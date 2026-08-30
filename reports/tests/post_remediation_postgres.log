@@ -1,0 +1,16 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /home/runner/work/ocor-detailed-design/ocor-detailed-design/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/runner/work/ocor-detailed-design/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 5 items
+
+tests/integration/test_postgres_outbox_live.py::test_live_pg_atomic_commit_contains_state_outbox_and_reconciliation_intent PASSED [ 20%]
+tests/integration/test_postgres_outbox_live.py::test_live_pg_idempotent_replay_preserves_single_event_and_receipt PASSED [ 40%]
+tests/integration/test_postgres_outbox_live.py::test_live_pg_injected_outbox_failure_rolls_back_aggregate_and_intent PASSED [ 60%]
+tests/integration/test_postgres_outbox_live.py::test_live_pg_for_update_serializes_competing_existing_aggregate_writers PASSED [ 80%]
+tests/integration/test_postgres_outbox_live.py::test_live_pg_reconciler_repairs_deleted_outbox_from_durable_intent PASSED [100%]
+
+- generated xml file: /home/runner/work/ocor-detailed-design/ocor-detailed-design/reports/tests/postgres_junit_post_approval.xml -
+============================== 5 passed in 0.53s ===============================

@@ -1,0 +1,149 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /home/runner/work/ocor-detailed-design/ocor-detailed-design/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/runner/work/ocor-detailed-design/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 109 items
+
+tests/acceptance_ev/test_ev_001_010_semantics_identity.py::test_ev_001_rfc8785_object_order_is_deterministic PASSED [  0%]
+tests/acceptance_ev/test_ev_001_010_semantics_identity.py::test_ev_002_rfc8785_ecmascript_number_boundaries_and_escaping PASSED [  1%]
+tests/acceptance_ev/test_ev_001_010_semantics_identity.py::test_ev_003_non_i_json_values_fail_closed PASSED [  2%]
+tests/acceptance_ev/test_ev_001_010_semantics_identity.py::test_ev_004_compiler_is_content_addressed_and_output_is_immutable PASSED [  3%]
+tests/acceptance_ev/test_ev_001_010_semantics_identity.py::test_ev_005_compiler_enforces_normative_schema_and_external_references PASSED [  4%]
+tests/acceptance_ev/test_ev_001_010_semantics_identity.py::test_ev_006_canonical_identity_is_resolved_exactly PASSED [  5%]
+tests/acceptance_ev/test_ev_001_010_semantics_identity.py::test_ev_007_unique_normalized_alias_resolves_to_canonical_identity PASSED [  6%]
+tests/acceptance_ev/test_ev_001_010_semantics_identity.py::test_ev_008_unknown_identity_produces_explicit_abstention PASSED [  7%]
+tests/acceptance_ev/test_ev_001_010_semantics_identity.py::test_ev_009_ambiguous_identity_produces_abstention_not_a_guess PASSED [  8%]
+tests/acceptance_ev/test_ev_001_010_semantics_identity.py::test_ev_010_identity_evidence_requires_threshold_and_margin_and_records_are_immutable PASSED [  9%]
+tests/acceptance_ev/test_ev_011_019_store_marking.py::test_ev_011_single_writer_boundary_rejects_replica_mutation PASSED [ 10%]
+tests/acceptance_ev/test_ev_011_019_store_marking.py::test_ev_012_optimistic_version_precondition_prevents_lost_update PASSED [ 11%]
+tests/acceptance_ev/test_ev_011_019_store_marking.py::test_ev_013_all_five_crash_windows_preserve_atomic_visibility PASSED [ 11%]
+tests/acceptance_ev/test_ev_011_019_store_marking.py::test_ev_014_idempotent_retry_cannot_duplicate_an_outbox_event PASSED [ 12%]
+tests/acceptance_ev/test_ev_011_019_store_marking.py::test_ev_015_outbox_events_are_committed_integrity_bound_and_versioned PASSED [ 13%]
+tests/acceptance_ev/test_ev_011_019_store_marking.py::test_ev_016_marking_total_order_join_is_the_least_upper_bound PASSED [ 14%]
+tests/acceptance_ev/test_ev_011_019_store_marking.py::test_ev_017_marking_partial_lattice_join_combines_compartments PASSED [ 15%]
+tests/acceptance_ev/test_ev_011_019_store_marking.py::test_ev_018_multi_scheme_join_is_monotonic_and_clearance_is_fail_closed PASSED [ 16%]
+tests/acceptance_ev/test_ev_011_019_store_marking.py::test_ev_019_marking_non_interference_preserves_semantic_identity PASSED [ 17%]
+tests/acceptance_ev/test_ev_020_028_actions_capabilities.py::test_ev_020_all_act_t01_through_act_t31b_transitions_are_executable_contracts PASSED [ 18%]
+tests/acceptance_ev/test_ev_020_028_actions_capabilities.py::test_ev_021_happy_path_transition_history_is_complete_and_tamper_evident PASSED [ 19%]
+tests/acceptance_ev/test_ev_020_028_actions_capabilities.py::test_ev_022_undefined_transition_is_rejected_without_mutating_action PASSED [ 20%]
+tests/acceptance_ev/test_ev_020_028_actions_capabilities.py::test_ev_023_temporal_execution_guards_use_inclusive_start_exclusive_end PASSED [ 21%]
+tests/acceptance_ev/test_ev_020_028_actions_capabilities.py::test_ev_024_audit_hash_chain_detects_evidence_tampering PASSED [ 22%]
+tests/acceptance_ev/test_ev_020_028_actions_capabilities.py::test_ev_025_compensation_and_identify_abstention_are_explicit_fsm_outcomes PASSED [ 22%]
+tests/acceptance_ev/test_ev_020_028_actions_capabilities.py::test_ev_026_capability_lease_expiration_is_enforced_at_exact_boundary PASSED [ 23%]
+tests/acceptance_ev/test_ev_020_028_actions_capabilities.py::test_ev_027_capability_subject_operation_and_resource_scopes_do_not_leak PASSED [ 24%]
+tests/acceptance_ev/test_ev_020_028_actions_capabilities.py::test_ev_028_delegation_revocation_and_usage_limits_cannot_be_bypassed PASSED [ 25%]
+tests/acceptance_ev/test_ev_029_035_fence_agent_e2e.py::test_ev_029_emission_fence_blocks_uncommitted_or_integrity_broken_events PASSED [ 26%]
+tests/acceptance_ev/test_ev_029_035_fence_agent_e2e.py::test_ev_030_emission_fence_orders_and_deduplicates_external_effects PASSED [ 27%]
+tests/acceptance_ev/test_ev_029_035_fence_agent_e2e.py::test_ev_031_emission_requires_both_capability_and_marking_clearance PASSED [ 28%]
+tests/acceptance_ev/test_ev_029_035_fence_agent_e2e.py::test_ev_032_strict_sandbox_allows_pure_tools_and_blocks_escape_syntax PASSED [ 29%]
+tests/acceptance_ev/test_ev_029_035_fence_agent_e2e.py::test_ev_033_token_budget_preflights_and_enforces_actual_model_output PASSED [ 30%]
+tests/acceptance_ev/test_ev_029_035_fence_agent_e2e.py::test_ev_034_agent_kernel_identifies_only_uniquely_and_otherwise_abstains PASSED [ 31%]
+tests/acceptance_ev/test_ev_029_035_fence_agent_e2e.py::test_ev_035_end_to_end_c1_through_c8_semantic_action_emission PASSED [ 32%]
+tests/backend_assumptions/test_ba01_atomic_outbox.py::test_ba01_precommit_crash_windows_publish_neither_document_nor_event[before-transaction] PASSED [ 33%]
+tests/backend_assumptions/test_ba01_atomic_outbox.py::test_ba01_precommit_crash_windows_publish_neither_document_nor_event[after-transaction-begin] PASSED [ 33%]
+tests/backend_assumptions/test_ba01_atomic_outbox.py::test_ba01_precommit_crash_windows_publish_neither_document_nor_event[after-aggregate-stage] PASSED [ 34%]
+tests/backend_assumptions/test_ba01_atomic_outbox.py::test_ba01_precommit_crash_windows_publish_neither_document_nor_event[after-outbox-stage] PASSED [ 35%]
+tests/backend_assumptions/test_ba01_atomic_outbox.py::test_ba01_postcommit_preack_crash_publishes_both_and_retry_is_idempotent PASSED [ 36%]
+tests/backend_assumptions/test_ba01_atomic_outbox.py::test_ba01_ratified_postgresql_fallback_is_selectable_and_has_reconciler PASSED [ 37%]
+tests/backend_assumptions/test_ba01_atomic_outbox.py::test_ba01_atomic_backend_is_not_replaced PASSED [ 38%]
+tests/backend_assumptions/test_ba01_postgres_fallback.py::test_ba01_postgresql_fallback_initializes_and_commits_aggregate_outbox_and_intent PASSED [ 39%]
+tests/backend_assumptions/test_ba01_postgres_fallback.py::test_ba01_postgresql_fallback_replays_idempotency_receipt PASSED [ 40%]
+tests/backend_assumptions/test_ba01_postgres_fallback.py::test_ba01_postgresql_fallback_rolls_back_stale_version PASSED [ 41%]
+tests/backend_assumptions/test_ba01_postgres_fallback.py::test_ba01_reconciler_repairs_missing_event_from_durable_intent PASSED [ 42%]
+tests/backend_assumptions/test_ba01_postgres_fallback.py::test_ba01_reconciler_rejects_nonpositive_batch_limit PASSED [ 43%]
+tests/backend_assumptions/test_ba02_idempotency.py::test_ba02_identical_retry_replays_the_original_receipt PASSED [ 44%]
+tests/backend_assumptions/test_ba02_idempotency.py::test_ba02_idempotency_key_cannot_be_rebound PASSED [ 44%]
+tests/backend_assumptions/test_ba03_single_writer.py::test_ba03_non_authoritative_writer_is_rejected PASSED [ 45%]
+tests/backend_assumptions/test_ba03_single_writer.py::test_ba03_optimistic_version_allows_only_one_concurrent_update PASSED [ 46%]
+tests/backend_assumptions/test_ba04_canonicalization.py::test_ba04_rfc8785_known_number_and_string_vector PASSED [ 47%]
+tests/backend_assumptions/test_ba04_canonicalization.py::test_ba04_key_order_does_not_change_digest_and_utf16_order_is_used PASSED [ 48%]
+tests/backend_assumptions/test_ba04_canonicalization.py::test_ba04_non_interoperable_numbers_are_rejected[nan] PASSED [ 49%]
+tests/backend_assumptions/test_ba04_canonicalization.py::test_ba04_non_interoperable_numbers_are_rejected[inf] PASSED [ 50%]
+tests/backend_assumptions/test_ba04_canonicalization.py::test_ba04_non_interoperable_numbers_are_rejected[9007199254740992] PASSED [ 51%]
+tests/backend_assumptions/test_ba04_canonicalization.py::test_ba04_duplicate_json_members_are_rejected PASSED [ 52%]
+tests/backend_assumptions/test_ba05_temporal_guards.py::test_ba05_action_window_is_start_inclusive_and_end_exclusive PASSED [ 53%]
+tests/backend_assumptions/test_ba05_temporal_guards.py::test_ba05_expire_event_is_legal_only_at_or_after_deadline PASSED [ 54%]
+tests/backend_assumptions/test_ba05_temporal_guards.py::test_ba05_audit_clock_cannot_move_backwards PASSED [ 55%]
+tests/backend_assumptions/test_ba05_temporal_guards.py::test_ba05_naive_datetimes_fail_closed PASSED [ 55%]
+tests/backend_assumptions/test_ba06_marking_lattice.py::test_ba06_total_order_join_is_commutative_associative_idempotent_and_monotonic PASSED [ 56%]
+tests/backend_assumptions/test_ba06_marking_lattice.py::test_ba06_partial_order_uses_the_unique_least_upper_bound PASSED [ 57%]
+tests/backend_assumptions/test_ba06_marking_lattice.py::test_ba06_marking_set_join_never_downgrades_any_input PASSED [ 58%]
+tests/backend_assumptions/test_ba06_marking_lattice.py::test_ba06_non_lattice_definition_is_rejected PASSED [ 59%]
+tests/backend_assumptions/test_ba06_marking_lattice.py::test_ba06_duplicate_scheme_identifiers_are_rejected PASSED [ 60%]
+tests/backend_assumptions/test_ba07_emission_fence.py::test_ba07_uncommitted_and_tampered_events_never_cross_the_fence PASSED [ 61%]
+tests/backend_assumptions/test_ba07_emission_fence.py::test_ba07_aggregate_events_cross_in_version_order PASSED [ 62%]
+tests/backend_assumptions/test_ba07_emission_fence.py::test_ba07_sink_failure_leaves_event_pending_and_retry_is_deduplicated PASSED [ 63%]
+tests/backend_assumptions/test_ba08_capability_expiration.py::test_ba08_lease_window_is_start_inclusive_and_end_exclusive PASSED [ 64%]
+tests/backend_assumptions/test_ba08_capability_expiration.py::test_ba08_revocation_and_scope_fail_closed PASSED [ 65%]
+tests/backend_assumptions/test_ba08_capability_expiration.py::test_ba08_delegation_cannot_escalate_capability_or_time PASSED [ 66%]
+tests/backend_assumptions/test_ba08_capability_expiration.py::test_ba08_usage_limited_lease_expires_by_consumption PASSED [ 66%]
+tests/integration/test_postgres_outbox_live.py::test_live_pg_atomic_commit_contains_state_outbox_and_reconciliation_intent PASSED [ 67%]
+tests/integration/test_postgres_outbox_live.py::test_live_pg_idempotent_replay_preserves_single_event_and_receipt PASSED [ 68%]
+tests/integration/test_postgres_outbox_live.py::test_live_pg_injected_outbox_failure_rolls_back_aggregate_and_intent PASSED [ 69%]
+tests/integration/test_postgres_outbox_live.py::test_live_pg_for_update_serializes_competing_existing_aggregate_writers PASSED [ 70%]
+tests/integration/test_postgres_outbox_live.py::test_live_pg_reconciler_repairs_deleted_outbox_from_durable_intent PASSED [ 71%]
+tests/runtime/test_c7_emission_hardening.py::test_store_bound_fence_drains_pending_events_and_exposes_receipts PASSED [ 72%]
+tests/runtime/test_c7_emission_hardening.py::test_fence_rejects_bad_configuration_collision_and_premature_delivery PASSED [ 73%]
+tests/runtime/test_c7_emission_hardening.py::test_store_bound_fence_discovers_unregistered_earlier_events PASSED [ 74%]
+tests/runtime/test_c7_emission_hardening.py::test_previously_emitted_durable_event_is_not_redelivered_after_fence_restart PASSED [ 75%]
+tests/runtime/test_c7_emission_hardening.py::test_fence_fails_closed_when_required_security_context_is_missing PASSED [ 76%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_c1_through_c8_compatibility_modules_are_importable PASSED [ 77%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_token_budget_reservation_lifecycle_is_accounted_exactly PASSED [ 77%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_sandbox_interpreter_supports_only_bounded_pure_expression_constructs PASSED [ 78%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_sandbox_rejects_unsupported_or_unsafe_expression_forms[unknown_name] PASSED [ 79%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_sandbox_rejects_unsupported_or_unsafe_expression_forms[~1] PASSED [ 80%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_sandbox_rejects_unsupported_or_unsafe_expression_forms[2 @ 3] PASSED [ 81%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_sandbox_rejects_unsupported_or_unsafe_expression_forms[2 ** 17] PASSED [ 82%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_sandbox_rejects_unsupported_or_unsafe_expression_forms[1 is 1] PASSED [ 83%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_sandbox_rejects_unsupported_or_unsafe_expression_forms[missing()] PASSED [ 84%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_sandbox_rejects_unsupported_or_unsafe_expression_forms[sum(*[1, 2])] PASSED [ 85%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_sandbox_rejects_unsupported_or_unsafe_expression_forms[sum(**{'x': 1})] PASSED [ 86%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_sandbox_rejects_unsupported_or_unsafe_expression_forms[{1: 'non-string-key'}] PASSED [ 87%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_sandbox_rejects_unsupported_or_unsafe_expression_forms[{'duplicate': 1, 'duplicate': 2}] PASSED [ 88%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_sandbox_rejects_unsupported_or_unsafe_expression_forms[values[99]] PASSED [ 88%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_sandbox_rejects_unsafe_registration_bindings_limits_and_tool_results PASSED [ 89%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_agent_kernel_successfully_accounts_structured_mapping_response PASSED [ 90%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_agent_kernel_capability_protects_model_and_sandbox_invocations PASSED [ 91%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_agent_token_preflight_does_not_consume_a_limited_capability PASSED [ 92%]
+tests/runtime/test_public_surface_and_c8_hardening.py::test_agent_response_and_model_contracts_fail_closed PASSED [ 93%]
+tests/schemas/test_schema_integrity.py::test_all_normative_json_schemas_are_draft_2020_12_and_metaschema_valid PASSED [ 94%]
+tests/schemas/test_schema_integrity.py::test_anti_rv_01_required_fields_are_declared_locally_in_properties PASSED [ 95%]
+tests/schemas/test_schema_integrity.py::test_conditional_keywords_are_structurally_explicit PASSED [ 96%]
+tests/schemas/test_schema_integrity.py::test_external_json_schema_references_resolve_and_validate_instances PASSED [ 97%]
+tests/schemas/test_schema_integrity.py::test_normative_conditionals_reject_incomplete_instances PASSED [ 98%]
+tests/schemas/test_schema_integrity.py::test_openapi_31_document_and_references_are_well_formed PASSED [ 99%]
+tests/schemas/test_schema_integrity.py::test_proto3_contract_is_syntactically_compilable_when_protoc_is_available PASSED [100%]
+
+- generated xml file: /home/runner/work/ocor-detailed-design/ocor-detailed-design/reports/tests/runtime_junit_post_approval.xml -
+================================ tests coverage ================================
+_______________ coverage: platform linux, python 3.12.14-final-0 _______________
+
+Name                                           Stmts   Miss  Cover   Missing
+----------------------------------------------------------------------------
+src/c1_compiler.py                                 2      0   100%
+src/c2_identity.py                                 1      0   100%
+src/c3_store.py                                    1      0   100%
+src/c4_marking.py                                  1      0   100%
+src/c5_actions.py                                  1      0   100%
+src/c6_capabilities.py                             1      0   100%
+src/c7_emission.py                                 1      0   100%
+src/c8_agent.py                                    1      0   100%
+src/ocor_runtime/__init__.py                      11      0   100%
+src/ocor_runtime/c1_compiler.py                   79      7    91%   45, 66-67, 90-92, 100
+src/ocor_runtime/c2_identity.py                  100     17    83%   20, 32, 56, 80, 96-97, 105, 121, 123, 139, 148, 179-180, 189-192
+src/ocor_runtime/c3_store.py                     164     12    93%   26, 33, 42, 45, 107, 130-131, 149, 151, 183, 288, 290
+src/ocor_runtime/c4_marking.py                   174     31    82%   38, 40, 44, 46, 48, 59, 62, 82, 118, 135-145, 153, 165, 180, 183, 188, 205, 232, 239, 244, 270-271, 281
+src/ocor_runtime/c5_actions.py                   160     16    90%   174, 176, 186, 190-193, 199-200, 208-209, 242, 245, 300, 302, 313
+src/ocor_runtime/c6_capabilities.py              150     21    86%   29, 33, 35, 54, 56, 63, 65, 69, 71, 102, 125, 132, 151, 159, 161, 171, 174-175, 182, 202, 223
+src/ocor_runtime/c7_emission.py                  113      6    95%   62, 91, 113, 161-162, 192
+src/ocor_runtime/c8_agent.py                     346     36    90%   42, 69, 102, 107, 109, 125, 138, 142, 176, 187, 198, 205, 210-211, 264, 279, 288, 291, 305, 307, 320-323, 330, 338-339, 349-351, 406, 508-509, 522, 528, 555
+src/ocor_runtime/canonical.py                    113      7    94%   90, 163, 166, 176-179
+src/ocor_runtime/errors.py                        19      0   100%
+src/ocor_runtime/fallback/__init__.py              2      0   100%
+src/ocor_runtime/fallback/postgres_outbox.py      93      8    91%   105-107, 143, 296-298, 313
+----------------------------------------------------------------------------
+TOTAL                                           1533    161    89%
+Coverage JSON written to file ../reports/tests/runtime_coverage_post_approval.json
+============================= 109 passed in 2.74s ==============================

@@ -24,7 +24,7 @@ This document is the complete implementation-level specification for the inspect
 |---|---:|---:|---|
 | `ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.2_APPROVED_BASELINE.md` | `3278379f97fe92b54edcc2aa935cee63ff42131f` | 226,360 chars | **PASS** — approved; SHA-256 `c3f432ae0d172f2b4f70be8220d0ae4a134ec14716bccc6a12d75dfee438b84f` |
 | `ocor-runtime/docs/governance_dossier/ARA_DECISION_RECORD_v1.1.md` | `b82c361b81c81070bcffb08b01267d677314447f` | 9,263 chars | **PASS** — DEC-197–DEC-206; SHA-256 `35579536a67122700ff09f6be33874163f5872a199f853b557d28c71af9a0eae` |
-| `ocor-runtime/VERIFICATION_EVIDENCE_REPORT.md` | `aa7efd09ea9f2841e7e934eea9ed173e006a94c7` | 10,161 | Present; self-reports 104 passed |
+| `ocor-runtime/VERIFICATION_EVIDENCE_REPORT.md` | historical runtime evidence | 10,622+ | Preserved; original 104-test campaign superseded for current status |\n| `reports/OCOR_ADD_v1.2_Validation_Closure_Report.md` | Actions run `33334792715` | 2,492 | **PASS** — 109 runtime, 38 BA, 35 EV and 5 live PostgreSQL tests; OpenAPI 3/3 |
 | `ocor-runtime/schemas/` | 10 files | 24,048 | Present: 8 JSON Schemas, OpenAPI 3.1, Proto3 |
 | `reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md` | SHA-256 `4f84249b86150a0aa0ef5bf7fcc1a5c99388651e8aae132720dd784883b0426f` | 224,714+ | Incorporated by value into approved baseline |
 | `reports/OCOR_ADD_v1.2_Final_Review.md` | `2299995c97f67bd3fde08101b244c2d424e0c217` | 6,724 | Present; conditional verdict |
@@ -525,7 +525,7 @@ Additional release gates: live PostgreSQL crash/restart; two-process writer epoc
 | `CC-EMISSION-FENCE` | §§2.6,4.6,5 | EV-029–031, BA-07 | freshness GAP |
 | Candidate BA-01–08 | §§5–8 | runtime BA IDs not equivalent | NOT VERIFIED |
 
-Executed during this pass: GitHub tree/path/blob validation and `python3 -m compileall` on imported source/tests. Runtime pytest is **NOT EXECUTED** because pytest is not installed and repository rules prohibit installing packages. The command failed once with `No module named pytest` and was not retried. The report’s “104 passed” remains historical self-report, not independently reproduced evidence.
+Post-approval validation is now independently reproduced by GitHub Actions run `33334792715` on revision `036b873d87cc8720d4134a237a8ea41d3b8817cf`. The locked CPython 3.12 environment executed the full document harness, governed OpenAPI 3.1 validation, 109 runtime tests, 38 BA cases, exactly 35 EV cases and five live PostgreSQL 16 transaction tests with zero failures, errors or skips. Statement coverage is observed at 89%; it is evidence, not an invented release threshold.
 
 Production is **NO-GO** while baseline blockers are open, container gaps remain, full fence predicates are absent, live PostgreSQL failure semantics are unproven, or contracts/FSM are not regenerated from the approved authority set.
 
@@ -547,7 +547,7 @@ Unknown keys, invalid ranges or unsafe sandbox increases fail startup.
 
 This LLD completely specifies the inspected runtime surface, target class allocation, deterministic protocols, PostgreSQL/embedded persistence, locks, async workers, memory bounds and BA/EV method matrix. Bidirectional traceability is preserved by representing non-conformance instead of equating filenames with ADD containers.
 
-The engineering document is complete and is now grounded in the approved ADD v1.2 baseline. Promotion from engineering candidate remains conditional on closing `LLD-BL-004`–`LLD-BL-006`, `VAL-ACT-001` and the applicable external-interface validation gate `VAL-ACT-002`; backend/runtime evidence closes incrementally under `VAL-ACT-003`.
+The engineering document is complete and grounded in the approved ADD v1.2 baseline. `DEC-207` closes `VAL-ACT-001` and `VAL-ACT-002` and closes `VAL-ACT-003` for the tested runtime slice. Promotion from engineering candidate remains conditional only on the separate implementation-alignment work represented by `LLD-BL-004`–`LLD-BL-006`; the validation closure does not claim E2/production readiness or automatically promote requirements to global `Verified`.
 
 ## Appendix A — Exact existing Python API inventory
 

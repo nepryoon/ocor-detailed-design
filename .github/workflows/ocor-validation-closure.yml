@@ -1,0 +1,121 @@
+name: OCOR ADD v1.2 validation closure
+
+on:
+  push:
+    branches:
+      - codex/validation-closure-v1.2
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validation-closure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ocor
+          POSTGRES_PASSWORD: ocor
+          POSTGRES_DB: ocor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ocor -d ocor"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      OCOR_LIVE_POSTGRES_DSN: postgresql://ocor:ocor@127.0.0.1:5432/ocor
+      PYTHONHASHSEED: "0"
+      TZ: UTC
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.8.14"
+          enable-cache: true
+
+      - name: Synchronize locked runtime environment
+        working-directory: ocor-runtime
+        run: |
+          set -euo pipefail
+          uv sync --frozen --extra test
+          uv pip install --python .venv/bin/python "rdflib==7.1.4" "psycopg[binary]==3.2.10"
+          .venv/bin/python --version
+          .venv/bin/python - <<'PY'
+          from importlib.metadata import version
+          for package in ("openapi-spec-validator", "rdflib", "psycopg", "pytest"):
+              print(f"{package}=={version(package)}")
+          PY
+
+      - name: Verify immutable source and report manifests
+        run: |
+          set -euo pipefail
+          sha256sum -c inputs/normative/SHA256SUMS | tee reports/tests/post_remediation_input_checksums.txt
+          sha256sum -c reports/OCOR_ADD_v1.2_SHA256SUMS | tee reports/tests/post_remediation_report_checksums.txt
+
+      - name: Run complete post-remediation document harness
+        run: |
+          set -euo pipefail
+          PY=ocor-runtime/.venv/bin/python
+          "$PY" scripts/verify.py --add reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md --json | tee reports/tests/post_remediation_verify.log
+          mv reports/verify_report.json reports/tests/v12_verify_report_post_approval.json
+          "$PY" reports/tests/test_v12_candidate.py | tee reports/tests/post_remediation_conformance.log
+          "$PY" reports/tests/test_v12_semantics.py | tee reports/tests/post_remediation_semantics.log
+          "$PY" reports/tests/test_v12_release_gate.py | tee reports/tests/post_remediation_release_gate.log
+          "$PY" reports/tests/test_v12_approval_readiness.py | tee reports/tests/post_remediation_approval_readiness.log
+
+      - name: Run governed OpenAPI 3.1 validation
+        run: |
+          set -euo pipefail
+          ocor-runtime/.venv/bin/python reports/tests/validate_openapi_governed.py | tee reports/tests/post_remediation_openapi.log
+
+      - name: Run complete runtime, BA, EV and live PostgreSQL campaigns
+        working-directory: ocor-runtime
+        run: |
+          set -euo pipefail
+          PY=.venv/bin/python
+          "$PY" -m pytest -v --cov=src --cov-report=term-missing --cov-report=json:../reports/tests/runtime_coverage_post_approval.json --junitxml=../reports/tests/runtime_junit_post_approval.xml tests/ | tee ../reports/tests/post_remediation_runtime.log
+          "$PY" -m pytest -v --junitxml=../reports/tests/ba_junit_post_approval.xml tests/backend_assumptions/ | tee ../reports/tests/post_remediation_ba.log
+          "$PY" -m pytest -v --junitxml=../reports/tests/ev_junit_post_approval.xml tests/acceptance_ev/ | tee ../reports/tests/post_remediation_ev.log
+          "$PY" -m pytest -v --junitxml=../reports/tests/postgres_junit_post_approval.xml tests/integration/test_postgres_outbox_live.py | tee ../reports/tests/post_remediation_postgres.log
+
+      - name: Build governed closure evidence
+        run: |
+          set -euo pipefail
+          ocor-runtime/.venv/bin/python reports/tests/build_validation_closure_report.py
+
+      - name: Upload immutable evidence candidate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocor-validation-closure-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 90
+          path: |
+            reports/OCOR_ADD_v1.2_Validation_Closure_Report.md
+            reports/tests/*post_approval*
+            reports/tests/post_remediation_*.log
+            reports/tests/post_remediation_*checksums.txt
+            reports/tests/openapi_31_validation_results.json
+            reports/tests/validation_closure_results.json
+            reports/tests/v12_conformance_results.json
+            reports/tests/v12_semantic_results.json
+            reports/tests/v12_release_gate_results.json
+            reports/tests/v12_approval_readiness_results.json
