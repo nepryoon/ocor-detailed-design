@@ -6,13 +6,13 @@
 |---|---|
 | Document | `OCOR_LLD_v1.0.md` |
 | Repository | `nepryoon/ocor-detailed-design` |
-| Inspected branch/commit | `main` / `ddfa97d1cacec23afdf767702c7c0fd816e66431` |
+| Governance baseline | ADD v1.2 approval package, effective 2026-08-30 |
 | Inspection date | 2026-08-30 |
 | Runtime | CPython ≥3.11; package `ocor-runtime` 0.1.0 |
-| LLD status | **ENGINEERING CANDIDATE — BASELINE AUTHORITY NOT CONFIRMED** |
-| Release effect | None; this document does not approve a baseline, close risk, or promote evidence |
+| LLD status | **ENGINEERING CANDIDATE — ADD v1.2 BASELINE AUTHORITY CONFIRMED; IMPLEMENTATION ALIGNMENT OPEN** |
+| Release effect | ADD v1.2 is approved by the separate ARA record; this LLD does not close implementation risk or promote runtime evidence |
 
-This document is the complete implementation-level specification for the runtime slice at the inspected commit. It is intentionally fail-closed about authority: it can guide implementation and review, but cannot become an approved LLD until §1.4 is closed by the Architecture Review Authority (ARA).
+This document is the complete implementation-level specification for the inspected runtime slice. ADD v1.2 baseline authority is confirmed by the non-empty, digest-pinned ARA package. The LLD remains an engineering candidate until the implementation-alignment blockers in §1.4 and the accepted validation actions are closed.
 
 “Existing” identifies executable code at the inspected commit. “Target” identifies a concrete alignment obligation derived from the ADD v1.2 Candidate; a target is not implementation evidence.
 
@@ -22,14 +22,14 @@ This document is the complete implementation-level specification for the runtime
 
 | Required deliverable | Git object | Size | Result |
 |---|---:|---:|---|
-| `ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.2_APPROVED_BASELINE.md` | `e69de29bb2d1d6434b8b29ae775ad8c2e48c5391` | 0 | **FAIL** — empty file |
-| `ocor-runtime/docs/governance_dossier/ARA_DECISION_RECORD_v1.1.md` | `e69de29bb2d1d6434b8b29ae775ad8c2e48c5391` | 0 | **FAIL** — empty file |
+| `ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.2_APPROVED_BASELINE.md` | `3278379f97fe92b54edcc2aa935cee63ff42131f` | 226,360 chars | **PASS** — approved; SHA-256 `c3f432ae0d172f2b4f70be8220d0ae4a134ec14716bccc6a12d75dfee438b84f` |
+| `ocor-runtime/docs/governance_dossier/ARA_DECISION_RECORD_v1.1.md` | `b82c361b81c81070bcffb08b01267d677314447f` | 9,263 chars | **PASS** — DEC-197–DEC-206; SHA-256 `35579536a67122700ff09f6be33874163f5872a199f853b557d28c71af9a0eae` |
 | `ocor-runtime/VERIFICATION_EVIDENCE_REPORT.md` | `aa7efd09ea9f2841e7e934eea9ed173e006a94c7` | 10,161 | Present; self-reports 104 passed |
 | `ocor-runtime/schemas/` | 10 files | 24,048 | Present: 8 JSON Schemas, OpenAPI 3.1, Proto3 |
-| `reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md` | `8d6bf00eeb9dd81cb217ba4c05dbb6ce8cd353f2` | 224,714 | Present, not approved |
+| `reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md` | SHA-256 `4f84249b86150a0aa0ef5bf7fcc1a5c99388651e8aae132720dd784883b0426f` | 224,714+ | Incorporated by value into approved baseline |
 | `reports/OCOR_ADD_v1.2_Final_Review.md` | `2299995c97f67bd3fde08101b244c2d424e0c217` | 6,724 | Present; conditional verdict |
 
-The Final Review labels the candidate `PROPOSED — AWAITING CHANGE CONTROL` and concludes `READY FOR DDD AFTER CHANGE-CONTROL APPROVAL`. The runtime evidence report states it relied on the execution mandate because the approved baseline and decision record were zero-byte files. Repository evidence therefore does not confirm ADD v1.2 approval.
+The historical Final Review described the pre-approval candidate. That status is superseded by the approved baseline, ARA Decision Record v1.1, approval checksum manifest and approved register snapshots. Repository evidence now confirms ADD v1.2 architectural approval; it does not by itself prove runtime conformance.
 
 ### 1.2 Authority hierarchy
 
@@ -43,18 +43,18 @@ Levels 4–5 MUST NOT infer approval when levels 1–2 are absent. A higher-leve
 
 ### 1.3 Decision
 
-The authoritative prerequisite gate is **BLOCKED**. Engineering continues through this conditional LLD so progress is not lost. Every divergence is represented explicitly; none is converted into assumed approval.
+The ADD v1.2 authority prerequisite gate is **PASS**. `LLD-BL-001`–`LLD-BL-003` are closed by the governed approval package. The implementation-alignment gate remains **BLOCKED** on `LLD-BL-004`–`LLD-BL-006`; no architecture approval is converted into an implementation-conformance claim.
 
 ### 1.4 Baseline blockers
 
-| ID | Blocker | Consequence | Closure evidence |
-|---|---|---|---|
-| `LLD-BL-001` | Approved ADD is empty | No authoritative text/digest | Non-empty baseline with approval metadata and immutable digest |
-| `LLD-BL-002` | ARA record is empty | DEC-197–205 cannot be independently verified | Decisions, dispositions, authority, date, signatures/digests |
-| `LLD-BL-003` | Candidate awaits change control | Candidate cannot be promoted by implementation inference | Approved package and updated registers |
-| `LLD-BL-004` | Runtime C1–C8 labels diverge from candidate container meanings | Nominal coverage is not conformance | Approved mapping or package realignment |
-| `LLD-BL-005` | Candidate audit says 44 FSM tuples; runtime has 32 edges | Conflicting `ACT-T*` meanings | ARA-selected table and regenerated contracts/tests |
-| `LLD-BL-006` | Candidate and runtime reuse BA-01–08 for different properties | Evidence namespace ambiguous | Versioned assumption register and unique IDs |
+| ID | Status | Blocker / disposition | Consequence | Closure evidence |
+|---|---|---|---|---|
+| `LLD-BL-001` | **CLOSED** | Approved ADD is non-empty and digest-pinned | Authority established | Approved baseline + SHA-256 manifest |
+| `LLD-BL-002` | **CLOSED** | ARA record assigns DEC-197–DEC-206 | Decisions independently verifiable | ARA Decision Record v1.1 + approved decision snapshot |
+| `LLD-BL-003` | **CLOSED** | Candidate promoted through explicit change control | Baseline frozen | Approval record + five approved register snapshots |
+| `LLD-BL-004` | **OPEN** | Runtime C1–C8 labels diverge from approved container meanings | Nominal coverage is not conformance | Approved mapping implemented or package realignment |
+| `LLD-BL-005` | **OPEN** | Approved baseline defines 44 FSM tuples; runtime has 32 edges | Conflicting `ACT-T*` meanings | Regenerated contracts, implementation and tests against approved table |
+| `LLD-BL-006` | **OPEN** | Approved ADD and runtime reuse BA-01–08 for different properties | Evidence namespace ambiguous | Versioned assumption register and unique IDs |
 
 ## 2. Non-negotiable invariants
 
@@ -131,7 +131,7 @@ Anchors: `MarkingSchemeDefinition::{leq,dominates,join,meet}`, `MarkingEngine::{
 | ACT-T31a | COMPENSATING | FAIL | FAILED | — |
 | ACT-T31b | READY | ABSTAIN | ABSTAINED | — |
 
-The runtime has 31 conceptual decisions and 32 concrete edges. Active means `not_before <= occurred_at < expires_at`; expired means `occurred_at >= expires_at`. Audit time is non-decreasing. Every transition appends a hash-chained immutable entry. Invalid event, stale version, time violation or bad history leaves the action unchanged. The candidate’s 44-tuple FSM is not merged; `LLD-BL-005` remains open.
+The runtime has 31 conceptual decisions and 32 concrete edges. Active means `not_before <= occurred_at < expires_at`; expired means `occurred_at >= expires_at`. Audit time is non-decreasing. Every transition appends a hash-chained immutable entry. Invalid event, stale version, time violation or bad history leaves the action unchanged. The approved baseline’s 44-tuple FSM is not yet implemented in this runtime slice; `LLD-BL-005` remains open.
 
 ### 2.5 Capability lease guards
 
@@ -547,7 +547,7 @@ Unknown keys, invalid ranges or unsafe sandbox increases fail startup.
 
 This LLD completely specifies the inspected runtime surface, target class allocation, deterministic protocols, PostgreSQL/embedded persistence, locks, async workers, memory bounds and BA/EV method matrix. Bidirectional traceability is preserved by representing non-conformance instead of equating filenames with ADD containers.
 
-The engineering document is complete. Its authority status remains conditional until the approved ADD and ARA record are restored as non-empty verifiable artifacts and `LLD-BL-001`–`006` close.
+The engineering document is complete and is now grounded in the approved ADD v1.2 baseline. Promotion from engineering candidate remains conditional on closing `LLD-BL-004`–`LLD-BL-006`, `VAL-ACT-001` and the applicable external-interface validation gate `VAL-ACT-002`; backend/runtime evidence closes incrementally under `VAL-ACT-003`.
 
 ## Appendix A — Exact existing Python API inventory
 
