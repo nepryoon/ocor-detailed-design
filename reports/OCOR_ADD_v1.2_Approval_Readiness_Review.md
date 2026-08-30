@@ -1,5 +1,7 @@
 # OCOR ADD v1.2 Candidate — Approval Readiness Review
 
+> **Governance supersession — 2026-08-30:** readiness review completed. ADD v1.2 is now **APPROVED** by the Product Owner acting as ARA; see the approved baseline, `ARA_DECISION_RECORD_v1.1.md`, approved register snapshots and checksum manifest. The authority-fence language below describes the earlier readiness stage and is retained as historical evidence.
+
 ## Control
 
 - Branch: `codex/add-v1.2-approval-readiness`.
