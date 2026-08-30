@@ -1,0 +1,932 @@
+{
+  "source": "inputs/normative/OCOR_Architectural_Design_Document_v1.1.md",
+  "if_then_counts": {
+    "urn:ocor:schema:signed-canonical-ir:1.0": 0,
+    "urn:ocor:schema:canonical-ingestion-envelope:1.1": 4,
+    "urn:ocor:schema:mcp-tool-contract:1.1": 11,
+    "urn:ocor:schema:action-type-contract:1.0": 9,
+    "urn:ocor:schema:event-subscription-contract:1.0": 0,
+    "OpenAPI 1.1.0": 3
+  },
+  "total_cases": 98,
+  "passed": 97,
+  "failed": 1,
+  "records": [
+    {
+      "schema": "urn:ocor:schema:signed-canonical-ir:1.0",
+      "case": "baseline positivo",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:signed-canonical-ir:1.0",
+      "case": "digest malformato",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "digest: 'sha256:xyz' does not match '^sha256:[0-9a-f]{64}$'"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "positivo ingest_mode=BATCH",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "positivo ingest_mode=STREAM",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "positivo ingest_mode=CDC",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "negativo ramo BATCH: transport STREAM",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "transport: Additional properties are not allowed ('offset', 'partition', 'stream_id' were unexpected)",
+        "transport: 'batch_id' is a required property",
+        "transport: 'record_index' is a required property",
+        "transport.mode: 'BATCH' was expected"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "negativo ramo STREAM: transport BATCH",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "transport: Additional properties are not allowed ('batch_id', 'record_index' were unexpected)",
+        "transport: 'stream_id' is a required property",
+        "transport: 'partition' is a required property",
+        "transport: 'offset' is a required property"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "negativo ramo ingest CDC: semantic_class non CDC_CHANGE",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "semantic_class: 'CDC_CHANGE' was expected"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "negativo ramo ingest CDC: transport non CDC",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "transport: Additional properties are not allowed ('batch_id', 'record_index' were unexpected)",
+        "transport: 'operation' is a required property",
+        "transport: 'source_transaction_id' is a required property",
+        "transport: 'source_position' is a required property"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "negativo ramo semantic CDC_CHANGE: ingest non CDC",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "ingest_mode: 'CDC' was expected",
+        "transport: Additional properties are not allowed ('offset', 'partition', 'stream_id' were unexpected)",
+        "transport: 'operation' is a required property",
+        "transport: 'source_transaction_id' is a required property"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "positivo oneOf effective_time.to='2026-08-30T10:00:00Z'",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "positivo oneOf effective_time.to=None",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "negativo oneOf effective_time.to",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "effective_time.to: 7 is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "positivo oneOf causation_id='11111111-1111-4111-8111-111111111111'",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "positivo oneOf causation_id=None",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "negativo oneOf causation_id",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "causation_id: 7 is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "positivo oneOf before_digest='sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "positivo oneOf before_digest=None",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "negativo oneOf before_digest",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "transport: {'mode': 'CDC', 'operation': 'UPDATE', 'source_transaction_id': 'tx-1', 'source_position': 'pos-1', 'before_digest': 7} is not valid under any of the given schemas",
+        "transport.before_digest: 7 is not valid under any of the given schemas",
+        "transport.before_digest: 7 is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "positivo oneOf after_digest='sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "positivo oneOf after_digest=None",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+      "case": "negativo oneOf after_digest",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "transport: {'mode': 'CDC', 'operation': 'UPDATE', 'source_transaction_id': 'tx-1', 'source_position': 'pos-1', 'after_digest': 7} is not valid under any of the given schemas",
+        "transport.after_digest: 7 is not valid under any of the given schemas",
+        "transport.after_digest: 7 is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "positivo ramo retry_safe=false",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "negativo ramo retry_safe=false",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "retry.max_attempts: 1 was expected"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "positivo ramo HIGH/CRITICAL",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "negativo ramo HIGH/CRITICAL quorum",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "approval.independent_approver_count: 2 was expected",
+        "approval.independent_approver_count: 2 was expected"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "positivo ramo EXECUTE_APPROVED_ACTION (vincoli 1)",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "positivo ramo EXECUTE_APPROVED_ACTION (vincoli 2)",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "negativo EXECUTE: tier mancante",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "allowed_autonomy_tiers: ['OBSERVE'] does not contain items matching the given schema"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "negativo EXECUTE: approval NONE",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "approval.mode: 'NONE' is not one of ['HUMAN_GATE', 'DUAL_CONTROL']",
+        "approval: 'independent_approver_count' is a required property"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "negativo EXECUTE: key_required false",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "idempotency.key_required: True was expected"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "negativo EXECUTE: EXECUTION_UNKNOWN mancante",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "error_codes: ['POLICY_DENIED'] does not contain items matching the given schema"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "positivo ramo DUAL_CONTROL",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "negativo ramo DUAL_CONTROL",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "approval.independent_approver_count: 2 was expected"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "positivo ramo compensation HUMAN_AUTHORIZED",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "negativo ramo compensation HUMAN_AUTHORIZED",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "compensation: 'compensation_contract_id' is a required property"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "positivo ramo HUMAN_GATE",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "negativo ramo HUMAN_GATE",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "approval: 'required_approver_roles' is a required property"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "positivo ramo PROPOSE_ACTION",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "negativo ramo PROPOSE_ACTION",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "allowed_autonomy_tiers: ['OBSERVE'] does not contain items matching the given schema"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "positivo ramo SIMULATE",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "negativo ramo SIMULATE",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "allowed_autonomy_tiers: ['OBSERVE'] does not contain items matching the given schema"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "positivo ramo ANALYZE",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "negativo ramo ANALYZE",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "allowed_autonomy_tiers: ['OBSERVE'] does not contain items matching the given schema"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "positivo ramo READ_ONLY",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:mcp-tool-contract:1.1",
+      "case": "negativo ramo READ_ONLY con execute",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "allowed_autonomy_tiers: ['OBSERVE', 'EXECUTE_APPROVED'] should not be valid under {'contains': {'const': 'EXECUTE_APPROVED'}}"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "positivo ramo target CANONICAL_COMMIT",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "positivo ramo produced CanonicalAssertion",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "negativo canonical: binding assente",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "<root>: 'canonical_commit_binding' is a required property"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "negativo canonical: effect errato",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "effect_class: 'CANONICAL_COMMIT' was expected"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "negativo canonical: accepted_from_claim false",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "canonical_commit_binding.requires_accepted_from_claim: True was expected"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "negativo semantico: CANONICAL_COMMIT R1 senza Human Gate",
+      "expected": "REJECT",
+      "actual": "ACCEPT",
+      "pass": false,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "positivo ramo target EXTERNAL_ADAPTER",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "negativo external con canonical binding",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "<root>: {'action_type_id': 'urn:ocor:test:action', 'version': '1.0.0', 'contract_digest': 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'target': 'EXTERNAL_ADAPTER', 'effect_class': 'EXTERNAL_NOTIFICATION', 'risk_class': 'R1_ANALYZE', 'parameters_schema': {'schema_id': 'urn:ocor:test:parameters', 'version': '1.0.0', 'digest': 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, 'expected_effect_schema': {'schema_id': 'urn:ocor:test:effect', 'version': '1.0.0', 'digest': 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, 'timeouts': {'proposal_ttl': 'PT1S', 'approval_ttl': 'PT1S', 'decision_dispatch_ttl': 'PT1S', 'predispatch_fence_ttl': 'PT1S', 'ack_timeout': 'PT1S', 'execution_confirmation_timeout': 'PT1S', 'reconciliation_deadline': 'PT1S', 'outcome_assessment_window': 'PT1S'}, 'retry': {'retry_safe': True, 'max_attempts': 1, 'backoff': ['PT1S']}, 'idempotency': {'key_required': True, 'scope': 'REQUEST', 'duplicate_semantics': 'REPLAY_RECEIPT'}, 'compensation': {'mode': 'NOT_APPLICABLE', 'irreversibility_class': 'REVERSIBLE'}, 'approval': {'mode': 'NONE', 'self_approval_allowed': False, 'timeout_action': 'DENY'}, 'policy_refs': ['urn:ocor:test:policy'], 'preconditions': [], 'provenance_requirements': {'record_proposal_digest': True, 'record_policy_decision': True, 'record_actor_chain': True, 'record_approval_set': True, 'record_delivery_attempts': True}, 'evidence_requirements': {'proposal_evidence': 'OPTIONAL', 'confirmation_evidence': 'REQUIRED', 'minimum_count': 0}, 'error_codes': ['POLICY_DENIED'], 'canonical_commit_binding': {'ownership_boundary': 'urn:ocor:test:boundary', 'aggregate_type_id': 'urn:ocor:test:aggregate-type', 'produced_assertion_class': 'CanonicalAssertion', 'requires_accepted_from_claim': True, 'requires_evidence_set': True}} should not be valid under {'required': ['canonical_commit_binding']}"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "positivo ramo R3_HIGH_IMPACT",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "negativo ramo R3_HIGH_IMPACT",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "approval.mode: 'DUAL_CONTROL' was expected",
+        "approval.independent_approver_count: 2 was expected",
+        "approval.required_approver_roles: ['urn:ocor:test:r1'] is too short"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "positivo ramo R2_CONTROLLED",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "negativo ramo R2_CONTROLLED",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "approval.mode: 'NONE' is not one of ['HUMAN_GATE', 'DUAL_CONTROL']",
+        "approval: 'independent_approver_count' is a required property",
+        "approval: 'required_approver_roles' is a required property"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "positivo ramo compensation HUMAN_AUTHORIZED",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "negativo ramo compensation HUMAN_AUTHORIZED",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "compensation: 'compensation_action_type_id' is a required property"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "positivo ramo IRREVERSIBLE",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "negativo ramo IRREVERSIBLE risk R2",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "risk_class: 'R3_HIGH_IMPACT' was expected"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "positivo ramo retry_safe=false annidato",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "positivo ramo retry_safe=false root",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "negativo retry_safe=false max_attempts",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "retry.max_attempts: 1 was expected"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:action-type-contract:1.0",
+      "case": "negativo retry_safe=false error code",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "error_codes: ['POLICY_DENIED'] does not contain items matching the given schema"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:event-subscription-contract:1.0",
+      "case": "baseline positivo",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "urn:ocor:schema:event-subscription-contract:1.0",
+      "case": "negativo exactly once vietato",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "delivery.semantics: 'AT_LEAST_ONCE' was expected"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:event-subscription-contract:1.0",
+      "case": "negativo cursor non opaco",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "replay.cursor_opaque: True was expected"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:event-subscription-contract:1.0",
+      "case": "negativo predicate arbitrario",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "filter.arbitrary_predicates_allowed: False was expected"
+      ]
+    },
+    {
+      "schema": "urn:ocor:schema:event-subscription-contract:1.0",
+      "case": "negativo marking non propagato",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "marking_policy.propagate_marking: True was expected"
+      ]
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo request GetObjectRequest",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "negativo required request GetObjectRequest",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "<root>: 'context' is a required property"
+      ]
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo request ObjectSetRequest",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "negativo required request ObjectSetRequest",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "<root>: 'context' is a required property"
+      ]
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo request SearchRequest",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "negativo required request SearchRequest",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "<root>: 'context' is a required property"
+      ]
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo request TraverseRequest",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "negativo required request TraverseRequest",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "<root>: 'context' is a required property"
+      ]
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo request ExplainRequest",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "negativo required request ExplainRequest",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "<root>: 'context' is a required property"
+      ]
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo request ProvenanceRequest",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "negativo required request ProvenanceRequest",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "<root>: 'context' is a required property"
+      ]
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo ramo Consistency AT_LEAST_COMMIT",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo ramo Consistency EXACT_AT_COMMIT",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "negativo ramo Consistency senza required_commit",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "<root>: 'required_commit' is a required property"
+      ]
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo Consistency BEST_AVAILABLE senza commit",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo ramo Problem version-sensitive",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "negativo ramo Problem version-sensitive",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "<root>: 'served' is a required property"
+      ]
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo ramo Problem CAPABILITY_DEFERRED",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "negativo ramo Problem CAPABILITY_DEFERRED",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "<root>: 'deferred_element' is a required property"
+      ]
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo oneOf TemporalInterval.to='2026-08-30T10:00:00Z'",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo oneOf TemporalInterval.to=None",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "negativo oneOf TemporalInterval.to",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "to: 7 is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo oneOf EpistemicStatus.accepting_decision_ref='urn:ocor:test:decision'",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "positivo oneOf EpistemicStatus.accepting_decision_ref=None",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "schema": "OpenAPI 1.1.0",
+      "case": "negativo oneOf EpistemicStatus.accepting_decision_ref",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "errors": [
+        "accepting_decision_ref: 7 is not valid under any of the given schemas"
+      ]
+    },
+    {
+      "schema": "suite",
+      "case": "conteggio if/then estratti",
+      "expected": {
+        "urn:ocor:schema:signed-canonical-ir:1.0": 0,
+        "urn:ocor:schema:canonical-ingestion-envelope:1.1": 4,
+        "urn:ocor:schema:mcp-tool-contract:1.1": 11,
+        "urn:ocor:schema:action-type-contract:1.0": 9,
+        "urn:ocor:schema:event-subscription-contract:1.0": 0,
+        "OpenAPI 1.1.0": 3
+      },
+      "actual": {
+        "urn:ocor:schema:signed-canonical-ir:1.0": 0,
+        "urn:ocor:schema:canonical-ingestion-envelope:1.1": 4,
+        "urn:ocor:schema:mcp-tool-contract:1.1": 11,
+        "urn:ocor:schema:action-type-contract:1.0": 9,
+        "urn:ocor:schema:event-subscription-contract:1.0": 0,
+        "OpenAPI 1.1.0": 3
+      },
+      "pass": true,
+      "errors": []
+    }
+  ]
+}
