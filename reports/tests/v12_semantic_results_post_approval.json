@@ -1,0 +1,211 @@
+{
+  "source": "reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md",
+  "total": 29,
+  "passed": 29,
+  "failed": 0,
+  "records": [
+    {
+      "case": "Principal coerente col transport binding",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "reason": "EFFECTIVE_PRINCIPAL_FROM_VERIFIED_BINDING"
+    },
+    {
+      "case": "Principal body divergente",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "reason": "GOVERNED_CONTEXT_MISMATCH"
+    },
+    {
+      "case": "Principal senza binding verificato",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "reason": "UNVERIFIED_TRANSPORT_BINDING"
+    },
+    {
+      "case": "dispatch con snapshot immutato",
+      "expected": "EMIT",
+      "actual": "EMIT",
+      "pass": true,
+      "reason": "EMISSION_FENCE_TRUE"
+    },
+    {
+      "case": "dispatch con state revision drift",
+      "expected": "INVALIDATED",
+      "actual": "INVALIDATED",
+      "pass": true,
+      "reason": "FRESHNESS_DRIFT:state_revision"
+    },
+    {
+      "case": "retry con policy drift",
+      "expected": "INVALIDATED",
+      "actual": "INVALIDATED",
+      "pass": true,
+      "reason": "FRESHNESS_DRIFT:policy_digest"
+    },
+    {
+      "case": "compensation con stop epoch drift",
+      "expected": "INVALIDATED",
+      "actual": "INVALIDATED",
+      "pass": true,
+      "reason": "FRESHNESS_DRIFT:stop_epoch"
+    },
+    {
+      "case": "dispatch con lease scaduta",
+      "expected": "INVALIDATED",
+      "actual": "INVALIDATED",
+      "pass": true,
+      "reason": "CAPABILITY_LEASE_EXPIRED"
+    },
+    {
+      "case": "dispatch senza audit append",
+      "expected": "INVALIDATED",
+      "actual": "INVALIDATED",
+      "pass": true,
+      "reason": "FRESHNESS_DRIFT:audit_append_available"
+    },
+    {
+      "case": "canonical commit completo",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "reason": "CANONICAL_ADMISSION_COMPLETE"
+    },
+    {
+      "case": "canonical commit senza decision_ref",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "reason": "MISSING_CANONICAL_BINDING:decision_ref"
+    },
+    {
+      "case": "canonical commit senza authority_ref",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "reason": "MISSING_CANONICAL_BINDING:authority_ref"
+    },
+    {
+      "case": "canonical commit senza evidence_set_ref",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "reason": "MISSING_CANONICAL_BINDING:evidence_set_ref"
+    },
+    {
+      "case": "canonical commit approval NONE",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "reason": "HUMAN_GATE_REQUIRED"
+    },
+    {
+      "case": "R2_CONTROLLED con ruoli vuoti",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "reason": "NON_EMPTY_QUORUM_AND_ROLES_REQUIRED"
+    },
+    {
+      "case": "R2_CONTROLLED con quorum zero",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "reason": "NON_EMPTY_QUORUM_AND_ROLES_REQUIRED"
+    },
+    {
+      "case": "restriction join monotono",
+      "expected": "ACCEPT:{A,B}",
+      "actual": "ACCEPT:{A,B}",
+      "pass": true,
+      "reason": "union"
+    },
+    {
+      "case": "permission join per intersezione",
+      "expected": "ACCEPT:{P2}",
+      "actual": "ACCEPT:{P2}",
+      "pass": true,
+      "reason": "intersection"
+    },
+    {
+      "case": "PERMISSION con operatore restriction",
+      "expected": "DENY",
+      "actual": "DENY",
+      "pass": true,
+      "reason": "UNSUPPORTED_FAMILY"
+    },
+    {
+      "case": "unknown marking label fail-closed",
+      "expected": "DENY",
+      "actual": "DENY",
+      "pass": true,
+      "reason": "UNKNOWN_LABEL"
+    },
+    {
+      "case": "FSM diagramma↔tabella sulle tuple",
+      "expected": "MATCH",
+      "actual": "MATCH",
+      "pass": true,
+      "reason": "diagram=44 table=44 only_diagram=[] only_table=[]"
+    },
+    {
+      "case": "FSM nessuna transizione senza source/destination",
+      "expected": "PASS",
+      "actual": "PASS",
+      "pass": true,
+      "reason": "archi=44"
+    },
+    {
+      "case": "FSM transition ID univoci",
+      "expected": "PASS",
+      "actual": "PASS",
+      "pass": true,
+      "reason": "ids=44"
+    },
+    {
+      "case": "FSM famiglia ACT-T contigua 01–31",
+      "expected": "PASS",
+      "actual": "PASS",
+      "pass": true,
+      "reason": "[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31]"
+    },
+    {
+      "case": "FSM stati raggiungibili",
+      "expected": "PASS",
+      "actual": "PASS",
+      "pass": true,
+      "reason": "[]"
+    },
+    {
+      "case": "range ID esistente",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "reason": "FR-001–FR-174"
+    },
+    {
+      "case": "range o ID inesistente",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "reason": "UNKNOWN_ID"
+    },
+    {
+      "case": "claim Verified con E1=0/E2=0",
+      "expected": "REJECT",
+      "actual": "REJECT",
+      "pass": true,
+      "reason": "EVIDENCE_FENCE"
+    },
+    {
+      "case": "stato Confirmed con E1=0/E2=0",
+      "expected": "ACCEPT",
+      "actual": "ACCEPT",
+      "pass": true,
+      "reason": "NO_UNSUPPORTED_PROMOTION"
+    }
+  ]
+}
