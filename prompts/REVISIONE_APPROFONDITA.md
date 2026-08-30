@@ -12,6 +12,10 @@
 >
 > Non cambiare branch di tua iniziativa. Il passaggio da `fase-1` a `main` lo fa
 > l'operatore fra le due esecuzioni: è ciò che garantisce l'indipendenza della review.
+>
+> **Ripresa dopo interruzione.** Prima di iniziare, elenca `reports/`. Se il deliverable
+> di uno STEP esiste gia ed e completo, quello STEP e fatto: **non rifarlo**, passa al
+> successivo. L'esecuzione puo essere interrotta e ripresa piu volte senza perdere lavoro.
 
 ---
 
@@ -84,11 +88,37 @@ referto finale.
 
 **Deliverable:** `reports/step0_ambiente.md` con l'esito dei tre comandi.
 
-## STEP 1 — Lettura integrale
+## STEP 1 — Lettura mirata
 
-Leggi fino a EOF, senza saltare: `inputs/normative/OCOR_Architectural_Design_Document_v1.1.md`; `inputs/normative/OCOR_DEC_197_plus_Draft_v0.1.md`; `inputs/supporting/DELTA_MANIFEST.json`; i sei registri normativi in `inputs/`.
+**Gestione del budget di contesto.** Il materiale pesa circa 288k token: leggerlo tutto
+linearmente esaurirebbe la finestra prima di arrivare all'analisi. Distingui due classi.
 
-**Deliverable:** `reports/step1_mappa.md` — mappa delle sezioni con, per ciascuna, una riga su cosa normalizza e quali contratti o invarianti stabilisce. Serve a te, non al committente: è la base su cui costruisci il resto.
+**Da leggere integralmente** (circa 65k token, sostenibile):
+
+- `inputs/normative/OCOR_Architectural_Design_Document_v1.1.md` — 3381 righe, l'oggetto della review
+- `inputs/normative/OCOR_DEC_197_plus_Draft_v0.1.md` — le nove bozze
+- `inputs/supporting/DELTA_MANIFEST.json` — la superficie di delta
+
+Leggili con blocchi ampi, non da 250 righe: `sed -n '1,900p'`, poi `901,1800p`, e cosi via.
+Quattro letture bastano per l'ADD.
+
+**Da consultare per ricerca mirata, MAI in lettura lineare** (circa 186k token, non
+sostenibile): i sei registri normativi. Sono tabelle di lookup, non prosa. Interrogali
+solo quando ti serve un ID specifico:
+
+```bash
+grep -n 'DEC-142' inputs/normative/OCOR_Decision_Register_v1.0.md | cut -c1-400
+grep -n 'FR-007'  inputs/normative/OCOR_Requirement_Register_v0.9.md | cut -c1-400
+grep -n 'ELM-080' inputs/normative/OCOR_CAP_ELM_Requirement_Crosswalk_v0.9.md
+grep -n 'OI-021'  inputs/normative/OCOR_Registers_v0.9.md | cut -c1-400
+```
+
+Il harness ha gia estratto meccanicamente la copertura di tracciabilita sull'universo dei
+693 ID: non serve leggere i registri per verificarla. Ti servono solo per il **contenuto**
+di un requisito o di una decisione specifica quando un finding lo richiede.
+
+**Deliverable:** `reports/step1_mappa.md` — mappa delle sezioni dell'ADD con, per ciascuna,
+una riga su cosa normalizza e quali contratti o invarianti stabilisce.
 
 ## STEP 2 — Conformance test degli schemi
 
