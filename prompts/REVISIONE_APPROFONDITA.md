@@ -47,6 +47,12 @@ Distingui sempre fra: contraddizione architetturale; omissione effettiva; ambigu
 
 Registra come finding soltanto problemi con riferimento testuale preciso.
 
+**Nessuna installazione, nessuna rete, nessun loop.** L'ambiente è già pronto e isolato.
+Non eseguire `pip`, `apt`, `npm`, `curl`, `wget` o qualsiasi comando che richieda rete:
+falliranno. Se un comando fallisce, non ripeterlo più di una volta: registra il
+fallimento, marca il controllo `NOT_EXECUTED` e prosegui. Il tuo compito è produrre un
+referto, non riparare l'ambiente.
+
 ---
 
 # ESECUZIONE 1 — branch `fase-1`
@@ -55,26 +61,28 @@ Su questo branch `inputs/supporting/prior/` **non esiste**. È deliberato: non c
 
 ## STEP 0 — Ambiente e integrità
 
-```bash
-# Su Ubuntu recente pip di sistema e' bloccato (PEP 668): usa il venv del repo.
-# Se e' gia' attivo (prompt che inizia con "(.venv)"), salta le prime due righe.
-[ -d .venv ] || python3 -m venv .venv
-source .venv/bin/activate
-pip install -q jsonschema pyyaml rdflib grpcio-tools
+**Non installare nulla e non usare la rete.** Le dipendenze Python sono già state
+installate dall'operatore nel virtualenv `.venv` del repo. Se un pacchetto manca, il
+harness lo segnala da solo come `NOT_EXECUTED`: prosegui, non tentare di installarlo.
 
+Esegui **una sola volta** questi tre comandi e passa allo STEP 1:
+
+```bash
 sha256sum -c inputs/normative/SHA256SUMS
-python3 scripts/verify.py --json
+./.venv/bin/python3 scripts/verify.py --json || true
+git rev-parse --abbrev-ref HEAD
 ```
 
-Se `python3 -m venv` fallisce, manca il pacchetto: `sudo apt install -y python3-venv`.
-Non usare `pip install --break-system-packages` senza necessita': installerebbe
-nell'ambiente di sistema.
+Se `./.venv/bin/python3` non esiste, usa `python3` e basta. Se un comando fallisce,
+registra il fallimento nel deliverable e prosegui: **non ripeterlo più di una volta**.
 
-Il digest atteso dell'ADD è `3e7532c7101e80c74b511cedc56a0563ca0938a3fe259911a91245cb19dedc7f`. Un mismatch invalida tutto: fermati e segnalalo.
+Il digest atteso dell'ADD è `3e7532c7101e80c74b511cedc56a0563ca0938a3fe259911a91245cb19dedc7f`.
+Un mismatch invalida tutto: fermati e segnalalo.
 
-Annota il referto del harness. I controlli marcati `NOT_EXECUTED` **non vanno dichiarati superati** in nessun punto del referto finale.
+I controlli marcati `NOT_EXECUTED` **non vanno dichiarati superati** in nessun punto del
+referto finale.
 
-**Deliverable:** `reports/step0_ambiente.md` con l'esito dei comandi.
+**Deliverable:** `reports/step0_ambiente.md` con l'esito dei tre comandi.
 
 ## STEP 1 — Lettura integrale
 
