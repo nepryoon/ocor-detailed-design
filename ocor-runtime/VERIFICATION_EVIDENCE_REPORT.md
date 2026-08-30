@@ -1,8 +1,21 @@
-# OCOR Runtime Verification Evidence Report
+# OCOR Runtime Verification Evidence Report\n\n> **Current governed status — 2026-08-30:** superseded by GitHub Actions run [`33334792715`](https://github.com/nepryoon/ocor-detailed-design/actions/runs/33334792715) and `reports/OCOR_ADD_v1.2_Validation_Closure_Report.md`. `DEC-207` accepts the closure evidence and records `E1_runtime_slice=PRESENT`; E2/production evidence remains unestablished.
 
 Date: 2026-08-30  
 Baseline authority: approved ADD v1.2 baseline; ARA decisions DEC-197 through DEC-206; effective 2026-08-30  
-Result: **PASS — 104 passed, 0 failed, 0 skipped**
+Historical result: **PASS — 104 passed, 0 failed, 0 skipped**  \nCurrent governed result: **PASS — 109 runtime tests, 38 BA cases, 35 EV cases and 5 live PostgreSQL cases; 0 failures, 0 errors, 0 skips**
+
+## Post-approval validation closure
+
+| Gate / campaign | Result | Evidence |
+|---|---|---|
+| `VAL-ACT-001` | **CLOSED** | Full post-remediation harness on candidate SHA-256 `4f84249b86150a0aa0ef5bf7fcc1a5c99388651e8aae132720dd784883b0426f` |
+| `VAL-ACT-002` | **CLOSED — NO WAIVER** | `openapi-spec-validator==0.9.0`; profile and both OpenAPI 3.1 subjects pass, 3/3 |
+| `VAL-ACT-003` | **CLOSED_FOR_RUNTIME_SLICE** | Full runtime 109/109; BA 38/38; EV 35/35; live PostgreSQL 16 5/5 |
+| Coverage | Observed 89% | 1,372 covered lines of 1,533 statements; no threshold inferred |
+| Integrity | **PASS** | 8/8 immutable normative inputs and 26/26 approval-package report entries |
+| Evidence scope | `E1_runtime_slice=PRESENT` | E2, production readiness and global requirement verification are not claimed |
+
+Raw logs, JUnit XML, coverage JSON, validator output and the machine-readable aggregate are digest-pinned by `OCOR_ADD_v1.2_VALIDATION_EVIDENCE_SHA256SUMS`.
 
 ## Scope and source basis
 
