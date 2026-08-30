@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.ocor.dev/v1.2/capability-lease.schema.json",
+  "title": "OCOR Capability Lease",
+  "type": "object",
+  "properties": {
+    "leaseId": {"type": "string", "format": "uuid"},
+    "subject": {"type": "string", "minLength": 1},
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "resources": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "issuedAt": {"type": "string", "format": "date-time"},
+    "notBefore": {"type": "string", "format": "date-time"},
+    "expiresAt": {"type": "string", "format": "date-time"},
+    "issuer": {"type": "string", "minLength": 1},
+    "revokedAt": {"type": "string", "format": "date-time"},
+    "parentLeaseId": {"type": "string", "format": "uuid"},
+    "maxUses": {"type": "integer", "minimum": 1}
+  },
+  "required": [
+    "leaseId", "subject", "capabilities", "resources", "issuedAt",
+    "notBefore", "expiresAt", "issuer"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "parentLeaseId": {"type": "string", "format": "uuid"}
+        },
+        "required": ["parentLeaseId"]
+      },
+      "then": {
+        "properties": {
+          "parentLeaseId": {"type": "string", "format": "uuid"},
+          "issuer": {"type": "string", "minLength": 1}
+        },
+        "required": ["parentLeaseId", "issuer"]
+      }
+    }
+  ],
+  "additionalProperties": false
+}

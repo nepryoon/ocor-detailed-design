@@ -1,0 +1,136 @@
+syntax = "proto3";
+
+package ocor.runtime.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option java_multiple_files = true;
+option java_package = "dev.ocor.runtime.v1";
+
+message SemanticEnvelope {
+  string schema_version = 1;
+  string kind = 2;
+  string object_id = 3;
+  google.protobuf.Struct payload = 4;
+  map<string, string> markings = 5;
+  google.protobuf.Struct operational_metadata = 6;
+}
+
+message CompileRequest {
+  SemanticEnvelope envelope = 1;
+}
+
+message CompiledArtifact {
+  string artifact_id = 1;
+  string semantic_digest = 2;
+  string envelope_digest = 3;
+  bytes canonical_payload = 4;
+  string schema_id = 5;
+}
+
+message IdentityEvidence {
+  map<string, double> candidate_confidence = 1;
+}
+
+message ResolveIdentityRequest {
+  string identifier = 1;
+  IdentityEvidence evidence = 2;
+}
+
+enum IdentityDecision {
+  IDENTITY_DECISION_UNSPECIFIED = 0;
+  IDENTITY_DECISION_IDENTIFY = 1;
+  IDENTITY_DECISION_ABSTAIN = 2;
+}
+
+message ResolveIdentityResponse {
+  IdentityDecision decision = 1;
+  optional string canonical_id = 2;
+  double confidence = 3;
+  string reason = 4;
+  repeated string candidates = 5;
+}
+
+enum ActionState {
+  ACTION_STATE_UNSPECIFIED = 0;
+  ACTION_STATE_DRAFT = 1;
+  ACTION_STATE_PROPOSED = 2;
+  ACTION_STATE_VALIDATED = 3;
+  ACTION_STATE_AUTHORIZED = 4;
+  ACTION_STATE_SCHEDULED = 5;
+  ACTION_STATE_READY = 6;
+  ACTION_STATE_RUNNING = 7;
+  ACTION_STATE_PAUSED = 8;
+  ACTION_STATE_SUCCEEDED = 9;
+  ACTION_STATE_FAILED = 10;
+  ACTION_STATE_CANCELLED = 11;
+  ACTION_STATE_EXPIRED = 12;
+  ACTION_STATE_COMPENSATING = 13;
+  ACTION_STATE_COMPENSATED = 14;
+  ACTION_STATE_REJECTED = 15;
+  ACTION_STATE_ABSTAINED = 16;
+}
+
+message TransitionActionRequest {
+  string action_id = 1;
+  string event = 2;
+  uint64 expected_version = 3;
+  string actor = 4;
+  google.protobuf.Timestamp occurred_at = 5;
+  google.protobuf.Struct evidence = 6;
+  string idempotency_key = 7;
+  string capability_lease_id = 8;
+}
+
+message ActionRecord {
+  string action_id = 1;
+  ActionState state = 2;
+  uint64 version = 3;
+  google.protobuf.Timestamp not_before = 4;
+  google.protobuf.Timestamp expires_at = 5;
+  repeated google.protobuf.Struct history = 6;
+}
+
+message OutboxEvent {
+  string event_id = 1;
+  string aggregate_id = 2;
+  uint64 aggregate_version = 3;
+  string event_type = 4;
+  google.protobuf.Struct payload = 5;
+  string payload_digest = 6;
+  string idempotency_key = 7;
+  string transaction_id = 8;
+  google.protobuf.Timestamp occurred_at = 9;
+  bool committed = 10;
+  optional google.protobuf.Timestamp emitted_at = 11;
+}
+
+message EmitRequest {
+  string event_id = 1;
+  string capability_lease_id = 2;
+}
+
+message EmissionReceipt {
+  string event_id = 1;
+  string aggregate_id = 2;
+  uint64 aggregate_version = 3;
+  google.protobuf.Timestamp emitted_at = 4;
+  bool deduplicated = 5;
+}
+
+service CompilerService {
+  rpc Compile(CompileRequest) returns (CompiledArtifact);
+}
+
+service IdentityService {
+  rpc Resolve(ResolveIdentityRequest) returns (ResolveIdentityResponse);
+}
+
+service ActionService {
+  rpc Transition(TransitionActionRequest) returns (ActionRecord);
+}
+
+service EmissionService {
+  rpc Emit(EmitRequest) returns (EmissionReceipt);
+}

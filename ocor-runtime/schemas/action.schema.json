@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.ocor.dev/v1.2/action.schema.json",
+  "title": "OCOR Action",
+  "type": "object",
+  "properties": {
+    "actionId": {"type": "string", "minLength": 1},
+    "state": {"$ref": "#/$defs/state"},
+    "version": {"type": "integer", "minimum": 0},
+    "notBefore": {"type": "string", "format": "date-time"},
+    "expiresAt": {"type": "string", "format": "date-time"},
+    "history": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/auditEntry"},
+      "default": []
+    }
+  },
+  "required": ["actionId", "state", "version"],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "state": {
+            "enum": ["SCHEDULED", "READY", "RUNNING", "PAUSED"]
+          }
+        },
+        "required": ["state"]
+      },
+      "then": {
+        "properties": {
+          "notBefore": {"type": "string", "format": "date-time"},
+          "expiresAt": {"type": "string", "format": "date-time"}
+        },
+        "required": ["notBefore", "expiresAt"]
+      }
+    }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "state": {
+      "type": "string",
+      "enum": [
+        "DRAFT", "PROPOSED", "VALIDATED", "AUTHORIZED", "SCHEDULED",
+        "READY", "RUNNING", "PAUSED", "SUCCEEDED", "FAILED",
+        "CANCELLED", "EXPIRED", "COMPENSATING", "COMPENSATED",
+        "REJECTED", "ABSTAINED"
+      ]
+    },
+    "event": {
+      "type": "string",
+      "enum": [
+        "SUBMIT", "CANCEL", "VALIDATE", "REJECT", "AUTHORIZE",
+        "SCHEDULE", "DISPATCH", "REVOKE", "ACTIVATE", "RESCHEDULE",
+        "EXPIRE", "START", "DEFER", "PAUSE", "SUCCEED", "FAIL",
+        "RESUME", "RETRY", "COMPENSATE", "COMPLETE", "ABSTAIN"
+      ]
+    },
+    "auditEntry": {
+      "type": "object",
+      "properties": {
+        "transitionId": {
+          "type": "string",
+          "pattern": "^ACT-T(?:0[1-9]|[12][0-9]|30|31[ab])$"
+        },
+        "source": {"$ref": "#/$defs/state"},
+        "event": {"$ref": "#/$defs/event"},
+        "target": {"$ref": "#/$defs/state"},
+        "occurredAt": {"type": "string", "format": "date-time"},
+        "actor": {"type": "string", "minLength": 1},
+        "evidence": {"type": "object"},
+        "previousHash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+        "entryHash": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      },
+      "required": [
+        "transitionId", "source", "event", "target", "occurredAt",
+        "actor", "evidence", "previousHash", "entryHash"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.ocor.dev/v1.2/outbox-event.schema.json",
+  "title": "OCOR Transactional Outbox Event",
+  "type": "object",
+  "properties": {
+    "eventId": {"type": "string", "minLength": 1},
+    "aggregateId": {"type": "string", "minLength": 1},
+    "aggregateVersion": {"type": "integer", "minimum": 1},
+    "eventType": {"type": "string", "minLength": 1},
+    "payload": {"type": "object"},
+    "payloadDigest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "idempotencyKey": {"type": "string", "minLength": 1},
+    "transactionId": {"type": "string", "format": "uuid"},
+    "occurredAt": {"type": "string", "format": "date-time"},
+    "committed": {"const": true},
+    "emittedAt": {"type": "string", "format": "date-time"}
+  },
+  "required": [
+    "eventId", "aggregateId", "aggregateVersion", "eventType", "payload",
+    "payloadDigest", "idempotencyKey", "transactionId", "occurredAt", "committed"
+  ],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "emittedAt": {"type": "string", "format": "date-time"}
+        },
+        "required": ["emittedAt"]
+      },
+      "then": {
+        "properties": {
+          "emittedAt": {"type": "string", "format": "date-time"},
+          "committed": {"const": true}
+        },
+        "required": ["emittedAt", "committed"]
+      }
+    }
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.ocor.dev/v1.2/evidence.schema.json",
+  "title": "OCOR Evidence",
+  "type": "object",
+  "properties": {
+    "evidenceId": {"type": "string", "minLength": 1},
+    "criterionId": {"type": "string", "pattern": "^EV-(?:00[1-9]|0[12][0-9]|03[0-5])$"},
+    "outcome": {"enum": ["PASS", "FAIL", "ABSTAIN"]},
+    "observedAt": {"type": "string", "format": "date-time"},
+    "implementationDigest": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "details": {"type": "object"}
+  },
+  "required": [
+    "evidenceId", "criterionId", "outcome", "observedAt",
+    "implementationDigest", "details"
+  ],
+  "additionalProperties": false
+}

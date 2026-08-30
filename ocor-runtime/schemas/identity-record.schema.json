@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.ocor.dev/v1.2/identity-record.schema.json",
+  "title": "OCOR Identity Record",
+  "type": "object",
+  "properties": {
+    "canonicalId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^urn:ocor:identity:[A-Za-z0-9._~-]+$"
+    },
+    "aliases": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "uniqueItems": true,
+      "default": []
+    },
+    "attributes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": ["string", "number", "integer", "boolean", "null"]
+      },
+      "default": {}
+    }
+  },
+  "required": ["canonicalId"],
+  "additionalProperties": false
+}

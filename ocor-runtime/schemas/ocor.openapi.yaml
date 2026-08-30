@@ -1,0 +1,280 @@
+openapi: 3.1.0
+info:
+  title: OCOR Core Semantic Runtime API
+  version: 1.2.0
+  description: >-
+    Normative C1-C8 contract. Mutations require an idempotency key and an
+    unexpired capability lease; externally visible events cross EMISSION-FENCE.
+jsonSchemaDialect: https://json-schema.org/draft/2020-12/schema
+servers:
+  - url: https://runtime.ocor.invalid/v1
+paths:
+  /compile:
+    post:
+      operationId: compileSemanticEnvelope
+      tags: [C1]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SemanticEnvelope'
+      responses:
+        '200':
+          description: Deterministically compiled semantic artifact
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompiledArtifact'
+        '422':
+          $ref: '#/components/responses/Rejected'
+  /identities:resolve:
+    post:
+      operationId: identifyOrAbstain
+      tags: [C2, C8]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                identifier: {type: string, minLength: 1}
+                evidence:
+                  type: object
+                  additionalProperties: {type: number, minimum: 0, maximum: 1}
+              required: [identifier]
+              additionalProperties: false
+      responses:
+        '200':
+          description: An evidence-backed identification or explicit abstention
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+  /actions/{actionId}/transitions:
+    post:
+      operationId: transitionAction
+      tags: [C3, C5]
+      security: [{capabilityLease: []}]
+      parameters:
+        - in: path
+          name: actionId
+          required: true
+          schema: {type: string, minLength: 1}
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: {type: string, minLength: 1}
+        - in: header
+          name: If-Match
+          required: true
+          schema: {type: integer, minimum: 0}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransitionRequest'
+      responses:
+        '200':
+          description: Atomically persisted action and outbox event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Action'
+        '403':
+          $ref: '#/components/responses/Rejected'
+        '409':
+          $ref: '#/components/responses/Rejected'
+        '422':
+          $ref: '#/components/responses/Rejected'
+  /outbox/{eventId}:emit:
+    post:
+      operationId: emitCommittedEvent
+      tags: [C7]
+      security: [{capabilityLease: []}]
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema: {type: string, minLength: 1}
+      responses:
+        '200':
+          description: EMISSION-FENCE receipt
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmissionReceipt'
+        '403':
+          $ref: '#/components/responses/Rejected'
+        '409':
+          $ref: '#/components/responses/Rejected'
+components:
+  securitySchemes:
+    capabilityLease:
+      type: http
+      scheme: bearer
+      bearerFormat: OCOR-CAPABILITY-LEASE
+  schemas:
+    SemanticEnvelope:
+      type: object
+      properties:
+        schemaVersion: {const: '1.2'}
+        kind:
+          type: string
+          enum: [Identity, Action, Evidence, AgentDecision, MarkingScheme]
+        objectId: {type: string, minLength: 1}
+        payload: {type: object}
+        markings:
+          type: object
+          additionalProperties: {type: string, minLength: 1}
+        operationalMetadata:
+          type: object
+          additionalProperties: false
+      required: [schemaVersion, kind, objectId, payload]
+      additionalProperties: false
+    IdentityRecord:
+      type: object
+      properties:
+        canonicalId:
+          type: string
+          pattern: '^urn:ocor:identity:[A-Za-z0-9._~-]+$'
+        aliases:
+          type: array
+          uniqueItems: true
+          items: {type: string, minLength: 1}
+        attributes: {type: object}
+      required: [canonicalId]
+      additionalProperties: false
+    Action:
+      type: object
+      properties:
+        actionId: {type: string, minLength: 1}
+        state:
+          type: string
+          enum:
+            - DRAFT
+            - PROPOSED
+            - VALIDATED
+            - AUTHORIZED
+            - SCHEDULED
+            - READY
+            - RUNNING
+            - PAUSED
+            - SUCCEEDED
+            - FAILED
+            - CANCELLED
+            - EXPIRED
+            - COMPENSATING
+            - COMPENSATED
+            - REJECTED
+            - ABSTAINED
+        version: {type: integer, minimum: 0}
+        notBefore: {type: string, format: date-time}
+        expiresAt: {type: string, format: date-time}
+        history:
+          type: array
+          items: {type: object}
+      required: [actionId, state, version]
+      additionalProperties: false
+    AgentResponse:
+      type: object
+      properties:
+        decision: {type: string, enum: [IDENTIFY, ABSTAIN]}
+        identityId: {type: [string, 'null']}
+        confidence: {type: number, minimum: 0, maximum: 1}
+        reason: {type: string, minLength: 1}
+        content: true
+      required: [decision, identityId, confidence, reason]
+      allOf:
+        - if:
+            properties:
+              decision: {const: IDENTIFY}
+            required: [decision]
+          then:
+            properties:
+              identityId: {type: string, minLength: 1}
+            required: [identityId]
+        - if:
+            properties:
+              decision: {const: ABSTAIN}
+            required: [decision]
+          then:
+            properties:
+              identityId: {type: 'null'}
+            required: [identityId]
+      additionalProperties: false
+    CompiledArtifact:
+      type: object
+      properties:
+        artifactId:
+          type: string
+          pattern: '^urn:ocor:sha256:[a-f0-9]{64}$'
+        semanticDigest:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+        envelopeDigest:
+          type: string
+          pattern: '^[a-f0-9]{64}$'
+        canonicalPayload:
+          type: string
+          contentEncoding: base64
+      required: [artifactId, semanticDigest, envelopeDigest, canonicalPayload]
+      additionalProperties: false
+    TransitionRequest:
+      type: object
+      properties:
+        event:
+          type: string
+          enum:
+            - SUBMIT
+            - CANCEL
+            - VALIDATE
+            - REJECT
+            - AUTHORIZE
+            - SCHEDULE
+            - DISPATCH
+            - REVOKE
+            - ACTIVATE
+            - RESCHEDULE
+            - EXPIRE
+            - START
+            - DEFER
+            - PAUSE
+            - SUCCEED
+            - FAIL
+            - RESUME
+            - RETRY
+            - COMPENSATE
+            - COMPLETE
+            - ABSTAIN
+        occurredAt: {type: string, format: date-time}
+        actor: {type: string, minLength: 1}
+        evidence: {type: object}
+      required: [event, occurredAt, actor]
+      additionalProperties: false
+    EmissionReceipt:
+      type: object
+      properties:
+        eventId: {type: string, minLength: 1}
+        aggregateId: {type: string, minLength: 1}
+        aggregateVersion: {type: integer, minimum: 1}
+        emittedAt: {type: string, format: date-time}
+        deduplicated: {type: boolean}
+      required: [eventId, aggregateId, aggregateVersion, emittedAt, deduplicated]
+      additionalProperties: false
+    Error:
+      type: object
+      properties:
+        code: {type: string, minLength: 1}
+        message: {type: string, minLength: 1}
+      required: [code, message]
+      additionalProperties: false
+  responses:
+    Rejected:
+      description: Fail-closed rejection
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Error'

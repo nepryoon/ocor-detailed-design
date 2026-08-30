@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.ocor.dev/v1.2/agent-response.schema.json",
+  "title": "OCOR Agent Identify-or-Abstain Response",
+  "type": "object",
+  "properties": {
+    "decision": {"enum": ["IDENTIFY", "ABSTAIN"]},
+    "identityId": {"type": ["string", "null"]},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "content": true
+  },
+  "required": ["decision", "identityId", "confidence", "reason"],
+  "allOf": [
+    {
+      "if": {
+        "properties": {"decision": {"const": "IDENTIFY"}},
+        "required": ["decision"]
+      },
+      "then": {
+        "properties": {
+          "identityId": {"type": "string", "minLength": 1},
+          "confidence": {"type": "number", "minimum": 0, "maximum": 1}
+        },
+        "required": ["identityId", "confidence"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"decision": {"const": "ABSTAIN"}},
+        "required": ["decision"]
+      },
+      "then": {
+        "properties": {
+          "identityId": {"type": "null"},
+          "reason": {"type": "string", "minLength": 1}
+        },
+        "required": ["identityId", "reason"]
+      }
+    }
+  ],
+  "additionalProperties": false
+}

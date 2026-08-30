@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.ocor.dev/v1.2/semantic-envelope.schema.json",
+  "title": "OCOR Semantic Envelope",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {"const": "1.2"},
+    "kind": {
+      "enum": ["Identity", "Action", "Evidence", "AgentDecision", "MarkingScheme"]
+    },
+    "objectId": {"type": "string", "minLength": 1},
+    "payload": {"type": "object"},
+    "markings": {
+      "type": "object",
+      "additionalProperties": {"type": "string", "minLength": 1}
+    },
+    "operationalMetadata": {
+      "type": "object",
+      "properties": {
+        "createdAt": {"type": "string", "format": "date-time"},
+        "updatedAt": {"type": "string", "format": "date-time"},
+        "writerId": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": ["schemaVersion", "kind", "objectId", "payload"],
+  "allOf": [
+    {
+      "if": {
+        "properties": {"kind": {"const": "Identity"}},
+        "required": ["kind"]
+      },
+      "then": {
+        "properties": {
+          "payload": {"$ref": "identity-record.schema.json"}
+        },
+        "required": ["payload"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"kind": {"const": "Action"}},
+        "required": ["kind"]
+      },
+      "then": {
+        "properties": {
+          "payload": {"$ref": "action.schema.json"}
+        },
+        "required": ["payload"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"kind": {"const": "Evidence"}},
+        "required": ["kind"]
+      },
+      "then": {
+        "properties": {
+          "payload": {"$ref": "evidence.schema.json"}
+        },
+        "required": ["payload"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"kind": {"const": "AgentDecision"}},
+        "required": ["kind"]
+      },
+      "then": {
+        "properties": {
+          "payload": {"$ref": "agent-response.schema.json"}
+        },
+        "required": ["payload"]
+      }
+    },
+    {
+      "if": {
+        "properties": {"kind": {"const": "MarkingScheme"}},
+        "required": ["kind"]
+      },
+      "then": {
+        "properties": {
+          "payload": {"$ref": "marking-scheme-definition.schema.json"}
+        },
+        "required": ["payload"]
+      }
+    }
+  ],
+  "additionalProperties": false
+}
