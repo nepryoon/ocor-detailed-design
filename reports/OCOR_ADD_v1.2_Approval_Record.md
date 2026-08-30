@@ -34,3 +34,18 @@ The approved baseline incorporates the corrected ADD v1.2 candidate by value. It
 | VAL-ACT-003 | Backend/runtime evidence remains incomplete by design at architectural approval. | Close through implementation evidence; no runtime conformance is implied by this approval. |
 
 These limitations do not invalidate the architecture approval. They prevent claims of implementation readiness, validator completion, or runtime conformance until their respective gates are satisfied.
+
+
+## Post-approval validation closure
+
+The limitations above describe the state at architecture approval. They are superseded for their specified closure scope by `DEC-207` and ARA Validation Closure Record v1.0.
+
+| ID | Current status | Closure evidence |
+|---|---|---|
+| `VAL-ACT-001` | **CLOSED** | Full post-remediation document campaign: verifier 12/0, conformance 105/105, semantics 29/29, release 12/12, readiness 18/18 |
+| `VAL-ACT-002` | **CLOSED — NO WAIVER REQUIRED** | Governed `openapi-spec-validator==0.9.0` run: profile plus approved embedded and runtime contracts 3/3 |
+| `VAL-ACT-003` | **CLOSED_FOR_RUNTIME_SLICE** | 109 runtime, 38 BA, 35 EV and 5 live PostgreSQL tests; zero failure/error/skip |
+
+Execution: GitHub Actions run [33334792715](https://github.com/nepryoon/ocor-detailed-design/actions/runs/33334792715), revision `036b873d87cc8720d4134a237a8ea41d3b8817cf`. Evidence manifest SHA-256: `fde0611b9aa1f950b9c599a3ee3d71d89ac353a21cb40b9e0ebe8efeffbdc073`.
+
+This closure establishes first-party implementation evidence for the tested slice only. It does not establish E2/production evidence or automatically mark requirements globally `Verified`.
