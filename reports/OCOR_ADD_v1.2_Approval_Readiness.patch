@@ -1,0 +1,318 @@
+# OCOR ADD v1.2 approval-readiness remediation patch
+# Base: main@854171d01e2728e64e81bd68a403d7f4b5dbb448
+# Branch: codex/add-v1.2-approval-readiness
+# Excludes the integrity-manifest refresh to avoid self-referential hashing.
+
+# Commit 27630c2047dadb507324d657a915ccf1ca7b0464 — fix(add): correct v1.2 amendment traceability
+@@ -3550,19 +3550,19 @@ Questa sezione registra l'intero delta della candidata rispetto alla baseline v1
+ | ID candidato | Finding servito | Locator v1.2 | Modifica | Natura | Versione contratto | `CC` / stato |
+ |---|---|---|---|---|---|---|
+ | `V12-AM-01` | `DRF-015`; document control | Front matter, §7.3, §8 | Versione, derivazione e digest v1.1; stato candidato; authority ed evidence fence; nessuna approvazione implicita | Normativa di change control | — | No — controllo della candidata |
+-| `V12-AM-02` | `DRF-001`, `DRF-008`, `ARF-001` | §1.4, §3.0.1–§3.0.3, §3.2–§3.5, §4.1–§4.3, §5.1, §5.3, §6.3 | Record `GovernedContext` unico; origine `BODY`/`TRANSPORT`/`DERIVED_FROM_VERIFIED_BINDING`; equivalenza per digest; Principal effettivo solo da binding autenticato; mismatch fail-closed | Normativa | Ingestion 1.2; OpenAPI 1.2.0; MCP 1.2; Action 1.1; Event 1.1 | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
+-| `V12-AM-03` | `DRF-002`, `RV-01` | §2.5 r.10, §3.7, §4.1–§4.1.2 | `CANONICAL_COMMIT` con risk floor R2, Human Gate/Dual Control, quorum/ruoli, Decision, Authority, Evidence, claim/source, aggregate/revision, precondizioni/invarianti, idempotency e GatePackage; `approval.mode=NONE` vietato | Normativa | Action 1.1 | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
+-| `V12-AM-04` | `DRF-003`, `DRF-009`, `DRF-010` | §4.1–§4.1.2, §5.2, §5.5 | `EMISSION-FENCE = G-FRESHNESS ∧ G-DISPATCH` atomica per primo invio, retry e compensation; `CapabilityLease`, policy validity, watermark, stop epoch, audit, deadline, circuit breaker e GatePackage rivalidati; drift→`INVALIDATED` | Normativa | Action 1.1 | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
+-| `V12-AM-05` | `DRF-004`, `ARF-004`, `ARF-012` | §3.0.2, §3.1.1, §5.3 | `MarkingSchemeDefinition` calcolabile, totale sul profilo, monotono, deterministico e fail-closed; famiglie restriction/permission; unknown e incomparabili deny; declassification con Authority separata; `OI-021` resta aperta | Normativa | — | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
+-| `V12-AM-06` | `DRF-005`, `ARF-014` | §3.3 | `ObjectSnapshot` rende obbligatori relazioni, uncertainty, identity candidates ed explanation oltre a claims/evidence/provenance/marking | Normativa | OpenAPI 1.2.0 | No — correzione di completezza |
+-| `V12-AM-07` | `DRF-006`, `V12-RF-001` | §3.8 | Event contract porta GCS e rende `max_replay_window` obbligatoria se replay è ammesso e vietata altrimenti | Normativa | Event 1.1 | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
+-| `V12-AM-08` | `DRF-007`, `DRF-012`, `ARF-005`, `V12-RF-002` | §3.5, §3.7 | Quorum e ruoli non vuoti; evidence `minimum_count` coerente con `REQUIRED`; combinazioni target/effect e profilo `R2_CONTROLLED` fail-closed; reason code C3 nominati | Normativa | MCP 1.2; Action 1.1 | No — allineamento a guardie esistenti |
+-| `V12-AM-09` | `DRF-009`, `DRF-010`, `ARF-007` | §4.1–§4.1.2 | `ConflictScope` tipizzato e blocco conservativo; `IndeterminateEffectAdjudication` append-only con Authority/Evidence; nessun unblock per silenzio | Normativa | — | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
+-| `V12-AM-10` | `DRF-011`, `ARF-018` | §4.1–§4.1.2 | Diagramma e tabella riscritti in bijezione sulle tuple `(transition_id, source, destination)`; `ACT-T22` separato da `ACT-T27`; source/destination espliciti | Normativa/editoriale | — | No — correzione interna |
+-| `V12-AM-11` | `DRF-013`; `FR-095`/`ELM-070` | §1.5, §4.2, §6.1, §7.1 | Opzione conservativa selezionata: `ELM-070` resta differita e si propone di riclassificare `FR-095` fuori dal PoC; registri sorgente invariati | Normativa di scope | — | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-02` | `DRF-001`, `DRF-002`, `ARF-001` | §1.4, §3.0.1–§3.0.3, §3.2–§3.5, §4.1–§4.3, §5.1, §5.3, §6.3 | Record `GovernedContext` unico; origine `BODY`/`TRANSPORT`/`DERIVED_FROM_VERIFIED_BINDING`; equivalenza per digest; Principal effettivo solo da binding autenticato; mismatch fail-closed | Normativa | Ingestion 1.2; OpenAPI 1.2.0; MCP 1.2; Action 1.1; Event 1.1 | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-03` | `DRF-003`, `DRF-008`, `RV-01` | §2.5 r.10, §3.7, §4.1–§4.1.2 | `CANONICAL_COMMIT` con risk floor R2, Human Gate/Dual Control, quorum/ruoli, Decision, Authority, Evidence, claim/source, aggregate/revision, precondizioni/invarianti, idempotency e GatePackage; `approval.mode=NONE` vietato | Normativa | Action 1.1 | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-04` | `DRF-004`, `ARF-006` | §4.1–§4.1.2, §5.2, §5.5 | `EMISSION-FENCE = G-FRESHNESS ∧ G-DISPATCH` atomica per primo invio, retry e compensation; `CapabilityLease`, policy validity, watermark, stop epoch, audit, deadline, circuit breaker e GatePackage rivalidati; drift→`INVALIDATED` | Normativa | Action 1.1 | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-05` | `DRF-005`, `ARF-004`, `ARF-012` | §3.0.2, §3.1.1, §5.3 | `MarkingSchemeDefinition` calcolabile, totale sul profilo, monotono, deterministico e fail-closed; famiglie restriction/permission; unknown e incomparabili deny; declassification con Authority separata; `OI-021` resta aperta | Normativa | — | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-06` | `DRF-013`, `ARF-014` | §3.3 | `ObjectSnapshot` rende obbligatori relazioni, uncertainty, identity candidates ed explanation oltre a claims/evidence/provenance/marking | Normativa | OpenAPI 1.2.0 | No — correzione di completezza |
++| `V12-AM-07` | `V12-RF-001`, `ARF-009` | §3.8 | Event contract porta GCS e rende `max_replay_window` obbligatoria se replay è ammesso e vietata altrimenti | Normativa | Event 1.1 | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-08` | `DRF-008`, `V12-RF-002`, `ARF-005` | §3.5, §3.7 | Quorum e ruoli non vuoti; evidence `minimum_count` coerente con `REQUIRED`; combinazioni target/effect e profilo `R2_CONTROLLED` fail-closed; reason code C3 nominati | Normativa | MCP 1.2; Action 1.1 | No — allineamento a guardie esistenti |
++| `V12-AM-09` | `DRF-007`, `ARF-007` | §4.1–§4.1.2 | `ConflictScope` tipizzato e blocco conservativo; `IndeterminateEffectAdjudication` append-only con Authority/Evidence; nessun unblock per silenzio | Normativa | — | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-10` | `DRF-006`, `ARF-018` | §4.1–§4.1.2 | Diagramma e tabella riscritti in bijezione sulle tuple `(transition_id, source, destination)`; `ACT-T22` separato da `ACT-T27`; source/destination espliciti | Normativa/editoriale | — | No — correzione interna |
++| `V12-AM-11` | `DRF-012`; `FR-095`/`ELM-070` | §1.5, §4.2, §6.1, §7.1 | Opzione conservativa selezionata: `ELM-070` resta differita e si propone di riclassificare `FR-095` fuori dal PoC; registri sorgente invariati | Normativa di scope | — | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
+ | `V12-AM-12` | `DRF-014`; scope fence | §1.5, §6.1, §7.1 | `NFR-078` resta `Confermato`, P0/MVP, fuori dal profilo PoC e non viene dichiarato differito; slice `CAP-024` corretta | Normativa/editoriale | — | No — ripristino del registro sorgente |
+-| `V12-AM-13` | `DRF-014`; traceability | §7.1 | `DEC-173` allocata ad Agent Kernel e `DEC-175` a Compiler & Gateway; coverage globale separa 183 decisioni subsystem/programme da 13 document/programme; `CAP-026` resta `OUT_OF_SCOPE` ma tracciata | Normativa | — | Sì per riallocazione — `PROPOSED — AWAITING CHANGE CONTROL` |
+-| `V12-AM-14` | `BA-01`, `DRF-015` | §2.6, §6.2, §8 | `BA-01` classificata `ARCHITECTURAL_ALTERNATIVE_REQUIRING_CHANGE_CONTROL`, `NO-GO` finché una sola alternativa, failure analysis e rollback non sono approvati | Normativa | — | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-13` | `DRF-015`; traceability | §7.1 | `DEC-173` allocata ad Agent Kernel e `DEC-175` a Compiler & Gateway; coverage globale separa 183 decisioni subsystem/programme da 13 document/programme; `CAP-026` resta `OUT_OF_SCOPE` ma tracciata | Normativa | — | Sì per riallocazione — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-14` | `DRF-009`, `BA-01` | §2.6, §6.2, §8 | `BA-01` classificata `ARCHITECTURAL_ALTERNATIVE_REQUIRING_CHANGE_CONTROL`, `NO-GO` finché una sola alternativa, failure analysis e rollback non sono approvati | Normativa | — | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
+ | `V12-AM-15` | 15 `DRF-*`, 27 `ARF-*`, `RV-01/02` | §1–§8 | Riconciliazione finding, conteggi, locator, DAG `DRAFT-A`–`DRAFT-I`, versioni contrattuali e linguaggio probatorio resi coerenti; storico v1.0→v1.1 preservato in §8.3 | Documentale | Tutte come §8.2 | No per ledger; le singole proposte conservano il proprio `CC` |
+ 
+ Ogni modifica testuale v1.1→v1.2 ricade in almeno una riga precedente. Il controllo automatico del patch usa il primo heading normativo che precede ciascun hunk e verifica che tale sezione sia coperta dal campo Locator. Le modifiche meramente consequenziali — rinomina di versione, riferimenti incrociati, aggiornamento dei conteggi e allineamento terminologico — ereditano l'ID della modifica causale e non costituiscono decisioni autonome.
+
+# Commit ee48d885f19460d9a8651db250f35cbe91a917d5 — fix(governance): cover draft C and harden BA-01 decision
+@@ -15,13 +15,14 @@ La direzione `X → Y` significa «X depends_on Y», quindi Y deve essere deciso
+ ```text
+ CC-CANONICAL-PATH → CC-GCS
+ CC-CANONICAL-PATH → DRAFT-G
++CC-SINGLE-WRITER-BRANCH-SCOPE → CC-CANONICAL-PATH
+ CC-EMISSION-FENCE → CC-GCS
+ CC-EMISSION-FENCE → DRAFT-I
+ CC-INDETERMINATE-ADJUDICATION → CC-EMISSION-FENCE
+ CC-MARKING-ALGEBRA → DRAFT-H
+ CC-ACTION-EVENT-CONTRACTS → CC-GCS
+ CC-FR095-SCOPE → authority over DEC-103 and requirement registers
+-CC-BA01-ALTERNATIVE → CC-CANONICAL-PATH
++CC-BA01-ALTERNATIVE → CC-SINGLE-WRITER-BRANCH-SCOPE
+ CC-DEC-ALLOCATION → document traceability authority
+ ```
+ 
+@@ -140,20 +141,37 @@ Il change set emission/adjudication è atomico: `CC-EMISSION-FENCE` e `CC-INDETE
+ - Criterio di approvazione: tutte e cinque le modifiche registro sono approvate come change set atomico.
+ - Criterio di chiusura: scansione registri mostra un'unica release MVP per `FR-095` e `ELM-070` assente dal PoC.
+ 
++## CC-SINGLE-WRITER-BRANCH-SCOPE — single writer, scenario branch e relay
++
++- Finding: `ARF-003`, `AM-03`; approva e sostituisce `DRAFT-C`.
++- Decisione richiesta — testo esatto: **«Approvare che l'esclusività di scrittura di `C3` sul ruolo `VersionedAssertedState` si applichi ai commit `main` per ownership boundary. Gli overlay di scenario sono scritti esclusivamente dall'adapter `ScenarioOverlayStore` di `C7`, che non possiede `main.write`. Il relay pubblica esclusivamente `OutboxEntry` committed del branch `main`; entry copiate o prodotte in branch di scenario non sono pubblicabili, non generano `DeliveryAttempt` e sono ignorate dal reconciler.»**
++- Stato: `Proposed — awaiting change control`.
++- Razionale: elimina l'ambiguità tra single writer canonico e writer degli overlay e impedisce che un fork produca effetti esterni.
++- Alternative: relay branch-agnostic; outbox pubblicabile nei branch; entrambe respinte perché violano isolamento e non-interferenza.
++- Opzione candidata: `C3/main` come unico writer canonico; `C7/scenario` come writer confinato senza capacità di emissione.
++- Impatti: C3, C5, C7, outbox relay, reconciler, scenario recovery e capability matrix.
++- Requisiti/decisioni: `ARC-007`, `ARC-020`, `DEC-148`, `FR-154`, `RSK-044`.
++- Registri da aggiornare: Decision Register/Index e Requirement Traceability Index con i locator §2.1, §2.4 e §2.5 r.11.
++- Dipendenze: `CC-CANONICAL-PATH`.
++- Rischio residuo: enforcement del branch scope e assenza di publish dai fork da dimostrare con test runtime.
++- Rollback: rifiutare la candidata e conservare v1.1; non è ammesso rendere il relay branch-agnostic.
++- Criterio di approvazione: ownership boundary, capacità `main.write` e filtro del relay sono espliciti e non sovrapposti.
++- Criterio di chiusura: test di fork dimostra zero `DeliveryAttempt`; un writer C7 su `main` e un relay su scenario sono respinti.
++
+ ## CC-BA01-ALTERNATIVE — atomicità local state+outbox
+ 
+ - Finding: `DRF-009`, `BA-01`.
+-- Decisione richiesta — testo esatto: **«Classificare il fallback `BA-01` come `ARCHITECTURAL_ALTERNATIVE_REQUIRING_CHANGE_CONTROL`. Se il backend candidato non realizza il commit atomico di aggregate revision, canonical commit e outbox, la release è `NO-GO` finché l'Authority non approva una sola alternativa, la relativa failure analysis, la riscrittura di §2.3/§6.2, i test crash-window e il rollback.»**
++- Decisione richiesta — testo esatto: **«Approvare come hard invariant il commit locale atomico di aggregate revision, canonical commit, idempotency binding e outbox descritto in §2.3. Nessun fallback è pre-approvato. Il backend candidato è ammissibile soltanto dopo crash-window, concurrency e fork-isolation test; se non soddisfa l'invariante, la release è `NO-GO`. RDBMS/event log o two-log+reconciler costituiscono nuove alternative architetturali e richiedono un successivo change control con failure analysis, aggiornamento di §2.3/§6.2 e rollback.»**
+ - Stato: `Proposed — awaiting change control`.
+ - Razionale: il fallback cambia un hard invariant e non è una sostituzione adapter-only.
+-- Alternative: versioned outbox atomica; RDBMS/event log; two-log + reconciler. Nessuna è approvata qui.
++- Alternative considerate ma non pre-approvate: RDBMS/event log e two-log + reconciler. La candidata seleziona esclusivamente l'invariante atomico e la semantica `NO-GO` in caso di mancata conformance.
+ - Impatti: C3, relay, recovery, consistency e `RSK-013/019`.
+ - Requisiti/decisioni: `NFR-058`, `NFR-084`, `ARC-007`, `ARC-020`.
+ - Registri da aggiornare: Decision Register/Index, backend assumption register futuro, risk treatment locator.
+-- Dipendenze: `CC-CANONICAL-PATH`.
++- Dipendenze: `CC-SINGLE-WRITER-BRANCH-SCOPE`.
+ - Rischio residuo: proprietà del backend candidata non verificata.
+ - Rollback: non rilasciare C3; baseline v1.1 resta ricostruibile.
+-- Criterio di approvazione: una sola topologia e failure semantics esplicite.
++- Criterio di approvazione: atomicità obbligatoria, nessun fallback implicito e failure semantics `NO-GO` esplicite.
+ - Criterio di chiusura: crash-window/concurrency/fork tests definiti e poi eseguiti nel DDD; al presente restano futuri.
+ 
+ ## CC-DEC-ALLOCATION — `DEC-173` e `DEC-175`
+@@ -174,4 +192,4 @@ Il change set emission/adjudication è atomico: `CC-EMISSION-FENCE` e `CC-INDETE
+ 
+ ## Package Gate
+ 
+-Il pacchetto è completo per decisione, ma tutte le voci restano `Proposed — awaiting change control`. L'opzione candidata della ADD è unica e fail-closed; il rollback comune è la baseline v1.1 immutata. L'Authority può approvare per change set compatibili col DAG, rigettare o richiedere una nuova candidata. Non è consentita un'approvazione parziale che renda insoddisfatti i contratti o rimuova una guardia dipendente.
++Il pacchetto contiene dieci change set ed è completo per decisione, inclusa la disposizione prima mancante di `DRAFT-C`; tutte le voci restano `Proposed — awaiting change control`. L'opzione candidata della ADD è unica e fail-closed; il rollback comune è la baseline v1.1 immutata. L'Authority può approvare per change set compatibili col DAG, rigettare o richiedere una nuova candidata. Non è consentita un'approvazione parziale che renda insoddisfatti i contratti o rimuova una guardia dipendente.
+
+# Commit d56b253f590e7e4993224f743c7c698ce0553205 — fix(traceability): add draft C dependency closure
+@@ -48,4 +48,4 @@ Authority fence: nessun nuovo `DEC-*`; nessuna approvazione `DRAFT-*`; nessuna c
+ 
+ ## `DRAFT-*` dependency control
+ 
+-La direzione è definita come `X depends_on Y` (Y deve precedere X). Baseline esplicita: `DRAFT-B depends_on DRAFT-G`; `DRAFT-D depends_on DRAFT-H`; `DRAFT-E` e `DRAFT-F` sono un change-set atomico. Inferenze candidate da sottoporre all'authority: `DRAFT-E depends_on DRAFT-I` per il CapabilityLease; `DRAFT-B/E/F depends_on DRAFT-A` per il GCS; gli emendamenti Action safety dipendono dal contratto `DRAFT-G`. Nessuna relazione equivale ad approvazione.
++La direzione è definita come `X depends_on Y` (Y deve precedere X). Baseline esplicita: `DRAFT-B depends_on DRAFT-G`; `DRAFT-C depends_on DRAFT-B`; `DRAFT-D depends_on DRAFT-H`; `DRAFT-E` e `DRAFT-F` sono un change-set atomico. Inferenze candidate da sottoporre all'authority: `DRAFT-E depends_on DRAFT-I` per il CapabilityLease; `DRAFT-B/C/E/F depends_on DRAFT-A` per il GCS; gli emendamenti Action safety dipendono dal contratto `DRAFT-G`; `BA-01` dipende dalla disposizione single-writer/branch-scope di `DRAFT-C`. `CC-SINGLE-WRITER-BRANCH-SCOPE` fornisce ora il percorso decisionale esplicito per `DRAFT-C`. Nessuna relazione equivale ad approvazione.
+
+# Commit 1474af8279b7cc5b67451f3e7e3f9162e3aadb29 — docs(review): update final gate after approval-readiness fixes
+@@ -7,6 +7,7 @@
+ - Branch locale: `codex/add-v1.2-remediation`.
+ - Review basis: sorgenti normative/supporting complete, review pregresse, registri, prompt, harness e test candidati.
+ - Stato documento: `PROPOSED — AWAITING CHANGE CONTROL`.
++- Approval-readiness remediation: branch `codex/add-v1.2-approval-readiness`; candidate SHA-256 `4f84249b86150a0aa0ef5bf7fcc1a5c99388651e8aae132720dd784883b0426f`.
+ - Evidence fence: `E1=0`, `E2=0`, zero requisiti `Verified`; tecnologie `Candidate Implementation`, capability `Design Target`.
+ 
+ ## 2. Executive Verdict
+@@ -89,20 +90,24 @@ Universo core: 693. Coverage: BR 18/18, FR 174/174, NFR 93/93, ARC 23/23, ELM 10
+ 
+ ## 11. Change-Control Status
+ 
+-Il Change-Control Package contiene nove slug provvisori senza ID decisionale, testo esatto, alternative, selezione candidata, impatti, registri, dipendenze, rischi, rollback e criteri. Il DAG impedisce approvazioni parziali incoerenti. `DRAFT-A`–`DRAFT-I` restano non approvate; nessun `OI-*`, `ASM-*` o `RSK-*` è chiuso.
++Il Change-Control Package contiene dieci slug provvisori senza ID decisionale, testo esatto, alternative, selezione candidata, impatti, registri, dipendenze, rischi, rollback e criteri. `CC-SINGLE-WRITER-BRANCH-SCOPE` fornisce il percorso decisionale esplicito prima mancante per `DRAFT-C`; `CC-BA01-ALTERNATIVE` approva soltanto l'invariante atomico e la semantica `NO-GO`, senza fallback impliciti. Il DAG impedisce approvazioni parziali incoerenti. `DRAFT-A`–`DRAFT-I` restano non approvate; nessun `OI-*`, `ASM-*` o `RSK-*` è chiuso.
+ 
+ ## 12. Evidence Fence
+ 
+ `PASS`: `E1=0`, `E2=0`, zero `Verified`; 158 controlli documentali non sono Evidence di implementazione. Nessun claim di parità, superiorità, performance, sicurezza, portabilità o production readiness è introdotto. Le acceptance evidence §7.2 restano `NOT RUN`.
+ 
+ ## 13. Residual Risks
+ 
+-1. Authority: nove change set devono essere approvati/modificati/rigettati; undici finding diretti ereditano questo blocco.
++1. Authority: dieci change set devono essere approvati/modificati/rigettati; undici finding diretti ereditano questo blocco.
+ 2. OpenAPI official semantic validator: `NOT_EXECUTED`; alternativa strutturale verde ma nessun claim di conformità allo strumento assente.
+ 3. Backend assumptions, inclusa `BA-01`, restano non verificate; i gate `NO-GO` persistono.
+ 4. Nessuna Evidence di runtime, performance, fault injection, security o portability è stata prodotta.
+ 5. Tassonomia nazionale marking (`OI-021`) e altri open issue restano aperti.
+ 
++## 13.1 Approval-readiness remediation
++
++La verifica mirata successiva alla Final Review ha corretto dodici mapping `V12-AM-*`→finding, aggiunto il change set mancante per `DRAFT-C`, reso deterministica la disposizione `BA-01` e aggiornato il DAG. Il controllo machine-readable `v12_approval_readiness_results.json` riporta 18/18 `PASS`. Le sezioni contenenti schemi, OpenAPI, Protobuf, FSM e matrici normative non sono state modificate; i relativi risultati precedenti restano evidenza del contenuto invariato, ma il full harness deve essere rieseguito sul nuovo digest prima della firma.
++
+ ## 14. Final Gate
+ 
+ `READY FOR DDD AFTER CHANGE-CONTROL APPROVAL`.
+
+# Commit 915b278a97f601f2d5ef1dc55e07f6f81bffeb57 — docs(validation): record approval-readiness verification
+@@ -2,7 +2,7 @@
+ 
+ ## Validation Control
+ 
+-- Oggetto: `reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md`.
++- Oggetto: `reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md`, SHA-256 post-remediation `4f84249b86150a0aa0ef5bf7fcc1a5c99388651e8aae132720dd784883b0426f`.
+ - Baseline: ADD v1.1 SHA-256 `3e7532c7101e80c74b511cedc56a0563ca0938a3fe259911a91245cb19dedc7f`.
+ - Data: 2026-08-30, Europe/Rome.
+ - Natura: verifica documentale e di contratto; non produce Evidence di sistema.
+@@ -41,6 +41,12 @@ Ogni gruppo conserva almeno un caso positivo: canonical R2/Human Gate completo,
+ 2. I test sono documentali/schema-level e non conformance di un'implementazione; non incrementano E1/E2.
+ 3. Backend, performance, security controls, portability e production readiness restano non verificati e soggetti alle Evidence future §7.2.
+ 
++## Approval-readiness remediation verification
++
++`PASS`: 18/18 controlli mirati, zero failure. Sono stati verificati i dodici mapping `V12-AM-*`→finding corretti, la presenza di dieci change set, il percorso decisionale completo per `DRAFT-C`, le dipendenze DAG, la disposizione deterministica `BA-01`, la chiusura nel ledger e la preservazione dell'authority fence.
++
++Le sezioni contenenti JSON Schema, OpenAPI, Protobuf, FSM e matrici di tracciabilità normativa non sono state modificate dalla remediation. I risultati meccanici precedenti restano riferibili a tali blocchi invariati; prima della firma dell'ADD deve comunque essere rieseguito il full harness sul digest post-remediation e deve essere eseguito il validator OpenAPI 3.1 approvato oppure registrata una waiver formale.
++
+ ## Verdict
+ 
+-La candidata è internamente verificabile e priva di failure meccaniche note. Il risultato abilita la Final Review e la review di change control, non l'approvazione automatica della baseline né il DDD in assenza delle decisioni elencate nel Change-Control Package.
++La candidata è internamente verificabile, priva di failure meccaniche note e completa per la review finale dell'Architecture Review Authority. Il risultato non costituisce approvazione automatica: i dieci change set devono essere decisi, i registri aggiornati atomicamente, il full harness rieseguito sul digest post-remediation e la decisione incorporata in una baseline firmata.
+
+# Commit 52677779cab58e33d36df76a426722f002b54737 — test(governance): add approval-readiness results
+@@ -0,0 +1,102 @@
++{
++  "source_candidate": "reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md",
++  "candidate_sha256": "4f84249b86150a0aa0ef5bf7fcc1a5c99388651e8aae132720dd784883b0426f",
++  "change_control_sha256": "f336b4d0b10942c3eeb6603bafff69b7e085edfa8bbd6dc0224266ee0e8aaa8c",
++  "remediation_ledger_sha256": "443d550091109c93f8eb338c9a90a7f3ab207c60c223f5b1ae6dfc244cffba0c",
++  "total": 18,
++  "passed": 18,
++  "failed": 0,
++  "scope": "Approval-readiness traceability, decision coverage, DAG, BA-01 disposition and authority fence; invariant-bearing schema/FSM blocks unchanged.",
++  "records": [
++    {
++      "check": "V12-AM-02 finding mapping",
++      "status": "PASS",
++      "detail": "DRF-001/002 and ARF-001"
++    },
++    {
++      "check": "V12-AM-03 finding mapping",
++      "status": "PASS",
++      "detail": "DRF-003/008 and RV-01"
++    },
++    {
++      "check": "V12-AM-04 finding mapping",
++      "status": "PASS",
++      "detail": "DRF-004 and ARF-006"
++    },
++    {
++      "check": "V12-AM-05 finding mapping",
++      "status": "PASS",
++      "detail": "DRF-005 and ARF-004/012"
++    },
++    {
++      "check": "V12-AM-06 finding mapping",
++      "status": "PASS",
++      "detail": "DRF-013 and ARF-014"
++    },
++    {
++      "check": "V12-AM-07 finding mapping",
++      "status": "PASS",
++      "detail": "V12-RF-001 and ARF-009"
++    },
++    {
++      "check": "V12-AM-08 finding mapping",
++      "status": "PASS",
++      "detail": "DRF-008, V12-RF-002 and ARF-005"
++    },
++    {
++      "check": "V12-AM-09 finding mapping",
++      "status": "PASS",
++      "detail": "DRF-007 and ARF-007"
++    },
++    {
++      "check": "V12-AM-10 finding mapping",
++      "status": "PASS",
++      "detail": "DRF-006 and ARF-018"
++    },
++    {
++      "check": "V12-AM-11 finding mapping",
++      "status": "PASS",
++      "detail": "DRF-012 and FR-095/ELM-070"
++    },
++    {
++      "check": "V12-AM-13 finding mapping",
++      "status": "PASS",
++      "detail": "DRF-015"
++    },
++    {
++      "check": "V12-AM-14 finding mapping",
++      "status": "PASS",
++      "detail": "DRF-009 and BA-01"
++    },
++    {
++      "check": "change-set count",
++      "status": "PASS",
++      "detail": "10 decision-ready change sets"
++    },
++    {
++      "check": "DRAFT-C decision path",
++      "status": "PASS",
++      "detail": "Dedicated CC-SINGLE-WRITER-BRANCH-SCOPE"
++    },
++    {
++      "check": "DRAFT-C DAG",
++      "status": "PASS",
++      "detail": "Canonical path precedes branch-scope; branch-scope precedes BA-01"
++    },
++    {
++      "check": "BA-01 deterministic disposition",
++      "status": "PASS",
++      "detail": "Atomic invariant; no implicit fallback; failed conformance is NO-GO"
++    },
++    {
++      "check": "ledger dependency closure",
++      "status": "PASS",
++      "detail": "DRAFT-C dependency and closure path recorded"
++    },
++    {
++      "check": "authority fence preserved",
++      "status": "PASS",
++      "detail": "No DEC assignment or approval inferred"
++    }
++  ]
++}
+
+# Commit 8ff9d39feacaf35ae3e04869cff5acb5c3d9037b — docs(review): add ADD v1.2 approval-readiness review
+@@ -0,0 +1,35 @@
++# OCOR ADD v1.2 Candidate — Approval Readiness Review
++
++## Control
++
++- Branch: `codex/add-v1.2-approval-readiness`.
++- Candidate SHA-256: `4f84249b86150a0aa0ef5bf7fcc1a5c99388651e8aae132720dd784883b0426f`.
++- Change-Control Package SHA-256: `f336b4d0b10942c3eeb6603bafff69b7e085edfa8bbd6dc0224266ee0e8aaa8c`.
++- Remediation Ledger SHA-256: `443d550091109c93f8eb338c9a90a7f3ab207c60c223f5b1ae6dfc244cffba0c`.
++- Authority fence: no approval, no new `DEC-*`, no source-register mutation, `E1=0`, `E2=0`.
++
++## Corrections applied
++
++1. Corrected twelve semantically incorrect `V12-AM-*`→finding mappings in the candidate Amendment Log.
++2. Added `CC-SINGLE-WRITER-BRANCH-SCOPE` as the explicit approval path for `DRAFT-C`.
++3. Extended the dependency DAG so canonical path precedes branch scope and branch scope precedes `BA-01`.
++4. Made `BA-01` deterministic: atomic local state/revision/idempotency/outbox is the only selected invariant; no fallback is pre-approved; failed conformance is `NO-GO`.
++5. Updated the Remediation Ledger and Final Review to the ten-change-set package.
++
++## Verification
++
++The targeted approval-readiness verifier reports **18 passed, 0 failed**. It covers all corrected mappings, change-set count, `DRAFT-C` decision coverage, DAG direction, `BA-01` disposition, ledger closure and preservation of the authority fence.
++
++Schema, OpenAPI, Protobuf, FSM and normative allocation blocks were not changed. The earlier 105/105 conformance, 29/29 semantic and 12/12 release-gate results therefore remain informative for unchanged content, but the full harness must be rerun against the new candidate digest before signature.
++
++## Residual authority decisions
++
++The candidate is now complete for ARA decision, but is not self-approved. The Authority must decide all ten change sets, including the selected `FR-095` P0/MVP disposition and the atomic `BA-01` invariant, update the five affected registers atomically, assign the next decision identifiers and issue a non-empty signed/digest-pinned baseline and ARA record.
++
++The official OpenAPI 3.1 semantic validator remains `NOT_EXECUTED`; execute it before signature or record a formal waiver.
++
++## Verdict
++
++**`READY FOR ARA APPROVAL REVIEW — NOT YET APPROVED`.**
++
++No known internal `BLOCKER` or `CRITICAL` remains in the candidate correction surface. Approval, register mutation and evidence promotion remain exclusively with the designated Authority.
+

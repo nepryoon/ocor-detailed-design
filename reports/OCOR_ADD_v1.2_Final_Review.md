@@ -1,5 +1,7 @@
 # OCOR ADD v1.2 Candidate — Final Review
 
+> **Governance supersession — 2026-08-30:** this review is the preserved pre-approval assessment. Its `PROPOSED` / `AWAITING CHANGE CONTROL` statements are superseded by `ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.2_APPROVED_BASELINE.md` and `ARA_DECISION_RECORD_v1.1.md`. ADD v1.2 is **APPROVED** under `DEC-197`–`DEC-206`; historical test statements remain evidence with the limitations recorded in the approval record.
+
 ## 1. Review Control
 
 - Oggetto: `reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md`.
@@ -7,6 +9,7 @@
 - Branch locale: `codex/add-v1.2-remediation`.
 - Review basis: sorgenti normative/supporting complete, review pregresse, registri, prompt, harness e test candidati.
 - Stato documento: `PROPOSED — AWAITING CHANGE CONTROL`.
+- Approval-readiness remediation: branch `codex/add-v1.2-approval-readiness`; candidate SHA-256 `4f84249b86150a0aa0ef5bf7fcc1a5c99388651e8aae132720dd784883b0426f`.
 - Evidence fence: `E1=0`, `E2=0`, zero requisiti `Verified`; tecnologie `Candidate Implementation`, capability `Design Target`.
 
 ## 2. Executive Verdict
@@ -89,7 +92,7 @@ Universo core: 693. Coverage: BR 18/18, FR 174/174, NFR 93/93, ARC 23/23, ELM 10
 
 ## 11. Change-Control Status
 
-Il Change-Control Package contiene nove slug provvisori senza ID decisionale, testo esatto, alternative, selezione candidata, impatti, registri, dipendenze, rischi, rollback e criteri. Il DAG impedisce approvazioni parziali incoerenti. `DRAFT-A`–`DRAFT-I` restano non approvate; nessun `OI-*`, `ASM-*` o `RSK-*` è chiuso.
+Il Change-Control Package contiene dieci slug provvisori senza ID decisionale, testo esatto, alternative, selezione candidata, impatti, registri, dipendenze, rischi, rollback e criteri. `CC-SINGLE-WRITER-BRANCH-SCOPE` fornisce il percorso decisionale esplicito prima mancante per `DRAFT-C`; `CC-BA01-ALTERNATIVE` approva soltanto l'invariante atomico e la semantica `NO-GO`, senza fallback impliciti. Il DAG impedisce approvazioni parziali incoerenti. `DRAFT-A`–`DRAFT-I` restano non approvate; nessun `OI-*`, `ASM-*` o `RSK-*` è chiuso.
 
 ## 12. Evidence Fence
 
@@ -97,11 +100,15 @@ Il Change-Control Package contiene nove slug provvisori senza ID decisionale, te
 
 ## 13. Residual Risks
 
-1. Authority: nove change set devono essere approvati/modificati/rigettati; undici finding diretti ereditano questo blocco.
+1. Authority: dieci change set devono essere approvati/modificati/rigettati; undici finding diretti ereditano questo blocco.
 2. OpenAPI official semantic validator: `NOT_EXECUTED`; alternativa strutturale verde ma nessun claim di conformità allo strumento assente.
 3. Backend assumptions, inclusa `BA-01`, restano non verificate; i gate `NO-GO` persistono.
 4. Nessuna Evidence di runtime, performance, fault injection, security o portability è stata prodotta.
 5. Tassonomia nazionale marking (`OI-021`) e altri open issue restano aperti.
+
+## 13.1 Approval-readiness remediation
+
+La verifica mirata successiva alla Final Review ha corretto dodici mapping `V12-AM-*`→finding, aggiunto il change set mancante per `DRAFT-C`, reso deterministica la disposizione `BA-01` e aggiornato il DAG. Il controllo machine-readable `v12_approval_readiness_results.json` riporta 18/18 `PASS`. Le sezioni contenenti schemi, OpenAPI, Protobuf, FSM e matrici normative non sono state modificate; i relativi risultati precedenti restano evidenza del contenuto invariato, ma il full harness deve essere rieseguito sul nuovo digest prima della firma.
 
 ## 14. Final Gate
 

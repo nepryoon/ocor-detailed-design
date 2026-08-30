@@ -1,16 +1,24 @@
 # OCOR Runtime Verification Evidence Report
 
 Date: 2026-08-30  
-Baseline authority: ADD v1.2 approval and ARA decisions DEC-197 through DEC-205, as stated in the execution mandate  
+Baseline authority: approved ADD v1.2 baseline; ARA decisions DEC-197 through DEC-206; effective 2026-08-30  
 Result: **PASS — 104 passed, 0 failed, 0 skipped**
 
 ## Scope and source basis
 
-This repository was initialized with zero-byte copies of
-`OCOR_ADD_v1.2_APPROVED_BASELINE.md` and `ARA_DECISION_RECORD_v1.1.md`. The
-executable traceability below therefore treats the supplied task contract and
-ratification statement as the authoritative minimum. FR-095 is not claimed by
-this PoC slice, and ELM-070 remains deferred as directed.
+This execution report predates the governed approval package but is retained as
+runtime-slice evidence. The formerly empty governance files are now populated:
+`OCOR_ADD_v1.2_APPROVED_BASELINE.md` is the authoritative baseline and
+`ARA_DECISION_RECORD_v1.1.md` assigns `DEC-197`–`DEC-206`. FR-095 is not
+claimed by this PoC slice and is placed at P0/MVP by `DEC-205`; ELM-070 remains
+deferred outside the PoC.
+
+The 104-test result below is evidence for the inspected runtime slice, not a
+full post-remediation rerun of the ADD document verification harness and not a
+claim that the runtime conforms to every approved ADD invariant. The
+`openapi-spec-validator` execution below covers the runtime schema snapshot;
+the separate governed external-interface baseline validation/waiver remains
+tracked as `VAL-ACT-002`.
 
 The delivered slice contains:
 
