@@ -1,5 +1,7 @@
 # OCOR ADD v1.2 Candidate — Final Review
 
+> **Governance supersession — 2026-08-30:** this review is the preserved pre-approval assessment. Its `PROPOSED` / `AWAITING CHANGE CONTROL` statements are superseded by `ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.2_APPROVED_BASELINE.md` and `ARA_DECISION_RECORD_v1.1.md`. ADD v1.2 is **APPROVED** under `DEC-197`–`DEC-206`; historical test statements remain evidence with the limitations recorded in the approval record.
+
 ## 1. Review Control
 
 - Oggetto: `reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md`.
