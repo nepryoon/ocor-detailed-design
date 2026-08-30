@@ -154,7 +154,7 @@ La baseline dichiara 29 stati e famiglia `ACT-T01`–`ACT-T31` con varianti `a/b
 
 `DRAFT-A`–`DRAFT-I` sono nove bozze non approvate. Dipendenze minime già esplicite o causalmente necessarie: canonical mutation presuppone Action Contract; marking operator presuppone marking metamodel; emission safety e indeterminate recovery modificano la stessa safety chain; la relazione tra emission fence e CapabilityLease richiede conferma dell'authority. La direzione degli archi del DAG sarà definita senza ambiguità nel piano di remediation.
 
-La classificazione dei gate in §7 deve essere ricostruita dal Decision Register: oltre a rimuovere `DEC-173/175` dall'elenco dei gate, vanno considerati i veri gate `DEC-049`, `DEC-078`, `DEC-136`, `DEC-164`, `DEC-185`, `DEC-195`, oggi omessi dall'elenco narrativo. Questa estensione è trattata nel piano come parte della stessa root cause di `DRF-015`, non come creazione di nuove decisioni.
+La classificazione dei gate in §7 deve essere ricostruita dal Decision Register: oltre a rimuovere `DEC-173/175` dall'elenco dei gate, vanno considerati i veri gate oggi omessi dall'elenco narrativo, incluso `DEC-177` (`GATE-IRB-15`, `Approved`) oltre ai 16 `Approved with conditions`; `DEC-194/195/196` richiedono inoltre una disposition document/programme esplicita. Questa estensione è trattata nel piano come parte della stessa root cause di `DRF-015`, non come creazione di nuove decisioni.
 
 ## Gate FASE 1
 
