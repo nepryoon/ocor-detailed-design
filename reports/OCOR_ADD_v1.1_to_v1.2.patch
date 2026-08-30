@@ -1,0 +1,1177 @@
+--- inputs/normative/OCOR_Architectural_Design_Document_v1.1.md	2026-08-30 16:25:24.090184288 +0200
++++ reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md	2026-08-30 19:34:44.608576841 +0200
+@@ -5,16 +5,17 @@
+ | Campo | Valore |
+ |---|---|
+ | Documento | `OCOR Architectural Design Document` |
+-| Identificativo | `OCOR-ADD-1.1` |
+-| Versione | `v1.1` |
++| Identificativo | `OCOR-ADD-1.2-CANDIDATE` |
++| Versione | `v1.2 Candidate` |
+ | Data | 30 agosto 2026 |
+-| Sostituisce | `OCOR-ADD-1.0`, SHA-256 `1e0fe999d66b0133638293d9568f79fb861636f81bc939e170e7d6fa392d8fed` |
+-| Origine della revisione | `OCOR ADD v1.0 — Independent Critical Review`, finding `ARF-001`–`ARF-027` |
+-| Natura della revisione | Correttiva e chiarificatrice. Nessuna capability attivata, nessun requisito aggiunto o rimosso, nessun `OI-*`/`ASM-*`/`RSK-*` chiuso, stato probatorio invariato |
++| Derivazione | ADD v1.1, SHA-256 `3e7532c7101e80c74b511cedc56a0563ca0938a3fe259911a91245cb19dedc7f` |
++| Sostituisce | Nessuna baseline approvata: è una candidata separata; la v1.1 resta immutabile e ricostruibile |
++| Origine della revisione | `OCOR ADD v1.1 — Independent Delta Review`, finding `DRF-001`–`DRF-015`, più red-team v1.2 |
++| Natura della revisione | Remediation candidata completa. Le modifiche che richiedono authority sono `PROPOSED — AWAITING CHANGE CONTROL`; nessuna capability attivata, nessun requisito sorgente aggiunto/rimosso, nessun `OI-*`/`ASM-*`/`RSK-*` chiuso, stato probatorio invariato |
+ | Document owner | `OCOR Chief Architect` (ruolo) |
+ | Approval authority | Product Owner e Architecture Review Authority; approval dell'ADD non ancora registrata |
+-| Stato documentale | `CANDIDATE ARCHITECTURAL BASELINE — DRAFT FOR ARCHITECTURAL APPROVAL` |
+-| Stato delle modifiche v1.1 | `PROPOSED — PENDING CHANGE CONTROL`; ogni emendamento è tracciato nell'Amendment Log §8 e richiede approvazione secondo `DEC-196` |
++| Stato documentale | `PROPOSED — AWAITING CHANGE CONTROL` |
++| Stato delle modifiche v1.2 | Soluzioni candidate univoche e fail-closed; Amendment Log §8; nessuna modifica entra nella baseline senza authority competente |
+ | Stato tecnico | `Design Target`; ogni tecnologia nominata è `Candidate Implementation` |
+ | Baseline normativa | `Initial Requirements Baseline v1.0 — APPROVED BASELINE` |
+ | Decisione di freeze IRB | `DEC-196`, 30 agosto 2026 |
+@@ -31,7 +32,7 @@
+ 
+ L'ADD concretizza la IRB senza modificarla. Le scelte vincolanti restano `DEC-001`–`DEC-196` e `ARC-001`–`ARC-023`; stack, versioni, edition, configurazioni e topologie nominate in questo documento sono candidati da sottoporre ai gate della IRB. Restano aperti, senza chiusura implicita, i 29 open issue accettati (`OI-001`, `OI-006`, `OI-008`–`OI-034`), le assunzioni, i rischi e le dipendenze della baseline. Nessun nuovo `DEC-*` è creato da questo documento: l'eventuale promozione di una scelta candidata a decisione di baseline usa change control e il progressivo successivo a `DEC-196`.
+ 
+-**Nota sulla revisione v1.1.** Gli emendamenti di questa versione correggono contraddizioni interne, completano contratti incompleti e chiudono lacune di tracciabilità rilevate dalla review indipendente dell'ADD v1.0. Non introducono capability, non modificano il perimetro PoC, non promuovono alcuna tecnologia candidata e non alterano `E1`/`E2`. Sette emendamenti stabiliscono o chiariscono una scelta architetturale vincolante e richiedono perciò una decisione di baseline: le voci candidate corrispondenti sono redatte in `OCOR_DEC_197_plus_Draft_v0.1.md` come **bozze non approvate**, e nessun identificativo `DEC-197` o successivo è assegnato da questo documento. L'Amendment Log completo è in §8.
++**Nota sulla revisione v1.2 candidata.** Questa versione corregge i difetti interni confermati della v1.1 e propone, senza approvarle, le decisioni necessarie per GCS, mutazione canonica, safety di emissione, marking, adjudication e change control. `DRAFT-A`–`DRAFT-I` restano bozze non approvate e questa candidata non assegna alcun nuovo identificativo decisionale oltre la baseline. La proposta conservativa su `FR-095` mantiene `ELM-070` differita e richiede la riclassificazione del requisito fuori dal PoC: fino all'approvazione dei registri la discrepanza è un authority blocker, non una modifica di baseline compiuta. L'Amendment Log completo è in §8.
+ 
+ ## 1.2 System context
+ 
+@@ -112,25 +113,27 @@
+ | `TB-CXT-08` — External effect | Action Engine verso Action Adapter | Decision/Approval fence, dual control, idempotency/fencing e reconciliation | `EXECUTION_UNKNOWN` se ambiguo |
+ | `TB-CXT-09` — Supply chain | Build/signing verso runtime isolato | Source/lock pin, reproducible build, SBOM, provenance, firma e revoca offline | `RELEASE_REJECTED` |
+ 
+-Ogni chiamata, evento, cache entry, embedding, log, explanation e artefatto derivato trasporta almeno il **Governed Context Set**:
++Ogni chiamata, evento, cache entry, embedding, log, explanation e artefatto derivato è associato a una e una sola istanza del record canonico **`GovernedContext` v1.2**:
+ 
+ ```text
+ tenant_id
+ organization_id
+ domain_id
+ compartments[]
+-classification_marking
++classification_marking_ref
+ purpose
+-principal_id
++effective_principal_id
+ actor_chain
+ ontology_release_digest
+ policy_bundle_digest
+ correlation_id
+ ```
+ 
+-Il Governed Context Set è normativo per tutti i contratti di §3, §4 e §5 e ciascuno di essi lo realizza integralmente. Due campi hanno una regola di origine specifica e non sono mai asseriti dal chiamante: `principal_id` e `actor_chain` derivano dal transport security context e dalla Delegation chain verificata, mai da un campo di payload o di body; `ingest_time`, `ontology_release_digest` e `policy_bundle_digest` sono assegnati dal boundary che ammette l'artefatto. La tabella di realizzazione per contratto è in §3.0.
++`GovernedContext` è chiuso: cardinalità esattamente uno per tutti i campi, salvo `compartments` e `actor_chain` che sono array non vuoti, ordinati dove semanticamente rilevante e senza duplicati. `classification_marking_ref` è sempre la forma canonica `urn:sha256:<marking_digest>`. `tenant_id`, `organization_id`, `domain_id`, `compartments`, `purpose` e `correlation_id` possono provenire dal `BODY` soltanto come valori dichiarati da confrontare con i binding autorizzati. `effective_principal_id` è sempre `DERIVED_FROM_VERIFIED_BINDING` dal Principal autenticato del trasporto; `actor_chain` è sempre derivata dalla Delegation chain verificata. `ontology_release_digest` e `policy_bundle_digest` sono assegnati dal boundary di ammissione e firmati nel binding. Nessun Principal, Goal, prompt, payload o producer dichiarato nel body concede Authority.
+ 
+-La chiave di isolamento è la tupla `(tenant_id, domain_id, compartments, purpose, marking, release_digest)`. Cache e indici non sono condivisi fra tuple incompatibili; code, topic e storage prefix sono compartment-scoped; una query federata produce soltanto l'intersezione autorizzata. Il marking derivato è il `conservative_join` degli input e delle obligation. Marking sconosciuti o non confrontabili assumono la postura più restrittiva e `DENY_EXPORT`; ogni abbassamento crea un distinto artefatto di sanitizzazione/declassificazione con authority, Approval e audit.
++Il boundary costruisce atomicamente `GovernedContext`, ne calcola `governed_context_digest` e lo lega all'artefatto. Un valore body incompatibile con il binding autenticato non è corretto silenziosamente: all'ingress esterno produce `QUARANTINED{reason=PRINCIPAL_BINDING_MISMATCH}` e Audit Record; sulle superfici interne o mutative produce `DENY{reason=GOVERNED_CONTEXT_MISMATCH}` prima di cache lookup, query, dispatch o commit. Un campo mancante, non risolvibile, sconosciuto o ambiguo è fail-closed. L'equivalenza fra forme serializzate richiede uguaglianza byte-canonica dei valori scalari, equivalenza insiemistica dei compartimenti dopo canonical sort e coincidenza dei digest; alias o coercizioni non dichiarate sono vietati. La tabella di realizzazione è in §3.0.1.
++
++La chiave di isolamento è la tupla `(tenant_id, organization_id, domain_id, compartments, purpose, classification_marking_ref, ontology_release_digest, policy_bundle_digest)`. Cache e indici non sono condivisi fra tuple incompatibili; code, topic e storage prefix sono compartment-scoped; una query federata produce soltanto l'intersezione autorizzata. Il marking derivato è il `conservative_join` degli input e delle obligation. Marking sconosciuti o non confrontabili producono `DENY`/`QUARANTINE` e `DENY_EXPORT`; ogni abbassamento crea un distinto artefatto di sanitizzazione/declassificazione con authority, Approval e audit.
+ 
+ Il PoC usa un tenant sintetico e almeno due compartimenti simulati. L'isolamento logico è obbligatorio; le classi che richiederanno separazione fisica restano governate da `OI-020`. Nessun claim di non-interferenza è ammesso prima dei relativi test.
+ 
+@@ -140,6 +143,7 @@
+ |---|---|
+ | PoC in scope | Otto subsystem core, Policy/Authority, Human Gate, audit, PKI locale e simulatori contract-faithful |
+ | Differito | `FR-048`; hardening esteso di `CAP-024`; `ELM-011`, `ELM-015`, `ELM-035`, `ELM-049`, `ELM-070`, `ELM-080`, `ELM-084`, `ELM-091` |
++| Proposta di change control | `FR-095`: riclassificazione da P0/PoC a P0/MVP, fuori dal PoC, mantenendo `ELM-070` differita — `PROPOSED — AWAITING CHANGE CONTROL` |
+ | Fuori perimetro | `CAP-026`; replica completa Foundry/AIP/Apollo; dati e sistemi reali; effetti fisici; accreditamento; HA e scala nazionale Production |
+ | Evidence fence | Ogni elemento resta `Design Target` o `Candidate Implementation`; `E1=0`, `E2=0` |
+ 
+@@ -282,7 +286,7 @@
+ 
+ | ID | Backend candidato | Proprietà semantica richiesta | Componente dipendente | Assunzione non verificata | Conformance test | Fallback | Impatto se non supportata |
+ |---|---|---|---|---|---|---|---|
+-| `BA-01` | TerminusDB — `VersionedAssertedState` | Commit locale atomico che includa in un'unica unità `aggregate_delta`, `aggregate_revision+1`, `canonical_commit_id` e `OutboxEntry[]`, con concorrenza ottimistica su `aggregate_revision` e fencing del writer | `C3` (§2.3, §6.2) | Che un versioned graph store supporti commit multi-documento atomici, e che l'outbox operativa possa risiedere nella storia versionata senza essere resa pubblicabile da un `forkScenario` (§2.5 r.11) | Crash-window test sulle cinque finestre di §2.3; test di concorrenza su writer stale; verifica che un fork non produca `DeliveryAttempt` | Outbox in store transazionale separato con due commit logici e reconciler, dichiarando esplicitamente la finestra di incoerenza; oppure `VersionedAssertedState` su RDBMS con event log | L'atomicità local-state+outbox decade: il pattern outbox non è più esente da perdita di evento, e §2.3 va riscritta. `RSK-013`, `RSK-019` |
++| `BA-01` | TerminusDB — `VersionedAssertedState` | Commit locale atomico che includa in un'unica unità `aggregate_delta`, `aggregate_revision+1`, `canonical_commit_id` e `OutboxEntry[]`, con concorrenza ottimistica su `aggregate_revision` e fencing del writer | `C3` (§2.3, §6.2) | Che un versioned graph store supporti commit multi-documento atomici, e che l'outbox operativa possa risiedere nella storia versionata senza essere resa pubblicabile da un `forkScenario` (§2.5 r.11) | Crash-window test sulle cinque finestre di §2.3; test di concorrenza su writer stale; verifica che un fork non produca `DeliveryAttempt` | `ARCHITECTURAL_ALTERNATIVE_REQUIRING_CHANGE_CONTROL`: due commit logici + reconciler, oppure stato su RDBMS/event log. `NO-GO` finché failure analysis, nuova §2.3/§6.2 e authority non approvano una sola alternativa | L'atomicità local-state+outbox decade; compare una crash window con rischio di evento perso/duplicato. `RSK-013`, `RSK-019`. `PROPOSED — AWAITING CHANGE CONTROL` |
+ | `BA-02` | TypeDB 3.x — `LogicProjection` | Visibilità atomica di facts e `projection_watermark`, per transazione locale oppure per versioned dataset con atomic pointer switch | `C4` (§2.5 r.3, §6.2 p.5) | Che almeno una delle due primitive esista e sia sostenibile per il volume di rebuild richiesto da `Rebuild` | Lettura concorrente durante la proiezione: nessun lettore osserva watermark avanzato con facts mancanti | Doppio dataset con puntatore atomico esterno gestito da `C4`; oppure watermark servito da `C4` e non dallo store | La consistenza osservabile decade: il Gateway non può garantire `AT_LEAST_COMMIT`. `RSK-052` |
+ | `BA-03` | TypeDB 3.x — time travel | Sandbox disposable per servire `EXACT_AT_COMMIT(Cn)` su query logiche nominate | `C2`, `C4` (§3.3, §6.2) | Che la creazione di una sandbox a un commit arbitrario sia possibile e sostenibile per richiesta | Benchmark di creazione sandbox; test di esaurimento risorse; test negativo con emulazione indisponibile | Restringere `EXACT_AT_COMMIT` al solo `VersionedAssertedState` e restituire `UNSUPPORTED_CAPABILITY` sulle query logiche, come già previsto da §3.3; oppure snapshot materializzati a commit selezionati | Il modo di consistenza più forte non è servibile sulle query logiche. `RSK-052` |
+ | `BA-04` | Apache Jena/TDB2 — `W3CBoundary` | Round-trip RDF 1.1 / JSON-LD / SHACL senza perdita nel profilo dichiarato, ed export watermark correlabile al commit canonico | `C4`, export/import (§2.4, §3.6) | Che il profilo portabile dichiarato sia effettivamente round-trippabile | Round-trip conformance su fixture canoniche; validazione SHACL delle shape di §3.6 | Boundary W3C come export batch offline non correlato a watermark, con staleness dichiarata e ruolo non interrogabile in linea | La portabilità W3C resta dichiarata ma non dimostrabile. `NFR-056`, `RSK-012` |
+@@ -291,7 +295,7 @@
+ | `BA-07` | Kafka/Strimzi — `C5` | Ordering per partizione, retention sufficiente al replay, DLQ e schema registry, in edizione strict-OSS | `C5` (§2.2, §3.8) | Che nessuna proprietà richiesta ricada in feature enterprise o licenze non ammesse; `OI-028` mantiene aperta la verifica | Inventario licenze e capability (`NFR-073`); test di replay dalla retention configurata | Backbone alternativo strict-OSS dietro lo stesso port `Publish/Subscribe/Replay/Quarantine`, già vendor-neutral | Il backbone va sostituito prima del gate. `RSK-047`, `RSK-051`, `RSK-056` |
+ | `BA-08` | OPA, Keycloak, SPIFFE/SPIRE, OpenBao | Decisione di policy entro `policy_authority_timeout`; revoca propagata e scadenza locale del `CapabilityLease` come meccanismi indipendenti per il target `≤10 s` | `C2`, `C6`, `C8`, control plane (§5.1, §5.5) | Che i due meccanismi raggiungano insieme il target; il `CapabilityLease` è un controllo proprio di OCOR (§5.2) e non dipende da `ELM-080` | Chaos/safety drill con misura dell'ultimo command accettato dopo lo stop | Scadenza locale ancorata alla vita del certificato workload, indipendente da qualsiasi lease semantica | Il target `NFR-047` non è raggiungibile con i soli meccanismi push. `RSK-037` |
+ 
+-Ogni riga è un candidato a `NO-GO` del release profile che vi dipende, secondo la regola di §2.4: in assenza di esito del conformance test, il profilo non è ammesso al gate. Il fallback dichiarato è la condizione che rende la sostituzione un'operazione di adapter e non una riprogettazione.
++Ogni riga è un candidato a `NO-GO` del release profile che vi dipende. I fallback `BA-02`–`BA-08` restano sostituzioni confinate se preservano i contratti; `BA-01` è esplicitamente esclusa da questa regola perché cambia l'invariante di atomicità e richiede change control architetturale.
+ 
+ **Tracciabilità:** `DEC-005`, `DEC-020`, `DEC-147`, `DEC-154`, `DEC-162`, `DEC-179`; `NFR-058`, `NFR-064`, `NFR-073`, `NFR-084`, `NFR-086`; `ARC-018`, `ARC-019`, `ARC-022`; `DEP-001`, `DEP-011`, `DEP-020`, `DEP-023`; `RSK-012`, `RSK-047`, `RSK-051`, `RSK-056`; `OI-006`, `OI-028`.
+ 
+@@ -303,23 +307,24 @@
+ 
+ ### 3.0.1 Realizzazione del Governed Context Set
+ 
+-Il Governed Context Set di §1.4 è normativo per ogni contratto. La tabella dichiara dove ciascun campo è realizzato e con quale regola di origine.
++Il `GovernedContext` di §1.4 è normativo per ogni superficie. `BODY` indica un valore serializzato e validato; `TRANSPORT` un valore autenticato non controllabile dal body; `DERIVED` una proiezione deterministica da binding verificato. Ogni riga produce lo stesso record canonico e lo stesso digest.
+ 
+-| Campo `§1.4` | Ingestion Envelope §3.2 | `QueryContext` §3.3 | `InvocationContext` §3.4 | `HandoffEnvelope` §4.3 | `SecurityContext` §5.3 | Osservabilità §6.3 | Origine |
+-|---|---|---|---|---|---|---|---|
+-| `tenant_id` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | chiamante, validato |
+-| `organization_id` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | binding autorizzato del Principal |
+-| `domain_id` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | chiamante, validato |
+-| `compartments[]` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | chiamante, validato |
+-| `classification_marking` | ✔ (inline) | ✔ (`*_ref`) | ✔ (`*_ref`) | ✔ (inline) | ✔ (decomposto) | ✔ (`*_ref`) | conservative join §5.3 |
+-| `purpose` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | binding autorizzato dell'adapter o del Principal |
+-| `principal_id` | ✔ (`integrity.producer_principal_ref`) | **derivato** | **derivato** | ✔ | ✔ | ✔ | **transport security context; mai da body o payload** |
+-| `actor_chain` | ✔ | **derivato** | **derivato** | ✔ | ✔ | ✔ | **Delegation chain verificata; mai da body o payload** |
+-| `ontology_release_digest` | ✔ | ✔ (`ontology_release`) | ✔ (`ontology_release`) | ✔ | ✔ | ✔ | boundary di ammissione |
+-| `policy_bundle_digest` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | boundary di ammissione |
+-| `correlation_id` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | chiamante o generato all'ingresso |
++| Superficie | Forma serializzata / mapping | Origine Principal | Enforcement point | Mismatch / campo assente |
++|---|---|---|---|---|
++| Ingestion | `context.*`; marking inline risolto a `classification_marking_ref`; `integrity.source_producer_principal_ref` è soltanto source assertion | `TRANSPORT` → `effective_principal_id` | `C5` admission boundary | external mismatch → `QUARANTINED`; incomplete → `REJECTED` |
++| Query | `QueryContext` usa gli undici nomi canonici; nessun Principal nel body | `TRANSPORT` | `C2` auth/policy interceptor, prima di cache/router | `DENY` senza lookup |
++| Function/model invocation | `InvocationContext` usa gli undici nomi canonici | `TRANSPORT` | `C2`/registry invocation interceptor | `DENY` |
++| MCP | `governed_context_ref` risolve a record immutabile; input schema non può sovrascriverlo | `TRANSPORT` | `C8` capability broker e `C2` tool boundary | `CAPABILITY_DENIED` |
++| Action Type | `governed_context_requirements` dichiara tutti i campi e vieta authority dal body | `DERIVED` | `C1` contract compiler | contract `RELEASE_REJECTED` |
++| Action Instance/Command | `governed_context` + digest nel `GatePackage`; command porta lo stesso digest | `TRANSPORT`/`DERIVED` | `C6` create, gate ed emission fence | `INVALIDATED` prima dell'invio |
++| Event Subscription | filter context e delivery context usano `governed_context_ref`; consumer non può ampliare scope | `TRANSPORT`/`DERIVED` | `C5` subscribe e per-delivery policy | `POLICY_DENIED`/quarantine |
++| Event delivery/replay | admitted envelope porta record/digest; replay ricostruisce lo stesso context e richiede window | `DERIVED` | `C5` delivery/replay controller | `REPLAY_DENIED`/quarantine |
++| Scenario | `ScenarioRunSpec.governed_context`; branch key include digest | `TRANSPORT`/`DERIVED` | `C7` scenario admission | `SCENARIO_ISOLATION_VIOLATION` |
++| Agent handoff | `HandoffEnvelope.governed_context`; sender dichiarato è confrontato col transport Principal | `TRANSPORT` | `C8` handoff broker | `CAPABILITY_DENIED` + audit |
++| Security context | proiezione valutata di `GovernedContext` e marking; non modello alternativo | `DERIVED` | PDP/PEP | `DENY` |
++| Observability | log/trace/metric portano `governed_context_digest`; accesso risolve il record con policy | `DERIVED` | telemetry admission + query | drop sicuro o quarantine; mai log non governato |
+ 
+-«**derivato**» significa che il campo non compare nel contratto per costruzione e non può comparirvi: il Gateway e il Function/Model Registry ricavano Principal e actor chain dal contesto di sicurezza del trasporto, e un campo di richiesta che li dichiarasse sarebbe un vettore di impersonificazione. L'assenza dal contratto è quindi il comportamento corretto, non una lacuna, e il campo è comunque presente in ogni Audit Record e in ogni trace.
++La validazione di equivalenza è identica su tutte le superfici. L'assenza del Principal dal body Query/Invocation è deliberata; l'assenza del `GovernedContext` risultante nell'Audit Record o nel GatePackage è sempre un difetto bloccante.
+ 
+ ### 3.0.2 Forma unica del marking
+ 
+@@ -356,7 +361,7 @@
+ | `TemporalAnnotation` | `mode`, `valid_from_field`, `valid_to_field`, `system_from_field`, `system_to_field`, `precision`, `timezone_policy` | `mode ∈ {ATEMPORAL, VALID_TIME, TRANSACTION_TIME, BITEMPORAL}`; intervalli UTC semiaperti `[from,to)`; system time assegnato solo dal canonical writer |
+ | `DerivedDefinition` | `derived_id`, `result_type_ref`, `typed_ast`, `execution_owner`, `materialization_policy`, `dependency_refs` | Un solo `execution_owner`; negazione stratificata e ricorsione bounded/controllata |
+ | `ContractDefinition` | `contract_id`, `kind`, input/output schema, error model, effect class, risk class, policy/approval refs, version | `kind ∈ {NAMED_QUERY, FUNCTION, MODEL_FUNCTION, ACTION, EVENT, MCP_TOOL}`; nessun dialect backend |
+-| `MarkingSchemeDefinition` | `scheme_id`, `version`, `levels[1..*]` ordinati dal meno al più restrittivo, `dominance_relation`, `caveat_semantics`, `dissemination_control_semantics`, `join_rule`, `incomparable_behavior`, `declassification_authority_ref` | `levels` definisce un ordine totale o un reticolo esplicito con elemento massimo; `join_rule ∈ {LATTICE_JOIN}`; `caveat_semantics` e `dissemination_control_semantics ∈ {RESTRICTION, PERMISSION}`; `incomparable_behavior ∈ {DENY, MOST_RESTRICTIVE}`; nessun default implicito |
++| `MarkingSchemeDefinition` | `scheme_id`, `version`, `levels[1..*]`, `top`, `bottom`, `dominance_relation`, `family_definitions[5]`, `unknown_value_behavior`, `incomparable_behavior`, `declassification_authority_ref` | `dominance_relation` è riflessiva, antisimmetrica e transitiva; ogni coppia supportata ha `join` e `meet` univoci. Le cinque famiglie obbligatorie sono `mandatory_markings`, `caveats`, `dissemination_controls`, `permitted_purposes`, `handling_instructions`; ciascuna dichiara vocabolario chiuso, `kind=RESTRICTION|PERMISSION`, `join_operator=UNION|INTERSECTION`, `meet_operator` duale e neutral element. `unknown_value_behavior=DENY`; incomparabili ⇒ `DENY|MOST_RESTRICTIVE` deterministico; nessun default implicito |
+ | `CapabilityDisposition` | `semantic_capability_id`, `adapter_role`, `disposition`, `limitation`, `evidence_ref` | `disposition ∈ {exact, emulated, materialized, unsupported, not_applicable_in_role, forbidden_by_design, deferred_by_scope}`; solo `unsupported` blocca la release senza eccezione approvata; `forbidden_by_design` disponibile su un adapter è un difetto di conformance |
+ 
+ Normalizzazione deterministica:
+@@ -461,7 +466,7 @@
+ ~~~json
+ {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+-  "$id": "urn:ocor:schema:canonical-ingestion-envelope:1.1",
++  "$id": "urn:ocor:schema:canonical-ingestion-envelope:1.2",
+   "title": "OCOR Canonical Ingestion Envelope",
+   "type": "object",
+   "additionalProperties": false,
+@@ -488,14 +493,16 @@
+     "classification_marking",
+     "provenance_ref",
+     "integrity",
++    "effective_principal_id",
+     "actor_chain",
++    "governed_context_digest",
+     "ontology_release_digest",
+     "policy_bundle_digest",
+     "correlation_id",
+     "transport"
+   ],
+   "properties": {
+-    "envelope_version": {"const": "1.1"},
++    "envelope_version": {"const": "1.2"},
+     "event_id": {"type": "string", "format": "uuid"},
+     "tenant_id": {"$ref": "#/$defs/stableId"},
+     "organization_id": {"$ref": "#/$defs/stableId"},
+@@ -507,11 +514,14 @@
+       "items": {"$ref": "#/$defs/stableId"}
+     },
+     "purpose": {"type": "string", "minLength": 1, "maxLength": 256},
++    "effective_principal_id": {"$ref": "#/$defs/stableId"},
+     "actor_chain": {
+       "type": "array",
+       "minItems": 1,
++      "uniqueItems": true,
+       "items": {"$ref": "#/$defs/stableId"}
+     },
++    "governed_context_digest": {"$ref": "#/$defs/digest"},
+     "ontology_release_digest": {"$ref": "#/$defs/digest"},
+     "policy_bundle_digest": {"$ref": "#/$defs/digest"},
+     "world_ref": {"$ref": "#/$defs/stableId"},
+@@ -574,10 +584,10 @@
+     "integrity": {
+       "type": "object",
+       "additionalProperties": false,
+-      "required": ["payload_digest", "producer_principal_ref"],
++      "required": ["payload_digest", "source_producer_principal_ref"],
+       "properties": {
+         "payload_digest": {"$ref": "#/$defs/digest"},
+-        "producer_principal_ref": {"$ref": "#/$defs/stableId"},
++        "source_producer_principal_ref": {"$ref": "#/$defs/stableId"},
+         "signature_ref": {"$ref": "#/$defs/contentRef"}
+       }
+     },
+@@ -666,7 +676,16 @@
+     "marking": {
+       "type": "object",
+       "additionalProperties": false,
+-      "required": ["scheme_id", "labels", "marking_digest"],
++      "required": [
++        "scheme_id",
++        "labels",
++        "mandatory_markings",
++        "caveats",
++        "dissemination_controls",
++        "permitted_purposes",
++        "handling_instructions",
++        "marking_digest"
++      ],
+       "properties": {
+         "scheme_id": {"$ref": "#/$defs/stableId"},
+         "labels": {
+@@ -680,6 +699,22 @@
+           "uniqueItems": true,
+           "items": {"type": "string", "minLength": 1, "maxLength": 128}
+         },
++        "mandatory_markings": {
++          "type": "array",
++          "uniqueItems": true,
++          "items": {"type": "string", "minLength": 1, "maxLength": 128}
++        },
++        "caveats": {
++          "type": "array",
++          "uniqueItems": true,
++          "items": {"type": "string", "minLength": 1, "maxLength": 128}
++        },
++        "permitted_purposes": {
++          "type": "array",
++          "minItems": 1,
++          "uniqueItems": true,
++          "items": {"type": "string", "minLength": 1, "maxLength": 128}
++        },
+         "handling_instructions": {
+           "type": "array",
+           "uniqueItems": true,
+@@ -741,8 +776,8 @@
+ 
+ Regole runtime:
+ 
+-- `ingest_time`, `ontology_release_digest`, `policy_bundle_digest` e `actor_chain` sono assegnati dal trusted ingress boundary e non sono asserzioni della sorgente; `purpose` e `organization_id` derivano dal binding autorizzato dell'adapter. Nessuno di questi campi può essere sovrascritto dal payload, e un envelope che li dichiari in modo incoerente con il binding è respinto con `Violation` e quarantena. `event_time` resta un'asserzione della sorgente.
+-- L'envelope realizza integralmente il Governed Context Set di §1.4: la chiave di isolamento `(tenant_id, domain_id, compartments, purpose, marking, release_digest)` è costruibile per ogni evento ammesso.
++- `effective_principal_id`, `actor_chain`, `ingest_time`, `ontology_release_digest`, `policy_bundle_digest` e `governed_context_digest` sono assegnati dal trusted ingress boundary e non sono asserzioni della sorgente. `integrity.source_producer_principal_ref` conserva separatamente il producer dichiarato; non concede Authority. Un producer incompatibile col Principal autenticato produce `PRINCIPAL_BINDING_MISMATCH`, quarantena e Audit Record. Nessun campo può essere sovrascritto dal payload. `event_time` resta un'asserzione della sorgente.
++- L'envelope admitted realizza integralmente `GovernedContext` §1.4: la chiave di isolamento completa è costruibile per ogni evento ammesso e il digest è verificabile.
+ - `semantic_class = CDC_CHANGE` e `ingest_mode = CDC` sono mutuamente vincolanti: un change data capture non è ammissibile senza `source_transaction_id` e `source_position`, e non è quindi ordinabile né riconciliabile in loro assenza.
+ - `idempotency_key` deduplica l'evento logico; delivery attempt e offset restano record distinti.
+ - Ordering è garantito soltanto per `ordering_key` nella relativa partizione.
+@@ -769,7 +804,7 @@
+ openapi: 3.1.0
+ info:
+   title: OCOR Named Query Gateway
+-  version: 1.1.0
++  version: 1.2.0
+ security:
+   - mutualTLS: []
+     workloadOAuth: [ocor.query]
+@@ -923,8 +958,10 @@
+         - domain_id
+         - compartments
+         - purpose
+-        - ontology_release
++        - classification_marking_ref
++        - ontology_release_digest
+         - policy_bundle_digest
++        - governed_context_digest
+         - logic_version
+         - branch
+         - consistency
+@@ -934,6 +971,7 @@
+         tenant_id: {type: string, pattern: '^urn:ocor:[A-Za-z0-9._~:/-]+$'}
+         organization_id: {type: string, pattern: '^urn:ocor:[A-Za-z0-9._~:/-]+$'}
+         policy_bundle_digest: {type: string, pattern: '^sha256:[0-9a-f]{64}$'}
++        governed_context_digest: {type: string, pattern: '^sha256:[0-9a-f]{64}$'}
+         domain_id: {type: string, pattern: '^urn:ocor:[A-Za-z0-9._~:/-]+$'}
+         compartments:
+           type: array
+@@ -941,7 +979,8 @@
+           uniqueItems: true
+           items: {type: string, pattern: '^urn:ocor:[A-Za-z0-9._~:/-]+$'}
+         purpose: {type: string, minLength: 1, maxLength: 256}
+-        ontology_release: {type: string, minLength: 1, maxLength: 128}
++        classification_marking_ref: {type: string, pattern: '^urn:sha256:[0-9a-f]{64}$'}
++        ontology_release_digest: {type: string, pattern: '^sha256:[0-9a-f]{64}$'}
+         logic_version: {type: string, minLength: 1, maxLength: 128}
+         branch: {type: string, minLength: 1, maxLength: 256}
+         scenario_id: {type: string, format: uuid}
+@@ -1091,9 +1130,13 @@
+         - system_time
+         - values
+         - epistemic_status
++        - link_refs
++        - uncertainty
+         - claim_refs
+         - evidence_refs
++        - identity_candidates
+         - provenance_ref
++        - explanation_ref
+         - marking_ref
+       properties:
+         object_ref: {$ref: '#/components/schemas/ResourceRef'}
+@@ -1118,7 +1161,7 @@
+           type: array
+           items: {$ref: '#/components/schemas/IdentityCandidate'}
+         provenance_ref: {type: string, pattern: '^urn:sha256:[0-9a-f]{64}$'}
+-        explanation_ref: {type: string}
++        explanation_ref: {type: string, pattern: '^urn:sha256:[0-9a-f]{64}$'}
+         marking_ref: {type: string, pattern: '^urn:sha256:[0-9a-f]{64}$'}
+     TemporalInterval:
+       type: object
+@@ -1326,7 +1369,7 @@
+   string domain_id = 3;
+   repeated string compartments = 4;
+   string purpose = 5;
+-  string ontology_release = 6;
++  string ontology_release_digest = 6;
+   string logic_version = 7;
+   string branch = 8;
+   optional string scenario_id = 9;
+@@ -1336,6 +1379,7 @@
+   string classification_marking_ref = 13;
+   string organization_id = 14;
+   string policy_bundle_digest = 15;
++  string governed_context_digest = 16;
+ }
+ 
+ message ResourceBudget {
+@@ -1484,13 +1528,14 @@
+ ~~~json
+ {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+-  "$id": "urn:ocor:schema:mcp-tool-contract:1.1",
++  "$id": "urn:ocor:schema:mcp-tool-contract:1.2",
+   "type": "object",
+   "additionalProperties": false,
+   "required": [
+     "contract_id",
+     "version",
+     "contract_digest",
++    "governed_context_ref",
+     "capability_id",
+     "input_schema",
+     "output_schema",
+@@ -1512,6 +1557,7 @@
+     "contract_id": {"$ref": "#/$defs/stableId"},
+     "version": {"$ref": "#/$defs/semver"},
+     "contract_digest": {"$ref": "#/$defs/digest"},
++    "governed_context_ref": {"type": "string", "pattern": "^urn:sha256:[0-9a-f]{64}$"},
+     "capability_id": {"$ref": "#/$defs/stableId"},
+     "input_schema": {"$ref": "#/$defs/schemaPin"},
+     "output_schema": {"$ref": "#/$defs/schemaPin"},
+@@ -1552,6 +1598,7 @@
+         "self_approval_allowed": {"const": false},
+         "required_approver_roles": {
+           "type": "array",
++          "minItems": 1,
+           "uniqueItems": true,
+           "items": {"$ref": "#/$defs/stableId"}
+         },
+@@ -1774,7 +1821,16 @@
+       },
+       "then": {
+         "properties": {
+-          "approval": {"required": ["independent_approver_count"]},
++          "approval": {
++            "properties": {"required_approver_roles": {"minItems": 1}},
++            "required": ["independent_approver_count", "required_approver_roles"]
++          },
++          "evidence_requirements": {
++            "properties": {
++              "input_evidence": {"const": "REQUIRED"},
++              "minimum_count": {"minimum": 1}
++            }
++          },
+           "error_codes": {"contains": {"const": "EXECUTION_UNKNOWN"}},
+           "compensation": {"required": ["mode", "irreversibility_class"]}
+         }
+@@ -1948,7 +2004,7 @@
+ ~~~json
+ {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+-  "$id": "urn:ocor:schema:action-type-contract:1.0",
++  "$id": "urn:ocor:schema:action-type-contract:1.1",
+   "title": "OCOR Action Type Contract",
+   "type": "object",
+   "additionalProperties": false,
+@@ -1956,6 +2012,7 @@
+     "action_type_id",
+     "version",
+     "contract_digest",
++    "governed_context_requirements",
+     "target",
+     "effect_class",
+     "risk_class",
+@@ -1976,6 +2033,22 @@
+     "action_type_id": {"$ref": "#/$defs/stableId"},
+     "version": {"$ref": "#/$defs/semver"},
+     "contract_digest": {"$ref": "#/$defs/digest"},
++    "governed_context_requirements": {
++      "type": "object",
++      "additionalProperties": false,
++      "required": [
++        "all_canonical_fields",
++        "principal_from_verified_transport",
++        "actor_chain_from_verified_delegation",
++        "mismatch_fail_closed"
++      ],
++      "properties": {
++        "all_canonical_fields": {"const": true},
++        "principal_from_verified_transport": {"const": true},
++        "actor_chain_from_verified_delegation": {"const": true},
++        "mismatch_fail_closed": {"const": true}
++      }
++    },
+     "target": {"enum": ["EXTERNAL_ADAPTER", "CANONICAL_COMMIT"]},
+     "canonical_commit_binding": {
+       "type": "object",
+@@ -1986,7 +2059,17 @@
+         "aggregate_type_id",
+         "produced_assertion_class",
+         "requires_accepted_from_claim",
+-        "requires_evidence_set"
++        "requires_evidence_set",
++        "claim_source_binding_path",
++        "decision_ref_path",
++        "authority_ref_path",
++        "evidence_set_path",
++        "aggregate_ref_path",
++        "expected_revision_path",
++        "precondition_binding_refs",
++        "invariant_binding_refs",
++        "gate_package_digest_path",
++        "idempotency_key_path"
+       ],
+       "properties": {
+         "ownership_boundary": {"$ref": "#/$defs/stableId"},
+@@ -2001,7 +2084,23 @@
+           ]
+         },
+         "requires_accepted_from_claim": {"type": "boolean"},
+-        "requires_evidence_set": {"type": "boolean"}
++        "requires_evidence_set": {"type": "boolean"},
++        "claim_source_binding_path": {"$ref": "#/$defs/jsonPointer"},
++        "decision_ref_path": {"$ref": "#/$defs/jsonPointer"},
++        "authority_ref_path": {"$ref": "#/$defs/jsonPointer"},
++        "evidence_set_path": {"$ref": "#/$defs/jsonPointer"},
++        "aggregate_ref_path": {"$ref": "#/$defs/jsonPointer"},
++        "expected_revision_path": {"$ref": "#/$defs/jsonPointer"},
++        "precondition_binding_refs": {
++          "type": "array", "minItems": 1, "uniqueItems": true,
++          "items": {"$ref": "#/$defs/stableId"}
++        },
++        "invariant_binding_refs": {
++          "type": "array", "minItems": 1, "uniqueItems": true,
++          "items": {"$ref": "#/$defs/stableId"}
++        },
++        "gate_package_digest_path": {"$ref": "#/$defs/jsonPointer"},
++        "idempotency_key_path": {"$ref": "#/$defs/jsonPointer"}
+       },
+       "allOf": [
+         {
+@@ -2107,6 +2206,7 @@
+         "self_approval_allowed": {"const": false},
+         "required_approver_roles": {
+           "type": "array",
++          "minItems": 1,
+           "uniqueItems": true,
+           "items": {"$ref": "#/$defs/stableId"}
+         },
+@@ -2177,7 +2277,13 @@
+           "EXECUTION_UNKNOWN",
+           "EXECUTION_INDETERMINATE",
+           "COMPENSATION_UNKNOWN",
+-          "COMPENSATION_INDETERMINATE"
++          "COMPENSATION_INDETERMINATE",
++          "PRECONDITION_FAILED",
++          "INVARIANT_VIOLATION",
++          "REVISION_CONFLICT",
++          "GATE_PACKAGE_MISMATCH",
++          "GOVERNED_CONTEXT_MISMATCH",
++          "CAPABILITY_LEASE_EXPIRED"
+         ]
+       }
+     }
+@@ -2191,6 +2297,21 @@
+       "then": {
+         "properties": {
+           "effect_class": {"const": "CANONICAL_COMMIT"},
++          "risk_class": {"enum": ["R2_CONTROLLED", "R3_HIGH_IMPACT"]},
++          "approval": {
++            "properties": {
++              "mode": {"enum": ["HUMAN_GATE", "DUAL_CONTROL"]},
++              "independent_approver_count": {"minimum": 1},
++              "required_approver_roles": {"minItems": 1}
++            },
++            "required": ["independent_approver_count", "required_approver_roles"]
++          },
++          "evidence_requirements": {
++            "properties": {
++              "proposal_evidence": {"const": "REQUIRED"},
++              "minimum_count": {"minimum": 1}
++            }
++          },
+           "compensation": {
+             "properties": {"irreversibility_class": {"enum": ["REVERSIBLE", "COMPENSATABLE"]}}
+           }
+@@ -2200,6 +2321,46 @@
+     },
+     {
+       "if": {
++        "properties": {
++          "approval": {
++            "properties": {"mode": {"enum": ["HUMAN_GATE", "DUAL_CONTROL"]}},
++            "required": ["mode"]
++          }
++        },
++        "required": ["approval"]
++      },
++      "then": {
++        "properties": {
++          "approval": {
++            "properties": {
++              "independent_approver_count": {"minimum": 1},
++              "required_approver_roles": {"minItems": 1}
++            },
++            "required": ["independent_approver_count", "required_approver_roles"]
++          }
++        }
++      }
++    },
++    {
++      "if": {
++        "properties": {
++          "evidence_requirements": {
++            "properties": {"proposal_evidence": {"const": "REQUIRED"}},
++            "required": ["proposal_evidence"]
++          }
++        },
++        "required": ["evidence_requirements"]
++      },
++      "then": {
++        "properties": {
++          "evidence_requirements": {
++            "properties": {"minimum_count": {"minimum": 1}}
++          }
++        }
++      }
++    },
++    {
++      "if": {
+         "properties": {"target": {"const": "EXTERNAL_ADAPTER"}},
+         "required": ["target"]
+       },
+@@ -2305,6 +2466,7 @@
+     },
+     "digest": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+     "duration": {"type": "string", "pattern": "^PT[0-9]+(\\.[0-9]+)?[SMH]$"},
++    "jsonPointer": {"type": "string", "pattern": "^/(?:[^~/]|~[01])+(?:/(?:[^~/]|~[01])+)*$"},
+     "schemaPin": {
+       "type": "object",
+       "additionalProperties": false,
+@@ -2329,15 +2491,17 @@
+ }
+ ~~~
+ 
+-`canonical_commit_binding` è obbligatorio se e solo se `target=CANONICAL_COMMIT` ed è vietato per `target=EXTERNAL_ADAPTER`: dichiara l'`ownership_boundary`, l'`aggregate_type_id` bersaglio e la classe di asserzione prodotta. Quando la classe è `CanonicalAssertion`, `requires_accepted_from_claim` e `requires_evidence_set` sono strutturalmente `true`, perché §3.6 invariante 1 non ammette una Canonical Assertion priva di `acceptedFromClaim` e di decisione di accettazione esplicita.
++`canonical_commit_binding` è obbligatorio se e solo se `target=CANONICAL_COMMIT` ed è vietato per `target=EXTERNAL_ADAPTER`. Oltre a ownership, aggregate type e classe prodotta, lega mediante JSON Pointer tipizzati Claim/source, Decision, Authority, Evidence set, aggregate ref, expected revision, GatePackage digest e idempotency key allo schema dei parameters; lega inoltre gli invariant e precondition ID. Un path assente, multiplo, non risolto o non compatibile col tipo atteso produce `CONTRACT_REJECTED`. Quando la classe è `CanonicalAssertion`, `requires_accepted_from_claim` e `requires_evidence_set` sono strutturalmente `true`.
+ 
+ Vincoli di admission:
+ 
+ - Ogni `ActionType` privo anche di un solo timeout è rifiutato dal compilatore: non esiste timeout implicito o ereditato.
+ - Una mutazione canonica non può essere `IRREVERSIBLE`: la reversibilità di merge e split è imposta da §3.6, invariante 4.
++- Ogni mutazione canonica ha risk floor `R2_CONTROLLED`, `approval.mode` umano, quorum e ruoli non vuoti, Decision/Authority/Evidence non vuoti e `minimum_count ≥ 1`; `R0`, `R1` e `NONE` sono strutturalmente impossibili.
+ - Un'azione `IRREVERSIBLE` è necessariamente `R3_HIGH_IMPACT` e non ammette compensation dichiarata, perché una compensation su effetto irreversibile sarebbe una promessa non mantenibile.
+ - `retry_safe=false` impone `max_attempts=1` e la dichiarazione di `EXECUTION_UNKNOWN`.
+ - `self_approval_allowed` è strutturalmente `false`; `R2_CONTROLLED` richiede almeno un approvatore indipendente, `R3_HIGH_IMPACT` esattamente due con ruoli distinti.
++- `C3` mappa deterministicamente precondition, invariant, revision e GatePackage mismatch a `PRECONDITION_FAILED`, `INVARIANT_VIOLATION`, `REVISION_CONFLICT`, `GATE_PACKAGE_MISMATCH`; nessun generico “reason code” è ammesso su questo path.
+ 
+ **Tracciabilità:** `DEC-010`, `DEC-011`, `DEC-092`–`DEC-096`, `DEC-131`, `DEC-132`, `DEC-169`, `DEC-174`; `FR-003`, `FR-031`–`FR-033`, `FR-075`–`FR-083`, `FR-136`–`FR-137`, `FR-162`–`FR-163`; `NFR-005`, `NFR-027`, `NFR-029`, `NFR-047`, `NFR-079`; `ARC-011`, `ARC-014`; `CAP-009`–`CAP-011`; `ELM-024`–`ELM-028`, `ELM-031`–`ELM-034`, `ELM-036`–`ELM-037`; `RSK-013`, `RSK-022`, `RSK-023`, `RSK-037`, `RSK-054`.
+ 
+@@ -2348,7 +2512,7 @@
+ ~~~json
+ {
+   "$schema": "https://json-schema.org/draft/2020-12/schema",
+-  "$id": "urn:ocor:schema:event-subscription-contract:1.0",
++  "$id": "urn:ocor:schema:event-subscription-contract:1.1",
+   "title": "OCOR Event Subscription Contract",
+   "type": "object",
+   "additionalProperties": false,
+@@ -2356,6 +2520,7 @@
+     "subscription_contract_id",
+     "version",
+     "contract_digest",
++    "governed_context_ref",
+     "event_type_refs",
+     "delivery",
+     "ordering",
+@@ -2369,6 +2534,7 @@
+     "subscription_contract_id": {"$ref": "#/$defs/stableId"},
+     "version": {"$ref": "#/$defs/semver"},
+     "contract_digest": {"$ref": "#/$defs/digest"},
++    "governed_context_ref": {"type": "string", "pattern": "^urn:sha256:[0-9a-f]{64}$"},
+     "event_type_refs": {
+       "type": "array",
+       "minItems": 1,
+@@ -2438,11 +2604,38 @@
+           "RELEASE_MISMATCH",
+           "SUBSCRIPTION_NOT_FOUND",
+           "CURSOR_EXPIRED",
++          "REPLAY_DENIED",
+           "CONTROL_PLANE_UNAVAILABLE"
+         ]
+       }
+     }
+   },
++  "allOf": [
++    {
++      "if": {
++        "properties": {
++          "replay": {
++            "properties": {"replay_allowed": {"const": true}},
++            "required": ["replay_allowed"]
++          }
++        },
++        "required": ["replay"]
++      },
++      "then": {"properties": {"replay": {"required": ["max_replay_window"]}}}
++    },
++    {
++      "if": {
++        "properties": {
++          "replay": {
++            "properties": {"replay_allowed": {"const": false}},
++            "required": ["replay_allowed"]
++          }
++        },
++        "required": ["replay"]
++      },
++      "then": {"properties": {"replay": {"not": {"required": ["max_replay_window"]}}}}
++    }
++  ],
+   "$defs": {
+     "stableId": {
+       "type": "string",
+@@ -2467,7 +2660,7 @@
+ }
+ ~~~
+ 
+-Ogni evento consegnato trasporta il Governed Context Set di §1.4 e, per gli eventi version-sensitive, `canonical_commit` e `projection_watermark`. Il contratto non dichiara semantica exactly-once e impone al consumer la deduplica su `event_id`. Il cursor è opaco: nessun offset di partizione, nome di topic o identificativo di broker attraversa il contratto pubblico, coerentemente con `TB-CXT-06`.
++Ogni evento consegnato risolve `governed_context_ref`, rivaluta Policy/Authority per delivery e conserva lo stesso context digest su replay; per gli eventi version-sensitive porta anche `canonical_commit` e `projection_watermark`. Replay è ammesso soltanto con finestra bounded esplicita e nuova autorizzazione; senza finestra produce `REPLAY_DENIED`. Il contratto non dichiara exactly-once e impone deduplica su `event_id`. Il cursor è opaco: nessun offset, topic o ID broker attraversa il contratto pubblico.
+ 
+ **Tracciabilità:** `DEC-053`, `DEC-089`–`DEC-091`; `FR-016`, `FR-069`–`FR-075`, `FR-148`; `NFR-027`–`NFR-028`, `NFR-052`, `NFR-077`, `NFR-088`; `ARC-004`, `ARC-009`; `CAP-011`; `ELM-024`–`ELM-028`; `RSK-021`, `RSK-058`.
+ 
+@@ -2499,76 +2692,85 @@
+ ~~~text
+ ActionInstance :=
+   action_instance_id
+-  + tenant_id
+-  + organization_id
+-  + compartments[]
++  + governed_context
++  + governed_context_digest
+   + action_type@release_digest
+   + action_target                      ∈ {EXTERNAL_ADAPTER, CANONICAL_COMMIT}
+   + proposal_digest
++  + claim_source_binding_ref?
++  + decision_ref
++  + authority_ref
++  + evidence_set_ref
++  + aggregate_type_id
+   + aggregate_ref
+   + expected_revision
++  + precondition_binding_refs[]
++  + invariant_binding_refs[]
+   + idempotency_key
++  + gate_package_digest
++  + capability_lease_ref
++  + ontology_release_digest
++  + canonical_commit_ref
++  + projection_watermark
+   + stop_epoch_at_command_ready
+   + policy_bundle_digest
+   + correlation_id
+ ~~~
+ 
++`ConflictScope` è un record chiuso `{ownership_boundary, aggregate_type_id, aggregate_ref, target_type, target_ref, effect_domain, resource_refs[], conflict_relation_version}`. La relazione di conflitto è deterministica e versionata; se lo scope o il footprint non sono calcolabili, la postura è il blocco conservativo dell'intero ownership boundary, non un allow implicito.
++
++`IndeterminateEffectAdjudication` è append-only e distinto dalla FSM esecutiva: `{adjudication_id, action_instance_id, conflict_scope, adjudicator_principal_id, authority_ref, decision_ref, evidence_refs[1..*], disposition, residual_risk, created_at, signature_ref}` con `disposition ∈ {EFFECT_CONFIRMED, NO_EFFECT_CONFIRMED, RESIDUAL_RISK_ACCEPTED_FOR_NEW_ACTION}`. Solo Evidence positiva può scegliere i primi due esiti; il terzo non riscrive l'esito ignoto e autorizza una nuova proposta nominando il rischio. Un record valido ricalcola il blocco; nessuna modifica in-place o silenzio lo rimuove.
++
+ La pipeline governa **entrambe** le classi di mutazione. Un `ActionType` con `target=EXTERNAL_ADAPTER` produce un effetto sul mondo esterno e si conferma con un `ExecutionResult` del destinatario; un `ActionType` con `target=CANONICAL_COMMIT` (§3.7) produce una mutazione dello stato canonico e si conferma con il commit receipt di `C3`. L'ammissione di una Claim a `CanonicalAssertion`, una `MergeDecision`, una `SplitDecision` e ogni altra mutazione canonica percorrono quindi la stessa FSM, le stesse guardie e lo stesso Human Gate delle azioni esterne: non esiste un secondo percorso, non governato, verso lo stato canonico. È questa la realizzazione di `ARC-014` e della regola 10 di §2.5.
+ 
+ `ActionProposal`, `PolicyAuthorityDecision`, `ApprovalRecord`, `Decision`, `ActionIntent`, `ActionCommand`, `DeliveryAttempt`, `ExecutionResult` e `OutcomeAssessment` sono record distinti, immutabili, correlati e append-only. Ogni transizione aggiorna atomicamente soltanto l'Action Ledger locale e la relativa Transactional Outbox; dispatch, proiezioni e conferme esterne sono asincroni. Non è ammessa alcuna transazione distribuita globale.
+ 
+ ```mermaid
+ stateDiagram-v2
+-    [*] --> PROPOSAL_RECORDED: SubmitProposal
+-    PROPOSAL_RECORDED --> CONTROL_CHECK: validate contract
+-
+-    CONTROL_CHECK --> DENIED: deny or control timeout
+-    CONTROL_CHECK --> APPROVAL_PENDING: Human Gate required
+-    CONTROL_CHECK --> APPROVAL_RESOLVED: approval not required
+-
+-    APPROVAL_PENDING --> APPROVAL_RESOLVED: valid human quorum
+-    APPROVAL_PENDING --> APPROVAL_REJECTED: rejection
+-    APPROVAL_PENDING --> APPROVAL_EXPIRED: expiry
+-
+-    APPROVAL_RESOLVED --> DECISION_PENDING
+-    DECISION_PENDING --> DECISION_REJECTED: reject or expire
+-    DECISION_PENDING --> INTENT_RECORDED: Decision ACCEPT
+-
+-    INTENT_RECORDED --> PRE_DISPATCH_CHECK
+-    PRE_DISPATCH_CHECK --> INVALIDATED: state, policy or release changed
+-    PRE_DISPATCH_CHECK --> CANCELLED: cancel or emergency stop
+-    PRE_DISPATCH_CHECK --> COMMAND_READY: all guards true
+-
+-    COMMAND_READY --> CANCELLED: emergency stop before relay
+-    COMMAND_READY --> DISPATCHED: outbox relay, guards revalidated
+-    COMMAND_READY --> CANONICAL_COMMIT_PENDING: internal target
+-    DISPATCHED --> ACKNOWLEDGED: transport receipt
+-    DISPATCHED --> EXECUTION_FAILED: definitive failure
+-    DISPATCHED --> EXECUTION_UNKNOWN: ambiguous timeout
+-
+-    CANONICAL_COMMIT_PENDING --> EXECUTION_CONFIRMED: commit receipt from C3
+-    CANONICAL_COMMIT_PENDING --> EXECUTION_FAILED: precondition or invariant rejected
+-    CANONICAL_COMMIT_PENDING --> INVALIDATED: revision or fence drift
+-
+-    ACKNOWLEDGED --> EXECUTION_CONFIRMED: correlated confirmation
+-    ACKNOWLEDGED --> EXECUTION_FAILED: definitive negative result
+-    ACKNOWLEDGED --> EXECUTION_UNKNOWN: confirmation timeout
+-
+-    EXECUTION_UNKNOWN --> EXECUTION_CONFIRMED: reconciliation evidence
+-    EXECUTION_UNKNOWN --> EXECUTION_FAILED: reconciliation evidence
+-    EXECUTION_UNKNOWN --> EXECUTION_INDETERMINATE: reconciliation deadline expired
+-
+-    EXECUTION_FAILED --> COMPENSATING: authorized compensation
+-    COMPENSATING --> COMPENSATED: compensation confirmed
+-    COMPENSATING --> COMPENSATION_FAILED: definitive failure
+-    COMPENSATING --> COMPENSATION_UNKNOWN: ambiguous timeout
+-    COMPENSATION_UNKNOWN --> COMPENSATED: reconciliation confirms effect
+-    COMPENSATION_UNKNOWN --> COMPENSATION_FAILED: reconciliation proves failure
+-    COMPENSATION_UNKNOWN --> COMPENSATION_INDETERMINATE: reconciliation deadline expired
+-
+-    EXECUTION_CONFIRMED --> OUTCOME_PENDING
+-    OUTCOME_PENDING --> OUTCOME_ASSESSED: observed Outcome
+-    OUTCOME_PENDING --> OUTCOME_UNOBSERVED: assessment window expired
++    [*] --> PROPOSAL_RECORDED: ACT-T01
++    PROPOSAL_RECORDED --> PROPOSAL_RECORDED: ACT-T02
++    [*] --> DENIED: ACT-T03
++    PROPOSAL_RECORDED --> CONTROL_CHECK: ACT-T04
++    CONTROL_CHECK --> DENIED: ACT-T05
++    CONTROL_CHECK --> APPROVAL_PENDING: ACT-T06
++    CONTROL_CHECK --> APPROVAL_RESOLVED: ACT-T07
++    APPROVAL_PENDING --> APPROVAL_RESOLVED: ACT-T08
++    APPROVAL_PENDING --> APPROVAL_REJECTED: ACT-T09a
++    APPROVAL_PENDING --> APPROVAL_EXPIRED: ACT-T09b
++    APPROVAL_RESOLVED --> DECISION_PENDING: ACT-T26
++    DECISION_PENDING --> DECISION_REJECTED: ACT-T10a
++    DECISION_PENDING --> INTENT_RECORDED: ACT-T10b
++    INTENT_RECORDED --> PRE_DISPATCH_CHECK: ACT-T11
++    PRE_DISPATCH_CHECK --> INVALIDATED: ACT-T13
++    PRE_DISPATCH_CHECK --> CANCELLED: ACT-T23a
++    PRE_DISPATCH_CHECK --> COMMAND_READY: ACT-T12
++    COMMAND_READY --> CANCELLED: ACT-T23b
++    COMMAND_READY --> DISPATCHED: ACT-T14
++    COMMAND_READY --> DISPATCHED: ACT-T19
++    COMMAND_READY --> CANONICAL_COMMIT_PENDING: ACT-T29
++    DISPATCHED --> ACKNOWLEDGED: ACT-T15
++    DISPATCHED --> EXECUTION_FAILED: ACT-T17a
++    DISPATCHED --> EXECUTION_UNKNOWN: ACT-T18a
++    CANONICAL_COMMIT_PENDING --> EXECUTION_CONFIRMED: ACT-T30
++    CANONICAL_COMMIT_PENDING --> EXECUTION_FAILED: ACT-T31a
++    CANONICAL_COMMIT_PENDING --> INVALIDATED: ACT-T31b
++    ACKNOWLEDGED --> EXECUTION_CONFIRMED: ACT-T16
++    ACKNOWLEDGED --> EXECUTION_FAILED: ACT-T17b
++    ACKNOWLEDGED --> EXECUTION_UNKNOWN: ACT-T18b
++    EXECUTION_UNKNOWN --> EXECUTION_CONFIRMED: ACT-T20a
++    EXECUTION_UNKNOWN --> EXECUTION_FAILED: ACT-T20b
++    EXECUTION_UNKNOWN --> EXECUTION_UNKNOWN: ACT-T20c
++    EXECUTION_UNKNOWN --> EXECUTION_INDETERMINATE: ACT-T24
++    EXECUTION_FAILED --> COMPENSATING: ACT-T21
++    COMPENSATING --> COMPENSATED: ACT-T21a
++    COMPENSATING --> COMPENSATION_FAILED: ACT-T21b
++    COMPENSATING --> COMPENSATION_UNKNOWN: ACT-T21c
++    COMPENSATION_UNKNOWN --> COMPENSATED: ACT-T21d
++    COMPENSATION_UNKNOWN --> COMPENSATION_FAILED: ACT-T21e
++    COMPENSATION_UNKNOWN --> COMPENSATION_INDETERMINATE: ACT-T25
++    EXECUTION_CONFIRMED --> OUTCOME_PENDING: ACT-T27
++    OUTCOME_PENDING --> OUTCOME_ASSESSED: ACT-T22
++    OUTCOME_PENDING --> OUTCOME_UNOBSERVED: ACT-T28
+ ```
+ 
+ Il diagramma e la tabella §4.1.2 sono in corrispondenza biunivoca: ogni arco del diagramma ha esattamente una transizione normativa e viceversa. `EXECUTION_INDETERMINATE` e `COMPENSATION_INDETERMINATE` sono stati terminali di escalation, non di successo né di fallimento: chiudono la macchina e trasferiscono la responsabilità a un Human Gate, senza mai inferire l'esito dall'assenza di risposta.
+@@ -2581,55 +2783,67 @@
+ | `G-AUTHORITY` | Principal autenticato; capability allow-listed; Delegation valida per scope, purpose, risk ceiling e TTL; actor chain integra; Policy e Authority services disponibili |
+ | `G-APPROVAL` | Per High-Impact: due Approval di Principal umani distinti, Domain Approver e National Approver; nessun approvatore coincide col proposer; firme legate a proposal digest, revision, release e scadenza |
+ | `G-DECISION` | `Decision=ACCEPT` firmata dall'Authority competente, non scaduta e limitata a effetto, target, parametri e validity window approvati |
+-| `G-FRESHNESS` | `expected_revision`, canonical commit, policy digest, Authority, Approval set, ontology release, adapter binding e watermark coincidono con i valori correnti; nessun `STALE_CONTEXT` o `PROJECTION_NOT_READY`; **nessun effetto esterno in stato `EXECUTION_UNKNOWN`, `EXECUTION_INDETERMINATE`, `COMPENSATION_UNKNOWN` o `COMPENSATION_INDETERMINATE` insiste sullo stesso `aggregate_ref` e sullo stesso target esterno** |
+-| `G-DISPATCH` | Emergency stop inattivo e `stop_epoch` invariato rispetto a quello registrato in `ACT-T12`; fencing token corrente; audit append durevole disponibile; circuit breaker chiuso; adapter conforme; idempotency key valida; command deadline non scaduta |
++| `G-FRESHNESS` | `expected_revision`, canonical commit, state revision, `governed_context_digest`, policy digest e finestra di validità, Authority, Approval set, ontology release, adapter binding e watermark coincidono con il `GatePackage` immutabile e con i valori correnti; nessun `STALE_CONTEXT`/`PROJECTION_NOT_READY`; nessun effetto irrisolto ha `ConflictScope` confliggente, salvo `IndeterminateEffectAdjudication` valido |
++| `G-DISPATCH` | Emergency stop inattivo; `stop_epoch` invariato; `CapabilityLease` integro, non scaduto e legato a Principal/delegation/action/stop epoch; fencing token corrente; audit append durevole disponibile; circuit breaker chiuso; adapter conforme; idempotency key valida; command deadline non scaduta; command digest coincide col `GatePackage` |
++
++`EMISSION-FENCE := G-FRESHNESS ∧ G-DISPATCH` è valutata atomicamente immediatamente prima di **ogni** invio esterno o interno, inclusi primo dispatch, retry e compensation. La valutazione e la registrazione del `DeliveryAttempt` appartengono alla stessa transazione locale del dispatcher. Qualunque drift materiale produce `INVALIDATED` prima dell'invio; un errore di valutazione non degrada a retry.
+ 
+ ### 4.1.2 Transizioni normative
+ 
+-| ID | Origine ed evento | Guardia | Effetto durevole | Destinazione o fallback |
++| Transition ID | Source | Evento/guardia | Effetto durevole | Destination |
+ |---|---|---|---|---|
+-| `ACT-T01` | Nuova `SubmitProposal` | `G-CONTRACT` | Registra proposta, fingerprint, actor chain, Evidence e receipt | `PROPOSAL_RECORDED` |
+-| `ACT-T02` | Duplicato con stessa key e fingerprint | Receipt già presente | Restituisce il receipt originale; nessun nuovo effetto | Stato invariato |
+-| `ACT-T03` | Stessa key con fingerprint diverso | Conflitto | Registra `IDEMPOTENCY_CONFLICT` | `DENIED` |
+-| `ACT-T04` | Avvio controllo | `G-AUTHORITY` valutabile | Registra input e policy snapshot | `CONTROL_CHECK` |
+-| `ACT-T05` | Policy/Authority deny, indisponibile o timeout | Guardia non soddisfatta | Registra reason code e decisione fail-closed | `DENIED` |
+-| `ACT-T06` | Human Gate richiesto | Risk/effect policy | Crea work item con evidence package e scadenza | `APPROVAL_PENDING` |
+-| `ACT-T07` | Gate non richiesto | Policy firmata | Registra `ApprovalAssessment=NOT_REQUIRED`; non simula Approval umana | `APPROVAL_RESOLVED` |
+-| `ACT-T08` | Approval ricevute | `G-APPROVAL` | Registra quorum, firme, scope e TTL | `APPROVAL_RESOLVED` |
+-| `ACT-T09` | Approval rifiutata o scaduta | — | Registra rifiuto/scadenza; nessun consenso per silenzio | `APPROVAL_REJECTED` o `APPROVAL_EXPIRED` |
+-| `ACT-T10` | Decisione | `G-DECISION` | Registra `Decision` e rationale; il reject chiude l'istanza | `INTENT_RECORDED` o `DECISION_REJECTED` |
+-| `ACT-T11` | Derivazione intento | Decision valida | Registra `ActionIntent`, desired effect e ChangeSet senza command | `PRE_DISPATCH_CHECK` |
+-| `ACT-T12` | Rivalidazione finale | `G-FRESHNESS ∧ G-DISPATCH` | Registra command, fencing token, `stop_epoch` corrente e outbox nella stessa transazione locale | `COMMAND_READY` |
+-| `ACT-T13` | Drift materiale | Guardia non soddisfatta | Invalida l'istanza; la nuova proposta la riferisce con `supersedes` | `INVALIDATED` |
+-| `ACT-T14` | Relay outbox verso adapter esterno | Command non scaduto ∧ `G-DISPATCH` rivalidata **al momento dell'emissione** ∧ `stop_epoch` invariato ∧ audit append disponibile ∧ `action_target=EXTERNAL_ADAPTER` | Registra `DeliveryAttempt`; invia lo stesso command e la stessa key | `DISPATCHED` |
+-| `ACT-T15` | ACK o adapter receipt | Correlation valida | Registra ricezione, non successo operativo | `ACKNOWLEDGED` |
+-| `ACT-T16` | Conferma esterna | Evidenza correlata e verificabile | Registra `ExecutionResult=CONFIRMED` | `EXECUTION_CONFIRMED` |
+-| `ACT-T17` | Fallimento definitivo | Evidenza correlata | Registra `ExecutionResult=FAILED` | `EXECUTION_FAILED` |
+-| `ACT-T18` | Timeout dopo possibile side effect | Esito non determinabile | Sospende retry, apre reconciliation e registra reason code | `EXECUTION_UNKNOWN` |
+-| `ACT-T19` | Retry sicuro | `retry_safe=true` nel contratto, stessa key, fencing token e `stop_epoch` correnti, audit append disponibile e retry budget non esaurito | Nuovo `DeliveryAttempt`, mai nuovo logical command | `DISPATCHED` |
+-| `ACT-T20` | Reconciliation | Query di stato read-only o evento tardivo | Risolve soltanto con evidenza positiva | confirmed, failed o resta unknown |
+-| `ACT-T21` | Avvio compensation | Compensation dichiarata e già autorizzata, oppure nuova Decision | Crea una nuova command correlata alla Saga | `COMPENSATING` |
+-| `ACT-T21a` | Esito compensation definitivo | Evidence correlata | Registra successo o fallimento definitivo | `COMPENSATED` o `COMPENSATION_FAILED` |
+-| `ACT-T21b` | Timeout o anomalia dopo possibile effetto compensativo | Esito non determinabile | Registra subtype `EXECUTION_UNKNOWN`, sospende ogni retry e apre status inquiry/reconciliation | `COMPENSATION_UNKNOWN` |
+-| `ACT-T21c` | Reconciliation compensation | Evidence positiva correlata | Risolve lo stato senza inferenze da assenza di risposta | `COMPENSATED`, `COMPENSATION_FAILED` o resta `COMPENSATION_UNKNOWN` |
+-| `ACT-T22` | Osservazione successiva | Execution confermata | L'Outcome rientra come Observation/Evidence e viene valutato separatamente | `OUTCOME_ASSESSED` |
+-| `ACT-T23` | Cancel o emergency stop | Prima dell'emissione; ha precedenza su `ACT-T14` | Termina senza command; dopo il dispatch non presume cancellazione esterna | `CANCELLED` oppure reconciliation/compensation |
+-| `ACT-T24` | Scadenza del `reconciliation_deadline` con stato `EXECUTION_UNKNOWN` | Nessuna evidenza positiva acquisita entro il deadline | Registra `EXECUTION_INDETERMINATE`, congela retry e compensation automatiche, apre escalation obbligatoria al Human Gate con evidence package, e mantiene il blocco di `G-FRESHNESS` su `aggregate_ref` e target esterno finché un Principal umano non adjudica | `EXECUTION_INDETERMINATE` |
+-| `ACT-T25` | Scadenza del `reconciliation_deadline` con stato `COMPENSATION_UNKNOWN` | Nessuna evidenza positiva acquisita entro il deadline | Registra `COMPENSATION_INDETERMINATE` ed escalation obbligatoria; nessuna inferenza di successo o fallimento | `COMPENSATION_INDETERMINATE` |
+-| `ACT-T26` | Apertura della decisione | `G-APPROVAL` risolta | Registra l'apertura della finestra decisionale e i pin congelati | `DECISION_PENDING` |
+-| `ACT-T27` | Execution confermata | Evidenza correlata registrata | Apre la finestra di osservazione dell'Outcome | `OUTCOME_PENDING` |
+-| `ACT-T28` | Scadenza della finestra di assessment | Nessuna Observation correlata entro `outcome_assessment_window` | Registra l'assenza di Outcome osservato senza inferirne il valore | `OUTCOME_UNOBSERVED` |
+-| `ACT-T29` | Dispatch verso `C3` | Command non scaduto ∧ `G-DISPATCH` rivalidata all'emissione ∧ `stop_epoch` invariato ∧ audit append disponibile ∧ `action_target=CANONICAL_COMMIT` | Consegna a `C3` la commit request governata con `Decision`, `Authority ref`, Evidence set, `expected_revision` e idempotency key | `CANONICAL_COMMIT_PENDING` |
+-| `ACT-T30` | Commit receipt di `C3` | Receipt correlato e verificabile | Registra `ExecutionResult=CONFIRMED` con `canonical_commit_id`; la `CanonicalAssertion` prodotta riferisce `acceptedFromClaim` e `acceptedByDecision` secondo §3.6 | `EXECUTION_CONFIRMED` |
+-| `ACT-T31` | Rifiuto di `C3` | Precondizione, invariante o revisione attesa non soddisfatte | Registra `ExecutionResult=FAILED` con reason code; nessuno stato canonico è modificato | `EXECUTION_FAILED` o `INVALIDATED` |
++| `ACT-T01` | `[*]` | nuova proposta; `G-CONTRACT` | registra proposta, GCS, fingerprint ed Evidence | `PROPOSAL_RECORDED` |
++| `ACT-T02` | `PROPOSAL_RECORDED` | stessa idempotency key e fingerprint | restituisce receipt originale | `PROPOSAL_RECORDED` |
++| `ACT-T03` | `[*]` | stessa key, fingerprint diverso | reason code IDEMPOTENCY_CONFLICT | `DENIED` |
++| `ACT-T04` | `PROPOSAL_RECORDED` | avvio; `G-AUTHORITY` valutabile | registra policy snapshot | `CONTROL_CHECK` |
++| `ACT-T05` | `CONTROL_CHECK` | deny/timeout/control unavailable | reason code fail-closed | `DENIED` |
++| `ACT-T06` | `CONTROL_CHECK` | Human Gate richiesto | work item + Evidence + expiry | `APPROVAL_PENDING` |
++| `ACT-T07` | `CONTROL_CHECK` | gate non richiesto e target non canonical | disposition NOT_REQUIRED | `APPROVAL_RESOLVED` |
++| `ACT-T08` | `APPROVAL_PENDING` | `G-APPROVAL` | quorum/firme/scope/TTL | `APPROVAL_RESOLVED` |
++| `ACT-T09a` | `APPROVAL_PENDING` | rifiuto esplicito | rejection record | `APPROVAL_REJECTED` |
++| `ACT-T09b` | `APPROVAL_PENDING` | expiry | expiry record | `APPROVAL_EXPIRED` |
++| `ACT-T10a` | `DECISION_PENDING` | Decision reject/expire | Decision + rationale | `DECISION_REJECTED` |
++| `ACT-T10b` | `DECISION_PENDING` | `G-DECISION`, ACCEPT | Decision + rationale | `INTENT_RECORDED` |
++| `ACT-T11` | `INTENT_RECORDED` | Decision valida | ActionIntent senza command | `PRE_DISPATCH_CHECK` |
++| `ACT-T12` | `PRE_DISPATCH_CHECK` | `EMISSION-FENCE` | command, GatePackage digest, lease, stop epoch e outbox atomici | `COMMAND_READY` |
++| `ACT-T13` | `PRE_DISPATCH_CHECK` | drift materiale | invalida; nessun command | `INVALIDATED` |
++| `ACT-T14` | `COMMAND_READY` | external target; `EMISSION-FENCE` atomica | DeliveryAttempt + invio | `DISPATCHED` |
++| `ACT-T15` | `DISPATCHED` | ACK correlato | receipt, non successo | `ACKNOWLEDGED` |
++| `ACT-T16` | `ACKNOWLEDGED` | conferma positiva | ExecutionResult confirmed | `EXECUTION_CONFIRMED` |
++| `ACT-T17a` | `DISPATCHED` | fallimento definitivo | ExecutionResult failed | `EXECUTION_FAILED` |
++| `ACT-T17b` | `ACKNOWLEDGED` | fallimento definitivo | ExecutionResult failed | `EXECUTION_FAILED` |
++| `ACT-T18a` | `DISPATCHED` | timeout ambiguo | sospende retry e apre reconciliation | `EXECUTION_UNKNOWN` |
++| `ACT-T18b` | `ACKNOWLEDGED` | confirmation timeout | sospende retry e apre reconciliation | `EXECUTION_UNKNOWN` |
++| `ACT-T19` | `COMMAND_READY` | retry autorizzato; `EMISSION-FENCE` atomica; stessa key | nuovo DeliveryAttempt, stesso logical command | `DISPATCHED` |
++| `ACT-T20a` | `EXECUTION_UNKNOWN` | Evidence positiva di effetto | reconciliation record | `EXECUTION_CONFIRMED` |
++| `ACT-T20b` | `EXECUTION_UNKNOWN` | Evidence positiva di non-effetto/failure | reconciliation record | `EXECUTION_FAILED` |
++| `ACT-T20c` | `EXECUTION_UNKNOWN` | nessuna Evidence prima del deadline | inquiry record, nessuna inferenza | `EXECUTION_UNKNOWN` |
++| `ACT-T21` | `EXECUTION_FAILED` | compensation autorizzata | crea command correlata, poi `EMISSION-FENCE` prima dell'invio | `COMPENSATING` |
++| `ACT-T21a` | `COMPENSATING` | Evidence di successo | result record | `COMPENSATED` |
++| `ACT-T21b` | `COMPENSATING` | Evidence di failure | result record | `COMPENSATION_FAILED` |
++| `ACT-T21c` | `COMPENSATING` | timeout ambiguo | sospende retry, apre reconciliation | `COMPENSATION_UNKNOWN` |
++| `ACT-T21d` | `COMPENSATION_UNKNOWN` | Evidence di effetto | reconciliation record | `COMPENSATED` |
++| `ACT-T21e` | `COMPENSATION_UNKNOWN` | Evidence di failure | reconciliation record | `COMPENSATION_FAILED` |
++| `ACT-T22` | `OUTCOME_PENDING` | Observation/Evidence correlata | OutcomeAssessment separato | `OUTCOME_ASSESSED` |
++| `ACT-T23a` | `PRE_DISPATCH_CHECK` | cancel/stop | nessun command | `CANCELLED` |
++| `ACT-T23b` | `COMMAND_READY` | stop prima dell'emissione; precedenza | nessun DeliveryAttempt | `CANCELLED` |
++| `ACT-T24` | `EXECUTION_UNKNOWN` | reconciliation deadline | apre adjudication, conserva ConflictScope | `EXECUTION_INDETERMINATE` |
++| `ACT-T25` | `COMPENSATION_UNKNOWN` | reconciliation deadline | apre adjudication, conserva ConflictScope | `COMPENSATION_INDETERMINATE` |
++| `ACT-T26` | `APPROVAL_RESOLVED` | Approval assessment risolta | congela pin decisionali | `DECISION_PENDING` |
++| `ACT-T27` | `EXECUTION_CONFIRMED` | confirmation record | apre assessment window | `OUTCOME_PENDING` |
++| `ACT-T28` | `OUTCOME_PENDING` | assessment window expired | assenza osservata, nessun valore inferito | `OUTCOME_UNOBSERVED` |
++| `ACT-T29` | `COMMAND_READY` | canonical target; `EMISSION-FENCE` atomica | invia a C3 Decision/Authority/Evidence/binding/revision/GCS | `CANONICAL_COMMIT_PENDING` |
++| `ACT-T30` | `CANONICAL_COMMIT_PENDING` | commit receipt C3 | canonical commit ID + accepted refs | `EXECUTION_CONFIRMED` |
++| `ACT-T31a` | `CANONICAL_COMMIT_PENDING` | precondition/invariant failure | reason code PRECONDITION_FAILED o INVARIANT_VIOLATION | `EXECUTION_FAILED` |
++| `ACT-T31b` | `CANONICAL_COMMIT_PENDING` | revision/GatePackage/GCS drift | reason code REVISION_CONFLICT, GATE_PACKAGE_MISMATCH o GOVERNED_CONTEXT_MISMATCH | `INVALIDATED` |
+ 
+-`ACT-T23` ha precedenza su `ACT-T14` e su `ACT-T29`: un emergency stop accettato localmente prima dell'emissione impedisce il relay e porta a `CANCELLED`, anche quando la command deadline non è scaduta. La guardia di stop, la disponibilità dell'audit e il fencing sono rivalutati **al momento dell'emissione**, non soltanto alla creazione del command: fra `COMMAND_READY` e il relay esiste una finestra pari a `predispatch_fence_ttl`, e la rivalidazione è ciò che impedisce a un command già pronto di raggiungere l'adapter dopo l'attivazione dello stop.
++`ACT-T23` ha precedenza su `ACT-T14`, `ACT-T19` e `ACT-T29`: uno stop accettato localmente prima dell'emissione impedisce il relay. A primo invio, retry e compensation, state revision, policy validity, Authority, Approval, release, watermark, stop epoch, `CapabilityLease`, audit, deadline, circuit breaker, adapter conformance e `GatePackage` sono letti in un unico snapshot di valutazione. Qualunque discrepanza materializza `INVALIDATED` prima del side effect.
+ 
+-Un `EXECUTION_UNKNOWN` o `COMPENSATION_UNKNOWN` non risolto entro il `reconciliation_deadline` **non resta pendente indefinitamente**: transita in uno stato terminale di indeterminatezza che nomina un responsabile umano e che blocca, attraverso `G-FRESHNESS`, ogni nuova azione sullo stesso aggregate e sullo stesso target esterno. È questo blocco, non la sola idempotency key, a impedire la doppia attuazione descritta da `RSK-023` quando l'esito della prima operazione resta ignoto.
++Un `EXECUTION_UNKNOWN` o `COMPENSATION_UNKNOWN` non risolto entro il `reconciliation_deadline` transita in uno stato terminale che apre il workflow distinto `IndeterminateEffectAdjudication`. `G-FRESHNESS` blocca ogni proposta con `ConflictScope` confliggente; scope assente o ambiguo blocca l'ownership boundary. Solo un'adjudication firmata con Authority ed Evidence non vuota può ricalcolare il blocco. È questo controllo, non la sola idempotency key, a impedire doppia attuazione senza congelare azioni sicuramente indipendenti.
+ 
+ Un timeout post-dispatch di un'operazione non idempotente produce obbligatoriamente `EXECUTION_UNKNOWN`: non equivale né a successo né a fallimento e non abilita retry ciechi. Un ACK prova soltanto la ricezione. `ExecutionResult` prova l'esito dichiarato dal destinatario; `OutcomeAssessment` valuta separatamente l'effetto osservato sul mondo.
+ 
+-La compensation non è rollback implicito: è una nuova operazione governata con idempotency key, fencing, Delivery Attempt ed Execution Result propri. `COMPENSATION_UNKNOWN` è uno stato specializzato della semantica `EXECUTION_UNKNOWN`: non equivale a fallimento e non abilita retry ciechi. Il PoC esercita al massimo un percorso compensativo bounded mediante simulatore contract-faithful; il modello generalizzato multi-step corrispondente a `ELM-035` resta differito.
++La compensation non è rollback implicito: è una nuova operazione governata con idempotency key, fencing, Delivery Attempt ed Execution Result propri. Immediatamente prima dell'invio rivalida atomicamente la stessa `EMISSION-FENCE`; drift o lease scaduta producono `INVALIDATED` e nessun invio. `COMPENSATION_UNKNOWN` non equivale a fallimento e non abilita retry ciechi. Il PoC esercita al massimo un percorso compensativo bounded mediante simulatore contract-faithful; il modello generalizzato multi-step `ELM-035` resta differito.
+ 
+ ### 4.1.3 Profilo temporale candidato PoC
+ 
+@@ -2677,7 +2891,7 @@
+ | `causal_model_digest`, `policy_bundle_digest` | SCM e policy snapshot firmati |
+ | `assumption_set_ref`, `input_digest`, `evidence_refs` | Premesse e input riproducibili |
+ | `seed`, `time_horizon`, `validity_at`, `budget` | Riproducibilità e limiti della run |
+-| `tenant_id`, `organization_id`, `domain`, `compartments[]`, `classification_marking`, `purpose`, `policy_bundle_digest` | Boundary di sicurezza; realizza il Governed Context Set di §1.4 |
++| `governed_context` | Record canonico §1.4 completo; include `domain_id`, marking ref, Principal transport-bound, actor chain, correlation e tutti i pin |
+ 
+ La baseline è montata read-only; ogni ipotesi è un delta append-only in overlay copy-on-write isolato per `(scenario_id, run_id, compartments)`. Cache, indici e projection key includono l'intera tupla di version pin. Un rebase crea una nuova versione e non riscrive la run originale.
+ 
+@@ -2754,7 +2968,7 @@
+ 
+ `SimulationResult` può generare soltanto `Recommendation` o `DecisionProposal`. Prima dell'eventuale Action Intent, il runtime rivalida Canonical State, release fence, Policy, Authority e validity expiry. Ogni tentativo di merge diretto o emissione di Action Command è negato e auditato.
+ 
+-`ELM-070` rimane differito: il contratto di Counterfactual Query è riconosciuto e validabile, ma il profilo PoC restituisce `REJECTED{reason=CAPABILITY_DEFERRED, element=ELM-070}` per l'esecuzione completa abduction–action–prediction. `do(X)` e il confronto interventistico P0 restano Design Target attivi.
++`ELM-070` rimane differito: il contratto di Counterfactual Query è riconosciuto e validabile, ma il profilo PoC restituisce `REJECTED{reason=CAPABILITY_DEFERRED, element=ELM-070}` per l'esecuzione completa abduction–action–prediction. Per eliminare la contraddizione con `FR-095` senza espandere il PoC, questa candidata propone `FR-095` P0/MVP fuori PoC. La proposta è `PROPOSED — AWAITING CHANGE CONTROL` e non modifica il registro sorgente; finché non approvata, l'acceptance PoC non può rivendicare `FR-095`. `do(X)` e il confronto interventistico non-AAP restano Design Target attivi.
+ 
+ **Tracciabilità:** `DEC-009`, `DEC-010`, `DEC-099`–`DEC-108`, `DEC-148`, `DEC-161`, `DEC-166`; `FR-086`–`FR-105`, `FR-154`, `FR-161`; `NFR-030`–`NFR-033`, `NFR-072`, `NFR-076`; `CAP-018`, `CAP-019`; `ELM-065`–`ELM-073`; `RSK-024`–`RSK-028`.
+ 
+@@ -2793,7 +3007,7 @@
+   task_id,
+   assignment_id,
+   parent_handoff_id?,
+-  sender_principal,
++  asserted_sender_principal,
+   recipient_principal,
+   contract_id,
+   contract_version,
+@@ -2804,16 +3018,10 @@
+   provenance_refs[],
+   taint_labels[],
+   baseline_ref,
++  governed_context,
++  governed_context_digest,
+   ontology_release_digest,
+   model_digest?,
+-  tenant_id,
+-  organization_id,
+-  domain,
+-  compartments[],
+-  classification_marking,
+-  purpose,
+-  policy_bundle_digest,
+-  actor_chain[],
+   delegation_ref,
+   effective_authority_ref,
+   correlation_id,
+@@ -2924,8 +3132,11 @@
+ CapabilityLease {
+   lease_id
+   capability_id
+-  principal_id
++  effective_principal_id
+   delegation_ref
++  action_instance_id
++  governed_context_digest
++  gate_package_digest
+   stop_epoch
+   fencing_token
+   issued_at
+@@ -2933,6 +3144,8 @@
+ }
+ ~~~
+ 
++Il lease è firmato dall'authority di capability; è monouso per `(action_instance_id, emission_attempt)` e non trasferibile. Principal, delegation, GCS, GatePackage o stop epoch non coincidenti, firma/revoca invalida o `expires_at ≤ now` producono `CAPABILITY_LEASE_EXPIRED`/`GOVERNED_CONTEXT_MISMATCH` e nessuna emissione.
++
+ Il termine «lease» ricorre in questo documento con tre significati distinti e non intercambiabili: il **Capability Lease** qui definito, controllo di sicurezza attivo nel PoC; il **writer epoch fencing** di `C3` (§2.2), che non è un lease semantico; e la `ResourceReservation/Lease` di `ELM-080`, differita e assente dal PoC. Il target di contenimento `≤10 s` di §5.5 dipende esclusivamente dal primo e non da `ELM-080`.
+ 
+ 1. `redelegation_allowed=false` è il default.
+@@ -2953,20 +3166,22 @@
+ SecurityContext {
+   tenant_id
+   organization_id
+-  domains[]
++  domain_id
+   compartments[]
++  classification_marking_ref
+   marking_scheme_ref              // MarkingSchemeDefinition attivo, §3.1.1
+   classification_level            // livello risolto dallo scheme
+   caveats[]                       // partizione di labels, semantica RESTRICTION
+   mandatory_markings[]            // partizione di labels, semantica RESTRICTION
+   dissemination_controls[]        // restrizioni, non permessi
+   permitted_purposes[]            // permessi
+-  principal_id
++  effective_principal_id
+   actor_chain[]
+   policy_bundle_digest
+   policy_bundle_not_before
+   policy_bundle_expires_at
+   ontology_release_digest
++  governed_context_digest
+   correlation_id
+   provenance_ref
+ }
+@@ -2986,9 +3201,20 @@
+ Purposes(d)=\bigcap_i Purposes(x_i).
+ $$
+ 
+-L'operatore dipende dalla **semantica del campo**, non dalla sua forma. `caveats`, `mandatory_markings` e `dissemination_controls` sono restrizioni: il join conservativo è l'**unione**, perché un derivato non può perdere un controllo posseduto da un solo input. `permitted_purposes` sono permessi: il join conservativo è l'**intersezione**. Il `MarkingSchemeDefinition` dichiara esplicitamente la semantica di ciascuna famiglia in `caveat_semantics` e `dissemination_control_semantics`, e nessun default implicito è ammesso.
++L'operatore dipende dalla semantica dichiarata e il profilo supportato è totale. La candidata seleziona una sola algebra conservativa:
++
++| Famiglia | Kind | Dominance | Join conservativo | Meet | Unknown / incomparabile |
++|---|---|---|---|---|---|
++| `classification_level` | `RESTRICTION` | reticolo `dominance_relation` | least upper bound univoco | greatest lower bound | `DENY`; oppure `top` solo se lo scheme lo dichiara esplicitamente |
++| `mandatory_markings` | `RESTRICTION` | superset più restrittivo | unione | intersezione | `DENY` |
++| `caveats` | `RESTRICTION` | superset più restrittivo | unione | intersezione | `DENY` |
++| `dissemination_controls` | `RESTRICTION` | superset più restrittivo | unione | intersezione | `DENY` |
++| `permitted_purposes` | `PERMISSION` | subset più restrittivo | intersezione | unione entro vocabolario | insieme vuoto ⇒ `DENY` |
++| `handling_instructions` | `RESTRICTION` | superset più restrittivo | unione | intersezione | `DENY` |
++
++Uno scheme che dichiari `PERMISSION` per caveat, mandatory marking, dissemination control o handling instruction è fuori dal profilo supportato e viene rifiutato in release admission. La tassonomia concreta resta governata da `OI-021`; il metamodello e gli operatori sono invece definiti qui.
+ 
+-$\bigsqcup$ è il join del reticolo dichiarato da `MarkingSchemeDefinition.levels` e `dominance_relation`; in assenza di uno scheme attivo e risolvibile la classificazione non è calcolabile e la richiesta è negata. Un'intersezione vuota di purpose, un label incomparabile o un contesto incompleto produce `DENY`, `QUARANTINE` o output redatto secondo `incomparable_behavior`; non autorizza in nessun caso un'etichetta meno restrittiva. Il criterio di accettazione «marking non decresce» (§7.2) è verificabile esattamente perché l'ordine è dichiarato dallo scheme.
++$\bigsqcup$ è il join univoco del reticolo dichiarato. Il compilatore verifica chiusura, totalità nel profilo supportato, monotonia, determinismo, associatività, commutatività e idempotenza degli operatori. In assenza di scheme attivo, label nota, risultato univoco o contesto completo la richiesta è negata; nessun valore sconosciuto viene scartato. Declassification non usa il meet ordinario: richiede una transizione separata firmata da `declassification_authority_ref`, Human Gate, Evidence, before/after digest e nuovo artefatto. Il criterio «marking non decresce» (§7.2) è quindi calcolabile senza chiudere `OI-021`.
+ 
+ | Superficie | Enforcement obbligatorio |
+ |---|---|
+@@ -3130,7 +3356,7 @@
+ - promozione dello stesso artifact digest senza rebuild;
+ - reference adapter e orchestratore fuori dalla semantica pubblica del prodotto.
+ 
+-Della `CAP-024` il PoC copre la slice di isolamento, deployment ripetibile e recovery (`NFR-059`, `NFR-062`, `NFR-065`), la degradazione sicura sotto carico e guasto (`NFR-079`, §6.3) e le classi di workload asincrono (`NFR-072`, §4.2). Restano differiti `NFR-060`, `NFR-061`, `NFR-064`, `NFR-074` e `NFR-078`, insieme al target indicativo `NFR-071`, il cui valore numerico resta governato da `ASM-010` e `OI-008`. L'hardening esteso di `CAP-024` resta perciò `Deferred` per la parte HA, multi-site, scala e air-gap, senza che ciò differisca alcun requisito P0 con obbligo `DEVE`.
++Della `CAP-024` il PoC copre la slice di isolamento, deployment ripetibile e recovery (`NFR-059`, `NFR-062`, `NFR-065`), la degradazione sicura sotto carico e guasto (`NFR-079`, §6.3) e le classi di workload asincrono (`NFR-072`, §4.2). `NFR-060`, `NFR-061`, `NFR-064`, `NFR-074` e `NFR-078` non sono inclusi nel profilo PoC ma restano requisiti `Confermato` nelle rispettive release sorgente; in particolare `NFR-078` è P0/MVP e non `Differito`. Il target indicativo `NFR-071` resta governato da `ASM-010` e `OI-008`. L'hardening esteso della capability è deferred rispetto al PoC; nessun requisito P0 con target **PoC** e obbligo `DEVE` è differito.
+ 
+ ## 6.2 Consistenza eventuale osservabile
+ 
+@@ -3171,21 +3397,23 @@
+ 
+ ## 6.3 Observability e safe-degraded operation
+ 
+-Ogni step del mission thread propaga:
++Ogni step del mission thread propaga il digest e, nel record governato policy-filtered, l'intero `GovernedContext`:
+ 
+ ~~~text
+ trace_id
+ correlation_id
+ causation_id
+-principal_id
++governed_context_digest
++effective_principal_id
+ actor_chain
+ tenant_id
+ organization_id
+-domain
++domain_id
+ compartments
++classification_marking_ref
+ purpose
+ policy_bundle_digest
+-ontology_release
++ontology_release_digest
+ canonical_commit
+ projection_watermark
+ policy_decision_id
+@@ -3256,29 +3484,36 @@
+ 
+ La seguente tabella è un'allocazione ingegneristica sintetica; le sovrapposizioni sono intenzionali perché Policy, audit, provenance e version fence sono concern trasversali. Il mapping normativo atomico 1:1 resta negli allegati `OCOR_Requirement_Register_v0.9.md`, `OCOR_Decision_Register_v1.0.md`, `OCOR_Requirement_Traceability_Index_v0.9.md` e `OCOR_CAP_ELM_Requirement_Crosswalk_v0.9.md`. La presenza di un ID esprime allocazione di design, non implementazione o evidenza.
+ 
+-La matrice copre l'intero universo normativo: 23/23 `ARC`, 18/18 `BR`, 174/174 `FR`, 93/93 `NFR`, 25/26 `CAP` — `CAP-026` è fuori perimetro per progetto e trattato in §7.1 — 103/103 `ELM`, 60/60 `RSK`. La riga «Programme & Evidence Governance» alloca i requisiti che governano il processo di verifica e i claim, e che non appartengono a un singolo subsystem runtime; non introduce un nono subsystem.
++La matrice copre 183/196 decisioni su superfici subsystem/programme, 23/23 `ARC`, 18/18 `BR`, 174/174 `FR`, 93/93 `NFR`, 25/26 `CAP` — `CAP-026` è fuori perimetro — 103/103 `ELM`, 60/60 `RSK`. Le restanti 13 decisioni sono tracciate come `DOCUMENT_CONTROL` nella tabella successiva: coverage globale 196/196. Una allocazione programme/document non implica ownership runtime.
+ 
+ | Subsystem ADD | Vincoli architetturali (`ARC-*`) | Range Decisioni (`DEC-*`) | Range Requisiti (`BR/FR/NFR-*`) | Capability correlate (`CAP-*`) | Elementi ontologici (`ELM-*`) | Rischi mitigati (`RSK-*`) |
+ |---|---|---|---|---|---|---|
+-| Compiler & Gateway | `ARC-003–006`, `ARC-008`, `ARC-016`, `ARC-018`, `ARC-022` | `DEC-060–067`, `DEC-069–087`, `DEC-178–179` | `BR-001`, `BR-007`; `FR-016`, `FR-022–027`, `FR-037`, `FR-039–061`, `FR-164–169`; `NFR-001`, `NFR-012–026`, `NFR-071`, `NFR-076–077`, `NFR-082–084` | `CAP-002–003`, `CAP-006–008`, `CAP-017`, `CAP-021–023` | `ELM-001–023`, `ELM-029–030`, `ELM-051`, `ELM-062–064`, `ELM-089–100` | `RSK-010–012`, `RSK-015–016`, `RSK-018`, `RSK-020`, `RSK-039`, `RSK-058` |
++| Compiler & Gateway | `ARC-003–006`, `ARC-008`, `ARC-016`, `ARC-018`, `ARC-022` | `DEC-060–067`, `DEC-069–087`, `DEC-175`, `DEC-178–179` | `BR-001`, `BR-007`; `FR-016`, `FR-022–027`, `FR-037`, `FR-039–061`, `FR-164–169`; `NFR-001`, `NFR-012–026`, `NFR-071`, `NFR-076–077`, `NFR-082–084` | `CAP-002–003`, `CAP-006–008`, `CAP-017`, `CAP-021–023` | `ELM-001–023`, `ELM-029–030`, `ELM-051`, `ELM-062–064`, `ELM-089–100` | `RSK-010–012`, `RSK-015–016`, `RSK-018`, `RSK-020`, `RSK-039`, `RSK-058` |
+ | State & Projections | `ARC-001–003`, `ARC-006–010`, `ARC-018`, `ARC-020–022` | `DEC-061`, `DEC-063`, `DEC-079`, `DEC-081`, `DEC-084–087`, `DEC-141–148`, `DEC-178–179` | `FR-007`, `FR-012`, `FR-025`, `FR-028–030`, `FR-053–054`, `FR-062–068`, `FR-148–150`, `FR-154`, `FR-168`; `NFR-012–014`, `NFR-024`, `NFR-026`, `NFR-053–055`, `NFR-058`, `NFR-077`, `NFR-084` | `CAP-004–005`, `CAP-015–018`, `CAP-023` | `ELM-003–005`, `ELM-017`, `ELM-034`, `ELM-036`, `ELM-053–064`, `ELM-094`, `ELM-100–101` | `RSK-012`, `RSK-017`, `RSK-019–020`, `RSK-039`, `RSK-041–045`, `RSK-052–053` |
+ | Action & Backbone | `ARC-002`, `ARC-009`, `ARC-011`, `ARC-014`, `ARC-016`, `ARC-020` | `DEC-064`, `DEC-089–097`, `DEC-167`, `DEC-169`, `DEC-187` | `BR-010`; `FR-031–033`, `FR-069–085`, `FR-162–163`, `FR-173`; `NFR-027–029`, `NFR-079`, `NFR-092` | `CAP-009–011`, `CAP-022` | `ELM-024–028`, `ELM-031–037`, `ELM-039`, `ELM-055`, `ELM-062`, `ELM-086`, `ELM-098` | `RSK-013`, `RSK-019`, `RSK-021–023`, `RSK-052`, `RSK-054`, `RSK-060` |
+ | Causal & Scenarios | `ARC-010–013`, `ARC-017` | `DEC-009–010`, `DEC-065`, `DEC-099–108`, `DEC-148`, `DEC-166` | `FR-009`, `FR-034–036`, `FR-086–105`, `FR-154`, `FR-161`; `NFR-007`, `NFR-015`, `NFR-030–033`, `NFR-072`, `NFR-076`, `NFR-090` | `CAP-018–019` | `ELM-038`, `ELM-059`, `ELM-065–073`, `ELM-077–078`, `ELM-085`, `ELM-094` | `RSK-003`, `RSK-014`, `RSK-024–028`, `RSK-044`, `RSK-059` |
+-| Agent Kernel | `ARC-010`, `ARC-014–016` | `DEC-007–008`, `DEC-018`, `DEC-066`, `DEC-110–120`, `DEC-132–133` | `FR-038`, `FR-106–128`, `FR-140`; `NFR-016`, `NFR-034–037`, `NFR-047–048` | `CAP-013`, `CAP-020`, `CAP-022` | `ELM-040`, `ELM-048`, `ELM-074–088`, `ELM-097`, `ELM-099` | `RSK-005`, `RSK-007`, `RSK-029–033`, `RSK-038` |
++| Agent Kernel | `ARC-010`, `ARC-014–016` | `DEC-007–008`, `DEC-018`, `DEC-066`, `DEC-110–120`, `DEC-132–133`, `DEC-173` | `FR-038`, `FR-106–128`, `FR-140`, `FR-166–167`; `NFR-016`, `NFR-034–037`, `NFR-047–048` | `CAP-013–014`, `CAP-020`, `CAP-022` | `ELM-040`, `ELM-048`, `ELM-051`, `ELM-074–088`, `ELM-097`, `ELM-099`, `ELM-103` | `RSK-005`, `RSK-007`, `RSK-029–033`, `RSK-038` |
+ | Security & Governance | `ARC-004`, `ARC-010`, `ARC-014–017` | `DEC-030–036`, `DEC-122–148`, `DEC-174` | `BR-005`, `BR-008`; `FR-001–006`, `FR-011`, `FR-129–154`; `NFR-005–006`, `NFR-008`, `NFR-038–058`, `NFR-081` | `CAP-012–016`, `CAP-018`, `CAP-020–021`, `CAP-023`, `CAP-025` | `ELM-015`, `ELM-040–050`, `ELM-052`, `ELM-058`, `ELM-060–061`, `ELM-086`, `ELM-092–094`, `ELM-102` | `RSK-004–006`, `RSK-008`, `RSK-034–044`, `RSK-055–058` |
+ | Deploy & Operations | `ARC-005`, `ARC-019–021`, `ARC-023` | `DEC-150–170`, `DEC-181–183`, `DEC-187–192` | `BR-004`, `BR-015–018`; `FR-013`, `FR-018–019`, `FR-155–163`, `FR-170–174`; `NFR-002`, `NFR-059–080`, `NFR-085–093` | `CAP-001`, `CAP-006`, `CAP-009–010`, `CAP-019`, `CAP-023–025` | `ELM-028`, `ELM-036–037`, `ELM-050`, `ELM-089–103` | `RSK-001–003`, `RSK-009`, `RSK-045–060` |
+ | Programme & Evidence Governance | `ARC-017`, `ARC-019` | `DEC-001–006`, `DEC-011–015`, `DEC-016–027`, `DEC-038–058`, `DEC-172`, `DEC-176–177`, `DEC-180`, `DEC-184–186`, `DEC-188`, `DEC-191–192`, `DEC-194–195` | `BR-002–003`, `BR-006`, `BR-009`, `BR-011–014`; `FR-008`, `FR-010`, `FR-014–015`, `FR-017`, `FR-020–021`; `NFR-003–004`, `NFR-009–011`, `NFR-057`, `NFR-089` | `CAP-024–025` | `ELM-089–091` | `RSK-001–003`, `RSK-009–010`, `RSK-043`, `RSK-059–060` |
+ 
+ Alcuni requisiti governano il processo di verifica e i claim più che una superficie runtime; la loro allocazione alla riga «Programme & Evidence Governance» è deliberata e non implica un componente software dedicato. `FR-017` e `FR-019` sono `P2/Future` e restano allocati senza attivazione nel profilo PoC; `FR-171` è `MVP`; `OI-013` mantiene aperta la normalizzazione atomica dell'inventario di `FR-020`, e questa allocazione non la chiude.
+ 
+-**Decisioni deliberatamente non allocate.** Le `DEC-*` di gate di processo — `DEC-028`, `DEC-029`, `DEC-037`, `DEC-059`, `DEC-068`, `DEC-088`, `DEC-098`, `DEC-109`, `DEC-121`, `DEC-149`, `DEC-171`, `DEC-173`, `DEC-175`, `DEC-193`, `DEC-196` — registrano l'apertura, la chiusura o l'approvazione di una fase IRB e non hanno una superficie architetturale: non sono allocabili a un subsystem e la loro assenza dalla matrice è corretta, non una lacuna. Tutte le altre `DEC-001`–`DEC-195` sono allocate. Nessun `DEC-*` è creato, modificato o chiuso da questo documento.
++**Disposition tipizzata delle decisioni non-subsystem.** Le 13 decisioni assenti dalle righe subsystem sono allocate, non ignorate:
++
++| Allocation kind | Decisioni | Superficie |
++|---|---|---|
++| `PROGRAMME_GOVERNANCE` | `DEC-037`, `DEC-059`, `DEC-068`, `DEC-088`, `DEC-098`, `DEC-109`, `DEC-121`, `DEC-149`, `DEC-171`, `DEC-193` | Programme & Evidence Governance; gate/chiusure IRB |
++| `DOCUMENT_CONTROL` | `DEC-028`, `DEC-029`, `DEC-196` | apertura processo, delega gate e freeze della baseline |
++
++I 17 `GATE-IRB` del Decision Register — `DEC-037`, `DEC-049`, `DEC-059`, `DEC-068`, `DEC-078`, `DEC-088`, `DEC-098`, `DEC-109`, `DEC-121`, `DEC-136`, `DEC-149`, `DEC-164`, `DEC-171`, `DEC-177`, `DEC-185`, `DEC-193`, `DEC-195` — hanno sempre allocation kind programme anche quando compaiono dentro un range largo di una riga subsystem. `DEC-194` è validation governance; `DEC-196` è document control. `DEC-173` e `DEC-175` sono invece sostantive e allocate rispettivamente ad Agent Kernel e Compiler & Gateway. Coverage: 183/196 nella matrice + 13/196 nella tabella = 196/196 globale. Nessun `DEC-*` è creato, modificato o chiuso.
+ 
+ ## 7.1 Scope disposition verificabile
+ 
+ | Elemento | Boundary architetturale imposto | Comportamento PoC |
+ |---|---|---|
+ | `FR-048` — SDK aggiuntivi, Rust/A2A | Generator profile disabilitato e non incluso nel release bundle | Build del profilo restituisce `CAPABILITY_DEFERRED` |
+-| `CAP-024` hardening esteso | Separato dalla topologia PoC single-site/non-HA. In perimetro PoC: `NFR-059`, `NFR-062`, `NFR-065`, `NFR-072`, `NFR-079`. Differiti: `NFR-060`, `NFR-061`, `NFR-064`, `NFR-074`, `NFR-078`, e il target indicativo `NFR-071` | Nessun claim HA, multi-site, scale nazionale o air-gap accreditation; nessun requisito P0 con obbligo `DEVE` è differito |
++| `CAP-024` hardening esteso | Separato dalla topologia PoC single-site/non-HA. In perimetro PoC: `NFR-059`, `NFR-062`, `NFR-065`, `NFR-072`, `NFR-079`. Fuori dal profilo PoC ma `Confermato` nelle release sorgente: `NFR-060`, `NFR-061`, `NFR-064`, `NFR-074`, `NFR-078`; target indicativo `NFR-071` governato da issue/assumption | Nessun claim HA, multi-site, scale nazionale o air-gap accreditation; nessun requisito P0/PoC con obbligo `DEVE` è differito |
+ | `ELM-011` — Vector | Nessun vector field/index o embedding store nel profilo PoC | Query vector/hybrid rifiutata come unsupported |
+ | `ELM-015` — Secret/Cipher/Sensitive Reference | Secret material sempre fuori dall'ontologia; profilo semantico completo non attivato | Solo secret reference infrastrutturale non ontologica |
+ | `ELM-035` — Saga/Compensation | Nessuna Saga generale multi-step | Ammesso un solo percorso bounded e human-authorized sul simulatore |
+@@ -3306,9 +3541,49 @@
+ 
+ Il design copre i requisiti allocati senza promuoverne lo stato. `exact` nelle matrici indica semantica target dell'adapter, non conformance osservata; `not_applicable_in_role`, `forbidden_by_design` e `deferred_by_scope` non sono gap e non richiedono eccezione. TypeDB 3.x, TerminusDB, Jena e ogni altra tecnologia restano adapter o componenti candidati. La prima release ingegneristica può essere ammessa al gate PoC soltanto dopo build delle fixture, conformance suite, failure campaign ed Evidence Package previsti da `NFR-090`–`NFR-093`; fino ad allora non sono consentiti claim di parità, superiorità, performance, sicurezza, portabilità o readiness.
+ 
+-La revisione v1.1 non modifica questa conclusione. Correggere una contraddizione, completare un contratto o allocare un requisito non produce evidenza: `E1` resta `0`, `E2` resta `0`, i requisiti `Verified` restano `0`, le capability restano `Design Target` e le tecnologie `Candidate Implementation`. Gli emendamenti elencati in §8 sono `PROPOSED — PENDING CHANGE CONTROL` e non entrano in baseline finché la Architecture Review Authority non li approva secondo `DEC-196`.
++La revisione v1.2 candidata non modifica questa conclusione. Correggere una contraddizione, completare un contratto o allocare un requisito non produce evidenza: `E1` resta `0`, `E2` resta `0`, i requisiti `Verified` restano `0`, le capability restano `Design Target` e le tecnologie `Candidate Implementation`. Gli emendamenti normativi elencati in §8 sono `PROPOSED — AWAITING CHANGE CONTROL` e non entrano in baseline finché la Architecture Review Authority non li approva secondo `DEC-196`.
++
++# 8. Amendment Log v1.1 → v1.2 Candidate
++
++Questa sezione registra l'intero delta della candidata rispetto alla baseline v1.1 identificata nel Document Control. I locator indicano le sezioni normative nelle quali ricade ciascun hunk del patch; le righe con `CC=Sì` sono soluzioni candidate tecnicamente determinate ma non approvate. L'approvazione, il rigetto o la modifica compete alla Architecture Review Authority. Nessuna riga eleva lo stato probatorio o modifica in-place i registri sorgente.
++
++| ID candidato | Finding servito | Locator v1.2 | Modifica | Natura | Versione contratto | `CC` / stato |
++|---|---|---|---|---|---|---|
++| `V12-AM-01` | `DRF-015`; document control | Front matter, §7.3, §8 | Versione, derivazione e digest v1.1; stato candidato; authority ed evidence fence; nessuna approvazione implicita | Normativa di change control | — | No — controllo della candidata |
++| `V12-AM-02` | `DRF-001`, `DRF-008`, `ARF-001` | §1.4, §3.0.1–§3.0.3, §3.2–§3.5, §4.1–§4.3, §5.1, §5.3, §6.3 | Record `GovernedContext` unico; origine `BODY`/`TRANSPORT`/`DERIVED_FROM_VERIFIED_BINDING`; equivalenza per digest; Principal effettivo solo da binding autenticato; mismatch fail-closed | Normativa | Ingestion 1.2; OpenAPI 1.2.0; MCP 1.2; Action 1.1; Event 1.1 | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-03` | `DRF-002`, `RV-01` | §2.5 r.10, §3.7, §4.1–§4.1.2 | `CANONICAL_COMMIT` con risk floor R2, Human Gate/Dual Control, quorum/ruoli, Decision, Authority, Evidence, claim/source, aggregate/revision, precondizioni/invarianti, idempotency e GatePackage; `approval.mode=NONE` vietato | Normativa | Action 1.1 | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-04` | `DRF-003`, `DRF-009`, `DRF-010` | §4.1–§4.1.2, §5.2, §5.5 | `EMISSION-FENCE = G-FRESHNESS ∧ G-DISPATCH` atomica per primo invio, retry e compensation; `CapabilityLease`, policy validity, watermark, stop epoch, audit, deadline, circuit breaker e GatePackage rivalidati; drift→`INVALIDATED` | Normativa | Action 1.1 | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-05` | `DRF-004`, `ARF-004`, `ARF-012` | §3.0.2, §3.1.1, §5.3 | `MarkingSchemeDefinition` calcolabile, totale sul profilo, monotono, deterministico e fail-closed; famiglie restriction/permission; unknown e incomparabili deny; declassification con Authority separata; `OI-021` resta aperta | Normativa | — | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-06` | `DRF-005`, `ARF-014` | §3.3 | `ObjectSnapshot` rende obbligatori relazioni, uncertainty, identity candidates ed explanation oltre a claims/evidence/provenance/marking | Normativa | OpenAPI 1.2.0 | No — correzione di completezza |
++| `V12-AM-07` | `DRF-006`, `V12-RF-001` | §3.8 | Event contract porta GCS e rende `max_replay_window` obbligatoria se replay è ammesso e vietata altrimenti | Normativa | Event 1.1 | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-08` | `DRF-007`, `DRF-012`, `ARF-005`, `V12-RF-002` | §3.5, §3.7 | Quorum e ruoli non vuoti; evidence `minimum_count` coerente con `REQUIRED`; combinazioni target/effect e profilo `R2_CONTROLLED` fail-closed; reason code C3 nominati | Normativa | MCP 1.2; Action 1.1 | No — allineamento a guardie esistenti |
++| `V12-AM-09` | `DRF-009`, `DRF-010`, `ARF-007` | §4.1–§4.1.2 | `ConflictScope` tipizzato e blocco conservativo; `IndeterminateEffectAdjudication` append-only con Authority/Evidence; nessun unblock per silenzio | Normativa | — | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-10` | `DRF-011`, `ARF-018` | §4.1–§4.1.2 | Diagramma e tabella riscritti in bijezione sulle tuple `(transition_id, source, destination)`; `ACT-T22` separato da `ACT-T27`; source/destination espliciti | Normativa/editoriale | — | No — correzione interna |
++| `V12-AM-11` | `DRF-013`; `FR-095`/`ELM-070` | §1.5, §4.2, §6.1, §7.1 | Opzione conservativa selezionata: `ELM-070` resta differita e si propone di riclassificare `FR-095` fuori dal PoC; registri sorgente invariati | Normativa di scope | — | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-12` | `DRF-014`; scope fence | §1.5, §6.1, §7.1 | `NFR-078` resta `Confermato`, P0/MVP, fuori dal profilo PoC e non viene dichiarato differito; slice `CAP-024` corretta | Normativa/editoriale | — | No — ripristino del registro sorgente |
++| `V12-AM-13` | `DRF-014`; traceability | §7.1 | `DEC-173` allocata ad Agent Kernel e `DEC-175` a Compiler & Gateway; coverage globale separa 183 decisioni subsystem/programme da 13 document/programme; `CAP-026` resta `OUT_OF_SCOPE` ma tracciata | Normativa | — | Sì per riallocazione — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-14` | `BA-01`, `DRF-015` | §2.6, §6.2, §8 | `BA-01` classificata `ARCHITECTURAL_ALTERNATIVE_REQUIRING_CHANGE_CONTROL`, `NO-GO` finché una sola alternativa, failure analysis e rollback non sono approvati | Normativa | — | Sì — `PROPOSED — AWAITING CHANGE CONTROL` |
++| `V12-AM-15` | 15 `DRF-*`, 27 `ARF-*`, `RV-01/02` | §1–§8 | Riconciliazione finding, conteggi, locator, DAG `DRAFT-A`–`DRAFT-I`, versioni contrattuali e linguaggio probatorio resi coerenti; storico v1.0→v1.1 preservato in §8.3 | Documentale | Tutte come §8.2 | No per ledger; le singole proposte conservano il proprio `CC` |
++
++Ogni modifica testuale v1.1→v1.2 ricade in almeno una riga precedente. Il controllo automatico del patch usa il primo heading normativo che precede ciascun hunk e verifica che tale sezione sia coperta dal campo Locator. Le modifiche meramente consequenziali — rinomina di versione, riferimenti incrociati, aggiornamento dei conteggi e allineamento terminologico — ereditano l'ID della modifica causale e non costituiscono decisioni autonome.
++
++## 8.1 Difetti v1.1 riconciliati nella candidata
++
++I 15 `DRF-*`, i 27 `ARF-*`, `RV-01`, `RV-02` e i nuovi `V12-RF-*` sono riconciliati nel Remediation Ledger esterno. `CLOSED_IN_CANDIDATE` significa soltanto che il difetto interno è corretto e testato nella candidata; `PENDING_CHANGE_CONTROL` significa che la soluzione tecnica è completa ma non è baseline. Nessuno stato chiude gli identificativi normativi `OI-*`, `ASM-*` o `RSK-*`.
++
++## 8.2 Versioni dei contratti v1.1 → v1.2 Candidate
++
++| Contratto | v1.1 | v1.2 Candidate | Motivo |
++|---|---|---|---|
++| `signed-canonical-ir` | `1.0` | `1.0` | Non modificato |
++| `canonical-ingestion-envelope` | `1.1` | `1.2` | GCS completo, Principal effettivo e marking families |
++| Named Query Gateway (OpenAPI) | `1.1.0` | `1.2.0` | GCS canonico e `ObjectSnapshot.required` completo |
++| `FunctionRegistry`/`ModelRegistry` (Protobuf) | `ocor.registry.v1` | `ocor.registry.v1` | Estensione additiva del context; nessuna rinumerazione |
++| `mcp-tool-contract` | `1.1` | `1.2` | GCS, quorum/ruoli ed evidence non vuota per execute |
++| `action-type-contract` | `1.0` | `1.1` | Canonical binding, Human Gate, evidence e target/effect constraints |
++| `event-subscription-contract` | `1.0` | `1.1` | GCS e replay window fail-closed |
+ 
+-# 8. Amendment Log v1.0 → v1.1
++## 8.3 Storico Amendment Log v1.0 → v1.1
+ 
+ Questa sezione è normativa ai fini del change control e non aggiunge requisiti. Ogni riga mappa un emendamento al finding che lo motiva, alla sezione toccata, alla tracciabilità impattata e alla necessità di una decisione di baseline.
+ 
+@@ -3345,7 +3620,7 @@
+ | `AM-27` | `ARF-027` | `OBSERVATION` | §3.4 | `ModelResult` con `oneof disposition` non valorizzata è invalido in admission | — | No |
+ | `AM-28` | Review §8, `P1-12` | `MAJOR` | §2.6 | Il Backend Assumption Register diventa una sezione normativa dell'ADD: otto assunzioni `BA-01`–`BA-08` con componente dipendente, conformance test, fallback e impatto | `NFR-058`, `NFR-073`, `NFR-084`; `DEP-001`, `DEP-011`, `DEP-020`, `DEP-023`; `OI-006` e `OI-028` restano **aperti** | No — rende esplicito ciò che §2.4 già implicava |
+ 
+-## 8.0 Difetti introdotti dalla revisione e corretti prima della consegna
++### 8.3.1 Difetti introdotti nella v1.1 e riesaminati per la candidata
+ 
+ La stesura della v1.1 ha introdotto due difetti, rilevati da un controllo sistematico sui campi richiesti da un condizionale ma non dichiarati fra le `properties` di uno schema chiuso, e da una verifica dei rimandi di sezione. Sono documentati qui perché la loro classe è la stessa di `ARF-001` e serve da criterio di controllo permanente per il DDD.
+ 
+@@ -3356,7 +3631,7 @@
+ 
+ La lezione metodologica è registrata: una suite che verifica soltanto i casi negativi di uno schema conferma il rigetto per la ragione sbagliata. Ogni conformance test di contratto del DDD deve includere, per ciascun ramo condizionale, almeno un caso positivo ben formato oltre ai casi negativi.
+ 
+-## 8.1 Versioni dei contratti
++### 8.3.2 Versioni storiche dei contratti v1.0 → v1.1
+ 
+ | Contratto | v1.0 | v1.1 | Motivo |
+ |---|---|---|---|
+@@ -3370,7 +3645,7 @@
+ 
+ Poiché l'ADD v1.0 non è mai stato approvato e `E1=0`, non esiste consumer di questi contratti: la finestra di coesistenza e il migration path di `NFR-088` non si applicano e nessuna breaking change è introdotta su una release rilasciata. La regola torna pienamente applicabile dalla prima approvazione.
+ 
+-## 8.2 Cosa questa revisione non fa
++## 8.4 Cosa questa revisione non fa
+ 
+ - Non crea, modifica o chiude alcun `DEC-*`, e non assegna `DEC-197` o successivi.
+ - Non chiude alcun `OI-*`. In particolare restano aperti e invariati `OI-008` (soglie numeriche), `OI-013` (inventario atomico delle capability), `OI-016`–`OI-019` (budget, quota, staleness, revoca), `OI-020` (isolamento fisico), `OI-021` (tassonomia di classificazione), `OI-022` (profilo crittografico), `OI-024` (soglie di rischio e RACI), `OI-028`–`OI-031`.
