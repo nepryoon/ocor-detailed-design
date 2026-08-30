@@ -1,0 +1,45 @@
+==============================================================================
+OCOR ADD — harness di verifica tool-backed
+oggetto: reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md
+sha256:  4f84249b86150a0aa0ef5bf7fcc1a5c99388651e8aae132720dd784883b0426f
+==============================================================================
+[SKIP] Integrità sorgenti
+       SHA256SUMS assente
+[PASS] JSON Schema — parsing e meta-validazione
+       5 schemi Draft 2020-12 validi: urn:ocor:schema:action-type-contract:1.1, urn:ocor:schema:canonical-ingestion-envelope:1.2, urn:ocor:schema:event-subscription-contract:1.1, urn:ocor:schema:mcp-tool-contract:1.2, urn:ocor:schema:signed-canonical-ir:1.0
+[PASS] OpenAPI — risoluzione $ref
+       OpenAPI 3.1.0 v1.2.0; 6 path, 25 schemi, 26 $ref; tutti i $ref risolti; schemi mai referenziati: nessuno
+[SKIP] OpenAPI — validazione semantica con validator ufficiale
+       nessun validator OpenAPI 3.1 nel harness; il controllo NON è dichiarato superato
+[PASS] Protobuf — compilazione
+       protoc compila senza errori
+[PASS] Turtle/RDF — parsing
+       17 triple
+[PASS] Rami condizionali insoddisfacibili (classe RV-01)
+       nessun campo richiesto da un condizionale risulta non dichiarato
+[INFO] Rami condizionali da coprire con casi POSITIVI
+       il §7.1 del prompt richiede almeno un caso positivo per ramo — signed-canonical-ir=0; canonical-ingestion-envelope=4; mcp-tool-contract=11; action-type-contract=11; event-subscription-contract=2
+[PASS] FSM — bijezione diagramma/tabella
+       29 stati in corrispondenza
+[PASS] FSM — famiglia ACT-T
+       ACT-T01–T31 contigui, più le varianti a/b/c
+[INFO] FSM — stati terminali
+       stati senza archi uscenti non attesi: nessuno; stati di indeterminatezza privi di uscita: nessuno
+[PASS] Tracciabilità — allocazione in §7
+       DEC 183/196; BR 18/18; FR 174/174; NFR 93/93; ARC 23/23; CAP 25/26; ELM 103/103; RSK 60/60
+[PASS] Universo normativo
+       693 = 693 atteso
+[PASS] Rimandi di sezione
+       43 rimandi distinti, 62 sezioni; non risolti: nessuno
+[PASS] Evidence fence
+       'E1=0' ricorre 16 volte; claim probatori non supportati: nessuno
+[PASS] Nessun DEC-197 assegnato
+       2 occorrenze, tutte in forma negativa o come nome di file
+==============================================================================
+PASS 12  FAIL 0  NOT_EXECUTED 2
+
+Controlli NON eseguiti — NON dichiararli superati nel referto:
+  - Integrità sorgenti: SHA256SUMS assente
+  - OpenAPI — validazione semantica con validator ufficiale: nessun validator OpenAPI 3.1 nel harness; il controllo NON è dichiarato superato
+==============================================================================
+referto JSON: reports/verify_report.json
