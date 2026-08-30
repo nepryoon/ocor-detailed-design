@@ -15,13 +15,14 @@ La direzione `X → Y` significa «X depends_on Y», quindi Y deve essere deciso
 ```text
 CC-CANONICAL-PATH → CC-GCS
 CC-CANONICAL-PATH → DRAFT-G
+CC-SINGLE-WRITER-BRANCH-SCOPE → CC-CANONICAL-PATH
 CC-EMISSION-FENCE → CC-GCS
 CC-EMISSION-FENCE → DRAFT-I
 CC-INDETERMINATE-ADJUDICATION → CC-EMISSION-FENCE
 CC-MARKING-ALGEBRA → DRAFT-H
 CC-ACTION-EVENT-CONTRACTS → CC-GCS
 CC-FR095-SCOPE → authority over DEC-103 and requirement registers
-CC-BA01-ALTERNATIVE → CC-CANONICAL-PATH
+CC-BA01-ALTERNATIVE → CC-SINGLE-WRITER-BRANCH-SCOPE
 CC-DEC-ALLOCATION → document traceability authority
 ```
 
@@ -140,20 +141,37 @@ Il change set emission/adjudication è atomico: `CC-EMISSION-FENCE` e `CC-INDETE
 - Criterio di approvazione: tutte e cinque le modifiche registro sono approvate come change set atomico.
 - Criterio di chiusura: scansione registri mostra un'unica release MVP per `FR-095` e `ELM-070` assente dal PoC.
 
+## CC-SINGLE-WRITER-BRANCH-SCOPE — single writer, scenario branch e relay
+
+- Finding: `ARF-003`, `AM-03`; approva e sostituisce `DRAFT-C`.
+- Decisione richiesta — testo esatto: **«Approvare che l'esclusività di scrittura di `C3` sul ruolo `VersionedAssertedState` si applichi ai commit `main` per ownership boundary. Gli overlay di scenario sono scritti esclusivamente dall'adapter `ScenarioOverlayStore` di `C7`, che non possiede `main.write`. Il relay pubblica esclusivamente `OutboxEntry` committed del branch `main`; entry copiate o prodotte in branch di scenario non sono pubblicabili, non generano `DeliveryAttempt` e sono ignorate dal reconciler.»**
+- Stato: `Proposed — awaiting change control`.
+- Razionale: elimina l'ambiguità tra single writer canonico e writer degli overlay e impedisce che un fork produca effetti esterni.
+- Alternative: relay branch-agnostic; outbox pubblicabile nei branch; entrambe respinte perché violano isolamento e non-interferenza.
+- Opzione candidata: `C3/main` come unico writer canonico; `C7/scenario` come writer confinato senza capacità di emissione.
+- Impatti: C3, C5, C7, outbox relay, reconciler, scenario recovery e capability matrix.
+- Requisiti/decisioni: `ARC-007`, `ARC-020`, `DEC-148`, `FR-154`, `RSK-044`.
+- Registri da aggiornare: Decision Register/Index e Requirement Traceability Index con i locator §2.1, §2.4 e §2.5 r.11.
+- Dipendenze: `CC-CANONICAL-PATH`.
+- Rischio residuo: enforcement del branch scope e assenza di publish dai fork da dimostrare con test runtime.
+- Rollback: rifiutare la candidata e conservare v1.1; non è ammesso rendere il relay branch-agnostic.
+- Criterio di approvazione: ownership boundary, capacità `main.write` e filtro del relay sono espliciti e non sovrapposti.
+- Criterio di chiusura: test di fork dimostra zero `DeliveryAttempt`; un writer C7 su `main` e un relay su scenario sono respinti.
+
 ## CC-BA01-ALTERNATIVE — atomicità local state+outbox
 
 - Finding: `DRF-009`, `BA-01`.
-- Decisione richiesta — testo esatto: **«Classificare il fallback `BA-01` come `ARCHITECTURAL_ALTERNATIVE_REQUIRING_CHANGE_CONTROL`. Se il backend candidato non realizza il commit atomico di aggregate revision, canonical commit e outbox, la release è `NO-GO` finché l'Authority non approva una sola alternativa, la relativa failure analysis, la riscrittura di §2.3/§6.2, i test crash-window e il rollback.»**
+- Decisione richiesta — testo esatto: **«Approvare come hard invariant il commit locale atomico di aggregate revision, canonical commit, idempotency binding e outbox descritto in §2.3. Nessun fallback è pre-approvato. Il backend candidato è ammissibile soltanto dopo crash-window, concurrency e fork-isolation test; se non soddisfa l'invariante, la release è `NO-GO`. RDBMS/event log o two-log+reconciler costituiscono nuove alternative architetturali e richiedono un successivo change control con failure analysis, aggiornamento di §2.3/§6.2 e rollback.»**
 - Stato: `Proposed — awaiting change control`.
 - Razionale: il fallback cambia un hard invariant e non è una sostituzione adapter-only.
-- Alternative: versioned outbox atomica; RDBMS/event log; two-log + reconciler. Nessuna è approvata qui.
+- Alternative considerate ma non pre-approvate: RDBMS/event log e two-log + reconciler. La candidata seleziona esclusivamente l'invariante atomico e la semantica `NO-GO` in caso di mancata conformance.
 - Impatti: C3, relay, recovery, consistency e `RSK-013/019`.
 - Requisiti/decisioni: `NFR-058`, `NFR-084`, `ARC-007`, `ARC-020`.
 - Registri da aggiornare: Decision Register/Index, backend assumption register futuro, risk treatment locator.
-- Dipendenze: `CC-CANONICAL-PATH`.
+- Dipendenze: `CC-SINGLE-WRITER-BRANCH-SCOPE`.
 - Rischio residuo: proprietà del backend candidata non verificata.
 - Rollback: non rilasciare C3; baseline v1.1 resta ricostruibile.
-- Criterio di approvazione: una sola topologia e failure semantics esplicite.
+- Criterio di approvazione: atomicità obbligatoria, nessun fallback implicito e failure semantics `NO-GO` esplicite.
 - Criterio di chiusura: crash-window/concurrency/fork tests definiti e poi eseguiti nel DDD; al presente restano futuri.
 
 ## CC-DEC-ALLOCATION — `DEC-173` e `DEC-175`
@@ -174,4 +192,4 @@ Il change set emission/adjudication è atomico: `CC-EMISSION-FENCE` e `CC-INDETE
 
 ## Package Gate
 
-Il pacchetto è completo per decisione, ma tutte le voci restano `Proposed — awaiting change control`. L'opzione candidata della ADD è unica e fail-closed; il rollback comune è la baseline v1.1 immutata. L'Authority può approvare per change set compatibili col DAG, rigettare o richiedere una nuova candidata. Non è consentita un'approvazione parziale che renda insoddisfatti i contratti o rimuova una guardia dipendente.
+Il pacchetto contiene dieci change set ed è completo per decisione, inclusa la disposizione prima mancante di `DRAFT-C`; tutte le voci restano `Proposed — awaiting change control`. L'opzione candidata della ADD è unica e fail-closed; il rollback comune è la baseline v1.1 immutata. L'Authority può approvare per change set compatibili col DAG, rigettare o richiedere una nuova candidata. Non è consentita un'approvazione parziale che renda insoddisfatti i contratti o rimuova una guardia dipendente.
