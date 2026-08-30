@@ -1,0 +1,157 @@
+{
+  "schema_version": "1.0",
+  "status": "PASS",
+  "executed_at_utc": "2026-08-30T20:51:43.885671+00:00",
+  "repository": "nepryoon/ocor-detailed-design",
+  "git_sha": "036b873d87cc8720d4134a237a8ea41d3b8817cf",
+  "github_run_id": "33334792715",
+  "github_run_attempt": "1",
+  "candidate_sha256": "4f84249b86150a0aa0ef5bf7fcc1a5c99388651e8aae132720dd784883b0426f",
+  "approved_baseline_sha256": "c3f432ae0d172f2b4f70be8220d0ae4a134ec14716bccc6a12d75dfee438b84f",
+  "integrity": {
+    "post_remediation_input_checksums.txt": {
+      "entries": 8,
+      "all_ok": true
+    },
+    "post_remediation_report_checksums.txt": {
+      "entries": 26,
+      "all_ok": true
+    }
+  },
+  "document_suites": {
+    "tool_backed_verifier": {
+      "passed": 12,
+      "failed": 0,
+      "not_executed": 2,
+      "information": 2
+    },
+    "contract_conformance": {
+      "passed": 105,
+      "failed": 0,
+      "total": 105
+    },
+    "semantic_fsm_adversarial": {
+      "passed": 29,
+      "failed": 0,
+      "total": 29
+    },
+    "release_integrity": {
+      "passed": 12,
+      "failed": 0,
+      "total": 12
+    },
+    "approval_readiness": {
+      "passed": 18,
+      "failed": 0,
+      "total": 18
+    }
+  },
+  "openapi": {
+    "profile": "ocor-runtime/docs/governance_dossier/OCOR_OPENAPI_VALIDATION_PROFILE_v1.0.md",
+    "profile_sha256": "bb9658a81477ac3eeae321f25788120acefacab9b514b32c9d964c180b8e32f7",
+    "validator": "openapi-spec-validator",
+    "validator_version": "0.9.0",
+    "validator_locked_wheel_sha256": "222fecffc7714f6d0a6ad62c0e4b66cc2b7dbfafb7b93acfc6c308abbdb51af8",
+    "executed_at_utc": "2026-08-30T20:51:38.428709+00:00",
+    "total": 3,
+    "passed": 3,
+    "failed": 0,
+    "waiver_required": false,
+    "records": [
+      {
+        "subject": "validator_profile",
+        "status": "PASS",
+        "checks": {
+          "validator_version_exact": true,
+          "lock_version_present": true,
+          "locked_wheel_sha256_present": true,
+          "profile_declares_validator": true
+        }
+      },
+      {
+        "subject": "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.2_APPROVED_BASELINE.md#embedded-openapi",
+        "status": "PASS",
+        "sha256": "33e29b389ab54787b2917c8de3c0b6c869764eab1684bb1c613e8fc15b9c86b3",
+        "openapi": "3.1.0",
+        "api_version": "1.2.0",
+        "paths": 6,
+        "component_schemas": 25
+      },
+      {
+        "subject": "ocor-runtime/schemas/ocor.openapi.yaml",
+        "status": "PASS",
+        "sha256": "daccb53edc6ce6cfebf0fbe659e46bea6f47ecfea94051e7ab3e9c7ecf44c006",
+        "openapi": "3.1.0",
+        "api_version": "1.2.0",
+        "paths": 4,
+        "component_schemas": 8,
+        "base_uri": "file:///home/runner/work/ocor-detailed-design/ocor-detailed-design/ocor-runtime/schemas/ocor.openapi.yaml"
+      }
+    ]
+  },
+  "runtime": {
+    "tests": 109,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "time_seconds": 2.747,
+    "artifact": "reports/tests/runtime_junit_post_approval.xml"
+  },
+  "backend_assumptions": {
+    "tests": 38,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "time_seconds": 0.157,
+    "artifact": "reports/tests/ba_junit_post_approval.xml"
+  },
+  "acceptance_ev": {
+    "tests": 35,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "time_seconds": 0.174,
+    "artifact": "reports/tests/ev_junit_post_approval.xml"
+  },
+  "live_postgresql": {
+    "tests": 5,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "time_seconds": 0.533,
+    "artifact": "reports/tests/postgres_junit_post_approval.xml"
+  },
+  "coverage": {
+    "covered_lines": 1372,
+    "num_statements": 1533,
+    "percent_covered": 89.49771689497717,
+    "percent_covered_display": "89",
+    "missing_lines": 161,
+    "excluded_lines": 23,
+    "percent_statements_covered": 89.49771689497717,
+    "percent_statements_covered_display": "89"
+  },
+  "closures": {
+    "VAL-ACT-001": {
+      "status": "CLOSED",
+      "basis": "full post-remediation document harness rerun on the approved candidate digest",
+      "passed": true
+    },
+    "VAL-ACT-002": {
+      "status": "CLOSED",
+      "basis": "governed OpenAPI 3.1 validation of approved embedded and runtime contracts; no waiver required",
+      "passed": true
+    },
+    "VAL-ACT-003": {
+      "status": "CLOSED_FOR_RUNTIME_SLICE",
+      "basis": "complete runtime plus BA-01..08, EV-001..035 and live PostgreSQL 16 evidence",
+      "passed": true
+    }
+  },
+  "evidence_scope": {
+    "E1_runtime_slice": "PRESENT",
+    "E2_independent_or_production": "NOT_ESTABLISHED",
+    "requirements_verified": "not promoted by this execution alone",
+    "production_readiness": "not claimed"
+  }
+}
