@@ -1,0 +1,341 @@
+{
+  "schema": "ocor.add.delta-manifest/v1",
+  "baseline": {
+    "document": "OCOR-ADD-1.0",
+    "sha256": "1e0fe999d66b0133638293d9568f79fb861636f81bc939e170e7d6fa392d8fed"
+  },
+  "target": {
+    "document": "OCOR-ADD-1.1",
+    "sha256": "3e7532c7101e80c74b511cedc56a0563ca0938a3fe259911a91245cb19dedc7f"
+  },
+  "purpose": "Superficie di revisione per la review indipendente della v1.1. La FASE 1 della review si applica esclusivamente a questa superficie.",
+  "amendments_count": 28,
+  "sections_added": [
+    "2.6",
+    "3.0",
+    "3.0.1",
+    "3.0.2",
+    "3.0.3",
+    "3.0.4",
+    "3.7",
+    "3.8",
+    "8",
+    "8.0",
+    "8.1",
+    "8.2"
+  ],
+  "contracts_added": [
+    "urn:ocor:schema:action-type-contract:1.0",
+    "urn:ocor:schema:event-subscription-contract:1.0"
+  ],
+  "contracts_version_bumped": [
+    "urn:ocor:schema:canonical-ingestion-envelope:1.1",
+    "urn:ocor:schema:mcp-tool-contract:1.1",
+    "OpenAPI 1.1.0"
+  ],
+  "fsm_states_added": [
+    "CANONICAL_COMMIT_PENDING",
+    "EXECUTION_INDETERMINATE",
+    "COMPENSATION_INDETERMINATE",
+    "CANCELLED (nel diagramma)"
+  ],
+  "fsm_transitions_added": [
+    "ACT-T24",
+    "ACT-T25",
+    "ACT-T26",
+    "ACT-T27",
+    "ACT-T28",
+    "ACT-T29",
+    "ACT-T30",
+    "ACT-T31"
+  ],
+  "self_reported_defects_introduced_and_fixed": [
+    "RV-01",
+    "RV-02"
+  ],
+  "amendments": [
+    {
+      "amendment": "AM-01",
+      "finding": "ARF-001",
+      "severity": "BLOCKER",
+      "sections": [
+        "1.4",
+        "3.0.1",
+        "3.2",
+        "3.3",
+        "3.4",
+        "4.2",
+        "4.3",
+        "5.3",
+        "6.3"
+      ],
+      "summary": "Il Governed Context Set è definito una volta in §1.4 e realizzato da ogni contratto; l'ingestion envelope acquisisce `organization_id`, `purpose`, `actor_chain`, `ontology_release_digest`, `policy_bun"
+    },
+    {
+      "amendment": "AM-02",
+      "finding": "ARF-002",
+      "severity": "BLOCKER",
+      "sections": [
+        "2.1",
+        "2.5 r.10",
+        "3.7",
+        "4.1",
+        "4.1.2"
+      ],
+      "summary": "La mutazione canonica diventa un `ActionType` con `target=CANONICAL_COMMIT` prodotto da `C6` e consegnato a `C3`: stessa FSM, stesse guardie, stesso Human Gate delle azioni esterne. Nuove transizioni "
+    },
+    {
+      "amendment": "AM-03",
+      "finding": "ARF-003",
+      "severity": "BLOCKER",
+      "sections": [
+        "2.1",
+        "2.4",
+        "2.5 r.11"
+      ],
+      "summary": "Lo scope del single-writer è disambiguato: `main` solo `C3`, branch di scenario solo l'adapter di `C7` senza `main.write` e senza outbox pubblicabile; il relay è vincolato al branch `main`"
+    },
+    {
+      "amendment": "AM-04",
+      "finding": "ARF-004",
+      "severity": "CRITICAL",
+      "sections": [
+        "5.3"
+      ],
+      "summary": "La propagazione dei controlli di disseminazione passa da intersezione a unione; l'operatore è legato alla semantica del campo dichiarata dal `MarkingSchemeDefinition`; `dissemination_rules[]` è rinomi"
+    },
+    {
+      "amendment": "AM-05",
+      "finding": "ARF-005",
+      "severity": "CRITICAL",
+      "sections": [
+        "3.5"
+      ],
+      "summary": "`approval.mode=HUMAN_GATE` richiede almeno un approvatore indipendente e almeno un ruolo nominato; `EXECUTE_APPROVED_ACTION` richiede quorum, `EXECUTION_UNKNOWN` e `irreversibility_class`"
+    },
+    {
+      "amendment": "AM-06",
+      "finding": "ARF-006",
+      "severity": "CRITICAL",
+      "sections": [
+        "4.1",
+        "4.1.1",
+        "4.1.2"
+      ],
+      "summary": "`G-DISPATCH` include `stop_epoch` e disponibilità audit; è rivalidata **all'emissione** in `ACT-T14`, `ACT-T19` e `ACT-T29`; `stop_epoch` entra nella tupla `ActionInstance`; `ACT-T23` ha precedenza es"
+    },
+    {
+      "amendment": "AM-07",
+      "finding": "ARF-007",
+      "severity": "CRITICAL",
+      "sections": [
+        "4.1",
+        "4.1.1",
+        "4.1.2"
+      ],
+      "summary": "Nuovi stati terminali `EXECUTION_INDETERMINATE` e `COMPENSATION_INDETERMINATE` con escalation obbligatoria (`ACT-T24`, `ACT-T25`); `G-FRESHNESS` blocca nuove azioni su aggregate con effetto esterno ir"
+    },
+    {
+      "amendment": "AM-08",
+      "finding": "ARF-008",
+      "severity": "MAJOR",
+      "sections": [
+        "3.3"
+      ],
+      "summary": "`Problem` acquisisce `served`, `detail`, `instance`, `deferred_element`; l'enum si estende a `CAPABILITY_DENIED`, `CAPABILITY_DEFERRED`, `CONTROL_PLANE_UNAVAILABLE`, `SCENARIO_ISOLATION_VIOLATION`; `s"
+    },
+    {
+      "amendment": "AM-09",
+      "finding": "ARF-009",
+      "severity": "MAJOR",
+      "sections": [
+        "3.7",
+        "3.8",
+        "3.9"
+      ],
+      "summary": "Nuovi contratti normativi `ACTION` (`action-type-contract:1.0`) e `EVENT` (`event-subscription-contract:1.0`); la vecchia §3.7 diventa §3.9"
+    },
+    {
+      "amendment": "AM-10",
+      "finding": "ARF-010",
+      "severity": "MAJOR",
+      "sections": [
+        "3.5"
+      ],
+      "summary": "`irreversibility_class` obbligatorio, blocco `retry` obbligatorio con `retry_safe`, `EXECUTION_UNKNOWN` imposto ai tool esecutivi, corrispondenza `effect_class`↔`allowed_autonomy_tiers`, fence di buil"
+    },
+    {
+      "amendment": "AM-11",
+      "finding": "ARF-011",
+      "severity": "MAJOR",
+      "sections": [
+        "2.4",
+        "3.1.1",
+        "7.3"
+      ],
+      "summary": "`CapabilityDisposition` acquisisce `not_applicable_in_role`, `forbidden_by_design`, `deferred_by_scope`; solo `unsupported` blocca la release; le otto righe di §2.4 sono riclassificate"
+    },
+    {
+      "amendment": "AM-12",
+      "finding": "ARF-012",
+      "severity": "MAJOR",
+      "sections": [
+        "3.1.1",
+        "3.0.2",
+        "5.3"
+      ],
+      "summary": "Nuovo costrutto OaC `MarkingSchemeDefinition` con reticolo, semantica dei caveat e dei controlli, regola di join e comportamento su incomparabilità"
+    },
+    {
+      "amendment": "AM-13",
+      "finding": "ARF-013",
+      "severity": "MAJOR",
+      "sections": [
+        "7"
+      ],
+      "summary": "Nuova colonna `ARC-*`, nuova riga «Programme & Evidence Governance», range estesi"
+    },
+    {
+      "amendment": "AM-14",
+      "finding": "ARF-014",
+      "severity": "MAJOR",
+      "sections": [
+        "3.3"
+      ],
+      "summary": "`ObjectSnapshot` acquisisce `epistemic_status`, `uncertainty`, `claim_refs`, `evidence_refs`, `identity_candidates`, `provenance_ref`, `explanation_ref`, `marking_ref`; nuovi schemi `EpistemicStatus`,"
+    },
+    {
+      "amendment": "AM-15",
+      "finding": "ARF-015",
+      "severity": "MAJOR",
+      "sections": [
+        "2.1"
+      ],
+      "summary": "Il C4 L2 acquisisce `C5`→`C6`, `C6`→`C3`, `C7`→`OVL`, `RB`→`C2`–`C8`, `CP`→`C4`"
+    },
+    {
+      "amendment": "AM-16",
+      "finding": "ARF-016",
+      "severity": "MAJOR",
+      "sections": [
+        "2.2",
+        "4.3.1",
+        "5.2",
+        "7.1"
+      ],
+      "summary": "`CapabilityLease` definito come costrutto distinto; i tre usi di «lease» sono separati esplicitamente; il target `≤10 s` non dipende più da `ELM-080`"
+    },
+    {
+      "amendment": "AM-17",
+      "finding": "ARF-017",
+      "severity": "MAJOR",
+      "sections": [
+        "6.1",
+        "7.1"
+      ],
+      "summary": "La slice PoC di `CAP-024` è enumerata per esteso: in perimetro `NFR-059`, `NFR-062`, `NFR-065`, `NFR-072`, `NFR-079`; differiti gli altri"
+    },
+    {
+      "amendment": "AM-18",
+      "finding": "ARF-018",
+      "severity": "MINOR",
+      "sections": [
+        "4.1",
+        "4.1.2"
+      ],
+      "summary": "Bijezione diagramma↔tabella ristabilita: `CANCELLED` nel diagramma, `ACT-T26`–`ACT-T28` in tabella"
+    },
+    {
+      "amendment": "AM-19",
+      "finding": "ARF-019",
+      "severity": "MINOR",
+      "sections": [
+        "3.2"
+      ],
+      "summary": "Vincolo bidirezionale `CDC_CHANGE` ↔ `ingest_mode=CDC`"
+    },
+    {
+      "amendment": "AM-20",
+      "finding": "ARF-020",
+      "severity": "MINOR",
+      "sections": [
+        "3.0.3 e tutti i contratti"
+      ],
+      "summary": "`compartments` array in tutti i contratti; la forma singolare non è più ammessa"
+    },
+    {
+      "amendment": "AM-21",
+      "finding": "ARF-021",
+      "severity": "MINOR",
+      "sections": [
+        "3.0.2"
+      ],
+      "summary": "`*_marking_ref` è definito come `urn:sha256:<marking_digest>`; `SecurityContext` è dichiarato proiezione valutata dell'oggetto `marking`"
+    },
+    {
+      "amendment": "AM-22",
+      "finding": "ARF-022",
+      "severity": "MINOR",
+      "sections": [
+        "5.1",
+        "5.3"
+      ],
+      "summary": "`policy_bundle_not_before` e `policy_bundle_expires_at` rendono operativa la condizione «Policy scaduta»"
+    },
+    {
+      "amendment": "AM-23",
+      "finding": "ARF-023",
+      "severity": "MINOR",
+      "sections": [
+        "3.9",
+        "7.2"
+      ],
+      "summary": "Colonna `EV-*` in entrambe le tabelle di conformance"
+    },
+    {
+      "amendment": "AM-24",
+      "finding": "ARF-024",
+      "severity": "MINOR",
+      "sections": [
+        "4.2"
+      ],
+      "summary": "`OUT_OF_DISTRIBUTION` ridefinito come uscita dal supporto empirico con constraint espliciti soddisfatti; precedenza fra gli otto reason code"
+    },
+    {
+      "amendment": "AM-25",
+      "finding": "ARF-025",
+      "severity": "MINOR",
+      "sections": [
+        "3.3"
+      ],
+      "summary": "`detail` e `instance` reintrodotti; la restrizione rispetto a RFC 9457 è dichiarata intenzionale"
+    },
+    {
+      "amendment": "AM-26",
+      "finding": "ARF-026",
+      "severity": "OBSERVATION",
+      "sections": [
+        "4.2"
+      ],
+      "summary": "Il divieto di effect estimate dentro `ABSTAIN` diventa un vincolo strutturale su `diagnostics`"
+    },
+    {
+      "amendment": "AM-27",
+      "finding": "ARF-027",
+      "severity": "OBSERVATION",
+      "sections": [
+        "3.4"
+      ],
+      "summary": "`ModelResult` con `oneof disposition` non valorizzata è invalido in admission"
+    },
+    {
+      "amendment": "AM-28",
+      "finding": "Review §8, `P1-12",
+      "severity": "MAJOR",
+      "sections": [
+        "2.6"
+      ],
+      "summary": "Il Backend Assumption Register diventa una sezione normativa dell'ADD: otto assunzioni `BA-01`–`BA-08` con componente dipendente, conformance test, fallback e impatto"
+    }
+  ]
+}
