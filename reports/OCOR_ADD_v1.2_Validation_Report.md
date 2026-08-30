@@ -1,5 +1,7 @@
 # OCOR ADD v1.2 Candidate — Validation Report
 
+> **Governance supersession — 2026-08-30:** this validation report remains the pre-approval mechanical evidence. ADD v1.2 is now **APPROVED** under `DEC-197`–`DEC-206`. The full post-remediation harness rerun and the governed external-interface validator/waiver are tracked as non-blocking `VAL-ACT-001` and `VAL-ACT-002`; this report does not claim their closure.
+
 ## Validation Control
 
 - Oggetto: `reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md`, SHA-256 post-remediation `4f84249b86150a0aa0ef5bf7fcc1a5c99388651e8aae132720dd784883b0426f`.
