@@ -55,12 +55,9 @@ Registra come finding soltanto problemi con riferimento testuale preciso.
 
 ## Verifica tool-backed obbligatoria
 
-Esegui `python3 scripts/verify.py --json` e riporta il referto. Se una dipendenza manca, usa il venv del repo (Ubuntu blocca pip di sistema, PEP 668):
+Esegui `./.venv/bin/python3 scripts/verify.py --json` e riporta il referto. Se una dipendenza manca, usa il venv del repo (Ubuntu blocca pip di sistema, PEP 668):
 
 ```bash
-[ -d .venv ] || python3 -m venv .venv
-source .venv/bin/activate
-pip install -q jsonschema pyyaml rdflib grpcio-tools
 ```
 
 Il harness copre i controlli meccanici. **Non copre** il controllo più importante, che devi eseguire tu:
