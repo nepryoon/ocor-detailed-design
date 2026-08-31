@@ -10,7 +10,7 @@ Il gate riproducibile verifica:
 
 - 285/285 requisiti IRB enumerati e allocati;
 - 283 `FULLY_SPECIFIED`;
-- 2 `CONDITIONALLY_SPECIFIED` (`FR-118`, `FR-119`) fino alla promozione governata dei registri;
+- 2 `CONDITIONALLY_SPECIFIED` (`FR-118`, `FR-119`) fino alla promozione autoritativa dei cinque snapshot candidati ora materializzati;
 - zero `GAP`;
 - full memory kinds/scopes, vector binding, lifecycle, API e security invariants;
 - FSM C6 44/44 semanticamente identica all'ADD v1.2;
@@ -49,6 +49,8 @@ Claim, Observation, Hypothesis, Model Output, Decision, ExecutionResult e Outcom
 | `ocor-governed-memory.openapi.yaml` | admission/search/consolidation/lifecycle/promotion/deletion/context API | candidate contract |
 | matrice IRB→ADD→LLD Markdown/JSON | tracciabilità 285/285 | generated and checked |
 | assurance results e manifest | evidence machine-readable | verified |
+| cinque register snapshot in `governance_candidates/` | aggiornamento atomico RR/RTI/DR/DTI/CAP-ELM | candidate; 11/11 controlli |
+| `OCOR_Full_Memory_Atomic_Register_Promotion_Package_v1.0.md` | istruzione di promozione e decision text | ready for authority promotion |
 
 Nessun file sotto `inputs/` è modificato e nessun nuovo ID `DEC-*` è attribuito unilateralmente.
 
@@ -84,7 +86,7 @@ Il nuovo Memory OpenAPI non eredita impropriamente tali evidenze: è un contratt
 Per rendere effettiva la decisione occorre:
 
 1. registrare formalmente il change set secondo l'autorità vigente;
-2. aggiornare atomicamente Requirement Register, RTI, Decision Register, Decision Traceability Index e CAP/ELM Crosswalk;
+2. assegnare l'identificativo decisionale e promuovere atomicamente i cinque snapshot completi già materializzati in `reports/governance_candidates/`;
 3. consolidare ADD v1.3 con `ELM-084 CORE/P0/PoC`;
 4. validare semanticamente il Memory OpenAPI e il JSON Schema;
 5. rieseguire assurance e review indipendente sul digest consolidato;

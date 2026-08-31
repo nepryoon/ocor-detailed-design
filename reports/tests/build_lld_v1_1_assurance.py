@@ -25,6 +25,10 @@ CC = OUT / "OCOR_Change_Control_Full_Governed_Agent_Memory_v1.0.md"
 CONTRACTS = OUT / "contracts"
 TRACE = OUT / "traceability"
 RESULTS = OUT / "tests" / "lld_v1_1_assurance_results.json"
+MANIFEST = OUT / "OCOR_IRB_ADD_LLD_REMEDIATION_SHA256SUMS"
+GOV_RESULTS = OUT / "tests" / "full_memory_governance_candidate_results.json"
+GOV_CANDIDATES = OUT / "governance_candidates"
+PROMOTION_PACKAGE = OUT / "OCOR_Full_Memory_Atomic_Register_Promotion_Package_v1.0.md"
 
 
 def resolve_source(*candidates: str) -> Path:
@@ -298,6 +302,19 @@ def run_checks(matrix: list[dict[str, str]]) -> dict:
     conditionals = [r["requirement_id"] for r in matrix if r["disposition"].startswith("CONDITIONALLY")]
     check("Conditional scope", conditionals == ["FR-118", "FR-119"], f"conditional={conditionals}")
 
+    governance_results = json.loads(GOV_RESULTS.read_text(encoding="utf-8"))
+    expected_registers = {
+        "OCOR_Requirement_Register_v1.1_FULL_MEMORY_CANDIDATE.md",
+        "OCOR_Requirement_Traceability_Index_v1.1_FULL_MEMORY_CANDIDATE.md",
+        "OCOR_Decision_Register_v1.2_FULL_MEMORY_CANDIDATE.md",
+        "OCOR_Decision_Traceability_Index_v1.2_FULL_MEMORY_CANDIDATE.md",
+        "OCOR_CAP_ELM_Requirement_Crosswalk_v1.1_FULL_MEMORY_CANDIDATE.md",
+    }
+    actual_registers = {path.name for path in GOV_CANDIDATES.glob("*.md")}
+    check("Five register candidates", actual_registers == expected_registers, str(sorted(actual_registers)))
+    check("Register candidate assurance", governance_results.get("status") == "PASS" and governance_results.get("counts", {}).get("fail") == 0, str(governance_results.get("counts")))
+    check("Atomic promotion package", PROMOTION_PACKAGE.exists() and "DECISION ID UNASSIGNED" in PROMOTION_PACKAGE.read_text(encoding="utf-8"), "identifier reserved to authority")
+
     gcs = [
         "tenant_id", "organization_id", "domain_id", "compartments", "classification_marking_ref",
         "purpose", "effective_principal_id", "actor_chain", "ontology_release_digest",
@@ -375,7 +392,7 @@ def run_checks(matrix: list[dict[str, str]]) -> dict:
     return {
         "schema_version": "1.0",
         "verdict": "PASS_WITH_GOVERNANCE_CONDITION" if not failed else "FAIL",
-        "governance_condition": "Promote CC-FULL-GOVERNED-AGENT-MEMORY and update the five authoritative registers before consolidating ADD/LLD",
+        "governance_condition": "Allocate the authority-owned decision identifier and atomically promote the five materialized register candidates before consolidating ADD/LLD",
         "counts": {
             "requirements": len(matrix),
             "fully_specified": sum(r["disposition"].startswith("FULLY") for r in matrix),
@@ -390,6 +407,8 @@ def run_checks(matrix: list[dict[str, str]]) -> dict:
             "lld_candidate_sha256": sha256(LLD),
             "add_candidate_sha256": sha256(ADD),
             "change_control_sha256": sha256(CC),
+            "register_candidate_results_sha256": sha256(GOV_RESULTS),
+            "atomic_promotion_package_sha256": sha256(PROMOTION_PACKAGE),
         },
     }
 
@@ -402,6 +421,15 @@ def main() -> int:
     write_outputs(matrix)
     result = run_checks(matrix)
     RESULTS.write_text(json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    manifest_paths = sorted(
+        path
+        for path in OUT.rglob("*")
+        if path.is_file() and path != MANIFEST and "__pycache__" not in path.parts
+    )
+    MANIFEST.write_text(
+        "\n".join(f"{sha256(path)}  {path.relative_to(OUT.parent).as_posix()}" for path in manifest_paths) + "\n",
+        encoding="utf-8",
+    )
     print(json.dumps(result["counts"], ensure_ascii=False))
     print(result["verdict"])
     return 0 if result["verdict"] != "FAIL" else 1

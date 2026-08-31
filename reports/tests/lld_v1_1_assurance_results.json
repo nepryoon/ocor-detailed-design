@@ -1,14 +1,14 @@
 {
   "schema_version": "1.0",
   "verdict": "PASS_WITH_GOVERNANCE_CONDITION",
-  "governance_condition": "Promote CC-FULL-GOVERNED-AGENT-MEMORY and update the five authoritative registers before consolidating ADD/LLD",
+  "governance_condition": "Allocate the authority-owned decision identifier and atomically promote the five materialized register candidates before consolidating ADD/LLD",
   "counts": {
     "requirements": 285,
     "fully_specified": 283,
     "conditionally_specified": 2,
     "gaps": 0,
-    "checks": 52,
-    "passed": 52,
+    "checks": 55,
+    "passed": 55,
     "failed": 0
   },
   "checks": [
@@ -61,6 +61,21 @@
       "check": "Conditional scope",
       "status": "PASS",
       "detail": "conditional=['FR-118', 'FR-119']"
+    },
+    {
+      "check": "Five register candidates",
+      "status": "PASS",
+      "detail": "['OCOR_CAP_ELM_Requirement_Crosswalk_v1.1_FULL_MEMORY_CANDIDATE.md', 'OCOR_Decision_Register_v1.2_FULL_MEMORY_CANDIDATE.md', 'OCOR_Decision_Traceability_Index_v1.2_FULL_MEMORY_CANDIDATE.md', 'OCOR_Requirement_Register_v1.1_FULL_MEMORY_CANDIDATE.md', 'OCOR_Requirement_Traceability_Index_v1.1_FULL_MEMORY_CANDIDATE.md']"
+    },
+    {
+      "check": "Register candidate assurance",
+      "status": "PASS",
+      "detail": "{'checks': 11, 'pass': 11, 'fail': 0}"
+    },
+    {
+      "check": "Atomic promotion package",
+      "status": "PASS",
+      "detail": "identifier reserved to authority"
     },
     {
       "check": "GovernedContext exact fields",
@@ -276,6 +291,8 @@
   "digests": {
     "lld_candidate_sha256": "1a5d5d448950cadfd09a177a6d91566e878b26a9f8a4cd481cb618ecd1401414",
     "add_candidate_sha256": "99f3d17d480eb2b3346524a0820dcdbbedfbe43b091428a86e8677ce8030ed22",
-    "change_control_sha256": "c11e68c5cfdc2b63c5b51b382dba086687701467a50fbeb17d071e4056ee8366"
+    "change_control_sha256": "c11e68c5cfdc2b63c5b51b382dba086687701467a50fbeb17d071e4056ee8366",
+    "register_candidate_results_sha256": "216f7f9016fa6dac83a671c94eefda9eed56685509ae73d7108f2b7685421ecc",
+    "atomic_promotion_package_sha256": "2b6373185f544c06faf514f757525cbebd5b53b0edd7419b43bd7f496e2ad7c0"
   }
 }
