@@ -156,3 +156,40 @@ Risultato macchina:
 
 Esito C.3: **PASS** — 7/7 output byte-identici fra i due clone e rispetto al
 workspace.
+
+## 5. C.4 — Lineage registri main → candidati
+
+La catena è registrata sia negli header dei cinque candidati sia nel risultato macchina
+`reports/tests/full_memory_governance_candidate_results.json`. Il punto di origine è
+univoco: `origin/main@098c680615cf8d8b57cd367386bac10d8acdc715`. Il trasformatore è
+`reports/tests/build_full_memory_governance_candidates.py`, SHA-256
+`376eddea2c62367405e2128e756967662c6f9285dedf1d76de9f5a17d58ace79`, introdotto
+nella sua forma strict-source dal commit `3ad0fdce7d3d8b6829c665acfa6e1a596fa59538`.
+
+| Input autoritativo e SHA-256 | Trasformazione dichiarata | Output candidato e SHA-256 |
+|---|---|---|
+| `registers/OCOR_Requirement_Register_v1.0_APPROVED.md` — `eb3c3bca4c0e88a2a7c70a6c5a7c45ab1cf51fd72329a2b6c2d877939c43b7d2` | sostituzione univoca righe `FR-118`/`FR-119`; header lineage | `reports/governance_candidates/OCOR_Requirement_Register_v1.1_FULL_MEMORY_CANDIDATE.md` — `df1e36a6ef2cbb92bee236f262858ac37f2989d369e0e1f4731268308e70887e` |
+| `registers/OCOR_Requirement_Traceability_Index_v1.0_APPROVED.md` — `44b54a577a6d6c3342af85fced1ee98662b79f783a8b22ab5c655feca113c0f7` | sostituzione univoca righe `FR-118`/`FR-119`; header lineage | `reports/governance_candidates/OCOR_Requirement_Traceability_Index_v1.1_FULL_MEMORY_CANDIDATE.md` — `bb747a84d3183370e11747249b6f85bcf6d55e530950bdcb9d699b634b633eac` |
+| `registers/OCOR_Decision_Register_v1.1_APPROVED.md` — `521e328e76d9723d7ad035684df49c0183c754f8029f20c522a744b4d2a5f7dd` | copia integrale; header lineage; append proposta `UNASSIGNED` | `reports/governance_candidates/OCOR_Decision_Register_v1.2_FULL_MEMORY_CANDIDATE.md` — `c14d8eba0532f6a65e514d206e79156ce17fa75c0b9078f5529fead987f32ee4` |
+| `registers/OCOR_Decision_Traceability_Index_v1.1_APPROVED.md` — `e6b4f45d96c323c44fb09370dc2396b8bd73ff7de1e2c0632a1f551b5dfe7d5a` | copia integrale; header lineage; append trace proposta `UNASSIGNED` | `reports/governance_candidates/OCOR_Decision_Traceability_Index_v1.2_FULL_MEMORY_CANDIDATE.md` — `f14b824e20155c2639908eda0d0d0454747954ba8fdc0965e788f0222edc6ab1` |
+| `registers/OCOR_CAP_ELM_Requirement_Crosswalk_v1.0_APPROVED.md` — `89a365262909e734c19512e799d78632b72ab6452ad0f5e7c11661f5819f101e` | sostituzione univoca riga `ELM-084`; header lineage | `reports/governance_candidates/OCOR_CAP_ELM_Requirement_Crosswalk_v1.1_FULL_MEMORY_CANDIDATE.md` — `1e74f8d7f7a7a119c1431ae00319c457f85fff3cdc4e40f82aa3c77127a019c3` |
+
+Tutti i path input della tabella hanno prefisso completo
+`ocor-runtime/docs/governance_dossier/`. Il result JSON, SHA-256
+`4f6edf4320af0fc262ab31728d655f375a9886281c0da6cbdf6a8961371fc309`, registra
+commit, path, cinque digest-base, cinque digest output e 11/11 controlli `PASS`.
+
+Il manifest candidato
+`reports/OCOR_FULL_MEMORY_GOVERNANCE_CANDIDATE_SHA256SUMS`, SHA-256
+`52f9006aa0ceb2c56cb7f15f290e6568e449f783bdc62760be71e06b5d343a0d`, contiene i
+cinque output e il result JSON; `sha256sum -c` restituisce 6/6 `OK`.
+
+I manifest approvati non sono stati toccati e coincidono con `origin/main`:
+
+| Manifest approvato | SHA-256 workspace | SHA-256 `origin/main` | Esito |
+|---|---|---|---|
+| `OCOR_ADD_v1.2_APPROVAL_SHA256SUMS` | `8d6b7125ddb77a78efff7521f78634b2f59f03eb2662ae4e6485d4244661dc88` | `8d6b7125ddb77a78efff7521f78634b2f59f03eb2662ae4e6485d4244661dc88` | `MATCH` |
+| `OCOR_ADD_v1.2_VALIDATION_EVIDENCE_SHA256SUMS` | `fde0611b9aa1f950b9c599a3ee3d71d89ac353a21cb40b9e0ebe8efeffbdc073` | `fde0611b9aa1f950b9c599a3ee3d71d89ac353a21cb40b9e0ebe8efeffbdc073` | `MATCH` |
+
+Esito C.4: **PASS** — lineage completo e verificabile; manifest candidato 6/6;
+manifest approvati immutati.
