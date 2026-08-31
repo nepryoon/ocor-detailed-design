@@ -122,7 +122,7 @@ def main() -> int:
     rows = tuple(
         (transition, source, destination)
         for transition, source, destination in re.findall(
-            r"^\| (ACT-T[0-9]+[ab]?) \| `([^`]+)` \| `([^`]+)` \|$",
+            r"^\| (ACT-T[0-9]+[a-e]?) \| `([^`]+)` \| `([^`]+)` \|$",
             fsm,
             flags=re.MULTILINE,
         )
