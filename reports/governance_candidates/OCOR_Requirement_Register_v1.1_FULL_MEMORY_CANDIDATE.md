@@ -1,6 +1,6 @@
 # OCOR — Requirement Register v1.1 — FULL GOVERNED MEMORY CANDIDATE
 
-> **Snapshot candidato completo; non ancora autoritativo.** Derivato senza modificare `OCOR_Requirement_Register_v1.0_APPROVED.md` (SHA-256 `87c11271ed5193d24ca6e782378c9e779c42c2e7b4a93ef7630f825de78be991`) per il change set `CC-FULL-GOVERNED-AGENT-MEMORY`. Diventa efficace soltanto con promozione atomica dei cinque registri e assegnazione dell'identificativo decisionale da parte dell'autorità competente. Preserva `E1=0`, `E2=0` e non dichiara implementazione, verifica runtime o Production readiness.
+> **Snapshot candidato completo; non ancora autoritativo.** Derivato senza modificare `origin/main@098c680615cf8d8b57cd367386bac10d8acdc715:ocor-runtime/docs/governance_dossier/registers/OCOR_Requirement_Register_v1.0_APPROVED.md` (SHA-256 `eb3c3bca4c0e88a2a7c70a6c5a7c45ab1cf51fd72329a2b6c2d877939c43b7d2`) per il change set `CC-FULL-GOVERNED-AGENT-MEMORY`. Diventa efficace soltanto con promozione atomica dei cinque registri e assegnazione dell'identificativo decisionale da parte dell'autorità competente. Preserva `E1=0`, `E2=0` e non dichiara implementazione, verifica runtime o Production readiness.
 
 # OCOR — Requirement Register v1.0 — APPROVED ADD v1.2
 
@@ -448,4 +448,3 @@ Nessun NFR usa `TBD` come metrica corrente. I target ulteriori non ancora determ
 ## Tracciabilità normativa estesa
 
 La catena riga-per-riga verso domanda, decisione, Context Pack, obiettivi, capability Palantir, estensioni OCOR, componenti, acceptance, metodo/evidenza e registri è parte normativa in `OCOR_Requirement_Traceability_Index_v0.9.md`.
-

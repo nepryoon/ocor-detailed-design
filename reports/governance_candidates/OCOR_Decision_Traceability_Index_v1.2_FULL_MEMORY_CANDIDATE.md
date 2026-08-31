@@ -1,6 +1,6 @@
 # OCOR — Decision Traceability Index v1.2 — FULL GOVERNED MEMORY CANDIDATE
 
-> **Snapshot candidato completo; non ancora autoritativo.** Derivato senza modificare `OCOR_Decision_Traceability_Index_v1.1_APPROVED.md` (SHA-256 `cabffb130078209a25c4c7ac66d6bdc8500fa009bd0897d9612f5fbd13e330e1`) per il change set `CC-FULL-GOVERNED-AGENT-MEMORY`. Diventa efficace soltanto con promozione atomica dei cinque registri e assegnazione dell'identificativo decisionale da parte dell'autorità competente. Preserva `E1=0`, `E2=0` e non dichiara implementazione, verifica runtime o Production readiness.
+> **Snapshot candidato completo; non ancora autoritativo.** Derivato senza modificare `origin/main@098c680615cf8d8b57cd367386bac10d8acdc715:ocor-runtime/docs/governance_dossier/registers/OCOR_Decision_Traceability_Index_v1.1_APPROVED.md` (SHA-256 `e6b4f45d96c323c44fb09370dc2396b8bd73ff7de1e2c0632a1f551b5dfe7d5a`) per il change set `CC-FULL-GOVERNED-AGENT-MEMORY`. Diventa efficace soltanto con promozione atomica dei cinque registri e assegnazione dell'identificativo decisionale da parte dell'autorità competente. Preserva `E1=0`, `E2=0` e non dichiara implementazione, verifica runtime o Production readiness.
 
 # OCOR — Decision Traceability Index v1.1 — APPROVED ADD v1.2
 
@@ -224,7 +224,6 @@
 | DEC-204 | DRAFT-D/H | marking lattice, join, fail-closed | evidence and egress marking | ADD v1.2 §§4.4, 10.7 |
 | DEC-205 | release reconciliation | FR-095 P0/MVP; ELM-070 deferred from PoC | FR-095; CAP-019; ELM-070 | ADD v1.2 §3.4; ARA v1.1 |
 | DEC-206 | final allocation | next decision DEC-207 | governance | ARA Decision Record v1.1 |
-
 
 
 ## Candidate decision trace — identifier allocation reserved to the authority

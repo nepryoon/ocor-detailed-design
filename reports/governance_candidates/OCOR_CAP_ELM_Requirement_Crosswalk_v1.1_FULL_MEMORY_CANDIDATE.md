@@ -1,6 +1,6 @@
 # OCOR — CAP/ELM Requirement Crosswalk v1.1 — FULL GOVERNED MEMORY CANDIDATE
 
-> **Snapshot candidato completo; non ancora autoritativo.** Derivato senza modificare `OCOR_CAP_ELM_Requirement_Crosswalk_v1.0_APPROVED.md` (SHA-256 `dbe1590ed72d21d56144b40f4543ef1f0de61f781d9fceb004c5500942cc2b80`) per il change set `CC-FULL-GOVERNED-AGENT-MEMORY`. Diventa efficace soltanto con promozione atomica dei cinque registri e assegnazione dell'identificativo decisionale da parte dell'autorità competente. Preserva `E1=0`, `E2=0` e non dichiara implementazione, verifica runtime o Production readiness.
+> **Snapshot candidato completo; non ancora autoritativo.** Derivato senza modificare `origin/main@098c680615cf8d8b57cd367386bac10d8acdc715:ocor-runtime/docs/governance_dossier/registers/OCOR_CAP_ELM_Requirement_Crosswalk_v1.0_APPROVED.md` (SHA-256 `89a365262909e734c19512e799d78632b72ab6452ad0f5e7c11661f5819f101e`) per il change set `CC-FULL-GOVERNED-AGENT-MEMORY`. Diventa efficace soltanto con promozione atomica dei cinque registri e assegnazione dell'identificativo decisionale da parte dell'autorità competente. Preserva `E1=0`, `E2=0` e non dichiara implementazione, verifica runtime o Production readiness.
 
 # OCOR — CAP/ELM Requirement Crosswalk v1.0 — APPROVED ADD v1.2
 
@@ -160,4 +160,3 @@
 - Ogni riga contiene almeno un ID `BR-*`, `FR-*` o `NFR-*` presente in uno dei registri di fase indicati.
 - Nessun riferimento di requisito generico o non allocato è usato nella matrice.
 - La presenza di un requisito non modifica lo stato delle evidenze riportato in `coverage_matrices.md`: i claim di parità o superiorità restano vietati finché non sono disponibili evidenze `E1` e, dove richiesto, revisione `E2`.
-

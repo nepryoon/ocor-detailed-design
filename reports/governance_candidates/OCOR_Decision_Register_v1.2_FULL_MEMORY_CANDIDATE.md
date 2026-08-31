@@ -1,6 +1,6 @@
 # OCOR — Decision Register v1.2 — FULL GOVERNED MEMORY CANDIDATE
 
-> **Snapshot candidato completo; non ancora autoritativo.** Derivato senza modificare `OCOR_Decision_Register_v1.1_APPROVED.md` (SHA-256 `b3f380362da89da202aed9c8dfa4868367661d41ab3590295bafab51bbceccb9`) per il change set `CC-FULL-GOVERNED-AGENT-MEMORY`. Diventa efficace soltanto con promozione atomica dei cinque registri e assegnazione dell'identificativo decisionale da parte dell'autorità competente. Preserva `E1=0`, `E2=0` e non dichiara implementazione, verifica runtime o Production readiness.
+> **Snapshot candidato completo; non ancora autoritativo.** Derivato senza modificare `origin/main@098c680615cf8d8b57cd367386bac10d8acdc715:ocor-runtime/docs/governance_dossier/registers/OCOR_Decision_Register_v1.1_APPROVED.md` (SHA-256 `521e328e76d9723d7ad035684df49c0183c754f8029f20c522a744b4d2a5f7dd`) per il change set `CC-FULL-GOVERNED-AGENT-MEMORY`. Diventa efficace soltanto con promozione atomica dei cinque registri e assegnazione dell'identificativo decisionale da parte dell'autorità competente. Preserva `E1=0`, `E2=0` e non dichiara implementazione, verifica runtime o Production readiness.
 
 # OCOR — Decision Register v1.1 — APPROVED ADD v1.2
 
@@ -244,7 +244,6 @@ Per ogni decisione, la catena verso obiettivi, capability, componenti, requisiti
 | DEC-204 | Marking lattice | Algebra delle marking, join e fail-closed propagation promossa come baseline. | Approved | 2026-08-30 | Product Owner / ARA | DRAFT-D; DRAFT-H; ADD v1.2 §§4.4, 10.7 |
 | DEC-205 | FR-095 | FR-095 è P0/MVP. ELM-070 resta differito fuori dal PoC; nessuna capacità AAP controfattuale è rivendicata nel PoC. Sostituisce solo la release disposition FR-095 di DEC-103. | Approved | 2026-08-30 | Product Owner / ARA | FR-095; CAP-019; ELM-070 |
 | DEC-206 | Allocation | Chiusura dell’allocazione decisionale ADD v1.2; la prossima decisione disponibile è DEC-207. | Approved | 2026-08-30 | Product Owner / ARA | ADD v1.2 §15; ARA Decision Record v1.1 |
-
 
 
 ## Candidate change-control entry — identifier allocation reserved to the authority

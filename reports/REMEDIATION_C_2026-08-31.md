@@ -89,3 +89,35 @@ FileNotFoundError: required authoritative register is missing: /definitely-missi
 
 Esito C.1: **PASS** — sorgenti univoche, byte verificati contro main, errore rumoroso
 su input assente o divergente.
+
+## 3. C.2 — Riancoraggio dei digest-base
+
+I cinque candidati sono stati rigenerati con
+`reports/tests/build_full_memory_governance_candidates.py` a partire da
+`origin/main@098c680615cf8d8b57cd367386bac10d8acdc715`. Il generatore ha concluso
+11 controlli `PASS`, 0 `FAIL`. Il delta dei cinque documenti è limitato al lineage
+dell'header e alla rimozione del LF staging eccedente; la disposizione proposta resta
+non approvata e senza identificativo assegnato.
+
+| Candidato | Digest-base precedente | Digest-base atteso (`origin/main`) | Digest-base dopo rigenerazione | Esito |
+|---|---|---|---|---|
+| Requirement Register v1.1 | `87c11271ed5193d24ca6e782378c9e779c42c2e7b4a93ef7630f825de78be991` | `eb3c3bca4c0e88a2a7c70a6c5a7c45ab1cf51fd72329a2b6c2d877939c43b7d2` | `eb3c3bca4c0e88a2a7c70a6c5a7c45ab1cf51fd72329a2b6c2d877939c43b7d2` | `MATCH` |
+| Requirement Traceability Index v1.1 | `f604bc963bd7006eb02f1524e741c7859e1a8c4b2e050568f6ce812a50f1b080` | `44b54a577a6d6c3342af85fced1ee98662b79f783a8b22ab5c655feca113c0f7` | `44b54a577a6d6c3342af85fced1ee98662b79f783a8b22ab5c655feca113c0f7` | `MATCH` |
+| Decision Register v1.2 | `b3f380362da89da202aed9c8dfa4868367661d41ab3590295bafab51bbceccb9` | `521e328e76d9723d7ad035684df49c0183c754f8029f20c522a744b4d2a5f7dd` | `521e328e76d9723d7ad035684df49c0183c754f8029f20c522a744b4d2a5f7dd` | `MATCH` |
+| Decision Traceability Index v1.2 | `cabffb130078209a25c4c7ac66d6bdc8500fa009bd0897d9612f5fbd13e330e1` | `e6b4f45d96c323c44fb09370dc2396b8bd73ff7de1e2c0632a1f551b5dfe7d5a` | `e6b4f45d96c323c44fb09370dc2396b8bd73ff7de1e2c0632a1f551b5dfe7d5a` | `MATCH` |
+| CAP/ELM Crosswalk v1.1 | `dbe1590ed72d21d56144b40f4543ef1f0de61f781d9fceb004c5500942cc2b80` | `89a365262909e734c19512e799d78632b72ab6452ad0f5e7c11661f5819f101e` | `89a365262909e734c19512e799d78632b72ab6452ad0f5e7c11661f5819f101e` | `MATCH` |
+
+Digest dei candidati rigenerati:
+
+| Candidato | SHA-256 output |
+|---|---|
+| Requirement Register v1.1 | `df1e36a6ef2cbb92bee236f262858ac37f2989d369e0e1f4731268308e70887e` |
+| Requirement Traceability Index v1.1 | `bb747a84d3183370e11747249b6f85bcf6d55e530950bdcb9d699b634b633eac` |
+| Decision Register v1.2 | `c14d8eba0532f6a65e514d206e79156ce17fa75c0b9078f5529fead987f32ee4` |
+| Decision Traceability Index v1.2 | `f14b824e20155c2639908eda0d0d0454747954ba8fdc0965e788f0222edc6ab1` |
+| CAP/ELM Crosswalk v1.1 | `1e74f8d7f7a7a119c1431ae00319c457f85fff3cdc4e40f82aa3c77127a019c3` |
+
+Il manifest candidato rigenerato verifica 6/6 entry `OK`; viene consolidato con la
+catena di lineage al punto C.4. Nessun manifest approvato è stato modificato.
+
+Esito C.2: **PASS** — 5/5 digest-base coincidono byte per byte con `origin/main`.
