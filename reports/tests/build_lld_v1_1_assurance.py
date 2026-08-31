@@ -6,6 +6,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -29,26 +30,43 @@ MANIFEST = OUT / "OCOR_IRB_ADD_LLD_REMEDIATION_SHA256SUMS"
 GOV_RESULTS = OUT / "tests" / "full_memory_governance_candidate_results.json"
 GOV_CANDIDATES = OUT / "governance_candidates"
 PROMOTION_PACKAGE = OUT / "OCOR_Full_Memory_Atomic_Register_Promotion_Package_v1.0.md"
+SOURCE_REF = "origin/main"
 
 
-def resolve_source(*candidates: str) -> Path:
-    for candidate in candidates:
-        path = ROOT / candidate
-        if path.exists():
-            return path
-    raise FileNotFoundError(candidates[0])
+def git_bytes(*args: str) -> bytes:
+    completed = subprocess.run(
+        ["git", *args],
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if completed.returncode != 0:
+        detail = completed.stderr.decode("utf-8", errors="replace").strip()
+        raise RuntimeError(f"git {' '.join(args)} failed: {detail}")
+    return completed.stdout
 
 
-REGISTER = resolve_source(
-    "audit-src/OCOR_Requirement_Register_v1.0_APPROVED.md",
-    "ocor-runtime/docs/governance_dossier/OCOR_Requirement_Register_v1.0_APPROVED.md",
+def required_source(relative_name: str) -> Path:
+    relative = Path(relative_name)
+    source = ROOT / relative
+    if not source.is_file():
+        raise FileNotFoundError(f"required authoritative source is missing: {source}")
+    authoritative_bytes = git_bytes("show", f"{SOURCE_REF}:{relative.as_posix()}")
+    if source.read_bytes() != authoritative_bytes:
+        raise RuntimeError(
+            f"authoritative source mismatch for {relative}: working-tree bytes differ from {SOURCE_REF}"
+        )
+    return source
+
+
+REGISTER = required_source(
+    "ocor-runtime/docs/governance_dossier/registers/OCOR_Requirement_Register_v1.0_APPROVED.md",
 )
-RTI = resolve_source(
-    "audit-src/OCOR_Requirement_Traceability_Index_v1.0_APPROVED.md",
-    "ocor-runtime/docs/governance_dossier/OCOR_Requirement_Traceability_Index_v1.0_APPROVED.md",
+RTI = required_source(
+    "ocor-runtime/docs/governance_dossier/registers/OCOR_Requirement_Traceability_Index_v1.0_APPROVED.md",
 )
-ADD_V12 = resolve_source(
-    "audit-src/OCOR_ADD_v1.2_APPROVED_BASELINE.md",
+ADD_V12 = required_source(
     "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.2_APPROVED_BASELINE.md",
 )
 

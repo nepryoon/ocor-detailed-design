@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import subprocess
 from pathlib import Path
 
 
@@ -25,6 +26,9 @@ else:
 DEST = OUT / "governance_candidates"
 RESULTS = OUT / "tests" / "full_memory_governance_candidate_results.json"
 MANIFEST = OUT / "OCOR_FULL_MEMORY_GOVERNANCE_CANDIDATE_SHA256SUMS"
+SOURCE_REF = "origin/main"
+REGISTER_ROOT_REL = Path("ocor-runtime/docs/governance_dossier/registers")
+REGISTER_ROOT = ROOT / REGISTER_ROOT_REL
 
 
 SOURCES = {
@@ -51,15 +55,36 @@ SOURCES = {
 }
 
 
+def git_bytes(*args: str) -> bytes:
+    completed = subprocess.run(
+        ["git", *args],
+        cwd=ROOT,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+    )
+    if completed.returncode != 0:
+        detail = completed.stderr.decode("utf-8", errors="replace").strip()
+        raise RuntimeError(f"git {' '.join(args)} failed: {detail}")
+    return completed.stdout
+
+
+def source_commit() -> str:
+    return git_bytes("rev-parse", f"{SOURCE_REF}^{{commit}}").decode("ascii").strip()
+
+
 def source_path(name: str) -> Path:
-    candidates = [
-        ROOT / "audit-src" / name,
-        ROOT / "ocor-runtime" / "docs" / "governance_dossier" / name,
-    ]
-    for candidate in candidates:
-        if candidate.exists():
-            return candidate
-    raise FileNotFoundError(name)
+    source = REGISTER_ROOT / name
+    if not source.is_file():
+        raise FileNotFoundError(f"required authoritative register is missing: {source}")
+    relative = source.relative_to(ROOT)
+    authoritative_bytes = git_bytes("show", f"{SOURCE_REF}:{relative.as_posix()}")
+    working_bytes = source.read_bytes()
+    if working_bytes != authoritative_bytes:
+        raise RuntimeError(
+            f"authoritative source mismatch for {relative}: working-tree bytes differ from {SOURCE_REF}"
+        )
+    return source
 
 
 def sha256(path: Path) -> str:
@@ -75,10 +100,11 @@ def replace_row(text: str, identifier: str, replacement: str) -> str:
 
 
 def candidate_header(kind: str, source: Path) -> str:
+    relative = source.relative_to(ROOT).as_posix()
     return (
         f"# OCOR — {kind} — FULL GOVERNED MEMORY CANDIDATE\n\n"
         "> **Snapshot candidato completo; non ancora autoritativo.** Derivato senza modificare "
-        f"`{source.name}` (SHA-256 `{sha256(source)}`) per il change set "
+        f"`{SOURCE_REF}@{source_commit()}:{relative}` (SHA-256 `{sha256(source)}`) per il change set "
         "`CC-FULL-GOVERNED-AGENT-MEMORY`. Diventa efficace soltanto con promozione atomica "
         "dei cinque registri e assegnazione dell'identificativo decisionale da parte "
         "dell'autorità competente. Preserva `E1=0`, `E2=0` e non dichiara implementazione, "
@@ -174,12 +200,14 @@ def main() -> int:
     }
     paths: dict[str, Path] = {}
     base_digests: dict[str, str] = {}
+    source_paths: dict[str, str] = {}
     for key, (source_name, output_name) in SOURCES.items():
         source = source_path(source_name)
         output = DEST / output_name
         output.write_text(builders[key](source), encoding="utf-8")
         paths[key] = output
         base_digests[key] = sha256(source)
+        source_paths[key] = source.relative_to(ROOT).as_posix()
 
     texts = {key: path.read_text(encoding="utf-8") for key, path in paths.items()}
     approved_decisions = set(
@@ -211,6 +239,9 @@ def main() -> int:
         "artifact": "OCOR full-memory five-register candidate update",
         "change_set": "CC-FULL-GOVERNED-AGENT-MEMORY",
         "status": "PASS" if all(item["status"] == "PASS" for item in checks) else "FAIL",
+        "source_ref": SOURCE_REF,
+        "source_commit": source_commit(),
+        "source_paths": source_paths,
         "base_sha256": base_digests,
         "candidate_sha256": {key: sha256(path) for key, path in paths.items()},
         "counts": {"checks": len(checks), "pass": sum(item["status"] == "PASS" for item in checks), "fail": sum(item["status"] == "FAIL" for item in checks)},
