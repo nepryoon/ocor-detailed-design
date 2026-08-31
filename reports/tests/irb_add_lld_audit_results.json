@@ -1,0 +1,3869 @@
+{
+  "add_allocated": 285,
+  "audit": "OCOR IRB -> ADD v1.2 -> LLD v1.0 exhaustive alignment",
+  "findings": [
+    {
+      "check": "LLD requirement allocation",
+      "detail": "0/285 IRB requirements are individually or range-allocated by the LLD",
+      "id": "IALLD-001",
+      "passed": false,
+      "severity": "BLOCKER"
+    },
+    {
+      "check": "GovernedContext exact field equality",
+      "detail": {
+        "add": [
+          "tenant_id",
+          "organization_id",
+          "domain_id",
+          "compartments",
+          "classification_marking_ref",
+          "purpose",
+          "effective_principal_id",
+          "actor_chain",
+          "ontology_release_digest",
+          "policy_bundle_digest",
+          "correlation_id"
+        ],
+        "lld": [
+          "principal_id",
+          "tenant_id",
+          "purpose_ids",
+          "authority_refs",
+          "policy_snapshot_digest",
+          "marking_ref",
+          "capability_lease_ids",
+          "correlation_id",
+          "causation_id",
+          "request_time",
+          "deadline",
+          "schema_pins",
+          "ontology_release_digest",
+          "trace_id"
+        ]
+      },
+      "id": "IALLD-002",
+      "passed": false,
+      "severity": "BLOCKER"
+    },
+    {
+      "check": "Referenced public contracts exist",
+      "detail": {
+        "schemas/openapi/ocor-named-query-gateway.openapi.yaml": false,
+        "schemas/proto/ocor_registry.proto": false
+      },
+      "id": "IALLD-003",
+      "passed": false,
+      "severity": "BLOCKER"
+    },
+    {
+      "check": "FR-118/FR-119 versus ELM-084 scope",
+      "detail": "FR-118 and FR-119 are Confirmed P0/PoC while ADD defers ELM-084 and specifies no persistent general memory",
+      "id": "IALLD-004",
+      "passed": false,
+      "severity": "MAJOR"
+    },
+    {
+      "check": "CapabilityLease exact contract",
+      "detail": "LLD supplies validation prose with fields not equal to the closed ADD CapabilityLease record, but no exact LLD data contract",
+      "id": "IALLD-005",
+      "passed": false,
+      "severity": "BLOCKER"
+    },
+    {
+      "check": "C3 idempotency binding in local atomic unit",
+      "detail": "DEC-201 requires aggregate revision, canonical commit, idempotency binding and outbox in one local commit",
+      "id": "IALLD-006",
+      "passed": false,
+      "severity": "MAJOR"
+    },
+    {
+      "check": "FSM guard and durable-effect completeness",
+      "detail": "LLD preserves 44 source/destination tuples but omits the ADD transition-by-transition event/guard and durable-effect columns",
+      "id": "IALLD-007",
+      "passed": false,
+      "severity": "BLOCKER"
+    },
+    {
+      "check": "Security and emergency-control detail",
+      "detail": "LLD has no executable design for the ADD Human Gate risk classes, break-glass and emergency-stop state model",
+      "id": "IALLD-008",
+      "passed": false,
+      "severity": "MAJOR"
+    },
+    {
+      "check": "Operations and recovery detail",
+      "detail": "ADD deployment, isolation, backup, restore, recovery and degraded-operation prescriptions are not decomposed in the LLD",
+      "id": "IALLD-009",
+      "passed": false,
+      "severity": "MAJOR"
+    }
+  ],
+  "lld_allocated": 0,
+  "passed": false,
+  "requirement_matrix": [
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "BR-001",
+      "title": "Core domain-neutral"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "BR-002",
+      "title": "Rappresentazione governata della minaccia"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "BR-003",
+      "title": "Continuità end-to-end"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "BR-004",
+      "title": "Distribuzione proprietaria governata"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "BR-005",
+      "title": "Governance federata"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "BR-006",
+      "title": "Evidenza della vertical slice"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "Future",
+        "PoC"
+      ],
+      "requirement_id": "BR-007",
+      "title": "Classificazione dello scope"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-001",
+      "title": "Portabilità del profilo"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-002",
+      "title": "Trasparenza delle dipendenze"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-003",
+      "title": "P0 non compensabili"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-004",
+      "title": "Metadati di verifica"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "BR-008",
+      "title": "Coordinamento nazionale federato"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-001",
+      "title": "Catalogo esplicito dei ruoli"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-002",
+      "title": "Authority per concern"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-003",
+      "title": "Human gate e dual control"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-005",
+      "title": "Integrità dell’approvazione"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-004",
+      "title": "Agente come machine principal"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-005",
+      "title": "Autorità distinta lungo il ciclo operativo"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-006",
+      "title": "Compartimentazione uniforme"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-006",
+      "title": "Non-divulgazione fra compartimenti"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "BR-009",
+      "title": "Comprensione della crisi ibrida"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "BR-010",
+      "title": "Mission thread integrato"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-007",
+      "title": "Query evidence-backed"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-008",
+      "title": "Action simulata canonica"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-009",
+      "title": "Confronto causale degli interventi"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-007",
+      "title": "Riproducibilità causale"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-010",
+      "title": "Orchestrazione multi-agente governata"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-011",
+      "title": "Replay audit end-to-end"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-008",
+      "title": "Correlazione completa del mission thread"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-012",
+      "title": "Identity resolution fail-safe"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-013",
+      "title": "Dataset sintetico versionato"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "BR-011",
+      "title": "Outcome di valore del PoC"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-009",
+      "title": "Gate di successo non compensabili"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "BR-012",
+      "title": "Exit criteria distinti per release"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-014",
+      "title": "Baseline Palantir identificata"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "BR-013",
+      "title": "Profili di capability per release"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "NFR-010",
+      "title": "Evidenza minima per parity verified"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-015",
+      "title": "Equivalenza semantico-funzionale"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-016",
+      "title": "Contratti OCOR derivati dalla Canonical IR"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P2"
+      ],
+      "releases": [
+        "Future"
+      ],
+      "requirement_id": "FR-017",
+      "title": "Disposizione degli endpoint di compatibilità"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-018",
+      "title": "Import semantico loss-accounted"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P2"
+      ],
+      "releases": [
+        "Future"
+      ],
+      "requirement_id": "FR-019",
+      "title": "Coesistenza tramite adapter"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC"
+      ],
+      "requirement_id": "FR-020",
+      "title": "Matrice atomica delle capability"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "BR-014",
+      "title": "Estensioni OCOR first-class"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "NFR-011",
+      "title": "Integrità dello stato Verified"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "FR-021",
+      "title": "Claim automaticamente circoscritto"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-022",
+      "title": "Registro di copertura ontologica"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-023",
+      "title": "Classificazione uniforme degli elementi"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC"
+      ],
+      "requirement_id": "FR-024",
+      "title": "Fondazioni e sistema dei tipi canonico"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-025",
+      "title": "Identità stabile e risoluzione dei mapping"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC"
+      ],
+      "requirement_id": "FR-026",
+      "title": "Relazioni e contratti semantici distinti"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-027",
+      "title": "Query, vincoli e inferenza spiegabile"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-028",
+      "title": "Conoscenza bitemporale ed epistemica"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-029",
+      "title": "Evidence e Provenance per affermazione"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-030",
+      "title": "Identity resolution reversibile"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-031",
+      "title": "Pipeline mutativa governata"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0",
+        "P1"
+      ],
+      "releases": [
+        "MVP",
+        "PoC"
+      ],
+      "requirement_id": "FR-032",
+      "title": "Transazioni e affidabilità operativa"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-033",
+      "title": "Decision ed execution lineage"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-034",
+      "title": "Semantica causale governata"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP",
+        "PoC"
+      ],
+      "requirement_id": "FR-035",
+      "title": "World, Scenario e simulazione"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0",
+        "P1"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-036",
+      "title": "Primitive deliberative"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0",
+        "P1"
+      ],
+      "releases": [
+        "MVP",
+        "PoC"
+      ],
+      "requirement_id": "FR-037",
+      "title": "Principals, confini e governance"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0",
+        "P1"
+      ],
+      "releases": [
+        "MVP",
+        "PoC"
+      ],
+      "requirement_id": "FR-038",
+      "title": "Modello multi-agente governato"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-039",
+      "title": "Lifecycle e disposition completa"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-012",
+      "title": "Assenza di leakage degli ID backend"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-013",
+      "title": "Execution owner unico"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-014",
+      "title": "Reversibilità epistemica"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-015",
+      "title": "Riproducibilità degli scenari"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-016",
+      "title": "Separazione tra obiettivi e autorità"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-017",
+      "title": "Completezza della coverage matrix"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-040",
+      "title": "DSL sorgente e Canonical IR"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-041",
+      "title": "Moduli e dipendenze OaC"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-042",
+      "title": "Type checker e analisi statica"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC"
+      ],
+      "requirement_id": "FR-043",
+      "title": "Generazione dei target"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-044",
+      "title": "Contratti API generati"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC"
+      ],
+      "requirement_id": "FR-045",
+      "title": "Semantic diff e migration plan"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-046",
+      "title": "Release immutabili e activation fence"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-047",
+      "title": "SDK e tool MCP generati"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P2"
+      ],
+      "releases": [
+        "Future",
+        "PoC"
+      ],
+      "requirement_id": "FR-048",
+      "title": "SDK aggiuntivi e A2A"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-049",
+      "title": "SPI controllata del compiler"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-050",
+      "title": "CLI e pipeline CI OaC"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-051",
+      "title": "Suite di test e conformance"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-052",
+      "title": "Language Server e integrazione IDE"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-018",
+      "title": "Compilazione deterministica"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-019",
+      "title": "Fail-closed sulle capability unsupported"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-020",
+      "title": "Identificabilità degli artefatti"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-021",
+      "title": "Integrità della release"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-022",
+      "title": "Coerenza cross-SDK"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-023",
+      "title": "Confinamento delle estensioni"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-053",
+      "title": "Ammissione dello stato canonico"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-054",
+      "title": "Traccia di adjudication"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-055",
+      "title": "Contratti query tipizzati"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-056",
+      "title": "Divieto accesso agenti ai datastore"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-057",
+      "title": "Consistency token"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-024",
+      "title": "Disclosure della versione servita"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-058",
+      "title": "Metadati delle Functions"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-025",
+      "title": "Sandbox delle Functions"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-059",
+      "title": "Mutazioni Function-backed"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-060",
+      "title": "Registry dei Models"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-061",
+      "title": "Nessuna promozione implicita delle prediction"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-062",
+      "title": "Concurrency e idempotenza del commit"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-063",
+      "title": "Lifecycle uniforme"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-064",
+      "title": "Idempotenza dei projector"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-065",
+      "title": "Reconciliation e rebuild"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-066",
+      "title": "Time travel e branch lineage"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-067",
+      "title": "Merge governato"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-068",
+      "title": "Propagazione dei confini"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-026",
+      "title": "Non-interference fra compartimenti"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-069",
+      "title": "Canonical Event Envelope"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-070",
+      "title": "Divieto di write diretto dagli adapter"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-071",
+      "title": "Ordering e deduplica"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-072",
+      "title": "Replay degli eventi"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-027",
+      "title": "Divieto di claim exactly-once"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-073",
+      "title": "Compatibilità dei contratti"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-074",
+      "title": "Classificazione errori evento"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-028",
+      "title": "Backpressure"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-075",
+      "title": "Correlazione end-to-end"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-076",
+      "title": "Distinzione ACK, Result e Outcome"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-077",
+      "title": "Pipeline Action uniforme"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-078",
+      "title": "Rivalidazione prima del comando"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-079",
+      "title": "Calcolo del Human Gate"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-029",
+      "title": "Zero bypass dei gate P0"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-080",
+      "title": "Policy di affidabilità dell’Action"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-081",
+      "title": "Fencing dei worker"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-082",
+      "title": "Mapping dell’Action Adapter"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-083",
+      "title": "Stati di esecuzione esterna"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-084",
+      "title": "Trigger e Automation Run"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-085",
+      "title": "Automazioni mutative governate"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-086",
+      "title": "Contratti analitici distinti"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-087",
+      "title": "Etichetta epistemica"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-088",
+      "title": "Manifest del Causal Model"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-089",
+      "title": "Separazione Link/Causal Edge"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-030",
+      "title": "Integrità degli artefatti causali"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-090",
+      "title": "Identify-or-abstain"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-091",
+      "title": "Stati di astensione causale"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-031",
+      "title": "Nessuna prescrizione da astensione"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-092",
+      "title": "Version pinning dello Scenario"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-093",
+      "title": "Contenuto del SimulationResult"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-032",
+      "title": "Isolamento della simulazione"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-094",
+      "title": "Semantica di do(X)"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-095",
+      "title": "Controfattuale AAP"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-096",
+      "title": "Separazione Intervention/Action"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-097",
+      "title": "Uncertainty descriptor"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-098",
+      "title": "Validity envelope runtime"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-099",
+      "title": "Confronto multidimensionale"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-100",
+      "title": "Nessuna Decision automatica dal ranking"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-101",
+      "title": "Modello omeostatico"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-102",
+      "title": "Deliberazione non mutativa"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-103",
+      "title": "Lifecycle delle run asincrone"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-033",
+      "title": "Quote delle simulazioni"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-104",
+      "title": "Contenuto della DecisionProposal"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-105",
+      "title": "Rivalidazione dell’ActionIntent"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-106",
+      "title": "Identità dell’Agent"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-107",
+      "title": "Contesto dell’agent run"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-108",
+      "title": "Schema del Tool Contract"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-109",
+      "title": "Tool Binding sostituibile"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-034",
+      "title": "Blocco query backend arbitrarie"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-110",
+      "title": "Enforcement degli autonomy tier"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-111",
+      "title": "Divieto di self-approval"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-112",
+      "title": "Schema della Delegation"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-113",
+      "title": "Authority non derivabile dal contenuto"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-035",
+      "title": "Propagazione della revoca"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-114",
+      "title": "Stato del coordinamento"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-115",
+      "title": "Coordinamento solo governato"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-116",
+      "title": "Schema dei Message"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-117",
+      "title": "Message non canonico"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-118",
+      "title": "Schema della Memory"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-119",
+      "title": "Isolamento del retrieval"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-120",
+      "title": "Budget multidimensionale agentico"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-121",
+      "title": "Termination condition"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-036",
+      "title": "Kill switch fail-safe"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-122",
+      "title": "Pacchetto di escalation"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-123",
+      "title": "Timeout del Human Gate"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-124",
+      "title": "Trace dell’agent run"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-125",
+      "title": "Evaluation suite agentica"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-126",
+      "title": "Trust tier governato"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-127",
+      "title": "Controlli strutturali dei tool"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-128",
+      "title": "Difesa confused deputy"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-037",
+      "title": "Fail-closed dei servizi di controllo"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "NFR-038",
+      "title": "Threat model continuo"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-129",
+      "title": "Identità individuale dei Principal"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "Production"
+      ],
+      "requirement_id": "NFR-039",
+      "title": "Autenticazione forte e revoca"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-130",
+      "title": "Policy Decision uniforme"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-040",
+      "title": "Enforcement e non-leakage"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "Production"
+      ],
+      "requirement_id": "NFR-041",
+      "title": "Isolamento risk-tiered"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-131",
+      "title": "Propagazione dei controlli obbligatori"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "Production"
+      ],
+      "requirement_id": "FR-132",
+      "title": "Declassification e sanitization governate"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-042",
+      "title": "Cifratura e key separation"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-133",
+      "title": "Segreti fuori dall’ontologia"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-134",
+      "title": "Copertura audit end-to-end"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "NFR-043",
+      "title": "Integrità verificabile dell’audit"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-044",
+      "title": "Artifact assurance offline"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-045",
+      "title": "Vulnerability remediation"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "Production"
+      ],
+      "requirement_id": "FR-135",
+      "title": "Data lifecycle e residency policy"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-046",
+      "title": "PoC privo di dati reali sensibili"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-136",
+      "title": "Human Gate del PoC"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "Production"
+      ],
+      "requirement_id": "FR-137",
+      "title": "Dual control per azioni critiche"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-138",
+      "title": "Fail-closed mutativo"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-139",
+      "title": "Break-glass governato"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-047",
+      "title": "Tempo di emergency stop"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-140",
+      "title": "Zero-trust agent/tool boundary"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-048",
+      "title": "Resilienza ad attacchi agentici"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-141",
+      "title": "Security incident runbook"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "Production"
+      ],
+      "requirement_id": "NFR-049",
+      "title": "Security drill per release"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-142",
+      "title": "Applicability Register"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-050",
+      "title": "Nessun claim operativo/compliance dal PoC"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-143",
+      "title": "Ownership federata"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-144",
+      "title": "Change Proposal obbligatoria"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-051",
+      "title": "Build riproducibile OaC"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-145",
+      "title": "Semantic versioning e diff"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-052",
+      "title": "Finestra di compatibilità"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-146",
+      "title": "Migration-as-Code"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "Production"
+      ],
+      "requirement_id": "FR-147",
+      "title": "Controllo delle migrazioni distruttive"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-148",
+      "title": "Release fence"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-053",
+      "title": "Promotion evidence gate"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-149",
+      "title": "Lineage claim-to-outcome"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-054",
+      "title": "Riproducibilità decisionale"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-150",
+      "title": "Acceptance e adjudication governate"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-055",
+      "title": "Reversibilità identity/adjudication"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "Production"
+      ],
+      "requirement_id": "FR-151",
+      "title": "Retention delle versioni"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-152",
+      "title": "Export/import portabile"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-056",
+      "title": "Round-trip portable profile"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0",
+        "P1"
+      ],
+      "releases": [
+        "Future",
+        "MVP"
+      ],
+      "requirement_id": "FR-153",
+      "title": "Migrazione Palantir capability-mapped"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "Future",
+        "MVP"
+      ],
+      "requirement_id": "NFR-057",
+      "title": "Claim di migration/parity evidence-based"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-058",
+      "title": "Backend substitution conformance"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-154",
+      "title": "Separazione branch/scenario"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-059",
+      "title": "PoC isolato e senza SaaS"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "Production"
+      ],
+      "requirement_id": "NFR-060",
+      "title": "Deployment sovrano e air-gap capable"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "Production"
+      ],
+      "requirement_id": "NFR-061",
+      "title": "Sync federata osservabile"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-062",
+      "title": "Deployment dichiarativo ripetibile"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "NFR-063",
+      "title": "Isolamento degli ambienti"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-064",
+      "title": "HA per classe di servizio"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "NFR-065",
+      "title": "Recovery target PoC"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-066",
+      "title": "SLO MVP control path"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-155",
+      "title": "Recovery authority-aware"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-067",
+      "title": "Backup immutabile e testato"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-156",
+      "title": "Preflight e progressive rollout"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-068",
+      "title": "Anti-drift operativo"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-069",
+      "title": "Osservabilità tecnica e semantica"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-157",
+      "title": "Staleness esplicita offline"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "Production"
+      ],
+      "requirement_id": "FR-158",
+      "title": "Action offline governata"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-159",
+      "title": "Runbook operativo"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "Production"
+      ],
+      "requirement_id": "NFR-070",
+      "title": "Game day Production"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-071",
+      "title": "Latenza fast path bounded"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-072",
+      "title": "Workload causali asincroni"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [],
+      "requirement_id": "NFR-073",
+      "title": "Gate licenza/capability"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-160",
+      "title": "Bundle air-gap governato"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-074",
+      "title": "Operatività air-gap completa"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "NFR-075",
+      "title": "Workload manifest"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-076",
+      "title": "Classificazione dei workload"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-161",
+      "title": "Lifecycle dei job asincroni"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-077",
+      "title": "Consistenza osservabile"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-162",
+      "title": "Rivalidazione pre-dispatch"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-078",
+      "title": "Scalabilità per celle"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-079",
+      "title": "Degradazione sicura"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-163",
+      "title": "Esito esterno ambiguo"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "NFR-080",
+      "title": "Specifica degli SLO"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-164",
+      "title": "Toolchain OaC locale"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-165",
+      "title": "UI come change proposal"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-166",
+      "title": "Vista del mission thread"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-167",
+      "title": "Strumenti role-oriented"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-081",
+      "title": "Amministrazione dual-control"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0",
+        "P1"
+      ],
+      "releases": [
+        "MVP",
+        "PoC"
+      ],
+      "requirement_id": "NFR-082",
+      "title": "Documentazione e conformance kit"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0",
+        "P1"
+      ],
+      "releases": [
+        "MVP",
+        "Production"
+      ],
+      "requirement_id": "NFR-083",
+      "title": "Localizzazione e accessibilità"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-168",
+      "title": "Boundary W3C dichiarato"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-169",
+      "title": "Contratti interoperabili generati"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-084",
+      "title": "Conformance degli adapter"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-170",
+      "title": "Exit package completo"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "NFR-085",
+      "title": "Integrità export/reimport"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "NFR-086",
+      "title": "Trasparenza licenze e dipendenze"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0",
+        "P1"
+      ],
+      "releases": [
+        "MVP",
+        "Production"
+      ],
+      "requirement_id": "NFR-087",
+      "title": "Sostenibilità delle dipendenze"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "NFR-088",
+      "title": "Compatibilità delle release"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP"
+      ],
+      "requirement_id": "FR-171",
+      "title": "Mapping di migrazione Palantir"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "NFR-089",
+      "title": "Claim di parità circoscritto"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "BR-015",
+      "title": "Validazione del mission thread"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-172",
+      "title": "Partecipazione reale del core"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-173",
+      "title": "Simulatori esterni fedeli"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-090",
+      "title": "Riproducibilità e anti-leakage"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-091",
+      "title": "Copertura della matrice PoC"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-092",
+      "title": "Gate assoluti del PoC"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "FR-174",
+      "title": "Campaign avversariale fail-safe"
+    },
+    {
+      "add_allocation": "DIRECT",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC"
+      ],
+      "requirement_id": "NFR-093",
+      "title": "Evidence package riproducibile"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "MVP",
+        "PoC"
+      ],
+      "requirement_id": "BR-016",
+      "title": "Exit gate verso MVP"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P1"
+      ],
+      "releases": [
+        "MVP",
+        "Production"
+      ],
+      "requirement_id": "BR-017",
+      "title": "Ambito MVP"
+    },
+    {
+      "add_allocation": "RANGE",
+      "approved_trace_index": "DIRECT",
+      "lld_allocation": "NONE",
+      "priorities": [
+        "P0"
+      ],
+      "releases": [
+        "PoC",
+        "Production"
+      ],
+      "requirement_id": "BR-018",
+      "title": "Entry gate Production"
+    }
+  ],
+  "requirements_by_prefix": {
+    "BR": 18,
+    "FR": 174,
+    "NFR": 93
+  },
+  "requirements_total": 285
+}
