@@ -193,3 +193,60 @@ I manifest approvati non sono stati toccati e coincidono con `origin/main`:
 
 Esito C.4: **PASS** — lineage completo e verificabile; manifest candidato 6/6;
 manifest approvati immutati.
+
+## 6. C.5 — Harness e validator OpenAPI 3.1
+
+Il test inizialmente `NOT_EXECUTED` era nominato:
+
+```text
+OpenAPI — validazione semantica con validator ufficiale
+```
+
+La causa era duplice: `openapi_spec_validator` non era importabile dalla `.venv` root
+e `scripts/verify.py` registrava comunque lo skip in modo hard-coded dopo la sola
+risoluzione strutturale dei `$ref`.
+
+Il pin governato preesistente è stato riutilizzato senza modificarlo:
+
+| Controllo dipendenza | Valore |
+|---|---|
+| Package | `openapi-spec-validator==0.9.0` |
+| Lock | `ocor-runtime/uv.lock`, SHA-256 `7cfe389e1d12995bcac6ee1ce0356c7054724b2eee03401c41bb2650ce859c69` |
+| Wheel SHA-256 pinnato | `222fecffc7714f6d0a6ad62c0e4b66cc2b7dbfafb7b93acfc6c308abbdb51af8` |
+| Sdist SHA-256 pinnato | `6d648cff6490ebb799dcfe273792f2941c050158854c721f086599d845da78b8` |
+| Profilo | `OCOR_OPENAPI_VALIDATION_PROFILE_v1.0.md`, SHA-256 `bb9658a81477ac3eeae321f25788120acefacab9b514b32c9d964c180b8e32f7` |
+
+L'ambiente CI è stato ricostruito con `uv sync --frozen --extra test`; la `.venv` root
+ha ricevuto lo stesso pin. Il primo run nell'ambiente CI minimale ha correttamente
+eseguito OpenAPI ma mostrato `Turtle/RDF — parsing: NOT_EXECUTED`, perché il workflow
+aggiunge `rdflib` in un passo separato. Dopo aver applicato lo stesso pin CI
+`rdflib==7.1.4`, il run finale non contiene skip. Lo stato intermedio non è contato
+come `PASS`.
+
+Il harness ora:
+
+- importa `openapi-spec-validator` soltanto al punto di esecuzione;
+- verifica versione installata, versione nel lock e wheel SHA-256 nel lock;
+- produce `FAIL` su pin/lock divergente o validazione fallita;
+- produce `NOT_EXECUTED` con eccezione esplicita soltanto se il package manca;
+- esegue `validate(document)` sul blocco OpenAPI 3.1 estratto.
+
+Esiti finali:
+
+| Esecuzione | PASS | FAIL | NOT_EXECUTED | Evidenza |
+|---|---:|---:|---:|---|
+| `./.venv/bin/python3 scripts/verify.py --json` | 14 | 0 | 0 | `reports/verify_report.json`, SHA-256 `9d929ffaf37714ed93bad08e5468dcbaba8b958a1d5ce431f6a7d79ca538107e` |
+| C.5 validator profile + ADD v1.1 + ADD v1.2 embedded + runtime OpenAPI | 4 | 0 | 0 | `reports/tests/c5_openapi_validation_results.json`, SHA-256 `c43e3d55c1ae771c76d34c06826ac29e56becad8444e7614ff1f2446d687dfe8` |
+
+Il runner C.5 è `reports/tests/validate_openapi_remediation_c.py`, SHA-256
+`a051f97186bdcca4e12007ebb0f95900e8e535c2da1e8ac922abbbe5dfae069c`. Registra
+`repo:///ocor-runtime/schemas/ocor.openapi.yaml` evitando un path assoluto dipendente
+dal runner; il resolver usa il file URI reale soltanto durante la validazione.
+
+Gli artefatti storici `validate_openapi_governed.py` e
+`openapi_31_validation_results.json` sono rimasti ai digest approvati
+`1c4639a9…ecbe3` e `75778277…0dca`; il manifest di validation evidence approvato passa
+integralmente senza essere aggiornato.
+
+Esito C.5: **PASS** — validator ufficiale eseguito con pin e digest verificati; harness
+14 `PASS`, 0 `FAIL`, 0 `NOT_EXECUTED`.
