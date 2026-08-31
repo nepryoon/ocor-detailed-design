@@ -4,594 +4,712 @@
 
 | Field | Value |
 |---|---|
-| Document | `OCOR_LLD_v1.0.md` |
+| Document | `docs/OCOR_LLD_v1.0.md` |
 | Repository | `nepryoon/ocor-detailed-design` |
-| Governance baseline | ADD v1.2 approval package, effective 2026-08-30 |
-| Inspection date | 2026-08-30 |
-| Runtime | CPython ≥3.11; package `ocor-runtime` 0.1.0 |
-| LLD status | **ENGINEERING CANDIDATE — ADD v1.2 BASELINE AUTHORITY CONFIRMED; IMPLEMENTATION ALIGNMENT OPEN** |
-| Release effect | ADD v1.2 is approved by the separate ARA record; this LLD does not close implementation risk or promote runtime evidence |
+| Normative baseline | `ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.2_APPROVED_BASELINE.md` |
+| Governance authority | `ARA_DECISION_RECORD_v1.1.md`, DEC-197–DEC-206 |
+| Validation closure | `ARA_VALIDATION_CLOSURE_RECORD_v1.0.md`, DEC-207 |
+| LLD status | **ADD v1.2 ALIGNED — IMPLEMENTATION CONFORMANCE OPEN** |
+| Effective date | 2026-08-31 |
+| Runtime target | CPython ≥3.11; PostgreSQL 16 reference adapter; selected ADD CIs as specified below |
 
-This document is the complete implementation-level specification for the inspected runtime slice. ADD v1.2 baseline authority is confirmed by the non-empty, digest-pinned ARA package. The LLD remains an engineering candidate until the implementation-alignment blockers in §1.4 and the accepted validation actions are closed.
+This LLD is normative for implementation detail below ADD v1.2. It neither changes the approved ADD nor asserts that unimplemented components have passed acceptance. “Required” means required by the approved baseline; “implemented” is established only by executable evidence.
 
-“Existing” identifies executable code at the inspected commit. “Target” identifies a concrete alignment obligation derived from the ADD v1.2 Candidate; a target is not implementation evidence.
+## 1. Authority, scope and closure register
 
-## 1. Prerequisites and authority decision
+### 1.1 Precedence
 
-### 1.1 Repository evidence
+Conflicts are resolved in this order:
 
-| Required deliverable | Git object | Size | Result |
-|---|---:|---:|---|
-| `ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.2_APPROVED_BASELINE.md` | `3278379f97fe92b54edcc2aa935cee63ff42131f` | 226,360 chars | **PASS** — approved; SHA-256 `c3f432ae0d172f2b4f70be8220d0ae4a134ec14716bccc6a12d75dfee438b84f` |
-| `ocor-runtime/docs/governance_dossier/ARA_DECISION_RECORD_v1.1.md` | `b82c361b81c81070bcffb08b01267d677314447f` | 9,263 chars | **PASS** — DEC-197–DEC-206; SHA-256 `35579536a67122700ff09f6be33874163f5872a199f853b557d28c71af9a0eae` |
-| `ocor-runtime/VERIFICATION_EVIDENCE_REPORT.md` | historical runtime evidence | 10,622+ | Preserved; original 104-test campaign superseded for current status |\n| `reports/OCOR_ADD_v1.2_Validation_Closure_Report.md` | Actions run `33334792715` | 2,492 | **PASS** — 109 runtime, 38 BA, 35 EV and 5 live PostgreSQL tests; OpenAPI 3/3 |
-| `ocor-runtime/schemas/` | 10 files | 24,048 | Present: 8 JSON Schemas, OpenAPI 3.1, Proto3 |
-| `reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md` | SHA-256 `4f84249b86150a0aa0ef5bf7fcc1a5c99388651e8aae132720dd784883b0426f` | 224,714+ | Incorporated by value into approved baseline |
-| `reports/OCOR_ADD_v1.2_Final_Review.md` | `2299995c97f67bd3fde08101b244c2d424e0c217` | 6,724 | Present; conditional verdict |
+1. approved ADD v1.2 and DEC-197–DEC-206;
+2. DEC-207 validation closure and pinned contract artifacts;
+3. OpenAPI 3.1, Proto3 and JSON Schemas under `ocor-runtime/schemas/`;
+4. this LLD;
+5. current source and tests.
 
-The historical Final Review described the pre-approval candidate. That status is superseded by the approved baseline, ARA Decision Record v1.1, approval checksum manifest and approved register snapshots. Repository evidence now confirms ADD v1.2 architectural approval; it does not by itself prove runtime conformance.
+Source code or tests that conflict with levels 1–4 are implementation gaps, not amendments.
 
-### 1.2 Authority hierarchy
+### 1.2 Authoritative inputs
 
-1. Non-empty, signed or digest-pinned approved ADD and ARA decision record.
-2. Approved decision/register entries referenced by that baseline.
-3. Versioned contracts approved with the baseline.
-4. This LLD.
-5. Runtime code, tests, and generated verification reports.
+| Artifact | Purpose | LLD use |
+|---|---|---|
+| `OCOR_ADD_v1.2_APPROVED_BASELINE.md` | architecture, invariants, C1–C8 allocation, BA-01–BA-08 | primary requirements source |
+| `ARA_DECISION_RECORD_v1.1.md` | approval authority and conditions | governance binding |
+| `ARA_VALIDATION_CLOSURE_RECORD_v1.0.md` | validation closure | evidence scope |
+| `schemas/openapi/ocor-named-query-gateway.openapi.yaml` | public query protocol | C2 wire contract |
+| `schemas/proto/ocor_registry.proto` | function/model registry protocol | C1/C7/C8 wire contract |
+| five ADD-embedded JSON contracts | canonical domain envelopes | C1/C5/C6/C8 validation |
+| other runtime schemas | versioned verification surface | compatibility only |
 
-Levels 4–5 MUST NOT infer approval when levels 1–2 are absent. A higher-level conflict makes the lower-level artifact a remediation target.
+### 1.3 Alignment closure register
 
-### 1.3 Decision
-
-The ADD v1.2 authority prerequisite gate is **PASS**. `LLD-BL-001`–`LLD-BL-003` are closed by the governed approval package. The implementation-alignment gate remains **BLOCKED** on `LLD-BL-004`–`LLD-BL-006`; no architecture approval is converted into an implementation-conformance claim.
-
-### 1.4 Baseline blockers
-
-| ID | Status | Blocker / disposition | Consequence | Closure evidence |
-|---|---|---|---|---|
-| `LLD-BL-001` | **CLOSED** | Approved ADD is non-empty and digest-pinned | Authority established | Approved baseline + SHA-256 manifest |
-| `LLD-BL-002` | **CLOSED** | ARA record assigns DEC-197–DEC-206 | Decisions independently verifiable | ARA Decision Record v1.1 + approved decision snapshot |
-| `LLD-BL-003` | **CLOSED** | Candidate promoted through explicit change control | Baseline frozen | Approval record + five approved register snapshots |
-| `LLD-BL-004` | **OPEN** | Runtime C1–C8 labels diverge from approved container meanings | Nominal coverage is not conformance | Approved mapping implemented or package realignment |
-| `LLD-BL-005` | **OPEN** | Approved baseline defines 44 FSM tuples; runtime has 32 edges | Conflicting `ACT-T*` meanings | Regenerated contracts, implementation and tests against approved table |
-| `LLD-BL-006` | **OPEN** | Approved ADD and runtime reuse BA-01–08 for different properties | Evidence namespace ambiguous | Versioned assumption register and unique IDs |
-
-## 2. Non-negotiable invariants
-
-### 2.1 RFC 8785 and SHA-256
-
-1. Digest-bearing JSON MUST be valid I-JSON and canonicalized by RFC 8785/JCS.
-2. Object keys MUST be ordered by unsigned UTF-16 code units.
-3. Lone surrogates, duplicate members, NaN, infinities, non-string keys, and integers outside `[-9007199254740991,9007199254740991]` MUST be rejected.
-4. `-0.0` serializes as `0`; exponent notation follows ECMAScript thresholds ≥21 or ≤-7.
-5. `canonical_sha256(x) = lowercase_hex(SHA-256(UTF8(JCS(x))))`.
-6. Semantic identity excludes top-level `markings`, `$markings`, and `operationalMetadata`; envelope identity includes the complete admitted envelope.
-7. Proto bytes, source JSON formatting, JSONB representation, and Python `repr` MUST NOT be semantic-digest inputs.
-
-Anchors: `canonical.py::{load_i_json,canonicalize_json,canonicalize,canonical_sha256}`, `c1_compiler.py::{semantic_view,SemanticCompiler.compile}`; EV-001–005 and runtime BA-04.
-
-### 2.2 Single writer, optimistic concurrency, atomic outbox
-
-For each `(branch, aggregate_id)` there is one current writer epoch. A mutation satisfies:
-
-\[
-expected\_version=current\_version \land writer\_epoch=current\_epoch
-\]
-
-and atomically creates:
-
-\[
-(aggregate\_version+1,\ canonical\_state,\ transaction\_id,\ outbox\_event,\ idempotency\_binding)
-\]
-
-Readers observe both state and outbox or neither. Same key/same request digest returns the original receipt; same key/different digest raises `ConcurrencyConflict`. The broker never joins the database transaction. Delivery is at-least-once; consumer idempotency is mandatory.
-
-Anchors: `AtomicOutboxStore.write`, `PostgreSQLTransactionalOutbox.write`, `OutboxReconciler.reconcile_once`; EV-011–015 and runtime BA-01–03.
-
-### 2.3 Marking lattice
-
-Each scheme is a finite partial order with unique labels, bottom, top, join and meet for every pair. The constructor enforces antisymmetry and closure. Restriction aggregation uses least-upper-bound join and satisfies commutativity, associativity, idempotence and monotonicity. Unknown schemes/labels, non-lattices and missing clearance dimensions fail closed. Disclosure requires clearance to dominate every marking.
-
-Anchors: `MarkingSchemeDefinition::{leq,dominates,join,meet}`, `MarkingEngine::{validate,join,is_authorized,disclose}`; EV-016–019 and runtime BA-06.
-
-### 2.4 ACT-T01 through ACT-T31b
-
-| ID | Source | Event | Target | Window |
-|---|---|---|---|---|
-| ACT-T01 | DRAFT | SUBMIT | PROPOSED | — |
-| ACT-T02 | DRAFT | CANCEL | CANCELLED | — |
-| ACT-T03 | PROPOSED | VALIDATE | VALIDATED | — |
-| ACT-T04 | PROPOSED | REJECT | REJECTED | — |
-| ACT-T05 | PROPOSED | CANCEL | CANCELLED | — |
-| ACT-T06 | VALIDATED | AUTHORIZE | AUTHORIZED | — |
-| ACT-T07 | VALIDATED | REJECT | REJECTED | — |
-| ACT-T08 | VALIDATED | CANCEL | CANCELLED | — |
-| ACT-T09 | AUTHORIZED | SCHEDULE | SCHEDULED | — |
-| ACT-T10 | AUTHORIZED | DISPATCH | READY | active |
-| ACT-T11 | AUTHORIZED | REVOKE | CANCELLED | — |
-| ACT-T12 | SCHEDULED | ACTIVATE | READY | active |
-| ACT-T13 | SCHEDULED | RESCHEDULE | SCHEDULED | — |
-| ACT-T14 | SCHEDULED | EXPIRE | EXPIRED | expired |
-| ACT-T15 | SCHEDULED | CANCEL | CANCELLED | — |
-| ACT-T16 | READY | START | RUNNING | active |
-| ACT-T17 | READY | DEFER | SCHEDULED | — |
-| ACT-T18 | READY | EXPIRE | EXPIRED | expired |
-| ACT-T19 | READY | CANCEL | CANCELLED | — |
-| ACT-T20 | RUNNING | PAUSE | PAUSED | — |
-| ACT-T21 | RUNNING | SUCCEED | SUCCEEDED | — |
-| ACT-T22 | RUNNING | FAIL | FAILED | — |
-| ACT-T23 | RUNNING | CANCEL | CANCELLED | — |
-| ACT-T24 | PAUSED | RESUME | RUNNING | active |
-| ACT-T25 | PAUSED | FAIL | FAILED | — |
-| ACT-T26 | PAUSED | CANCEL | CANCELLED | — |
-| ACT-T27 | FAILED | RETRY | READY | — |
-| ACT-T28 | FAILED | COMPENSATE | COMPENSATING | — |
-| ACT-T29 | SUCCEEDED | COMPENSATE | COMPENSATING | — |
-| ACT-T30 | COMPENSATING | COMPLETE | COMPENSATED | — |
-| ACT-T31a | COMPENSATING | FAIL | FAILED | — |
-| ACT-T31b | READY | ABSTAIN | ABSTAINED | — |
-
-The runtime has 31 conceptual decisions and 32 concrete edges. Active means `not_before <= occurred_at < expires_at`; expired means `occurred_at >= expires_at`. Audit time is non-decreasing. Every transition appends a hash-chained immutable entry. Invalid event, stale version, time violation or bad history leaves the action unchanged. The approved baseline’s 44-tuple FSM is not yet implemented in this runtime slice; `LLD-BL-005` remains open.
-
-### 2.5 Capability lease guards
-
-A lease is active exactly when:
-
-\[
-not\_before \le now < expires\_at \land (revoked\_at=\varnothing \lor now<revoked\_at)
-\]
-
-Authorization also requires authoritative registration, subject match, operation/resource scope, active ancestry and remaining uses. Delegation cannot widen capability, resource or time. Parent revocation/expiry invalidates descendants. Consuming a use is atomic with the protected local operation when they share persistence.
-
-### 2.6 EMISSION-FENCE
-
-An effect crosses only if:
-
-\[
-G_{emit}=Committed \land Integrity \land Ordered \land Fresh \land Authorized \land MarkingAllowed \land AuditAvailable
-\]
-
-Existing code enforces committed status, digest integrity, aggregate order, occurrence time, optional capability, optional marking and in-process deduplication. Target code also validates state revision, policy digest/validity, release, watermark, stop epoch, deadline, circuit breaker, adapter conformance, immutable GatePackage and audit availability immediately before first send, retry and compensation. Sink failure leaves the event pending; receipt follows acknowledgement only.
-
-## 3. Package and C1–C8 allocation
-
-### 3.1 Existing surface versus candidate ADD
-
-| Runtime module | Existing responsibility | Candidate allocation | Status |
+| ID | Former divergence | Rectification in this revision | Status |
 |---|---|---|---|
-| `c1_compiler.py` | Schema/JCS/content-addressed artifact | C1 Compiler | PARTIAL |
-| `c2_identity.py` | Identity and abstention | C2/C8 support | MISLABELLED/PARTIAL; Gateway absent |
-| `c3_store.py` | Aggregate/outbox reference store | C3 State/Outbox | PARTIAL |
-| `c4_marking.py` | Marking lattice | Cross-cutting security | MISLABELLED; Projection C4 absent |
-| `c5_actions.py` | Action FSM/audit | C6 Action Engine | MISLABELLED; Event Backbone C5 absent |
-| `c6_capabilities.py` | Capability leases | C2/C6/C8 control | MISLABELLED/PARTIAL |
-| `c7_emission.py` | Emission fence | C3/C5/C6 boundary | MISLABELLED; Causal C7 absent |
-| `c8_agent.py` | Sandbox, budget, agent kernel | C8 Agent Kernel | PARTIAL |
+| LLD-BL-004 | legacy filenames were treated as C1–C8 allocation | §4 makes the ADD component names and packages canonical; legacy modules move behind compatibility façades | **CLOSED_IN_LLD** |
+| LLD-BL-005 | 32-edge legacy action FSM conflicted with the ADD FSM | §3.4 defines the exact 44 approved transition tuples and guards | **CLOSED_IN_LLD** |
+| LLD-BL-006 | runtime behavioural tests reused ADD BA identifiers | §9 reserves BA-01–BA-08 for ADD acceptance and renames legacy assertions RBA-01–RBA-08 | **CLOSED_IN_LLD** |
 
-Top-level `src/c1_compiler.py` through `src/c8_agent.py` are compatibility re-export shims.
+### 1.4 Implementation gap register
 
-### 3.2 Target layout
+| ID | Concrete gap | Closure evidence |
+|---|---|---|
+| LLD-IG-001 | canonical package/container layout in §4 is not fully implemented | import/API tests for every required port and class |
+| LLD-IG-002 | current runtime action code implements a legacy 32-transition FSM | exact-tuple test against all 44 rows in §3.4 |
+| LLD-IG-003 | ADD backend acceptance BA-01–BA-08 is incomplete | governed adapter runs and immutable evidence bundle |
+| LLD-IG-004 | current runtime verification OpenAPI/Proto differs from the approved public contracts | generated stubs plus bidirectional conformance tests for §8 |
+| LLD-IG-005 | Governed Context Set and full emission fence are not enforced on every boundary | negative matrix covering every row of §2.3 and §3.5 |
+| LLD-IG-006 | C4, C5 and C7 production components are absent or partial | component, integration and BA evidence |
+| LLD-IG-007 | PostgreSQL proves atomic invariants but is not the selected C3 VersionedAssertedState CI | TerminusDB BA-01 or approved architectural change record |
+
+The LLD is coherent with the ADD; the implementation remains **NO-GO for production conformance** until all `LLD-IG-*` items are closed.
+
+## 2. Cross-cutting types and Governed Context Set
+
+### 2.1 Canonical scalar types
+
+```python
+from typing import NewType
+Digest = NewType("Digest", str)          # lowercase urn:sha256:<64 hex>
+ObjectId = NewType("ObjectId", str)
+CommitId = NewType("CommitId", str)
+Revision = NewType("Revision", int)      # non-negative
+EventId = NewType("EventId", str)
+LeaseId = NewType("LeaseId", str)
+Instant = NewType("Instant", str)        # RFC 3339 UTC, microsecond precision
+```
+
+Digests are semantic identities only when calculated from RFC 8785 canonical JSON bytes. Protobuf bytes, database bytes and transport compression never define semantic identity.
+
+### 2.2 Governed Context Set
+
+`GovernedContext` is immutable and contains:
+
+```python
+@dataclass(frozen=True, slots=True)
+class GovernedContext:
+    principal_id: str
+    tenant_id: str
+    purpose_ids: tuple[str, ...]
+    authority_refs: tuple[str, ...]
+    policy_snapshot_digest: Digest
+    marking_ref: str
+    capability_lease_ids: tuple[LeaseId, ...]
+    correlation_id: str
+    causation_id: str | None
+    request_time: datetime
+    deadline: datetime | None
+    schema_pins: tuple[str, ...]
+    ontology_release_digest: Digest
+    trace_id: str
+```
+
+`governed_context_digest = sha256(jcs(to_semantic_dict(context)))`. The authenticated transport principal is authoritative. A principal or tenant supplied in a body is comparison-only; absence, mismatch, unverifiable authority, stale policy, invalid marking, expired lease, missing purpose or schema-pin mismatch fails closed before domain processing.
+
+### 2.3 Enforcement matrix
+
+| Boundary | Required propagation | Failure |
+|---|---|---|
+| ingestion / C3 claim | context digest in claim, commit and outbox entry | reject claim; no state/outbox mutation |
+| C2 query | context digest in cache key, plan, response provenance | deny with typed reason; no payload |
+| registry invocation | context digest in `InvocationContext` and result evidence | abstain/deny |
+| MCP/tool call | context digest in signed tool request | deny before execution |
+| C6 action | context digest in proposal, GatePackage, decision and command | transition to approved failure state |
+| C5 event/replay | context digest in envelope and replay authorization | quarantine or deny |
+| C7 scenario | context digest in scenario, job and sealed result | reject/cancel |
+| C8 handoff | context digest before/after handoff | deny or escalate |
+| audit/telemetry | digest and decision only; sensitive context fields redacted | fail closed if mandatory audit cannot commit |
+
+No component may silently synthesize missing context. Derived context must carry signed derivation evidence and a new digest.
+
+## 3. Non-negotiable formal invariants
+
+### 3.1 RFC 8785 and SHA-256
+
+`CanonicalJsonEngine.canonicalize(value) -> bytes` implements RFC 8785/JCS:
+
+- input values are restricted to the I-JSON domain;
+- object keys are ordered by UTF-16 code units;
+- strings use JSON escaping with invalid Unicode rejected;
+- finite IEEE-754 numbers use ECMAScript-compatible shortest round-trip formatting; `NaN`, infinities and negative zero ambiguity are rejected or normalized exactly as the pinned implementation profile specifies;
+- UTF-8 output has no BOM or insignificant whitespace.
+
+`semantic_digest(value) = "urn:sha256:" + sha256(canonicalize(value)).hexdigest()`. Verification recomputes and uses constant-time comparison. Signing signs domain-separated canonical bytes: `b"OCOR:<contract>:<version>\x00" + canonical_bytes`.
+
+### 3.2 Atomic single-writer/outbox invariant
+
+For one aggregate and one transaction:
+
+\[
+Commit = (aggregate\_delta, revision+1, canonical\_commit\_id, OutboxEntry[])
+\]
+
+Visibility is both-or-neither. Only C3 may mutate authoritative asserted state. Every command supplies `expected_revision` and `writer_epoch`; stale revisions or epochs fail without side effects. Broker publication is outside the state transaction. There is no distributed 2PC. An outbox entry becomes externally eligible only after its enclosing canonical commit is durable.
+
+### 3.3 Marking algebra
+
+The only canonical policy carrier is the `marking` object. Every `*_marking_ref` has form `urn:sha256:<marking_digest>` and must resolve through `GetProvenance`.
+
+`SecurityContext` is an evaluation result over a marking, never an alternative marking model.
+
+- Restriction families `classification`, `mandatory_markings`, `caveats`, `dissemination_controls`, and `handling_instructions` combine by union/least upper bound.
+- `permitted_purposes` is a permission set and combines by intersection. Empty intersection means DENY.
+- Unknown or incomparable values mean DENY unless an explicit governed top element exists.
+- Release is allowed iff the evaluated principal clearance dominates every restriction and the requested purpose belongs to the effective permission set.
+- Declassification is never a meet, subtraction or in-place edit. It is a separate signed transition containing authority, Human Gate decision, evidence, before digest and after digest.
+
+Marking changes do not alter the semantic payload digest; they alter the governed envelope digest.
+
+### 3.4 Approved C6 action FSM — exact 44 tuples
+
+The tuple identity, source and destination are normative.
+
+| ID | Source | Destination |
+|---|---|---|
+| ACT-T01 | `[*]` | `PROPOSAL_RECORDED` |
+| ACT-T02 | `PROPOSAL_RECORDED` | `PROPOSAL_RECORDED` |
+| ACT-T03 | `[*]` | `DENIED` |
+| ACT-T04 | `PROPOSAL_RECORDED` | `CONTROL_CHECK` |
+| ACT-T05 | `CONTROL_CHECK` | `DENIED` |
+| ACT-T06 | `CONTROL_CHECK` | `APPROVAL_PENDING` |
+| ACT-T07 | `CONTROL_CHECK` | `APPROVAL_RESOLVED` |
+| ACT-T08 | `APPROVAL_PENDING` | `APPROVAL_RESOLVED` |
+| ACT-T09a | `APPROVAL_PENDING` | `APPROVAL_REJECTED` |
+| ACT-T09b | `APPROVAL_PENDING` | `APPROVAL_EXPIRED` |
+| ACT-T10a | `DECISION_PENDING` | `DECISION_REJECTED` |
+| ACT-T10b | `DECISION_PENDING` | `INTENT_RECORDED` |
+| ACT-T11 | `INTENT_RECORDED` | `PRE_DISPATCH_CHECK` |
+| ACT-T12 | `PRE_DISPATCH_CHECK` | `COMMAND_READY` |
+| ACT-T13 | `PRE_DISPATCH_CHECK` | `INVALIDATED` |
+| ACT-T14 | `COMMAND_READY` | `DISPATCHED` |
+| ACT-T15 | `DISPATCHED` | `ACKNOWLEDGED` |
+| ACT-T16 | `ACKNOWLEDGED` | `EXECUTION_CONFIRMED` |
+| ACT-T17a | `DISPATCHED` | `EXECUTION_FAILED` |
+| ACT-T17b | `ACKNOWLEDGED` | `EXECUTION_FAILED` |
+| ACT-T18a | `DISPATCHED` | `EXECUTION_UNKNOWN` |
+| ACT-T18b | `ACKNOWLEDGED` | `EXECUTION_UNKNOWN` |
+| ACT-T19 | `COMMAND_READY` | `DISPATCHED` |
+| ACT-T20a | `EXECUTION_UNKNOWN` | `EXECUTION_CONFIRMED` |
+| ACT-T20b | `EXECUTION_UNKNOWN` | `EXECUTION_FAILED` |
+| ACT-T20c | `EXECUTION_UNKNOWN` | `EXECUTION_UNKNOWN` |
+| ACT-T21 | `EXECUTION_FAILED` | `COMPENSATING` |
+| ACT-T21a | `COMPENSATING` | `COMPENSATED` |
+| ACT-T21b | `COMPENSATING` | `COMPENSATION_FAILED` |
+| ACT-T21c | `COMPENSATING` | `COMPENSATION_UNKNOWN` |
+| ACT-T21d | `COMPENSATION_UNKNOWN` | `COMPENSATED` |
+| ACT-T21e | `COMPENSATION_UNKNOWN` | `COMPENSATION_FAILED` |
+| ACT-T22 | `OUTCOME_PENDING` | `OUTCOME_ASSESSED` |
+| ACT-T23a | `PRE_DISPATCH_CHECK` | `CANCELLED` |
+| ACT-T23b | `COMMAND_READY` | `CANCELLED` |
+| ACT-T24 | `EXECUTION_UNKNOWN` | `EXECUTION_INDETERMINATE` |
+| ACT-T25 | `COMPENSATION_UNKNOWN` | `COMPENSATION_INDETERMINATE` |
+| ACT-T26 | `APPROVAL_RESOLVED` | `DECISION_PENDING` |
+| ACT-T27 | `EXECUTION_CONFIRMED` | `OUTCOME_PENDING` |
+| ACT-T28 | `OUTCOME_PENDING` | `OUTCOME_UNOBSERVED` |
+| ACT-T29 | `COMMAND_READY` | `CANONICAL_COMMIT_PENDING` |
+| ACT-T30 | `CANONICAL_COMMIT_PENDING` | `EXECUTION_CONFIRMED` |
+| ACT-T31a | `CANONICAL_COMMIT_PENDING` | `EXECUTION_FAILED` |
+| ACT-T31b | `CANONICAL_COMMIT_PENDING` | `INVALIDATED` |
+
+The transition registry is an immutable map keyed by these IDs. Duplicate IDs, missing tuples, extra tuples or a source/destination mismatch fail process startup.
+
+### 3.5 Guards, precedence and indeterminacy
+
+Mandatory guards are `G-CONTRACT`, `G-AUTHORITY`, `G-APPROVAL`, `G-DECISION`, `G-FRESHNESS`, and `G-DISPATCH`.
+
+\[
+EMISSION\text{-}FENCE := G\text{-}FRESHNESS \land G\text{-}DISPATCH
+\]
+
+The fence is evaluated atomically immediately before every external or internal send, including first dispatch, retry and compensation. `ACT-T23a/b` cancellation wins over `ACT-T14`, `ACT-T19` and `ACT-T29`. `EXECUTION_UNKNOWN` and `COMPENSATION_UNKNOWN` never imply success or failure; they either reconcile from evidence or terminate in the corresponding `*_INDETERMINATE` state with a separate adjudication case. Canonical mutations traverse `ACT-T29`–`ACT-T31b`.
+
+### 3.6 Capability lease temporal guards
+
+A lease is valid only when:
+
+```text
+not_before <= trusted_now < expires_at
+and not revoked
+and subject == authenticated principal
+and operation in allowed_operations
+and resource matches governed scope
+and usage_count < usage_limit
+and parent chain is valid
+and policy_snapshot_digest is current
+```
+
+The end boundary is exclusive. Validation and usage consumption are atomic. Wall-clock rollback cannot extend a lease; scheduling uses monotonic time anchored to a signed trusted-wall-clock sample. Revocation and expiry invalidate cached authorization within 10 seconds. Denial emits no sensitive payload.
+
+## 4. Canonical C1–C8 package and class breakdown
+
+Canonical Python root:
 
 ```text
 src/ocor_runtime/
-  canonical.py, errors.py, contracts.py
-  c1_compiler.py, c2_identity.py, c3_store.py, c4_marking.py
-  c5_actions.py, c6_capabilities.py, c7_emission.py, c8_agent.py
-  gateway/{service.py,router.py,consistency.py,interceptors.py}
-  projection/{ports.py,projector.py,watermark.py,reconciler.py}
-  eventing/{ports.py,dispatcher.py,replay.py,quarantine.py}
-  actions/{coordinator.py,gate.py,dispatcher.py,reconciliation.py}
-  causal/{models.py,overlay.py,runtime.py,jobs.py,sealing.py}
-  persistence/{ports.py,postgres.py,embedded.py,migrations/0001_runtime.sql}
-  workers/{supervisor.py,lease_expiry.py}
-  wire/{json_codec.py,protobuf_codec.py,grpc_service.py,http_service.py}
+  compiler/       # C1 Ontology Compiler & IR Pipeline
+  gateway/        # C2 Unified Semantic Gateway
+  state/          # C3 Canonical State Service & Outbox Worker
+  projection/     # C4 Projection Adapters
+  eventing/       # C5 Event Backbone
+  actions/        # C6 Action Engine & Saga Coordinator
+  causal/         # C7 Causal Runtime & Scenario Orchestrator
+  agents/         # C8 Governed Agent Kernel
+  governance/ security/ wire/ persistence/ workers/
+  compat/         # legacy c1_compiler.py ... c8_agent.py façades only
 ```
 
-Existing public classes remain stable. Domain modules depend only on contracts/ports; adapters depend on domain modules; composition depends on both. No circular dependencies.
+Dependencies flow through ports. No component imports a concrete adapter owned by another component.
 
-### 3.3 Typed exceptions
+### 4.1 C1 — Ontology Compiler & IR Pipeline
 
-| Exception | Trigger | HTTP | gRPC | Retry |
-|---|---|---:|---|---|
-| `CanonicalizationError` | Non-I-JSON | 422 | INVALID_ARGUMENT | no |
-| `SchemaValidationError` | Contract violation | 422 | INVALID_ARGUMENT | no |
-| `IdentityConflictError` | Immutable identity conflict | 409 | ALREADY_EXISTS | adjudicate |
-| `SingleWriterViolation` | Wrong writer/epoch | 403 | PERMISSION_DENIED | refresh authority |
-| `ConcurrencyConflict` | Version/idempotency conflict | 409 | ABORTED | conditional |
-| `MarkingError` | Invalid lattice/label | 422 | FAILED_PRECONDITION | no |
-| `InvalidTransition` | Undefined edge/bad history | 409 | FAILED_PRECONDITION | no |
-| `TemporalGuardViolation` | Bad/out-of-window time | 409 | FAILED_PRECONDITION | re-evaluate |
-| `AuthorizationError` | Invalid capability | 403 | PERMISSION_DENIED | reacquire |
-| `EmissionBlocked` | Fence false | 409 | FAILED_PRECONDITION | bounded |
-| `SandboxViolation` | Forbidden operation/result | 403 | PERMISSION_DENIED | no |
-| `TokenBudgetExceeded` | Budget exhausted | 429 | RESOURCE_EXHAUSTED | approved increase |
+| Module / concrete type | Required methods | Contract |
+|---|---|---|
+| `compiler/ports.py::CompilerPort` | `validate_package`, `compile`, `semantic_diff`, `package_release`, `verify_release` | public C1 port |
+| `compiler/meta_schema.py::MetaSchemaValidator` | `validate(package, governed_context)` | offline, all violations returned in deterministic order |
+| `compiler/locks.py::DependencyLockResolver` | `resolve(manifest, lockfile)` | no floating dependency or network lookup |
+| `compiler/compiler.py::DeterministicOntologyCompiler` | `compile(package, pins, context) -> CanonicalIR` | pure for identical bytes/pins/context |
+| `compiler/ir.py::CanonicalIREmitter` | `emit(graph) -> SignedCanonicalIR` | schema-valid, JCS-addressed |
+| `compiler/generators.py::{JsonSchemaGenerator, ProtoGenerator, ApiGenerator}` | `generate(ir)` | deterministic sorted outputs |
+| `compiler/release.py::{ReleasePackager,SbomBuilder,ReleaseSigner}` | `package`, `build`, `sign`, `verify` | content addressed, immutable release |
 
-Wire errors include `code`, safe `message`, `correlation_id`, `retryable`; never SQL, stacks, credentials, policy internals or marked payload.
+Types: `OntologyPackage`, `DependencyPin`, `CanonicalIR`, `SemanticDiff`, `ReleaseBundle`, `SignatureEnvelope`. Exceptions: `MetaSchemaViolation`, `UnpinnedDependency`, `CompilationConflict`, `NonDeterministicOutput`, `SignatureVerificationError`.
 
-## 4. Concrete classes and extensions
+### 4.2 C2 — Unified Semantic Gateway
 
-### 4.1 C1 compiler
+| Module / concrete type | Required methods | Contract |
+|---|---|---|
+| `gateway/ports.py::SemanticGatewayPort` | `get_object`, `query_object_set`, `search`, `traverse`, `explain`, `get_provenance` | exactly the six OpenAPI operations |
+| `gateway/auth.py::TransportAuthInterceptor` | `authenticate`, `bind_context` | transport principal authoritative |
+| `gateway/router.py::NamedQueryRouter` | `route(query_name, version)` | allow-listed named queries only |
+| `gateway/policy.py::AuthorityPolicyEvaluator` | `authorize(context, query)` | fail closed on timeout/unknown |
+| `gateway/planner.py::ConsistencyPlanner` | `plan(commit_pin, projection_watermarks)` | exact/stale semantics explicit |
+| `gateway/sanitize.py::ResponseSanitizer` | `sanitize(result, effective_marking)` | no partial unauthorized payload |
+| `gateway/provenance.py::ProvenanceResolver` | `resolve(ref, context)` | resolves marking and evidence references |
 
-Existing: frozen `CompiledArtifact`; `SemanticCompiler` with offline Draft 2020-12 registry, deterministic validation and `compile`; `semantic_view`.
+Types: `NamedQuery`, `ConsistencyRequirement`, `QueryPlan`, `GatewayResult`, `ProvenanceBundle`, `Abstention`. Exceptions: `AuthenticationRequired`, `ContextMismatch`, `AuthorityDenied`, `QueryNotAllowlisted`, `ConsistencyUnavailable`, `ProvenanceUnresolvable`.
 
-Target: `CompilerPort.compile`, `ReleaseVerifier.verify`, content-addressed `ArtifactRepository.put_if_absent`, and `SemanticDiff.compare` returning `NO_CHANGE`, `NON_BREAKING`, `BREAKING` or `INDETERMINATE`. Cache key is `(schema_digest,semantic_digest,compiler_version)`.
+### 4.3 C3 — Canonical State Service & Outbox Worker
 
-### 4.2 C2 identity and Gateway
+| Module / concrete type | Required methods | Contract |
+|---|---|---|
+| `state/ports.py::VersionedAssertedStatePort` | `admit_claim`, `commit_aggregate`, `get_commit`, `reconcile_outbox` | authoritative C3 port |
+| `state/admission.py::ClaimAdmissionService` | `validate`, `adjudicate` | contract/context/authority before mutation |
+| `state/aggregate.py::AggregateProcessor` | `apply(current, command)` | deterministic delta |
+| `state/commit.py::AtomicCommitCoordinator` | `commit(delta, expected_revision, entries, context)` | state+revision+commit+outbox atomically |
+| `state/fence.py::WriterFence` | `acquire`, `validate_epoch`, `release` | one active writer epoch |
+| `state/outbox.py::{OutboxRepository,OutboxDispatcher}` | `claim_batch`, `mark_published`, `mark_retry`, `dispatch_once` | skip-locked, idempotent sink |
+| `state/reconcile.py::OutboxReconciler` | `reconcile(commit_id)` | repairs metadata, never invents publication |
 
-Existing: `IdentityRecord`, `ResolutionOutcome`, `IdentityRegistry`, `normalize_identifier` (NFKC/trim/casefold, no fuzzy guessing).
+Types: `Claim`, `Adjudication`, `AggregateDelta`, `CanonicalCommit`, `OutboxEntry`, `WriterEpoch`. Exceptions: `StaleRevision`, `WriterFenced`, `AtomicCommitFailure`, `DuplicateIdempotencyKey`, `OutboxIntegrityError`.
 
-Target: `SemanticGateway.get_object/query_object_set/search/traverse/explain/get_provenance`; `TransportIdentityInterceptor`; `PolicyAuthorityInterceptor`; `ConsistencyPlanner`; `ResultSanitizer`; `NamedContractRouter`. Public raw SQL/Cypher/Datalog/TypeQL/WOQL/SPARQL is rejected. Cache keys include governed-context, branch, release, policy, named query, parameters and consistency target.
+### 4.4 C4 — Projection Adapters
 
-### 4.3 C3 state/outbox
+| Module / concrete type | Required methods | Contract |
+|---|---|---|
+| `projection/ports.py::ProjectionPort` | `project`, `get_watermark`, `rebuild`, `run_adapter_conformance` | public C4 port |
+| `projection/mapping.py::ProjectionMappingExecutor` | `map_commit(commit)` | pinned mapping release |
+| `projection/typedb.py::TypeDBProjector` | `project_batch` | facts and watermark atomically |
+| `projection/rdf.py::JenaBoundaryAdapter` | `export_jsonld`, `import_jsonld`, `validate_shacl` | canonical round trip |
+| `projection/watermark.py::WatermarkStore` | `compare_and_advance`, `checksum` | monotonic per projection |
+| `projection/drift.py::ProjectionDriftDetector` | `scan`, `quarantine` | no authoritative-state mutation |
 
-Existing: `StoredDocument`, `OutboxEvent`, `WriteResult`, `CrashWindow`, `AtomicOutboxStore`, PostgreSQL fallback and reconciler.
+Types: `ProjectionBatch`, `ProjectionWatermark`, `ProjectionChecksum`, `DriftReport`, `AdapterConformanceResult`. Exceptions: `ProjectionConflict`, `WatermarkRegression`, `MappingPinMismatch`, `ProjectionDrift`, `ShapeViolation`.
 
-Target ports have the following exact async signatures:
+### 4.5 C5 — Event Backbone
 
-| Port | Method signature |
-|---|---|
-| `AtomicStateStore` | `commit(command: CommitCommand) -> WriteResult` |
-| `AtomicStateStore` | `get(aggregate_id: str, branch: str = "main") -> StoredDocument or None` |
-| `OutboxRepository` | `claim_batch(worker_id: str, limit: int, lease_seconds: int) -> immutable sequence of OutboxEvent` |
-| `OutboxRepository` | `acknowledge(event_id: str, emitted_at: datetime, sink_receipt: str) -> None` |
-| `OutboxRepository` | `release(event_id: str, next_attempt_at: datetime, error_code: str) -> None` |
+| Module / concrete type | Required methods | Contract |
+|---|---|---|
+| `eventing/ports.py::EventBackbonePort` | `publish`, `subscribe`, `replay`, `quarantine`, `reprocess_authorized` | public C5 port |
+| `eventing/envelope.py::EventEnvelopeValidator` | `validate`, `verify_digest` | JSON schema, context and marking required |
+| `eventing/partition.py::AggregatePartitioner` | `partition_key(event)` | stable aggregate ordering |
+| `eventing/journal.py::KafkaEventJournal` | `append`, `read_from` | idempotent producer, bounded consumer |
+| `eventing/registry.py::SchemaRegistryClient` | `resolve`, `check_compatibility` | pinned schemas |
+| `eventing/retry.py::{RetryScheduler,DlqManager}` | `schedule`, `quarantine`, `reprocess` | bounded attempts; governed reprocess |
+| `eventing/replay.py::ReplayCoordinator` | `authorize`, `stream` | original semantics plus new replay context |
 
-`CommitCommand` carries aggregate/branch/document, expected version, writer ID/epoch, event/payload, idempotency key, time, Decision, Authority, Evidence refs and GatePackage digest. Missing governance rejects before persistence.
+Types: `CanonicalEventEnvelope`, `Subscription`, `ReplayRequest`, `DlqRecord`, `DeliveryReceipt`. Exceptions: `EnvelopeInvalid`, `SchemaPinMismatch`, `OrderingViolation`, `ReplayDenied`, `QuarantinedEvent`.
 
-### 4.4 C4 marking/projections
+### 4.6 C6 — Action Engine & Saga Coordinator
 
-Marking classes remain cross-cutting. Candidate C4 adds `ProjectionAdapter.project/get_watermark/rebuild`, `ProjectionReconciler.compare`, and `CapabilityProbe.run`. Projectors deduplicate `(projection_id,branch,commit_id)`, commit facts plus watermark locally, and never reverse-write canonical state.
+| Module / concrete type | Required methods | Contract |
+|---|---|---|
+| `actions/ports.py::ActionEnginePort` | `submit_proposal`, `record_approval`, `record_decision`, `dispatch`, `reconcile_execution` | public C6 port |
+| `actions/ledger.py::{ProposalLedger,DecisionLedger}` | `append`, `get` | immutable hash-chained records |
+| `actions/human_gate.py::HumanGateClient` | `request`, `verify_decision` | signed decision bound to context/digest |
+| `actions/fsm.py::ApprovedActionStateMachine` | `transition(action_id, transition_id, evidence)` | exact §3.4 registry |
+| `actions/saga.py::SagaCoordinator` | `advance`, `compensate` | state persisted before/after effects |
+| `actions/dispatch.py::FencedDispatcher` | `dispatch`, `retry` | §3.5 fence at send instant |
+| `actions/reconcile.py::ExecutionReconciler` | `poll_evidence`, `adjudicate_indeterminate` | never infer unknown outcomes |
 
-### 4.5 C5 Event Backbone
+Types: `ActionProposal`, `GatePackage`, `ApprovalRecord`, `DecisionRecord`, `ActionIntent`, `Command`, `ExecutionEvidence`, `CompensationPlan`. Exceptions: `InvalidTransition`, `GuardFailed`, `ApprovalExpired`, `DecisionRejected`, `EmissionFenceClosed`, `IndeterminateExecution`.
 
-`c5_actions.py` remains compatibility code logically owned by C6. Target C5 adds `EventEnvelopeValidator`, deterministic `Partitioner`, `EventJournal`, `OutboxDispatcher`, bounded `ReplayController`, and append-only `QuarantineRepository`. Ordering is per key/partition; end-to-end exactly-once is never claimed.
+### 4.7 C7 — Causal Runtime & Scenario Orchestrator
 
-### 4.6 C6 Action Engine
+| Module / concrete type | Required methods | Contract |
+|---|---|---|
+| `causal/ports.py::CausalRuntimePort` | `create_scenario`, `run_causal_query`, `simulate_intervention`, `get_job`, `cancel_job` | public C7 port |
+| `causal/scenario.py::ScenarioValidator` | `validate`, `pin_inputs` | immutable commit/schema/model pins |
+| `causal/overlay.py::ScenarioOverlayStore` | `create`, `read`, `seal` | never writes C3 main |
+| `causal/scm.py::StructuralCausalModelWorker` | `query`, `intervene` | deterministic seed and resource budget |
+| `causal/jobs.py::{JobLedger,JobScheduler}` | `submit`, `claim`, `heartbeat`, `cancel` | durable job state |
+| `causal/seal.py::ResultSealer` | `seal`, `verify` | immutable S3 object plus ledger digest |
 
-Existing: FSM/audit and capability classes. Target: `ActionCoordinator`, `GatePackageVerifier`, `FencedActionDispatcher`, `ExecutionReconciler`, `CompensationCoordinator`. Transition, audit, state and outbox persist atomically. Ambiguous timeout remains blocked/adjudication-required. The 16-state runtime FSM is no-go for production until authority chooses the table.
+Types: `Scenario`, `Intervention`, `CausalQuery`, `CausalJob`, `ResourceBudget`, `SealedResult`. Exceptions: `ScenarioInvalid`, `ModelPinMismatch`, `BudgetExceeded`, `JobCancelled`, `ResultIntegrityError`.
 
-### 4.7 C7 Causal Runtime
+### 4.8 C8 — Governed Agent Kernel
 
-`c7_emission.py` remains a compatibility location, not Candidate C7. Target adds `ScenarioRunSpec`, capability-isolated `ScenarioOverlayStore`, `CausalRuntime`, durable `CausalJobController`, and `ResultSealer`. Non-identifiability, OOD, invalid validity or stale context returns `ABSTAIN`. C7 emits only SimulationResult/Recommendation/DecisionProposal, never ActionCommand or `main` mutation.
+| Module / concrete type | Required methods | Contract |
+|---|---|---|
+| `agents/ports.py::AgentKernelPort` | `start_run`, `assign_task`, `call_tool`, `handoff`, `escalate`, `stop_run` | public C8 port |
+| `agents/run.py::RunManager` | `start`, `checkpoint`, `stop` | durable run and context |
+| `agents/capability.py::CapabilityBroker` | `issue`, `validate_and_consume`, `revoke` | §3.6 temporal and scope guards |
+| `agents/taint.py::TaintFirewall` | `label`, `check_flow`, `sanitize` | marking monotonicity |
+| `agents/budget.py::BudgetController` | `reserve`, `commit`, `release` | atomic token/time/tool budgets |
+| `agents/handoff.py::HandoffCoordinator` | `prepare`, `accept`, `abort` | context, marking and lease rebound |
+| `agents/monitor.py::{RunMonitor,KillSwitch}` | `observe`, `trip`, `terminate` | bounded cancellation and audit |
 
-### 4.8 C8 Agent Kernel
+Types: `AgentRun`, `TaskAssignment`, `ToolCall`, `HandoffPackage`, `BudgetReservation`, `CapabilityLease`. Exceptions: `CapabilityDenied`, `LeaseExpired`, `TaintViolation`, `BudgetExhausted`, `HandoffRejected`, `RunTerminated`.
 
-Existing: `TokenBudget`, `StrictSandbox`, `AgentResponse`, `ModelResult`, `AgentModel`, `AgentKernel`. Exact sandbox defaults: 4,096 source chars, 256 AST nodes, 1,024 operations, 65,536 result chars; exponent magnitude ≤16. No imports, attributes, mutation, comprehensions, lambdas, builtins or unregistered calls.
+## 5. Storage engine and data-access layer
 
-Target adds `RunLedger`, `CapabilityBroker`, `TaintFirewall`, `HandoffBroker`, `KillSwitchListener`. Memory/retrieval/tool output remain tainted and cannot grant authority or change pins.
+### 5.1 Logical roles and selected CIs
 
-## 5. Storage engine and DAL
+| Role | Selected CI | Writer | Required semantics |
+|---|---|---|---|
+| `VersionedAssertedState` | TerminusDB | C3 only | versioned commits, optimistic revision, atomic commit+outbox; BA-01 |
+| `LogicProjection` | TypeDB | C4 only | facts+watermark atomicity; BA-02/03 |
+| `W3CBoundary` | Jena/TDB2 | C4 boundary | RDF/JSON-LD/SHACL round trip; BA-04 |
+| `ActionWorkflowLedger` | Temporal + PostgreSQL | C6 | durable FSM/saga; BA-05 |
+| `ScenarioResultStore` | S3-compatible + PostgreSQL | C7 | immutable sealed result and job ledger; BA-06 |
+| `EventJournal` | Kafka/Strimzi | C5 | order/replay/DLQ/schema registry; BA-07 |
+| `SecurityState` | OPA/Keycloak/SPIFFE/OpenBao | governance | fail-closed policy and lease/revocation; BA-08 |
 
-### 5.1 PostgreSQL 16 DDL
+A non-TerminusDB authoritative C3 implementation is not a fallback. It requires an approved architecture change and new BA-01 evidence.
+
+### 5.2 Reference PostgreSQL atomic adapter DDL
+
+The following DDL is the executable verification adapter for the atomic C3 invariant and the C6 ledger. It does not supersede the selected CIs.
 
 ```sql
-CREATE SCHEMA IF NOT EXISTS ocor;
+CREATE TABLE ocor_writer_epoch (
+  scope text PRIMARY KEY,
+  epoch bigint NOT NULL CHECK (epoch > 0),
+  owner_id uuid NOT NULL,
+  lease_until timestamptz NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT clock_timestamp()
+);
 
-CREATE TABLE IF NOT EXISTS ocor.aggregate_state (
-  branch text NOT NULL DEFAULT 'main',
+CREATE TABLE ocor_aggregate (
+  tenant_id text NOT NULL,
   aggregate_id text NOT NULL,
-  aggregate_version bigint NOT NULL CHECK (aggregate_version > 0),
-  writer_id text NOT NULL,
+  revision bigint NOT NULL CHECK (revision >= 0),
   writer_epoch bigint NOT NULL CHECK (writer_epoch > 0),
-  document jsonb NOT NULL,
-  semantic_digest char(64) NOT NULL CHECK (semantic_digest ~ '^[0-9a-f]{64}$'),
-  envelope_digest char(64) NOT NULL CHECK (envelope_digest ~ '^[0-9a-f]{64}$'),
-  last_transaction_id uuid NOT NULL,
-  occurred_at timestamptz NOT NULL,
+  state_json jsonb NOT NULL,
+  state_digest text NOT NULL CHECK (state_digest ~ '^urn:sha256:[0-9a-f]{64}$'),
+  governed_context_digest text NOT NULL CHECK (governed_context_digest ~ '^urn:sha256:[0-9a-f]{64}$'),
   updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
-  PRIMARY KEY (branch, aggregate_id),
-  UNIQUE (branch, aggregate_id, aggregate_version)
+  PRIMARY KEY (tenant_id, aggregate_id)
 );
 
-CREATE TABLE IF NOT EXISTS ocor.idempotency_binding (
-  idempotency_key text PRIMARY KEY,
-  request_digest char(64) NOT NULL CHECK (request_digest ~ '^[0-9a-f]{64}$'),
-  transaction_id uuid NOT NULL UNIQUE,
-  event_id uuid NOT NULL UNIQUE,
+CREATE TABLE ocor_canonical_commit (
+  commit_id text PRIMARY KEY CHECK (commit_id ~ '^urn:sha256:[0-9a-f]{64}$'),
+  tenant_id text NOT NULL,
   aggregate_id text NOT NULL,
-  aggregate_version bigint NOT NULL CHECK (aggregate_version > 0),
-  created_at timestamptz NOT NULL,
-  expires_at timestamptz,
-  CHECK (expires_at IS NULL OR expires_at > created_at)
+  prior_revision bigint NOT NULL,
+  revision bigint NOT NULL CHECK (revision = prior_revision + 1),
+  aggregate_delta jsonb NOT NULL,
+  delta_digest text NOT NULL CHECK (delta_digest ~ '^urn:sha256:[0-9a-f]{64}$'),
+  governed_context_digest text NOT NULL,
+  writer_epoch bigint NOT NULL,
+  committed_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  UNIQUE (tenant_id, aggregate_id, revision),
+  FOREIGN KEY (tenant_id, aggregate_id)
+    REFERENCES ocor_aggregate(tenant_id, aggregate_id)
+    DEFERRABLE INITIALLY DEFERRED
 );
 
-CREATE TABLE IF NOT EXISTS ocor.outbox_event (
-  event_id uuid PRIMARY KEY,
-  transaction_id uuid NOT NULL UNIQUE,
-  branch text NOT NULL CHECK (branch = 'main'),
+CREATE TABLE ocor_outbox (
+  event_id text PRIMARY KEY,
+  commit_id text NOT NULL REFERENCES ocor_canonical_commit(commit_id),
+  tenant_id text NOT NULL,
   aggregate_id text NOT NULL,
-  aggregate_version bigint NOT NULL CHECK (aggregate_version > 0),
-  event_type text NOT NULL,
-  payload jsonb NOT NULL,
-  payload_digest char(64) NOT NULL CHECK (payload_digest ~ '^[0-9a-f]{64}$'),
-  request_digest char(64) NOT NULL CHECK (request_digest ~ '^[0-9a-f]{64}$'),
+  aggregate_revision bigint NOT NULL,
+  partition_key text NOT NULL,
+  schema_ref text NOT NULL,
+  payload_json jsonb NOT NULL,
+  payload_digest text NOT NULL,
+  marking_ref text NOT NULL,
+  governed_context_digest text NOT NULL,
   idempotency_key text NOT NULL UNIQUE,
-  governed_context_digest char(64) NOT NULL CHECK (governed_context_digest ~ '^[0-9a-f]{64}$'),
-  gate_package_digest char(64) NOT NULL CHECK (gate_package_digest ~ '^[0-9a-f]{64}$'),
-  occurred_at timestamptz NOT NULL,
-  status text NOT NULL DEFAULT 'PENDING'
-    CHECK (status IN ('PENDING','CLAIMED','EMITTED','QUARANTINED')),
+  status text NOT NULL CHECK (status IN ('PENDING','CLAIMED','PUBLISHED','RETRY','QUARANTINED')),
   attempt_count integer NOT NULL DEFAULT 0 CHECK (attempt_count >= 0),
-  next_attempt_at timestamptz NOT NULL,
-  claim_owner text,
-  claim_expires_at timestamptz,
-  emitted_at timestamptz,
-  sink_receipt text,
+  available_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  claimed_by uuid,
+  claim_until timestamptz,
+  published_at timestamptz,
+  sink_receipt jsonb,
   last_error_code text,
-  UNIQUE (branch, aggregate_id, aggregate_version),
-  FOREIGN KEY (branch, aggregate_id)
-    REFERENCES ocor.aggregate_state(branch, aggregate_id) DEFERRABLE INITIALLY DEFERRED,
-  CHECK ((status = 'EMITTED') = (emitted_at IS NOT NULL)),
-  CHECK ((status = 'CLAIMED') = (claim_owner IS NOT NULL AND claim_expires_at IS NOT NULL))
+  created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  UNIQUE (tenant_id, aggregate_id, aggregate_revision, schema_ref)
 );
 
-CREATE TABLE IF NOT EXISTS ocor.reconciliation_intent (
-  transaction_id uuid PRIMARY KEY,
-  branch text NOT NULL,
-  aggregate_id text NOT NULL,
-  aggregate_version bigint NOT NULL CHECK (aggregate_version > 0),
-  expected_event_id uuid NOT NULL UNIQUE,
-  created_at timestamptz NOT NULL,
-  reconciled_at timestamptz,
-  failure_code text
-);
+CREATE INDEX ocor_outbox_dispatch_idx
+  ON ocor_outbox (available_at, created_at)
+  WHERE status IN ('PENDING','RETRY');
+CREATE INDEX ocor_outbox_claim_recovery_idx
+  ON ocor_outbox (claim_until)
+  WHERE status = 'CLAIMED';
+CREATE INDEX ocor_commit_aggregate_idx
+  ON ocor_canonical_commit (tenant_id, aggregate_id, revision DESC);
 
-CREATE TABLE IF NOT EXISTS ocor.capability_lease (
-  lease_id uuid PRIMARY KEY,
-  subject text NOT NULL,
-  issuer text NOT NULL,
-  capabilities jsonb NOT NULL,
-  resources jsonb NOT NULL,
-  issued_at timestamptz NOT NULL,
-  not_before timestamptz NOT NULL,
-  expires_at timestamptz NOT NULL,
-  revoked_at timestamptz,
-  parent_lease_id uuid REFERENCES ocor.capability_lease(lease_id),
-  max_uses bigint CHECK (max_uses > 0),
-  use_count bigint NOT NULL DEFAULT 0 CHECK (use_count >= 0),
-  CHECK (issued_at <= not_before AND not_before < expires_at),
-  CHECK (revoked_at IS NULL OR revoked_at >= issued_at),
-  CHECK (max_uses IS NULL OR use_count <= max_uses)
-);
-
-CREATE TABLE IF NOT EXISTS ocor.action_instance (
-  action_id text PRIMARY KEY,
-  state text NOT NULL,
-  version bigint NOT NULL CHECK (version >= 0),
-  not_before timestamptz,
-  expires_at timestamptz,
-  last_entry_hash char(64) NOT NULL CHECK (last_entry_hash ~ '^[0-9a-f]{64}$'),
-  gate_package_digest char(64) NOT NULL CHECK (gate_package_digest ~ '^[0-9a-f]{64}$'),
-  updated_at timestamptz NOT NULL,
-  CHECK (not_before IS NULL OR expires_at IS NULL OR not_before < expires_at)
-);
-
-CREATE TABLE IF NOT EXISTS ocor.action_audit (
-  action_id text NOT NULL REFERENCES ocor.action_instance(action_id),
-  version bigint NOT NULL CHECK (version > 0),
+CREATE TABLE ocor_action_transition (
+  action_id uuid NOT NULL,
+  sequence_no bigint NOT NULL,
   transition_id text NOT NULL,
   source_state text NOT NULL,
-  event_name text NOT NULL,
-  target_state text NOT NULL,
-  occurred_at timestamptz NOT NULL,
-  actor text NOT NULL,
-  evidence jsonb NOT NULL,
-  previous_hash char(64) NOT NULL CHECK (previous_hash ~ '^[0-9a-f]{64}$'),
-  entry_hash char(64) NOT NULL CHECK (entry_hash ~ '^[0-9a-f]{64}$'),
-  PRIMARY KEY (action_id, version),
-  UNIQUE (entry_hash)
+  destination_state text NOT NULL,
+  evidence_json jsonb NOT NULL,
+  governed_context_digest text NOT NULL,
+  previous_hash text,
+  record_hash text NOT NULL,
+  recorded_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+  PRIMARY KEY (action_id, sequence_no),
+  UNIQUE (action_id, transition_id, record_hash)
 );
-
-CREATE INDEX IF NOT EXISTS outbox_dispatch_idx
-  ON ocor.outbox_event (next_attempt_at, occurred_at, event_id) WHERE status='PENDING';
-CREATE INDEX IF NOT EXISTS outbox_claim_expiry_idx
-  ON ocor.outbox_event (claim_expires_at, event_id) WHERE status='CLAIMED';
-CREATE INDEX IF NOT EXISTS outbox_aggregate_order_idx
-  ON ocor.outbox_event (branch, aggregate_id, aggregate_version);
-CREATE INDEX IF NOT EXISTS reconciliation_pending_idx
-  ON ocor.reconciliation_intent (created_at, transaction_id) WHERE reconciled_at IS NULL;
-CREATE INDEX IF NOT EXISTS capability_expiry_idx
-  ON ocor.capability_lease (expires_at, lease_id) WHERE revoked_at IS NULL;
-CREATE INDEX IF NOT EXISTS action_state_idx
-  ON ocor.action_instance (state, updated_at, action_id);
 ```
 
-### 5.2 Transactions and locking
+### 5.3 Transaction and locking algorithm
 
-Mutation sequence on one connection: idempotency lookup/digest compare; aggregate `FOR UPDATE`; version/epoch/time/governance validation; conditional upsert; insert outbox, idempotency and reconciliation intent; one commit. Zero-row update is `ConcurrencyConflict`. No broker/network call occurs inside.
+`commit_aggregate` runs at `SERIALIZABLE` or equivalent CI semantics:
 
-Dispatcher claims with `FOR UPDATE SKIP LOCKED`, batch 100, setting claim owner/expiry and incrementing attempts. Publish occurs after claim commit. A short transaction acknowledges or releases with bounded exponential backoff ≤60 seconds. Only the minimum non-emitted aggregate version is claimable. Database time governs claims/leases.
+1. authenticate and validate `GovernedContext`;
+2. validate writer epoch;
+3. lock aggregate row (`SELECT ... FOR UPDATE`);
+4. compare `expected_revision`;
+5. calculate delta, canonical commit ID and event digests in memory;
+6. update aggregate, insert canonical commit and all outbox rows in one transaction;
+7. commit; only then signal the dispatcher.
 
-Lock order: aggregate/action row → capability row → outbox/idempotency rows. Deadlock `40P01` and serialization `40001` receive at most three jittered retries when idempotency makes retry safe.
+Serialization failure retries use bounded exponential backoff with jitter and recompute from a fresh snapshot. Business conflicts do not retry. Dispatcher claims use `FOR UPDATE SKIP LOCKED`, a bounded lease and stable `(available_at, created_at, event_id)` order. Sink calls use the event id as idempotency key. A lost acknowledgement leaves the row retryable; a verified sink receipt marks it published.
 
-### 5.3 Fallbacks
+### 5.4 Embedded and in-memory adapters
 
-`AtomicOutboxStore` is test/single-process only: copy-on-commit plus `RLock`, no durability or multi-process safety.
+`InMemoryVersionedStateAdapter` is deterministic, process-local, lock-protected and injectable only in unit/property tests. `SQLiteVerificationAdapter` is single-process integration-only with WAL and `BEGIN IMMEDIATE`. Neither may be selected in a production profile, used as automatic failover, or reported as BA-01 evidence.
 
-Embedded durable mode is SQLite ≥3.45, WAL, `foreign_keys=ON`, `synchronous=FULL`, one writer, `BEGIN IMMEDIATE`. Because no `SKIP LOCKED`, exactly one dispatcher process is allowed. A second dispatcher lock is refused. Semantics and crash tests remain identical.
+## 6. Concurrency, execution and memory model
 
-A non-atomic adapter is never auto-selected for production. PostgreSQL fallback requires an explicit connection factory and release-profile permission.
+All network and storage ports are async. CPU-bound canonicalization, schema validation and causal work run in bounded executors or isolated workers.
 
-## 6. Concurrency, workers, memory
+| Loop | Ownership | Claim/batch | Cancellation and recovery |
+|---|---|---|---|
+| outbox dispatcher | one task per partition group | bounded batch, skip-locked lease | finish/abandon current receipt, release claims, recover expired claims |
+| outbox reconciler | singleton per C3 shard | commit/event page | checkpoint after page; idempotent restart |
+| lease expiry/revocation | singleton per security shard | indexed expiry page | invalidates cache ≤10s; persistent cursor |
+| C6 execution reconciler | partitioned by action ID | bounded due-action batch | unknown remains unknown; no inferred result |
+| C7 job scheduler | durable worker pool | one leased job per worker | heartbeat; cooperative cancel; lease recovery |
 
-One `asyncio` loop per process serves HTTP/gRPC and workers. CPU-heavy canonicalization/schema/causal work uses a bounded pool. Domain `RLock` is never held over network I/O. Current `EmissionFence.emit` calls a sink while locked; production uses durable claim/publish/ack instead.
+Rules:
 
-| Worker | Cadence | Batch | Shutdown |
-|---|---:|---:|---|
-| Outbox dispatcher | notify + 100 ms idle | 100 | stop claims; finish ≤20 s; release rest |
-| Reconciler | 5 s | 100 | finish transaction |
-| Lease expiry | 1 s | 500 | inline auth still checks expiry |
-| Action reconciliation | 2 s | 100 | persist cursor |
-| Scenario TTL | 10 s | 100 | expire/release idempotently |
+- task groups provide structured concurrency; no fire-and-forget tasks;
+- queues are bounded and apply backpressure to callers;
+- per-tenant and global semaphores cap concurrent I/O and CPU jobs;
+- cancellation is observed at each await and before every emission fence;
+- critical commit/fence sections are shielded only for the minimum atomic duration;
+- retries are capped, classified and persisted;
+- blocking libraries execute outside the event-loop thread;
+- every worker exposes queue depth, oldest age, attempts, lease age and memory gauges.
 
-Cancellation is checked before claim, after each item and before sleep. Supervisor restart backoff: 1,2,4,8,16,30 seconds; five failures/60 s opens the worker circuit.
+Memory bounds are configured as `max_batch_items`, `max_payload_bytes`, `max_queue_items`, `max_inflight_bytes`, and `max_result_bytes`. Payloads above threshold stream to content-addressed storage. Caches are weighted LRU/TTL and key on governed-context digest. Large references are released after each batch; cycles are not retained in registries. A sustained RSS breach stops admission, drains queues, requests GC once, and terminates the worker for supervised restart if the hard limit remains exceeded.
 
-Memory bounds: request 4 MiB; canonical JSON 8 MiB; 200 in-flight events/process; schema cache 256 entries/15 min; max 100 identity candidates; receipt cache 10,000/30 min; causal in-memory result 64 MiB. Sandbox bounds are §4.8. CPython cyclic GC stays enabled; no hot-loop manual collection. At 85% memory readiness fails, 90% stops expensive jobs, 95% for 60 s triggers orchestration restart after active DB transactions finish.
+## 7. Deterministic cryptographic implementation
 
-## 7. Wire protocol
+`wire/canonical_json.py::CanonicalJsonEngine` is the sole RFC 8785 implementation. Callers cannot inject pre-serialized JSON. `wire/digest.py::DigestService` exposes:
 
-`load_i_json` is the sole text admission parser for digest-bearing JSON. Digests are domain-specific:
+```python
+canonicalize(value: JsonValue) -> bytes
+semantic_digest(value: JsonValue) -> Digest
+verify_digest(value: JsonValue, expected: Digest) -> None
+domain_separated_bytes(contract: str, version: str, value: JsonValue) -> bytes
+```
 
-| Digest | Canonical input |
+Known-answer vectors cover UTF-16 ordering, escapes, exponent thresholds, integer precision boundaries, negative zero and rejection of non-finite numbers/unpaired surrogates. Differential tests run at least 100,000 randomly generated finite floats against the pinned reference.
+
+Signatures record algorithm, key ID, signed-at, contract/version, semantic digest and governed-context digest. Verification validates key status at signed-at, trust chain, domain separation and digest before schema use. SHA-256 input is always canonical semantic bytes; transport hashes are separate fields.
+
+## 8. Wire protocols and schema authority
+
+### 8.1 Public OpenAPI 3.1 surface
+
+The normative C2 API is `OCOR Named Query Gateway`, API version 1.2.0, with exactly:
+
+- `POST /v1/queries/get-object`
+- `POST /v1/queries/query-object-set`
+- `POST /v1/queries/search`
+- `POST /v1/queries/traverse`
+- `POST /v1/queries/explain`
+- `POST /v1/queries/get-provenance`
+
+Generated server/client stubs validate OpenAPI 3.1 request and response schemas. Authentication is transport-bound. Every request/response carries or resolves the governed-context digest, consistency requirement, schema pins, marking/provenance references and typed fail-closed result. Undocumented paths are not part of the ADD public interface.
+
+### 8.2 Proto3 registry surface
+
+The normative package is `ocor.registry.v1` with services `FunctionRegistry` and `ModelRegistry`. Implementations preserve `VersionPin`, `SchemaPin`, `TypedValue`, `InvocationContext`, `ResourceBudget`, descriptors, publish/resolve/invoke requests, result validity, uncertainty and abstention.
+
+JSON↔Proto mapping is schema-defined. Unknown enum values and fields are preserved where Proto rules allow but rejected when semantic validation cannot establish meaning. Semantic digest is computed from the canonical logical JSON projection, never raw Protobuf serialization; equivalent JSON and Proto values must produce the same digest.
+
+### 8.3 Authoritative domain schemas
+
+| Contract | Canonical schema ID |
 |---|---|
-| `semantic_digest` | `semantic_view(document)` |
-| `envelope_digest` | full admitted envelope |
-| `payload_digest` | outbox payload |
-| `request_digest` | `{aggregateId,document,eventType,payload}` |
-| action `entry_hash` | audit fields + version + previous hash |
-| governed-context digest | complete canonical context |
-| GatePackage digest | all immutable pins and authority/evidence refs |
+| Signed Canonical IR | `urn:ocor:schema:signed-canonical-ir:1.0` |
+| Canonical Ingestion Envelope | `urn:ocor:schema:canonical-ingestion-envelope:1.2` |
+| MCP Tool Contract | `urn:ocor:schema:mcp-tool-contract:1.2` |
+| Action Type Contract | `urn:ocor:schema:action-type-contract:1.1` |
+| Event Subscription Contract | `urn:ocor:schema:event-subscription-contract:1.1` |
 
-OpenAPI is 3.1.0/API 1.2.0 with `/compile`, `/identities:resolve`, `/actions/{actionId}/transitions`, `/outbox/{eventId}:emit`. JSON is camelCase. Timestamps are RFC3339 UTC and timezone-aware. Mutations require `Idempotency-Key` and `If-Match`.
+Schemas are loaded offline by digest, with external references allow-listed and pinned. Compile-time and runtime validators use the same schema bundle. The existing `/compile`, `/identities:resolve`, `/actions/...`, `/outbox/...` OpenAPI paths and `ocor.runtime.v1` Proto services remain a compatibility/verification surface only and cannot be advertised as ADD v1.2 public contracts.
 
-Proto package is `ocor.runtime.v1`; services: `CompilerService`, `IdentityService`, `ActionService`, `EmissionService`. Zero enum values are rejected. `Struct` passes I-JSON validation. Map/wire serialization never supplies digests. JSON↔Proto round trips yield the same domain object and JCS digest. Unknown/default/presence semantics are tested explicitly.
+## 9. Test harness and verification matrix
 
-## 8. Test harness
+### 9.1 Deterministic fixtures
 
-### 8.1 Fixtures
-
-`fixed_now = 2026-08-30T12:00:00Z`; no wall-clock sleeps. Other fixtures: fresh authoritative store; total classification lattice; diamond compartment lattice; empty capability authority; live `agent-1` lease (`+1s` to `+11s`); two ordered aggregate events; offline sibling-schema registry; fake DB-API connection; deterministic recording/failing sink.
-
-### 8.2 BA matrix
-
-| ID | Methods | Parameters | Oracle |
-|---|---|---|---|
-| BA-01 | Store/PostgreSQL/reconciler | 4 pre-commit windows, post-commit/pre-ack, stale, replay, limits 10/0 | both-or-neither; one replay; rollback stale; repair 1; reject 0 |
-| BA-02 | `write` | same key same/different request | prior receipt / conflict |
-| BA-03 | writer/version | wrong writer; 2 threads expect v1 | no state; one commit + one conflict |
-| BA-04 | JCS | RFC vector, UTF-16 keys, NaN/Inf/2**53, duplicate | exact bytes or canonical error |
-| BA-05 | FSM time | start-1µs/start/expiry, expire before/at, backward/naive | inclusive/exclusive, monotonic |
-| BA-06 | lattice | total, diamond, duplicate, non-lattice | algebra holds; invalid rejected |
-| BA-07 | fence | uncommitted/tampered, v2 first, sink fail/retry | blocked/order/pending/dedup |
-| BA-08 | lease | bounds, wrong scope, escalation, one use | fail closed |
-
-Candidate BA identifiers mean different things and must be renamed or versioned after authority resolution.
-
-### 8.3 EV-001–EV-035
-
-| EV | Test function (suffix) | Method/oracle |
+| Fixture | Construction | Reset/oracle |
 |---|---|---|
-| EV-001 | `rfc8785_object_order_is_deterministic` | exact canonical order/digest |
-| EV-002 | `ecmascript_number_boundaries_and_escaping` | exact thresholds/escapes |
-| EV-003 | `non_i_json_values_fail_closed` | invalid values rejected |
-| EV-004 | `compiler_is_content_addressed_and_output_is_immutable` | frozen artifact |
-| EV-005 | `compiler_enforces_normative_schema_and_external_references` | offline valid/invalid |
-| EV-006 | `canonical_identity_is_resolved_exactly` | exact ID, confidence 1 |
-| EV-007 | `unique_normalized_alias_resolves` | trim/casefold unique |
-| EV-008 | `unknown_identity_produces_explicit_abstention` | no ID |
-| EV-009 | `ambiguous_identity_produces_abstention_not_a_guess` | ordered candidates |
-| EV-010 | `identity_evidence_requires_threshold_and_margin_and_records_are_immutable` | 0.79 abstains; 0.95/0.20 wins; mutation conflicts |
-| EV-011 | `single_writer_boundary_rejects_replica_mutation` | no state/event |
-| EV-012 | `optimistic_version_precondition_prevents_lost_update` | stale conflict |
-| EV-013 | `all_five_crash_windows_preserve_atomic_visibility` | both-or-neither |
-| EV-014 | `idempotent_retry_cannot_duplicate_an_outbox_event` | same event, counts (1,1) |
-| EV-015 | `outbox_events_are_committed_integrity_bound_and_versioned` | versions [1,2] |
-| EV-016 | `marking_total_order_join_is_the_least_upper_bound` | PUBLIC∨INTERNAL=INTERNAL |
-| EV-017 | `marking_partial_lattice_join_combines_compartments` | A∨B=AB |
-| EV-018 | `multi_scheme_join_is_monotonic_and_clearance_is_fail_closed` | missing clearance denies/no payload |
-| EV-019 | `marking_non_interference_preserves_semantic_identity` | same semantic, different envelope digest |
-| EV-020 | `all_act_t01_through_act_t31b_transitions_are_executable_contracts` | exact 32 IDs/targets |
-| EV-021 | `happy_path_transition_history_is_complete_and_tamper_evident` | six-step SUCCEEDED |
-| EV-022 | `undefined_transition_is_rejected_without_mutating_action` | DRAFT unchanged |
-| EV-023 | `temporal_execution_guards_use_inclusive_start_exclusive_end` | -1µs deny/start allow/expiry deny |
-| EV-024 | `audit_hash_chain_detects_evidence_tampering` | forged ticket blocks |
-| EV-025 | `compensation_and_identify_abstention_are_explicit_fsm_outcomes` | COMPENSATED and T31b |
-| EV-026 | `capability_lease_expiration_is_enforced_at_exact_boundary` | exact expiry deny |
-| EV-027 | `capability_subject_operation_and_resource_scopes_do_not_leak` | 3 wrong-scope denies |
-| EV-028 | `delegation_revocation_and_usage_limits_cannot_be_bypassed` | use/revoke/escalation deny |
-| EV-029 | `emission_fence_blocks_uncommitted_or_integrity_broken_events` | both rejected |
-| EV-030 | `emission_fence_orders_and_deduplicates_external_effects` | v2-first reject; two deliveries |
-| EV-031 | `emission_requires_both_capability_and_marking_clearance` | PUBLIC deny; SECRET ack |
-| EV-032 | `strict_sandbox_allows_pure_tools_and_blocks_escape_syntax` | add works; five escapes reject |
-| EV-033 | `token_budget_preflights_and_enforces_actual_model_output` | preflight avoids model; reservation cleared |
-| EV-034 | `agent_kernel_identifies_only_uniquely_and_otherwise_abstains` | unique identify; ambiguous/unknown abstain |
-| EV-035 | `end_to_end_c1_through_c8_semantic_action_emission` | one marked event, key `EV-035` |
+| `frozen_clock` / `monotonic_clock` | exact UTC and monotonic instants | no host clock access |
+| `governed_context_factory` | signed transport principal, pins, marking and leases | digest recomputed |
+| `canonical_vectors` | RFC 8785 known answers plus invalid I-JSON | exact bytes/digests |
+| `writer_epoch` | unique owner/epoch per test | stale writer rejected |
+| `aggregate_factory` | revision 0 with canonical state | state/outbox both-or-neither |
+| `crash_injector` | five BA-01 crash windows | durable post-restart inspection |
+| `sink_stub` | idempotency ledger and lost-ack mode | delivery count and receipt |
+| `marking_factory` | total, partial, multi-scheme and unknown values | algebra/property oracle |
+| `lease_factory` | start/end/revocation/delegation/use bounds | inclusive-start/exclusive-end |
+| `action_factory` | each approved state and signed evidence | exact tuple/history hash |
+| `projection_fixture` | disposable TypeDB/Jena instances | watermark/checksum/round trip |
+| `kafka_fixture` | disposable Strimzi-compatible broker/registry | partition order/replay/DLQ |
+| `scenario_fixture` | pinned SCM, seed, budget, object store | immutable sealed result |
 
-Additional release gates: live PostgreSQL crash/restart; two-process writer epoch/claim recovery; lost acknowledgement with sink idempotency; JSON↔Proto digest equality; ≥100,000 random finite float differential cases; lattice properties; approved full FSM; full fence drift matrix; async cancellation; memory bounds.
+### 9.2 ADD acceptance behaviours — reserved BA namespace
 
-## 9. Traceability and gates
-
-| Candidate source | LLD | Existing evidence | Status |
-|---|---|---|---|
-| §2.2 C1, §3.1 | §§2.1,4.1,7 | EV-001–005 | PARTIAL |
-| §2.2 C2, §3.0.1/3.3 | §4.2 | EV-006–010 identity only | Gateway GAP |
-| §2.2 C3, §2.3/6.2 | §§2.2,4.3,5 | EV-011–015, runtime BA-01–03 | PARTIAL |
-| §2.2 C4, §2.4 | §4.4 | marking tests do not prove projections | GAP |
-| §2.2 C5, §3.8 | §§4.5,6 | emission tests only | GAP |
-| §2.2 C6, §4.1 | §§2.4–2.6,4.6 | EV-020–031 | FSM conflict |
-| §2.2 C7, §4.2 | §4.7 | none | GAP |
-| §2.2 C8, §7 | §§4.8,6 | EV-032–035 | PARTIAL |
-| §5.3 marking | §§2.3,4.4 | EV-016–019, BA-06 | permission/intersection GAP |
-| `CC-EMISSION-FENCE` | §§2.6,4.6,5 | EV-029–031, BA-07 | freshness GAP |
-| Candidate BA-01–08 | §§5–8 | runtime BA IDs not equivalent | NOT VERIFIED |
-
-Post-approval validation is now independently reproduced by GitHub Actions run `33334792715` on revision `036b873d87cc8720d4134a237a8ea41d3b8817cf`. The locked CPython 3.12 environment executed the full document harness, governed OpenAPI 3.1 validation, 109 runtime tests, 38 BA cases, exactly 35 EV cases and five live PostgreSQL 16 transaction tests with zero failures, errors or skips. Statement coverage is observed at 89%; it is evidence, not an invented release threshold.
-
-Production is **NO-GO** while baseline blockers are open, container gaps remain, full fence predicates are absent, live PostgreSQL failure semantics are unproven, or contracts/FSM are not regenerated from the approved authority set.
-
-## 10. Configuration baseline
-
-| Key | Default | Range |
-|---|---:|---:|
-| dispatcher batch / idle poll | 100 / 100 ms | 1–1000 / 25–5000 |
-| claim / maximum backoff | 30 s / 60 s | 5–300 / 1–600 |
-| max in-flight | 200 | 1–2000 |
-| reconciler / lease sweep | 5 s / 1 s | 1–300 / 1–10 |
-| shutdown grace | 20 s | 1–120 |
-| request / canonical value | 4 MiB / 8 MiB | 64 KiB–16 MiB / 64 KiB–32 MiB |
-| sandbox source/nodes/operations/result | 4096/256/1024/65536 | increases require change control |
-
-Unknown keys, invalid ranges or unsafe sandbox increases fail startup.
-
-## 11. Completion statement
-
-This LLD completely specifies the inspected runtime surface, target class allocation, deterministic protocols, PostgreSQL/embedded persistence, locks, async workers, memory bounds and BA/EV method matrix. Bidirectional traceability is preserved by representing non-conformance instead of equating filenames with ADD containers.
-
-The engineering document is complete and grounded in the approved ADD v1.2 baseline. `DEC-207` closes `VAL-ACT-001` and `VAL-ACT-002` and closes `VAL-ACT-003` for the tested runtime slice. Promotion from engineering candidate remains conditional only on the separate implementation-alignment work represented by `LLD-BL-004`–`LLD-BL-006`; the validation closure does not claim E2/production readiness or automatically promote requirements to global `Verified`.
-
-## Appendix A — Exact existing Python API inventory
-
-All dataclasses below are `frozen=True, slots=True` unless stated otherwise.
-
-| Module | Type/function | Exact public signature or fields |
+| ID | CI / method-level scenario | Required oracle |
 |---|---|---|
-| `canonical` | `canonicalize_json` | `(value: Any) -> str` |
-| `canonical` | `canonicalize` | `(value: Any) -> bytes` |
-| `canonical` | `canonical_sha256` | `(value: Any) -> str` |
-| `canonical` | `load_i_json` | `(document: str | bytes | bytearray) -> Any` |
-| `c1_compiler` | `CompiledArtifact` | `artifact_id, semantic_digest, envelope_digest, canonical_payload, document, schema_id=None` |
-| `c1_compiler` | `SemanticCompiler` | `__init__(schema=None, *, registry=None)`; `from_schema_file(path)`; `validate(document)`; `compile(document)` |
-| `c2_identity` | `IdentityRecord` | `canonical_id, aliases=frozenset(), attributes={}` |
-| `c2_identity` | `ResolutionOutcome` | `status, canonical_id, confidence, reason, candidates=()`; property `identified` |
-| `c2_identity` | `IdentityRegistry` | `register(record)`; `get(canonical_id)`; `add_alias(canonical_id, alias)`; `candidates(identifier)`; `resolve(identifier, *, evidence=None, minimum_confidence=.80, minimum_margin=.10)`; `all_records()` |
-| `c3_store` | `StoredDocument` | `aggregate_id, document, version, writer_id, transaction_id, semantic_digest, updated_at` |
-| `c3_store` | `OutboxEvent` | `event_id, aggregate_id, aggregate_version, event_type, payload, payload_digest, request_digest, idempotency_key, transaction_id, occurred_at, committed=True, emitted_at=None`; `verify_integrity()` |
-| `c3_store` | `WriteResult` | `document, event, replayed=False` |
-| `c3_store` | `AtomicOutboxStore` | `__init__(*, authoritative_writer='ocor-core')`; `write(aggregate_id, document, *, expected_version, writer_id, event_type, event_payload=None, idempotency_key, occurred_at=None, crash_window=None)`; `get`; `get_event`; `outbox(*, include_emitted=False)`; `mark_emitted`; `snapshot_counts`; `verify_atomicity` |
-| `c4_marking` | `MarkingSchemeDefinition` | `__init__(scheme_id, levels=None, *, labels=None, relations=None)`; `from_dict`; `leq`; `dominates`; `join`; `meet` |
-| `c4_marking` | `MarkingSet` | `values`; `__getitem__(scheme_id)` |
-| `c4_marking` | `DisclosureDecision` | `allowed, reason, payload=None` |
-| `c4_marking` | `MarkingEngine` | `__init__(schemes)`; property `schemes`; `validate`; `join`; `is_authorized`; `require_authorized`; `disclose` |
-| `c5_actions` | `TransitionSpec` | `transition_id, source, event, target, enforces_action_window=False` |
-| `c5_actions` | `ActionAuditEntry` | `transition_id, source, event, target, occurred_at, actor, evidence, previous_hash, entry_hash` |
-| `c5_actions` | `Action` | `action_id, state=DRAFT, version=0, not_before=None, expires_at=None, history=()` |
-| `c5_actions` | `ActionFSM` | `allowed_events(state)`; `transition(action,event,*,occurred_at,actor,evidence=None,expected_version=None)`; `transition_by_id`; `verify_history` |
-| `c6_capabilities` | `CapabilityLease` | `lease_id, subject, capabilities, resources, not_before, expires_at, issued_at, issuer, revoked_at=None, parent_lease_id=None, max_uses=None`; `is_active`; `allows` |
-| `c6_capabilities` | `CapabilityAuthority` | `__init__(issuer='ocor-capability-authority')`; `issue`; `get`; `revoke`; `authorize`; `usage` |
-| `c7_emission` | `EventSink` | `emit(event, *, idempotency_key)` |
-| `c7_emission` | `EmissionReceipt` | `event_id, aggregate_id, aggregate_version, emitted_at, sink_result=None, deduplicated=False` |
-| `c7_emission` | `EmissionFence` | `__init__(*,store=None,capability_authority=None,require_capability=False,marking_engine=None)`; `register`; `emit`; `drain`; `receipt` |
-| `c8_agent` | `TokenCharge` | `category, tokens` |
-| `c8_agent` | `BudgetReservation` | `reservation_id, category, tokens` |
-| `c8_agent` | `TokenBudget` | `__init__(limit, *, tokenizer=deterministic_token_count)`; properties `used,reserved,remaining,charges`; `count`; `consume`; `consume_text`; `reserve`; `commit`; `cancel` |
-| `c8_agent` | `StrictSandbox` | `__init__(tools=None, *, max_source_characters=4096, max_ast_nodes=256, max_operations=1024, max_result_characters=65536)`; `tool_names`; `register_tool`; `execute` |
-| `c8_agent` | `AgentResponse` | `decision, identity_id, confidence, reason, content=None` |
-| `c8_agent` | `ModelResult` | `response, output_tokens=None` |
-| `c8_agent` | `AgentModel` | `__call__(prompt: str, *, max_output_tokens: int) -> ModelResult` |
-| `c8_agent` | `AgentKernel` | `__init__(*,identity_registry=None,sandbox=None,capability_authority=None,subject='ocor-agent')`; `identify_or_abstain`; `execute_sandboxed`; `invoke` |
-| `fallback.postgres_outbox` | `PostgreSQLWriteReceipt` | `transaction_id, event_id, aggregate_id, aggregate_version, replayed=False` |
-| `fallback.postgres_outbox` | `PostgreSQLTransactionalOutbox` | `__init__(connection_factory)`; `initialize`; `write` |
-| `fallback.postgres_outbox` | `OutboxReconciler` | `__init__(connection_factory)`; `reconcile_once(*, limit=100)` |
-| `fallback.postgres_outbox` | `select_atomic_backend` | `(candidate, *, postgres_connection_factory=None) -> Any` |
+| BA-01 | TerminusDB `commit_aggregate`; inject crash before transaction, after state staging, after outbox staging, after durable commit before response, after response loss | aggregate delta, revision, canonical commit and outbox are all visible or all absent; retry is idempotent; stale writer/revision rejected |
+| BA-02 | TypeDB `project_batch` with failure between fact and watermark stages | facts and watermark advance atomically; replay produces identical checksum |
+| BA-03 | TypeDB `query_exact_at_commit` in isolated sandbox | result uses exactly the pinned commit and cannot observe later facts |
+| BA-04 | Jena `export_jsonld` → `import_jsonld` → `validate_shacl` | canonical RDF/JSON-LD round trip, SHACL validity and matching watermark |
+| BA-05 | Temporal/PostgreSQL run of ACT-T14, T18a/b, T19 and T29–T31b with lost acknowledgements | durable workflow history matches §3.4; fence and indeterminate semantics hold |
+| BA-06 | S3/PostgreSQL `submit/cancel/seal/verify` | job ledger is durable; cancellation bounded; sealed object immutable and digest-verifiable |
+| BA-07 | Kafka/Strimzi `publish/replay/quarantine/reprocess_authorized` | per-aggregate order, deterministic replay, schema enforcement, DLQ and governed reprocess |
+| BA-08 | OPA/Keycloak/SPIFFE/OpenBao policy timeout, revocation and lease expiration | timeout fails closed; principal binding holds; revocation/expiry enforcement latency ≤10s |
 
-Aliases retained by compatibility contract: `Compiler=SemanticCompiler`, `IdentityResolver=IdentityRegistry`, `DocumentStore=AtomicOutboxStore`, `LatticeSolver=MarkingSchemeDefinition`, `FSM=ActionFSM`, `LeaseRegistry=CapabilityAuthority`, `EMISSION_FENCE=EmissionFence`, and `Sandbox=StrictSandbox`.
+No test with a different meaning may use `BA-*`.
+
+### 9.3 Runtime behavioural assertions — compatibility namespace
+
+Existing filenames that formerly used BA identifiers are interpreted as:
+
+| Compatibility ID | Behaviour |
+|---|---|
+| RBA-01 | PostgreSQL reference adapter atomic commit/outbox |
+| RBA-02 | idempotent retry |
+| RBA-03 | single-writer/optimistic conflict |
+| RBA-04 | RFC 8785/SHA-256 determinism |
+| RBA-05 | legacy FSM temporal behaviour |
+| RBA-06 | marking lattice |
+| RBA-07 | emission fence |
+| RBA-08 | capability lease |
+
+RBA evidence is useful implementation evidence but never substitutes for ADD BA evidence.
+
+### 9.4 EV-001–EV-035 method-level matrix
+
+| EV | Method / function under test | Oracle |
+|---|---|---|
+| EV-001 | `CanonicalJsonEngine.canonicalize` object ordering | exact UTF-16 key order and digest |
+| EV-002 | number/string canonicalization | pinned ECMAScript thresholds and escaping |
+| EV-003 | canonical input validator | non-I-JSON rejected |
+| EV-004 | `DeterministicOntologyCompiler.compile` | identical content address; immutable output |
+| EV-005 | `MetaSchemaValidator.validate` / lock resolver | offline schema; unpinned refs rejected |
+| EV-006 | identity resolution named query | exact ID and evidence |
+| EV-007 | normalized alias resolution | unique match only |
+| EV-008 | unknown identity | explicit abstention |
+| EV-009 | ambiguous identity | ordered candidates; no guess |
+| EV-010 | evidence threshold/margin | boundary cases and immutable record |
+| EV-011 | `WriterFence.validate_epoch` | replica/stale mutation produces no state/event |
+| EV-012 | `commit_aggregate` optimistic precondition | lost update prevented |
+| EV-013 | BA-01 crash injector | all five windows, both-or-neither |
+| EV-014 | retry by idempotency key | one outbox event |
+| EV-015 | commit/outbox integrity | version sequence and digest binding |
+| EV-016 | marking total-order LUB | least upper bound |
+| EV-017 | marking partial-order LUB | compartments union |
+| EV-018 | multi-scheme marking + purposes | restrictions union, permissions intersection, unknown denies |
+| EV-019 | marking non-interference | semantic digest stable; envelope digest changes |
+| EV-020 | `ApprovedActionStateMachine.registry` | exact 44 IDs and exact source/destination tuples |
+| EV-021 | approved happy path | transition history complete and hash-chain valid |
+| EV-022 | undefined transition | typed rejection without mutation |
+| EV-023 | temporal guards | inclusive start, exclusive end |
+| EV-024 | decision/audit evidence | tampering detected before transition |
+| EV-025 | compensation and unknown outcomes | explicit compensated/failed/unknown/indeterminate paths |
+| EV-026 | lease exact expiry | expiry instant denied |
+| EV-027 | subject/operation/resource checks | wrong scope denied without leakage |
+| EV-028 | delegation/revocation/usage | atomic consume; no bypass |
+| EV-029 | emission fence integrity | uncommitted or invalid digest blocked |
+| EV-030 | ordering/idempotency | out-of-order blocked; retry deduplicated |
+| EV-031 | capability + marking + purpose | all required; no payload on deny |
+| EV-032 | sandbox/tool contract | pure allow-list works; escapes rejected |
+| EV-033 | `BudgetController` | preflight and actual usage bounded; reservation released |
+| EV-034 | C8 governed identity use | unique result or abstention |
+| EV-035 | end-to-end C1→C8 | canonical contracts, GCS, exact FSM, commit/outbox, marked event and provenance |
+
+EV-020 is not satisfied by the legacy 32-transition registry. EV-013 supports BA-01 only when executed against the selected TerminusDB CI.
+
+## 10. Bidirectional traceability
+
+| ADD v1.2 requirement | LLD realization | Verification | Implementation state |
+|---|---|---|---|
+| C1–C8 canonical allocation | §4.1–§4.8 | import/API/component tests | OPEN: LLD-IG-001/006 |
+| Governed Context Set | §2.2–§2.3 | negative boundary matrix, EV-031/035 | OPEN: LLD-IG-005 |
+| RFC 8785 / SHA-256 | §3.1, §7 | EV-001–005, differential float campaign | partial evidence |
+| single writer / atomic outbox | §3.2, §5 | BA-01, EV-011–015 | reference adapter proven; LLD-IG-007 |
+| marking algebra/declassification | §3.3 | EV-016–019 and signed declassification cases | partial evidence |
+| ACT-T01–ACT-T31b | §3.4–§3.5 | EV-020–025, BA-05 | OPEN: LLD-IG-002/003 |
+| capability lease | §3.6 | EV-026–028, BA-08 | partial; full CI open |
+| EMISSION-FENCE | §3.5, C6 dispatcher | EV-029–031, BA-05/07 | OPEN: LLD-IG-005 |
+| public OpenAPI/Proto/contracts | §8 | lint, generated-stub and cross-wire digest tests | OPEN: LLD-IG-004 |
+| selected CIs | §5.1 | BA-01–BA-08 | OPEN: LLD-IG-003/007 |
+| concurrency/memory | §6 | cancellation, saturation, soak and RSS gates | open release gate |
+
+Reverse traceability is enforced by requiring every public port, state transition, database constraint, schema operation and EV/BA test to cite one row above in code metadata or test markers. Orphaned LLD elements and unimplemented ADD requirements fail the alignment checker.
+
+## 11. Configuration baseline
+
+| Key | Type / rule | Default |
+|---|---|---|
+| `OCOR_ENV` | `dev|test|staging|prod` | `dev` |
+| `OCOR_STATE_CI` | production must be `terminusdb` until changed by decision | `inmemory` only for dev/test |
+| `OCOR_DATABASE_DSN` | secret reference, never logged | unset |
+| `OCOR_OUTBOX_BATCH` | 1–1000 | 100 |
+| `OCOR_OUTBOX_CLAIM_SECONDS` | 1–300 | 30 |
+| `OCOR_MAX_INFLIGHT_BYTES` | positive integer | 67,108,864 |
+| `OCOR_POLICY_TIMEOUT_MS` | 1–5000; timeout denies | 500 |
+| `OCOR_REVOCATION_MAX_STALENESS_SECONDS` | must be ≤10 | 10 |
+| `OCOR_CLOCK_SKEW_SECONDS` | non-negative; evidence-bound | 2 |
+| `OCOR_SCHEMA_BUNDLE_DIGEST` | required `urn:sha256:*` in staging/prod | unset |
+| `OCOR_ONTOLOGY_RELEASE_DIGEST` | required `urn:sha256:*` in staging/prod | unset |
+| `OCOR_LOG_LEVEL` | standard level | `INFO` |
+
+Production startup validates all required pins, exact FSM registry, trusted clock, policy provider, durable stores, TLS identity, key resolver and telemetry sink. Any invalid or missing value terminates startup.
+
+## 12. Release gates and completion statement
+
+The document-level ADD alignment gate passes only if an automated checker confirms:
+
+1. all eight canonical component names and packages;
+2. exact equality of the 44 FSM tuples;
+3. exclusive ADD use of BA-01–BA-08 and explicit RBA compatibility names;
+4. exact six public OpenAPI paths, Proto package/services and five schema IDs;
+5. GCS, marking, outbox, fence and lease invariants;
+6. bidirectional traceability without an unclassified divergence.
+
+Implementation release remains blocked until `LLD-IG-001`–`LLD-IG-007` are closed with immutable evidence and BA-01–BA-08 pass against the selected CIs. The 109-test runtime campaign, 35 EV results, 38 legacy BA/RBA results, live PostgreSQL tests, OpenAPI validation and coverage remain valid historical evidence for their tested surface; they do not prove the missing ADD components or selected-CI acceptance.
+
+This revision closes the former LLD specification conflicts without altering the approved ADD, its decision records or immutable input artifacts.

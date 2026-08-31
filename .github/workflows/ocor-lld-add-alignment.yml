@@ -1,0 +1,41 @@
+name: OCOR LLD ADD Alignment
+
+on:
+  push:
+    branches:
+      - codex/lld-add-v1.2-alignment
+    paths:
+      - docs/OCOR_LLD_v1.0.md
+      - ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.2_APPROVED_BASELINE.md
+      - reports/tests/test_lld_add_alignment.py
+      - .github/workflows/ocor-lld-add-alignment.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - docs/OCOR_LLD_v1.0.md
+      - ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.2_APPROVED_BASELINE.md
+      - reports/tests/test_lld_add_alignment.py
+      - .github/workflows/ocor-lld-add-alignment.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-lld-add-alignment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate normative alignment
+        run: |
+          python reports/tests/test_lld_add_alignment.py \
+            --output reports/tests/lld_add_alignment_results.json
+      - name: Upload machine-readable result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lld-add-alignment-results
+          path: reports/tests/lld_add_alignment_results.json
+          if-no-files-found: error
