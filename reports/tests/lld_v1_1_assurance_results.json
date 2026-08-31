@@ -1,14 +1,14 @@
 {
   "schema_version": "1.0",
   "verdict": "PASS_WITH_GOVERNANCE_CONDITION",
-  "governance_condition": "Ratify CC-BOUNDED-GOVERNED-MEMORY before consolidating ADD/LLD",
+  "governance_condition": "Promote CC-FULL-GOVERNED-AGENT-MEMORY and update the five authoritative registers before consolidating ADD/LLD",
   "counts": {
     "requirements": 285,
     "fully_specified": 283,
     "conditionally_specified": 2,
     "gaps": 0,
-    "checks": 37,
-    "passed": 37,
+    "checks": 52,
+    "passed": 52,
     "failed": 0
   },
   "checks": [
@@ -78,14 +78,44 @@
       "detail": "11/11"
     },
     {
-      "check": "GovernedMemory bounded schema",
+      "check": "GovernedMemory closed schema",
       "status": "PASS",
-      "detail": "29 required fields"
+      "detail": "32 required fields"
+    },
+    {
+      "check": "GovernedMemory kinds",
+      "status": "PASS",
+      "detail": "8/8"
+    },
+    {
+      "check": "GovernedMemory scopes",
+      "status": "PASS",
+      "detail": "7/7"
+    },
+    {
+      "check": "GovernedMemory vector binding",
+      "status": "PASS",
+      "detail": "model/content/representation bindings present"
+    },
+    {
+      "check": "GovernedMemory lifecycle",
+      "status": "PASS",
+      "detail": "legal hold and deletion saga states present"
     },
     {
       "check": "Memory governance fence",
       "status": "PASS",
       "detail": "candidate remains non-approved"
+    },
+    {
+      "check": "Full memory disposition",
+      "status": "PASS",
+      "detail": "full PoC semantics; scale/resilience bounded"
+    },
+    {
+      "check": "No stale bounded profile",
+      "status": "PASS",
+      "detail": "superseded bounded identifiers absent"
     },
     {
       "check": "FSM 44 rows",
@@ -158,6 +188,31 @@
       "detail": "byte-identical to ADD v1.2 embedded block"
     },
     {
+      "check": "Memory OpenAPI 3.1",
+      "status": "PASS",
+      "detail": "version 3.1.0"
+    },
+    {
+      "check": "Memory OpenAPI operations",
+      "status": "PASS",
+      "detail": "['/v1/memory/items', '/v1/memory/items/{memory_item_id}/versions/{memory_version}', '/v1/memory/search', '/v1/memory/consolidations', '/v1/memory/items/{memory_item_id}/promotions', '/v1/memory/items/{memory_item_id}/lifecycle', '/v1/memory/items/{memory_item_id}', '/v1/memory/context-assemblies']"
+    },
+    {
+      "check": "Memory OpenAPI external contracts",
+      "status": "PASS",
+      "detail": "memory item and GCS schemas referenced"
+    },
+    {
+      "check": "Memory OpenAPI refs",
+      "status": "PASS",
+      "detail": "all local/external refs resolved"
+    },
+    {
+      "check": "Memory operationId uniqueness",
+      "status": "PASS",
+      "detail": "['admitMemoryItem', 'getMemoryItemVersion', 'searchMemory', 'consolidateMemory', 'proposeMemoryPromotion', 'transitionMemoryLifecycle', 'requestMemoryDeletion', 'assembleMemoryContext']"
+    },
+    {
       "check": "Semantic token TRANSIENT",
       "status": "PASS",
       "detail": "TRANSIENT"
@@ -196,11 +251,31 @@
       "check": "Semantic token recovery gate",
       "status": "PASS",
       "detail": "recovery gate"
+    },
+    {
+      "check": "Semantic token MemoryContextAssembly",
+      "status": "PASS",
+      "detail": "MemoryContextAssembly"
+    },
+    {
+      "check": "Semantic token DELETION_INCOMPLETE",
+      "status": "PASS",
+      "detail": "DELETION_INCOMPLETE"
+    },
+    {
+      "check": "Semantic token FGM-20",
+      "status": "PASS",
+      "detail": "FGM-20"
+    },
+    {
+      "check": "Semantic token VECTOR",
+      "status": "PASS",
+      "detail": "VECTOR"
     }
   ],
   "digests": {
-    "lld_candidate_sha256": "3e49edb3fb5ccf4bd2e53f88100822cc85d0caa03eeecff36f95b6ae695aa2f1",
-    "add_candidate_sha256": "a0f2f2051f8053ec26596fd64f12fb484fc202b307107a485e48a66db4982af6",
-    "change_control_sha256": "ffac31dff8cb8e23b1191ac125dd2c3e06671d4c353dba1f03dc5e536936a2cc"
+    "lld_candidate_sha256": "1a5d5d448950cadfd09a177a6d91566e878b26a9f8a4cd481cb618ecd1401414",
+    "add_candidate_sha256": "99f3d17d480eb2b3346524a0820dcdbbedfbe43b091428a86e8677ce8030ed22",
+    "change_control_sha256": "c11e68c5cfdc2b63c5b51b382dba086687701467a50fbeb17d071e4056ee8366"
   }
 }

@@ -1,6 +1,6 @@
 # OCOR — Matrice esaustiva IRB → ADD → LLD v1.1 Candidate
 
-> Matrice generata dal Requirement Register e dal Requirement Traceability Index approvati. `CONDITIONALLY_SPECIFIED` non equivale ad approvazione: per FR-118/119 richiede la ratifica di `CC-BOUNDED-GOVERNED-MEMORY`.
+> Matrice generata dal Requirement Register e dal Requirement Traceability Index approvati. `CONDITIONALLY_SPECIFIED` non equivale ad approvazione: per FR-118/119 richiede la promozione governata di `CC-FULL-GOVERNED-AGENT-MEMORY`.
 
 | IRB ID | Tipo | Titolo | Priorità | Release | Allocazione ADD | Anchor LLD | Verifica | Disposition |
 |---|---|---|---|---|---|---|---|---|
@@ -139,8 +139,8 @@
 | `FR-115` | FR | Coordinamento solo governato | P0 | PoC | RTI approved `FR-115` + ADD v1.2 §7 | §2 Decomposizione C1–C8 + §7.3 Mission thread | inspection + end-to-end conformance | FULLY_SPECIFIED — Obbligo trasversale allocato ai port C1–C8 e al gate di conformità end-to-end. |
 | `FR-116` | FR | Schema dei Message | P1 | MVP | RTI approved `FR-116` + ADD v1.2 §7 | §2 Decomposizione C1–C8 + §7.3 Mission thread | inspection + end-to-end conformance | FULLY_SPECIFIED — Obbligo trasversale allocato ai port C1–C8 e al gate di conformità end-to-end. |
 | `FR-117` | FR | Message non canonico | P0 | PoC | RTI approved `FR-117` + ADD v1.2 §7 | §2 Decomposizione C1–C8 + §7.3 Mission thread | inspection + end-to-end conformance | FULLY_SPECIFIED — Obbligo trasversale allocato ai port C1–C8 e al gate di conformità end-to-end. |
-| `FR-118` | FR | Schema della Memory | P0 | PoC | RTI approved `FR-118` + ADD v1.2 §7 | §2.8 C8 — Governed Agent Kernel | schema/lifecycle/isolation/negative test | CONDITIONALLY_SPECIFIED — Bounded memory: admission, TTL, taint, retrieval pre/post-policy e non-interference. |
-| `FR-119` | FR | Isolamento del retrieval | P0 | PoC | RTI approved `FR-119` + ADD v1.2 §7 | §2.8 C8 — Governed Agent Kernel | schema/lifecycle/isolation/negative test | CONDITIONALLY_SPECIFIED — Bounded memory: admission, TTL, taint, retrieval pre/post-policy e non-interference. |
+| `FR-118` | FR | Schema della Memory | P0 | PoC | RTI approved `FR-118` + ADD v1.2 §7 | §2.8 C8 — Governed Agent Kernel | schema/lifecycle/isolation/negative test | CONDITIONALLY_SPECIFIED — Full governed memory: types/scopes, persistence, vector retrieval, lifecycle, promotion and non-interference. |
+| `FR-119` | FR | Isolamento del retrieval | P0 | PoC | RTI approved `FR-119` + ADD v1.2 §7 | §2.8 C8 — Governed Agent Kernel | schema/lifecycle/isolation/negative test | CONDITIONALLY_SPECIFIED — Full governed memory: types/scopes, persistence, vector retrieval, lifecycle, promotion and non-interference. |
 | `FR-120` | FR | Budget multidimensionale agentico | P0 | PoC | RTI approved `FR-120` + ADD v1.2 §7 | §2.8 C8 — Governed Agent Kernel | task/handoff/capability/isolation test | FULLY_SPECIFIED — Run/task durevoli, capability, budget, handoff tipizzato, dissent preservato e termination. |
 | `FR-121` | FR | Termination condition | P0 | PoC | RTI approved `FR-121` + ADD v1.2 §7 | §2 Decomposizione C1–C8 + §7.3 Mission thread | inspection + end-to-end conformance | FULLY_SPECIFIED — Obbligo trasversale allocato ai port C1–C8 e al gate di conformità end-to-end. |
 | `FR-122` | FR | Pacchetto di escalation | P0 | PoC | RTI approved `FR-122` + ADD v1.2 §7 | §2 Decomposizione C1–C8 + §7.3 Mission thread | inspection + end-to-end conformance | FULLY_SPECIFIED — Obbligo trasversale allocato ai port C1–C8 e al gate di conformità end-to-end. |

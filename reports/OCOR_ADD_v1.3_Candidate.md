@@ -5,119 +5,170 @@
 | Field | Value |
 |---|---|
 | Identifier | `OCOR-ADD-1.3-CANDIDATE` |
-| Status | `PROPOSED — AWAITING GOVERNED DECISION` |
+| Status | `PROPOSED — USER-DIRECTED, AWAITING GOVERNED BASELINE PROMOTION` |
 | Base | `OCOR-ADD-1.2` approved baseline |
 | Base SHA-256 | `c3f432ae0d172f2b4f70be8220d0ae4a134ec14716bccc6a12d75dfee438b84f` |
-| Change set | `CC-BOUNDED-GOVERNED-MEMORY` |
-| Trigger | `IALLD-007` |
+| Change set | `CC-FULL-GOVERNED-AGENT-MEMORY` |
+| Trigger | `IALLD-007` plus explicit requester disposition |
 | Requirements | `FR-118`, `FR-119` remain Confirmed P0/PoC |
+| Element | `ELM-084 = CORE / P0 / PoC` in this candidate |
 | Evidence state | unchanged; no implementation or production claim |
 | Effective from | only after governed approval and consolidated baseline publication |
 
-This candidate is a normative amendment to ADD v1.2. Every ADD v1.2 clause remains unchanged except the explicit replacements below. Candidate text does not supersede the approved baseline until promoted by the competent authority.
+This candidate amends ADD v1.2. Every ADD v1.2 clause remains unchanged except the replacements and additions below. It does not supersede the approved baseline until the competent authority promotes it. The previous bounded-memory proposal is withdrawn.
 
 ## 2. Normative replacements
 
-### 2.1 Scope fence replacement
+### 2.1 Scope fence
 
 Replace the `ELM-084` disposition in ADD v1.2 §§1.5 and 7.1 with:
 
-| Element | PoC disposition | Deferred disposition |
-|---|---|---|
-| `ELM-084` — Agent Memory | `POC_BOUNDED_PROFILE`: run/task-scoped `GovernedMemoryItem`, TTL-bounded, evidence-reconstructible, policy-filtered and compartment-isolated | General persistent, cross-run, vector, learning and cross-project memory remains deferred to MVP |
-
-No claim of general agent memory is permitted in the PoC.
-
-### 2.2 C8 storage and authority replacement
-
-C8 may persist only:
-
-- run, task, assignment, commitment and handoff records;
-- bounded `GovernedMemoryItem` records;
-- opaque content references to content-addressed storage;
-- policy/audit/provenance bindings.
-
-C8 may not persist global memory, backend credentials, hidden reasoning, unrestricted embeddings or unbounded conversational history. Memory is non-authoritative and cannot directly produce a Canonical Assertion, Decision, Approval, Delegation, CapabilityLease or ActionCommand.
-
-### 2.3 GovernedMemoryItem contract
-
-The closed contract and admission/retrieval algorithms in `OCOR_Change_Control_Bounded_Governed_Memory_v1.0.md` are incorporated by value into this candidate. The canonical field names are normative. Aliases and undeclared extensions are prohibited.
-
-The record is bound to exactly one canonical ADD `GovernedContext` v1.2. Its `governed_context_digest` must equal the digest calculated from the closed eleven-field ADD record; the memory contract does not redefine or extend `GovernedContext`.
-
-### 2.4 Isolation and leakage control
-
-Memory storage, indexes, caches, queues, logs and content prefixes use the isolation key:
-
-```text
-(tenant_id,
- organization_id,
- domain_id,
- compartments,
- purpose,
- classification_marking_ref,
- ontology_release_digest,
- policy_bundle_digest,
- agent_run_id)
-```
-
-Policy evaluation occurs before lookup and before materialisation. Unauthorized items cannot influence content, existence, count, rank, pagination, cache hit, explanation, error or observable timing bucket. Any ambiguity produces `DENY` without payload.
-
-### 2.5 Lifecycle
-
-```text
-PROPOSED → ACTIVE
-PROPOSED → QUARANTINED
-ACTIVE → EXPIRED
-ACTIVE → REVOKED
-ACTIVE → QUARANTINED
-EXPIRED | REVOKED | QUARANTINED → DELETED
-```
-
-No transition returns an item to `ACTIVE`. Correction, sanitisation or declassification produces a new item with new digest and provenance. Physical deletion follows the approved retention policy while the audit tombstone remains.
-
-### 2.6 Agent invariants replacement
-
-Replace the memory portion of ADD v1.2 §4.3.1 invariant 9 with:
-
-1. `ELM-080` remains deferred; budget/quota do not become semantic reservation.
-2. `ELM-084/POC_BOUNDED_PROFILE` is active only through the closed `GovernedMemoryItem` contract.
-3. Memory is tainted and non-authoritative; retrieval cannot change authority, policy, marking or capability.
-4. General persistent and vector memory remains deferred.
-5. CapabilityLease remains the distinct short-lived security token defined by ADD v1.2 and is not a Memory or `ELM-080` lease.
-
-### 2.7 Acceptance allocation replacement
-
-Add to the Agent Kernel and Security & Governance acceptance rows:
-
-| Requirement | Method | Evidence | Gate |
+| Element | Capability | PoC disposition | Later-release distinction |
 |---|---|---|---|
-| `FR-118` | schema/lifecycle/TTL/admission negative suite | immutable item, audit, expiry and correction records | all `BGM-01`–`03`, `08`, `09` pass |
-| `FR-119` | cross-tenant/compartment leakage campaign including rank/count/cache/error/timing | denied traces and non-interference report | `BGM-04`, `05`, `10` pass with zero leakage |
+| `ELM-084` — Agent Memory | full governed working, episodic, semantic, procedural, preference, reflection, dissent and team-shared memory | `CORE / P0 / PoC`; persistent cross-run, structured/full-text/vector/hybrid, consolidation and lifecycle included | MVP/Production increase scale, HA, SLO and E2 evidence; they do not introduce different memory semantics |
 
-## 3. Traceability
+The PoC is functionally complete but resource-bounded. Production volume, multi-region continuity and production SLOs are not implied.
 
-| Source | ADD v1.3 realization | LLD obligation |
+### 2.2 C8 subsystem replacement
+
+C8 includes a logical `GovernedMemoryService` with `MemoryAdmissionPort`, `MemoryReadPort`, `MemorySearchPort`, `MemoryLifecyclePort`, `MemoryConsolidationPort`, `MemoryRepresentationPort`, `MemoryPromotionPort`, `MemoryDeletionPort` and `MemoryAuditPort`.
+
+The subsystem persists item/version metadata, content-addressed payloads and lifecycle events. Full-text and vector stores are rebuildable projections. Audit is append-only. Backend identifiers do not cross the port boundary.
+
+### 2.3 Memory taxonomy and scope
+
+`memory_kind ∈ {WORKING, EPISODIC, SEMANTIC, PROCEDURAL, PREFERENCE, REFLECTION, DISSENT, TEAM_SHARED}`.
+
+`memory_scope ∈ {RUN, TASK, AGENT, TEAM, PROJECT, DOMAIN, FEDERATED}`.
+
+Kind defines semantics; scope defines visibility/lifetime ownership. They are independent. Each combination must be explicitly present in the capability matrix or fail with `UNSUPPORTED_CAPABILITY`.
+
+Cross-run persistence is included. Cross-project or federated retrieval requires explicit Authority, compatible purpose, conservative marking and audit. Cross-tenant access remains deny-by-default and requires a separately approved federation policy.
+
+### 2.4 Authority and epistemic separation
+
+Memory is non-authoritative and never directly produces Canonical Assertion, Authority, Delegation, Approval, Decision, CapabilityLease, ActionCommand or policy change.
+
+Claim, Observation, Hypothesis, Model Output, Decision, ExecutionResult and OutcomeAssessment remain distinct source types. A `SEMANTIC` memory item is derived knowledge, not accepted truth. `PROCEDURAL` memory is data until a separate approval authorizes instruction eligibility; live policy, capability, delegation and kill switch still apply at every use.
+
+Hidden chain-of-thought, model scratchpads, credentials, tokens, secrets and unrestricted raw conversational history are prohibited memory payloads. `MemoryContextAssembly` records only selected item/version refs, policy decisions, ordering, redaction, truncation and final context digest.
+
+### 2.5 GovernedMemoryItem contract
+
+The closed contract in `reports/contracts/governed-memory-item.schema.json` and the rules of `OCOR_Change_Control_Full_Governed_Agent_Memory_v1.0.md` are incorporated by value. Undeclared fields and aliases are prohibited.
+
+Every item is immutable and versioned. Correction, reclassification, consolidation, reflection, instruction-eligibility change or semantic update creates a new item version linked through `supersedes_ref`, `correction_of_ref`, `derived_from_refs` or `consolidates_refs`.
+
+The item binds to exactly one canonical eleven-field ADD `GovernedContext`. The GCS digest is recalculated at admission, retrieval, context assembly, consolidation, promotion and deletion.
+
+### 2.6 Storage and projection roles
+
+| Logical store | Role | Constraint |
 |---|---|---|
-| `FR-118` | §§2.2–2.5 | exact record, constraints, store, lifecycle, expiry worker and tests |
-| `FR-119` | §2.4 | pre/post policy, full isolation key, cache/index partition and non-interference tests |
-| `ELM-084` | §2.1 bounded/deferred split | bounded adapter only; general profile rejected as deferred |
-| `FR-038` | §2.6 | memory cannot grant authority or bypass the agent kernel |
-| `ARC-015`, `ARC-016` | §§2.2, 2.4, 2.6 | least privilege, taint, compartment isolation and kill switch |
+| Memory metadata | item/version/lifecycle/scope/digests | authority only for memory metadata |
+| Object store | encrypted payloads and derived artifacts | content-addressed; no canonical-state authority |
+| Full-text index | lexical retrieval | rebuildable, policy-partitioned projection |
+| Vector index | embedding/ANN retrieval | rebuildable, representation-versioned projection |
+| Event journal | lifecycle/access/consolidation/deletion events | replay source for memory projections |
+| Audit store | access, denial and influence evidence | protected audit authority |
 
-## 4. Backward compatibility
+State, content, indexes, caches, queues, logs and backups use the full isolation tuple: tenant, organization, domain, compartments, marking, purpose, policy bundle, ontology release, memory scope and owner/project/team bindings.
 
-ADD v1.2 has no approved public memory contract and no production consumer. This amendment adds a bounded PoC contract without changing the existing approved OpenAPI, Proto, Action, Event or MCP identifiers. Any future public memory API requires independent contract versioning and compatibility review.
+### 2.7 Retrieval and non-interference
 
-## 5. Promotion conditions
+Supported modes are `STRUCTURED`, `FULL_TEXT`, `VECTOR` and `HYBRID`. Requests use a named, versioned query contract and declare kinds, scopes, consistency, time window, top-k and explanation profile.
 
-This candidate may be consolidated as an approved ADD baseline only when:
+Policy is evaluated before candidate lookup and again before materialisation. Unauthorized items do not enter ANN graphs, score normalization, ranking, diversity, counts, pagination, explanations or shared caches visible to the requester. Result marking is the conservative join of returned content and derivations.
 
-1. the bounded profile disposition is ratified through governed change control;
+Hybrid ranking records lexical, vector, recency, confidence, source-quality, diversity and policy factors independently. Scores are retrieval evidence, not confidence in truth or Authority.
+
+### 2.8 Embedding and representation governance
+
+Each embedding binds to item/version, content digest, model/version/digest, tokenizer, dimensions, normalization profile, purpose and marking. Model upgrade creates a parallel representation version and deterministic rebuild; it does not mutate source memory.
+
+Representation generation executes under an authorized GCS. Cross-compartment centroids, global ANN graphs and shared vector caches are prohibited unless that exact profile passes non-interference tests. Raw vectors are not part of the default response contract.
+
+### 2.9 Consolidation, reflection and dissent
+
+Consolidation is an explicit job with input query/digest, algorithm/model pins, purpose, budget, target kind/scope and reviewer policy. It creates a new derived item with complete lineage and uncertainty. Source items remain immutable.
+
+Contradictions produce conflict/dissent artifacts. Frequency or majority does not erase dissent. Reflection output is always tainted and instruction-ineligible by default. Automatic consolidation is limited to approved profiles and cannot promote memory to canonical state or activate procedures.
+
+### 2.10 Lifecycle, forgetting and deletion
+
+```text
+PROPOSED → ACTIVE | QUARANTINED
+ACTIVE → SUPERSEDED | REVOKED | EXPIRED | LEGAL_HOLD | DELETION_PENDING
+QUARANTINED → ACTIVE | REVOKED | DELETION_PENDING
+SUPERSEDED | REVOKED | EXPIRED → LEGAL_HOLD | DELETION_PENDING
+LEGAL_HOLD → prior logical disposition | DELETION_PENDING
+DELETION_PENDING → DELETED | DELETION_INCOMPLETE
+DELETION_INCOMPLETE → DELETION_PENDING
+```
+
+`DELETED` is terminal. Forgetting may be triggered by expiry, purpose completion, revocation, supersession, confidence decay, quota pressure or authorized request. Legal hold blocks deletion. Deletion is a saga covering content, embeddings, indexes, caches, replicas, exports and restored backups. Partial completion blocks retrieval and remains visible as `DELETION_INCOMPLETE`.
+
+### 2.11 Memory influence and canonical promotion
+
+Every use in an agent/model context creates a `MemoryContextAssembly` receipt. Promotion follows only:
+
+```text
+GovernedMemoryItem
+  → MemoryPromotionProposal
+  → C6 Policy/Authority/Approval/Decision
+  → GovernedCanonicalCommitCommand
+  → C3 canonical commit
+```
+
+Rejected promotion is recorded separately and does not rewrite the memory item. Training or fine-tuning from memory is a distinct governed workflow and is not authorized by this amendment.
+
+### 2.12 Security additions
+
+Threat modelling and acceptance include prompt injection, memory poisoning, provenance laundering, confused deputy, delegation replay, capability escalation, agent collusion/conformity, dissent suppression, embedding inversion, membership inference, marking downgrade, stale policy, deletion resurrection and kill-switch races.
+
+All untrusted/model-generated content is tainted. Rendering separates data from instructions. Tool invocation always re-evaluates live capability, delegation, policy, memory instruction eligibility and stop epoch.
+
+### 2.13 Operations additions
+
+Backup manifests include memory metadata, content refs, representation versions, lifecycle/deletion epochs, journal checkpoints and audit refs. Restore replays deletion tombstones before reopening retrieval, preventing resurrection of deleted content. Projection drift or stale deletion epoch blocks materialisation.
+
+PoC resource limits are configuration values: item count, payload size, embedding dimensions, top-k, consolidation concurrency, index size and retention horizon. Exceeding them produces quota/backpressure behavior, never semantic downgrade.
+
+## 3. Acceptance allocation
+
+The `FGM-01`–`FGM-20` campaign in the change-control package is incorporated.
+
+| Requirement | Required evidence |
+|---|---|
+| `FR-118` | all kinds/scopes, schema, persistence, cross-run retrieval, consolidation, vector/hybrid retrieval, versioning, lifecycle, legal hold, deletion, promotion and context-assembly tests |
+| `FR-119` | cross-project/federated policy, poisoning, revocation/reclassification, cross-compartment non-interference and kill-switch/delegation race tests with zero leakage |
+
+Passing schema tests alone is insufficient. `FR-118/119` remain `specified/planned` until the full campaign produces governed evidence.
+
+## 4. Traceability
+
+| Source | ADD realization | LLD obligation |
+|---|---|---|
+| `FR-118` | §§2.2–2.11, §3 | full record, store/index ports, algorithms, lifecycle and FGM suite |
+| `FR-119` | §§2.6–2.8, 2.12 | pre/post policy, partitioned ranking/cache/index and non-interference |
+| `ELM-084` | §2.1 | full PoC capability; scale/resilience only deferred |
+| `FR-038` | §§2.3–2.4, 2.11 | memory never grants Authority or bypasses C6/C3 |
+| `ARC-015`, `ARC-016` | §§2.4, 2.7, 2.12 | least privilege, taint, isolation, live enforcement and kill switch |
+
+## 5. Compatibility
+
+ADD v1.2 exposes no approved public memory API and has no production consumer. This change introduces a new versioned contract rather than silently changing an external interface. Existing OpenAPI, Registry Proto, Action, Event and MCP identifiers remain unchanged. The memory API is separately versioned as `1.0.0`.
+
+## 6. Promotion conditions
+
+This candidate may be consolidated only when:
+
+1. `CC-FULL-GOVERNED-AGENT-MEMORY` is ratified through governed change control;
 2. all five approved register snapshots are updated atomically;
-3. the authoritative memory schema is materialised and hashed;
-4. LLD v1.1 uses the exact ADD `GovernedContext` and memory contract;
-5. the 285/285 semantic alignment gate reports no blocker;
-6. a new manifest pins the consolidated baseline and dependencies.
+3. `ELM-084` is recorded `CORE/P0/PoC` without retaining the bounded/deferred split;
+4. memory JSON Schema and OpenAPI are validated and manifest-pinned;
+5. LLD v1.1 implements every architectural rule above at design level;
+6. the 285/285 alignment gate has zero gap and no stale bounded-profile reference;
+7. a new manifest pins the consolidated baseline and dependencies.
 
 Until then ADD v1.2 remains the only approved ADD baseline.

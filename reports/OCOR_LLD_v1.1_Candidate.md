@@ -7,7 +7,7 @@
 | Identificativo | `OCOR-LLD-1.1-CANDIDATE` |
 | Stato | `PROPOSED — AWAITING GOVERNED DECISION` |
 | Baseline architetturale | `OCOR-ADD-1.2`, SHA-256 `c3f432ae0d172f2b4f70be8220d0ae4a134ec14716bccc6a12d75dfee438b84f` |
-| Emendamento candidato | `OCOR-ADD-1.3-CANDIDATE`, change set `CC-BOUNDED-GOVERNED-MEMORY` |
+| Emendamento candidato | `OCOR-ADD-1.3-CANDIDATE`, change set `CC-FULL-GOVERNED-AGENT-MEMORY` |
 | Sostituisce | LLD v1.0 soltanto dopo approvazione e pubblicazione consolidata |
 | Evidence claim | Specifica esecutiva; non dichiara implementazione né production readiness |
 
@@ -23,7 +23,8 @@ Ogni conflitto fra questo documento e l'ADD produce `LLD_CONFORMANCE_FAILURE`; n
 |---|---|---|
 | Governed Context | `reports/contracts/governed-context.schema.json` | record chiuso ADD v1.2, 11 campi |
 | Capability Lease | `reports/contracts/capability-lease.schema.json` | record chiuso, monouso per emission attempt |
-| Bounded Memory | `reports/contracts/governed-memory-item.schema.json` | attivo solo se approvato `CC-BOUNDED-GOVERNED-MEMORY` |
+| Full Governed Agent Memory | `reports/contracts/governed-memory-item.schema.json` | full PoC profile; attivo solo dopo promozione di `CC-FULL-GOVERNED-AGENT-MEMORY` |
+| Governed Memory API | `reports/contracts/ocor-governed-memory.openapi.yaml` | API 1.0.0 per admission, search, consolidation, lifecycle, promotion, deletion e context assembly |
 | Named Query Gateway | `reports/contracts/ocor-named-query-gateway.openapi.yaml` | OpenAPI 3.1, sei query nominate |
 | Registry | `reports/contracts/ocor_registry.proto` | Proto3 package `ocor.registry.v1` |
 
@@ -177,11 +178,68 @@ Package: `ocor.c7.scenario`, `ocor.c7.scm`, `ocor.c7.identification`, `ocor.c7.i
 
 ### 2.8 C8 — Governed Agent Kernel
 
-Package: `ocor.c8.run`, `ocor.c8.task`, `ocor.c8.assignment`, `ocor.c8.handoff`, `ocor.c8.dissent`, `ocor.c8.memory`, `ocor.c8.budget`, `ocor.c8.tools`.
+Package: `ocor.c8.run`, `ocor.c8.task`, `ocor.c8.assignment`, `ocor.c8.handoff`, `ocor.c8.dissent`, `ocor.c8.memory`, `ocor.c8.memory.content`, `ocor.c8.memory.index`, `ocor.c8.memory.consolidation`, `ocor.c8.memory.lifecycle`, `ocor.c8.budget`, `ocor.c8.tools`.
 
 Record chiusi: `AgentRun`, `Task`, `Assignment`, `Commitment`, `Handoff`, `Dissent`, `DecisionProposal`, `ToolInvocation`, `GovernedMemoryItem`. Task graph rifiuta cicli e depth oltre policy; assignment verifica machine identity, capability, delegation, autonomy tier, budget e termination condition. Handoff conserva sender, recipient, schema, input/output refs, GCS digest e accepted/rejected status. Dissent non può essere sovrascritto: la risoluzione crea un record separato.
 
-Il profilo memory PoC, se approvato, usa il contratto manifestato. Admission verifica fonte/evidence/provenance, GCS, marking, TTL, retention, taint e content digest; input non verificabile va in quarantine. Retrieval valuta policy prima di lookup e prima di materializzazione, usa la chiave completa di isolamento e non rivela esistenza/count/rank/cache/timing. `instruction_eligible=false` per default; render separa dati da istruzioni e non attribuisce autorità alla memoria. Expiry/revocation/quarantine sono monotone e le correzioni creano un nuovo item. General persistent/vector/cross-project memory resta fuori scope.
+Il PoC implementa il profilo completo `FULL_GOVERNED_AGENT_MEMORY`: working, episodic, semantic, procedural, preference, reflection, dissent e team-shared; scope run, task, agent, team, project, domain e federated; persistenza cross-run; retrieval structured/full-text/vector/hybrid; consolidation, versioning, forgetting, legal hold, deletion e promotion proposal. Sono bounded soltanto volume, payload, dimensione degli indici, concorrenza e SLO PoC.
+
+#### 2.8.1 Port e componenti memory
+
+| Port/componente | Responsabilità |
+|---|---|
+| `MemoryAdmissionPort` | closed-schema admission, source/evidence/provenance, marking, taint, scope e idempotency |
+| `MemoryMetadataStore` | item/version/lifecycle/scope/digest e link immutabili |
+| `MemoryContentStore` | payload content-addressed, cifrati e policy-bound |
+| `MemoryLexicalIndexPort` | full-text projection policy-partitioned |
+| `MemoryVectorIndexPort` | embedding/ANN projection versionata e policy-partitioned |
+| `MemorySearchPort` | structured/full-text/vector/hybrid named queries |
+| `MemoryConsolidationWorker` | derived summary/reflection con lineage, uncertainty e dissent |
+| `MemoryLifecycleCoordinator` | supersession, revocation, expiry, legal hold e deletion saga |
+| `MemoryPromotionPort` | crea `MemoryPromotionProposal`; nessuna scrittura C3 diretta |
+| `MemoryContextAssembler` | selezione, redazione, ordering, truncation e influence receipt |
+
+Indici lessicali e vettoriali sono proiezioni ricostruibili. L'autorità dei metadata memory non è autorità sullo stato canonico. Gli ID backend non attraversano i port.
+
+#### 2.8.2 Admission e versioning
+
+`admitMemory` costruisce il GCS da binding autenticato, valida schema/digest, rifiuta chain-of-thought/segreti/credenziali/raw history non governata, risolve Evidence/Provenance, calcola marking e taint, verifica scope/retention/quota/policy e scrive atomicamente metadata, content ref, lifecycle event e audit. Le proiezioni sono asincrone e legate allo stesso item/version digest.
+
+Idempotency key: `(tenant_id, memory_scope, source_digest, content_digest, operation_id)`. Stessa key e digest restituisce la receipt originale; digest diverso produce `MEMORY_IDEMPOTENCY_CONFLICT`.
+
+Ogni modifica semantica crea una nuova versione. `supersedes_ref`, `correction_of_ref`, `derived_from_refs` e `consolidates_refs` preservano la storia. Nessun update in-place del contenuto è ammesso.
+
+#### 2.8.3 Retrieval e non-interference
+
+La richiesta dichiara contract/version, mode, kind/scope, time window, top-k e ranking profile. Policy pre-query produce una partizione autorizzata; policy post-query rivalida ogni item prima della materializzazione. Item non autorizzati non influenzano ANN graph, score normalization, rank, count, pagination, diversity, cache, explanation, error o timing bucket.
+
+`HYBRID` conserva separatamente lexical score, vector score, recency, confidence, source quality, diversity e policy factors. Il risultato espone item/version, content/evidence/provenance refs, marking, score factors e explanation policy-safe. Score non equivale a verità.
+
+#### 2.8.4 Embedding lifecycle
+
+`EmbeddingDescriptor` lega item/version/content digest a model/version/digest, tokenizer, dimensioni, normalization profile, purpose e marking. Upgrade del modello crea una representation version parallela e una rebuild deterministica. Cross-compartment centroid, ANN graph e cache condivisi sono vietati senza una specifica prova di non-interference. Revoca, expiry, reclassification o deletion invalidano la representation prima della successiva materializzazione.
+
+#### 2.8.5 Consolidation, reflection e dissent
+
+`MemoryConsolidationJob` contiene input query/digest, item/version refs, algorithm/model pins, target kind/scope, budget e reviewer policy. Produce un nuovo item derivato con uncertainty e lineage. Non sovrascrive gli input e non abilita istruzioni. Contraddizioni producono `DISSENT`/conflict records; frequency e majority non eliminano alternative.
+
+`PROCEDURAL` memory richiede `instruction_approval_ref` per `instruction_eligible=true`, ma ogni uso rivalida policy, capability, delegation, purpose e kill switch. `REFLECTION` resta tainted e instruction-ineligible di default.
+
+#### 2.8.6 Lifecycle, forgetting e deletion
+
+FSM: `PROPOSED → ACTIVE|QUARANTINED`; `ACTIVE → SUPERSEDED|REVOKED|EXPIRED|LEGAL_HOLD|DELETION_PENDING`; terminalizzazione tramite `DELETION_PENDING → DELETED|DELETION_INCOMPLETE`, con retry governato da `DELETION_INCOMPLETE`. Uscire da legal hold ripristina la disposition precedente registrata.
+
+Il deletion saga cancella content, embeddings, full-text/vector entries, cache, repliche ed export; scrive deletion epoch e tombstone non-content. Fino al completamento, retrieval fallisce chiuso. Restore applica i tombstone prima di riaprire gli indici per impedire resurrection.
+
+#### 2.8.7 Context influence e promotion
+
+Ogni inserimento nel contesto produce `MemoryContextAssembly` con query digest, item/version selezionati, policy decisions, redactions, ordering, truncation, context ref/digest e audit ref. Non viene memorizzato il ragionamento interno del modello.
+
+Promotion path obbligatorio: `MemoryItem → MemoryPromotionProposal → C6 control/approval/decision → GovernedCanonicalCommitCommand → C3`. Memory non concede Authority, Approval, Decision, CapabilityLease o ActionCommand.
+
+#### 2.8.8 Threat model memory
+
+Test e controlli coprono prompt injection, poisoning, provenance laundering, embedding inversion, membership inference, cross-scope leakage, confused deputy, delegation replay, capability escalation, agent collusion/conformity, dissent suppression, malicious consolidation, procedural activation, stale policy, marking downgrade, deletion resurrection e kill-switch race.
 
 ### 2.9 Superfici operatore e developer tooling
 
@@ -281,7 +339,7 @@ Single-site isolato, namespace e service account per subsystem, network policy d
 
 ### 5.2 Configuration baseline fail-closed
 
-Ogni CI ha endpoint/ref, version/digest, trust bundle, identity, timeout, retry budget, circuit breaker, storage prefix, backup policy e health contract: TerminusDB, TypeDB, Jena, Temporal/PostgreSQL, Kafka/Schema Registry, object store S3, OPA, Keycloak, SPIFFE, OpenBao, audit store, registries e simulatore. Pin assente o incompatibile blocca startup. PostgreSQL resta adapter di verifica dell'atomicità e non sostituisce implicitamente TerminusDB.
+Ogni CI ha endpoint/ref, version/digest, trust bundle, identity, timeout, retry budget, circuit breaker, storage prefix, backup policy e health contract: TerminusDB, TypeDB, Jena, Temporal/PostgreSQL, Kafka/Schema Registry, object store S3, memory metadata store, full-text index, vector index, embedding worker, OPA, Keycloak, SPIFFE, OpenBao, audit store, registries e simulatore. Memory backend e embedding model sono port-bound e manifestati; una sostituzione deve preservare non-interference, deletion epoch, representation version e rebuild semantics. Pin assente o incompatibile blocca startup. PostgreSQL resta adapter di verifica dell'atomicità e non sostituisce implicitamente TerminusDB.
 
 ### 5.3 Observability e safe-degraded
 
@@ -289,7 +347,7 @@ Log/metric/trace includono correlation ID, component, operation, release, policy
 
 ### 5.4 Backup, restore e replay
 
-Backup set lega canonical state/history, idempotency, outbox, audit, schemas, policy, ontology, registry, projection checkpoint, scenario metadata e object refs allo stesso recovery point. È cifrato, firmato, authority-aware e testato. Restore avviene in rete isolata: verifica manifest/digest/firme → ripristina authority stores → canonical state → idempotency/outbox → projections via replay → audit reconciliation. Il recovery gate controlla revision, watermark, orphan/duplicate, marking, GCS e sample semantic digest prima di riaprire traffico. Replay usa event IDs originali e non emette effetti esterni.
+Backup set lega canonical state/history, idempotency, outbox, audit, schemas, policy, ontology, registry, projection checkpoint, scenario metadata, memory metadata/content refs, representation versions, lifecycle/deletion epochs e object refs allo stesso recovery point. È cifrato, firmato, authority-aware e testato. Restore avviene in rete isolata: verifica manifest/digest/firme → ripristina authority stores → canonical state → idempotency/outbox → memory tombstone/deletion journal → projections via replay → audit reconciliation. Il recovery gate controlla revision, watermark, orphan/duplicate, marking, GCS, deletion resurrection e sample semantic digest prima di riaprire traffico. Replay usa event IDs originali e non emette effetti esterni.
 
 ## 6. Concorrenza e failure semantics
 
@@ -317,7 +375,7 @@ Backup set lega canonical state/history, idempotency, outbox, audit, schemas, po
 
 ### 7.2 Test obbligatori
 
-Schema/meta tests verificano record chiusi, exact field set, canonical bytes, digest e negative corpus. Contract tests verificano OpenAPI/Proto/JSON Schema e generated SDK drift. Fault injection copre ogni crash window C3, lost ACK, duplicate delivery, control-plane timeout, stale watermark, expired Approval/lease, stop race, poison event, restore divergence e cross-compartment non-interference. `BGM-01`–`BGM-10` coprono bounded memory solo se il change set è approvato.
+Schema/meta tests verificano record chiusi, exact field set, canonical bytes, digest e negative corpus. Contract tests verificano OpenAPI/Proto/JSON Schema e generated SDK drift. Fault injection copre ogni crash window C3, lost ACK, duplicate delivery, control-plane timeout, stale watermark, expired Approval/lease, stop race, poison event, restore divergence e cross-compartment non-interference. `FGM-01`–`FGM-20` coprono la memoria governata completa solo dopo la promozione del change set.
 
 E1 dimostra implementazione del runtime slice; E2 richiede ambiente production-like, scale/security/recovery evidence e resta distinto. Nessun test legacy `RBA-*` è rinominato in `BA-*`.
 
@@ -335,7 +393,7 @@ Il bundle air-gapped include immagini firmate, chart/manifest, schemas, policy, 
 
 ### 7.5 Profili di release e gate
 
-Capability ed elemento hanno disposition `CORE`, `OPTIONAL` o `FUTURE` e release `PoC`, `MVP` o `Production`; combinazioni non dichiarate sono `UNSUPPORTED_CAPABILITY`. Il PoC dimostra la vertical slice bounded e chiude i P0 PoC. L'exit verso MVP richiede evidence package completo, gap e risk register governati, backup/restore e portability results. L'entry Production richiede E2, scale/security/recovery campaign, SLO ratificati, operational ownership, incident response e residual-risk acceptance. LLD approval non promuove automaticamente nessuno di questi gate.
+Capability ed elemento hanno disposition `CORE`, `OPTIONAL` o `FUTURE` e release `PoC`, `MVP` o `Production`; combinazioni non dichiarate sono `UNSUPPORTED_CAPABILITY`. Il PoC dimostra la vertical slice completa nelle funzioni e bounded soltanto per scala/resilienza, chiudendo i P0 PoC. L'exit verso MVP richiede evidence package completo, gap e risk register governati, backup/restore e portability results. L'entry Production richiede E2, scale/security/recovery campaign, SLO ratificati, operational ownership, incident response e residual-risk acceptance. LLD approval non promuove automaticamente nessuno di questi gate.
 
 ## 8. Tracciabilità bidirezionale
 
@@ -346,7 +404,7 @@ La matrice normativa `reports/traceability/OCOR_IRB_ADD_LLD_v1.1_Matrix.md` cont
 - `FULLY_SPECIFIED` privo di design e metodo;
 - `NOT_APPLICABLE` senza razionale e authority;
 - qualunque `GAP` per P0/PoC;
-- downgrade di priorità/release o uso del profilo memory candidato come già approvato.
+- downgrade di priorità/release, riferimento al profilo bounded superseduto o uso del full memory profile candidato come già approvato.
 
 Reverse traceability: ogni schema, port, tabella, transition e test dichiara almeno un requisito nella matrice; artefatti senza origine sono `ORPHAN_DESIGN`.
 
@@ -354,7 +412,7 @@ Reverse traceability: ogni schema, port, tabella, transition e test dichiara alm
 
 Questa candidata chiude tecnicamente i finding `IALLD-001`–`IALLD-017` soltanto se il gate semantico e i validator risultano positivi. L'approvazione formale richiede inoltre:
 
-1. decisione governata su `CC-BOUNDED-GOVERNED-MEMORY` e aggiornamento atomico dei registri;
+1. promozione governata di `CC-FULL-GOVERNED-AGENT-MEMORY` e aggiornamento atomico dei registri;
 2. consolidamento dell'ADD risultante;
 3. audit indipendente della matrice 285/285;
 4. manifest SHA-256 della candidata e dei contratti;

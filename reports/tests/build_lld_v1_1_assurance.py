@@ -9,6 +9,8 @@ import re
 import sys
 from pathlib import Path
 
+import yaml
+
 
 HERE = Path(__file__).resolve()
 if HERE.parents[2].name == "remediation-output":
@@ -19,7 +21,7 @@ else:
     OUT = ROOT / "reports"
 LLD = OUT / "OCOR_LLD_v1.1_Candidate.md"
 ADD = OUT / "OCOR_ADD_v1.3_Candidate.md"
-CC = OUT / "OCOR_Change_Control_Bounded_Governed_Memory_v1.0.md"
+CC = OUT / "OCOR_Change_Control_Full_Governed_Agent_Memory_v1.0.md"
 CONTRACTS = OUT / "contracts"
 TRACE = OUT / "traceability"
 RESULTS = OUT / "tests" / "lld_v1_1_assurance_results.json"
@@ -49,6 +51,46 @@ ADD_V12 = resolve_source(
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def iter_refs(value):
+    if isinstance(value, dict):
+        if "$ref" in value:
+            yield value["$ref"]
+        for child in value.values():
+            yield from iter_refs(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from iter_refs(child)
+
+
+def resolve_pointer(document, fragment: str):
+    node = document
+    if fragment in ("", "#"):
+        return node
+    if not fragment.startswith("#/"):
+        raise ValueError(fragment)
+    for raw in fragment[2:].split("/"):
+        token = raw.replace("~1", "/").replace("~0", "~")
+        node = node[int(token)] if isinstance(node, list) else node[token]
+    return node
+
+
+def unresolved_refs(document, base_dir: Path) -> list[str]:
+    errors = []
+    for ref in iter_refs(document):
+        try:
+            if ref.startswith("#"):
+                resolve_pointer(document, ref)
+                continue
+            file_part, marker, fragment = ref.partition("#")
+            path = base_dir / file_part
+            target = json.loads(path.read_text(encoding="utf-8")) if path.suffix == ".json" else yaml.safe_load(path.read_text(encoding="utf-8"))
+            if marker:
+                resolve_pointer(target, "#" + fragment)
+        except Exception as exc:
+            errors.append(f"{ref}: {type(exc).__name__}")
+    return errors
 
 
 def extract_requirements(text: str) -> list[dict[str, str]]:
@@ -95,7 +137,7 @@ def allocation(req: dict[str, str]) -> tuple[str, str, str]:
             ("memory", "memoria", "retrieval"),
             "§2.8 C8 — Governed Agent Kernel",
             "schema/lifecycle/isolation/negative test",
-            "Bounded memory: admission, TTL, taint, retrieval pre/post-policy e non-interference.",
+            "Full governed memory: types/scopes, persistence, vector retrieval, lifecycle, promotion and non-interference.",
         ),
         (
             ("ontology", "ontologia", "canonical ir", "oac", "migration", "semantic diff", "sdk", "code generation", "schema evolution", "elementi", "tipi", "relazioni", "semantici"),
@@ -208,8 +250,8 @@ def write_outputs(matrix: list[dict[str, str]]) -> None:
         "# OCOR — Matrice esaustiva IRB → ADD → LLD v1.1 Candidate",
         "",
         "> Matrice generata dal Requirement Register e dal Requirement Traceability Index approvati. "
-        "`CONDITIONALLY_SPECIFIED` non equivale ad approvazione: per FR-118/119 richiede la ratifica di "
-        "`CC-BOUNDED-GOVERNED-MEMORY`.",
+        "`CONDITIONALLY_SPECIFIED` non equivale ad approvazione: per FR-118/119 richiede la promozione governata di "
+        "`CC-FULL-GOVERNED-AGENT-MEMORY`.",
         "",
         "| IRB ID | Tipo | Titolo | Priorità | Release | Allocazione ADD | Anchor LLD | Verifica | Disposition |",
         "|---|---|---|---|---|---|---|---|---|",
@@ -270,8 +312,17 @@ def run_checks(matrix: list[dict[str, str]]) -> dict:
     check("CapabilityLease exact fields", set(lease["properties"]) == lease_required and lease.get("additionalProperties") is False, f"{len(lease['properties'])}/11")
 
     memory = json.loads((CONTRACTS / "governed-memory-item.schema.json").read_text())
-    check("GovernedMemory bounded schema", memory.get("additionalProperties") is False and "expires_at" in memory["required"] and "agent_run_id" in memory["required"], f"{len(memory['required'])} required fields")
-    check("Memory governance fence", "AWAITING GOVERNED DECISION" in add and "AWAITING GOVERNED DECISION" in cc, "candidate remains non-approved")
+    expected_kinds = {"WORKING", "EPISODIC", "SEMANTIC", "PROCEDURAL", "PREFERENCE", "REFLECTION", "DISSENT", "TEAM_SHARED"}
+    expected_scopes = {"RUN", "TASK", "AGENT", "TEAM", "PROJECT", "DOMAIN", "FEDERATED"}
+    check("GovernedMemory closed schema", memory.get("additionalProperties") is False and len(memory["required"]) >= 30, f"{len(memory['required'])} required fields")
+    check("GovernedMemory kinds", set(memory["properties"]["memory_kind"]["enum"]) == expected_kinds, f"{len(expected_kinds)}/8")
+    check("GovernedMemory scopes", set(memory["properties"]["memory_scope"]["enum"]) == expected_scopes, f"{len(expected_scopes)}/7")
+    check("GovernedMemory vector binding", all(name in memory["properties"] for name in ("embedding_model_ref", "embedding_model_digest", "embedding_dimensions", "embedding_normalization_profile", "embedding_ref", "embedding_digest")), "model/content/representation bindings present")
+    check("GovernedMemory lifecycle", all(state in memory["properties"]["lifecycle_status"]["enum"] for state in ("LEGAL_HOLD", "DELETION_PENDING", "DELETION_INCOMPLETE", "DELETED")), "legal hold and deletion saga states present")
+    check("Memory governance fence", "AWAITING GOVERNED" in add and "AWAITING GOVERNED" in cc, "candidate remains non-approved")
+    check("Full memory disposition", "ELM-084 = CORE / P0 / PoC" in add and "FULL_GOVERNED_AGENT_MEMORY" in cc, "full PoC semantics; scale/resilience bounded")
+    stale_bundle = "\n".join((add, lld))
+    check("No stale bounded profile", "CC-BOUNDED-GOVERNED-MEMORY" not in stale_bundle and "POC_BOUNDED_PROFILE" not in stale_bundle, "superseded bounded identifiers absent")
 
     transitions = re.findall(r"^\| `ACT-T[^`]+` \|", lld, re.M)
     check("FSM 44 rows", len(transitions) == 44, f"{len(transitions)}/44")
@@ -306,14 +357,25 @@ def run_checks(matrix: list[dict[str, str]]) -> dict:
     check("Proto services", all(f"service {name}" in proto for name in ("FunctionRegistry", "ModelRegistry")), "FunctionRegistry + ModelRegistry")
     check("Proto source identity", proto == embedded_block("## 3.4 Function & Model Registry", "proto"), "byte-identical to ADD v1.2 embedded block")
 
-    for token in ("TRANSIENT", "PERMANENT", "POLICY_DENIED", "POISON", "identify-or-abstain", "R3_HIGH_IMPACT", "RESET_PENDING", "recovery gate"):
+    memory_api = (CONTRACTS / "ocor-governed-memory.openapi.yaml").read_text()
+    memory_api_doc = yaml.safe_load(memory_api)
+    memory_paths = re.findall(r"^  (/v1/memory/[^:]+):$", memory_api, re.M)
+    check("Memory OpenAPI 3.1", memory_api.startswith("openapi: 3.1.0"), "version 3.1.0")
+    check("Memory OpenAPI operations", len(memory_paths) == 8 and len(set(memory_paths)) == 8, str(memory_paths))
+    check("Memory OpenAPI external contracts", "./governed-memory-item.schema.json" in memory_api and "./governed-context.schema.json" in memory_api, "memory item and GCS schemas referenced")
+    memory_ref_errors = unresolved_refs(memory_api_doc, CONTRACTS)
+    check("Memory OpenAPI refs", not memory_ref_errors, "all local/external refs resolved" if not memory_ref_errors else str(memory_ref_errors))
+    operation_ids = re.findall(r"^      operationId: ([A-Za-z][A-Za-z0-9]+)$", memory_api, re.M)
+    check("Memory operationId uniqueness", len(operation_ids) == 8 and len(set(operation_ids)) == 8, str(operation_ids))
+
+    for token in ("TRANSIENT", "PERMANENT", "POLICY_DENIED", "POISON", "identify-or-abstain", "R3_HIGH_IMPACT", "RESET_PENDING", "recovery gate", "MemoryContextAssembly", "DELETION_INCOMPLETE", "FGM-20", "VECTOR"):
         check(f"Semantic token {token}", token.lower() in lld.lower(), token)
 
     failed = [c for c in checks if c["status"] == "FAIL"]
     return {
         "schema_version": "1.0",
         "verdict": "PASS_WITH_GOVERNANCE_CONDITION" if not failed else "FAIL",
-        "governance_condition": "Ratify CC-BOUNDED-GOVERNED-MEMORY before consolidating ADD/LLD",
+        "governance_condition": "Promote CC-FULL-GOVERNED-AGENT-MEMORY and update the five authoritative registers before consolidating ADD/LLD",
         "counts": {
             "requirements": len(matrix),
             "fully_specified": sum(r["disposition"].startswith("FULLY") for r in matrix),
