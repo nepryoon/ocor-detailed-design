@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ocor:schema:capability-lease:1.0",
+  "title": "OCOR CapabilityLease",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "lease_id",
+    "capability_id",
+    "effective_principal_id",
+    "delegation_ref",
+    "action_instance_id",
+    "governed_context_digest",
+    "gate_package_digest",
+    "stop_epoch",
+    "fencing_token",
+    "issued_at",
+    "expires_at"
+  ],
+  "properties": {
+    "lease_id": {"type": "string", "minLength": 1},
+    "capability_id": {"type": "string", "minLength": 1},
+    "effective_principal_id": {"type": "string", "minLength": 1},
+    "delegation_ref": {"type": "string", "minLength": 1},
+    "action_instance_id": {"type": "string", "minLength": 1},
+    "governed_context_digest": {"$ref": "#/$defs/digest"},
+    "gate_package_digest": {"$ref": "#/$defs/digest"},
+    "stop_epoch": {"type": "integer", "minimum": 0},
+    "fencing_token": {"type": "integer", "minimum": 1},
+    "issued_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"}
+  },
+  "$defs": {
+    "digest": {"type": "string", "pattern": "^urn:sha256:[0-9a-f]{64}$"}
+  }
+}

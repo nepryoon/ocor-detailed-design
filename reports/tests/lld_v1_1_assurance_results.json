@@ -1,0 +1,206 @@
+{
+  "schema_version": "1.0",
+  "verdict": "PASS_WITH_GOVERNANCE_CONDITION",
+  "governance_condition": "Ratify CC-BOUNDED-GOVERNED-MEMORY before consolidating ADD/LLD",
+  "counts": {
+    "requirements": 285,
+    "fully_specified": 283,
+    "conditionally_specified": 2,
+    "gaps": 0,
+    "checks": 37,
+    "passed": 37,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "check": "IRB universe",
+      "status": "PASS",
+      "detail": "285 rows; 285 unique"
+    },
+    {
+      "check": "IRB BR count",
+      "status": "PASS",
+      "detail": "18/18"
+    },
+    {
+      "check": "IRB FR count",
+      "status": "PASS",
+      "detail": "174/174"
+    },
+    {
+      "check": "IRB NFR count",
+      "status": "PASS",
+      "detail": "93/93"
+    },
+    {
+      "check": "ADD allocation",
+      "status": "PASS",
+      "detail": "approved RTI row for every requirement"
+    },
+    {
+      "check": "LLD allocation",
+      "status": "PASS",
+      "detail": "LLD anchor for every requirement"
+    },
+    {
+      "check": "Priority resolved",
+      "status": "PASS",
+      "detail": "priority present for every requirement"
+    },
+    {
+      "check": "Release resolved",
+      "status": "PASS",
+      "detail": "release present for every requirement"
+    },
+    {
+      "check": "No GAP",
+      "status": "PASS",
+      "detail": "zero GAP dispositions"
+    },
+    {
+      "check": "Conditional scope",
+      "status": "PASS",
+      "detail": "conditional=['FR-118', 'FR-119']"
+    },
+    {
+      "check": "GovernedContext exact fields",
+      "status": "PASS",
+      "detail": "['actor_chain', 'classification_marking_ref', 'compartments', 'correlation_id', 'domain_id', 'effective_principal_id', 'ontology_release_digest', 'organization_id', 'policy_bundle_digest', 'purpose', 'tenant_id']"
+    },
+    {
+      "check": "GovernedContext required",
+      "status": "PASS",
+      "detail": "11/11"
+    },
+    {
+      "check": "CapabilityLease exact fields",
+      "status": "PASS",
+      "detail": "11/11"
+    },
+    {
+      "check": "GovernedMemory bounded schema",
+      "status": "PASS",
+      "detail": "29 required fields"
+    },
+    {
+      "check": "Memory governance fence",
+      "status": "PASS",
+      "detail": "candidate remains non-approved"
+    },
+    {
+      "check": "FSM 44 rows",
+      "status": "PASS",
+      "detail": "44/44"
+    },
+    {
+      "check": "FSM five columns",
+      "status": "PASS",
+      "detail": "ID/source/event/effect/destination present"
+    },
+    {
+      "check": "FSM semantic identity",
+      "status": "PASS",
+      "detail": "44/44 exact rows"
+    },
+    {
+      "check": "C3 token GovernedCanonicalCommitCommand",
+      "status": "PASS",
+      "detail": "GovernedCanonicalCommitCommand"
+    },
+    {
+      "check": "C3 token canonical_idempotency",
+      "status": "PASS",
+      "detail": "canonical_idempotency"
+    },
+    {
+      "check": "C3 token gate_package_digest",
+      "status": "PASS",
+      "detail": "gate_package_digest"
+    },
+    {
+      "check": "C3 token claim_source_bindings",
+      "status": "PASS",
+      "detail": "claim_source_bindings"
+    },
+    {
+      "check": "C3 token branch=main",
+      "status": "PASS",
+      "detail": "branch=main"
+    },
+    {
+      "check": "OpenAPI six named queries",
+      "status": "PASS",
+      "detail": "['/v1/queries/get-object', '/v1/queries/query-object-set', '/v1/queries/search', '/v1/queries/traverse', '/v1/queries/explain', '/v1/queries/get-provenance']"
+    },
+    {
+      "check": "OpenAPI 3.1",
+      "status": "PASS",
+      "detail": "version 3.1.0"
+    },
+    {
+      "check": "OpenAPI source identity",
+      "status": "PASS",
+      "detail": "byte-identical to ADD v1.2 embedded block"
+    },
+    {
+      "check": "Proto package",
+      "status": "PASS",
+      "detail": "ocor.registry.v1"
+    },
+    {
+      "check": "Proto services",
+      "status": "PASS",
+      "detail": "FunctionRegistry + ModelRegistry"
+    },
+    {
+      "check": "Proto source identity",
+      "status": "PASS",
+      "detail": "byte-identical to ADD v1.2 embedded block"
+    },
+    {
+      "check": "Semantic token TRANSIENT",
+      "status": "PASS",
+      "detail": "TRANSIENT"
+    },
+    {
+      "check": "Semantic token PERMANENT",
+      "status": "PASS",
+      "detail": "PERMANENT"
+    },
+    {
+      "check": "Semantic token POLICY_DENIED",
+      "status": "PASS",
+      "detail": "POLICY_DENIED"
+    },
+    {
+      "check": "Semantic token POISON",
+      "status": "PASS",
+      "detail": "POISON"
+    },
+    {
+      "check": "Semantic token identify-or-abstain",
+      "status": "PASS",
+      "detail": "identify-or-abstain"
+    },
+    {
+      "check": "Semantic token R3_HIGH_IMPACT",
+      "status": "PASS",
+      "detail": "R3_HIGH_IMPACT"
+    },
+    {
+      "check": "Semantic token RESET_PENDING",
+      "status": "PASS",
+      "detail": "RESET_PENDING"
+    },
+    {
+      "check": "Semantic token recovery gate",
+      "status": "PASS",
+      "detail": "recovery gate"
+    }
+  ],
+  "digests": {
+    "lld_candidate_sha256": "3e49edb3fb5ccf4bd2e53f88100822cc85d0caa03eeecff36f95b6ae695aa2f1",
+    "add_candidate_sha256": "a0f2f2051f8053ec26596fd64f12fb484fc202b307107a485e48a66db4982af6",
+    "change_control_sha256": "ffac31dff8cb8e23b1191ac125dd2c3e06671d4c353dba1f03dc5e536936a2cc"
+  }
+}
