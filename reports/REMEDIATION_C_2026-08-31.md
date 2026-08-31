@@ -250,3 +250,44 @@ integralmente senza essere aggiornato.
 
 Esito C.5: **PASS** — validator ufficiale eseguito con pin e digest verificati; harness
 14 `PASS`, 0 `FAIL`, 0 `NOT_EXECUTED`.
+
+## 7. C.6 — Correzione editoriale del Verification Evidence Report
+
+Il file `ocor-runtime/VERIFICATION_EVIDENCE_REPORT.md` conteneva due occorrenze
+editoriali di backslash-`n`: una sequenza `\n\n` nella prima riga e una sequenza `\n`
+nella riga dei risultati. Sono state sostituite esclusivamente con gli a-capo che
+rappresentavano.
+
+SHA-256 precedente:
+`cf57a5a463a10c15e0356cbe1af18d44e0f007423abffb4a9b3423163c1df0b2`.
+SHA-256 corretto:
+`af0f5a17d92735d9175827b4bc001cf386708e31399b198414052b1411b543e1`.
+
+Il controllo meccanico
+“byte precedenti con ogni sequenza letterale `\n` normalizzata → byte correnti”
+restituisce identità completa. Nessuna parola, cifra, disposizione, stato probatorio o
+riferimento è cambiato.
+
+Diff testuale integrale:
+
+```diff
+diff --git a/ocor-runtime/VERIFICATION_EVIDENCE_REPORT.md b/ocor-runtime/VERIFICATION_EVIDENCE_REPORT.md
+index fb79ab9..ef6a057 100644
+--- a/ocor-runtime/VERIFICATION_EVIDENCE_REPORT.md
++++ b/ocor-runtime/VERIFICATION_EVIDENCE_REPORT.md
+@@ -1,8 +1,11 @@
+-# OCOR Runtime Verification Evidence Report\n\n> **Current governed status — 2026-08-30:** superseded by GitHub Actions run [`33334792715`](https://github.com/nepryoon/ocor-detailed-design/actions/runs/33334792715) and `reports/OCOR_ADD_v1.2_Validation_Closure_Report.md`. `DEC-207` accepts the closure evidence and records `E1_runtime_slice=PRESENT`; E2/production evidence remains unestablished.
++# OCOR Runtime Verification Evidence Report
++
++> **Current governed status — 2026-08-30:** superseded by GitHub Actions run [`33334792715`](https://github.com/nepryoon/ocor-detailed-design/actions/runs/33334792715) and `reports/OCOR_ADD_v1.2_Validation_Closure_Report.md`. `DEC-207` accepts the closure evidence and records `E1_runtime_slice=PRESENT`; E2/production evidence remains unestablished.
+ 
+ Date: 2026-08-30  
+ Baseline authority: approved ADD v1.2 baseline; ARA decisions DEC-197 through DEC-206; effective 2026-08-30  
+-Historical result: **PASS — 104 passed, 0 failed, 0 skipped**  \nCurrent governed result: **PASS — 109 runtime tests, 38 BA cases, 35 EV cases and 5 live PostgreSQL cases; 0 failures, 0 errors, 0 skips**
++Historical result: **PASS — 104 passed, 0 failed, 0 skipped**  
++Current governed result: **PASS — 109 runtime tests, 38 BA cases, 35 EV cases and 5 live PostgreSQL cases; 0 failures, 0 errors, 0 skips**
+ 
+ ## Post-approval validation closure
+```
+
+Esito C.6: **PASS** — correzione puramente editoriale, semantica invariata.
