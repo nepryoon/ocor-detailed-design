@@ -121,3 +121,38 @@ Il manifest candidato rigenerato verifica 6/6 entry `OK`; viene consolidato con 
 catena di lineage al punto C.4. Nessun manifest approvato è stato modificato.
 
 Esito C.2: **PASS** — 5/5 digest-base coincidono byte per byte con `origin/main`.
+
+## 4. C.3 — Riproducibilità da due clone puliti
+
+Il verificatore `reports/tests/verify_full_memory_reproducibility.py` ha creato due
+clone temporanei indipendenti del repository GitHub, ha importato il commit candidato
+`d86c7e07a4e2a8bdc7412390ca0a9013eb1d8e62` in detached HEAD e ha verificato in
+entrambi `origin/main=098c680615cf8d8b57cd367386bac10d8acdc715` prima di eseguire il
+generatore. I clone erano clean prima della generazione.
+
+Un primo setup basato sul clone del repository locale è stato respinto prima di
+generare output: avrebbe rimappato `origin/main` sul branch locale `main`, fermo a
+`ddfa97d1cacec23afdf767702c7c0fd816e66431`. Il verificatore definitivo clona il vero
+origin GitHub e usa il repository locale soltanto per importare il commit non ancora
+pushato; in questo modo il ref autoritativo non viene ridefinito.
+
+Ambiente del run: Python `3.14.4`, Git `2.53.0`. Il generatore non incorpora timestamp,
+path assoluti o enumerazioni non ordinate: commit sorgente e path sono relativi e
+fissi, l'ordine dei cinque registri è dichiarato nel codice e il manifest è ordinato.
+
+| Output confrontato | Clone 1 SHA-256 | Clone 2 SHA-256 | Workspace SHA-256 | Byte-identico |
+|---|---|---|---|---|
+| CAP/ELM Crosswalk candidate | `1e74f8d7f7a7a119c1431ae00319c457f85fff3cdc4e40f82aa3c77127a019c3` | `1e74f8d7f7a7a119c1431ae00319c457f85fff3cdc4e40f82aa3c77127a019c3` | `1e74f8d7f7a7a119c1431ae00319c457f85fff3cdc4e40f82aa3c77127a019c3` | `YES` |
+| Decision Register candidate | `c14d8eba0532f6a65e514d206e79156ce17fa75c0b9078f5529fead987f32ee4` | `c14d8eba0532f6a65e514d206e79156ce17fa75c0b9078f5529fead987f32ee4` | `c14d8eba0532f6a65e514d206e79156ce17fa75c0b9078f5529fead987f32ee4` | `YES` |
+| Decision Traceability candidate | `f14b824e20155c2639908eda0d0d0454747954ba8fdc0965e788f0222edc6ab1` | `f14b824e20155c2639908eda0d0d0454747954ba8fdc0965e788f0222edc6ab1` | `f14b824e20155c2639908eda0d0d0454747954ba8fdc0965e788f0222edc6ab1` | `YES` |
+| Requirement Register candidate | `df1e36a6ef2cbb92bee236f262858ac37f2989d369e0e1f4731268308e70887e` | `df1e36a6ef2cbb92bee236f262858ac37f2989d369e0e1f4731268308e70887e` | `df1e36a6ef2cbb92bee236f262858ac37f2989d369e0e1f4731268308e70887e` | `YES` |
+| Requirement Traceability candidate | `bb747a84d3183370e11747249b6f85bcf6d55e530950bdcb9d699b634b633eac` | `bb747a84d3183370e11747249b6f85bcf6d55e530950bdcb9d699b634b633eac` | `bb747a84d3183370e11747249b6f85bcf6d55e530950bdcb9d699b634b633eac` | `YES` |
+| Candidate results JSON | `4f6edf4320af0fc262ab31728d655f375a9886281c0da6cbdf6a8961371fc309` | `4f6edf4320af0fc262ab31728d655f375a9886281c0da6cbdf6a8961371fc309` | `4f6edf4320af0fc262ab31728d655f375a9886281c0da6cbdf6a8961371fc309` | `YES` |
+| Candidate SHA256SUMS | `52f9006aa0ceb2c56cb7f15f290e6568e449f783bdc62760be71e06b5d343a0d` | `52f9006aa0ceb2c56cb7f15f290e6568e449f783bdc62760be71e06b5d343a0d` | `52f9006aa0ceb2c56cb7f15f290e6568e449f783bdc62760be71e06b5d343a0d` | `YES` |
+
+Risultato macchina:
+`reports/tests/full_memory_reproducibility_results.json`, SHA-256
+`1b8a796b7eda4b75df4d725d551d3f224801bf8ae776d406798f5227e2fca36a`.
+
+Esito C.3: **PASS** — 7/7 output byte-identici fra i due clone e rispetto al
+workspace.
