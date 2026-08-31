@@ -184,6 +184,14 @@ Il manifest candidato
 `52f9006aa0ceb2c56cb7f15f290e6568e449f783bdc62760be71e06b5d343a0d`, contiene i
 cinque output e il result JSON; `sha256sum -c` restituisce 6/6 `OK`.
 
+Il manifest candidato aggregato
+`reports/OCOR_IRB_ADD_LLD_REMEDIATION_SHA256SUMS`, SHA-256
+`94c82fa14ef0cd90d234565380ae0ec5d1b0c7684f4af6252e12840f28030e8e`, è stato
+riallineato per le sole nove entry modificate dalla remediation C.1–C.4: il manifest
+full-memory, i cinque candidati, i due generatori e il result JSON. Le altre sedici
+entry, comprese ADD v1.3, LLD v1.1 e i contratti memory fuori perimetro, non sono state
+modificate. `sha256sum -c` restituisce 25/25 `OK`.
+
 I manifest approvati non sono stati toccati e coincidono con `origin/main`:
 
 | Manifest approvato | SHA-256 workspace | SHA-256 `origin/main` | Esito |
@@ -191,8 +199,8 @@ I manifest approvati non sono stati toccati e coincidono con `origin/main`:
 | `OCOR_ADD_v1.2_APPROVAL_SHA256SUMS` | `8d6b7125ddb77a78efff7521f78634b2f59f03eb2662ae4e6485d4244661dc88` | `8d6b7125ddb77a78efff7521f78634b2f59f03eb2662ae4e6485d4244661dc88` | `MATCH` |
 | `OCOR_ADD_v1.2_VALIDATION_EVIDENCE_SHA256SUMS` | `fde0611b9aa1f950b9c599a3ee3d71d89ac353a21cb40b9e0ebe8efeffbdc073` | `fde0611b9aa1f950b9c599a3ee3d71d89ac353a21cb40b9e0ebe8efeffbdc073` | `MATCH` |
 
-Esito C.4: **PASS** — lineage completo e verificabile; manifest candidato 6/6;
-manifest approvati immutati.
+Esito C.4: **PASS** — lineage completo e verificabile; manifest specifico 6/6;
+manifest candidato aggregato 25/25; manifest approvati immutati.
 
 ## 6. C.5 — Harness e validator OpenAPI 3.1
 
@@ -291,3 +299,60 @@ index fb79ab9..ef6a057 100644
 ```
 
 Esito C.6: **PASS** — correzione puramente editoriale, semantica invariata.
+
+## 8. C.7 — Verifica della mappatura DRAFT e provenienza decisionale
+
+Verdetto: **nessuna collisione e nessun errore nel report di riconciliazione**.
+
+Una collisione richiederebbe due record decisionali distinti con lo stesso ID. Il
+Decision Register approvato contiene invece esattamente una riga per ciascuna
+`DEC-197`–`DEC-206`; l'ARA Decision Record contiene esattamente una sezione per
+ciascuna delle dieci decisioni. `DEC-202` e `DEC-204` sono ratifiche combinate
+esplicitamente autorizzate, non ID riutilizzati:
+
+- `DEC-202`: `CC-EMISSION-FENCE` ratifica `DRAFT-E` e il contenuto safety-control di
+  `DRAFT-I` in un solo record normativo;
+- `DEC-204`: `CC-MARKING-ALGEBRA` ratifica `DRAFT-D` e `DRAFT-H` in un solo record
+  normativo.
+
+La cardinalità è quindi coerente: nove draft confluiscono in sette decisioni di
+ratifica; tre change set senza draft diretto producono `DEC-201`, `DEC-205` e
+`DEC-206`; il totale è dieci decisioni.
+
+| Draft | Decisione approvata | Natura |
+|---|---|---|
+| `DRAFT-A` | `DEC-197` | ratifica singola GCS |
+| `DRAFT-B` | `DEC-199` | ratifica singola canonical path |
+| `DRAFT-C` | `DEC-200` | ratifica singola single-writer |
+| `DRAFT-D` | `DEC-204` | ratifica combinata marking |
+| `DRAFT-E` | `DEC-202` | ratifica combinata emission fence |
+| `DRAFT-F` | `DEC-203` | ratifica singola adjudication |
+| `DRAFT-G` | `DEC-198` | ratifica singola ACTION/EVENT |
+| `DRAFT-H` | `DEC-204` | ratifica combinata marking |
+| `DRAFT-I` | `DEC-202` | solo contenuto safety-control nella ratifica combinata |
+
+Provenienza completa delle tre decisioni senza draft diretto:
+
+| Decisione | Finding / gate | Amendment | Change set | Disposizione risultante |
+|---|---|---|---|---|
+| `DEC-201` | `DRF-009`, `BA-01` | `V12-AM-14` | `CC-BA01-ALTERNATIVE` | commit locale state+revision+idempotency+outbox hard invariant; nessun fallback implicito; dipendenza `DEC-200` |
+| `DEC-205` | `DRF-012` | `V12-AM-11` | `CC-FR095-SCOPE` | `FR-095` P0/MVP, `ELM-070` differita; supersession circoscritta della release clause di `DEC-103` |
+| `DEC-206` | `DRF-015` | `V12-AM-13` | `CC-DEC-ALLOCATION` | `DEC-173` ad Agent Kernel/role surfaces; `DEC-175` a Compiler & Gateway; coverage 196/196 |
+
+Fonti verificate:
+
+| Fonte | SHA-256 |
+|---|---|
+| `ocor-runtime/docs/governance_dossier/ARA_DECISION_RECORD_v1.1.md` | `35579536a67122700ff09f6be33874163f5872a199f853b557d28c71af9a0eae` |
+| `ocor-runtime/docs/governance_dossier/registers/OCOR_Decision_Register_v1.1_APPROVED.md` | `521e328e76d9723d7ad035684df49c0183c754f8029f20c522a744b4d2a5f7dd` |
+| `reports/OCOR_ADD_v1.2_Change_Control_Package.md` | `f336b4d0b10942c3eeb6603bafff69b7e085edfa8bbd6dc0224266ee0e8aaa8c` |
+| `reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md` | `4f84249b86150a0aa0ef5bf7fcc1a5c99388651e8aae132720dd784883b0426f` |
+
+Il controllo `reports/tests/verify_decision_mapping.py`, SHA-256
+`e5b731b43c671547bf63a83211cd922ac1f8839bc4b5dcf10e98db29c5223a50`, produce
+`reports/tests/c7_decision_mapping_results.json`, SHA-256
+`b521743b026f4d6307876555f38f82ddf7ca80c6a767efdb20f5352df2e37055`:
+6 `PASS`, 0 `FAIL`.
+
+Esito C.7: **PASS** — mappatura molti-a-uno intenzionale e univoca; nessuna decisione
+storica modificata o rinumerata; nessuna segnalazione collisione necessaria.
