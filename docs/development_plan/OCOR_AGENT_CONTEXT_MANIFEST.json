@@ -1,0 +1,1303 @@
+{
+  "schema_version": "1.0",
+  "base_commit": "67cda4b44a8d27b831eb461b1e28d71e1d3398ab",
+  "normative_core": [
+    {
+      "path": "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+      "sha256": "dca9e218914a310ac53f92cded61ae29a40323b98daacb51028077d6c15cd2fb"
+    },
+    {
+      "path": "docs/OCOR_LLD_v1.1.md",
+      "sha256": "bd464bfef50dc5a5e1b7ffac389fdf12be57a3b545225a92cf1564dc6a01d219"
+    },
+    {
+      "path": "reports/traceability/OCOR_IRB_ADD_LLD_v1.1_Matrix.json",
+      "sha256": "3e321c3fd8f0b7e85c35d888e5273f5f26fae86494b67e3db3876a0eaf09eaeb"
+    }
+  ],
+  "roles": [
+    {
+      "role": "Delivery Coordinator",
+      "required_context": [
+        "AGENTS.md",
+        "task record",
+        "normative anchors",
+        "owned source/tests",
+        "dependency handoffs"
+      ],
+      "output_contract": "structured handoff plus evidence manifest",
+      "max_context_tokens": 60000
+    },
+    {
+      "role": "Contract and Shared-Kernel Agent",
+      "required_context": [
+        "AGENTS.md",
+        "task record",
+        "normative anchors",
+        "owned source/tests",
+        "dependency handoffs"
+      ],
+      "output_contract": "structured handoff plus evidence manifest",
+      "max_context_tokens": 40000
+    },
+    {
+      "role": "Component Implementation Agent",
+      "required_context": [
+        "AGENTS.md",
+        "task record",
+        "normative anchors",
+        "owned source/tests",
+        "dependency handoffs"
+      ],
+      "output_contract": "structured handoff plus evidence manifest",
+      "max_context_tokens": 40000
+    },
+    {
+      "role": "Governed Memory Agent",
+      "required_context": [
+        "AGENTS.md",
+        "task record",
+        "normative anchors",
+        "owned source/tests",
+        "dependency handoffs"
+      ],
+      "output_contract": "structured handoff plus evidence manifest",
+      "max_context_tokens": 40000
+    },
+    {
+      "role": "Security and Policy Agent",
+      "required_context": [
+        "AGENTS.md",
+        "task record",
+        "normative anchors",
+        "owned source/tests",
+        "dependency handoffs"
+      ],
+      "output_contract": "structured handoff plus evidence manifest",
+      "max_context_tokens": 40000
+    },
+    {
+      "role": "Infrastructure and Operations Agent",
+      "required_context": [
+        "AGENTS.md",
+        "task record",
+        "normative anchors",
+        "owned source/tests",
+        "dependency handoffs"
+      ],
+      "output_contract": "structured handoff plus evidence manifest",
+      "max_context_tokens": 40000
+    },
+    {
+      "role": "Verification and Evidence Agent",
+      "required_context": [
+        "AGENTS.md",
+        "task record",
+        "normative anchors",
+        "owned source/tests",
+        "dependency handoffs"
+      ],
+      "output_contract": "structured handoff plus evidence manifest",
+      "max_context_tokens": 40000
+    },
+    {
+      "role": "Integration Agent",
+      "required_context": [
+        "AGENTS.md",
+        "task record",
+        "normative anchors",
+        "owned source/tests",
+        "dependency handoffs"
+      ],
+      "output_contract": "structured handoff plus evidence manifest",
+      "max_context_tokens": 40000
+    },
+    {
+      "role": "Independent Conformance Reviewer",
+      "required_context": [
+        "AGENTS.md",
+        "task record",
+        "normative anchors",
+        "owned source/tests",
+        "dependency handoffs"
+      ],
+      "output_contract": "structured handoff plus evidence manifest",
+      "max_context_tokens": 60000
+    }
+  ],
+  "tasks": [
+    {
+      "task_id": "OCOR-DEV-0001",
+      "role": "Component Implementation Agent",
+      "paths": [
+        ".github/CODEOWNERS",
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md"
+      ],
+      "max_input_tokens": 28000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0002",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/devcontainer.json",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md"
+      ],
+      "max_input_tokens": 31000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0003",
+      "role": "Component Implementation Agent",
+      "paths": [
+        ".github/workflows/ocor-poc-ci.yml",
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md"
+      ],
+      "max_input_tokens": 34000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0004",
+      "role": "Verification and Evidence Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/tools/evidence_manifest.py"
+      ],
+      "max_input_tokens": 31000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0005",
+      "role": "Component Implementation Agent",
+      "paths": [
+        ".github/workflows/ocor-supply-chain.yml",
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md"
+      ],
+      "max_input_tokens": 31000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0006",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "deploy/local/compose.yaml",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md"
+      ],
+      "max_input_tokens": 37000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0007",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/kernel/canonical.py"
+      ],
+      "max_input_tokens": 34000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0008",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/kernel/governed_context.py"
+      ],
+      "max_input_tokens": 34000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0009",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/kernel/governance.py"
+      ],
+      "max_input_tokens": 37000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0010",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/tools/generate_contracts.py"
+      ],
+      "max_input_tokens": 34000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0011",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c1/ports.py"
+      ],
+      "max_input_tokens": 31000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0012",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c2/ports.py"
+      ],
+      "max_input_tokens": 31000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0013",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c3/ports.py"
+      ],
+      "max_input_tokens": 31000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0014",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/security/ports.py"
+      ],
+      "max_input_tokens": 34000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0015",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "spikes/c3_atomicity/"
+      ],
+      "max_input_tokens": 34000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0016",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "spikes/c3_backend/"
+      ],
+      "max_input_tokens": 37000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0017",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "spikes/typedb_exact_commit/"
+      ],
+      "max_input_tokens": 37000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0018",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "spikes/jena_marking/"
+      ],
+      "max_input_tokens": 37000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0019",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "spikes/kafka_delivery/"
+      ],
+      "max_input_tokens": 37000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0020",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "spikes/c6_fsm_fidelity/"
+      ],
+      "max_input_tokens": 37000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0021",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "spikes/control_plane_latency/"
+      ],
+      "max_input_tokens": 34000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0022",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "spikes/causal_reproducibility/"
+      ],
+      "max_input_tokens": 37000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0023",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "spikes/vector_partition/"
+      ],
+      "max_input_tokens": 37000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0024",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "spikes/non_interference/"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0025",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "spikes/memory_deletion/"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0026",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "spikes/restore_no_resurrection/"
+      ],
+      "max_input_tokens": 37000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0027",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "spikes/context_replay/"
+      ],
+      "max_input_tokens": 37000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0028",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c1/compiler.py"
+      ],
+      "max_input_tokens": 37000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0029",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c3/service.py"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0030",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c6/engine.py"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0031",
+      "role": "Verification and Evidence Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/tests/mission_thread/test_first_governed_slice.py"
+      ],
+      "max_input_tokens": 43000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0032",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c1/frontend.py"
+      ],
+      "max_input_tokens": 43000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0033",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c1/releases.py"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0034",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c2/gateway.py"
+      ],
+      "max_input_tokens": 43000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0035",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c2/planner.py"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0036",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c3/recovery.py"
+      ],
+      "max_input_tokens": 43000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0037",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0038",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c4/jena_adapter.py"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0039",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c4/rebuild.py"
+      ],
+      "max_input_tokens": 37000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0040",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c5/backbone.py"
+      ],
+      "max_input_tokens": 43000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0041",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c5/operations.py"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0042",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c6/fsm.py"
+      ],
+      "max_input_tokens": 46000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0043",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c6/human_gate.py"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0044",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c6/safety.py"
+      ],
+      "max_input_tokens": 43000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0045",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c7/runtime.py"
+      ],
+      "max_input_tokens": 46000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0046",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c8/orchestrator.py"
+      ],
+      "max_input_tokens": 46000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0047",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/c8/tool_runtime.py"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0048",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/security/control_plane.py"
+      ],
+      "max_input_tokens": 46000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0049",
+      "role": "Component Implementation Agent",
+      "paths": [
+        "AGENTS.md",
+        "deploy/helm/ocor-poc/",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md"
+      ],
+      "max_input_tokens": 46000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0050",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/memory/model.py"
+      ],
+      "max_input_tokens": 43000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0051",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/memory/stores.py"
+      ],
+      "max_input_tokens": 46000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0052",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/memory/retrieval.py"
+      ],
+      "max_input_tokens": 46000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0053",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/memory/embeddings.py"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0054",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/memory/consolidation.py"
+      ],
+      "max_input_tokens": 43000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0055",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/memory/lifecycle.py"
+      ],
+      "max_input_tokens": 43000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0056",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/memory/deletion.py"
+      ],
+      "max_input_tokens": 46000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0057",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/memory/context.py"
+      ],
+      "max_input_tokens": 43000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0058",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/memory/promotion.py"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0059",
+      "role": "Governed Memory Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/src/ocor_runtime/memory/operations.py"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0060",
+      "role": "Verification and Evidence Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/tests/conformance/ba/"
+      ],
+      "max_input_tokens": 46000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0061",
+      "role": "Verification and Evidence Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/tests/conformance/fgm/test_fgm_01_10.py"
+      ],
+      "max_input_tokens": 43000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0062",
+      "role": "Verification and Evidence Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/tests/conformance/fgm/test_fgm_11_20.py"
+      ],
+      "max_input_tokens": 46000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0063",
+      "role": "Verification and Evidence Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/tests/conformance/fsm/test_all_44.py"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0064",
+      "role": "Verification and Evidence Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/tests/conformance/security/"
+      ],
+      "max_input_tokens": 46000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0065",
+      "role": "Verification and Evidence Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/tests/conformance/mission_thread/"
+      ],
+      "max_input_tokens": 49000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0066",
+      "role": "Verification and Evidence Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "ocor-runtime/tests/conformance/operations/"
+      ],
+      "max_input_tokens": 46000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0067",
+      "role": "Verification and Evidence Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "reports/evidence/G7/requirement_results.json"
+      ],
+      "max_input_tokens": 40000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0068",
+      "role": "Verification and Evidence Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "reports/evidence/G7/independent_review.md"
+      ],
+      "max_input_tokens": 37000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    },
+    {
+      "task_id": "OCOR-DEV-0069",
+      "role": "Verification and Evidence Agent",
+      "paths": [
+        "AGENTS.md",
+        "docs/OCOR_LLD_v1.1.md",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "reports/evidence/G7/poc_go_candidate/"
+      ],
+      "max_input_tokens": 34000,
+      "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+      "exclusions": [
+        "inputs/",
+        "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+        "docs/OCOR_LLD_v1.1.md"
+      ]
+    }
+  ]
+}
