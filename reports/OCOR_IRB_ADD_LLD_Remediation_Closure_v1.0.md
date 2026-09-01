@@ -1,16 +1,17 @@
-# OCOR — Chiusura tecnica della remediation IRB → ADD → LLD
+# OCOR — Chiusura autoritativa della remediation IRB → ADD → LLD
+
+> **Documento corrente di chiusura post-promozione.** Sostituisce esclusivamente la disposition pre-promozione della precedente revisione di questo report; gli audit storici restano conservati e sono marcati superseduti dall'audit autoritativo v1.1.
 
 ## 1. Verdetto
 
-**Esito: `TECHNICALLY READY FOR GOVERNED BASELINE PROMOTION`.**
+**Esito: `PASS — GOVERNED BASELINE PROMOTED BY DEC-208`.**
 
-La candidata recepisce la disposizione del requester: il PoC implementa la memoria governata completa e limita soltanto scala, resilienza e SLO production-grade. Il precedente bounded profile è ritirato.
+La baseline di design approvata specifica la memoria governata completa per il PoC e limita soltanto scala, resilienza e SLO production-grade. Il precedente bounded profile è ritirato. Questa frase descrive completezza documentale, non implementazione runtime.
 
 Il gate riproducibile verifica:
 
 - 285/285 requisiti IRB enumerati e allocati;
-- 283 `FULLY_SPECIFIED`;
-- 2 `CONDITIONALLY_SPECIFIED` (`FR-118`, `FR-119`) fino alla promozione autoritativa dei cinque snapshot candidati ora materializzati;
+- 285 `FULLY_SPECIFIED`, inclusi `FR-118` e `FR-119` a livello di design;
 - zero `GAP`;
 - full memory kinds/scopes, vector binding, lifecycle, API e security invariants;
 - FSM C6 44/44 semanticamente identica all'ADD v1.2;
@@ -20,7 +21,7 @@ Il gate riproducibile verifica:
 
 `CC-FULL-GOVERNED-AGENT-MEMORY` sostituisce integralmente `CC-BOUNDED-GOVERNED-MEMORY`.
 
-La candidata porta `ELM-084` a `CORE/P0/PoC` e include:
+`DEC-208` porta `ELM-084` a `CORE/P0/PoC` a livello di design e include:
 
 - working, episodic, semantic, procedural, preference, reflection, dissent e team-shared memory;
 - scope run, task, agent, team, project, domain e federated;
@@ -38,21 +39,21 @@ La memoria non diventa una seconda canonical authority. Non può creare direttam
 
 Claim, Observation, Hypothesis, Model Output, Decision, ExecutionResult e OutcomeAssessment restano distinti. Hidden chain-of-thought, scratchpad, credenziali, token e segreti non sono contenuti ammessi. Training/fine-tuning dalla memoria richiede un workflow distinto.
 
-## 4. Artefatti della candidata
+## 4. Artefatti promossi e storici
 
 | Artefatto | Ruolo | Stato |
 |---|---|---|
-| `OCOR_Change_Control_Full_Governed_Agent_Memory_v1.0.md` | decision package completo | user-directed; awaiting governed promotion |
-| `OCOR_ADD_v1.3_Candidate.md` | emendamento ADD | candidate |
-| `OCOR_LLD_v1.1_Candidate.md` | specifica esecutiva | candidate |
-| `governed-memory-item.schema.json` | record chiuso full memory | candidate contract |
-| `ocor-governed-memory.openapi.yaml` | admission/search/consolidation/lifecycle/promotion/deletion/context API | candidate contract |
-| matrice IRB→ADD→LLD Markdown/JSON | tracciabilità 285/285 | generated and checked |
-| assurance results e manifest | evidence machine-readable | verified |
-| cinque register snapshot in `governance_candidates/` | aggiornamento atomico RR/RTI/DR/DTI/CAP-ELM | candidate; 11/11 controlli |
-| `OCOR_Full_Memory_Atomic_Register_Promotion_Package_v1.0.md` | istruzione di promozione e decision text | ready for authority promotion |
+| `OCOR_Change_Control_Full_Governed_Agent_Memory_v1.0.md` | decision package storico | `PROMOTED BY DEC-208` |
+| `ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md` | baseline ADD | `APPROVED` |
+| `docs/OCOR_LLD_v1.1.md` | specifica esecutiva corrente | `APPROVED` |
+| `ocor-runtime/docs/governance_dossier/contracts/governed-memory-item.schema.json` | record chiuso full memory | `APPROVED CONTRACT` |
+| `ocor-runtime/docs/governance_dossier/contracts/ocor-governed-memory.openapi.yaml` | API full-memory | `APPROVED CONTRACT` |
+| matrice IRB→ADD→LLD Markdown/JSON | tracciabilità 285/285 | `CURRENT / CHECKED` |
+| assurance results e manifest | assurance documentale machine-readable | `PASS` quando i gate correnti sono verdi |
+| cinque snapshot in `reports/governance_candidates/` | predecessori storici dei registri promossi | `SUPERSEDED BY APPROVED SNAPSHOTS` |
+| `OCOR_Full_Memory_Atomic_Register_Promotion_Package_v1.0.md` | istruzione storica di promozione | `COMPLETED BY DEC-208` |
 
-Nessun file sotto `inputs/` è modificato e nessun nuovo ID `DEC-*` è attribuito unilateralmente.
+Nessun file sotto `inputs/` è modificato. `DEC-208` è stato assegnato dall'autorità nel passaggio governato; `DEC-209` governa soltanto la presente errata editoriale e i gate di assurance, senza nuova semantica runtime.
 
 ## 5. Disposizione dei finding originari
 
@@ -64,7 +65,7 @@ Nessun file sotto `inputs/` è modificato e nessun nuovo ID `DEC-*` è attribuit
 | `IALLD-004` | CapabilityLease chiusa, fencing e consumo atomico | `CLOSED` |
 | `IALLD-005` | FSM completa con guardie ed effetti | `CLOSED` |
 | `IALLD-006` | comando C3 chiuso e idempotency binding atomico | `CLOSED` |
-| `IALLD-007` | full governed memory PoC, `ELM-084 CORE/P0/PoC` | `CLOSED_TECHNICALLY / PENDING_REGISTER_PROMOTION` |
+| `IALLD-007` | full governed memory PoC, `ELM-084 CORE/P0/PoC` | `CLOSED BY DEC-208 AT DESIGN LEVEL` |
 | `IALLD-008`–`017` | C1–C8, consistency, event, causal, security, deployment e configuration completati | `CLOSED` |
 
 ## 6. Full memory assurance
@@ -73,24 +74,17 @@ Il gate controlla un record chiuso con almeno trenta campi obbligatori, otto mem
 
 La campagna progettata `FGM-01`–`FGM-20` copre admission, cross-run/federated retrieval, vector model upgrade, poisoning, correction, revocation, legal hold, deletion failure, dissent, procedural activation, promotion, non-interference, kill switch, restore e context influence.
 
-`FULLY_SPECIFIED` e `CONDITIONALLY_SPECIFIED` sono stati di design, non evidence runtime. `FR-118/119` restano specified/planned finché `FGM-01`–`FGM-20` non producono evidenze governate.
+`FULLY_SPECIFIED` è uno stato di design, non evidence runtime. `FR-118/119` restano specified/planned finché `FGM-01`–`FGM-20` non producono evidenze governate.
 
 ## 7. Contratti preesistenti
 
 Il Named Query OpenAPI e il Registry Proto standalone restano byte-identici ai blocchi incorporati nell'ADD v1.2; continuano quindi a beneficiare dell'evidenza governata `VAL-ACT-002` e della compilazione `protoc` già registrata per gli stessi byte.
 
-Il nuovo Memory OpenAPI non eredita impropriamente tali evidenze: è un contratto candidato nuovo, sottoposto in questo pacchetto a parse e controlli strutturali. La validazione semantica governata deve essere inclusa nel gate di promozione del nuovo baseline contract.
+Il Memory OpenAPI non eredita impropriamente evidenze runtime pregresse: è un contratto approvato sottoposto a parse, risoluzione `$ref`, validazione semantica e fixture positive/negative. Questi esiti sono assurance del contratto e non incrementano `E1` o `E2`.
 
-## 8. Promozione richiesta
+## 8. Promozione completata
 
-Per rendere effettiva la decisione occorre:
-
-1. registrare formalmente il change set secondo l'autorità vigente;
-2. assegnare l'identificativo decisionale e promuovere atomicamente i cinque snapshot completi già materializzati in `reports/governance_candidates/`;
-3. consolidare ADD v1.3 con `ELM-084 CORE/P0/PoC`;
-4. validare semanticamente il Memory OpenAPI e il JSON Schema;
-5. rieseguire assurance e review indipendente sul digest consolidato;
-6. consolidare e approvare LLD v1.1 con nuovo manifest.
+`DEC-208` ha completato atomicamente registrazione del change set, promozione dei cinque snapshot, consolidamento ADD v1.3 e LLD v1.1, validazione dei contratti e manifest. `DEC-209` corregge il solo stato documentale residuo, rigenera la matrice e rende bloccanti i controlli contro regressioni candidate/pending-promotion.
 
 ## 9. Evidence fence
 

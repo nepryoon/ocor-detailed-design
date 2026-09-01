@@ -15,7 +15,7 @@
 
 L'IRB approvato prevale sull'ADD; l'ADD v1.3 approvato prevale sull'LLD. `DEC-208` ratifica il change set sulla memoria governata. Le disposizioni relative a `GovernedMemoryItem` sono quindi norme di design approvate, ma non costituiscono evidenza di implementazione: il runtime full-memory resta `NO-GO` fino alla chiusura governata di `FGM-01`–`FGM-20`.
 
-Ogni conflitto fra questo documento e l'ADD produce `LLD_CONFORMANCE_FAILURE`; non sono ammesse correzioni implicite tramite codice, configurazione, alias di campo o fallback tecnologico. Le parole DEVE, NON DEVE, DOVREBBE e PUÒ hanno valore normativo nel perimetro candidato.
+Ogni conflitto fra questo documento e l'ADD produce `LLD_CONFORMANCE_FAILURE`; non sono ammesse correzioni implicite tramite codice, configurazione, alias di campo o fallback tecnologico. Le parole DEVE, NON DEVE, DOVREBBE e PUÒ hanno valore normativo nella baseline tecnica approvata.
 
 ### 0.2 Artefatti contrattuali materializzati
 
@@ -28,7 +28,7 @@ Ogni conflitto fra questo documento e l'ADD produce `LLD_CONFORMANCE_FAILURE`; n
 | Named Query Gateway | `ocor-runtime/docs/governance_dossier/contracts/ocor-named-query-gateway.openapi.yaml` | OpenAPI 3.1, sei query nominate |
 | Registry | `ocor-runtime/docs/governance_dossier/contracts/ocor_registry.proto` | Proto3 package `ocor.registry.v1` |
 
-I digest di questi file sono fissati nel manifest della candidata. Generazione di codice e fixture partono esclusivamente dai file manifestati.
+I digest di questi file sono fissati nel manifest di approvazione governato. Generazione di codice e fixture partono esclusivamente dai file manifestati.
 
 ## 1. Tipi trasversali e invarianti
 
@@ -182,7 +182,7 @@ Package: `ocor.c8.run`, `ocor.c8.task`, `ocor.c8.assignment`, `ocor.c8.handoff`,
 
 Record chiusi: `AgentRun`, `Task`, `Assignment`, `Commitment`, `Handoff`, `Dissent`, `DecisionProposal`, `ToolInvocation`, `GovernedMemoryItem`. Task graph rifiuta cicli e depth oltre policy; assignment verifica machine identity, capability, delegation, autonomy tier, budget e termination condition. Handoff conserva sender, recipient, schema, input/output refs, GCS digest e accepted/rejected status. Dissent non può essere sovrascritto: la risoluzione crea un record separato.
 
-Il PoC implementa il profilo completo `FULL_GOVERNED_AGENT_MEMORY`: working, episodic, semantic, procedural, preference, reflection, dissent e team-shared; scope run, task, agent, team, project, domain e federated; persistenza cross-run; retrieval structured/full-text/vector/hybrid; consolidation, versioning, forgetting, legal hold, deletion e promotion proposal. Sono bounded soltanto volume, payload, dimensione degli indici, concorrenza e SLO PoC.
+Il PoC specifica il profilo completo `FULL_GOVERNED_AGENT_MEMORY` con gli enum esatti `WORKING`, `EPISODIC`, `SEMANTIC`, `PROCEDURAL`, `PREFERENCE`, `REFLECTION`, `DISSENT`, `TEAM_SHARED` e gli scope esatti `RUN`, `TASK`, `AGENT`, `TEAM`, `PROJECT`, `DOMAIN`, `FEDERATED`; include persistenza cross-run, retrieval `STRUCTURED`/`FULL_TEXT`/`VECTOR`/`HYBRID`, consolidation, versioning, forgetting, legal hold, deletion e promotion proposal. Sono bounded soltanto volume, payload, dimensione degli indici, concorrenza e SLO PoC. Questa è completezza di design, non un claim di implementazione.
 
 #### 2.8.1 Port e componenti memory
 
@@ -375,7 +375,32 @@ Backup set lega canonical state/history, idempotency, outbox, audit, schemas, po
 
 ### 7.2 Test obbligatori
 
-Schema/meta tests verificano record chiusi, exact field set, canonical bytes, digest e negative corpus. Contract tests verificano OpenAPI/Proto/JSON Schema e generated SDK drift. Fault injection copre ogni crash window C3, lost ACK, duplicate delivery, control-plane timeout, stale watermark, expired Approval/lease, stop race, poison event, restore divergence e cross-compartment non-interference. `FGM-01`–`FGM-20` coprono la memoria governata completa solo dopo la promozione del change set.
+Schema/meta tests verificano record chiusi, exact field set, canonical bytes, digest e negative corpus. Contract tests verificano OpenAPI/Proto/JSON Schema e generated SDK drift. Fault injection copre ogni crash window C3, lost ACK, duplicate delivery, control-plane timeout, stale watermark, expired Approval/lease, stop race, poison event, restore divergence e cross-compartment non-interference. `FGM-01`–`FGM-20` sono la futura campagna di evidenza runtime della memoria governata completa; `DEC-208` ha già promosso il design, non i relativi esiti.
+
+| FGM | Fixture o fault | Oracle documentato |
+|---|---|---|
+| `FGM-01` | ogni memory kind/scope valido | schema chiuso, versione immutabile, provenance e audit |
+| `FGM-02` | campo mancante/malformato o content class vietata | rigetto prima della persistenza |
+| `FGM-03` | consolidation working→episodic/semantic | nuovo item derivato; sorgenti immutate e collegate |
+| `FGM-04` | retrieval cross-run | versione esatta autorizzata e influence trace |
+| `FGM-05` | retrieval cross-project/federated | Authority esplicita e zero leakage non autorizzato |
+| `FGM-06` | equivalenza structured/full-text/vector/hybrid | risultato policy-filtered e representation/ranking pin |
+| `FGM-07` | upgrade embedding model | representation parallela versionata e rebuild deterministico |
+| `FGM-08` | prompt injection/poisoning | taint, non-eseguibilità, quarantine o rendering sicuro |
+| `FGM-09` | correction/supersession | nuova versione immutabile ed exact-version replay |
+| `FGM-10` | revocation/expiry/reclassification | assenza da result, rank, count, cache ed explanation |
+| `FGM-11` | legal hold e rilascio | deletion bloccata e prior disposition ripristinata |
+| `FGM-12` | deletion saga con failure parziale | `DELETION_INCOMPLETE` fail-closed, poi completamento |
+| `FGM-13` | consolidation conflict/dissent | fonti conflittuali preservate, nessun majority merge silenzioso |
+| `FGM-14` | procedural activation | approvazione separata e policy/capability live rivalidate |
+| `FGM-15` | memory→canonical promotion | percorso C6/C3 completo, nessuna write diretta |
+| `FGM-16` | non-interference cross-compartment | zero leakage content/existence/rank/count/cache/timing |
+| `FGM-17` | race kill switch/revoca delega | nessuna retrieval o tool influence successiva |
+| `FGM-18` | restore dopo deletion | nessuna resurrezione; tombstone riconciliato |
+| `FGM-19` | quota/retention pressure | selezione deterministica; legal hold protetto |
+| `FGM-20` | context assembly | replay esatto di item/version/redaction/order/truncation digest |
+
+Gli oracle sono specifiche per test futuri. Nessun esito FGM è dichiarato in questa baseline documentale.
 
 E1 dimostra implementazione del runtime slice; E2 richiede ambiente production-like, scale/security/recovery evidence e resta distinto. Nessun test legacy `RBA-*` è rinominato in `BA-*`.
 
@@ -404,18 +429,14 @@ La matrice normativa `reports/traceability/OCOR_IRB_ADD_LLD_v1.1_Matrix.md` cont
 - `FULLY_SPECIFIED` privo di design e metodo;
 - `NOT_APPLICABLE` senza razionale e authority;
 - qualunque `GAP` per P0/PoC;
-- downgrade di priorità/release, riferimento al profilo bounded superseduto o uso del full memory profile candidato come già approvato.
+- downgrade di priorità/release, riferimento al profilo bounded superseduto o trattamento del full memory profile approvato come ancora candidato.
 
 Reverse traceability: ogni schema, port, tabella, transition e test dichiara almeno un requisito nella matrice; artefatti senza origine sono `ORPHAN_DESIGN`.
 
 ## 9. Disposizione di approvazione
 
-Questa candidata chiude tecnicamente i finding `IALLD-001`–`IALLD-017` soltanto se il gate semantico e i validator risultano positivi. L'approvazione formale richiede inoltre:
+`DEC-208` ha approvato questa LLD v1.1 e ha promosso atomicamente `CC-FULL-GOVERNED-AGENT-MEMORY`, i cinque registri, ADD v1.3 e i contratti manifestati. LLD v1.0 è pertanto superseduta come specifica tecnica corrente.
 
-1. promozione governata di `CC-FULL-GOVERNED-AGENT-MEMORY` e aggiornamento atomico dei registri;
-2. consolidamento dell'ADD risultante;
-3. audit indipendente della matrice 285/285;
-4. manifest SHA-256 della candidata e dei contratti;
-5. decision record dell'autorità competente, senza attribuzione retroattiva di evidenze runtime.
+La matrice autoritativa assegna tutti i 285 requisiti IRB con disposition di design `FULLY_SPECIFIED`; per `FR-118` e `FR-119` lo stato probatorio resta `specified/planned`, `E1=0`, `E2=0`. L'approvazione documentale non costituisce implementazione: full-memory runtime, conformità runtime e Production readiness restano `NO-GO` fino alla chiusura governata delle campagne applicabili, incluse `FGM-01`–`FGM-20`.
 
-Fino ad allora LLD v1.0 rimane il documento pubblicato; questa v1.1 è pronta per review ma non è `APPROVED`.
+L'errata editoriale `CC-IRB-ADD-LLD-AUTHORITY-SEAL`, approvata da `DEC-209`, elimina esclusivamente il testo pre-promozione residuo. Non modifica comportamento, priorità, release, contratti, capability disposition o stato probatorio approvati da `DEC-208`.

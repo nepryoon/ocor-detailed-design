@@ -6,6 +6,8 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import subprocess
+import sys
 from importlib.metadata import version
 from pathlib import Path
 from typing import Any
@@ -17,8 +19,12 @@ from openapi_spec_validator.readers import read_from_filename
 
 ROOT = Path(__file__).resolve().parents[2]
 INPUT_ADD = ROOT / "inputs/normative/OCOR_Architectural_Design_Document_v1.1.md"
-APPROVED_ADD = ROOT / "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.2_APPROVED_BASELINE.md"
+APPROVED_ADD = ROOT / "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md"
 RUNTIME_SPEC = ROOT / "ocor-runtime/schemas/ocor.openapi.yaml"
+AUTHORITATIVE_SPECS = (
+    ROOT / "ocor-runtime/docs/governance_dossier/contracts/ocor-named-query-gateway.openapi.yaml",
+    ROOT / "ocor-runtime/docs/governance_dossier/contracts/ocor-governed-memory.openapi.yaml",
+)
 PROFILE = ROOT / "ocor-runtime/docs/governance_dossier/OCOR_OPENAPI_VALIDATION_PROFILE_v1.0.md"
 LOCK = ROOT / "ocor-runtime/uv.lock"
 OUTPUT = ROOT / "reports/tests/c5_openapi_validation_results.json"
@@ -90,6 +96,31 @@ def main() -> int:
                 }
             )
 
+    for subject in AUTHORITATIVE_SPECS:
+        try:
+            document, base_uri = read_from_filename(str(subject))
+            validate(document, base_uri=base_uri)
+            records.append(
+                {
+                    "subject": str(subject.relative_to(ROOT)),
+                    "status": "PASS",
+                    "sha256": digest(subject),
+                    "openapi": document["openapi"],
+                    "api_version": document.get("info", {}).get("version"),
+                    "paths": len(document.get("paths", {})),
+                    "component_schemas": len(document.get("components", {}).get("schemas", {})),
+                }
+            )
+        except Exception as exc:
+            records.append(
+                {
+                    "subject": str(subject.relative_to(ROOT)),
+                    "status": "FAIL",
+                    "sha256": digest(subject),
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+            )
+
     try:
         runtime_document, base_uri = read_from_filename(str(RUNTIME_SPEC))
         validate(runtime_document, base_uri=base_uri)
@@ -114,6 +145,21 @@ def main() -> int:
                 "error": f"{type(exc).__name__}: {exc}",
             }
         )
+
+    chain = subprocess.run(
+        [sys.executable, "reports/tests/build_authoritative_chain_assurance.py", "--promotion-gate"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    records.append(
+        {
+            "subject": "authoritative_irb_add_lld_chain",
+            "status": "PASS" if chain.returncode == 0 else "FAIL",
+            "detail": chain.stdout.strip() or chain.stderr.strip(),
+        }
+    )
 
     failed = [record for record in records if record["status"] != "PASS"]
     result = {
