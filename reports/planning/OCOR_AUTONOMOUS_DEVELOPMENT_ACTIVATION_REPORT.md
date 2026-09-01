@@ -118,5 +118,5 @@ ocor-runtime/.venv/bin/python scripts/validate_runtime_evidence.py \
 ```
 
 Il commit valutato dal manifest è
-`688587e4548c5c59ae75db0184dd6064a35ad10d`. PR e merge di attivazione saranno
+`76983c48df71129d62015a1f2dbd0c258bdc4a35`. PR e merge di attivazione saranno
 registrati nel sealing update dopo la CI.
