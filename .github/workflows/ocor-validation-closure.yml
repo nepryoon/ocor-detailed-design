@@ -48,7 +48,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
-          version: "0.8.14"
+          version: "0.12.5"
           enable-cache: true
 
       - name: Synchronize locked runtime environment
@@ -56,7 +56,6 @@ jobs:
         run: |
           set -euo pipefail
           uv sync --frozen --extra test
-          uv pip install --python .venv/bin/python "rdflib==7.1.4" "psycopg[binary]==3.2.10"
           .venv/bin/python --version
           .venv/bin/python - <<'PY'
           from importlib.metadata import version

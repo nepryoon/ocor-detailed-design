@@ -1,0 +1,91 @@
+name: OCOR autonomous delivery controls
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  delivery-activation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: ocor
+          POSTGRES_PASSWORD: ocor
+          POSTGRES_DB: ocor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ocor -d ocor"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      OCOR_LIVE_POSTGRES_DSN: postgresql://ocor:ocor@127.0.0.1:5432/ocor
+      PYTHONHASHSEED: "0"
+      TZ: UTC
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install pinned uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.5"
+          enable-cache: true
+
+      - name: Synchronize frozen test environment
+        working-directory: ocor-runtime
+        run: uv sync --frozen --extra test
+
+      - name: Reject immutable-path and task-ledger regressions
+        run: >-
+          ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py
+          --base "${{ github.event.pull_request.base.sha || github.event.before }}"
+          --head "${{ github.sha }}"
+
+      - name: Validate approved development plan and runner
+        run: |
+          set -euo pipefail
+          PY=ocor-runtime/.venv/bin/python
+          "$PY" scripts/ocor_autonomous_delivery.py --validate
+          "$PY" scripts/ocor_autonomous_delivery.py --dry-run
+          "$PY" scripts/ocor_autonomous_delivery.py --next
+
+      - name: Test repository protection and runner controls
+        run: >-
+          uv run --project ocor-runtime --frozen pytest -q
+          ocor-runtime/tests/tasks/test_ocor_dev_0001.py
+
+      - name: Execute complete runtime suite with PostgreSQL
+        run: >-
+          uv run --project ocor-runtime --frozen pytest -q
+          --junitxml=reports/tests/activation_runtime_junit.xml
+          ocor-runtime/tests/
+
+      - name: Lint approved planning Markdown
+        run: >-
+          npx --yes markdownlint-cli2@0.18.1
+          'docs/development_plan/*.md' 'reports/planning/*.md'
+
+      - name: Validate and render Mermaid DAG
+        run: >-
+          npx --yes @mermaid-js/mermaid-cli@11.12.0
+          --input docs/development_plan/OCOR_DEPENDENCY_DAG.mmd
+          --output /tmp/ocor-dependency-dag.svg
+          --puppeteerConfigFile .github/mermaid-puppeteer.json
+          --quiet
