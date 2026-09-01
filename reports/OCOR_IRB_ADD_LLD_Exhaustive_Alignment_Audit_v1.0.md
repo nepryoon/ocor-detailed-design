@@ -1,4 +1,6 @@
-# OCOR — Audit esaustivo di allineamento IRB → ADD v1.2 → LLD v1.0
+# OCOR — Audit esaustivo di allineamento IRB → ADD v1.2 → LLD v1.0 — SUPERSEDED
+
+> **SUPERSEDED HISTORICAL AUDIT.** Questo referto descrive ADD v1.2 e LLD v1.0 prima di `DEC-208`. Non è il risultato corrente. L'autorità corrente è `reports/OCOR_IRB_ADD_LLD_Authoritative_Audit_v1.1.md` con risultato machine-readable `reports/tests/irb_add_lld_authoritative_audit_results.json`.
 
 ## 1. Verdetto esecutivo
 
