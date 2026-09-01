@@ -105,7 +105,7 @@ def ci_is_green(checks: Sequence[dict[str, Any]], required: Iterable[str]) -> tu
             return False, f"required check absent: {context}"
         status = str(check.get("status", "")).upper()
         conclusion = str(check.get("conclusion", "")).upper()
-        if status != "COMPLETED" or conclusion not in {"SUCCESS", "NEUTRAL"}:
+        if status != "COMPLETED" or conclusion != "SUCCESS":
             return False, f"required check is red or incomplete: {context}"
     return True, "all required checks are green"
 
@@ -281,10 +281,12 @@ def validate_state(plan: Plan, state: dict[str, Any]) -> list[str]:
     return errors
 
 
-def recover_interrupted(state: dict[str, Any]) -> list[str]:
+def recover_interrupted(state: dict[str, Any], max_retries: int = 2) -> list[str]:
     recovered: list[str] = []
     for task_id, value in state.get("tasks", {}).items():
-        if value.get("status") in ACTIVE:
+        status = value.get("status")
+        retryable_failure = status in FAILURE and int(value.get("retries", 0)) < max_retries
+        if status in ACTIVE or retryable_failure:
             value["status"] = "PENDING"
             value["last_error"] = "recovered after interrupted runner"
             recovered.append(task_id)
@@ -305,6 +307,14 @@ def ready_tasks(plan: Plan, state: dict[str, Any]) -> list[dict[str, Any]]:
     candidates: list[tuple[int, int, str, dict[str, Any]]] = []
     for task_id, task in plan.tasks.items():
         if state["tasks"][task_id]["status"] != "PENDING":
+            continue
+        gate_number = int(str(task.get("delivery_gate", "G0"))[1:])
+        earlier_gate_open = any(
+            int(str(other.get("delivery_gate", "G0"))[1:]) < gate_number
+            and state["tasks"][other_id]["status"] not in TERMINAL_SUCCESS
+            for other_id, other in plan.tasks.items()
+        )
+        if earlier_gate_open:
             continue
         hard = task.get("hard_dependencies", [])
         if any(state["tasks"][dependency]["status"] not in TERMINAL_SUCCESS for dependency in hard):
@@ -785,7 +795,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if args.resume:
             if not args.execute:
                 raise DeliveryError("--resume requires --execute")
-            recovered = recover_interrupted(state)
+            recovered = recover_interrupted(state, int(plan.config["max_retries"]))
             state["history"].append({"event": "RESUME", "recovered": recovered, "at": utc_now()})
             atomic_json(args.state, state)
 

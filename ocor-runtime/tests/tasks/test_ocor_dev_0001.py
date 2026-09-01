@@ -53,6 +53,15 @@ def test_hard_dependency_blocks_and_acceptance_unblocks_task_0002(plan):
     assert {"OCOR-DEV-0002", "OCOR-DEV-0004"} <= ready
 
 
+def test_delivery_gate_blocks_later_gate_until_prior_gate_closes(plan):
+    state = delivery.new_state(plan)
+    for task_id in plan.backlog["gates"]["G0"]["required_tasks"]:
+        state["tasks"][task_id]["status"] = "ACCEPTED"
+    assert any(task["delivery_gate"] == "G1" for task in delivery.ready_tasks(plan, state))
+    state["tasks"]["OCOR-DEV-0006"]["status"] = "PENDING"
+    assert all(task["delivery_gate"] == "G0" for task in delivery.ready_tasks(plan, state))
+
+
 def test_cycle_detection_fails_closed():
     tasks = {
         "OCOR-DEV-0001": {"hard_dependencies": ["OCOR-DEV-0002"], "soft_dependencies": []},
@@ -75,6 +84,15 @@ def test_state_recovery_releases_interrupted_ownership(plan):
     assert delivery.recover_interrupted(state) == ["OCOR-DEV-0001"]
     assert state["tasks"]["OCOR-DEV-0001"]["status"] == "PENDING"
     assert not state["ownership_locks"]
+
+
+def test_bounded_retry_recovery_stops_at_budget(plan):
+    state = delivery.new_state(plan)
+    task = state["tasks"]["OCOR-DEV-0001"]
+    task.update(status="FAILED_IMPLEMENTATION", retries=1)
+    assert delivery.recover_interrupted(state, max_retries=2) == ["OCOR-DEV-0001"]
+    task.update(status="FAILED_IMPLEMENTATION", retries=2)
+    assert delivery.recover_interrupted(state, max_retries=2) == []
 
 
 def test_file_ownership_collision_is_rejected(plan):
