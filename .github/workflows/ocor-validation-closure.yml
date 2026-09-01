@@ -1,4 +1,4 @@
-name: OCOR ADD v1.2 validation closure
+name: OCOR governance and validation closure
 
 on:
   push:
@@ -101,6 +101,13 @@ jobs:
           set -euo pipefail
           ocor-runtime/.venv/bin/python reports/tests/build_validation_closure_report.py
 
+      - name: Verify DEC-208 authoritative promotion
+        run: |
+          set -euo pipefail
+          python reports/tests/build_dec208_approval_manifest.py
+          python reports/tests/verify_dec208_authoritative_promotion.py
+          ocor-runtime/.venv/bin/python reports/tests/validate_openapi_remediation_c.py
+
       - name: Upload immutable evidence candidate
         if: always()
         uses: actions/upload-artifact@v4
@@ -119,3 +126,5 @@ jobs:
             reports/tests/v12_semantic_results.json
             reports/tests/v12_release_gate_results.json
             reports/tests/v12_approval_readiness_results.json
+            reports/tests/dec208_authoritative_promotion_results.json
+            ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVAL_SHA256SUMS
