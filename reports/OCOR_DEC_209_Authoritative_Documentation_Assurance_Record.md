@@ -22,4 +22,6 @@ No runtime is implemented or validated. No BA or FGM campaign is accepted. No re
 
 ## Configuration control
 
-The exact update set is sealed by `ocor-runtime/docs/governance_dossier/OCOR_IRB_ADD_LLD_AUTHORITY_SEAL_SHA256SUMS`; final generated audit results are sealed by `reports/OCOR_IRB_ADD_LLD_FINAL_SHA256SUMS`. Effectiveness requires green CI on the sealing revision and merge into `main`.
+The exact update set is sealed by `ocor-runtime/docs/governance_dossier/OCOR_IRB_ADD_LLD_AUTHORITY_SEAL_SHA256SUMS`; final generated audit results are sealed by `reports/OCOR_IRB_ADD_LLD_FINAL_SHA256SUMS`.
+
+Material update-set commit `c5e2ba8e74133bb4f910cc1dbf36f54ef48b971d` passed GitHub Actions run `33550474351`. Legacy runtime/BA/EV steps in that workflow are outside the DEC-209 evidence scope and are not accepted as runtime evidence. Effectiveness requires green CI on this sealing revision and merge into `main`.

@@ -63,4 +63,6 @@ Production readiness = NO-GO
 
 ## 6. Effectiveness and sealing
 
-The decision becomes effective only after the exact branch revision passes the repository-required checks and is merged without bypassing branch protection. The final sealing revision records the successful CI run and exact head SHA before merge; post-merge verification confirms the `main` SHA and unchanged `inputs/` tree.
+The material update-set commit `c5e2ba8e74133bb4f910cc1dbf36f54ef48b971d` passed GitHub Actions run `33550474351` with conclusion `success`. The workflow's legacy runtime/BA/EV steps are not accepted as evidence by this documentation decision and do not change any evidence status.
+
+This sealing revision is itself subject to the same repository-required workflow. The decision becomes effective only after that revision is green and merged without bypassing branch protection; post-merge verification confirms the `main` SHA and unchanged `inputs/` tree.
