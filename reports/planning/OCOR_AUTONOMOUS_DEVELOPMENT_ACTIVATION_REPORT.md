@@ -84,9 +84,10 @@ gh api --method PUT repos/nepryoon/ocor-detailed-design/branches/main/protection
   --input reports/planning/OCOR_MAIN_PROTECTION_REQUEST.json
 ```
 
-La request viene materializzata soltanto con i contesti effettivamente osservati
-dopo la CI della PR di attivazione. Fino ad allora il runner ha push/PR/merge
-disabilitati e rifiuta il merge quando `main` non è protetto.
+La request è materializzata in `OCOR_MAIN_PROTECTION_REQUEST.json` con i soli
+contesti effettivamente osservati: `delivery-activation` e `validation-closure`.
+Il runner consente push e PR espliciti; il merge resta disabilitato e viene comunque
+rifiutato quando `main` non è protetto.
 
 ## Runner persistente
 
@@ -118,5 +119,7 @@ ocor-runtime/.venv/bin/python scripts/validate_runtime_evidence.py \
 ```
 
 Il commit valutato dal manifest è
-`79c02d66ff0ecdc3b72254b16a345ec23ab7bc78`. PR e merge di attivazione saranno
-registrati nel sealing update dopo la CI.
+`79c02d66ff0ecdc3b72254b16a345ec23ab7bc78`. La PR di attivazione è
+`https://github.com/nepryoon/ocor-detailed-design/pull/11`; i run verdi osservati
+sono `33558417453` (`validation-closure`) e `33558417500`
+(`delivery-activation`). Il merge sarà registrato dopo il sealing check.
