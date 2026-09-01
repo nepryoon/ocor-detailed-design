@@ -296,7 +296,8 @@ def main() -> int:
     report_path = REPORT / "OCOR_PLANNING_VALIDATION_REPORT.md"
     report_path.write_text("\n".join(report_lines).rstrip() + "\n", encoding="utf-8")
 
-    state["completed_phase"] = "VALIDATE" if not critical_findings else "REPAIR"
+    if state.get("completed_phase") != "DELIVER":
+        state["completed_phase"] = "VALIDATE" if not critical_findings else "REPAIR"
     state["validation_status"] = "PASS" if not critical_findings else "FAIL"
     state["validation_summary"] = dict(counts)
     # Report and validator are added after validation; run-state itself is excluded to avoid a self-hash.
