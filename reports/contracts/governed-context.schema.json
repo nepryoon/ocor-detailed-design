@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ocor:schema:governed-context:1.2",
+  "title": "OCOR GovernedContext v1.2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tenant_id",
+    "organization_id",
+    "domain_id",
+    "compartments",
+    "classification_marking_ref",
+    "purpose",
+    "effective_principal_id",
+    "actor_chain",
+    "ontology_release_digest",
+    "policy_bundle_digest",
+    "correlation_id"
+  ],
+  "properties": {
+    "tenant_id": {"type": "string", "minLength": 1},
+    "organization_id": {"type": "string", "minLength": 1},
+    "domain_id": {"type": "string", "minLength": 1},
+    "compartments": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "classification_marking_ref": {"$ref": "#/$defs/digest"},
+    "purpose": {"type": "string", "minLength": 1},
+    "effective_principal_id": {"type": "string", "minLength": 1},
+    "actor_chain": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "ontology_release_digest": {"$ref": "#/$defs/digest"},
+    "policy_bundle_digest": {"$ref": "#/$defs/digest"},
+    "correlation_id": {"type": "string", "minLength": 1}
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^urn:sha256:[0-9a-f]{64}$"
+    }
+  }
+}

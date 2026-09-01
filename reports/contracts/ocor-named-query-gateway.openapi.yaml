@@ -1,0 +1,491 @@
+openapi: 3.1.0
+info:
+  title: OCOR Named Query Gateway
+  version: 1.2.0
+security:
+  - mutualTLS: []
+    workloadOAuth: [ocor.query]
+paths:
+  /v1/queries/get-object:
+    post:
+      operationId: GetObject
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/GetObjectRequest'}
+      responses:
+        '200':
+          description: Typed object snapshot
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GetObjectResponse'}
+        default: {$ref: '#/components/responses/Problem'}
+  /v1/queries/query-object-set:
+    post:
+      operationId: QueryObjectSet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ObjectSetRequest'}
+      responses:
+        '200':
+          description: Typed object page
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ObjectPageResponse'}
+        default: {$ref: '#/components/responses/Problem'}
+  /v1/queries/search:
+    post:
+      operationId: Search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/SearchRequest'}
+      responses:
+        '200':
+          description: Policy-filtered search result
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SearchResponse'}
+        default: {$ref: '#/components/responses/Problem'}
+  /v1/queries/traverse:
+    post:
+      operationId: Traverse
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TraverseRequest'}
+      responses:
+        '200':
+          description: Named traversal result
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GraphResponse'}
+        default: {$ref: '#/components/responses/Problem'}
+  /v1/queries/explain:
+    post:
+      operationId: Explain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ExplainRequest'}
+      responses:
+        '200':
+          description: Policy-filtered explanation graph
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GraphResponse'}
+        default: {$ref: '#/components/responses/Problem'}
+  /v1/queries/get-provenance:
+    post:
+      operationId: GetProvenance
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProvenanceRequest'}
+      responses:
+        '200':
+          description: Policy-filtered provenance graph
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/GraphResponse'}
+        default: {$ref: '#/components/responses/Problem'}
+components:
+  securitySchemes:
+    mutualTLS:
+      type: mutualTLS
+    workloadOAuth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://identity.ocor.svc/oauth2/token
+          scopes:
+            ocor.query: Invoke allow-listed named queries
+  schemas:
+    SchemaPin:
+      type: object
+      additionalProperties: false
+      required: [schema_id, version, digest]
+      properties:
+        schema_id: {type: string, pattern: '^urn:ocor:[A-Za-z0-9._~:/-]+$'}
+        version: {type: string}
+        digest: {type: string, pattern: '^sha256:[0-9a-f]{64}$'}
+    ResourceRef:
+      type: object
+      additionalProperties: false
+      required: [resource_type_id, resource_id]
+      properties:
+        resource_type_id: {type: string, pattern: '^urn:ocor:[A-Za-z0-9._~:/-]+$'}
+        resource_id: {type: string, minLength: 1, maxLength: 512}
+    Consistency:
+      type: object
+      additionalProperties: false
+      required: [mode]
+      properties:
+        mode:
+          enum: [BEST_AVAILABLE, AT_LEAST_COMMIT, EXACT_AT_COMMIT]
+        required_commit: {type: string, minLength: 1, maxLength: 256}
+        wait_timeout_ms: {type: integer, minimum: 0, maximum: 30000}
+      allOf:
+        - if:
+            properties:
+              mode: {enum: [AT_LEAST_COMMIT, EXACT_AT_COMMIT]}
+            required: [mode]
+          then:
+            required: [required_commit]
+    QueryContext:
+      type: object
+      additionalProperties: false
+      description: >-
+        Realizza il Governed Context Set di §1.4. principal_id e actor_chain sono
+        deliberatamente assenti: derivano dal transport security context e dalla
+        Delegation chain verificata, e un campo di richiesta che li dichiarasse
+        sarebbe un vettore di impersonificazione.
+      required:
+        - request_id
+        - correlation_id
+        - tenant_id
+        - organization_id
+        - domain_id
+        - compartments
+        - purpose
+        - classification_marking_ref
+        - ontology_release_digest
+        - policy_bundle_digest
+        - governed_context_digest
+        - logic_version
+        - branch
+        - consistency
+      properties:
+        request_id: {type: string, format: uuid}
+        correlation_id: {type: string, format: uuid}
+        tenant_id: {type: string, pattern: '^urn:ocor:[A-Za-z0-9._~:/-]+$'}
+        organization_id: {type: string, pattern: '^urn:ocor:[A-Za-z0-9._~:/-]+$'}
+        policy_bundle_digest: {type: string, pattern: '^sha256:[0-9a-f]{64}$'}
+        governed_context_digest: {type: string, pattern: '^sha256:[0-9a-f]{64}$'}
+        domain_id: {type: string, pattern: '^urn:ocor:[A-Za-z0-9._~:/-]+$'}
+        compartments:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: {type: string, pattern: '^urn:ocor:[A-Za-z0-9._~:/-]+$'}
+        purpose: {type: string, minLength: 1, maxLength: 256}
+        classification_marking_ref: {type: string, pattern: '^urn:sha256:[0-9a-f]{64}$'}
+        ontology_release_digest: {type: string, pattern: '^sha256:[0-9a-f]{64}$'}
+        logic_version: {type: string, minLength: 1, maxLength: 128}
+        branch: {type: string, minLength: 1, maxLength: 256}
+        scenario_id: {type: string, format: uuid}
+        consistency: {$ref: '#/components/schemas/Consistency'}
+    ContractCall:
+      type: object
+      additionalProperties: false
+      required: [contract_id, contract_version, contract_digest, parameters]
+      properties:
+        contract_id: {type: string, pattern: '^urn:ocor:[A-Za-z0-9._~:/-]+$'}
+        contract_version: {type: string}
+        contract_digest: {type: string, pattern: '^sha256:[0-9a-f]{64}$'}
+        parameters:
+          type: object
+          description: Closed generated schema selected by contract_id and digest
+    GetObjectRequest:
+      type: object
+      additionalProperties: false
+      required: [context, object_ref, view_contract]
+      properties:
+        context: {$ref: '#/components/schemas/QueryContext'}
+        object_ref: {$ref: '#/components/schemas/ResourceRef'}
+        view_contract: {$ref: '#/components/schemas/ContractCall'}
+    ObjectSetRequest:
+      type: object
+      additionalProperties: false
+      required: [context, object_set_contract, page_size]
+      properties:
+        context: {$ref: '#/components/schemas/QueryContext'}
+        object_set_contract: {$ref: '#/components/schemas/ContractCall'}
+        page_size: {type: integer, minimum: 1, maximum: 1000}
+        page_token: {type: string, maxLength: 4096}
+    SearchRequest:
+      type: object
+      additionalProperties: false
+      required: [context, search_contract, text, page_size]
+      properties:
+        context: {$ref: '#/components/schemas/QueryContext'}
+        search_contract: {$ref: '#/components/schemas/ContractCall'}
+        text: {type: string, minLength: 1, maxLength: 4096}
+        page_size: {type: integer, minimum: 1, maximum: 200}
+        page_token: {type: string, maxLength: 4096}
+    TraverseRequest:
+      type: object
+      additionalProperties: false
+      required: [context, start, traversal_contract]
+      properties:
+        context: {$ref: '#/components/schemas/QueryContext'}
+        start:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: {$ref: '#/components/schemas/ResourceRef'}
+        traversal_contract: {$ref: '#/components/schemas/ContractCall'}
+    ExplainRequest:
+      type: object
+      additionalProperties: false
+      required: [context, target, explanation_contract]
+      properties:
+        context: {$ref: '#/components/schemas/QueryContext'}
+        target: {$ref: '#/components/schemas/ResourceRef'}
+        explanation_contract: {$ref: '#/components/schemas/ContractCall'}
+        max_depth: {type: integer, minimum: 1, maximum: 20, default: 5}
+    ProvenanceRequest:
+      type: object
+      additionalProperties: false
+      required: [context, target, direction, max_depth]
+      properties:
+        context: {$ref: '#/components/schemas/QueryContext'}
+        target: {$ref: '#/components/schemas/ResourceRef'}
+        direction: {enum: [UPSTREAM, DOWNSTREAM, BOTH]}
+        max_depth: {type: integer, minimum: 1, maximum: 20}
+        include_evidence: {type: boolean, default: true}
+    ServedContext:
+      type: object
+      additionalProperties: false
+      required:
+        - ontology_release
+        - branch
+        - served_commit
+        - watermark
+        - staleness_ms
+        - result_marking_ref
+        - provenance_ref
+      properties:
+        ontology_release: {type: string}
+        branch: {type: string}
+        served_commit: {type: string}
+        watermark: {type: string}
+        staleness_ms: {type: integer, minimum: 0}
+        result_marking_ref: {type: string}
+        provenance_ref: {type: string, pattern: '^urn:sha256:[0-9a-f]{64}$'}
+        redaction_count: {type: integer, minimum: 0}
+    EpistemicStatus:
+      type: object
+      additionalProperties: false
+      description: >-
+        Stato di verita dell'oggetto servito. CANONICAL indica una
+        CanonicalAssertion accettata da una Decision; le altre classi non sono
+        stato canonico e non possono esserne promosse implicitamente.
+      required: [status, accepting_decision_ref]
+      properties:
+        status:
+          enum: [CANONICAL, CLAIMED, CONTESTED, UNADJUDICATED, RETRACTED]
+        accepting_decision_ref:
+          oneOf:
+            - {type: string, pattern: '^urn:ocor:[A-Za-z0-9._~:/-]+$'}
+            - {type: 'null'}
+        contested_by_count: {type: integer, minimum: 0}
+    Uncertainty:
+      type: object
+      additionalProperties: false
+      required: [semantics]
+      properties:
+        semantics:
+          enum: [NONE, INTERVAL, DISTRIBUTION, QUALITATIVE_SCALE, CALIBRATED_PROBABILITY]
+        value: {type: object, description: Closed schema selected by semantics}
+        calibration_ref: {type: string}
+    IdentityCandidate:
+      type: object
+      additionalProperties: false
+      description: >-
+        Candidate identity non adjudicata. Non e appiattita nel risultato e non
+        implica appartenenza al cluster canonico (FR-012).
+      required: [candidate_ref, score, score_semantics, adjudication_status]
+      properties:
+        candidate_ref: {$ref: '#/components/schemas/ResourceRef'}
+        score: {type: number}
+        score_semantics:
+          enum: [LEXICAL_RELEVANCE, VECTOR_SIMILARITY, HYBRID_RANK, MATCH_CONFIDENCE]
+        adjudication_status:
+          enum: [UNADJUDICATED, ACCEPTED, REJECTED, SPLIT]
+    ObjectSnapshot:
+      type: object
+      additionalProperties: false
+      description: >-
+        Soddisfa FR-007: identita, relazioni, validita temporale, claims,
+        evidenze, provenance, stato di verita, incertezza e spiegazione
+        policy-filtered sono esposti per ogni risultato. I riferimenti a
+        explanation e provenance sono risolvibili tramite Explain e
+        GetProvenance secondo policy; le redazioni sono dichiarate in
+        ServedContext.redaction_count.
+      required:
+        - object_ref
+        - object_schema
+        - valid_time
+        - system_time
+        - values
+        - epistemic_status
+        - link_refs
+        - uncertainty
+        - claim_refs
+        - evidence_refs
+        - identity_candidates
+        - provenance_ref
+        - explanation_ref
+        - marking_ref
+      properties:
+        object_ref: {$ref: '#/components/schemas/ResourceRef'}
+        object_schema: {$ref: '#/components/schemas/SchemaPin'}
+        valid_time: {$ref: '#/components/schemas/TemporalInterval'}
+        system_time: {$ref: '#/components/schemas/TemporalInterval'}
+        values:
+          type: object
+          description: Closed object schema generated from Canonical IR
+        link_refs:
+          type: array
+          items: {$ref: '#/components/schemas/ResourceRef'}
+        epistemic_status: {$ref: '#/components/schemas/EpistemicStatus'}
+        uncertainty: {$ref: '#/components/schemas/Uncertainty'}
+        claim_refs:
+          type: array
+          items: {type: string, pattern: '^urn:ocor:[A-Za-z0-9._~:/-]+$'}
+        evidence_refs:
+          type: array
+          items: {type: string, pattern: '^urn:sha256:[0-9a-f]{64}$'}
+        identity_candidates:
+          type: array
+          items: {$ref: '#/components/schemas/IdentityCandidate'}
+        provenance_ref: {type: string, pattern: '^urn:sha256:[0-9a-f]{64}$'}
+        explanation_ref: {type: string, pattern: '^urn:sha256:[0-9a-f]{64}$'}
+        marking_ref: {type: string, pattern: '^urn:sha256:[0-9a-f]{64}$'}
+    TemporalInterval:
+      type: object
+      additionalProperties: false
+      description: Intervallo UTC semiaperto [from,to); null in to indica un intervallo ancora aperto
+      required: [from, to]
+      properties:
+        from: {type: string, format: date-time}
+        to:
+          oneOf:
+            - {type: string, format: date-time}
+            - {type: 'null'}
+    GetObjectResponse:
+      type: object
+      additionalProperties: false
+      required: [served, object]
+      properties:
+        served: {$ref: '#/components/schemas/ServedContext'}
+        object: {$ref: '#/components/schemas/ObjectSnapshot'}
+    ObjectPageResponse:
+      type: object
+      additionalProperties: false
+      required: [served, items]
+      properties:
+        served: {$ref: '#/components/schemas/ServedContext'}
+        items:
+          type: array
+          items: {$ref: '#/components/schemas/ObjectSnapshot'}
+        next_page_token: {type: string}
+    SearchHit:
+      type: object
+      additionalProperties: false
+      required: [object, score, score_semantics]
+      properties:
+        object: {$ref: '#/components/schemas/ObjectSnapshot'}
+        score: {type: number}
+        score_semantics:
+          enum: [LEXICAL_RELEVANCE, VECTOR_SIMILARITY, HYBRID_RANK]
+    SearchResponse:
+      type: object
+      additionalProperties: false
+      required: [served, hits]
+      properties:
+        served: {$ref: '#/components/schemas/ServedContext'}
+        hits:
+          type: array
+          items: {$ref: '#/components/schemas/SearchHit'}
+        next_page_token: {type: string}
+    GraphNode:
+      type: object
+      additionalProperties: false
+      required: [node_ref, node_kind, marking_ref]
+      properties:
+        node_ref: {$ref: '#/components/schemas/ResourceRef'}
+        node_kind: {type: string}
+        marking_ref: {type: string}
+    GraphEdge:
+      type: object
+      additionalProperties: false
+      required: [edge_type_id, from_ref, to_ref, marking_ref]
+      properties:
+        edge_type_id: {type: string}
+        from_ref: {$ref: '#/components/schemas/ResourceRef'}
+        to_ref: {$ref: '#/components/schemas/ResourceRef'}
+        marking_ref: {type: string}
+    GraphResponse:
+      type: object
+      additionalProperties: false
+      required: [served, nodes, edges]
+      properties:
+        served: {$ref: '#/components/schemas/ServedContext'}
+        nodes: {type: array, items: {$ref: '#/components/schemas/GraphNode'}}
+        edges: {type: array, items: {$ref: '#/components/schemas/GraphEdge'}}
+    Problem:
+      type: object
+      additionalProperties: false
+      description: >-
+        Profilo ristretto di RFC 9457. I membri standard type, title, status,
+        detail e instance sono supportati; i membri di estensione arbitrari NON
+        sono ammessi, per impedire che un errore trasporti contenuto non
+        policy-filtered. reason_code, served e deferred_element sono le uniche
+        estensioni ammesse e sono chiuse. La deviazione da RFC 9457 e
+        intenzionale e dichiarata.
+      required: [type, title, status, reason_code, correlation_id]
+      properties:
+        type: {type: string, format: uri}
+        title: {type: string}
+        status: {type: integer, minimum: 400, maximum: 599}
+        detail: {type: string, maxLength: 1024}
+        instance: {type: string, format: uri}
+        reason_code:
+          enum:
+            - POLICY_DENIED
+            - AUTHORITY_MISSING
+            - CAPABILITY_DENIED
+            - CONTRACT_NOT_FOUND
+            - CONTRACT_DIGEST_MISMATCH
+            - SCHEMA_VIOLATION
+            - PROJECTION_NOT_READY
+            - STALE_CONTEXT
+            - RELEASE_MISMATCH
+            - UNSUPPORTED_CAPABILITY
+            - CAPABILITY_DEFERRED
+            - CONTROL_PLANE_UNAVAILABLE
+            - SCENARIO_ISOLATION_VIOLATION
+        served: {$ref: '#/components/schemas/ServedContext'}
+        deferred_element:
+          type: string
+          pattern: '^(ELM|CAP|FR)-[0-9]{3}$'
+        correlation_id: {type: string, format: uuid}
+      allOf:
+        - if:
+            properties:
+              reason_code:
+                enum: [STALE_CONTEXT, PROJECTION_NOT_READY, RELEASE_MISMATCH]
+            required: [reason_code]
+          then:
+            required: [served]
+        - if:
+            properties:
+              reason_code: {const: CAPABILITY_DEFERRED}
+            required: [reason_code]
+          then:
+            required: [deferred_element]
+  responses:
+    Problem:
+      description: Typed fail-closed error
+      content:
+        application/problem+json:
+          schema: {$ref: '#/components/schemas/Problem'}

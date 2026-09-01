@@ -1,8 +1,11 @@
-# OCOR Runtime Verification Evidence Report\n\n> **Current governed status — 2026-08-30:** superseded by GitHub Actions run [`33334792715`](https://github.com/nepryoon/ocor-detailed-design/actions/runs/33334792715) and `reports/OCOR_ADD_v1.2_Validation_Closure_Report.md`. `DEC-207` accepts the closure evidence and records `E1_runtime_slice=PRESENT`; E2/production evidence remains unestablished.
+# OCOR Runtime Verification Evidence Report
+
+> **Current governed status — 2026-08-30:** superseded by GitHub Actions run [`33334792715`](https://github.com/nepryoon/ocor-detailed-design/actions/runs/33334792715) and `reports/OCOR_ADD_v1.2_Validation_Closure_Report.md`. `DEC-207` accepts the closure evidence and records `E1_runtime_slice=PRESENT`; E2/production evidence remains unestablished.
 
 Date: 2026-08-30  
 Baseline authority: approved ADD v1.2 baseline; ARA decisions DEC-197 through DEC-206; effective 2026-08-30  
-Historical result: **PASS — 104 passed, 0 failed, 0 skipped**  \nCurrent governed result: **PASS — 109 runtime tests, 38 BA cases, 35 EV cases and 5 live PostgreSQL cases; 0 failures, 0 errors, 0 skips**
+Historical result: **PASS — 104 passed, 0 failed, 0 skipped**  
+Current governed result: **PASS — 109 runtime tests, 38 BA cases, 35 EV cases and 5 live PostgreSQL cases; 0 failures, 0 errors, 0 skips**
 
 ## Post-approval validation closure
 

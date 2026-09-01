@@ -1,0 +1,298 @@
+{
+  "schema_version": "1.0",
+  "verdict": "PASS_WITH_GOVERNANCE_CONDITION",
+  "governance_condition": "Allocate the authority-owned decision identifier and atomically promote the five materialized register candidates before consolidating ADD/LLD",
+  "counts": {
+    "requirements": 285,
+    "fully_specified": 283,
+    "conditionally_specified": 2,
+    "gaps": 0,
+    "checks": 55,
+    "passed": 55,
+    "failed": 0
+  },
+  "checks": [
+    {
+      "check": "IRB universe",
+      "status": "PASS",
+      "detail": "285 rows; 285 unique"
+    },
+    {
+      "check": "IRB BR count",
+      "status": "PASS",
+      "detail": "18/18"
+    },
+    {
+      "check": "IRB FR count",
+      "status": "PASS",
+      "detail": "174/174"
+    },
+    {
+      "check": "IRB NFR count",
+      "status": "PASS",
+      "detail": "93/93"
+    },
+    {
+      "check": "ADD allocation",
+      "status": "PASS",
+      "detail": "approved RTI row for every requirement"
+    },
+    {
+      "check": "LLD allocation",
+      "status": "PASS",
+      "detail": "LLD anchor for every requirement"
+    },
+    {
+      "check": "Priority resolved",
+      "status": "PASS",
+      "detail": "priority present for every requirement"
+    },
+    {
+      "check": "Release resolved",
+      "status": "PASS",
+      "detail": "release present for every requirement"
+    },
+    {
+      "check": "No GAP",
+      "status": "PASS",
+      "detail": "zero GAP dispositions"
+    },
+    {
+      "check": "Conditional scope",
+      "status": "PASS",
+      "detail": "conditional=['FR-118', 'FR-119']"
+    },
+    {
+      "check": "Five register candidates",
+      "status": "PASS",
+      "detail": "['OCOR_CAP_ELM_Requirement_Crosswalk_v1.1_FULL_MEMORY_CANDIDATE.md', 'OCOR_Decision_Register_v1.2_FULL_MEMORY_CANDIDATE.md', 'OCOR_Decision_Traceability_Index_v1.2_FULL_MEMORY_CANDIDATE.md', 'OCOR_Requirement_Register_v1.1_FULL_MEMORY_CANDIDATE.md', 'OCOR_Requirement_Traceability_Index_v1.1_FULL_MEMORY_CANDIDATE.md']"
+    },
+    {
+      "check": "Register candidate assurance",
+      "status": "PASS",
+      "detail": "{'checks': 11, 'pass': 11, 'fail': 0}"
+    },
+    {
+      "check": "Atomic promotion package",
+      "status": "PASS",
+      "detail": "identifier reserved to authority"
+    },
+    {
+      "check": "GovernedContext exact fields",
+      "status": "PASS",
+      "detail": "['actor_chain', 'classification_marking_ref', 'compartments', 'correlation_id', 'domain_id', 'effective_principal_id', 'ontology_release_digest', 'organization_id', 'policy_bundle_digest', 'purpose', 'tenant_id']"
+    },
+    {
+      "check": "GovernedContext required",
+      "status": "PASS",
+      "detail": "11/11"
+    },
+    {
+      "check": "CapabilityLease exact fields",
+      "status": "PASS",
+      "detail": "11/11"
+    },
+    {
+      "check": "GovernedMemory closed schema",
+      "status": "PASS",
+      "detail": "32 required fields"
+    },
+    {
+      "check": "GovernedMemory kinds",
+      "status": "PASS",
+      "detail": "8/8"
+    },
+    {
+      "check": "GovernedMemory scopes",
+      "status": "PASS",
+      "detail": "7/7"
+    },
+    {
+      "check": "GovernedMemory vector binding",
+      "status": "PASS",
+      "detail": "model/content/representation bindings present"
+    },
+    {
+      "check": "GovernedMemory lifecycle",
+      "status": "PASS",
+      "detail": "legal hold and deletion saga states present"
+    },
+    {
+      "check": "Memory governance fence",
+      "status": "PASS",
+      "detail": "candidate remains non-approved"
+    },
+    {
+      "check": "Full memory disposition",
+      "status": "PASS",
+      "detail": "full PoC semantics; scale/resilience bounded"
+    },
+    {
+      "check": "No stale bounded profile",
+      "status": "PASS",
+      "detail": "superseded bounded identifiers absent"
+    },
+    {
+      "check": "FSM 44 rows",
+      "status": "PASS",
+      "detail": "44/44"
+    },
+    {
+      "check": "FSM five columns",
+      "status": "PASS",
+      "detail": "ID/source/event/effect/destination present"
+    },
+    {
+      "check": "FSM semantic identity",
+      "status": "PASS",
+      "detail": "44/44 exact rows"
+    },
+    {
+      "check": "C3 token GovernedCanonicalCommitCommand",
+      "status": "PASS",
+      "detail": "GovernedCanonicalCommitCommand"
+    },
+    {
+      "check": "C3 token canonical_idempotency",
+      "status": "PASS",
+      "detail": "canonical_idempotency"
+    },
+    {
+      "check": "C3 token gate_package_digest",
+      "status": "PASS",
+      "detail": "gate_package_digest"
+    },
+    {
+      "check": "C3 token claim_source_bindings",
+      "status": "PASS",
+      "detail": "claim_source_bindings"
+    },
+    {
+      "check": "C3 token branch=main",
+      "status": "PASS",
+      "detail": "branch=main"
+    },
+    {
+      "check": "OpenAPI six named queries",
+      "status": "PASS",
+      "detail": "['/v1/queries/get-object', '/v1/queries/query-object-set', '/v1/queries/search', '/v1/queries/traverse', '/v1/queries/explain', '/v1/queries/get-provenance']"
+    },
+    {
+      "check": "OpenAPI 3.1",
+      "status": "PASS",
+      "detail": "version 3.1.0"
+    },
+    {
+      "check": "OpenAPI source identity",
+      "status": "PASS",
+      "detail": "byte-identical to ADD v1.2 embedded block"
+    },
+    {
+      "check": "Proto package",
+      "status": "PASS",
+      "detail": "ocor.registry.v1"
+    },
+    {
+      "check": "Proto services",
+      "status": "PASS",
+      "detail": "FunctionRegistry + ModelRegistry"
+    },
+    {
+      "check": "Proto source identity",
+      "status": "PASS",
+      "detail": "byte-identical to ADD v1.2 embedded block"
+    },
+    {
+      "check": "Memory OpenAPI 3.1",
+      "status": "PASS",
+      "detail": "version 3.1.0"
+    },
+    {
+      "check": "Memory OpenAPI operations",
+      "status": "PASS",
+      "detail": "['/v1/memory/items', '/v1/memory/items/{memory_item_id}/versions/{memory_version}', '/v1/memory/search', '/v1/memory/consolidations', '/v1/memory/items/{memory_item_id}/promotions', '/v1/memory/items/{memory_item_id}/lifecycle', '/v1/memory/items/{memory_item_id}', '/v1/memory/context-assemblies']"
+    },
+    {
+      "check": "Memory OpenAPI external contracts",
+      "status": "PASS",
+      "detail": "memory item and GCS schemas referenced"
+    },
+    {
+      "check": "Memory OpenAPI refs",
+      "status": "PASS",
+      "detail": "all local/external refs resolved"
+    },
+    {
+      "check": "Memory operationId uniqueness",
+      "status": "PASS",
+      "detail": "['admitMemoryItem', 'getMemoryItemVersion', 'searchMemory', 'consolidateMemory', 'proposeMemoryPromotion', 'transitionMemoryLifecycle', 'requestMemoryDeletion', 'assembleMemoryContext']"
+    },
+    {
+      "check": "Semantic token TRANSIENT",
+      "status": "PASS",
+      "detail": "TRANSIENT"
+    },
+    {
+      "check": "Semantic token PERMANENT",
+      "status": "PASS",
+      "detail": "PERMANENT"
+    },
+    {
+      "check": "Semantic token POLICY_DENIED",
+      "status": "PASS",
+      "detail": "POLICY_DENIED"
+    },
+    {
+      "check": "Semantic token POISON",
+      "status": "PASS",
+      "detail": "POISON"
+    },
+    {
+      "check": "Semantic token identify-or-abstain",
+      "status": "PASS",
+      "detail": "identify-or-abstain"
+    },
+    {
+      "check": "Semantic token R3_HIGH_IMPACT",
+      "status": "PASS",
+      "detail": "R3_HIGH_IMPACT"
+    },
+    {
+      "check": "Semantic token RESET_PENDING",
+      "status": "PASS",
+      "detail": "RESET_PENDING"
+    },
+    {
+      "check": "Semantic token recovery gate",
+      "status": "PASS",
+      "detail": "recovery gate"
+    },
+    {
+      "check": "Semantic token MemoryContextAssembly",
+      "status": "PASS",
+      "detail": "MemoryContextAssembly"
+    },
+    {
+      "check": "Semantic token DELETION_INCOMPLETE",
+      "status": "PASS",
+      "detail": "DELETION_INCOMPLETE"
+    },
+    {
+      "check": "Semantic token FGM-20",
+      "status": "PASS",
+      "detail": "FGM-20"
+    },
+    {
+      "check": "Semantic token VECTOR",
+      "status": "PASS",
+      "detail": "VECTOR"
+    }
+  ],
+  "digests": {
+    "lld_candidate_sha256": "1a5d5d448950cadfd09a177a6d91566e878b26a9f8a4cd481cb618ecd1401414",
+    "add_candidate_sha256": "99f3d17d480eb2b3346524a0820dcdbbedfbe43b091428a86e8677ce8030ed22",
+    "change_control_sha256": "c11e68c5cfdc2b63c5b51b382dba086687701467a50fbeb17d071e4056ee8366",
+    "register_candidate_results_sha256": "216f7f9016fa6dac83a671c94eefda9eed56685509ae73d7108f2b7685421ecc",
+    "atomic_promotion_package_sha256": "2b6373185f544c06faf514f757525cbebd5b53b0edd7419b43bd7f496e2ad7c0"
+  }
+}

@@ -12,8 +12,8 @@ Uso:
 
 Exit code: 0 se tutti i controlli meccanici passano, 1 altrimenti.
 
-Dipendenze: jsonschema, PyYAML, rdflib (opzionale), grpcio-tools (opzionale).
-    pip install jsonschema pyyaml rdflib grpcio-tools
+Dipendenze: jsonschema, PyYAML, openapi-spec-validator, rdflib, grpcio-tools.
+L'ambiente governato è definito da ocor-runtime/uv.lock.
 """
 from __future__ import annotations
 import argparse, collections, hashlib, json, os, re, subprocess, sys, tempfile
@@ -24,6 +24,8 @@ DEFAULT_ADD = os.path.join(ROOT, "inputs", "normative", "OCOR_Architectural_Desi
 UNIVERSE = {"DEC": 196, "BR": 18, "FR": 174, "NFR": 93,
             "ARC": 23, "CAP": 26, "ELM": 103, "RSK": 60}
 CORE_TOTAL = 693
+OPENAPI_VALIDATOR_VERSION = "0.9.0"
+OPENAPI_VALIDATOR_WHEEL_SHA256 = "222fecffc7714f6d0a6ad62c0e4b66cc2b7dbfafb7b93acfc6c308abbdb51af8"
 
 results: list[dict] = []
 
@@ -156,8 +158,55 @@ def check_openapi(text: str) -> None:
             orphan = sorted(defined - used)
             record("OpenAPI — risoluzione $ref", "PASS",
                    f"{detail}; tutti i $ref risolti; schemi mai referenziati: {orphan or 'nessuno'}")
-        record("OpenAPI — validazione semantica con validator ufficiale", "NOT_EXECUTED",
-               "nessun validator OpenAPI 3.1 nel harness; il controllo NON è dichiarato superato")
+        try:
+            from importlib.metadata import version
+            from openapi_spec_validator import validate as validate_openapi
+        except (ImportError, ModuleNotFoundError) as exc:
+            record(
+                "OpenAPI — validazione semantica con validator ufficiale",
+                "NOT_EXECUTED",
+                f"openapi-spec-validator=={OPENAPI_VALIDATOR_VERSION} non disponibile: {exc}",
+            )
+            return
+
+        installed_version = version("openapi-spec-validator")
+        lock_path = os.path.join(ROOT, "ocor-runtime", "uv.lock")
+        if not os.path.isfile(lock_path):
+            record(
+                "OpenAPI — validazione semantica con validator ufficiale",
+                "FAIL",
+                f"lock richiesto assente: {lock_path}",
+            )
+            return
+        lock_text = open(lock_path, encoding="utf-8").read()
+        version_pinned = (
+            f'name = "openapi-spec-validator"\nversion = "{OPENAPI_VALIDATOR_VERSION}"'
+            in lock_text
+        )
+        wheel_pinned = f'hash = "sha256:{OPENAPI_VALIDATOR_WHEEL_SHA256}"' in lock_text
+        if installed_version != OPENAPI_VALIDATOR_VERSION or not version_pinned or not wheel_pinned:
+            record(
+                "OpenAPI — validazione semantica con validator ufficiale",
+                "FAIL",
+                f"validator non conforme al pin: installed={installed_version}, "
+                f"version_pinned={version_pinned}, wheel_sha256_pinned={wheel_pinned}",
+            )
+            return
+        try:
+            validate_openapi(doc)
+        except Exception as exc:
+            record(
+                "OpenAPI — validazione semantica con validator ufficiale",
+                "FAIL",
+                f"openapi-spec-validator=={installed_version}: {type(exc).__name__}: {exc}",
+            )
+        else:
+            record(
+                "OpenAPI — validazione semantica con validator ufficiale",
+                "PASS",
+                f"openapi-spec-validator=={installed_version}; wheel SHA-256 "
+                f"{OPENAPI_VALIDATOR_WHEEL_SHA256}; documento OpenAPI {doc.get('openapi')} valido",
+            )
         return
     record("OpenAPI", "NOT_EXECUTED", "nessun blocco OpenAPI trovato")
 

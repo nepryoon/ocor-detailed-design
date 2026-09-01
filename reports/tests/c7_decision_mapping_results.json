@@ -1,0 +1,114 @@
+{
+  "artifact": "OCOR FASE C.7 decision mapping verification",
+  "status": "PASS",
+  "sources": {
+    "ocor-runtime/docs/governance_dossier/ARA_DECISION_RECORD_v1.1.md": "35579536a67122700ff09f6be33874163f5872a199f853b557d28c71af9a0eae",
+    "ocor-runtime/docs/governance_dossier/registers/OCOR_Decision_Register_v1.1_APPROVED.md": "521e328e76d9723d7ad035684df49c0183c754f8029f20c522a744b4d2a5f7dd",
+    "reports/OCOR_ADD_v1.2_Change_Control_Package.md": "f336b4d0b10942c3eeb6603bafff69b7e085edfa8bbd6dc0224266ee0e8aaa8c",
+    "reports/OCOR_Architectural_Design_Document_v1.2_Candidate.md": "4f84249b86150a0aa0ef5bf7fcc1a5c99388651e8aae132720dd784883b0426f"
+  },
+  "mapping_by_draft": {
+    "DRAFT-A": "DEC-197",
+    "DRAFT-B": "DEC-199",
+    "DRAFT-C": "DEC-200",
+    "DRAFT-D": "DEC-204",
+    "DRAFT-E": "DEC-202",
+    "DRAFT-F": "DEC-203",
+    "DRAFT-G": "DEC-198",
+    "DRAFT-H": "DEC-204",
+    "DRAFT-I": "DEC-202"
+  },
+  "mapping_by_decision": {
+    "DEC-197": [
+      "DRAFT-A"
+    ],
+    "DEC-198": [
+      "DRAFT-G"
+    ],
+    "DEC-199": [
+      "DRAFT-B"
+    ],
+    "DEC-200": [
+      "DRAFT-C"
+    ],
+    "DEC-201": [],
+    "DEC-202": [
+      "DRAFT-E",
+      "DRAFT-I"
+    ],
+    "DEC-203": [
+      "DRAFT-F"
+    ],
+    "DEC-204": [
+      "DRAFT-D",
+      "DRAFT-H"
+    ],
+    "DEC-205": [],
+    "DEC-206": []
+  },
+  "combined_ratifications": {
+    "DEC-202": [
+      "DRAFT-E",
+      "DRAFT-I"
+    ],
+    "DEC-204": [
+      "DRAFT-D",
+      "DRAFT-H"
+    ]
+  },
+  "non_draft_provenance": {
+    "DEC-201": [
+      "DRF-009",
+      "BA-01",
+      "V12-AM-14",
+      "CC-BA01-ALTERNATIVE"
+    ],
+    "DEC-205": [
+      "DRF-012",
+      "V12-AM-11",
+      "CC-FR095-SCOPE"
+    ],
+    "DEC-206": [
+      "DRF-015",
+      "V12-AM-13",
+      "CC-DEC-ALLOCATION"
+    ]
+  },
+  "checks": [
+    {
+      "check": "ten_unique_ara_sections",
+      "status": "PASS",
+      "detail": "expected=10, present=10"
+    },
+    {
+      "check": "one_register_row_per_decision",
+      "status": "PASS",
+      "detail": "{\"DEC-197\": 1, \"DEC-198\": 1, \"DEC-199\": 1, \"DEC-200\": 1, \"DEC-201\": 1, \"DEC-202\": 1, \"DEC-203\": 1, \"DEC-204\": 1, \"DEC-205\": 1, \"DEC-206\": 1}"
+    },
+    {
+      "check": "approved_mapping_matches_ara",
+      "status": "PASS",
+      "detail": "{\"DEC-197\": [\"DRAFT-A\"], \"DEC-198\": [\"DRAFT-G\"], \"DEC-199\": [\"DRAFT-B\"], \"DEC-200\": [\"DRAFT-C\"], \"DEC-201\": [], \"DEC-202\": [\"DRAFT-E\", \"DRAFT-I\"], \"DEC-203\": [\"DRAFT-F\"], \"DEC-204\": [\"DRAFT-D\", \"DRAFT-H\"], \"DEC-205\": [], \"DEC-206\": []}"
+    },
+    {
+      "check": "all_nine_drafts_ratified_once",
+      "status": "PASS",
+      "detail": "{\"DRAFT-A\": \"DEC-197\", \"DRAFT-B\": \"DEC-199\", \"DRAFT-C\": \"DEC-200\", \"DRAFT-D\": \"DEC-204\", \"DRAFT-E\": \"DEC-202\", \"DRAFT-F\": \"DEC-203\", \"DRAFT-G\": \"DEC-198\", \"DRAFT-H\": \"DEC-204\", \"DRAFT-I\": \"DEC-202\"}"
+    },
+    {
+      "check": "combined_ratifications_are_single_records",
+      "status": "PASS",
+      "detail": "DEC-202 and DEC-204 each have one record and two explicit provenance slugs"
+    },
+    {
+      "check": "non_draft_decision_provenance",
+      "status": "PASS",
+      "detail": "{\"DEC-201\": true, \"DEC-205\": true, \"DEC-206\": true}"
+    }
+  ],
+  "counts": {
+    "checks": 6,
+    "passed": 6,
+    "failed": 0
+  }
+}
