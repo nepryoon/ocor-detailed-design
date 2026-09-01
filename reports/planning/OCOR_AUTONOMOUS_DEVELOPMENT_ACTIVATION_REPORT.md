@@ -1,11 +1,11 @@
 # OCOR Autonomous Development Activation Report
 
-## Verdict corrente
+## Verdict finale
 
-La baseline di planning è stata integrata e `OCOR-DEV-0001` è `ACCEPTED_LOCALLY`.
-Tutti i gate controllabili localmente sono `PASS`. Lo stato non è ancora
-`AUTONOMOUS DEVELOPMENT READY`: la protezione effettiva di `main` è
-`BLOCKED_EXTERNAL_AUTHORITY` e la PR di attivazione deve ancora completare CI e merge.
+La baseline di planning è integrata e `OCOR-DEV-0001` è `COMPLETE`. Tutti i gate
+controllabili localmente e i due sealing check della PR #11 sono `PASS`. Il verdetto
+è `ACTIVATION COMPLETE — EXTERNAL PROTECTION BLOCKER`: la protezione effettiva di
+`main` resta `BLOCKED_EXTERNAL_AUTHORITY` per il piano GitHub corrente.
 
 Questo referto non stabilisce runtime conformance, E1, E2, PoC-GO o Production
 readiness. Non è stato eseguito alcun task successivo a `OCOR-DEV-0001`.
@@ -121,5 +121,7 @@ ocor-runtime/.venv/bin/python scripts/validate_runtime_evidence.py \
 Il commit valutato dal manifest è
 `8599c2426819d5b614e193fe9a8f97431a97dee8`. La PR di attivazione è
 `https://github.com/nepryoon/ocor-detailed-design/pull/11`; i run verdi osservati
-sono `33558417453` (`validation-closure`) e `33558417500`
-(`delivery-activation`). Il merge sarà registrato dopo il sealing check.
+del primo ciclo sono `33558417453` e `33558417500`; i sealing run verdi sono
+`33558754033` (`validation-closure`) e `33558753936`
+(`delivery-activation`). Il final material commit è
+`a2150bebb48b6240e3ae96324907584ed3a4c9d4`.
