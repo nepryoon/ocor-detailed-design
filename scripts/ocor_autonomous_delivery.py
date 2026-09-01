@@ -19,11 +19,11 @@ import subprocess
 import sys
 import tempfile
 import uuid
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Iterable, Sequence
-
+from typing import Any
 
 TASK_ID = re.compile(r"^OCOR-DEV-[0-9]{4}$")
 TERMINAL_SUCCESS = {"ACCEPTED"}
@@ -151,7 +151,7 @@ class Plan:
     dag_edges: set[tuple[str, str]]
 
     @classmethod
-    def load(cls, root: Path) -> "Plan":
+    def load(cls, root: Path) -> Plan:
         development = root / "docs/development_plan"
         backlog_path = development / "OCOR_IMPLEMENTATION_BACKLOG.json"
         schema_path = development / "OCOR_IMPLEMENTATION_BACKLOG.schema.json"
@@ -209,7 +209,7 @@ class Plan:
             for dependency in task.get("hard_dependencies", []):
                 if (dependency, task_id) not in self.dag_edges:
                     errors.append(f"Mermaid DAG lacks hard edge {dependency}->{task_id}")
-        if int(self.config.get("max_retries", -1)) not in range(0, 4):
+        if int(self.config.get("max_retries", -1)) not in range(4):
             errors.append("max_retries must be between zero and three")
         if int(self.config.get("max_parallel", 0)) < 1:
             errors.append("max_parallel must be positive")

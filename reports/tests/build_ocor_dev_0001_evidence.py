@@ -10,7 +10,6 @@ import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[2]
 GATE = ROOT / "reports/evidence/G0"
 LOG = GATE / "OCOR-DEV-0001.log"
