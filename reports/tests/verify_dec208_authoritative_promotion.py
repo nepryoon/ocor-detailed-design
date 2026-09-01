@@ -91,7 +91,7 @@ def main() -> int:
     check("evidence_fence", all(token in fence_text for token in ("E1=0", "E2=0", "NO-GO")) and "evidence state: Verified" not in fence_text, "no evidence promotion")
     check("deferred_fences", all(token in ara for token in ("FR-048", "ELM-011", "Candidate Implementation")), "unrelated deferrals preserved")
     check("approval_attestations", "Product Owner approval evidence" in ara and "Architecture Review Authority approval evidence" in ara, "two role attestations")
-    check("p01_p11", all(f"| P-{i:02d} | PASS |" in ara for i in range(1, 12)), "P-01..P-11 PASS")
+    check("p01_p12", all(f"| P-{i:02d} | PASS |" in ara for i in range(1, 13)), "P-01..P-12 PASS")
 
     git_dir = ROOT / ".git"
     if git_dir.exists():

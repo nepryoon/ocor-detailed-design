@@ -2,7 +2,7 @@
 
 ## Outcome
 
-**Status: APPROVED — PENDING GREEN PROMOTION CI AND MERGE.**
+**Status: APPROVED — EFFECTIVE ON MERGE.**
 
 The Product Owner and Architecture Review Authority authorize the atomic promotion of
 `CC-FULL-GOVERNED-AGENT-MEMORY` as `DEC-208`.
@@ -31,4 +31,6 @@ The promotion preserves `E1=0`, `E2=0`, zero global `Verified` and confines
 - Human Role Attestations;
 - `OCOR_ADD_v1.3_APPROVAL_SHA256SUMS`;
 - `reports/tests/dec208_authoritative_promotion_results.json`;
-- GitHub Actions promotion run, recorded by the finalization commit.
+- GitHub Actions promotion run `33546395820`, successful on material update-set
+  commit `38d01b6fc4dc3cffea27e5893c273e94a39b9f00`;
+- final sealing revision subject to the same required workflow before merge.

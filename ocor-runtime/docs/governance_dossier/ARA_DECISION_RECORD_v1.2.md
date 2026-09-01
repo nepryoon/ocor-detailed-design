@@ -5,10 +5,10 @@
 | Field | Value |
 |---|---|
 | Record identifier | `OCOR-ARA-DR-1.2` |
-| Status | **APPROVED — EFFECTIVE ON GREEN PROMOTION CI AND MERGE** |
+| Status | **APPROVED — EFFECTIVE ON MERGE** |
 | Decision | `DEC-208` |
 | Title | Full Governed Agent Memory: design-baseline disposition and runtime evidence fence |
-| Effective date | 2026-09-01, conditional on green CI and merge of the content-addressed update set |
+| Effective date | 2026-09-01, on merge of the content-addressed update set |
 | Authority | Luca Lillo, Product Owner and repository owner, acting as Architecture Review Authority |
 | Product Owner approval evidence | Explicit instruction: «procedi con il passaggio autoritativo» |
 | Architecture Review Authority approval evidence | The same explicit instruction, issued by Luca Lillo in the ARA capacity recorded by ARA Decision Record v1.1, followed by activation of the governed promotion exception for this exact change set |
@@ -76,7 +76,7 @@ files in this set.
 | P-09 | PASS | promotion checker verifies referential consistency and manifest digests |
 | P-10 | PASS | DEC-207 declares DEC-208 next; no approved DEC-208 allocation exists before this record |
 | P-11 | PASS | Product Owner and ARA role attestations are recorded for this change set |
-| P-12 | PENDING_THIS_PROMOTION_CI | becomes PASS only when GitHub Actions validates this exact revision; merge is forbidden otherwise |
+| P-12 | PASS | GitHub Actions promotion run `33546395820` completed successfully on material update-set commit `38d01b6fc4dc3cffea27e5893c273e94a39b9f00`; the sealing revision must pass the same required workflow before merge |
 
 ## 5. Evidence and authority fences
 
@@ -93,7 +93,7 @@ This approval does not:
 
 ## 6. Effectiveness rule
 
-Before the promotion CI is green, the state is `APPROVED — PENDING EFFECTIVENESS`.
-After the exact revision passes the promotion checker and all required GitHub Actions
-jobs, the decision becomes effective only when the pull request is merged into
-`main`. A finalization commit records the successful run before merge.
+Promotion run `33546395820` closed `P-12` on the material update set with zero
+failures. This finalization revision records that immutable run and is itself subject
+to the same required GitHub Actions gate. The decision becomes effective only when
+the green, content-addressed pull request is merged into `main`.
