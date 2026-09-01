@@ -54,7 +54,6 @@ FINAL_FILES = [
     "reports/tests/v12_conformance_results.json",
     "reports/tests/v12_semantic_results.json",
     "reports/tests/v12_release_gate_results.json",
-    "reports/tests/v12_approval_readiness_results.json",
 ]
 
 
