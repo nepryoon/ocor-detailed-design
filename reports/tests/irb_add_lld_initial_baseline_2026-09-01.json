@@ -1,0 +1,103 @@
+{
+  "report_type": "OCOR_IRB_ADD_LLD_INITIAL_BASELINE",
+  "generated_at": "2026-09-01T21:00:00+02:00",
+  "repository": "nepryoon/ocor-detailed-design",
+  "branch": "codex/complete-irb-add-lld-authoritative-baseline",
+  "baseline_commit": "d83e9fc3dfe1a77da0685cdf782a27f2262b80b3",
+  "baseline_tree": "a3c25c269fd4c8f5e3a2374ed5650b00ec1d0464",
+  "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+  "next_free_decision_id": "DEC-209",
+  "decision_id_basis": "DEC-001..DEC-208 found across origin/main, all remote refs, full Git history, registers, indexes, ARA records, reports and drafts; DEC-209 absent",
+  "authoritative_current_artifacts": [
+    "ocor-runtime/docs/governance_dossier/registers/OCOR_Requirement_Register_v1.1_APPROVED.md",
+    "ocor-runtime/docs/governance_dossier/registers/OCOR_Requirement_Traceability_Index_v1.1_APPROVED.md",
+    "ocor-runtime/docs/governance_dossier/registers/OCOR_Decision_Register_v1.2_APPROVED.md",
+    "ocor-runtime/docs/governance_dossier/registers/OCOR_Decision_Traceability_Index_v1.2_APPROVED.md",
+    "ocor-runtime/docs/governance_dossier/registers/OCOR_CAP_ELM_Requirement_Crosswalk_v1.1_APPROVED.md",
+    "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+    "docs/OCOR_LLD_v1.1.md",
+    "ocor-runtime/docs/governance_dossier/ARA_DECISION_RECORD_v1.2.md",
+    "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVAL_SHA256SUMS"
+  ],
+  "historical_approved_artifacts": [
+    "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.2_APPROVED_BASELINE.md",
+    "docs/OCOR_LLD_v1.0.md",
+    "ocor-runtime/docs/governance_dossier/ARA_DECISION_RECORD_v1.1.md",
+    "ocor-runtime/docs/governance_dossier/ARA_VALIDATION_CLOSURE_RECORD_v1.0.md"
+  ],
+  "superseded_artifacts": [
+    "reports/OCOR_IRB_ADD_LLD_Exhaustive_Alignment_Audit_v1.0.md",
+    "reports/tests/irb_add_lld_audit_results.json"
+  ],
+  "candidate_artifacts": [
+    "reports/OCOR_ADD_v1.3_Candidate.md",
+    "reports/OCOR_LLD_v1.1_Candidate.md",
+    "reports/governance_candidates/"
+  ],
+  "generated_artifacts": [
+    "reports/traceability/OCOR_IRB_ADD_LLD_v1.1_Matrix.md",
+    "reports/traceability/OCOR_IRB_ADD_LLD_v1.1_Matrix.json",
+    "reports/tests/dec208_authoritative_promotion_results.json",
+    "reports/verify_report.json"
+  ],
+  "runtime_evidence_artifacts": [
+    "ocor-runtime/VERIFICATION_EVIDENCE_REPORT.md",
+    "reports/tests/*post_approval*",
+    "reports/tests/post_remediation_*.log"
+  ],
+  "requirement_universe": {
+    "total": 285,
+    "BR": 18,
+    "FR": 174,
+    "NFR": 93,
+    "register_rows": 285,
+    "traceability_index_rows": 285
+  },
+  "preflight": {
+    "normative_sha256": {"status": "PASS", "files": 8},
+    "tool_backed_harness": {"status": "PASS", "passed": 14, "failed": 0, "not_executed": 0},
+    "dec208_manifest": {"status": "PASS", "files": 19},
+    "inputs_status": "UNCHANGED",
+    "worktree_at_start": "CLEAN"
+  },
+  "initial_findings": [
+    {
+      "id": "AUTH-STALE-001",
+      "severity": "BLOCKER",
+      "artifact": "docs/OCOR_LLD_v1.1.md",
+      "finding": "Approved front matter conflicts with candidate-only normative scope and final non-approval disposition."
+    },
+    {
+      "id": "AUTH-STALE-002",
+      "severity": "BLOCKER",
+      "artifact": "reports/traceability/OCOR_IRB_ADD_LLD_v1.1_Matrix.md",
+      "finding": "Title/control text says Candidate and FR-118/FR-119 remain CONDITIONALLY_SPECIFIED pending DEC-208 promotion."
+    },
+    {
+      "id": "AUTH-STALE-003",
+      "severity": "MAJOR",
+      "artifact": "reports/OCOR_IRB_ADD_LLD_Remediation_Closure_v1.0.md",
+      "finding": "Completed DEC-208 promotion is still described as future work."
+    },
+    {
+      "id": "AUTH-STALE-004",
+      "severity": "BLOCKER",
+      "artifact": "reports/tests/irb_add_lld_audit_results.json",
+      "finding": "Historical ADD v1.2 to LLD v1.0 failure is not clearly superseded by a current authoritative audit result."
+    },
+    {
+      "id": "AUTH-GATE-001",
+      "severity": "BLOCKER",
+      "artifact": "reports/tests/verify_dec208_authoritative_promotion.py",
+      "finding": "Current gates accept the stale contradictions above."
+    }
+  ],
+  "evidence_fence": {
+    "E1": 0,
+    "E2": 0,
+    "global_verified_requirements": 0,
+    "full_memory_runtime": "NO-GO",
+    "production_readiness": "NO-GO"
+  },
+  "initial_verdict": "FAIL_REMEDIATION_REQUIRED"
+}
