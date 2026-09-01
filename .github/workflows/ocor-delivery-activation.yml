@@ -55,7 +55,7 @@ jobs:
       - name: Reject immutable-path and task-ledger regressions
         run: >-
           ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py
-          --base "${{ github.event.pull_request.base.sha || github.event.before }}"
+          --base "${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}"
           --head "${{ github.sha }}"
 
       - name: Validate approved development plan and runner

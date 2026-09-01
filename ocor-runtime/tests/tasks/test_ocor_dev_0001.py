@@ -150,3 +150,9 @@ def test_bounded_prompt_contains_one_task_and_prohibited_claims(plan):
     assert "OCOR-DEV-0001" in prompt
     assert "OCOR-DEV-0002" not in prompt
     assert "Production readiness" in prompt
+
+
+def test_content_addressed_evidence_includes_matching_raw_log(plan):
+    qualifying, commit = delivery.evidence_qualifies(ROOT, plan.tasks["OCOR-DEV-0001"])
+    assert qualifying is True
+    assert len(commit) == 40

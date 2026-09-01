@@ -36,6 +36,20 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise ValueError("task identifier mismatch")
         if evidence.get("sha256") != digest(evidence_path):
             raise ValueError("evidence digest mismatch")
+        raw_entry = next(
+            (
+                item
+                for item in entries
+                if item.get("task_id") == f"{args.task}-RAW"
+            ),
+            None,
+        )
+        if raw_entry is None:
+            raise ValueError("manifest has no raw evidence entry")
+        raw_path = args.manifest.parent / raw_entry["path"]
+        raw_digest = digest(raw_path)
+        if raw_entry.get("sha256") != raw_digest:
+            raise ValueError("raw manifest digest mismatch")
         commands = record.get("commands", [])
         if not commands:
             raise ValueError("evidence has no executed command")
@@ -44,6 +58,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             raise ValueError(f"non-qualifying result present: {sorted(statuses & NON_QUALIFYING)}")
         if statuses != {"PASS"} or record.get("result") != "PASS":
             raise ValueError(f"mandatory evidence is not all PASS: {sorted(statuses)}")
+        if record.get("raw_output_sha256") != raw_digest:
+            raise ValueError("record raw-output digest mismatch")
         required = {"commit", "environment", "raw_output_sha256", "created_at"}
         missing = sorted(required - record.keys())
         if missing:

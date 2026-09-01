@@ -51,7 +51,7 @@ Servizio qualificante locale: immagine
 server PostgreSQL `16.14`. Risultati:
 
 - suite PostgreSQL: 5 `PASS`, 0 `FAIL`, 0 `SKIPPED`, 0 `NOT_EXECUTED`;
-- suite completa: 128 `PASS`, 0 `FAIL`, 0 `SKIPPED`, 0 `XFAIL`, 0 `NOT_EXECUTED`;
+- suite completa: 129 `PASS`, 0 `FAIL`, 0 `SKIPPED`, 0 `XFAIL`, 0 `NOT_EXECUTED`;
 - collection errors: 0.
 
 Questi risultati sono regression e activation evidence; non sono evidenza di runtime
@@ -95,7 +95,7 @@ non crea state. Le mutazioni richiedono `--execute`; push, PR e merge richiedono
 anche opt-in distinti e configurazione abilitata. Lo state volatile e resumable è
 `.ocor/delivery/state.json`, escluso da Git.
 
-Copertura del subset runner: 19 `PASS`. Sono verificati parsing/schema, DAG cycle,
+Copertura del subset runner: 20 `PASS`. Sono verificati parsing/schema, DAG cycle,
 dependency readiness, gate barrier, retry exhaustion, recovery, ownership collision,
 dry-run non mutante, red CI, risultati non eseguiti, stop-after-task e
 stop-after-gate. Il dry-run reale seleziona senza mutazioni

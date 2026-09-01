@@ -121,6 +121,15 @@ def evidence_qualifies(root: Path, task: dict[str, Any]) -> tuple[bool, str]:
         if sha256_file(evidence_path) != entry["sha256"]:
             return False, "evidence digest mismatch"
         record = load_json(evidence_path)
+        raw_entry = next(
+            item
+            for item in manifest.get("artifacts", [])
+            if item.get("task_id") == f"{task['id']}-RAW"
+        )
+        raw_path = manifest_path.parent / raw_entry["path"]
+        raw_digest = sha256_file(raw_path)
+        if raw_digest != raw_entry["sha256"] or raw_digest != record.get("raw_output_sha256"):
+            return False, "raw evidence digest mismatch"
         statuses = {str(item.get("status", "")).upper() for item in record.get("commands", [])}
         if not statuses or statuses != {"PASS"} or statuses & FORBIDDEN_RESULT:
             return False, f"non-qualifying command statuses: {sorted(statuses)}"
@@ -800,7 +809,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             atomic_json(args.state, state)
 
         if args.validate:
-            print(f"PASS: 69-task plan, schema, context manifest and acyclic DAG validated")
+            print(
+                f"PASS: {len(plan.tasks)}-task plan, schema, context manifest "
+                "and acyclic DAG validated"
+            )
             return 0
         if args.status or (
             not any((args.next, args.dry_run, args.task, args.execute, args.resume, args.accept_evidence))

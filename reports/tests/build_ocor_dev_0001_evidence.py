@@ -34,9 +34,9 @@ def main() -> int:
     commands = [
         {"command": "sha256sum -c inputs/normative/SHA256SUMS", "status": "PASS", "exit_code": 0},
         {"command": "python scripts/validate_ocor_change_scope.py --base origin/main --head HEAD", "status": "PASS", "exit_code": 0},
-        {"command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0001.py", "status": "PASS", "exit_code": 0, "passed": 19},
+        {"command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0001.py", "status": "PASS", "exit_code": 0, "passed": 20},
         {"command": "python scripts/ocor_autonomous_delivery.py --validate", "status": "PASS", "exit_code": 0},
-        {"command": "pytest -q ocor-runtime/tests/ with live PostgreSQL", "status": "PASS", "exit_code": 0, "passed": 128, "skipped": 0},
+        {"command": "pytest -q ocor-runtime/tests/ with live PostgreSQL", "status": "PASS", "exit_code": 0, "passed": 129, "skipped": 0},
         {"command": "markdownlint-cli2 0.18.1 planning Markdown", "status": "PASS", "exit_code": 0, "files": 6},
         {"command": "mmdc 11.12.0 dependency DAG render", "status": "PASS", "exit_code": 0, "files": 1},
     ]
@@ -57,8 +57,8 @@ def main() -> int:
         },
         "commands": commands,
         "counts": {
-            "unique_pytest": {"PASS": 128, "FAIL": 0, "SKIPPED": 0, "XFAIL": 0, "NOT_EXECUTED": 0},
-            "task_control_subset": {"PASS": 19, "FAIL": 0, "SKIPPED": 0, "XFAIL": 0, "NOT_EXECUTED": 0},
+            "unique_pytest": {"PASS": 129, "FAIL": 0, "SKIPPED": 0, "XFAIL": 0, "NOT_EXECUTED": 0},
+            "task_control_subset": {"PASS": 20, "FAIL": 0, "SKIPPED": 0, "XFAIL": 0, "NOT_EXECUTED": 0},
             "postgres_subset": {"PASS": 5, "FAIL": 0, "SKIPPED": 0, "XFAIL": 0, "NOT_EXECUTED": 0},
             "documentation_validators": {"PASS": 2, "FAIL": 0, "NOT_EXECUTED": 0},
         },
