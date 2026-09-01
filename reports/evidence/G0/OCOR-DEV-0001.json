@@ -1,0 +1,95 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "PoC_GO": "NO_GO",
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "sha256sum -c inputs/normative/SHA256SUMS",
+      "exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "python scripts/validate_ocor_change_scope.py --base origin/main --head HEAD",
+      "exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0001.py",
+      "exit_code": 0,
+      "passed": 20,
+      "status": "PASS"
+    },
+    {
+      "command": "python scripts/ocor_autonomous_delivery.py --validate",
+      "exit_code": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "pytest -q ocor-runtime/tests/ with live PostgreSQL",
+      "exit_code": 0,
+      "passed": 129,
+      "skipped": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "markdownlint-cli2 0.18.1 planning Markdown",
+      "exit_code": 0,
+      "files": 6,
+      "status": "PASS"
+    },
+    {
+      "command": "mmdc 11.12.0 dependency DAG render",
+      "exit_code": 0,
+      "files": 1,
+      "status": "PASS"
+    }
+  ],
+  "commit": "8599c2426819d5b614e193fe9a8f97431a97dee8",
+  "counts": {
+    "documentation_validators": {
+      "FAIL": 0,
+      "NOT_EXECUTED": 0,
+      "PASS": 2
+    },
+    "postgres_subset": {
+      "FAIL": 0,
+      "NOT_EXECUTED": 0,
+      "PASS": 5,
+      "SKIPPED": 0,
+      "XFAIL": 0
+    },
+    "task_control_subset": {
+      "FAIL": 0,
+      "NOT_EXECUTED": 0,
+      "PASS": 20,
+      "SKIPPED": 0,
+      "XFAIL": 0
+    },
+    "unique_pytest": {
+      "FAIL": 0,
+      "NOT_EXECUTED": 0,
+      "PASS": 129,
+      "SKIPPED": 0,
+      "XFAIL": 0
+    }
+  },
+  "created_at": "2026-09-01T21:01:03.590307Z",
+  "environment": {
+    "markdownlint_cli2": "0.18.1 (markdownlint 0.38.0)",
+    "mermaid_cli": "11.12.0",
+    "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.43",
+    "postgres": "postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20; PostgreSQL 16.14",
+    "psycopg": "3.2.10",
+    "python": "3.12.14",
+    "uv": "0.12.5"
+  },
+  "raw_output_sha256": "2fe81773b330e52285d0c9de28422bb6406ee28ba50fe8827c704faaabebc966",
+  "result": "PASS",
+  "rollback": "Stop dispatch; revert the activation commits with new revert commits; restore the prior frozen lock and workflows; re-run the prior manifests.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0001"
+}

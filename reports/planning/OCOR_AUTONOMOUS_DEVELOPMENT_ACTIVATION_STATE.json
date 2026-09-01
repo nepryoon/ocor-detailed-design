@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "run_id": "OCOR-ACT-20260901-01",
+  "started_at": "2026-09-01T20:30:00Z",
+  "updated_at": "2026-09-01T21:03:36Z",
+  "status": "ACTIVATION_COMPLETE_EXTERNAL_PROTECTION_BLOCKER",
+  "repository": "nepryoon/ocor-detailed-design",
+  "starting_main": "dd4ff9ddb3009f1fc9ad7aea06807a83145c63bc",
+  "planning": {
+    "pull_request": "https://github.com/nepryoon/ocor-detailed-design/pull/10",
+    "head": "e7b8c976ed4261c7b7cbf330409d4a09fac18db5",
+    "merge_commit": "dd4ff9ddb3009f1fc9ad7aea06807a83145c63bc",
+    "ci_run": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/33555053000",
+    "result": "MERGED_AND_VERIFIED"
+  },
+  "activation_branch": "task/OCOR-DEV-0001-repository-protection",
+  "evaluated_commit": "8599c2426819d5b614e193fe9a8f97431a97dee8",
+  "final_commit": "a2150bebb48b6240e3ae96324907584ed3a4c9d4",
+  "activation_pull_request": "https://github.com/nepryoon/ocor-detailed-design/pull/11",
+  "activation_ci_runs": [
+    "https://github.com/nepryoon/ocor-detailed-design/actions/runs/33558753936",
+    "https://github.com/nepryoon/ocor-detailed-design/actions/runs/33558754033"
+  ],
+  "activation_merge_commit": null,
+  "task": {
+    "id": "OCOR-DEV-0001",
+    "status": "COMPLETE",
+    "next_dependency_ready": "OCOR-DEV-0002",
+    "later_tasks_executed": []
+  },
+  "tests": {
+    "unique_pytest": {"PASS": 129, "FAIL": 0, "SKIPPED": 0, "XFAIL": 0, "NOT_EXECUTED": 0},
+    "postgres_subset": {"PASS": 5, "FAIL": 0, "SKIPPED": 0, "XFAIL": 0, "NOT_EXECUTED": 0},
+    "runner_subset": {"PASS": 20, "FAIL": 0, "SKIPPED": 0, "XFAIL": 0, "NOT_EXECUTED": 0}
+  },
+  "validators": {
+    "markdownlint_cli2_0_18_1": "PASS",
+    "mermaid_cli_11_12_0": "PASS",
+    "runner_plan_validation": "PASS",
+    "immutable_path_guard": "PASS",
+    "evidence_manifest": "PASS"
+  },
+  "branch_protection": {
+    "status": "BLOCKED_EXTERNAL_AUTHORITY",
+    "main_protected": false,
+    "authenticated_identity": "nepryoon",
+    "repository_permission": "admin",
+    "required_contexts_observed": ["delivery-activation", "validation-closure"],
+    "api_result": "HTTP 403: Upgrade to GitHub Pro or make this repository public to enable this feature."
+  },
+  "inputs_tree": {
+    "before": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "after": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "unchanged": true
+  },
+  "artifact_hashes": {
+    "docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json": "d3276e91a90adcb8dab99e90a5d14aefa0fee9ec7d3e7f7f074fd3776bf38a5a",
+    "reports/evidence/G0/MANIFEST.json": "b50edd9c766c98e502200d911263fc8873df94187162793759f5557ce2a57429",
+    "reports/evidence/G0/OCOR-DEV-0001.json": "39e6cbc163b47e4ade964eee5d9a16fcf013a038efc5ffa5d168d927df7b3f7f",
+    "reports/evidence/G0/OCOR-DEV-0001.log": "2fe81773b330e52285d0c9de28422bb6406ee28ba50fe8827c704faaabebc966",
+    "scripts/ocor_autonomous_delivery.py": "542452c68e71440e7eea73762b7d28e7a90c9c4400fb6c99a5ad82761deabd27"
+  },
+  "claims": {
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "E1": 0,
+    "E2": 0,
+    "PoC_GO": "NO_GO",
+    "Production_readiness": "NO_GO"
+  },
+  "blockers": [
+    {
+      "id": "ACT-BLK-001",
+      "type": "EXTERNAL_PROTECTION_AUTHORITY",
+      "detail": "Classic branch protection and repository rulesets are unavailable for this private repository under the current GitHub plan despite admin credentials."
+    }
+  ]
+}

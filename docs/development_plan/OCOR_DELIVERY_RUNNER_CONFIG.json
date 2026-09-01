@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0",
+  "integration_branch": "main",
+  "remote": "origin",
+  "task_branch_prefix": "task/",
+  "state_path": ".ocor/delivery/state.json",
+  "log_path": ".ocor/delivery/logs",
+  "worktree_path": ".ocor/worktrees",
+  "max_retries": 2,
+  "max_parallel": 4,
+  "mandatory_check_contexts": [
+    "delivery-activation",
+    "validation-closure"
+  ],
+  "require_branch_protection_for_merge": true,
+  "allow_push": true,
+  "allow_pull_request": true,
+  "allow_merge": false,
+  "prohibited_claims": [
+    "E1",
+    "E2",
+    "PoC-GO",
+    "Production readiness"
+  ]
+}
