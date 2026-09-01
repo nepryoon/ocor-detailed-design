@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import json
 import sys
 from argparse import Namespace
@@ -152,7 +153,46 @@ def test_bounded_prompt_contains_one_task_and_prohibited_claims(plan):
     assert "Production readiness" in prompt
 
 
-def test_content_addressed_evidence_includes_matching_raw_log(plan):
-    qualifying, commit = delivery.evidence_qualifies(ROOT, plan.tasks["OCOR-DEV-0001"])
+def test_content_addressed_evidence_includes_matching_raw_log(tmp_path):
+    gate = tmp_path / "reports/evidence/G0"
+    gate.mkdir(parents=True)
+    raw = gate / "task.log"
+    raw.write_text("qualifying\n", encoding="utf-8")
+    raw_digest = hashlib.sha256(raw.read_bytes()).hexdigest()
+    record = gate / "task.json"
+    record.write_text(
+        json.dumps(
+            {
+                "task_id": "OCOR-DEV-0001",
+                "commit": "a" * 40,
+                "result": "PASS",
+                "raw_output_sha256": raw_digest,
+                "commands": [{"status": "PASS"}],
+            }
+        ),
+        encoding="utf-8",
+    )
+    (gate / "MANIFEST.json").write_text(
+        json.dumps(
+            {
+                "artifacts": [
+                    {
+                        "task_id": "OCOR-DEV-0001",
+                        "path": record.name,
+                        "sha256": hashlib.sha256(record.read_bytes()).hexdigest(),
+                    },
+                    {
+                        "task_id": "OCOR-DEV-0001-RAW",
+                        "path": raw.name,
+                        "sha256": raw_digest,
+                    },
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    qualifying, commit = delivery.evidence_qualifies(
+        tmp_path, {"id": "OCOR-DEV-0001", "delivery_gate": "G0"}
+    )
     assert qualifying is True
     assert len(commit) == 40
