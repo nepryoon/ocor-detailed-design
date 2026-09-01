@@ -119,7 +119,7 @@ ocor-runtime/.venv/bin/python scripts/validate_runtime_evidence.py \
 ```
 
 Il commit valutato dal manifest è
-`79c02d66ff0ecdc3b72254b16a345ec23ab7bc78`. La PR di attivazione è
+`8599c2426819d5b614e193fe9a8f97431a97dee8`. La PR di attivazione è
 `https://github.com/nepryoon/ocor-detailed-design/pull/11`; i run verdi osservati
 sono `33558417453` (`validation-closure`) e `33558417500`
 (`delivery-activation`). Il merge sarà registrato dopo il sealing check.
