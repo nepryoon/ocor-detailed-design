@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "run_id": "OCOR-PLAN-20260901T195716Z",
+  "started_at_utc": "2026-09-01T19:57:16Z",
+  "updated_at_utc": "2026-09-01T20:22:29Z",
+  "repository_root": "/home/luca/projects/ocor-detailed-design",
+  "base_branch": "origin/main",
+  "base_commit": "67cda4b44a8d27b831eb461b1e28d71e1d3398ab",
+  "expected_commit": "67cda4b44a8d27b831eb461b1e28d71e1d3398ab",
+  "expected_commit_comparison": "MATCH",
+  "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+  "planning_branch": "plan/ocor-ai-first-autonomous-development-v1",
+  "completed_phase": "DELIVER",
+  "validation_status": "PASS",
+  "retry_history": [
+    {
+      "phase": "BASELINE",
+      "command": "ocor-runtime/.venv/bin/python -m pytest -q -rA",
+      "result": "FAIL_COLLECTION",
+      "attempt": 1,
+      "cause": "psycopg non installato; live PostgreSQL non collezionabile localmente",
+      "remediation": "Suite non-live rieseguita con esclusione esplicita del solo test live; 104 PASS. Live PostgreSQL resta NOT_EXECUTED."
+    },
+    {
+      "phase": "DECOMPOSE",
+      "command": "python scripts/build_ocor_development_plan.py",
+      "result": "FAIL_RENDER",
+      "attempt": 1,
+      "cause": "campo risk non materializzato nel record della capability baseline",
+      "remediation": "Corretto il mapping strutturato e rigenerati tutti gli artefatti; generazione completata."
+    },
+    {
+      "phase": "VALIDATE",
+      "command": "ruff check scripts/build_ocor_development_plan.py scripts/validate_ocor_development_plan.py",
+      "result": "FAIL_STATIC",
+      "attempt": 1,
+      "cause": "permessi eseguibili e rilievi statici nei soli tool planning",
+      "remediation": "Corretti i rilievi, impostati i permessi, rieseguiti ruff e validator con esito PASS."
+    }
+  ],
+  "assumptions": [
+    "Il task planning autorizza scritture esclusivamente in docs/development_plan, reports/planning e nei due script planning build/validate.",
+    "I risultati runtime esistenti sono baseline informativa e non vengono promossi a evidenza DEC-209 o PoC-GO."
+  ],
+  "blockers": [
+    {
+      "id": "ENV-LOCAL-POSTGRES-001",
+      "scope": "local baseline only",
+      "status": "OPEN_NON_BLOCKING_FOR_PLANNING",
+      "detail": "psycopg non è presente nella venv locale; cinque test live PostgreSQL sono NOT_EXECUTED localmente. Il workflow GitHub configura la dipendenza e il servizio separatamente."
+    },
+    {
+      "id": "GITHUB-BRANCH-PROTECTION-001",
+      "scope": "repository control visibility",
+      "status": "OPEN_NON_BLOCKING_FOR_PLANNING",
+      "detail": "La lettura API della branch protection di main restituisce HTTP 403 perché la feature richiede repository pubblico o GitHub Pro; l'enforcement corrente è UNKNOWN e G0 ne richiede la verifica/configurazione."
+    }
+  ],
+  "artifact_hashes": {
+    "docs/development_plan/OCOR_AI_FIRST_DEVELOPMENT_PLAN.md": "4c32e083d26f4ac7d2416da196c3516638b6364bd2eb811c3756e4354d43e167",
+    "docs/development_plan/OCOR_AUTONOMOUS_EXECUTION_HARNESS.md": "855798344bd4df2c3c0ea773ca30cd9cb62339ddf277aee983bb9ae8e230ecf3",
+    "docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json": "d3276e91a90adcb8dab99e90a5d14aefa0fee9ec7d3e7f7f074fd3776bf38a5a",
+    "docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.schema.json": "e56b0ba774d32a8bc489d353416dcc0824dcd20851cc7662d3f6a33d6f265792",
+    "docs/development_plan/OCOR_DEPENDENCY_DAG.mmd": "8ccdd7773e69f96570f39a720450f67a777ce84df83717acc3cd3ee34d774e35",
+    "docs/development_plan/OCOR_RISK_AND_SPIKE_REGISTER.md": "269710f2fa178285eccf168736bf7fb4b516884ddae48c540f9930a90f89a2dd",
+    "docs/development_plan/OCOR_TRACEABILITY_PLAN.csv": "9b1d20fad35147a336358abd41b231206bf654da28d2aa730e81a1ce5b91e9f1",
+    "docs/development_plan/OCOR_AGENT_CONTEXT_MANIFEST.json": "0aaf70dbf4e1b3af1b5eba52fb141d67ba48b1faf229f19cfa489822430d02b5",
+    "reports/planning/OCOR_REPOSITORY_INVENTORY.md": "42ce0a39764b0e2ec0989c3ace464961cf3cb80e80a72057f811d73ecc78a333",
+    "reports/planning/OCOR_REPOSITORY_INVENTORY.json": "2edc82d5a92de5c298db716a54c44b2842bf6c6ff94799af87ee849c5db58d04",
+    "reports/planning/OCOR_CURRENT_STATE_BASELINE.md": "e34edfb4157ed8e698dc425dea64b3aafa51bb283d093f26ed36459468e1cb2f",
+    "reports/planning/OCOR_CURRENT_STATE_BASELINE.json": "8ec659529cfc087295f274d51a41467f0b7f39f3d6a1c4bd0a2abdddfbf2111a",
+    "scripts/build_ocor_development_plan.py": "3aaf7882622856099c03be7d62d944ce6a6ac5e3e76b3d50666aacb3e38b9e79",
+    "reports/planning/OCOR_PLANNING_VALIDATION_REPORT.md": "302ca245bb30458ba2e22568063a41ddd4884a52aad0c792b87d7bcc2eb3d27b",
+    "scripts/validate_ocor_development_plan.py": "4d359258ba3aa1e95535b0bd879f36a98055acf3b7158c1e1bc04090cf362235"
+  },
+  "material_commit": "fab105cb3872de67ee6cc9ba1545f5c385663736",
+  "final_commit": "git:HEAD",
+  "final_commit_resolver": "git rev-parse HEAD",
+  "pr_url": "https://github.com/nepryoon/ocor-detailed-design/pull/10",
+  "validation_summary": {
+    "PASS": 37,
+    "NOT_EXECUTED": 2
+  }
+}

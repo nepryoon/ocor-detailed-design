@@ -1,0 +1,114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:ocor:development-backlog:1.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "plan_id",
+    "base_commit",
+    "selected_strategy",
+    "strategy_decision",
+    "workstreams",
+    "gates",
+    "tasks",
+    "graph_analysis"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "plan_id": {
+      "type": "string"
+    },
+    "base_commit": {
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "selected_strategy": {
+      "const": "D_EVIDENCE_DERIVED_HYBRID"
+    },
+    "strategy_decision": {
+      "type": "object"
+    },
+    "workstreams": {
+      "type": "object"
+    },
+    "gates": {
+      "type": "object"
+    },
+    "graph_analysis": {
+      "type": "object"
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "workstream",
+          "delivery_gate",
+          "objective",
+          "rationale",
+          "requirement_ids",
+          "normative_references",
+          "affected_components",
+          "expected_file_areas",
+          "prohibited_file_areas",
+          "hard_dependencies",
+          "soft_dependencies",
+          "parallel_group",
+          "integration_point",
+          "preconditions",
+          "bounded_agent_context_pack",
+          "assumptions",
+          "implementation_procedure",
+          "migration_and_compatibility_procedure",
+          "required_test_levels",
+          "validation_commands",
+          "acceptance_criteria",
+          "negative_acceptance_criteria",
+          "evidence_outputs",
+          "rollback_procedure",
+          "security_considerations",
+          "observability_requirements",
+          "expected_duration_days",
+          "ai_token_estimate",
+          "compute_estimate",
+          "uncertainty",
+          "confidence",
+          "failure_and_escalation_conditions",
+          "definition_of_done",
+          "coverage",
+          "parallel_wave"
+        ],
+        "properties": {
+          "id": {
+            "pattern": "^OCOR-DEV-[0-9]{4}$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 5
+          },
+          "workstream": {
+            "pattern": "^WS-(0[0-9]|1[0-3])$"
+          },
+          "delivery_gate": {
+            "pattern": "^G[0-7]$"
+          },
+          "expected_duration_days": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  }
+}

@@ -1,0 +1,245 @@
+{
+  "schema_version": "1.0",
+  "base_commit": "67cda4b44a8d27b831eb461b1e28d71e1d3398ab",
+  "authority": {
+    "DEC-209": "effective",
+    "IRB": "APPROVED_DESIGN",
+    "ADD": "v1.3",
+    "LLD": "v1.1",
+    "runtime_conformance": "NOT_ESTABLISHED_NO_GO",
+    "E1": 0,
+    "E2": 0,
+    "global_verified": 0
+  },
+  "environment": {
+    "python_host": "3.14.4",
+    "python_runtime_venv": "3.12.14",
+    "pytest": "9.1.1",
+    "jsonschema": "4.26.0",
+    "openapi_spec_validator": "0.9.0",
+    "grpcio_tools": "1.83.1",
+    "docker": "29.7.2",
+    "node": "20.20.2",
+    "unavailable": [
+      "psycopg in local runtime venv",
+      "markdownlint",
+      "mmdc",
+      "mypy",
+      "bandit",
+      "trivy",
+      "syft",
+      "grype"
+    ]
+  },
+  "executions": [
+    {
+      "command": "sha256sum -c inputs/normative/SHA256SUMS",
+      "exit_code": 0,
+      "pass": 8,
+      "fail": 0,
+      "skipped": 0,
+      "not_executed": 0,
+      "duration_seconds": "<1",
+      "reproducible": true
+    },
+    {
+      "command": "./.venv/bin/python3 scripts/verify.py --json",
+      "exit_code": 0,
+      "pass": 14,
+      "fail": 0,
+      "skipped": 0,
+      "not_executed": 0,
+      "duration_seconds": "<1",
+      "reproducible": true
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python -m pytest -q -rA",
+      "exit_code": 2,
+      "pass": 0,
+      "fail": 1,
+      "skipped": 0,
+      "not_executed": 5,
+      "duration_seconds": 0,
+      "reproducible": true,
+      "detail": "collection error: ModuleNotFoundError psycopg; five live PostgreSQL tests not collected"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python -m pytest -q -rA --ignore=tests/integration/test_postgres_outbox_live.py",
+      "exit_code": 0,
+      "pass": 104,
+      "fail": 0,
+      "skipped": 0,
+      "not_executed": 5,
+      "duration_seconds": 0.35,
+      "reproducible": true
+    }
+  ],
+  "runtime_fsm": {
+    "implemented_transition_count": 32,
+    "approved_transition_count": 44,
+    "status": "PARTIALLY_IMPLEMENTED",
+    "evidence": "ocor-runtime/src/ocor_runtime/c5_actions.py::_SPECS vs docs/OCOR_LLD_v1.1.md §3.2"
+  },
+  "capabilities": [
+    {
+      "capability": "Canonical JSON/digest kernel",
+      "required_by": "ADD §3.0; LLD §1.1",
+      "status": "IMPLEMENTED_AND_VERIFIED",
+      "current_implementation": "ocor_runtime/canonical.py; EV-001..004 and BA-04",
+      "current_evidence": "Qualifying multi-language contract evidence",
+      "missing_evidence": "Generated SDK parity",
+      "gap": "Generated SDK parity",
+      "risk": "MEDIUM"
+    },
+    {
+      "capability": "C1 compiler/IR",
+      "required_by": "ADD §3.1; LLD §2.1",
+      "status": "PARTIALLY_IMPLEMENTED",
+      "current_implementation": "SemanticCompiler validates/canonicalizes one envelope",
+      "current_evidence": "DSL, type checking, releases, diff, migration, generation",
+      "missing_evidence": "Architecture C1 exceeds current helper",
+      "gap": "Architecture C1 exceeds current helper",
+      "risk": "HIGH"
+    },
+    {
+      "capability": "C2 query gateway",
+      "required_by": "ADD §3.3; LLD §2.2",
+      "status": "ABSENT",
+      "current_implementation": "Current c2_identity.py is identity registry only",
+      "current_evidence": "Named queries, purpose/policy planning, evidence, watermarks",
+      "missing_evidence": "Current module label misallocates responsibility",
+      "gap": "Current module label misallocates responsibility",
+      "risk": "CRITICAL"
+    },
+    {
+      "capability": "C3 asserted state",
+      "required_by": "ADD §§2.3/3.6; LLD §2.3",
+      "status": "PARTIALLY_IMPLEMENTED",
+      "current_implementation": "In-memory AtomicOutboxStore; PostgreSQL fallback and five live tests",
+      "current_evidence": "Approved full commit bindings, qualifying backend campaign",
+      "missing_evidence": "Local live suite cannot collect without psycopg",
+      "gap": "Local live suite cannot collect without psycopg",
+      "risk": "HIGH"
+    },
+    {
+      "capability": "C4 projections",
+      "required_by": "ADD §2.2; LLD §2.4",
+      "status": "ABSENT",
+      "current_implementation": "Current c4_marking.py implements marking lattice only",
+      "current_evidence": "TypeDB/Jena adapters, watermarks, rebuild, drift",
+      "missing_evidence": "No projection backend code",
+      "gap": "No projection backend code",
+      "risk": "CRITICAL"
+    },
+    {
+      "capability": "C5 event backbone",
+      "required_by": "ADD §§2.2/3.8; LLD §2.5",
+      "status": "ABSENT",
+      "current_implementation": "Current c5_actions.py is an obsolete 32-transition action FSM",
+      "current_evidence": "Kafka/Strimzi, registry, replay, DLQ, quarantine",
+      "missing_evidence": "Component naming conflicts with approved allocation",
+      "gap": "Component naming conflicts with approved allocation",
+      "risk": "CRITICAL"
+    },
+    {
+      "capability": "C6 governed action engine",
+      "required_by": "ADD §4.1; LLD §§2.6/3",
+      "status": "PARTIALLY_IMPLEMENTED",
+      "current_implementation": "CapabilityAuthority plus action FSM/emission helpers in C5/C6/C7 labels",
+      "current_evidence": "Exact 44 transitions, Human Gate, Decision, EMISSION-FENCE, safety",
+      "missing_evidence": "12 transitions absent and durable effects incomplete",
+      "gap": "12 transitions absent and durable effects incomplete",
+      "risk": "CRITICAL"
+    },
+    {
+      "capability": "C7 causal runtime",
+      "required_by": "ADD §4.2; LLD §2.7",
+      "status": "ABSENT",
+      "current_implementation": "Current c7_emission.py is emission fence",
+      "current_evidence": "Scenario branches, interventions, counterfactuals, uncertainty, sealing",
+      "missing_evidence": "No causal symbols/tests",
+      "gap": "No causal symbols/tests",
+      "risk": "CRITICAL"
+    },
+    {
+      "capability": "C8 governed agent kernel",
+      "required_by": "ADD §4.3; LLD §2.8",
+      "status": "PARTIALLY_IMPLEMENTED",
+      "current_implementation": "Sandbox, token budget, identify/abstain model wrapper",
+      "current_evidence": "AgentRun/Task/Assignment/Commitment/Handoff/Dissent and governed tools",
+      "missing_evidence": "No durable multi-agent orchestration",
+      "gap": "No durable multi-agent orchestration",
+      "risk": "HIGH"
+    },
+    {
+      "capability": "Full Governed Agent Memory",
+      "required_by": "DEC-208; ADD Part II; LLD §2.8.1–2.8.8",
+      "status": "ABSENT",
+      "current_implementation": "No runtime source, schema or test implementation",
+      "current_evidence": "All 8 kinds, 7 scopes, lifecycle, stores, retrieval, deletion, replay, promotion",
+      "missing_evidence": "FGM-01–20 absent",
+      "gap": "FGM-01–20 absent",
+      "risk": "CRITICAL"
+    },
+    {
+      "capability": "Security control plane",
+      "required_by": "ADD §5; LLD §4",
+      "status": "DOCUMENTATION_ONLY",
+      "current_implementation": "In-process marking and capability primitives",
+      "current_evidence": "OPA, Keycloak, SPIFFE/SPIRE, OpenBao, mTLS, dual control",
+      "missing_evidence": "No real control-plane integration",
+      "gap": "No real control-plane integration",
+      "risk": "CRITICAL"
+    },
+    {
+      "capability": "Deployment and recovery",
+      "required_by": "ADD §6; LLD §5",
+      "status": "ABSENT",
+      "current_implementation": "CI starts PostgreSQL service only",
+      "current_evidence": "Compose, Helm, observability, backup, restore, air-gap",
+      "missing_evidence": "No deploy directory or runbooks",
+      "gap": "No deploy directory or runbooks",
+      "risk": "HIGH"
+    },
+    {
+      "capability": "BA-01–BA-08",
+      "required_by": "LLD §7.1",
+      "status": "COMPATIBILITY_ONLY",
+      "current_implementation": "Files named BA exercise mostly in-memory abstractions; one live PostgreSQL slice exists",
+      "current_evidence": "Real selected-component cases for all BA IDs",
+      "missing_evidence": "Legacy names do not establish architectural BA evidence",
+      "gap": "Legacy names do not establish architectural BA evidence",
+      "risk": "CRITICAL"
+    },
+    {
+      "capability": "FGM-01–FGM-20",
+      "required_by": "LLD §7.2",
+      "status": "ABSENT",
+      "current_implementation": "Only documented future oracles",
+      "current_evidence": "Twenty qualifying real-backend cases",
+      "missing_evidence": "Full-memory runtime remains NO-GO",
+      "gap": "Full-memory runtime remains NO-GO",
+      "risk": "CRITICAL"
+    },
+    {
+      "capability": "Synthetic mission thread",
+      "required_by": "LLD §7.3",
+      "status": "COMPATIBILITY_ONLY",
+      "current_implementation": "EV-035 is an in-process Python path using no C2 gateway/C4/C5/C7 causal/memory services",
+      "current_evidence": "Real selected-service C1-C8+memory thread",
+      "missing_evidence": "Current test name cannot prove full architecture",
+      "gap": "Current test name cannot prove full architecture",
+      "risk": "CRITICAL"
+    },
+    {
+      "capability": "CI merge prevention",
+      "required_by": "Repository workflows",
+      "status": "UNKNOWN",
+      "current_implementation": "PR workflow exists and ran green on DEC-209; branch-protection API returned HTTP 403",
+      "current_evidence": "Explicit G0-G7 jobs, no mandatory skip, readable/enforced protection rules",
+      "missing_evidence": "Current workflow mixes legacy runtime/document gates and enforcement cannot be proven",
+      "gap": "Current workflow mixes legacy runtime/document gates and enforcement cannot be proven",
+      "risk": "HIGH"
+    }
+  ]
+}
