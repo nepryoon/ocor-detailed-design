@@ -1,0 +1,39 @@
+{
+  "claims": {"E1": 0, "E2": 0, "Production_readiness": "NO_GO", "runtime_conformance": "NOT_ESTABLISHED"},
+  "commands": [
+    {"command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0023.py against pinned real Qdrant 1.15.1", "result": {"failed": 0, "not_executed": 0, "passed": 8, "skipped": 0}, "status": "PASS"},
+    {"command": "pytest -q ocor-runtime/tests with isolated live PostgreSQL 16.14, Kafka and Qdrant", "result": {"failed": 0, "not_executed": 0, "passed": 447, "skipped": 0}, "status": "PASS"},
+    {"command": "ruff check vector partition spike and task tests; git diff --check", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"}
+  ],
+  "commit": "dedd13ed0eb8b43778c9c7eaf95337a65102c6ea",
+  "created_at": "2026-09-02T18:18:33Z",
+  "environment": {
+    "docker": "29.7.2",
+    "python": "3.12.14",
+    "qdrant": "1.15.1",
+    "qdrant_image": "qdrant/qdrant:v1.15.1@sha256:d122138f76868edba68d36cb0833139c1d1761f00f09e48e61f8314196e6a4c6",
+    "ruff": "0.16.1"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0023.py": "f39482ba746db11df8b3dadb5501b456e24c44d929f13e05959b6840408b849b",
+    "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537",
+    "spikes/vector_partition/oracle.py": "8cd8aa1cb3a912c9f679e47dbba55d8e3cd5326d741c87131a0c38865f1768ad"
+  },
+  "raw_output_sha256": "34c6a438a2e96e401c8407eb8ec5ec3fb0e194c4364f49e936b745626cb7ef94",
+  "requirement_results": [
+    {"case_id": "OCOR-DEV-0023-VECTOR-PARTITION", "command": "pytest real Qdrant physical-partition and non-interference matrix", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 8, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0023-REGRESSION", "command": "pytest -q ocor-runtime/tests with isolated live PostgreSQL 16.14, Kafka and Qdrant", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 447, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0023-QUALITY", "command": "ruff check vector partition spike and task tests; git diff --check", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"}
+  ],
+  "residual_risks": [
+    "This G2 spike qualifies physical vector partition routing on real Qdrant; it is not FGM-16 or final runtime-conformance evidence.",
+    "The timing assertion is a bounded local envelope, not a Production SLO or formal side-channel proof.",
+    "Full Governed Agent Memory lifecycle and deletion semantics remain for their downstream tasks and FGM campaign.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and compensating controls are not equivalent."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated spike commits; the campaign removes its exact generated Qdrant container and changes no runtime data or approved backend selection.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0023"
+}

@@ -39,6 +39,16 @@
       "path": "OCOR-DEV-0022.log",
       "sha256": "1d9c6d7eb37c9a82dd9e4ec491b947c2f2bf15bfa1ccc94f1978fd6b4dc62bf8",
       "task_id": "OCOR-DEV-0022-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0023.json",
+      "sha256": "08f7cef8a6866f7a284ff5b12df2de9b726b5097b8387598cf6e195cc53389c8",
+      "task_id": "OCOR-DEV-0023"
+    },
+    {
+      "path": "OCOR-DEV-0023.log",
+      "sha256": "34c6a438a2e96e401c8407eb8ec5ec3fb0e194c4364f49e936b745626cb7ef94",
+      "task_id": "OCOR-DEV-0023-RAW"
     }
   ],
   "created_at": "2026-09-02T04:25:45Z",
@@ -151,6 +161,33 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0022"
+    },
+    {
+      "case_id": "OCOR-DEV-0023-VECTOR-PARTITION",
+      "command": "pytest real Qdrant physical-partition and non-interference matrix",
+      "evidence_path": "OCOR-DEV-0023.json",
+      "raw_output_path": "OCOR-DEV-0023.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0023"
+    },
+    {
+      "case_id": "OCOR-DEV-0023-QUALITY",
+      "command": "ruff check vector partition spike and task tests; git diff --check",
+      "evidence_path": "OCOR-DEV-0023.json",
+      "raw_output_path": "OCOR-DEV-0023.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0023"
+    },
+    {
+      "case_id": "OCOR-DEV-0023-REGRESSION",
+      "command": "pytest -q ocor-runtime/tests with isolated live PostgreSQL 16.14, Kafka and Qdrant",
+      "evidence_path": "OCOR-DEV-0023.json",
+      "raw_output_path": "OCOR-DEV-0023.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0023"
     }
   ],
   "schema_version": "1.0"
