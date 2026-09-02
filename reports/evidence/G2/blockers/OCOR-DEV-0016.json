@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0016",
+  "delivery_gate": "G2",
+  "status": "WAITING_EXTERNAL_SERVICE",
+  "recorded_against_commit": "256f05b4e5c1787a1d56cb9947c5b094e541d815",
+  "inputs_tree_sha": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+  "mandatory_test_disposition": "NOT_EXECUTED",
+  "summary": "The selected C3 backend campaign requires real TerminusDB, but no approved TerminusDB image, binary, endpoint, or credential is available in the execution environment.",
+  "required_services": [
+    "TerminusDB"
+  ],
+  "observations": [
+    {
+      "check": "local Docker image and container inventory for TerminusDB",
+      "outcome": "ABSENT"
+    },
+    {
+      "check": "local executable and repository deployment-artifact inventory for TerminusDB",
+      "outcome": "ABSENT"
+    }
+  ],
+  "external_action_required": "Preload an approved digest-pinned TerminusDB deployment artifact, or provide an already approved reachable TerminusDB endpoint and its intended credentials; then clear the blocker and execute OCOR-DEV-0016 without substituting PostgreSQL.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "production_readiness": "NO-GO",
+    "task_accepted": false
+  }
+}
