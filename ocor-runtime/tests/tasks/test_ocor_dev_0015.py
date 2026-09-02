@@ -9,6 +9,10 @@ import pytest
 from ocor_runtime.c3.ports import GovernedCanonicalCommitCommand
 from ocor_runtime.kernel.governed_context import GovernedContext
 
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
+
 from spikes.c3_atomicity.oracle import (
     AtomicCommitOracle,
     AtomicVisibilityError,
@@ -20,7 +24,7 @@ DIGEST_A = "urn:sha256:" + "a" * 64
 DIGEST_B = "urn:sha256:" + "b" * 64
 DIGEST_C = "urn:sha256:" + "c" * 64
 DIGEST_D = "urn:sha256:" + "d" * 64
-WORKER = Path("spikes/c3_atomicity/crash_worker.py").resolve()
+WORKER = REPOSITORY_ROOT / "spikes/c3_atomicity/crash_worker.py"
 
 
 @pytest.fixture
