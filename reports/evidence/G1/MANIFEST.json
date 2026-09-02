@@ -1,0 +1,46 @@
+{
+  "artifacts": [
+    {
+      "path": "OCOR-DEV-0007.json",
+      "sha256": "8cd207398f57bdc1dc69ac1c2031f6aab6a92e8d90c7991c8a25076509a25810",
+      "task_id": "OCOR-DEV-0007"
+    },
+    {
+      "path": "OCOR-DEV-0007.log",
+      "sha256": "fe529cca1ab9c1f926e3c4f59916b98b3df3cfd350b99856551aaa6ca26c6817",
+      "task_id": "OCOR-DEV-0007-RAW"
+    }
+  ],
+  "created_at": "2026-09-02T03:14:35Z",
+  "gate": "G1",
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0007-CANONICAL-KERNEL",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0007.py",
+      "evidence_path": "OCOR-DEV-0007.json",
+      "raw_output_path": "OCOR-DEV-0007.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0007"
+    },
+    {
+      "case_id": "OCOR-DEV-0007-QUALITY",
+      "command": "ruff check canonical kernel and task tests; git diff --check",
+      "evidence_path": "OCOR-DEV-0007.json",
+      "raw_output_path": "OCOR-DEV-0007.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0007"
+    },
+    {
+      "case_id": "OCOR-DEV-0007-REGRESSION",
+      "command": "pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14",
+      "evidence_path": "OCOR-DEV-0007.json",
+      "raw_output_path": "OCOR-DEV-0007.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0007"
+    }
+  ],
+  "schema_version": "1.0"
+}
