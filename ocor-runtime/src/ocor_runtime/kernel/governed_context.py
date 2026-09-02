@@ -9,12 +9,10 @@ from typing import Any, ClassVar
 
 from ..errors import CanonicalizationError
 from .canonical import (
-    IdentifierError,
     canonical_bytes,
     canonical_digest,
     canonical_set,
     parse_i_json,
-    validate_correlation_id,
     verify_canonical_digest,
 )
 
@@ -95,6 +93,18 @@ def _required_array(field: str, value: object, *, semantic_set: bool) -> tuple[s
         raise GovernedContextError("GOVERNED_CONTEXT_INVALID", str(exc)) from exc
 
 
+def _required_mapping_array(
+    field: str, value: object, *, semantic_set: bool
+) -> tuple[str, ...]:
+    """Validate a JSON-schema array at a mapping boundary without coercion."""
+
+    if not isinstance(value, list):
+        raise GovernedContextError(
+            "GOVERNED_CONTEXT_INVALID", f"{field} must be a non-empty array"
+        )
+    return _required_array(field, value, semantic_set=semantic_set)
+
+
 @dataclass(frozen=True, slots=True)
 class GovernedContext:
     """The exact normative eleven-field GovernedContext v1.2 record."""
@@ -138,12 +148,7 @@ class GovernedContext:
             "policy_bundle_digest",
         ):
             _required_digest(field, getattr(self, field))
-        try:
-            validate_correlation_id(self.correlation_id)
-        except IdentifierError as exc:
-            raise GovernedContextError(
-                "GOVERNED_CONTEXT_INVALID", f"invalid correlation_id: {exc}"
-            ) from exc
+        _required_string("correlation_id", self.correlation_id)
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, object]) -> GovernedContext:
@@ -170,13 +175,13 @@ class GovernedContext:
             tenant_id=value["tenant_id"],  # type: ignore[arg-type]
             organization_id=value["organization_id"],  # type: ignore[arg-type]
             domain_id=value["domain_id"],  # type: ignore[arg-type]
-            compartments=_required_array(
+            compartments=_required_mapping_array(
                 "compartments", value["compartments"], semantic_set=True
             ),
             classification_marking_ref=value["classification_marking_ref"],  # type: ignore[arg-type]
             purpose=value["purpose"],  # type: ignore[arg-type]
             effective_principal_id=value["effective_principal_id"],  # type: ignore[arg-type]
-            actor_chain=_required_array(
+            actor_chain=_required_mapping_array(
                 "actor_chain", value["actor_chain"], semantic_set=False
             ),
             ontology_release_digest=value["ontology_release_digest"],  # type: ignore[arg-type]
@@ -241,15 +246,20 @@ class GovernedContextCodec:
     """Verify the same GCS and digest at JSON, OpenAPI and Proto boundaries."""
 
     @staticmethod
+    def _require_binding(binding: object) -> VerifiedGovernedContextBinding:
+        if not isinstance(binding, VerifiedGovernedContextBinding):
+            raise GovernedContextError(
+                "GOVERNED_CONTEXT_MISMATCH", "a verified binding is required"
+            )
+        return binding
+
+    @staticmethod
     def _admit(
         candidate: GovernedContext,
         binding: VerifiedGovernedContextBinding,
         claimed_digest: str,
     ) -> GovernedContext:
-        if not isinstance(binding, VerifiedGovernedContextBinding):
-            raise GovernedContextError(
-                "GOVERNED_CONTEXT_MISMATCH", "a verified binding is required"
-            )
+        binding = GovernedContextCodec._require_binding(binding)
         if candidate != binding.expected:
             differing = [
                 field
@@ -329,6 +339,7 @@ class GovernedContextCodec:
     ) -> GovernedContext:
         """Rebuild omitted identity fields only from the verified binding."""
 
+        binding = cls._require_binding(binding)
         values = binding.expected.to_mapping()
         try:
             for field in PROTO_DECLARED_FIELDS:
