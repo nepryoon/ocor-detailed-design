@@ -1,0 +1,33 @@
+{
+  "claims": {"E1": 0, "E2": 0, "Production_readiness": "NO_GO", "runtime_conformance": "NOT_ESTABLISHED"},
+  "commands": [
+    {"command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0015.py", "result": {"failed": 0, "not_executed": 0, "passed": 11, "skipped": 0}, "status": "PASS"},
+    {"command": "pytest -q ocor-runtime/tests with live PostgreSQL 16.14", "result": {"failed": 0, "not_executed": 0, "passed": 411, "skipped": 0}, "status": "PASS"},
+    {"command": "ruff check C3 atomicity spike and task tests; git diff --check", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"}
+  ],
+  "commit": "c9f51a3b0263fe5b936d6d1bea9bab35a7638aeb",
+  "created_at": "2026-09-02T04:25:45Z",
+  "environment": {"postgres": "16.14", "python": "3.12.14", "ruff": "0.16.1", "sqlite": "3.53.1", "uv": "0.5.9"},
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0015.py": "f8b1b58c9619c79a1de855db280d91c5b1f62f392a807c6422c4ea3a349a0bb4",
+    "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537",
+    "spikes/c3_atomicity/crash_worker.py": "22de05882afdda012a5139e0c79526d891b7dde19597f0bf3dd15ff6990b6cbc",
+    "spikes/c3_atomicity/oracle.py": "bb4836a34fcdd72855f74ea724cf8a80b3dc7649e4e9a0475897b82a77ad7156"
+  },
+  "raw_output_sha256": "e466b6f9e0ad1eac72c51a237f9df6bcacefba2f50d0a69b8f415134e0054212",
+  "requirement_results": [
+    {"case_id": "OCOR-DEV-0015-CRASH-MATRIX", "command": "pytest process-crash revision/state/commit/idempotency/outbox matrix", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 11, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0015-REGRESSION", "command": "pytest -q ocor-runtime/tests with live PostgreSQL 16.14", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 411, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0015-QUALITY", "command": "ruff check C3 atomicity spike and task tests; git diff --check", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"}
+  ],
+  "residual_risks": [
+    "SQLite is the real file-backed reference oracle for the all-or-none hypothesis, not the selected C3 backend and not BA evidence.",
+    "OCOR-DEV-0016 must still qualify PostgreSQL locking, isolation, concurrency and reconciliation behaviour before a selected backend claim.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and compensating controls are not equivalent."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated spike commits; no runtime data migration or component selection is changed.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0015"
+}

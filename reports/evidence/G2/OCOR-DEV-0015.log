@@ -1,0 +1,38 @@
+OCOR-DEV-0015 qualifying raw evidence
+observed_at=2026-09-02T04:25:45Z
+implementation_commit=c9f51a3b0263fe5b936d6d1bea9bab35a7638aeb
+inputs_tree=60a73de8e47b38e94aeb0e2b8dedc689fab6eb35
+
+$ pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0015.py
+...........                                                              [100%]
+11 passed in 0.29s
+
+Crash process exit code at every injected boundary: 86.
+Pre-commit durable counts (aggregate, commit, idempotency, outbox): (0,0,0,0).
+Post-commit/pre-ACK durable counts: (1,1,1,1).
+Identical retry receipt: byte-identical PASS.
+Changed-content key reuse: IDEMPOTENCY_CONFLICT PASS.
+Injected partial visibility: oracle rejection PASS.
+
+$ pytest -q ocor-runtime/tests with live PostgreSQL 16.14
+........................................................................ [ 17%]
+........................................................................ [ 35%]
+........................................................................ [ 52%]
+........................................................................ [ 70%]
+........................................................................ [ 87%]
+...................................................                      [100%]
+411 passed in 5.89s
+
+$ ruff check spikes/c3_atomicity ocor-runtime/tests/tasks/test_ocor_dev_0015.py
+All checks passed!
+$ git diff --check
+PASS (no output)
+
+Qualifying totals: 11 targeted PASS; 411 regression PASS; 0 failed; 0 skipped;
+0 xfail; 0 collection errors; 0 NOT_EXECUTED.
+Versions: SQLite 3 (Python 3.12.14 stdlib); PostgreSQL 16.14; uv 0.5.9;
+Python 3.12.14; ruff 0.16.1.
+SQLite is a real file-backed process-crash reference oracle for this hypothesis,
+not selected C3 backend or BA evidence. E1=0, E2=0, runtime conformance is not
+established and Production remains NO-GO. Server-side main protection remains
+EXTERNAL_CONTROL_PENDING; compensating controls are not equivalent.
