@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 
+# isort: split
 from ocor_runtime.kernel.governance import (
     Authority,
     AuthorityRequest,
