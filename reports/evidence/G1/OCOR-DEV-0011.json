@@ -1,0 +1,31 @@
+{
+  "claims": {"E1": 0, "E2": 0, "Production_readiness": "NO_GO", "runtime_conformance": "NOT_ESTABLISHED"},
+  "commands": [
+    {"command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0011.py", "result": {"failed": 0, "not_executed": 0, "passed": 18, "skipped": 0}, "status": "PASS"},
+    {"command": "pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14", "result": {"failed": 0, "not_executed": 0, "passed": 324, "skipped": 0}, "status": "PASS"},
+    {"command": "ruff check C1 ports and task tests; git diff --check", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"}
+  ],
+  "commit": "5879878c2759a04ab6a150ca4f1b97eebe310d24",
+  "created_at": "2026-09-02T03:52:58Z",
+  "environment": {"postgres": "16.14", "python": "3.12.14", "ruff": "0.16.1", "uv": "0.12.5"},
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c1/ports.py": "9a44dd13f22974542700a8d8956c352834d3b6c2134474529e9a25bfddac29e0",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0011.py": "e06d69bb753f372c005ebf4b737c2c606681c9cd9b0477ef21e3919705265f8e",
+    "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537"
+  },
+  "raw_output_sha256": "2d801939c627e7acecaa58995d72f7d440411b76223b16ada1da9b2b69688a4b",
+  "requirement_results": [
+    {"case_id": "OCOR-DEV-0011-C1-PORTS", "command": "pytest typed source, IR release, diagnostic and determinism cases", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 18, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0011-REGRESSION", "command": "pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 324, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0011-QUALITY", "command": "ruff check C1 ports and task tests; git diff --check", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"}
+  ],
+  "residual_risks": [
+    "These are C1 boundary contracts; parser/compiler implementations and signed release publication are assigned to subsequent C1 tasks.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and compensating controls are not equivalent."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated task commits and revalidate the prior cumulative G1 manifest.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0011"
+}

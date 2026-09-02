@@ -1,0 +1,27 @@
+OCOR-DEV-0011 qualifying raw evidence
+observed_at=2026-09-02T03:52:58Z
+implementation_commit=5879878c2759a04ab6a150ca4f1b97eebe310d24
+inputs_tree=60a73de8e47b38e94aeb0e2b8dedc689fab6eb35
+
+$ pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0011.py
+..................                                                       [100%]
+18 passed in 0.06s
+
+$ pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14
+........................................................................ [ 22%]
+........................................................................ [ 44%]
+........................................................................ [ 66%]
+........................................................................ [ 88%]
+....................................                                     [100%]
+324 passed in 4.08s
+
+$ ruff check ocor-runtime/src/ocor_runtime/c1/ports.py ocor-runtime/tests/tasks/test_ocor_dev_0011.py
+All checks passed!
+$ git diff --check
+PASS (no output)
+
+Qualifying totals: 18 targeted PASS; 324 regression PASS; 0 failed; 0 skipped;
+0 xfail; 0 collection errors; 0 NOT_EXECUTED.
+Versions: uv 0.12.5; Python 3.12.14; ruff 0.16.1; PostgreSQL 16.14.
+This is G1 typed-port evidence only; E1=0, E2=0, runtime conformance is not
+established and Production remains NO-GO.
