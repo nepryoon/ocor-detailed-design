@@ -1,0 +1,13 @@
+{
+  "name": "OCOR deterministic Python toolchain",
+  "image": "python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2",
+  "containerEnv": {
+    "OCOR_POSTGRES_IMAGE": "postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+    "OCOR_PYTHON_VERSION": "3.11.15",
+    "OCOR_UV_VERSION": "0.12.5",
+    "PYTHONHASHSEED": "0",
+    "TZ": "UTC"
+  },
+  "postCreateCommand": "test \"$(python --version 2>&1)\" = \"Python 3.11.15\" && test \"$(uv --version)\" = \"uv 0.12.5 (x86_64-unknown-linux-gnu)\" && uv sync --project ocor-runtime --frozen --extra test",
+  "remoteUser": "root"
+}
