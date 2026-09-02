@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import hashlib
+import shutil
+import struct
+import subprocess
 from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
@@ -31,6 +34,67 @@ def test_rfc_8785_number_and_string_vectors_produce_stable_bytes():
         b'{"literals":[null,true,false],"numbers":[333333333.3333333,1e+30,4.5,0.002,1e-27],'
         b'"string":"\xe2\x82\xac$\\u000f\\nA\'B\\\"\\\\\\\"/"}'
     )
+
+
+@pytest.mark.parametrize(
+    ("binary64_hex", "expected"),
+    [
+        ("0000000000000000", "0"),
+        ("8000000000000000", "0"),
+        ("0000000000000001", "5e-324"),
+        ("8000000000000001", "-5e-324"),
+        ("7fefffffffffffff", "1.7976931348623157e+308"),
+        ("ffefffffffffffff", "-1.7976931348623157e+308"),
+        ("4340000000000000", "9007199254740992"),
+        ("c340000000000000", "-9007199254740992"),
+        ("4430000000000000", "295147905179352830000"),
+        ("44b52d02c7e14af5", "9.999999999999997e+22"),
+        ("44b52d02c7e14af6", "1e+23"),
+        ("44b52d02c7e14af7", "1.0000000000000001e+23"),
+        ("444b1ae4d6e2ef4e", "999999999999999700000"),
+        ("444b1ae4d6e2ef4f", "999999999999999900000"),
+        ("444b1ae4d6e2ef50", "1e+21"),
+        ("3eb0c6f7a0b5ed8c", "9.999999999999997e-7"),
+        ("3eb0c6f7a0b5ed8d", "0.000001"),
+        ("3e7ad7f29abcaf48", "1e-7"),
+    ],
+)
+def test_rfc_8785_appendix_b_binary64_vectors(binary64_hex: str, expected: str):
+    value = struct.unpack(">d", bytes.fromhex(binary64_hex))[0]
+    assert canonical_bytes(value) == expected.encode()
+
+
+def test_exact_two_to_the_53_integer_has_independent_golden_digest():
+    value = 9_007_199_254_740_992
+    assert canonical_bytes(value) == b"9007199254740992"
+    assert parse_i_json("9007199254740992") == value
+    assert canonical_digest(value) == (
+        "urn:sha256:c681da39d7273a6a24c15c9cac3a75526ff2ecf8ba4ee60346a0c70c8163bdb2"
+    )
+
+
+@pytest.mark.parametrize(
+    "document",
+    ["9007199254740992", "-9007199254740992", "1e23", "1e-7", "0.000001"],
+)
+def test_number_serialization_matches_node_ecmascript_boundary(document: str):
+    node = shutil.which("node")
+    assert node is not None, "Node.js is mandatory for the cross-language JCS oracle"
+    result = subprocess.run(
+        [
+            node,
+            "-e",
+            "process.stdout.write(JSON.stringify(JSON.parse(process.argv[1])))",
+            "--",
+            document,
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        timeout=10,
+    )
+    assert result.returncode == 0, result.stderr
+    assert canonical_bytes(parse_i_json(document)).decode() == result.stdout
 
 
 def test_utf16_property_order_matches_rfc_8785():
@@ -109,10 +173,19 @@ def test_malformed_identifiers_are_rejected(value: str):
     [
         '{"a":1,"a":2}',
         '{"value":NaN}',
-        '{"value":9007199254740992}',
+        '{"value":9007199254740993}',
         '"\ud800"',
     ],
 )
 def test_duplicate_keys_and_non_i_json_values_are_rejected(document: str):
     with pytest.raises(CanonicalizationError):
         parse_i_json(document)
+
+
+def test_kernel_errors_expose_stable_bounded_reason_codes():
+    with pytest.raises(IdentifierError) as identifier:
+        validate_correlation_id("not-a-uuid")
+    with pytest.raises(TimestampError) as timestamp:
+        parse_utc_timestamp("2026-09-02T00:00:00+00:00")
+    assert identifier.value.code == "IDENTIFIER_INVALID"
+    assert timestamp.value.code == "TIMESTAMP_INVALID"

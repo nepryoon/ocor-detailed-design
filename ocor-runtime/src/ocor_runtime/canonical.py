@@ -100,6 +100,24 @@ def _serialize_float(value: float) -> str:
     return sign + body
 
 
+def _serialize_integer(value: int) -> str:
+    """Serialize integers only when their value survives the binary64 boundary."""
+
+    if abs(value) <= MAX_SAFE_INTEGER:
+        return str(value)
+    try:
+        binary64 = float(value)
+    except OverflowError as exc:
+        raise CanonicalizationError(
+            f"integer {value} is not representable as an IEEE-754 binary64 value"
+        ) from exc
+    if not math.isfinite(binary64) or int(binary64) != value:
+        raise CanonicalizationError(
+            f"integer {value} is not exactly representable as an IEEE-754 binary64 value"
+        )
+    return _serialize_float(binary64)
+
+
 def _serialize(value: Any) -> str:
     if value is None:
         return "null"
@@ -110,11 +128,7 @@ def _serialize(value: Any) -> str:
     if isinstance(value, str):
         return _serialize_string(value)
     if isinstance(value, int):
-        if abs(value) > MAX_SAFE_INTEGER:
-            raise CanonicalizationError(
-                f"integer {value} exceeds the interoperable IEEE-754 safe range"
-            )
-        return str(value)
+        return _serialize_integer(value)
     if isinstance(value, float):
         return _serialize_float(value)
     if isinstance(value, Mapping):
@@ -177,4 +191,3 @@ def load_i_json(document: str | bytes | bytearray) -> Any:
         raise CanonicalizationError(f"invalid I-JSON: {exc}") from exc
     canonicalize(parsed)
     return parsed
-

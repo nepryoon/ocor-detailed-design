@@ -3,7 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from ocor_runtime.c1_compiler import SemanticCompiler
 from ocor_runtime.c2_identity import (
     IdentityRecord,
@@ -11,7 +10,11 @@ from ocor_runtime.c2_identity import (
     ResolutionStatus,
 )
 from ocor_runtime.canonical import canonical_sha256, canonicalize_json
-from ocor_runtime.errors import CanonicalizationError, IdentityConflictError, SchemaValidationError
+from ocor_runtime.errors import (
+    CanonicalizationError,
+    IdentityConflictError,
+    SchemaValidationError,
+)
 
 pytestmark = pytest.mark.acceptance
 SCHEMAS = Path(__file__).resolve().parents[2] / "schemas"
@@ -34,9 +37,10 @@ def test_ev_002_rfc8785_ecmascript_number_boundaries_and_escaping():
 
 
 def test_ev_003_non_i_json_values_fail_closed():
-    for value in (float("nan"), float("-inf"), 9_007_199_254_740_992, {1: "x"}):
+    for value in (float("nan"), float("-inf"), 9_007_199_254_740_993, {1: "x"}):
         with pytest.raises(CanonicalizationError):
             canonicalize_json(value)
+    assert canonicalize_json(9_007_199_254_740_992) == "9007199254740992"
     with pytest.raises(CanonicalizationError):
         canonicalize_json("\ud800")
 
@@ -151,4 +155,3 @@ def test_ev_010_identity_evidence_requires_threshold_and_margin_and_records_are_
                 "urn:ocor:identity:alice", attributes={"country": "US"}
             )
         )
-

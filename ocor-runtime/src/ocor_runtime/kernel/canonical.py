@@ -13,7 +13,7 @@ from itertools import pairwise
 from typing import Any, TypeVar
 
 from ..canonical import canonicalize, load_i_json
-from ..errors import CanonicalizationError
+from ..errors import CanonicalizationError, OCORError
 
 T = TypeVar("T")
 DIGEST = re.compile(r"urn:sha256:[0-9a-f]{64}")
@@ -24,12 +24,22 @@ UTC_TIMESTAMP = re.compile(
 )
 
 
-class IdentifierError(ValueError):
+class KernelBoundaryError(OCORError, ValueError):
+    """A typed kernel-boundary failure with a stable bounded reason code."""
+
+    code = "KERNEL_BOUNDARY_INVALID"
+
+
+class IdentifierError(KernelBoundaryError):
     """An identifier is absent, non-canonical or outside RFC 4122."""
 
+    code = "IDENTIFIER_INVALID"
 
-class TimestampError(ValueError):
+
+class TimestampError(KernelBoundaryError):
     """A timestamp cannot be represented at an OCOR UTC boundary."""
+
+    code = "TIMESTAMP_INVALID"
 
 
 def canonical_bytes(value: Any) -> bytes:
@@ -80,7 +90,7 @@ def parse_utc_timestamp(value: str) -> datetime:
     try:
         parsed = datetime.fromisoformat(value.removesuffix("Z") + "+00:00")
     except ValueError as exc:
-        raise TimestampError(f"invalid UTC timestamp: {exc}") from exc
+        raise TimestampError("invalid UTC timestamp") from exc
     if parsed.utcoffset() != UTC.utcoffset(parsed):
         raise TimestampError("timestamp is not UTC")
     return parsed
