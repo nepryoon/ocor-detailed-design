@@ -1,0 +1,216 @@
+name: OCOR supply-chain gates
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  supply-chain:
+    name: supply-chain
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    continue-on-error: false
+    env:
+      OCOR_SCAN_ROOT: .
+      OCOR_SCAN_OUTPUT: /tmp/ocor-supply-chain
+      OCOR_SCANNER_VERSION: 1.0.0
+    steps:
+      - name: Checkout exact revision
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run pinned in-repository scanners
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+
+          import ast
+          import hashlib
+          import json
+          import os
+          import re
+          import sys
+          import tomllib
+          from pathlib import Path
+
+          root = Path(os.environ["OCOR_SCAN_ROOT"]).resolve()
+          output = Path(os.environ["OCOR_SCAN_OUTPUT"]).resolve()
+          version = os.environ["OCOR_SCANNER_VERSION"]
+          output.mkdir(parents=True, exist_ok=True)
+          excluded = {".git", ".ocor", ".venv", "__pycache__"}
+          text_suffixes = {".json", ".md", ".proto", ".py", ".toml", ".ttl", ".txt", ".yaml", ".yml"}
+
+          def candidates(suffixes: set[str]):
+              for path in sorted(root.rglob("*")):
+                  if not path.is_file() or path.suffix.lower() not in suffixes:
+                      continue
+                  relative = path.relative_to(root)
+                  if excluded & set(relative.parts) or output == path or output in path.parents:
+                      continue
+                  if path.stat().st_size <= 2_000_000:
+                      yield path, relative.as_posix()
+
+          def write(name: str, findings: list[dict[str, object]]) -> None:
+              payload = {
+                  "blocking_findings": len(findings),
+                  "findings": sorted(findings, key=lambda item: (str(item["path"]), str(item["rule_id"]))),
+                  "result": "FAIL" if findings else "PASS",
+                  "scanner": f"ocor-{name}-scanner",
+                  "scanner_version": version,
+              }
+              (output / f"{name}.json").write_text(
+                  json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+              )
+
+          static_findings: list[dict[str, object]] = []
+          for path, relative in candidates({".py"}):
+              source = path.read_text(encoding="utf-8")
+              try:
+                  tree = ast.parse(source, filename=relative)
+              except SyntaxError as exc:
+                  static_findings.append(
+                      {"line": exc.lineno or 0, "path": relative, "rule_id": "PYTHON_SYNTAX_ERROR", "severity": "CRITICAL"}
+                  )
+                  continue
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in {"eval", "exec"}:
+                      static_findings.append(
+                          {"line": node.lineno, "path": relative, "rule_id": "DYNAMIC_CODE_EXECUTION", "severity": "HIGH"}
+                      )
+                  if isinstance(node, ast.Call) and any(
+                      keyword.arg == "shell" and isinstance(keyword.value, ast.Constant) and keyword.value.value is True
+                      for keyword in node.keywords
+                  ):
+                      static_findings.append(
+                          {"line": node.lineno, "path": relative, "rule_id": "SUBPROCESS_SHELL_TRUE", "severity": "CRITICAL"}
+                      )
+          write("static", static_findings)
+
+          secret_patterns = {
+              "AWS_ACCESS_KEY": re.compile(r"AKIA[0-9A-Z]{16}"),
+              "GITHUB_TOKEN": re.compile(r"gh[pousr]_[A-Za-z0-9]{36,}"),
+              "PRIVATE_KEY": re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
+          }
+          secret_findings: list[dict[str, object]] = []
+          for path, relative in candidates(text_suffixes):
+              try:
+                  source = path.read_text(encoding="utf-8")
+              except UnicodeDecodeError:
+                  continue
+              for rule_id, pattern in secret_patterns.items():
+                  for match in pattern.finditer(source):
+                      secret_findings.append(
+                          {
+                              "line": source.count("\n", 0, match.start()) + 1,
+                              "path": relative,
+                              "rule_id": rule_id,
+                              "severity": "CRITICAL",
+                          }
+                      )
+          write("secrets", secret_findings)
+
+          lock_path = root / "ocor-runtime/uv.lock"
+          dependency_findings: list[dict[str, object]] = []
+          components: list[dict[str, object]] = []
+          denied_licenses = {"AGPL-3.0", "AGPL-3.0-only", "GPL-3.0", "GPL-3.0-only", "SSPL-1.0"}
+          try:
+              lock = tomllib.loads(lock_path.read_text(encoding="utf-8"))
+          except (OSError, tomllib.TOMLDecodeError) as exc:
+              dependency_findings.append(
+                  {"path": "ocor-runtime/uv.lock", "rule_id": "LOCK_UNREADABLE", "severity": "CRITICAL", "detail": str(exc)}
+              )
+              lock = {"package": []}
+          for package in sorted(lock.get("package", []), key=lambda item: (item.get("name", ""), item.get("version", ""))):
+              name = str(package.get("name", ""))
+              package_version = str(package.get("version", ""))
+              license_name = package.get("license")
+              if not name or not package_version:
+                  dependency_findings.append(
+                      {"path": "ocor-runtime/uv.lock", "rule_id": "UNVERSIONED_DEPENDENCY", "severity": "CRITICAL"}
+                  )
+                  continue
+              if license_name in denied_licenses:
+                  dependency_findings.append(
+                      {
+                          "detail": str(license_name),
+                          "path": f"pkg:pypi/{name}@{package_version}",
+                          "rule_id": "DISALLOWED_LICENSE",
+                          "severity": "HIGH",
+                      }
+                  )
+              artifacts: list[dict[str, object]] = []
+              if isinstance(package.get("sdist"), dict):
+                  artifacts.append(package["sdist"])
+              artifacts.extend(item for item in package.get("wheels", []) if isinstance(item, dict))
+              source = package.get("source", {})
+              registry_package = isinstance(source, dict) and "registry" in source
+              hashes = sorted({str(item.get("hash", "")) for item in artifacts if item.get("hash")})
+              if registry_package and (not hashes or any(re.fullmatch(r"sha256:[0-9a-f]{64}", value) is None for value in hashes)):
+                  dependency_findings.append(
+                      {
+                          "path": f"pkg:pypi/{name}@{package_version}",
+                          "rule_id": "MISSING_OR_INVALID_ARTIFACT_HASH",
+                          "severity": "CRITICAL",
+                      }
+                  )
+              component: dict[str, object] = {
+                  "name": name,
+                  "purl": f"pkg:pypi/{name}@{package_version}",
+                  "type": "library",
+                  "version": package_version,
+              }
+              if hashes:
+                  component["hashes"] = [
+                      {"alg": "SHA-256", "content": value.removeprefix("sha256:")} for value in hashes
+                  ]
+              if license_name:
+                  component["licenses"] = [{"license": {"id": str(license_name)}}]
+              components.append(component)
+          write("dependencies", dependency_findings)
+
+          lock_digest = hashlib.sha256(lock_path.read_bytes()).hexdigest() if lock_path.is_file() else ""
+          sbom = {
+              "bomFormat": "CycloneDX",
+              "components": components,
+              "metadata": {
+                  "component": {"name": "ocor-runtime", "type": "application"},
+                  "properties": [
+                      {"name": "ocor:lock:sha256", "value": lock_digest},
+                      {"name": "ocor:scanner:version", "value": version},
+                  ],
+              },
+              "serialNumber": f"urn:uuid:{lock_digest[:8]}-{lock_digest[8:12]}-{lock_digest[12:16]}-{lock_digest[16:20]}-{lock_digest[20:32]}",
+              "specVersion": "1.5",
+              "version": 1,
+          }
+          (output / "sbom.cdx.json").write_text(
+              json.dumps(sbom, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          blockers = len(static_findings) + len(secret_findings) + len(dependency_findings)
+          summary = {
+              "blocking_findings": blockers,
+              "result": "FAIL" if blockers else "PASS",
+              "scanner": "ocor-supply-chain",
+              "scanner_version": version,
+          }
+          (output / "summary.json").write_text(
+              json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          print(json.dumps(summary, sort_keys=True))
+          raise SystemExit(1 if blockers else 0)
+          PY
+      - name: Upload machine-readable findings and SBOM
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ocor-supply-chain-${{ github.sha }}
+          path: /tmp/ocor-supply-chain/*.json
+          if-no-files-found: error
+          retention-days: 90
