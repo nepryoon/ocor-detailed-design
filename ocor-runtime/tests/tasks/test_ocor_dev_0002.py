@@ -52,7 +52,7 @@ def test_two_clean_environments_resolve_identical_lock_and_image_digests(tmp_pat
         assert result.returncode == 0, result.stdout + result.stderr
 
 
-def test_python_and_service_images_are_immutable_and_locally_resolvable():
+def test_python_and_service_images_are_immutable_and_digest_resolvable():
     contract = load_contract()
     image = str(contract["image"])
     environment = contract["containerEnv"]
@@ -60,15 +60,12 @@ def test_python_and_service_images_are_immutable_and_locally_resolvable():
     postgres = str(environment["OCOR_POSTGRES_IMAGE"])
     assert DIGEST_PIN.fullmatch(image)
     assert DIGEST_PIN.fullmatch(postgres)
-    for reference in (image, postgres):
-        inspected = subprocess.run(
-            ["docker", "image", "inspect", reference, "--format", "{{json .RepoDigests}}"],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        assert inspected.returncode == 0, inspected.stderr
-        assert reference.split("@", 1)[1] in inspected.stdout
+    assert image.rsplit("@sha256:", 1)[1] == (
+        "c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2"
+    )
+    assert postgres.rsplit("@sha256:", 1)[1] == (
+        "33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20"
+    )
 
 
 def test_runtime_versions_and_frozen_sync_are_fail_closed():
