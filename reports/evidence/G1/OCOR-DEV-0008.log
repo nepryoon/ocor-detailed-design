@@ -1,0 +1,41 @@
+OCOR-DEV-0008 qualifying raw evidence
+observed_at=2026-09-02T03:26:23Z
+implementation_commit=ba3ffe6a8c5e8c8a183a1e0e2e6d6f2636fc4502
+inputs_tree=60a73de8e47b38e94aeb0e2b8dedc689fab6eb35
+
+$ UV_PROJECT_ENVIRONMENT=<pre-provisioned-test-venv> uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0008.py
+...........................................                              [100%]
+43 passed in 0.13s
+
+The targeted suite compiled the approved ocor_registry.proto with grpcio-tools,
+serialized/deserialized the real InvocationContext message deterministically,
+validated the approved governed-context.schema.json referenced by the real OpenAPI
+component, and exercised positive, negative, stale-binding and tamper cases.
+
+$ PYTHONPATH="$PWD/ocor-runtime/src" OCOR_LIVE_POSTGRES_DSN=postgresql://ocor:ocor@127.0.0.1:55432/ocor <pre-provisioned-test-venv>/bin/python -m pytest -q ocor-runtime/tests/
+........................................................................ [ 29%]
+........................................................................ [ 58%]
+........................................................................ [ 88%]
+.............................                                            [100%]
+245 passed in 1.21s
+
+$ ruff check ocor-runtime/src/ocor_runtime/kernel/governed_context.py ocor-runtime/tests/tasks/test_ocor_dev_0008.py
+All checks passed!
+
+$ git diff --check
+PASS (no output)
+
+Versions:
+uv 0.12.5
+Python 3.12.14
+ruff 0.16.1
+PostgreSQL 16.14
+protobuf 7.36.0
+grpcio/grpcio-tools 1.83.1
+jsonschema 4.26.0
+PyYAML 6.0.3
+
+Qualifying totals: 43 targeted PASS; 245 regression PASS; 0 failed; 0 skipped;
+0 xfail; 0 collection errors; 0 NOT_EXECUTED.
+This task establishes G1 GCS boundary-contract evidence only. It does not establish
+BA, FGM, E1, E2, runtime conformance, Production readiness, or server-side branch protection.

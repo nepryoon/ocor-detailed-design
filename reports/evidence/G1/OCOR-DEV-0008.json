@@ -1,0 +1,78 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0008.py with pre-provisioned test environment",
+      "result": {"failed": 0, "not_executed": 0, "passed": 43, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14",
+      "result": {"failed": 0, "not_executed": 0, "passed": 245, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "ruff check governed context kernel and task tests; git diff --check",
+      "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0},
+      "status": "PASS"
+    }
+  ],
+  "commit": "ba3ffe6a8c5e8c8a183a1e0e2e6d6f2636fc4502",
+  "created_at": "2026-09-02T03:26:23Z",
+  "environment": {
+    "grpcio_tools": "1.83.1",
+    "jsonschema": "4.26.0",
+    "postgres": "16.14",
+    "protobuf": "7.36.0",
+    "python": "3.12.14",
+    "pyyaml": "6.0.3",
+    "ruff": "0.16.1",
+    "uv": "0.12.5"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/docs/governance_dossier/contracts/governed-context.schema.json": "04671e932f7378c34b07fc01881755c7c5af66787ef2f6a3ca2da5bd86c22a88",
+    "ocor-runtime/docs/governance_dossier/contracts/ocor-governed-memory.openapi.yaml": "526caa147715aaffc6d4003889db1111e50d6cd17cd9fc61dbfad28f58343d9b",
+    "ocor-runtime/docs/governance_dossier/contracts/ocor_registry.proto": "7de0aa5f592a013f2f067866ce6dbb27c1ecbffefcc14eb3a0e0d959bfc24694",
+    "ocor-runtime/src/ocor_runtime/kernel/governed_context.py": "4d216c73708009e19caf04761dabdcc35c77967a2e8616c5a0a575fc5b21e241",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0008.py": "4bd61de7b178cb343ee9b37c67df62e40446502afe04b1087c53b37a25172a9a",
+    "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537"
+  },
+  "raw_output_sha256": "ec226c015c180332306b5a30b11013f21377cf1b44882d869dc417002033bdf6",
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0008-BOUNDARY-ROUNDTRIP",
+      "command": "compile real Proto and validate real JSON/OpenAPI contract in targeted suite",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 43, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0008-REGRESSION",
+      "command": "pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 245, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0008-QUALITY",
+      "command": "ruff check governed context kernel and task tests; git diff --check",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "The VerifiedGovernedContextBinding is a fail-closed kernel contract; integration with the selected authenticated identity and delegation provider is assigned to later security/runtime tasks.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and is not represented as equivalent to compensating controls."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated task commits, retain the OCOR-DEV-0007 canonical compatibility surface, and revalidate the previous G1 manifest.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0008"
+}
