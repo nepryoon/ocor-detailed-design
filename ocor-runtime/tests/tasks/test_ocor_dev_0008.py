@@ -13,6 +13,7 @@ import pytest
 import yaml
 from jsonschema import Draft202012Validator
 
+# isort: split
 from ocor_runtime.kernel.canonical import IdentifierError, validate_correlation_id
 from ocor_runtime.kernel.governed_context import (
     GCS_FIELDS,
