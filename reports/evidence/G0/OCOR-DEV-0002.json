@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0002",
+  "commit": "1fd0a069412873c77726db69cb683f0768e2b417",
+  "result": "PASS",
+  "commands": [
+    {
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0002.py",
+      "status": "PASS",
+      "exit_code": 0,
+      "passed": 7,
+      "failed": 0,
+      "skipped": 0,
+      "not_executed": 0
+    },
+    {
+      "command": "python scripts/validate_runtime_evidence.py --task OCOR-DEV-0002 --non-skipped --manifest reports/evidence/G0/MANIFEST.json",
+      "status": "PASS",
+      "exit_code": 0
+    }
+  ],
+  "environment": {
+    "host_python": "3.12.14",
+    "container_python": "3.11.15",
+    "uv": "0.12.5",
+    "postgres": "16.14",
+    "python_image": "python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2",
+    "postgres_image": "postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20"
+  },
+  "inputs": {
+    "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537",
+    "ocor-runtime/pyproject.toml": "690b0f074434e95da728725e02cfc35b45ccf08aec430fc9bed1be1057383bb1",
+    "ocor-runtime/devcontainer.json": "a19591dae2971edce47376fa0885e5470b99a638a39fb46d48e58fc7aa281cc7"
+  },
+  "counts": {
+    "complete_regression": {
+      "PASS": 147,
+      "FAIL": 0,
+      "SKIPPED": 0,
+      "XFAIL": 0,
+      "NOT_EXECUTED": 0
+    },
+    "postgres_subset": {
+      "PASS": 5,
+      "FAIL": 0,
+      "SKIPPED": 0,
+      "XFAIL": 0,
+      "NOT_EXECUTED": 0
+    }
+  },
+  "raw_output_sha256": "d091de176f8b4b74940ea8db8d5630b14de8ede67790e2deec7363a108fab116",
+  "rollback": "Revert the isolated task commits; remove the devcontainer contract; revalidate the prior G0 manifest. No data migration exists.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "created_at": "2026-09-02T02:24:40Z"
+}
