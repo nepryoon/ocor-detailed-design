@@ -96,6 +96,156 @@ def test_bounded_retry_recovery_stops_at_budget(plan):
     assert delivery.recover_interrupted(state, max_retries=2) == []
 
 
+@pytest.mark.parametrize("status", sorted(delivery.EXTERNAL_WAITING))
+def test_external_waiting_is_valid_nonterminal_and_not_recovered(plan, status):
+    state = delivery.new_state(plan)
+    state["tasks"]["OCOR-DEV-0001"].update(
+        status=status,
+        external_blocker={
+            "code": status,
+            "evidence_sha256": "a" * 64,
+            "recorded_against_commit": "b" * 40,
+        },
+    )
+    assert delivery.validate_state(plan, state) == []
+    assert delivery.recover_interrupted(state) == []
+    assert state["tasks"]["OCOR-DEV-0001"]["status"] == status
+    assert delivery.ready_tasks(plan, state) == []
+
+
+def test_external_waiting_record_and_clear_are_auditable(plan):
+    state = delivery.new_state(plan)
+    record = {
+        "detail": "real backend is not locally available",
+        "evidence_path": "reports/evidence/G2/blockers/OCOR-DEV-0016.json",
+        "evidence_sha256": "b" * 64,
+        "recorded_against_commit": "c" * 40,
+        "external_action_required": "preload the approved backend image",
+    }
+    delivery.record_external_waiting(
+        state, "OCOR-DEV-0001", "WAITING_EXTERNAL_SERVICE", record
+    )
+    summary = delivery.summarize(plan, state)
+    assert summary["status_counts"]["WAITING_EXTERNAL_SERVICE"] == 1
+    assert summary["dependency_ready"] == []
+    assert summary["external_blockers"][0]["task_id"] == "OCOR-DEV-0001"
+    assert state["history"][-1]["event"] == "EXTERNAL_BLOCKER_RECORDED"
+    delivery.clear_external_waiting(state, "OCOR-DEV-0001")
+    assert state["tasks"]["OCOR-DEV-0001"]["status"] == "PENDING"
+    assert "external_blocker" not in state["tasks"]["OCOR-DEV-0001"]
+    assert state["history"][-1]["event"] == "EXTERNAL_BLOCKER_CLEARED"
+
+
+def test_external_blocker_evidence_is_nonqualifying_and_content_addressed(
+    plan, tmp_path
+):
+    isolated = replace(plan, root=tmp_path)
+    task = plan.tasks["OCOR-DEV-0016"]
+    path = tmp_path / "reports/evidence/G2/blockers/OCOR-DEV-0016.json"
+    path.parent.mkdir(parents=True)
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "task_id": task["id"],
+                "delivery_gate": "G2",
+                "status": "WAITING_EXTERNAL_SERVICE",
+                "recorded_against_commit": "c" * 40,
+                "inputs_tree_sha": plan.config["compensating_protection"]["inputs_tree_sha"],
+                "mandatory_test_disposition": "NOT_EXECUTED",
+                "summary": "TerminusDB is absent.",
+                "required_services": ["TerminusDB"],
+                "observations": [{"check": "local image inventory", "outcome": "ABSENT"}],
+                "external_action_required": "Preload the approved TerminusDB artifact.",
+                "claims": {
+                    "E1": 0,
+                    "E2": 0,
+                    "production_readiness": "NO-GO",
+                    "task_accepted": False,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (path.parent / "MANIFEST.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "gate": "G2",
+                "evidence_class": "EXTERNAL_BLOCKER_NON_QUALIFYING",
+                "artifacts": [
+                    {
+                        "task_id": task["id"],
+                        "path": path.name,
+                        "status": "WAITING_EXTERNAL_SERVICE",
+                        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    record = delivery.external_blocker_record(
+        isolated, task, "WAITING_EXTERNAL_SERVICE", path, "c" * 40
+    )
+    assert record["evidence_path"] == "reports/evidence/G2/blockers/OCOR-DEV-0016.json"
+    assert len(record["evidence_sha256"]) == 64
+    assert delivery.evidence_qualifies(tmp_path, task)[0] is False
+
+
+def test_external_blocker_evidence_rejects_pass_claim(plan, tmp_path):
+    isolated = replace(plan, root=tmp_path)
+    task = plan.tasks["OCOR-DEV-0016"]
+    path = tmp_path / "reports/evidence/G2/blockers/OCOR-DEV-0016.json"
+    path.parent.mkdir(parents=True)
+    path.write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "task_id": task["id"],
+                "delivery_gate": "G2",
+                "status": "WAITING_EXTERNAL_SERVICE",
+                "recorded_against_commit": "c" * 40,
+                "inputs_tree_sha": plan.config["compensating_protection"]["inputs_tree_sha"],
+                "mandatory_test_disposition": "PASS",
+                "summary": "invalid",
+                "required_services": ["TerminusDB"],
+                "observations": [{"check": "inventory", "outcome": "ABSENT"}],
+                "external_action_required": "provide it",
+                "claims": {
+                    "E1": 0,
+                    "E2": 0,
+                    "production_readiness": "NO-GO",
+                    "task_accepted": False,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    (path.parent / "MANIFEST.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "1.0",
+                "gate": "G2",
+                "evidence_class": "EXTERNAL_BLOCKER_NON_QUALIFYING",
+                "artifacts": [
+                    {
+                        "task_id": task["id"],
+                        "path": path.name,
+                        "status": "WAITING_EXTERNAL_SERVICE",
+                        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(delivery.DeliveryError, match="identity, fence, or claim"):
+        delivery.external_blocker_record(
+            isolated, task, "WAITING_EXTERNAL_SERVICE", path, "c" * 40
+        )
+
+
 def test_file_ownership_collision_is_rejected(plan):
     state = delivery.new_state(plan)
     state["ownership_locks"]["other"] = [".github"]

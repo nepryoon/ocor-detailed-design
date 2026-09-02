@@ -1,0 +1,37 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0021",
+  "delivery_gate": "G2",
+  "status": "WAITING_EXTERNAL_SERVICE",
+  "recorded_against_commit": "256f05b4e5c1787a1d56cb9947c5b094e541d815",
+  "inputs_tree_sha": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+  "mandatory_test_disposition": "NOT_EXECUTED",
+  "summary": "The integrated identity-policy latency and failure-semantics campaign requires SPIFFE/SPIRE and OpenBao in addition to OPA and Keycloak; the former two approved components are unavailable in the execution environment.",
+  "required_services": [
+    "SPIFFE/SPIRE server and agent",
+    "OpenBao",
+    "OPA",
+    "Keycloak"
+  ],
+  "observations": [
+    {
+      "check": "local Docker image, container, executable, and repository deployment-artifact inventory for SPIFFE/SPIRE",
+      "outcome": "ABSENT"
+    },
+    {
+      "check": "local Docker image, container, executable, and repository deployment-artifact inventory for OpenBao",
+      "outcome": "ABSENT"
+    },
+    {
+      "check": "local OPA and Keycloak availability without SPIFFE/SPIRE and OpenBao",
+      "outcome": "AVAILABLE_BUT_INSUFFICIENT"
+    }
+  ],
+  "external_action_required": "Preload approved digest-pinned SPIRE server/agent and OpenBao deployment artifacts, or provide already approved reachable endpoints and their intended credentials/configuration; then clear the blocker and execute the complete OCOR-DEV-0021 campaign with OPA and Keycloak also present.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "production_readiness": "NO-GO",
+    "task_accepted": false
+  }
+}

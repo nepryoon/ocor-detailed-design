@@ -1,0 +1,30 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0018",
+  "delivery_gate": "G2",
+  "status": "WAITING_EXTERNAL_SERVICE",
+  "recorded_against_commit": "256f05b4e5c1787a1d56cb9947c5b094e541d815",
+  "inputs_tree_sha": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+  "mandatory_test_disposition": "NOT_EXECUTED",
+  "summary": "The marking-safe projection campaign requires real Apache Jena/Fuseki, but no approved Jena image, distribution, local jars, endpoint, or credential is available in the execution environment.",
+  "required_services": [
+    "Apache Jena/Fuseki"
+  ],
+  "observations": [
+    {
+      "check": "local Docker image and container inventory for Apache Jena or Fuseki",
+      "outcome": "ABSENT"
+    },
+    {
+      "check": "local executable, jar, cache, and repository deployment-artifact inventory for Apache Jena or Fuseki",
+      "outcome": "ABSENT"
+    }
+  ],
+  "external_action_required": "Preload an approved digest-pinned Apache Jena/Fuseki deployment artifact, or provide an already approved reachable endpoint and its intended credentials; then clear the blocker and execute OCOR-DEV-0018 against real Jena rather than an RDF-library compatibility substitute.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "production_readiness": "NO-GO",
+    "task_accepted": false
+  }
+}

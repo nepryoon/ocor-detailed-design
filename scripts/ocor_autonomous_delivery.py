@@ -30,6 +30,13 @@ TASK_ID = re.compile(r"^OCOR-DEV-[0-9]{4}$")
 TERMINAL_SUCCESS = {"ACCEPTED"}
 ACTIVE = {"PREPARED", "RUNNING", "VALIDATING"}
 FAILURE = {"FAILED_IMPLEMENTATION", "BLOCKED_INFRASTRUCTURE", "BLOCKED_CI"}
+EXTERNAL_WAITING = {
+    "WAITING_EXTERNAL_CREDENTIAL",
+    "WAITING_EXTERNAL_SERVICE",
+    "WAITING_REPOSITORY_PERMISSION",
+    "WAITING_PAID_PLATFORM_CAPABILITY",
+    "WAITING_AUTHORITY_DECISION",
+}
 FORBIDDEN_RESULT = {"SKIPPED", "UNAVAILABLE", "NOT_EXECUTED", "XFAIL"}
 IMMUTABLE_PATHS = (
     "inputs/",
@@ -143,6 +150,124 @@ def evidence_qualifies(root: Path, task: dict[str, Any]) -> tuple[bool, str]:
         return True, str(record.get("commit", ""))
     except (DeliveryError, KeyError, StopIteration, OSError) as exc:
         return False, str(exc)
+
+
+def external_blocker_record(
+    plan: Plan,
+    task: dict[str, Any],
+    code: str,
+    path: Path,
+    integration_commit: str,
+) -> dict[str, str]:
+    """Validate a non-qualifying, content-addressed external-blocker record."""
+    expected = (
+        plan.root
+        / "reports"
+        / "evidence"
+        / task["delivery_gate"]
+        / "blockers"
+        / f"{task['id']}.json"
+    ).resolve()
+    candidate = (path if path.is_absolute() else plan.root / path).resolve()
+    if candidate != expected:
+        raise DeliveryError(f"external blocker record must be {expected.relative_to(plan.root)}")
+    record = load_json(candidate)
+    record_digest = sha256_file(candidate)
+    manifest = load_json(expected.parent / "MANIFEST.json")
+    if (
+        manifest.get("schema_version") != "1.0"
+        or manifest.get("gate") != task["delivery_gate"]
+        or manifest.get("evidence_class") != "EXTERNAL_BLOCKER_NON_QUALIFYING"
+    ):
+        raise DeliveryError("external blocker manifest identity is invalid")
+    try:
+        entry = next(
+            item
+            for item in manifest.get("artifacts", [])
+            if item.get("task_id") == task["id"]
+        )
+    except StopIteration as exc:
+        raise DeliveryError("external blocker is absent from its manifest") from exc
+    if entry != {
+        "task_id": task["id"],
+        "path": expected.name,
+        "status": code,
+        "sha256": record_digest,
+    }:
+        raise DeliveryError("external blocker manifest entry does not match")
+    expected_inputs = str(
+        plan.config.get("compensating_protection", {}).get("inputs_tree_sha", "")
+    )
+    expected_claims = {
+        "E1": 0,
+        "E2": 0,
+        "production_readiness": "NO-GO",
+        "task_accepted": False,
+    }
+    recorded_commit = str(record.get("recorded_against_commit", ""))
+    identity = {
+        "schema_version": record.get("schema_version"),
+        "task_id": record.get("task_id"),
+        "delivery_gate": record.get("delivery_gate"),
+        "status": record.get("status"),
+        "inputs_tree_sha": record.get("inputs_tree_sha"),
+        "mandatory_test_disposition": record.get("mandatory_test_disposition"),
+        "claims": record.get("claims"),
+    }
+    required_identity = {
+        "schema_version": "1.0",
+        "task_id": task["id"],
+        "delivery_gate": task["delivery_gate"],
+        "status": code,
+        "inputs_tree_sha": expected_inputs,
+        "mandatory_test_disposition": "NOT_EXECUTED",
+        "claims": expected_claims,
+    }
+    if identity != required_identity:
+        raise DeliveryError("external blocker identity, fence, or claim fields do not match")
+    if not re.fullmatch(r"[0-9a-f]{40}", recorded_commit):
+        raise DeliveryError("external blocker recorded commit is invalid")
+    if recorded_commit != integration_commit:
+        ancestor = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(plan.root),
+                "merge-base",
+                "--is-ancestor",
+                recorded_commit,
+                integration_commit,
+            ],
+            check=False,
+        )
+        if ancestor.returncode:
+            raise DeliveryError("external blocker was not recorded against an ancestor of main")
+    summary = record.get("summary")
+    services = record.get("required_services")
+    observations = record.get("observations")
+    action = record.get("external_action_required")
+    if not isinstance(summary, str) or not summary.strip():
+        raise DeliveryError("external blocker summary is required")
+    if not isinstance(services, list) or not services or not all(
+        isinstance(item, str) and item.strip() for item in services
+    ):
+        raise DeliveryError("external blocker must identify required services")
+    if not isinstance(observations, list) or not observations or not all(
+        isinstance(item, dict)
+        and isinstance(item.get("check"), str)
+        and item.get("outcome") in {"ABSENT", "AVAILABLE_BUT_INSUFFICIENT"}
+        for item in observations
+    ):
+        raise DeliveryError("external blocker observations are missing or invalid")
+    if not isinstance(action, str) or not action.strip():
+        raise DeliveryError("external blocker must state the exact external action")
+    return {
+        "detail": summary.strip(),
+        "evidence_path": str(candidate.relative_to(plan.root)),
+        "evidence_sha256": record_digest,
+        "recorded_against_commit": recorded_commit,
+        "external_action_required": action.strip(),
+    }
 
 
 @dataclass(frozen=True)
@@ -282,8 +407,24 @@ def validate_state(plan: Plan, state: dict[str, Any]) -> list[str]:
         status = str(value.get("status", ""))
         if status in FORBIDDEN_RESULT:
             errors.append(f"{task_id}: forbidden promoted status {status}")
-        if status not in {"PENDING", "PREPARED", "RUNNING", "VALIDATING", "ACCEPTED"} | FAILURE:
+        if status not in (
+            {"PENDING", "PREPARED", "RUNNING", "VALIDATING", "ACCEPTED"}
+            | FAILURE
+            | EXTERNAL_WAITING
+        ):
             errors.append(f"{task_id}: invalid state {status}")
+        blocker = value.get("external_blocker")
+        if status in EXTERNAL_WAITING:
+            if not isinstance(blocker, dict) or blocker.get("code") != status:
+                errors.append(f"{task_id}: external waiting state lacks matching blocker")
+            elif not re.fullmatch(r"[0-9a-f]{64}", str(blocker.get("evidence_sha256", ""))):
+                errors.append(f"{task_id}: external blocker evidence digest is invalid")
+            elif not re.fullmatch(
+                r"[0-9a-f]{40}", str(blocker.get("recorded_against_commit", ""))
+            ):
+                errors.append(f"{task_id}: external blocker commit fence is invalid")
+        elif blocker is not None:
+            errors.append(f"{task_id}: non-waiting state retains external blocker")
         if int(value.get("retries", 0)) > int(plan.config["max_retries"]):
             errors.append(f"{task_id}: retry budget exceeded")
     locks = state.get("ownership_locks", {})
@@ -307,6 +448,46 @@ def recover_interrupted(state: dict[str, Any], max_retries: int = 2) -> list[str
     for task_id in recovered:
         state.get("ownership_locks", {}).pop(task_id, None)
     return recovered
+
+
+def record_external_waiting(
+    state: dict[str, Any], task_id: str, code: str, record: dict[str, str]
+) -> None:
+    if code not in EXTERNAL_WAITING:
+        raise DeliveryError(f"invalid external blocker code: {code}")
+    value = state["tasks"][task_id]
+    if value.get("status") != "PENDING":
+        raise DeliveryError(f"external blocker can only be recorded from PENDING: {task_id}")
+    at = utc_now()
+    value["status"] = code
+    value["external_blocker"] = {
+        "code": code,
+        "detail": record["detail"],
+        "evidence_path": record["evidence_path"],
+        "evidence_sha256": record["evidence_sha256"],
+        "recorded_against_commit": record["recorded_against_commit"],
+        "external_action_required": record["external_action_required"],
+        "integration_commit": state["integration_commit"],
+        "recorded_at": at,
+    }
+    state["history"].append(
+        {"task_id": task_id, "event": "EXTERNAL_BLOCKER_RECORDED", "code": code, "at": at}
+    )
+    state["updated_at"] = at
+
+
+def clear_external_waiting(state: dict[str, Any], task_id: str) -> None:
+    value = state["tasks"][task_id]
+    previous = str(value.get("status"))
+    if previous not in EXTERNAL_WAITING:
+        raise DeliveryError(f"task is not waiting on an external blocker: {task_id}")
+    value["status"] = "PENDING"
+    value.pop("external_blocker", None)
+    at = utc_now()
+    state["history"].append(
+        {"task_id": task_id, "event": "EXTERNAL_BLOCKER_CLEARED", "code": previous, "at": at}
+    )
+    state["updated_at"] = at
 
 
 def ready_tasks(plan: Plan, state: dict[str, Any]) -> list[dict[str, Any]]:
@@ -897,12 +1078,26 @@ def summarize(plan: Plan, state: dict[str, Any]) -> dict[str, Any]:
     for item in state["tasks"].values():
         counts[item["status"]] = counts.get(item["status"], 0) + 1
     ready = ready_tasks(plan, state)
+    blockers = []
+    for task_id, item in sorted(state["tasks"].items()):
+        if item["status"] in EXTERNAL_WAITING:
+            blocker = item["external_blocker"]
+            blockers.append(
+                {
+                    "task_id": task_id,
+                    "status": item["status"],
+                    "detail": blocker["detail"],
+                    "evidence_path": blocker["evidence_path"],
+                    "external_action_required": blocker["external_action_required"],
+                }
+            )
     return {
         "run_id": state["run_id"],
         "integration_commit": state["integration_commit"],
         "emergency_stop": state["emergency_stop"],
         "status_counts": counts,
         "dependency_ready": [item["id"] for item in ready],
+        "external_blockers": blockers,
     }
 
 
@@ -926,6 +1121,10 @@ def parser() -> argparse.ArgumentParser:
     result.add_argument("--stop-after-gate", metavar="GATE")
     result.add_argument("--emergency-stop", metavar="REASON")
     result.add_argument("--accept-evidence", metavar="OCOR-DEV-NNNN")
+    result.add_argument("--record-external-blocker", metavar="OCOR-DEV-NNNN")
+    result.add_argument("--clear-external-blocker", metavar="OCOR-DEV-NNNN")
+    result.add_argument("--blocker-code", choices=sorted(EXTERNAL_WAITING))
+    result.add_argument("--blocker-evidence", type=Path)
     result.add_argument("--push", action="store_true")
     result.add_argument("--open-pr", action="store_true")
     result.add_argument("--merge", action="store_true")
@@ -949,6 +1148,24 @@ def main(argv: Sequence[str] | None = None) -> int:
         if state_errors:
             raise DeliveryError("; ".join(state_errors))
 
+        external_action = args.record_external_blocker or args.clear_external_blocker
+        ordinary_action = any(
+            (
+                args.validate,
+                args.status,
+                args.next,
+                args.dry_run,
+                args.task,
+                args.resume,
+                args.emergency_stop,
+                args.accept_evidence,
+            )
+        )
+        if external_action and ordinary_action:
+            raise DeliveryError("external blocker actions cannot be combined with another action")
+        if (args.blocker_code or args.blocker_evidence) and not args.record_external_blocker:
+            raise DeliveryError("blocker code and evidence require --record-external-blocker")
+
         if args.emergency_stop:
             if not args.execute:
                 raise DeliveryError("--emergency-stop requires --execute")
@@ -959,11 +1176,66 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(json.dumps(summarize(plan, state), indent=2))
             return 0
 
+        blocker_actions = [args.record_external_blocker, args.clear_external_blocker]
+        if sum(item is not None for item in blocker_actions) > 1:
+            raise DeliveryError("external blocker record and clear actions are mutually exclusive")
+
+        if args.record_external_blocker:
+            if not args.execute:
+                raise DeliveryError("--record-external-blocker requires --execute")
+            if not args.blocker_code or not args.blocker_evidence:
+                raise DeliveryError("external blocker code and evidence are required")
+            task_id = args.record_external_blocker
+            if task_id not in plan.tasks:
+                raise DeliveryError(f"unknown task: {task_id}")
+            if task_id not in {item["id"] for item in ready_tasks(plan, state)}:
+                raise DeliveryError(f"task is not dependency-ready: {task_id}")
+            execution_preflight(plan)
+            remote_main = git_output(
+                root,
+                "rev-parse",
+                f"{plan.config['remote']}/{plan.config['integration_branch']}",
+            )
+            if state["integration_commit"] != remote_main:
+                raise DeliveryError("delivery state integration commit is stale")
+            record = external_blocker_record(
+                plan,
+                plan.tasks[task_id],
+                args.blocker_code,
+                args.blocker_evidence,
+                remote_main,
+            )
+            record_external_waiting(state, task_id, args.blocker_code, record)
+            atomic_json(args.state, state)
+            print(json.dumps(summarize(plan, state), indent=2))
+            return 0
+
+        if args.clear_external_blocker:
+            if not args.execute:
+                raise DeliveryError("--clear-external-blocker requires --execute")
+            task_id = args.clear_external_blocker
+            if task_id not in plan.tasks:
+                raise DeliveryError(f"unknown task: {task_id}")
+            execution_preflight(plan)
+            remote_main = git_output(
+                root,
+                "rev-parse",
+                f"{plan.config['remote']}/{plan.config['integration_branch']}",
+            )
+            if state["integration_commit"] != remote_main:
+                raise DeliveryError("delivery state integration commit is stale")
+            clear_external_waiting(state, task_id)
+            atomic_json(args.state, state)
+            print(json.dumps(summarize(plan, state), indent=2))
+            return 0
+
         if args.accept_evidence:
             if not args.execute:
                 raise DeliveryError("--accept-evidence requires --execute")
             if args.accept_evidence not in plan.tasks:
                 raise DeliveryError(f"unknown task: {args.accept_evidence}")
+            if state["tasks"][args.accept_evidence]["status"] in EXTERNAL_WAITING:
+                raise DeliveryError("clear the external blocker before accepting task evidence")
             task = plan.tasks[args.accept_evidence]
             hard = task.get("hard_dependencies", [])
             if any(state["tasks"][item]["status"] != "ACCEPTED" for item in hard):
@@ -1003,7 +1275,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
             return 0
         if args.status or (
-            not any((args.next, args.dry_run, args.task, args.execute, args.resume, args.accept_evidence))
+            not any(
+                (
+                    args.next,
+                    args.dry_run,
+                    args.task,
+                    args.execute,
+                    args.resume,
+                    args.accept_evidence,
+                    args.record_external_blocker,
+                    args.clear_external_blocker,
+                )
+            )
         ):
             print(json.dumps(summarize(plan, state), indent=2))
             return 0
