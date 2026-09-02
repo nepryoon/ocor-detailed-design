@@ -1,0 +1,32 @@
+{
+  "claims": {"E1": 0, "E2": 0, "Production_readiness": "NO_GO", "runtime_conformance": "NOT_ESTABLISHED"},
+  "commands": [
+    {"command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0012.py", "result": {"failed": 0, "not_executed": 0, "passed": 20, "skipped": 0}, "status": "PASS"},
+    {"command": "pytest -q -rA ocor-runtime/tests with live PostgreSQL 16.14", "result": {"failed": 0, "not_executed": 0, "passed": 344, "skipped": 0}, "status": "PASS"},
+    {"command": "ruff check C2 ports and task tests; git diff --check", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"}
+  ],
+  "commit": "c1712e18906a21fcdbb85c0fc93ecd4a04fc1548",
+  "created_at": "2026-09-02T04:01:59Z",
+  "environment": {"postgres": "16.14", "python": "3.12.14", "ruff": "0.16.1", "uv": "0.5.9"},
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c2/ports.py": "3988b87107a68c2d4a9e454496f80d6f498c86dec4f4f2202511b5427f94ac17",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0012.py": "b6d51f25bbf579736eb6c957cb9e9155ac7f3cf21f6ed3911b1eed46e686eb38",
+    "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537"
+  },
+  "raw_output_sha256": "ced9728cd0c939f2d296024633ce7ae4a8a0b076d10227199e4d4214f088d3a2",
+  "requirement_results": [
+    {"case_id": "OCOR-DEV-0012-C2-PORTS", "command": "pytest named-query, GCS/policy/identity binding, consistency and watermark cases", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 20, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0012-REGRESSION", "command": "pytest -q -rA ocor-runtime/tests with live PostgreSQL 16.14", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 344, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0012-QUALITY", "command": "ruff check C2 ports and task tests; git diff --check", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"}
+  ],
+  "residual_risks": [
+    "These are C2 boundary contracts; concrete gateway routing, projection reads and policy/Authority implementations are assigned to subsequent tasks.",
+    "AT_LEAST_COMMIT is deliberately fail-closed on an exact opaque watermark until a subsequent store contract supplies a validated partial order.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and compensating controls are not equivalent."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated task commits and revalidate the prior cumulative G1 manifest.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0012"
+}
