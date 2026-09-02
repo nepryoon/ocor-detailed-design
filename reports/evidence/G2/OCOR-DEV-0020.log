@@ -1,0 +1,35 @@
+OCOR-DEV-0020 qualifying raw-result record
+created_at=2026-09-02T05:04:35Z
+implementation_commit=b122b250348bfba65ee58b0589103cf9bc57ce3f
+inputs_tree=60a73de8e47b38e94aeb0e2b8dedc689fab6eb35
+approved_lld_sha256=bd464bfef50dc5a5e1b7ffac389fdf12be57a3b545225a92cf1564dc6a01d219
+transition_semantic_sha256=de1a242107f29c9e5106a3b4894fbb15dec8a77e52a62eb8d373b28931bb6eee
+
+$ PYTHONPATH="$PWD:$PWD/ocor-runtime/src" /home/luca/projects/ocor-activation-final/ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0020.py
+........                                                                 [100%]
+8 passed in 0.02s
+
+Observed qualifying cases:
+- exactly 44 unique transition identifiers, ACT-T01 through ACT-T31b
+- source, event/guard, durable effect, and destination included in the semantic seal
+- ACT-T12, T14, T19, T21, and T29 retain their EMISSION-FENCE obligations
+- missing, extra, duplicate, and altered-effect candidates fail closed
+- an altered or unsealed LLD fails before table generation
+
+$ OCOR_LIVE_POSTGRES_DSN=postgresql://ocor:REDACTED@127.0.0.1:55432/ocor PYTHONPATH="$PWD:$PWD/ocor-runtime/src" /home/luca/projects/ocor-activation-final/ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests
+........................................................................ [ 16%]
+........................................................................ [ 33%]
+........................................................................ [ 50%]
+........................................................................ [ 67%]
+........................................................................ [ 84%]
+..................................................................       [100%]
+426 passed in 32.92s
+
+$ /home/luca/.local/bin/ruff check spikes/c6_fsm_fidelity ocor-runtime/tests/tasks/test_ocor_dev_0020.py
+All checks passed!
+
+$ git diff --check
+exit=0
+
+Failures=0 Skipped=0 XFAIL=0 NOT_EXECUTED=0 CollectionErrors=0
+This is G2 table-fidelity spike evidence, not BA-05 or final runtime-conformance evidence.
