@@ -790,8 +790,24 @@ class LeaseConsumptionLedger:
                 "CONTROL_PLANE_UNAVAILABLE",
                 "authoritative lease state omitted its evaluation time",
             )
+        try:
+            evaluated_at = _aware(
+                "authoritative lease evaluation time",
+                decision.evaluated_at,
+                correlation,
+            )
+        except (GovernanceFault, TypeError, ValueError) as exc:
+            raise fault(
+                "CONTROL_PLANE_UNAVAILABLE",
+                "authoritative lease state returned an invalid evaluation time",
+            ) from exc
+        if evaluated_at < lease.issued_at or evaluated_at >= lease.expires_at:
+            raise fault(
+                "CONTROL_PLANE_UNAVAILABLE",
+                "authoritative lease state returned a contradictory evaluation time",
+            )
         return LeaseConsumptionReceipt(
-            key, lease.governed_context_digest, decision.evaluated_at
+            key, lease.governed_context_digest, evaluated_at
         )
 
 

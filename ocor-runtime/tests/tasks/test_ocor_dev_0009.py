@@ -22,6 +22,8 @@ from ocor_runtime.kernel.governance import (
     InMemoryTrustedClock,
     LeaseConsumptionLedger,
     LeaseExpectation,
+    LeaseStateDecision,
+    LeaseStateOutcome,
     ProvenanceRecord,
     RiskClass,
     VerifiedAuthorityBinding,
@@ -464,6 +466,39 @@ def test_atomic_boundary_fails_closed_when_clock_is_unavailable(
     assert exc_info.value.reason_code == "CONTROL_PLANE_UNAVAILABLE"
     assert "sensitive provider diagnostic" not in str(exc_info.value)
     assert lease_state.consumption(lease.lease_id) is None
+
+
+@pytest.mark.parametrize(
+    "evaluated_at",
+    [
+        NOW.replace(tzinfo=None),
+        NOW - timedelta(seconds=3),
+        NOW + timedelta(seconds=4),
+    ],
+)
+def test_malformed_authoritative_consumption_time_fails_closed(
+    lease: CapabilityLease,
+    lease_expectation: LeaseExpectation,
+    clock: InMemoryTrustedClock,
+    evaluated_at: datetime,
+):
+    class ContradictoryState:
+        @staticmethod
+        def consume_if_current(**_kwargs) -> LeaseStateDecision:  # type: ignore[no-untyped-def]
+            return LeaseStateDecision(LeaseStateOutcome.CONSUMED, evaluated_at)
+
+    ledger = LeaseConsumptionLedger(clock=clock, state=ContradictoryState())
+
+    with pytest.raises(GovernanceFault) as exc_info:
+        ledger.consume(
+            lease,
+            lease_expectation,
+            signature_verified=True,
+            revoked=False,
+        )
+
+    assert exc_info.value.reason_code == "CONTROL_PLANE_UNAVAILABLE"
+    assert exc_info.value.failure_class is FailureClass.PERMANENT
 
 
 @pytest.mark.parametrize(
