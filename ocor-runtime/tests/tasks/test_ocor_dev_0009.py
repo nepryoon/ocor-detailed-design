@@ -441,6 +441,31 @@ def test_expiry_is_rechecked_inside_atomic_consumption_boundary(
     assert state.consumption(lease.lease_id) is None
 
 
+def test_atomic_boundary_fails_closed_when_clock_is_unavailable(
+    lease: CapabilityLease,
+    lease_expectation: LeaseExpectation,
+    lease_state: InMemoryLeaseState,
+):
+    class UnavailableClock:
+        @staticmethod
+        def now() -> datetime:
+            raise RuntimeError("sensitive provider diagnostic")
+
+    ledger = LeaseConsumptionLedger(clock=UnavailableClock(), state=lease_state)
+
+    with pytest.raises(GovernanceFault) as exc_info:
+        ledger.consume(
+            lease,
+            lease_expectation,
+            signature_verified=True,
+            revoked=False,
+        )
+
+    assert exc_info.value.reason_code == "CONTROL_PLANE_UNAVAILABLE"
+    assert "sensitive provider diagnostic" not in str(exc_info.value)
+    assert lease_state.consumption(lease.lease_id) is None
+
+
 @pytest.mark.parametrize(
     "field",
     [

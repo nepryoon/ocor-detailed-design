@@ -659,7 +659,14 @@ class InMemoryLeaseState:
         with self._lock:
             try:
                 now = _aware("authoritative now", clock.now(), CORRELATION_ZERO)
-            except (AttributeError, GovernanceFault, TypeError, ValueError):
+            except (
+                AttributeError,
+                GovernanceFault,
+                OSError,
+                RuntimeError,
+                TypeError,
+                ValueError,
+            ):
                 return LeaseStateDecision(
                     LeaseStateOutcome.CONTROL_PLANE_UNAVAILABLE, None
                 )
@@ -754,6 +761,11 @@ class LeaseConsumptionLedger:
                 "CONTROL_PLANE_UNAVAILABLE",
                 "authoritative lease state is unavailable",
             ) from exc
+        if not isinstance(decision, LeaseStateDecision):
+            raise fault(
+                "CONTROL_PLANE_UNAVAILABLE",
+                "authoritative lease state returned an invalid result",
+            )
         outcome = decision.outcome
         if outcome is LeaseStateOutcome.CONTROL_PLANE_UNAVAILABLE:
             raise fault("CONTROL_PLANE_UNAVAILABLE", "trusted clock is unavailable")
