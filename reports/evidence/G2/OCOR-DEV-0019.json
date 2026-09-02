@@ -1,0 +1,40 @@
+{
+  "claims": {"E1": 0, "E2": 0, "Production_readiness": "NO_GO", "runtime_conformance": "NOT_ESTABLISHED"},
+  "commands": [
+    {"command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0019.py against isolated real Kafka 7.6.0", "result": {"failed": 0, "not_executed": 0, "passed": 8, "skipped": 0}, "status": "PASS"},
+    {"command": "pytest -q ocor-runtime/tests with live PostgreSQL 16.14 and real Kafka 7.6.0", "result": {"failed": 0, "not_executed": 0, "passed": 418, "skipped": 0}, "status": "PASS"},
+    {"command": "ruff check Kafka spike and task tests; git diff --check", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"}
+  ],
+  "commit": "651f52ace00b07f11cd2f6231a16f2b676fcecfa",
+  "created_at": "2026-09-02T04:57:00Z",
+  "environment": {
+    "docker": "29.7.2",
+    "kafka": "Confluent Platform 7.6.0",
+    "kafka_image": "confluentinc/cp-kafka:7.6.0@sha256:24cdd3a7fa89d2bed150560ebea81ff1943badfa61e51d66bb541a6b0d7fb047",
+    "python": "3.12.14",
+    "ruff": "0.16.1",
+    "storage": "isolated Docker named volume retained across restart"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0019.py": "6e6248780207ff1548291faf7344c9023bbedd48f5ded5dcebd16abda5c2919e",
+    "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537",
+    "spikes/kafka_delivery/oracle.py": "b0d162567e55a6976ec606c5c575748638a91c74b35b87b0cef33323ca8306ba"
+  },
+  "raw_output_sha256": "72fd6827488388343cb5d2e05114b9122ed0bf36f836f1c17a6ec8147f856c37",
+  "requirement_results": [
+    {"case_id": "OCOR-DEV-0019-KAFKA-FAULT-CAMPAIGN", "command": "pytest real Kafka broker-restart and consumer-crash campaign", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 8, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0019-REGRESSION", "command": "pytest -q ocor-runtime/tests with live PostgreSQL 16.14 and real Kafka 7.6.0", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 418, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0019-QUALITY", "command": "ruff check Kafka spike and task tests; git diff --check", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"}
+  ],
+  "residual_risks": [
+    "This G2 spike qualifies the selected Kafka delivery mechanism but is not BA or final runtime-conformance evidence.",
+    "The foundation compose stack intentionally uses tmpfs and cannot itself provide restart durability; qualifying evidence used an isolated persistent volume with the identical pinned Kafka image.",
+    "Exactly-once visible effects depend on the governed consumer retaining the demonstrated event-id deduplication contract.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and compensating controls are not equivalent."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated spike commits; the campaign removes its exact generated container, topic, and named volume and changes no runtime migration or approved component selection.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0019"
+}
