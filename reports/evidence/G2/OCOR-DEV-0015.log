@@ -1,18 +1,19 @@
 OCOR-DEV-0015 qualifying raw evidence
-observed_at=2026-09-02T04:29:09Z
-implementation_commit=bfa0ee539f5ca98d5645f36d5268e1afca390a50
+observed_at=2026-09-02T04:37:26Z
+implementation_commit=7c38c6ec7f124b625c113658345e7fb8c4effe0e
 inputs_tree=60a73de8e47b38e94aeb0e2b8dedc689fab6eb35
 
 $ pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0015.py
-...........                                                              [100%]
-11 passed in 0.27s
+..........                                                               [100%]
+10 passed in 1.27s
 
 Crash process exit code at every injected boundary: 86.
 Pre-commit durable counts (aggregate, commit, idempotency, outbox): (0,0,0,0).
 Post-commit/pre-ACK durable counts: (1,1,1,1).
-Identical retry receipt: byte-identical PASS.
+Two concurrent identical retry receipts: byte-identical PASS; one commit.
 Changed-content key reuse: IDEMPOTENCY_CONFLICT PASS.
 Injected partial visibility: oracle rejection PASS.
+Second valid revision counts: (1,2,2,2); referential oracle PASS.
 
 $ pytest -q ocor-runtime/tests with live PostgreSQL 16.14
 ........................................................................ [ 17%]
@@ -20,19 +21,20 @@ $ pytest -q ocor-runtime/tests with live PostgreSQL 16.14
 ........................................................................ [ 52%]
 ........................................................................ [ 70%]
 ........................................................................ [ 87%]
-...................................................                      [100%]
-411 passed in 5.43s
+..................................................                       [100%]
+410 passed in 6.30s
 
 $ ruff check spikes/c3_atomicity ocor-runtime/tests/tasks/test_ocor_dev_0015.py
 All checks passed!
 $ git diff --check
 PASS (no output)
 
-Qualifying totals: 11 targeted PASS; 411 regression PASS; 0 failed; 0 skipped;
+Qualifying totals: 10 targeted PASS; 410 regression PASS; 0 failed; 0 skipped;
 0 xfail; 0 collection errors; 0 NOT_EXECUTED.
-Versions: SQLite 3 (Python 3.12.14 stdlib); PostgreSQL 16.14; uv 0.5.9;
-Python 3.12.14; ruff 0.16.1.
-SQLite is a real file-backed process-crash reference oracle for this hypothesis,
-not selected C3 backend or BA evidence. E1=0, E2=0, runtime conformance is not
-established and Production remains NO-GO. Server-side main protection remains
+Versions: PostgreSQL 16.14; psycopg 3.2.10; uv 0.5.9; Python 3.12.14;
+ruff 0.16.1.
+This real PostgreSQL retained adapter/fault harness retires the SPIKE-01 atomicity
+hypothesis; it is not BA or final runtime conformance evidence. E1=0, E2=0,
+runtime conformance is not established and Production remains NO-GO.
+Server-side main protection remains
 EXTERNAL_CONTROL_PENDING; compensating controls are not equivalent.
