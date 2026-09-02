@@ -1,0 +1,36 @@
+OCOR-DEV-0019 qualifying raw-result record
+created_at=2026-09-02T04:57:00Z
+implementation_commit=651f52ace00b07f11cd2f6231a16f2b676fcecfa
+inputs_tree=60a73de8e47b38e94aeb0e2b8dedc689fab6eb35
+kafka_image=confluentinc/cp-kafka:7.6.0@sha256:24cdd3a7fa89d2bed150560ebea81ff1943badfa61e51d66bb541a6b0d7fb047
+storage=isolated Docker named volume retained across broker restart and removed after campaign
+
+$ PYTHONPATH="$PWD:$PWD/ocor-runtime/src" /home/luca/projects/ocor-activation-final/ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0019.py
+........                                                                 [100%]
+8 passed in 29.93s
+
+Observed qualifying cases:
+- real Confluent Kafka 7.6.0 broker metadata returned broker id 1
+- eight keyed events stayed on one partition with contiguous offsets 0..7
+- the first four records survived a real broker container restart
+- two complete reads from offset zero returned byte-equivalent governed envelopes
+- a killed real consumer process redelivered its prefix and deduplicated to eight effects
+- malformed envelopes and conflicting event-id reuse failed closed
+
+$ OCOR_LIVE_POSTGRES_DSN=postgresql://ocor:REDACTED@127.0.0.1:55432/ocor PYTHONPATH="$PWD:$PWD/ocor-runtime/src" /home/luca/projects/ocor-activation-final/ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests
+........................................................................ [ 17%]
+........................................................................ [ 34%]
+........................................................................ [ 51%]
+........................................................................ [ 68%]
+........................................................................ [ 86%]
+..........................................................               [100%]
+418 passed in 40.46s
+
+$ /home/luca/.local/bin/ruff check spikes/kafka_delivery ocor-runtime/tests/tasks/test_ocor_dev_0019.py
+All checks passed!
+
+$ git diff --check
+exit=0
+
+Failures=0 Skipped=0 XFAIL=0 NOT_EXECUTED=0 CollectionErrors=0
+This is G2 spike evidence, not BA evidence, runtime conformance, E1, E2, or Production readiness.
