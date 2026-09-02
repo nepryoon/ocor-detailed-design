@@ -548,10 +548,20 @@ class InMemoryTrustedClock:
 
 class LeaseStateOutcome(StrEnum):
     CONSUMED = "CONSUMED"
+    EXPIRED = "EXPIRED"
     REVOKED = "REVOKED"
     STOP_EPOCH_MISMATCH = "STOP_EPOCH_MISMATCH"
     FENCING_TOKEN_STALE = "FENCING_TOKEN_STALE"
     ALREADY_CONSUMED = "ALREADY_CONSUMED"
+    CONTROL_PLANE_UNAVAILABLE = "CONTROL_PLANE_UNAVAILABLE"
+
+
+@dataclass(frozen=True, slots=True)
+class LeaseStateDecision:
+    """Result of the single atomic validity-and-consumption boundary."""
+
+    outcome: LeaseStateOutcome
+    evaluated_at: datetime | None
 
 
 class LeaseStatePort(Protocol):
@@ -560,13 +570,16 @@ class LeaseStatePort(Protocol):
     def consume_if_current(
         self,
         *,
+        clock: TrustedClock,
         lease_id: str,
         action_instance_id: str,
         stop_epoch: int,
         fencing_token: int,
         emission_attempt: int,
-    ) -> LeaseStateOutcome:
-        """Atomically check live state and consume the lease at most once."""
+        issued_at: datetime,
+        expires_at: datetime,
+    ) -> LeaseStateDecision:
+        """Atomically evaluate time/live state and consume the lease at most once."""
 
 
 class InMemoryLeaseState:
@@ -634,23 +647,34 @@ class InMemoryLeaseState:
     def consume_if_current(
         self,
         *,
+        clock: TrustedClock,
         lease_id: str,
         action_instance_id: str,
         stop_epoch: int,
         fencing_token: int,
         emission_attempt: int,
-    ) -> LeaseStateOutcome:
+        issued_at: datetime,
+        expires_at: datetime,
+    ) -> LeaseStateDecision:
         with self._lock:
+            try:
+                now = _aware("authoritative now", clock.now(), CORRELATION_ZERO)
+            except (AttributeError, GovernanceFault, TypeError, ValueError):
+                return LeaseStateDecision(
+                    LeaseStateOutcome.CONTROL_PLANE_UNAVAILABLE, None
+                )
+            if now < issued_at or now >= expires_at:
+                return LeaseStateDecision(LeaseStateOutcome.EXPIRED, now)
             if lease_id in self._revoked:
-                return LeaseStateOutcome.REVOKED
+                return LeaseStateDecision(LeaseStateOutcome.REVOKED, now)
             if stop_epoch != self._stop_epoch:
-                return LeaseStateOutcome.STOP_EPOCH_MISMATCH
+                return LeaseStateDecision(LeaseStateOutcome.STOP_EPOCH_MISMATCH, now)
             if fencing_token != self._fencing_tokens.get(action_instance_id):
-                return LeaseStateOutcome.FENCING_TOKEN_STALE
+                return LeaseStateDecision(LeaseStateOutcome.FENCING_TOKEN_STALE, now)
             if lease_id in self._consumed:
-                return LeaseStateOutcome.ALREADY_CONSUMED
+                return LeaseStateDecision(LeaseStateOutcome.ALREADY_CONSUMED, now)
             self._consumed[lease_id] = (action_instance_id, emission_attempt)
-            return LeaseStateOutcome.CONSUMED
+            return LeaseStateDecision(LeaseStateOutcome.CONSUMED, now)
 
     def consumption(self, lease_id: str) -> tuple[str, int] | None:
         with self._lock:
@@ -697,12 +721,6 @@ class LeaseConsumptionLedger:
             raise fault("LEASE_INVALID", "lease signature is not verified")
         if revoked:
             raise fault("LEASE_REVOKED", "lease is revoked")
-        try:
-            now = _aware("authoritative now", self._clock.now(), correlation)
-        except (AttributeError, GovernanceFault, TypeError, ValueError) as exc:
-            raise fault("CONTROL_PLANE_UNAVAILABLE", "trusted clock is unavailable") from exc
-        if now < lease.issued_at or now >= lease.expires_at:
-            raise fault("LEASE_EXPIRED", "lease is outside its time window")
         bindings = (
             "capability_id",
             "effective_principal_id",
@@ -721,18 +739,26 @@ class LeaseConsumptionLedger:
         if lease.fencing_token != expected.fencing_token:
             raise fault("FENCING_TOKEN_STALE", "lease fencing token is stale")
         try:
-            outcome = self._state.consume_if_current(
+            decision = self._state.consume_if_current(
+                clock=self._clock,
                 lease_id=lease.lease_id,
                 action_instance_id=lease.action_instance_id,
                 stop_epoch=lease.stop_epoch,
                 fencing_token=lease.fencing_token,
                 emission_attempt=expected.emission_attempt,
+                issued_at=lease.issued_at,
+                expires_at=lease.expires_at,
             )
         except Exception as exc:
             raise fault(
                 "CONTROL_PLANE_UNAVAILABLE",
                 "authoritative lease state is unavailable",
             ) from exc
+        outcome = decision.outcome
+        if outcome is LeaseStateOutcome.CONTROL_PLANE_UNAVAILABLE:
+            raise fault("CONTROL_PLANE_UNAVAILABLE", "trusted clock is unavailable")
+        if outcome is LeaseStateOutcome.EXPIRED:
+            raise fault("LEASE_EXPIRED", "lease is outside its time window")
         if outcome is LeaseStateOutcome.REVOKED:
             raise fault("LEASE_REVOKED", "lease is revoked")
         if outcome is LeaseStateOutcome.STOP_EPOCH_MISMATCH:
@@ -747,7 +773,14 @@ class LeaseConsumptionLedger:
                 "authoritative lease state returned an invalid result",
             )
         key = (lease.lease_id, lease.action_instance_id, expected.emission_attempt)
-        return LeaseConsumptionReceipt(key, lease.governed_context_digest, now)
+        if decision.evaluated_at is None:
+            raise fault(
+                "CONTROL_PLANE_UNAVAILABLE",
+                "authoritative lease state omitted its evaluation time",
+            )
+        return LeaseConsumptionReceipt(
+            key, lease.governed_context_digest, decision.evaluated_at
+        )
 
 
 @dataclass(frozen=True, slots=True)

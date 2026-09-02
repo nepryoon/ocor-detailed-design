@@ -413,6 +413,34 @@ def test_expired_lease_fails_closed(
     assert exc_info.value.reason_code == "LEASE_EXPIRED"
 
 
+def test_expiry_is_rechecked_inside_atomic_consumption_boundary(
+    lease: CapabilityLease,
+    lease_expectation: LeaseExpectation,
+    clock: InMemoryTrustedClock,
+):
+    class AdvanceAtAtomicBoundary(InMemoryLeaseState):
+        def consume_if_current(self, **kwargs):  # type: ignore[no-untyped-def]
+            clock.advance(timedelta(seconds=3))
+            return super().consume_if_current(**kwargs)
+
+    state = AdvanceAtAtomicBoundary(
+        stop_epoch=lease.stop_epoch,
+        fencing_tokens={lease.action_instance_id: lease.fencing_token},
+    )
+    ledger = LeaseConsumptionLedger(clock=clock, state=state)
+
+    with pytest.raises(GovernanceFault) as exc_info:
+        ledger.consume(
+            lease,
+            lease_expectation,
+            signature_verified=True,
+            revoked=False,
+        )
+
+    assert exc_info.value.reason_code == "LEASE_EXPIRED"
+    assert state.consumption(lease.lease_id) is None
+
+
 @pytest.mark.parametrize(
     "field",
     [
