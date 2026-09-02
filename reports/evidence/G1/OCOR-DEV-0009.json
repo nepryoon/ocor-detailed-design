@@ -1,0 +1,74 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0009.py in pre-provisioned test environment",
+      "result": {"failed": 0, "not_executed": 0, "passed": 46, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14",
+      "result": {"failed": 0, "not_executed": 0, "passed": 291, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "ruff check governance kernel and task tests; git diff --check",
+      "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0},
+      "status": "PASS"
+    }
+  ],
+  "commit": "f759c529b595b1ef17bd41bc7bfa70251cfbad21",
+  "created_at": "2026-09-02T03:35:43Z",
+  "environment": {
+    "postgres": "16.14",
+    "python": "3.12.14",
+    "ruff": "0.16.1",
+    "uv": "0.12.5"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/docs/governance_dossier/contracts/capability-lease.schema.json": "d16951ad374f33138541370d55d0cd474ae0672ae3fa0a134d0a10ae030ddf0e",
+    "ocor-runtime/src/ocor_runtime/kernel/governance.py": "1f927c02009be119bd5ea7a98f286b6578e96ec0b93471c0103feb44668c5a3d",
+    "ocor-runtime/src/ocor_runtime/kernel/governed_context.py": "4d216c73708009e19caf04761dabdcc35c77967a2e8616c5a0a575fc5b21e241",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0009.py": "6fd2f36712b7c4fbbb6cff8cfe09c8bead61c832bc107c50c6096d9812823d45",
+    "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537"
+  },
+  "raw_output_sha256": "eb111ccb2474cb6b978643469f3b0158ad9fbc4d2a8c1320a88cf12b483ecd27",
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0009-GOVERNANCE-CONTRACT",
+      "command": "pytest targeted Authority, lease, evidence, provenance and error taxonomy cases",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 46, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0009-REGRESSION",
+      "command": "pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 291, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0009-QUALITY",
+      "command": "ruff check governance kernel and task tests; git diff --check",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "Signature and revocation verdicts are explicit fail-closed inputs from a future cryptographic control-plane adapter; this task does not claim provider integration.",
+    "The lease consumption ledger proves kernel one-shot semantics; durable co-transaction with DeliveryAttempt is assigned to the later C6 persistence/emission tasks.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and is not represented as equivalent to compensating controls."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated task commits and revalidate the previous cumulative G1 manifest.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0009"
+}
