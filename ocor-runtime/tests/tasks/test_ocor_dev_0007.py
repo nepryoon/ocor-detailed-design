@@ -7,6 +7,8 @@ import subprocess
 from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
+
+# isort: split
 from ocor_runtime.errors import CanonicalizationError
 from ocor_runtime.kernel.canonical import (
     IdentifierError,
@@ -51,6 +53,8 @@ def test_rfc_8785_number_and_string_vectors_produce_stable_bytes():
         ("44b52d02c7e14af5", "9.999999999999997e+22"),
         ("44b52d02c7e14af6", "1e+23"),
         ("44b52d02c7e14af7", "1.0000000000000001e+23"),
+        ("444b1ae4d6e2ef4c", "999999999999999500000"),
+        ("444b1ae4d6e2ef4d", "999999999999999600000"),
         ("444b1ae4d6e2ef4e", "999999999999999700000"),
         ("444b1ae4d6e2ef4f", "999999999999999900000"),
         ("444b1ae4d6e2ef50", "1e+21"),
@@ -90,6 +94,10 @@ def test_exact_two_to_the_53_integer_has_independent_golden_digest():
 def test_number_serialization_matches_node_ecmascript_boundary(document: str):
     node = shutil.which("node")
     assert node is not None, "Node.js is mandatory for the cross-language JCS oracle"
+    version = subprocess.run(
+        [node, "--version"], check=False, capture_output=True, text=True, timeout=10
+    )
+    assert version.returncode == 0 and version.stdout.strip() == "v20.20.2"
     result = subprocess.run(
         [
             node,

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import pytest
+
+# isort: split
 from ocor_runtime.canonical import canonical_sha256, canonicalize_json, load_i_json
 from ocor_runtime.errors import CanonicalizationError
 

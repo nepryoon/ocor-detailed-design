@@ -3,6 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+
+# isort: split
 from ocor_runtime.c1_compiler import SemanticCompiler
 from ocor_runtime.c2_identity import (
     IdentityRecord,

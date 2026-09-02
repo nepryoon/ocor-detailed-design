@@ -13,6 +13,12 @@ class CanonicalizationError(OCORError, ValueError):
     code = "CANONICALIZATION_INVALID"
 
 
+class DigestProviderError(CanonicalizationError):
+    """The configured SHA-256 provider failed operationally."""
+
+    code = "DIGEST_PROVIDER_FAILURE"
+
+
 class SchemaValidationError(OCORError, ValueError):
     """A semantic document does not conform to its normative schema."""
 

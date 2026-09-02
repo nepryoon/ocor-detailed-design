@@ -13,7 +13,7 @@ from itertools import pairwise
 from typing import Any, TypeVar
 
 from ..canonical import canonicalize, load_i_json
-from ..errors import CanonicalizationError, OCORError
+from ..errors import CanonicalizationError, DigestProviderError, OCORError
 
 T = TypeVar("T")
 DIGEST = re.compile(r"urn:sha256:[0-9a-f]{64}")
@@ -63,7 +63,10 @@ def parse_i_json(document: str | bytes | bytearray) -> Any:
 def canonical_digest(value: Any) -> str:
     """Return the normative lowercase SHA-256 URN for canonical bytes."""
 
-    return "urn:sha256:" + hashlib.sha256(canonical_bytes(value)).hexdigest()
+    try:
+        return "urn:sha256:" + hashlib.sha256(canonical_bytes(value)).hexdigest()
+    except OSError as exc:
+        raise DigestProviderError("SHA-256 provider failure") from exc
 
 
 def verify_canonical_digest(value: Any, claimed_digest: str) -> str:

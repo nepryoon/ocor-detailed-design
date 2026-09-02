@@ -14,7 +14,7 @@ import math
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from .errors import CanonicalizationError
+from .errors import CanonicalizationError, DigestProviderError
 
 MAX_SAFE_INTEGER = 9_007_199_254_740_991
 
@@ -162,7 +162,10 @@ def canonicalize(value: Any) -> bytes:
 def canonical_sha256(value: Any) -> str:
     """Return a lowercase SHA-256 digest over canonical UTF-8 JSON."""
 
-    return hashlib.sha256(canonicalize(value)).hexdigest()
+    try:
+        return hashlib.sha256(canonicalize(value)).hexdigest()
+    except OSError as exc:
+        raise DigestProviderError("SHA-256 provider failure") from exc
 
 
 def load_i_json(document: str | bytes | bytearray) -> Any:
