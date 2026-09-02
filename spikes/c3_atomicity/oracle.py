@@ -1,21 +1,16 @@
-"""Process-crash oracle for the C3 revision/state/idempotency/outbox invariant.
-
-SQLite is used as a real file-backed transactional reference, not as the selected
-C3 backend. OCOR-DEV-0016 separately qualifies the selected backend under real
-concurrency. Abrupt worker exit exercises journal recovery rather than an in-memory
-mock or exception-only rollback.
-"""
+"""PostgreSQL process-crash oracle for the C3 atomic commit invariant."""
 
 from __future__ import annotations
 
 import hashlib
 import json
 import os
-import sqlite3
 from collections.abc import Mapping
 from enum import StrEnum
-from pathlib import Path
 from typing import Any
+
+import psycopg
+from psycopg.rows import dict_row
 
 
 class AtomicVisibilityError(RuntimeError):
@@ -28,64 +23,66 @@ class IdempotencyConflict(RuntimeError):
 
 class CrashStage(StrEnum):
     BEFORE_TRANSACTION = "before-transaction"
-    AFTER_BEGIN = "after-begin"
-    AFTER_STATE = "after-state"
-    AFTER_COMMIT_RECORD = "after-commit-record"
-    AFTER_IDEMPOTENCY = "after-idempotency"
-    AFTER_OUTBOX = "after-outbox"
+    AFTER_TRANSACTION_BEGIN = "after-transaction-begin"
+    AFTER_AGGREGATE_STAGE = "after-aggregate-stage"
+    AFTER_OUTBOX_STAGE = "after-outbox-stage"
     AFTER_COMMIT_BEFORE_ACK = "after-commit-before-ack"
 
     @classmethod
     def precommit(cls) -> tuple[CrashStage, ...]:
         return (
             cls.BEFORE_TRANSACTION,
-            cls.AFTER_BEGIN,
-            cls.AFTER_STATE,
-            cls.AFTER_COMMIT_RECORD,
-            cls.AFTER_IDEMPOTENCY,
-            cls.AFTER_OUTBOX,
+            cls.AFTER_TRANSACTION_BEGIN,
+            cls.AFTER_AGGREGATE_STAGE,
+            cls.AFTER_OUTBOX_STAGE,
         )
 
 
 SCHEMA = """
-PRAGMA journal_mode=WAL;
-PRAGMA synchronous=FULL;
-CREATE TABLE IF NOT EXISTS canonical_aggregate (
+CREATE TABLE IF NOT EXISTS spike_c3_aggregate (
     tenant_id TEXT NOT NULL,
     aggregate_type TEXT NOT NULL,
     aggregate_ref TEXT NOT NULL,
-    revision INTEGER NOT NULL CHECK (revision > 0),
+    revision BIGINT NOT NULL CHECK (revision > 0),
     state_digest TEXT NOT NULL,
     PRIMARY KEY (tenant_id, aggregate_type, aggregate_ref)
 );
-CREATE TABLE IF NOT EXISTS canonical_commit (
+CREATE TABLE IF NOT EXISTS spike_c3_commit (
     commit_id TEXT PRIMARY KEY,
     tenant_id TEXT NOT NULL,
     aggregate_type TEXT NOT NULL,
     aggregate_ref TEXT NOT NULL,
-    from_revision INTEGER NOT NULL,
-    to_revision INTEGER NOT NULL,
+    from_revision BIGINT NOT NULL,
+    to_revision BIGINT NOT NULL CHECK (to_revision = from_revision + 1),
     command_digest TEXT NOT NULL,
     state_digest TEXT NOT NULL,
     evidence_digest TEXT NOT NULL,
-    governed_context_digest TEXT NOT NULL
+    governed_context_digest TEXT NOT NULL,
+    UNIQUE (tenant_id, aggregate_type, aggregate_ref, to_revision)
 );
-CREATE TABLE IF NOT EXISTS canonical_idempotency (
+CREATE TABLE IF NOT EXISTS spike_c3_idempotency (
     tenant_id TEXT NOT NULL,
     aggregate_type TEXT NOT NULL,
     aggregate_ref TEXT NOT NULL,
     idempotency_key TEXT NOT NULL,
     command_digest TEXT NOT NULL,
-    receipt_json TEXT NOT NULL,
+    receipt JSONB NOT NULL,
     PRIMARY KEY (tenant_id, aggregate_type, aggregate_ref, idempotency_key)
 );
-CREATE TABLE IF NOT EXISTS canonical_outbox (
+CREATE TABLE IF NOT EXISTS spike_c3_outbox (
     event_id TEXT PRIMARY KEY,
-    commit_id TEXT NOT NULL UNIQUE REFERENCES canonical_commit(commit_id),
+    commit_id TEXT NOT NULL UNIQUE REFERENCES spike_c3_commit(commit_id),
     branch TEXT NOT NULL CHECK (branch = 'main'),
     payload_digest TEXT NOT NULL
 );
 """
+
+TABLES = (
+    "spike_c3_aggregate",
+    "spike_c3_commit",
+    "spike_c3_idempotency",
+    "spike_c3_outbox",
+)
 
 
 def _canonical_bytes(value: object) -> bytes:
@@ -98,25 +95,33 @@ def _digest(value: object) -> str:
     return "urn:sha256:" + hashlib.sha256(_canonical_bytes(value)).hexdigest()
 
 
-def _required(command: Mapping[str, Any], field: str) -> Any:
-    if field not in command:
+def _required(value: Mapping[str, Any], field: str) -> Any:
+    if field not in value:
         raise ValueError(f"missing command field: {field}")
-    return command[field]
+    return value[field]
 
 
-class AtomicCommitOracle:
-    def __init__(self, database: str | Path) -> None:
-        self.database = Path(database)
+class PostgreSQLAtomicCommitOracle:
+    """Minimal retained adapter/fault harness for SPIKE-01 only."""
 
-    def connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.database, timeout=5, isolation_level=None)
-        connection.execute("PRAGMA foreign_keys=ON")
-        connection.execute("PRAGMA busy_timeout=5000")
-        return connection
+    def __init__(self, dsn: str) -> None:
+        if not dsn:
+            raise ValueError("a PostgreSQL DSN is required")
+        self._dsn = dsn
+
+    def connect(self) -> psycopg.Connection[Any]:
+        return psycopg.connect(self._dsn, row_factory=dict_row)
 
     def initialize(self) -> None:
         with self.connect() as connection:
-            connection.executescript(SCHEMA)
+            connection.execute(SCHEMA)
+
+    def reset(self) -> None:
+        with self.connect() as connection:
+            connection.execute(
+                "TRUNCATE spike_c3_outbox, spike_c3_idempotency, "
+                "spike_c3_commit, spike_c3_aggregate"
+            )
 
     @staticmethod
     def _crash(selected: CrashStage | None, target: CrashStage) -> None:
@@ -128,134 +133,171 @@ class AtomicCommitOracle:
     ) -> dict[str, Any]:
         stage = CrashStage(crash_stage) if crash_stage is not None else None
         self._crash(stage, CrashStage.BEFORE_TRANSACTION)
-        tenant_id = _required(_required(command, "governed_context"), "tenant_id")
-        aggregate_type = _required(command, "aggregate_type")
-        aggregate_ref = _required(command, "aggregate_ref")
-        expected_revision = _required(command, "expected_revision")
-        idempotency_key = _required(command, "idempotency_key")
+        context = _required(command, "governed_context")
+        if not isinstance(context, Mapping):
+            raise TypeError("governed_context must be an object")
+        tenant_id = str(_required(context, "tenant_id"))
+        aggregate_type = str(_required(command, "aggregate_type"))
+        aggregate_ref = str(_required(command, "aggregate_ref"))
+        expected_revision = int(_required(command, "expected_revision"))
+        idempotency_key = str(_required(command, "idempotency_key"))
         if _required(command, "branch") != "main":
             raise ValueError("canonical commit branch must be main")
         command_digest = _digest(command)
         state_digest = _digest(_required(command, "canonical_delta"))
         evidence_digest = _digest(_required(command, "evidence_refs"))
-        scope = (tenant_id, aggregate_type, aggregate_ref, idempotency_key)
+        scope = (tenant_id, aggregate_type, aggregate_ref)
 
         connection = self.connect()
         try:
-            connection.execute("BEGIN IMMEDIATE")
-            self._crash(stage, CrashStage.AFTER_BEGIN)
-            replay = connection.execute(
-                """SELECT command_digest, receipt_json FROM canonical_idempotency
-                   WHERE tenant_id=? AND aggregate_type=? AND aggregate_ref=?
-                     AND idempotency_key=?""",
-                scope,
-            ).fetchone()
-            if replay is not None:
-                if replay[0] != command_digest:
-                    raise IdempotencyConflict("idempotency scope was rebound")
-                connection.rollback()
-                return json.loads(replay[1])
-
-            current = connection.execute(
-                """SELECT revision FROM canonical_aggregate
-                   WHERE tenant_id=? AND aggregate_type=? AND aggregate_ref=?""",
-                scope[:3],
-            ).fetchone()
-            revision = int(current[0]) if current is not None else 0
-            if expected_revision != revision:
-                raise AtomicVisibilityError(
-                    f"revision conflict: expected {expected_revision}, found {revision}"
+            with connection.transaction():
+                self._crash(stage, CrashStage.AFTER_TRANSACTION_BEGIN)
+                lock_key = "\x1f".join(scope)
+                connection.execute(
+                    "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (lock_key,)
                 )
-            to_revision = revision + 1
-            commit_id = "urn:ocor:commit:sha256:" + hashlib.sha256(
-                f"{command_digest}:{to_revision}".encode()
-            ).hexdigest()
-            event_id = "urn:ocor:event:sha256:" + hashlib.sha256(
-                f"{commit_id}:outbox".encode()
-            ).hexdigest()
-            payload_digest = _digest(
-                {"commit_id": commit_id, "revision": to_revision, "state_digest": state_digest}
-            )
-            receipt = {
-                "aggregate_ref": aggregate_ref,
-                "command_digest": command_digest,
-                "commit_id": commit_id,
-                "evidence_digest": evidence_digest,
-                "from_revision": revision,
-                "governed_context_digest": _required(command, "governed_context_digest"),
-                "idempotency_key": idempotency_key,
-                "outbox_event_id": event_id,
-                "outbox_payload_digest": payload_digest,
-                "state_digest": state_digest,
-                "to_revision": to_revision,
-            }
-            connection.execute(
-                """INSERT INTO canonical_aggregate
-                       (tenant_id, aggregate_type, aggregate_ref, revision, state_digest)
-                   VALUES (?, ?, ?, ?, ?)
-                   ON CONFLICT (tenant_id, aggregate_type, aggregate_ref) DO UPDATE SET
-                       revision=excluded.revision, state_digest=excluded.state_digest""",
-                (*scope[:3], to_revision, state_digest),
-            )
-            self._crash(stage, CrashStage.AFTER_STATE)
-            connection.execute(
-                """INSERT INTO canonical_commit
-                       (commit_id, tenant_id, aggregate_type, aggregate_ref,
-                        from_revision, to_revision, command_digest, state_digest,
-                        evidence_digest, governed_context_digest)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    commit_id,
-                    *scope[:3],
-                    revision,
-                    to_revision,
-                    command_digest,
-                    state_digest,
-                    evidence_digest,
-                    _required(command, "governed_context_digest"),
-                ),
-            )
-            self._crash(stage, CrashStage.AFTER_COMMIT_RECORD)
-            connection.execute(
-                """INSERT INTO canonical_idempotency
-                       (tenant_id, aggregate_type, aggregate_ref, idempotency_key,
-                        command_digest, receipt_json)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
-                (*scope, command_digest, _canonical_bytes(receipt).decode()),
-            )
-            self._crash(stage, CrashStage.AFTER_IDEMPOTENCY)
-            connection.execute(
-                """INSERT INTO canonical_outbox
-                       (event_id, commit_id, branch, payload_digest)
-                   VALUES (?, ?, 'main', ?)""",
-                (event_id, commit_id, payload_digest),
-            )
-            self._crash(stage, CrashStage.AFTER_OUTBOX)
-            connection.commit()
+                replay = connection.execute(
+                    """SELECT command_digest, receipt
+                       FROM spike_c3_idempotency
+                       WHERE tenant_id=%s AND aggregate_type=%s AND aggregate_ref=%s
+                         AND idempotency_key=%s""",
+                    (*scope, idempotency_key),
+                ).fetchone()
+                if replay is not None:
+                    if replay["command_digest"] != command_digest:
+                        raise IdempotencyConflict("idempotency scope was rebound")
+                    return dict(replay["receipt"])
+
+                current = connection.execute(
+                    """SELECT revision FROM spike_c3_aggregate
+                       WHERE tenant_id=%s AND aggregate_type=%s AND aggregate_ref=%s
+                       FOR UPDATE""",
+                    scope,
+                ).fetchone()
+                revision = int(current["revision"]) if current is not None else 0
+                if expected_revision != revision:
+                    raise AtomicVisibilityError(
+                        f"revision conflict: expected {expected_revision}, found {revision}"
+                    )
+                to_revision = revision + 1
+                commit_id = "urn:ocor:commit:sha256:" + hashlib.sha256(
+                    f"{command_digest}:{to_revision}".encode()
+                ).hexdigest()
+                event_id = "urn:ocor:event:sha256:" + hashlib.sha256(
+                    f"{commit_id}:outbox".encode()
+                ).hexdigest()
+                payload_digest = _digest(
+                    {
+                        "commit_id": commit_id,
+                        "revision": to_revision,
+                        "state_digest": state_digest,
+                    }
+                )
+                receipt = {
+                    "aggregate_ref": aggregate_ref,
+                    "command_digest": command_digest,
+                    "commit_id": commit_id,
+                    "evidence_digest": evidence_digest,
+                    "from_revision": revision,
+                    "governed_context_digest": _required(
+                        command, "governed_context_digest"
+                    ),
+                    "idempotency_key": idempotency_key,
+                    "outbox_event_id": event_id,
+                    "outbox_payload_digest": payload_digest,
+                    "state_digest": state_digest,
+                    "to_revision": to_revision,
+                }
+                connection.execute(
+                    """INSERT INTO spike_c3_aggregate
+                           (tenant_id, aggregate_type, aggregate_ref, revision, state_digest)
+                       VALUES (%s, %s, %s, %s, %s)
+                       ON CONFLICT (tenant_id, aggregate_type, aggregate_ref) DO UPDATE SET
+                           revision=EXCLUDED.revision, state_digest=EXCLUDED.state_digest""",
+                    (*scope, to_revision, state_digest),
+                )
+                self._crash(stage, CrashStage.AFTER_AGGREGATE_STAGE)
+                connection.execute(
+                    """INSERT INTO spike_c3_commit
+                           (commit_id, tenant_id, aggregate_type, aggregate_ref,
+                            from_revision, to_revision, command_digest, state_digest,
+                            evidence_digest, governed_context_digest)
+                       VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                    (
+                        commit_id,
+                        *scope,
+                        revision,
+                        to_revision,
+                        command_digest,
+                        state_digest,
+                        evidence_digest,
+                        _required(command, "governed_context_digest"),
+                    ),
+                )
+                connection.execute(
+                    """INSERT INTO spike_c3_idempotency
+                           (tenant_id, aggregate_type, aggregate_ref, idempotency_key,
+                            command_digest, receipt)
+                       VALUES (%s, %s, %s, %s, %s, %s::jsonb)""",
+                    (
+                        *scope,
+                        idempotency_key,
+                        command_digest,
+                        _canonical_bytes(receipt).decode("utf-8"),
+                    ),
+                )
+                connection.execute(
+                    """INSERT INTO spike_c3_outbox
+                           (event_id, commit_id, branch, payload_digest)
+                       VALUES (%s, %s, 'main', %s)""",
+                    (event_id, commit_id, payload_digest),
+                )
+                self._crash(stage, CrashStage.AFTER_OUTBOX_STAGE)
             self._crash(stage, CrashStage.AFTER_COMMIT_BEFORE_ACK)
             return receipt
-        except BaseException:
-            if connection.in_transaction:
-                connection.rollback()
-            raise
         finally:
             connection.close()
 
     def counts(self) -> tuple[int, int, int, int]:
         with self.connect() as connection:
-            tables = (
-                "canonical_aggregate",
-                "canonical_commit",
-                "canonical_idempotency",
-                "canonical_outbox",
-            )
             return tuple(
-                int(connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
-                for table in tables
+                int(
+                    connection.execute(
+                        "SELECT COUNT(*) FROM " + table
+                    ).fetchone()["count"]
+                )
+                for table in TABLES
             )
 
     def assert_atomic_visibility(self) -> tuple[int, int, int, int]:
-        counts = self.counts()
-        if len(set(counts)) != 1:
-            raise AtomicVisibilityError(f"partial durable visibility: {counts}")
-        return counts
+        with self.connect() as connection:
+            anomaly = connection.execute(
+                """SELECT
+                     (SELECT count(*) FROM spike_c3_aggregate a
+                       WHERE NOT EXISTS (
+                         SELECT 1 FROM spike_c3_commit c
+                         WHERE (c.tenant_id,c.aggregate_type,c.aggregate_ref)=
+                               (a.tenant_id,a.aggregate_type,a.aggregate_ref))) AS orphan_state,
+                     (SELECT count(*) FROM spike_c3_commit c
+                       LEFT JOIN spike_c3_outbox o ON o.commit_id=c.commit_id
+                       LEFT JOIN spike_c3_idempotency i
+                         ON (i.receipt->>'commit_id')=c.commit_id
+                       WHERE o.commit_id IS NULL OR i.command_digest IS NULL) AS incomplete_commit,
+                     (SELECT count(*) FROM spike_c3_idempotency i
+                       LEFT JOIN spike_c3_commit c
+                         ON c.commit_id=(i.receipt->>'commit_id')
+                       WHERE c.commit_id IS NULL) AS phantom_receipt,
+                     (SELECT count(*) FROM spike_c3_aggregate a
+                       WHERE a.revision <> (
+                         SELECT max(c.to_revision) FROM spike_c3_commit c
+                         WHERE (c.tenant_id,c.aggregate_type,c.aggregate_ref)=
+                               (a.tenant_id,a.aggregate_type,a.aggregate_ref))) AS revision_drift"""
+            ).fetchone()
+        assert anomaly is not None
+        problems = {key: int(value) for key, value in anomaly.items() if int(value)}
+        if problems:
+            raise AtomicVisibilityError(f"partial durable visibility: {problems}")
+        return self.counts()
+
+
+AtomicCommitOracle = PostgreSQLAtomicCommitOracle

@@ -3,19 +3,20 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
-from pathlib import Path
 
 from oracle import AtomicCommitOracle, CrashStage
 
 
 def main() -> int:
-    if len(sys.argv) != 3:
-        raise SystemExit("usage: crash_worker.py DATABASE CRASH_STAGE")
+    if len(sys.argv) != 2:
+        raise SystemExit("usage: crash_worker.py CRASH_STAGE")
+    dsn = os.environ.get("OCOR_LIVE_POSTGRES_DSN")
+    if not dsn:
+        raise SystemExit("OCOR_LIVE_POSTGRES_DSN is required")
     command = json.load(sys.stdin)
-    AtomicCommitOracle(Path(sys.argv[1])).commit(
-        command, crash_stage=CrashStage(sys.argv[2])
-    )
+    AtomicCommitOracle(dsn).commit(command, crash_stage=CrashStage(sys.argv[1]))
     return 0
 
 

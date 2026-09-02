@@ -1,8 +1,11 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import pytest
@@ -25,6 +28,22 @@ DIGEST_B = "urn:sha256:" + "b" * 64
 DIGEST_C = "urn:sha256:" + "c" * 64
 DIGEST_D = "urn:sha256:" + "d" * 64
 WORKER = REPOSITORY_ROOT / "spikes/c3_atomicity/crash_worker.py"
+
+
+@pytest.fixture(scope="session")
+def postgres_dsn() -> str:
+    dsn = os.environ.get("OCOR_LIVE_POSTGRES_DSN")
+    if not dsn:
+        pytest.fail("OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence")
+    return dsn
+
+
+@pytest.fixture
+def oracle(postgres_dsn: str) -> AtomicCommitOracle:
+    value = AtomicCommitOracle(postgres_dsn)
+    value.initialize()
+    value.reset()
+    return value
 
 
 @pytest.fixture
@@ -73,9 +92,9 @@ def command() -> dict[str, object]:
     ).to_mapping()
 
 
-def crash(database: Path, command: dict[str, object], stage: CrashStage) -> int:
+def crash(command: dict[str, object], stage: CrashStage) -> int:
     result = subprocess.run(
-        [sys.executable, str(WORKER), str(database), stage.value],
+        [sys.executable, str(WORKER), stage.value],
         input=json.dumps(command),
         text=True,
         capture_output=True,
@@ -87,48 +106,46 @@ def crash(database: Path, command: dict[str, object], stage: CrashStage) -> int:
 
 
 @pytest.mark.parametrize("stage", CrashStage.precommit())
-def test_abrupt_precommit_crash_recovers_with_zero_partial_visibility(
-    tmp_path: Path, command: dict[str, object], stage: CrashStage
+def test_real_postgresql_precommit_process_crash_has_zero_partial_visibility(
+    oracle: AtomicCommitOracle, command: dict[str, object], stage: CrashStage
 ):
-    database = tmp_path / f"{stage.value}.sqlite"
-    oracle = AtomicCommitOracle(database)
-    oracle.initialize()
-    assert crash(database, command, stage) == 86
+    assert crash(command, stage) == 86
     assert oracle.assert_atomic_visibility() == (0, 0, 0, 0)
 
 
-def test_postcommit_preack_crash_has_all_four_durable_records_and_exact_retry(
-    tmp_path: Path, command: dict[str, object]
+def test_real_postgresql_postcommit_preack_crash_has_complete_exact_retry(
+    oracle: AtomicCommitOracle, command: dict[str, object]
 ):
-    database = tmp_path / "postcommit.sqlite"
-    oracle = AtomicCommitOracle(database)
-    oracle.initialize()
-    assert crash(database, command, CrashStage.AFTER_COMMIT_BEFORE_ACK) == 86
+    assert crash(command, CrashStage.AFTER_COMMIT_BEFORE_ACK) == 86
     assert oracle.assert_atomic_visibility() == (1, 1, 1, 1)
     with oracle.connect() as connection:
         stored = connection.execute(
-            "SELECT receipt_json FROM canonical_idempotency"
-        ).fetchone()[0]
-    assert oracle.commit(command) == json.loads(stored)
+            "SELECT receipt FROM spike_c3_idempotency"
+        ).fetchone()["receipt"]
+    assert oracle.commit(command) == stored
     assert oracle.assert_atomic_visibility() == (1, 1, 1, 1)
 
 
-def test_identical_retry_returns_byte_identical_original_receipt(
-    tmp_path: Path, command: dict[str, object]
+def test_two_concurrent_identical_retries_return_one_identical_receipt(
+    oracle: AtomicCommitOracle, command: dict[str, object]
 ):
-    oracle = AtomicCommitOracle(tmp_path / "retry.sqlite")
-    oracle.initialize()
-    first = oracle.commit(command)
-    second = oracle.commit(command)
-    assert json.dumps(first, sort_keys=True) == json.dumps(second, sort_keys=True)
+    barrier = threading.Barrier(3)
+
+    def attempt() -> dict[str, object]:
+        barrier.wait(timeout=5)
+        return oracle.commit(command)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        futures = [pool.submit(attempt), pool.submit(attempt)]
+        barrier.wait(timeout=5)
+        receipts = [future.result(timeout=10) for future in futures]
+    assert receipts[0] == receipts[1]
     assert oracle.assert_atomic_visibility() == (1, 1, 1, 1)
 
 
 def test_key_reuse_with_changed_content_is_rejected_without_partial_write(
-    tmp_path: Path, command: dict[str, object]
+    oracle: AtomicCommitOracle, command: dict[str, object]
 ):
-    oracle = AtomicCommitOracle(tmp_path / "conflict.sqlite")
-    oracle.initialize()
     original = oracle.commit(command)
     changed = {**command, "canonical_delta": {"status": "REJECTED"}}
     with pytest.raises(IdempotencyConflict):
@@ -137,16 +154,32 @@ def test_key_reuse_with_changed_content_is_rejected_without_partial_write(
     assert oracle.assert_atomic_visibility() == (1, 1, 1, 1)
 
 
-def test_partial_visibility_falsifies_oracle_instead_of_passing(
-    tmp_path: Path,
+def test_atomic_oracle_accepts_multiple_revisions_without_global_count_equality(
+    oracle: AtomicCommitOracle, command: dict[str, object]
 ):
-    oracle = AtomicCommitOracle(tmp_path / "partial.sqlite")
-    oracle.initialize()
+    first = oracle.commit(command)
+    second_command = {
+        **command,
+        "command_id": "urn:ocor:command:atomicity:2",
+        "expected_revision": 1,
+        "canonical_delta": {"status": "CONFIRMED"},
+        "idempotency_key": "atomicity-spike-key-0002",
+    }
+    second = oracle.commit(second_command)
+    assert first["to_revision"] == 1
+    assert second["from_revision"] == 1
+    assert second["to_revision"] == 2
+    assert oracle.assert_atomic_visibility() == (1, 2, 2, 2)
+
+
+def test_partial_visibility_falsifies_oracle_instead_of_passing(
+    oracle: AtomicCommitOracle,
+):
     with oracle.connect() as connection:
         connection.execute(
-            """INSERT INTO canonical_aggregate
+            """INSERT INTO spike_c3_aggregate
                    (tenant_id, aggregate_type, aggregate_ref, revision, state_digest)
-               VALUES ('tenant', 'type', 'ref', 1, ?)""",
+               VALUES ('tenant', 'type', 'ref', 1, %s)""",
             (DIGEST_A,),
         )
     with pytest.raises(AtomicVisibilityError, match="partial durable visibility"):
@@ -154,10 +187,8 @@ def test_partial_visibility_falsifies_oracle_instead_of_passing(
 
 
 def test_scenario_branch_cannot_create_relayable_outbox(
-    tmp_path: Path, command: dict[str, object]
+    oracle: AtomicCommitOracle, command: dict[str, object]
 ):
-    oracle = AtomicCommitOracle(tmp_path / "scenario.sqlite")
-    oracle.initialize()
     with pytest.raises(ValueError, match="branch must be main"):
         oracle.commit({**command, "branch": "scenario/test"})
     assert oracle.assert_atomic_visibility() == (0, 0, 0, 0)
