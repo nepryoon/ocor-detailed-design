@@ -9,7 +9,7 @@ from ocor_runtime.c2_identity import (
     IdentityRegistry,
     ResolutionStatus,
 )
-from ocor_runtime.canonical import canonical_sha256, canonicalize_json
+from ocor_runtime.canonical import canonical_sha256, canonicalize_json, load_i_json
 from ocor_runtime.errors import (
     CanonicalizationError,
     IdentityConflictError,
@@ -41,6 +41,7 @@ def test_ev_003_non_i_json_values_fail_closed():
         with pytest.raises(CanonicalizationError):
             canonicalize_json(value)
     assert canonicalize_json(9_007_199_254_740_992) == "9007199254740992"
+    assert canonicalize_json(load_i_json("9007199254740993")) == "9007199254740992"
     with pytest.raises(CanonicalizationError):
         canonicalize_json("\ud800")
 

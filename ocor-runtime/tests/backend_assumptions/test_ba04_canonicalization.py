@@ -35,6 +35,7 @@ def test_ba04_non_interoperable_numbers_are_rejected(value):
 
 def test_ba04_exact_binary64_integer_boundary_is_canonical():
     assert canonicalize_json(2**53) == "9007199254740992"
+    assert canonicalize_json(load_i_json("9007199254740993")) == "9007199254740992"
 
 
 def test_ba04_duplicate_json_members_are_rejected():

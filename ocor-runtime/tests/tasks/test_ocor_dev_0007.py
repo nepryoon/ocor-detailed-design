@@ -62,6 +62,7 @@ def test_rfc_8785_number_and_string_vectors_produce_stable_bytes():
 def test_rfc_8785_appendix_b_binary64_vectors(binary64_hex: str, expected: str):
     value = struct.unpack(">d", bytes.fromhex(binary64_hex))[0]
     assert canonical_bytes(value) == expected.encode()
+    assert canonical_bytes(parse_i_json(expected)) == expected.encode()
 
 
 def test_exact_two_to_the_53_integer_has_independent_golden_digest():
@@ -75,7 +76,16 @@ def test_exact_two_to_the_53_integer_has_independent_golden_digest():
 
 @pytest.mark.parametrize(
     "document",
-    ["9007199254740992", "-9007199254740992", "1e23", "1e-7", "0.000001"],
+    [
+        "9007199254740992",
+        "9007199254740993",
+        "-9007199254740992",
+        "295147905179352830000",
+        "999999999999999900000",
+        "1e23",
+        "1e-7",
+        "0.000001",
+    ],
 )
 def test_number_serialization_matches_node_ecmascript_boundary(document: str):
     node = shutil.which("node")
@@ -173,7 +183,7 @@ def test_malformed_identifiers_are_rejected(value: str):
     [
         '{"a":1,"a":2}',
         '{"value":NaN}',
-        '{"value":9007199254740993}',
+        '{"value":1e10000}',
         '"\ud800"',
     ],
 )
@@ -189,3 +199,16 @@ def test_kernel_errors_expose_stable_bounded_reason_codes():
         parse_utc_timestamp("2026-09-02T00:00:00+00:00")
     assert identifier.value.code == "IDENTIFIER_INVALID"
     assert timestamp.value.code == "TIMESTAMP_INVALID"
+
+
+def test_canonical_and_digest_errors_are_typed_and_bounded():
+    with pytest.raises(CanonicalizationError) as huge:
+        canonical_bytes(10**5000)
+    with pytest.raises(CanonicalizationError) as parsed:
+        parse_i_json("1" * 5000)
+    with pytest.raises(CanonicalizationError) as digest:
+        verify_canonical_digest({}, "not-a-digest")
+    assert huge.value.code == "CANONICALIZATION_INVALID"
+    assert parsed.value.code == "CANONICALIZATION_INVALID"
+    assert digest.value.code == "DIGEST_INVALID"
+    assert max(len(str(item.value)) for item in (huge, parsed, digest)) < 100

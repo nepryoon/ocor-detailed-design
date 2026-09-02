@@ -10,6 +10,8 @@ class OCORError(Exception):
 class CanonicalizationError(OCORError, ValueError):
     """A value cannot be represented by RFC 8785 JSON canonicalization."""
 
+    code = "CANONICALIZATION_INVALID"
+
 
 class SchemaValidationError(OCORError, ValueError):
     """A semantic document does not conform to its normative schema."""
@@ -65,4 +67,3 @@ class SandboxViolation(OCORError, PermissionError):
 
 class TokenBudgetExceeded(OCORError):
     """An agent invocation attempted to exceed its deterministic token budget."""
-

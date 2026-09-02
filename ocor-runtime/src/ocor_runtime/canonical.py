@@ -109,11 +109,11 @@ def _serialize_integer(value: int) -> str:
         binary64 = float(value)
     except OverflowError as exc:
         raise CanonicalizationError(
-            f"integer {value} is not representable as an IEEE-754 binary64 value"
+            "integer is not representable as an IEEE-754 binary64 value"
         ) from exc
     if not math.isfinite(binary64) or int(binary64) != value:
         raise CanonicalizationError(
-            f"integer {value} is not exactly representable as an IEEE-754 binary64 value"
+            "integer is not exactly representable as an IEEE-754 binary64 value"
         )
     return _serialize_float(binary64)
 
@@ -172,22 +172,38 @@ def load_i_json(document: str | bytes | bytearray) -> Any:
         result: dict[str, Any] = {}
         for key, value in pairs:
             if key in result:
-                raise CanonicalizationError(f"duplicate object key: {key!r}")
+                raise CanonicalizationError("duplicate object key")
             result[key] = value
         return result
 
     def reject_constant(value: str) -> None:
         raise CanonicalizationError(f"non-finite JSON constant: {value}")
 
+    def parse_integer(value: str) -> int | float:
+        """Map JSON integers to the I-JSON binary64 domain without host-int drift."""
+
+        try:
+            binary64 = float(value)
+        except (OverflowError, ValueError) as exc:
+            raise CanonicalizationError("invalid I-JSON integer") from exc
+        if not math.isfinite(binary64):
+            raise CanonicalizationError(
+                "integer is not representable as an IEEE-754 binary64 value"
+            )
+        if abs(binary64) <= MAX_SAFE_INTEGER:
+            return int(value)
+        return binary64
+
     try:
         parsed = json.loads(
             document,
             object_pairs_hook=reject_duplicate_keys,
             parse_constant=reject_constant,
+            parse_int=parse_integer,
         )
     except CanonicalizationError:
         raise
-    except (UnicodeError, json.JSONDecodeError) as exc:
-        raise CanonicalizationError(f"invalid I-JSON: {exc}") from exc
+    except (UnicodeError, ValueError) as exc:
+        raise CanonicalizationError("invalid I-JSON document") from exc
     canonicalize(parsed)
     return parsed

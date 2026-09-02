@@ -42,6 +42,12 @@ class TimestampError(KernelBoundaryError):
     code = "TIMESTAMP_INVALID"
 
 
+class DigestError(CanonicalizationError):
+    """A canonical digest is malformed or does not bind the supplied value."""
+
+    code = "DIGEST_INVALID"
+
+
 def canonical_bytes(value: Any) -> bytes:
     """Return RFC 8785 UTF-8 bytes for an I-JSON value."""
 
@@ -64,10 +70,10 @@ def verify_canonical_digest(value: Any, claimed_digest: str) -> str:
     """Recalculate a digest and fail closed on malformed or mismatched claims."""
 
     if not isinstance(claimed_digest, str) or DIGEST.fullmatch(claimed_digest) is None:
-        raise CanonicalizationError("claimed digest is not a canonical SHA-256 URN")
+        raise DigestError("claimed digest is not a canonical SHA-256 URN")
     calculated = canonical_digest(value)
     if not hmac.compare_digest(calculated, claimed_digest):
-        raise CanonicalizationError("canonical digest mismatch")
+        raise DigestError("canonical digest mismatch")
     return calculated
 
 
