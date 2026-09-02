@@ -1,0 +1,33 @@
+{
+  "claims": {"E1": 0, "E2": 0, "Production_readiness": "NO_GO", "runtime_conformance": "NOT_ESTABLISHED"},
+  "commands": [
+    {"command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0015.py with live PostgreSQL 16.14", "result": {"failed": 0, "not_executed": 0, "passed": 10, "skipped": 0}, "status": "PASS"},
+    {"command": "pytest -q ocor-runtime/tests with live PostgreSQL 16.14", "result": {"failed": 0, "not_executed": 0, "passed": 410, "skipped": 0}, "status": "PASS"},
+    {"command": "ruff check C3 atomicity spike and task tests; git diff --check", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"}
+  ],
+  "commit": "7c38c6ec7f124b625c113658345e7fb8c4effe0e",
+  "created_at": "2026-09-02T04:37:26Z",
+  "environment": {"postgres": "16.14", "psycopg": "3.2.10", "python": "3.12.14", "ruff": "0.16.1", "uv": "0.5.9"},
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0015.py": "9aae62c4e80368f0f005082941d9f76289d0ff2bfacb4597be3af357d75a7825",
+    "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537",
+    "spikes/c3_atomicity/crash_worker.py": "c238a50fd4f22a5f3697c86e7aa28752588ac3102508eebed97d75b73275ad6e",
+    "spikes/c3_atomicity/oracle.py": "bac05e6912b7ebbfa3d534435908c16a6c788aaa3d07f9349da59114b6fc03fb"
+  },
+  "raw_output_sha256": "6ce4798e8373167e43b782f7fa209b2bbff059c56b76391508cc877ca870076b",
+  "requirement_results": [
+    {"case_id": "OCOR-DEV-0015-CRASH-MATRIX", "command": "pytest real PostgreSQL process-crash and concurrent-retry matrix", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 10, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0015-REGRESSION", "command": "pytest -q ocor-runtime/tests with live PostgreSQL 16.14", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 410, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0015-QUALITY", "command": "ruff check C3 atomicity spike and task tests; git diff --check", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"}
+  ],
+  "residual_risks": [
+    "The retained PostgreSQL adapter/fault harness retires SPIKE-01 only and is not BA or final runtime conformance evidence.",
+    "OCOR-DEV-0016 must still qualify selected-backend lost-ACK, restart and reconciliation behaviour before a selected backend claim.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and compensating controls are not equivalent."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated spike commits; no runtime data migration or component selection is changed.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0015"
+}
