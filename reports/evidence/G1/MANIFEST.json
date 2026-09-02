@@ -59,6 +59,16 @@
       "path": "OCOR-DEV-0012.log",
       "sha256": "ced9728cd0c939f2d296024633ce7ae4a8a0b076d10227199e4d4214f088d3a2",
       "task_id": "OCOR-DEV-0012-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0013.json",
+      "sha256": "248c3dd8aa5b436d26b1f8c631cd5295d87ec5d5b94a05c295610b079f2404ed",
+      "task_id": "OCOR-DEV-0013"
+    },
+    {
+      "path": "OCOR-DEV-0013.log",
+      "sha256": "3a0539022e743149ac89dbcf783035458ee505224e6acbb39747f70f33aa1c15",
+      "task_id": "OCOR-DEV-0013-RAW"
     }
   ],
   "created_at": "2026-09-02T03:14:35Z",
@@ -225,6 +235,33 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0012"
+    },
+    {
+      "case_id": "OCOR-DEV-0013-C3-PORTS",
+      "command": "pytest governed commit, receipt, idempotency, revision, state and outbox cases",
+      "evidence_path": "OCOR-DEV-0013.json",
+      "raw_output_path": "OCOR-DEV-0013.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0013"
+    },
+    {
+      "case_id": "OCOR-DEV-0013-QUALITY",
+      "command": "ruff check C3 ports and task tests; git diff --check",
+      "evidence_path": "OCOR-DEV-0013.json",
+      "raw_output_path": "OCOR-DEV-0013.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0013"
+    },
+    {
+      "case_id": "OCOR-DEV-0013-REGRESSION",
+      "command": "pytest -q ocor-runtime/tests with live PostgreSQL 16.14",
+      "evidence_path": "OCOR-DEV-0013.json",
+      "raw_output_path": "OCOR-DEV-0013.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0013"
     }
   ],
   "schema_version": "1.0"

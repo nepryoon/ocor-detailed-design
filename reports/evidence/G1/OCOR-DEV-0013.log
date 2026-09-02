@@ -1,0 +1,29 @@
+OCOR-DEV-0013 qualifying raw evidence
+observed_at=2026-09-02T04:11:10Z
+implementation_commit=c49c0b607f1962c283d0191daf386036467ba7c1
+inputs_tree=60a73de8e47b38e94aeb0e2b8dedc689fab6eb35
+
+$ pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0013.py
+..................................                                       [100%]
+34 passed in 0.11s
+
+$ pytest -q ocor-runtime/tests with OCOR_LIVE_POSTGRES_DSN (PostgreSQL 16.14)
+........................................................................ [ 19%]
+........................................................................ [ 38%]
+........................................................................ [ 57%]
+........................................................................ [ 76%]
+........................................................................ [ 95%]
+..................                                                       [100%]
+378 passed in 5.09s
+
+$ ruff check ocor-runtime/src/ocor_runtime/c3/ports.py ocor-runtime/tests/tasks/test_ocor_dev_0013.py
+All checks passed!
+$ git diff --check
+PASS (no output)
+
+Qualifying totals: 34 targeted PASS; 378 regression PASS; 0 failed; 0 skipped;
+0 xfail; 0 collection errors; 0 NOT_EXECUTED.
+Versions: uv 0.5.9; Python 3.12.14; ruff 0.16.1; PostgreSQL 16.14.
+This is G1 typed-port evidence only; E1=0, E2=0, runtime conformance is not
+established and Production remains NO-GO. Server-side main protection remains
+EXTERNAL_CONTROL_PENDING; compensating controls are not equivalent.
