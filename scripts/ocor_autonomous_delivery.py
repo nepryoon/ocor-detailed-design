@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import io
 import json
 import os
 import re
@@ -85,6 +86,10 @@ def atomic_json(path: Path, value: dict[str, Any]) -> None:
         stream.write(payload)
         temporary = Path(stream.name)
     temporary.replace(path)
+
+
+def evidence_manifest_path(root: Path, task: dict[str, Any]) -> Path:
+    return root / "reports/evidence" / task["delivery_gate"] / "MANIFEST.json"
 
 
 def path_overlap(left: str, right: str) -> bool:
@@ -408,6 +413,53 @@ def prepare_worktree(plan: Plan, task: dict[str, Any]) -> Path:
     return target
 
 
+def expected_task_branch(plan: Plan, task: dict[str, Any]) -> str:
+    slug = re.sub(r"[^a-z0-9]+", "-", task["title"].lower()).strip("-")[:48]
+    return f"{plan.config['task_branch_prefix']}{task['id']}-{slug}"
+
+
+def assert_task_branch(plan: Plan, worktree: Path, task: dict[str, Any]) -> str:
+    branch = git_output(worktree, "branch", "--show-current")
+    expected = expected_task_branch(plan, task)
+    if not branch or branch != expected:
+        raise DeliveryError(f"unrecognised task branch: {branch or 'DETACHED'}; expected {expected}")
+    if branch == str(plan.config["integration_branch"]):
+        raise DeliveryError("direct automated work on the integration branch is prohibited")
+    return branch
+
+
+def assert_inputs_tree(plan: Plan, revision: str = "HEAD") -> str:
+    actual = git_output(plan.root, "rev-parse", f"{revision}:inputs")
+    expected = str(plan.config.get("compensating_protection", {}).get("inputs_tree_sha", ""))
+    if not expected or actual != expected:
+        raise DeliveryError(f"inputs tree drift: expected {expected or 'UNCONFIGURED'}, got {actual}")
+    return actual
+
+
+def execution_preflight(plan: Plan) -> None:
+    if git_output(plan.root, "status", "--porcelain"):
+        raise DeliveryError("coordinator worktree is dirty")
+    branch = git_output(plan.root, "branch", "--show-current")
+    if not branch:
+        raise DeliveryError("detached HEAD is prohibited")
+    if branch == str(plan.config["integration_branch"]):
+        raise DeliveryError("autonomous execution on main is prohibited")
+    pattern = str(
+        plan.config.get("compensating_protection", {}).get(
+            "coordinator_branch_pattern", r"^governed/[a-z0-9][a-z0-9._/-]*$"
+        )
+    )
+    if not re.fullmatch(pattern, branch):
+        raise DeliveryError(f"unrecognised coordinator branch: {branch}")
+    remote_main = git_output(
+        plan.root, "rev-parse", f"{plan.config['remote']}/{plan.config['integration_branch']}"
+    )
+    head = git_output(plan.root, "rev-parse", "HEAD")
+    if head != remote_main:
+        raise DeliveryError(f"stale starting commit: HEAD={head}, remote main={remote_main}")
+    assert_inputs_tree(plan)
+
+
 def bounded_prompt(plan: Plan, task: dict[str, Any]) -> str:
     context = plan.context_for(task["id"])
     payload = {
@@ -498,6 +550,32 @@ def emit_evidence(
         "created_at": utc_now(),
     }
     atomic_json(worktree / json_output, evidence)
+    manifest_path = evidence_manifest_path(worktree, task)
+    manifest = load_json(manifest_path) if manifest_path.exists() else {
+        "schema_version": "1.0",
+        "gate": task["delivery_gate"],
+        "created_at": utc_now(),
+        "artifacts": [],
+    }
+    replacements = {
+        task["id"]: {
+            "task_id": task["id"],
+            "path": Path(json_output).name,
+            "sha256": sha256_file(worktree / json_output),
+        },
+        f"{task['id']}-RAW": {
+            "task_id": f"{task['id']}-RAW",
+            "path": Path(named_log).name,
+            "sha256": sha256_file(target_log),
+        },
+    }
+    retained = [
+        item for item in manifest.get("artifacts", []) if item.get("task_id") not in replacements
+    ]
+    manifest["artifacts"] = sorted(
+        retained + list(replacements.values()), key=lambda item: str(item.get("task_id"))
+    )
+    atomic_json(manifest_path, manifest)
 
 
 def changed_task_paths(worktree: Path) -> list[str]:
@@ -513,6 +591,7 @@ def changed_task_paths(worktree: Path) -> list[str]:
 
 def enforce_task_scope(task: dict[str, Any], paths: Sequence[str]) -> None:
     allowed = list(task.get("expected_file_areas", [])) + list(task.get("evidence_outputs", []))
+    allowed.append(str(Path(task["evidence_outputs"][0]).parent / "MANIFEST.json"))
     for path in paths:
         if any(path == item.rstrip("/") or path.startswith(item.rstrip("/") + "/") for item in IMMUTABLE_PATHS):
             raise DeliveryError(f"immutable path changed: {path}")
@@ -576,11 +655,14 @@ def gh_json(worktree: Path, arguments: Sequence[str]) -> Any:
         raise DeliveryError("GitHub operation returned invalid JSON") from exc
 
 
-def remote_delivery(plan: Plan, worktree: Path, task: dict[str, Any], args: Any) -> None:
+def remote_delivery(plan: Plan, worktree: Path, task: dict[str, Any], args: Any) -> str:
     """Perform explicitly enabled push/PR/merge operations without bypasses."""
-    branch = git_output(worktree, "branch", "--show-current")
+    branch = assert_task_branch(plan, worktree, task)
     head = git_output(worktree, "rev-parse", "HEAD")
     remote = str(plan.config["remote"])
+    if not (args.push and args.open_pr and args.merge):
+        raise DeliveryError("compensating mode requires --push --open-pr --merge together")
+    assert_inputs_tree(plan, head)
     if args.push:
         if not plan.config.get("allow_push"):
             raise DeliveryError("push is disabled by delivery configuration")
@@ -624,8 +706,24 @@ def remote_delivery(plan: Plan, worktree: Path, task: dict[str, Any], args: Any)
             worktree,
             ["api", f"repos/{repository}/branches/{plan.config['integration_branch']}"],
         )
-        if plan.config.get("require_branch_protection_for_merge") and not protection.get("protected"):
-            raise DeliveryError("integration branch protection is not effective")
+        if not protection.get("protected"):
+            compensation = plan.config.get("compensating_protection", {})
+            if not (
+                compensation.get("enabled")
+                and compensation.get("status") == "EXTERNAL_CONTROL_PENDING"
+                and compensation.get("server_side_equivalent") is False
+            ):
+                raise DeliveryError("integration branch protection is not effective")
+        watch = subprocess.run(
+            ["gh", "pr", "checks", branch, "--watch", "--interval", "10"],
+            cwd=worktree,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=1800,
+        )
+        if watch.returncode:
+            raise DeliveryError(watch.stdout.strip() or watch.stderr.strip() or "CI checks failed")
         pr = gh_json(
             worktree,
             [
@@ -655,6 +753,26 @@ def remote_delivery(plan: Plan, worktree: Path, task: dict[str, Any], args: Any)
         )
         if result.returncode:
             raise DeliveryError(result.stderr.strip() or "merge failed")
+        fetched = subprocess.run(
+            ["git", "-C", str(plan.root), "fetch", remote, str(plan.config["integration_branch"])],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if fetched.returncode:
+            raise DeliveryError(fetched.stderr.strip() or "post-merge fetch failed")
+        merged = git_output(
+            plan.root, "rev-parse", f"{remote}/{plan.config['integration_branch']}"
+        )
+        ancestor = subprocess.run(
+            ["git", "-C", str(plan.root), "merge-base", "--is-ancestor", head, merged],
+            check=False,
+        )
+        if ancestor.returncode:
+            raise DeliveryError("post-merge main does not contain the exact PR head")
+        assert_inputs_tree(plan, f"{remote}/{plan.config['integration_branch']}")
+        return merged
+    raise DeliveryError("merge completion was not verified")
 
 
 def execute_task(plan: Plan, state: dict[str, Any], task: dict[str, Any], args) -> None:
@@ -664,6 +782,7 @@ def execute_task(plan: Plan, state: dict[str, Any], task: dict[str, Any], args) 
     acquire_ownership(plan, state, task_id)
     state["tasks"][task_id]["status"] = "PREPARED"
     worktree = prepare_worktree(plan, task)
+    assert_task_branch(plan, worktree, task)
     log_dir = plan.root / plan.config["log_path"] / task_id
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / f"attempt-{state['tasks'][task_id]['retries'] + 1}.log"
@@ -695,17 +814,36 @@ def execute_task(plan: Plan, state: dict[str, Any], task: dict[str, Any], args) 
         )
         state["tasks"][task_id]["status"] = "VALIDATING"
         atomic_json(args.state, state)
-        command_results = run_validation_commands(worktree, task, log)
+        evidence_commands = [
+            command for command in task.get("validation_commands", [])
+            if "validate_runtime_evidence.py" in command
+        ]
+        functional_task = {**task, "validation_commands": [
+            command for command in task.get("validation_commands", [])
+            if command not in evidence_commands
+        ]}
+        command_results = run_validation_commands(worktree, functional_task, log)
     if any(item["status"] != "PASS" for item in command_results):
         state["tasks"][task_id]["retries"] += 1
         state["tasks"][task_id]["status"] = "FAILED_IMPLEMENTATION"
         atomic_json(args.state, state)
         raise DeliveryError(f"validation failed for {task_id}")
     emit_evidence(plan, task, worktree, command_results, log_path, evaluated_commit)
+    evidence_results = run_validation_commands(
+        worktree, {**task, "validation_commands": evidence_commands}, io.StringIO()
+    )
+    if any(item["status"] != "PASS" for item in evidence_results):
+        state["tasks"][task_id]["retries"] += 1
+        state["tasks"][task_id]["status"] = "FAILED_IMPLEMENTATION"
+        atomic_json(args.state, state)
+        raise DeliveryError(f"evidence validation failed for {task_id}")
+    command_results.extend(evidence_results)
+    emit_evidence(plan, task, worktree, command_results, log_path, evaluated_commit)
     accepted_commit = commit_task(worktree, task)
-    remote_delivery(plan, worktree, task, args)
+    merged_commit = remote_delivery(plan, worktree, task, args)
     state["tasks"][task_id]["status"] = "ACCEPTED"
     state["tasks"][task_id]["accepted_commit"] = accepted_commit
+    state["tasks"][task_id]["merged_commit"] = merged_commit
     state["ownership_locks"].pop(task_id, None)
     state["history"].append({"task_id": task_id, "event": "ACCEPTED", "at": utc_now()})
     state["updated_at"] = utc_now()
@@ -791,6 +929,14 @@ def main(argv: Sequence[str] | None = None) -> int:
             qualifying, detail = evidence_qualifies(root, task)
             if not qualifying:
                 raise DeliveryError(f"task evidence is not qualifying: {detail}")
+            merged = subprocess.run(
+                ["git", "-C", str(root), "merge-base", "--is-ancestor", detail,
+                 f"{plan.config['remote']}/{plan.config['integration_branch']}"],
+                check=False,
+            )
+            if merged.returncode:
+                raise DeliveryError("qualifying evidence commit is not merged into main")
+            assert_inputs_tree(plan, f"{plan.config['remote']}/{plan.config['integration_branch']}")
             state["tasks"][args.accept_evidence]["status"] = "ACCEPTED"
             state["tasks"][args.accept_evidence]["accepted_commit"] = detail
             state["history"].append(
@@ -848,6 +994,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             return 0
         if not args.execute:
             raise DeliveryError("task execution requires explicit --execute")
+        execution_preflight(plan)
         if args.max_parallel != 1:
             raise DeliveryError("this persistent coordinator executes one task per process; use isolated processes for parallel work")
         if not ready:

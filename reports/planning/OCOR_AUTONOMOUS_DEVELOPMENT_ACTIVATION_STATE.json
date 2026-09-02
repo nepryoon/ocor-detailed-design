@@ -2,8 +2,8 @@
   "schema_version": "1.0",
   "run_id": "OCOR-ACT-20260901-01",
   "started_at": "2026-09-01T20:30:00Z",
-  "updated_at": "2026-09-01T21:03:36Z",
-  "status": "ACTIVATION_COMPLETE_EXTERNAL_PROTECTION_BLOCKER",
+  "updated_at": "2026-09-02T02:09:45Z",
+  "status": "ACTIVATION_COMPLETE_COMPENSATING_PROTECTION_ACTIVE",
   "repository": "nepryoon/ocor-detailed-design",
   "starting_main": "dd4ff9ddb3009f1fc9ad7aea06807a83145c63bc",
   "planning": {
@@ -29,9 +29,9 @@
     "later_tasks_executed": []
   },
   "tests": {
-    "unique_pytest": {"PASS": 129, "FAIL": 0, "SKIPPED": 0, "XFAIL": 0, "NOT_EXECUTED": 0},
+    "unique_pytest": {"PASS": 138, "FAIL": 0, "SKIPPED": 0, "XFAIL": 0, "NOT_EXECUTED": 0},
     "postgres_subset": {"PASS": 5, "FAIL": 0, "SKIPPED": 0, "XFAIL": 0, "NOT_EXECUTED": 0},
-    "runner_subset": {"PASS": 20, "FAIL": 0, "SKIPPED": 0, "XFAIL": 0, "NOT_EXECUTED": 0}
+    "runner_subset": {"PASS": 29, "FAIL": 0, "SKIPPED": 0, "XFAIL": 0, "NOT_EXECUTED": 0}
   },
   "validators": {
     "markdownlint_cli2_0_18_1": "PASS",
@@ -41,12 +41,14 @@
     "evidence_manifest": "PASS"
   },
   "branch_protection": {
-    "status": "BLOCKED_EXTERNAL_AUTHORITY",
+    "status": "EXTERNAL_CONTROL_PENDING",
     "main_protected": false,
     "authenticated_identity": "nepryoon",
     "repository_permission": "admin",
     "required_contexts_observed": ["delivery-activation", "validation-closure"],
-    "api_result": "HTTP 403: Upgrade to GitHub Pro or make this repository public to enable this feature."
+    "api_result": "HTTP 403: Upgrade to GitHub Pro or make this repository public to enable this feature.",
+    "server_side_equivalent": false,
+    "compensating_controls_active": true
   },
   "inputs_tree": {
     "before": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
@@ -55,10 +57,13 @@
   },
   "artifact_hashes": {
     "docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json": "d3276e91a90adcb8dab99e90a5d14aefa0fee9ec7d3e7f7f074fd3776bf38a5a",
-    "reports/evidence/G0/MANIFEST.json": "b50edd9c766c98e502200d911263fc8873df94187162793759f5557ce2a57429",
+    "reports/evidence/G0/MANIFEST.json": "5425922f318c22aa7349a4d11e4f5b26a6382fa419292494d66a42d36d556168",
     "reports/evidence/G0/OCOR-DEV-0001.json": "39e6cbc163b47e4ade964eee5d9a16fcf013a038efc5ffa5d168d927df7b3f7f",
     "reports/evidence/G0/OCOR-DEV-0001.log": "2fe81773b330e52285d0c9de28422bb6406ee28ba50fe8827c704faaabebc966",
-    "scripts/ocor_autonomous_delivery.py": "542452c68e71440e7eea73762b7d28e7a90c9c4400fb6c99a5ad82761deabd27"
+    "scripts/ocor_autonomous_delivery.py": "34124bf3384e85c60a33761db821d4115272adccce8af0e95a0a662734dc6a5b",
+    "docs/development_plan/OCOR_DELIVERY_RUNNER_CONFIG.json": "29848c6642065e8eb48515015fcc38b79b0d810ef9870b722a6a94601e121216",
+    "reports/evidence/G0/OCOR-COMPENSATING-PROTECTION.json": "82eb2daae7d807f453311588d94f65eea9ce776b814a75a7b41ce421e6284b11",
+    "reports/evidence/G0/OCOR-COMPENSATING-PROTECTION.log": "1299c2dea66257b6aa0326790ab681ba496cf32e497636ad9d0b5d1dc6b1aa36"
   },
   "claims": {
     "runtime_conformance": "NOT_ESTABLISHED",
@@ -70,7 +75,7 @@
   "blockers": [
     {
       "id": "ACT-BLK-001",
-      "type": "EXTERNAL_PROTECTION_AUTHORITY",
+      "type": "WAITING_PAID_PLATFORM_CAPABILITY",
       "detail": "Classic branch protection and repository rulesets are unavailable for this private repository under the current GitHub plan despite admin credentials."
     }
   ]

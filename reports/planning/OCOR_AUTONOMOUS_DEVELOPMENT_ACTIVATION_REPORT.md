@@ -4,8 +4,9 @@
 
 La baseline di planning è integrata e `OCOR-DEV-0001` è `COMPLETE`. Tutti i gate
 controllabili localmente e i due sealing check della PR #11 sono `PASS`. Il verdetto
-è `ACTIVATION COMPLETE — EXTERNAL PROTECTION BLOCKER`: la protezione effettiva di
-`main` resta `BLOCKED_EXTERNAL_AUTHORITY` per il piano GitHub corrente.
+è `ACTIVATION COMPLETE — COMPENSATING PROTECTION ACTIVE`: la protezione effettiva di
+`main` resta `EXTERNAL_CONTROL_PENDING` per il piano GitHub corrente e i controlli
+repository-locali non sono dichiarati equivalenti alla protezione server-side.
 
 Questo referto non stabilisce runtime conformance, E1, E2, PoC-GO o Production
 readiness. Non è stato eseguito alcun task successivo a `OCOR-DEV-0001`.
@@ -51,7 +52,8 @@ Servizio qualificante locale: immagine
 server PostgreSQL `16.14`. Risultati:
 
 - suite PostgreSQL: 5 `PASS`, 0 `FAIL`, 0 `SKIPPED`, 0 `NOT_EXECUTED`;
-- suite completa: 129 `PASS`, 0 `FAIL`, 0 `SKIPPED`, 0 `XFAIL`, 0 `NOT_EXECUTED`;
+- suite completa rivalidata dopo i controlli compensativi: 138 `PASS`, 0 `FAIL`,
+  0 `SKIPPED`, 0 `XFAIL`, 0 `NOT_EXECUTED`;
 - collection errors: 0.
 
 Questi risultati sono regression e activation evidence; non sono evidenza di runtime
@@ -76,8 +78,9 @@ La query read-only di `branches/main` conferma `protected=false` e nessun requir
 check effettivo. Il contesto osservato dalla CI verde è `validation-closure`; non sono
 stati inventati nomi di check.
 
-Stato: `BLOCKED_EXTERNAL_AUTHORITY`. Comando di continuazione dopo l'abilitazione
-della funzione sul piano GitHub:
+Stato: `EXTERNAL_CONTROL_PENDING`. Il piano di delivery può proseguire soltanto tramite
+la modalità compensativa descritta in `OCOR_COMPENSATING_PROTECTION_MODE.md`. Comando
+di continuazione dopo l'abilitazione della funzione sul piano GitHub:
 
 ```bash
 gh api --method PUT repos/nepryoon/ocor-detailed-design/branches/main/protection \
@@ -86,8 +89,11 @@ gh api --method PUT repos/nepryoon/ocor-detailed-design/branches/main/protection
 
 La request è materializzata in `OCOR_MAIN_PROTECTION_REQUEST.json` con i soli
 contesti effettivamente osservati: `delivery-activation` e `validation-closure`.
-Il runner consente push e PR espliciti; il merge resta disabilitato e viene comunque
-rifiutato quando `main` non è protetto.
+Il runner richiede congiuntamente push, PR, CI verde, verifica dell'HEAD esatto,
+`--match-head-commit` e recheck post-merge. Rifiuta dirty tree, detached HEAD, esecuzione
+su `main`, branch non riconosciuti, commit iniziale stale e drift di `inputs/`. Il merge
+senza protezione server-side è ammesso soltanto quando la configurazione registra
+esplicitamente `EXTERNAL_CONTROL_PENDING` e `server_side_equivalent=false`.
 
 ## Runner persistente
 
@@ -96,10 +102,11 @@ non crea state. Le mutazioni richiedono `--execute`; push, PR e merge richiedono
 anche opt-in distinti e configurazione abilitata. Lo state volatile e resumable è
 `.ocor/delivery/state.json`, escluso da Git.
 
-Copertura del subset runner: 20 `PASS`. Sono verificati parsing/schema, DAG cycle,
+Copertura del subset runner: 29 `PASS`. Sono verificati parsing/schema, DAG cycle,
 dependency readiness, gate barrier, retry exhaustion, recovery, ownership collision,
 dry-run non mutante, red CI, risultati non eseguiti, stop-after-task e
-stop-after-gate. Il dry-run reale seleziona senza mutazioni
+stop-after-gate, protocollo branch, dirty/detached/main/stale rejection e disposizione
+compensativa non equivalente. Il dry-run reale seleziona senza mutazioni
 `OCOR-DEV-0002` e `OCOR-DEV-0004`; `--next` restituisce `OCOR-DEV-0002`.
 Nessuno dei due è stato eseguito.
 

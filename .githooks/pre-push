@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+while read -r local_ref local_sha remote_ref remote_sha
+do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "OCOR: direct push to main is prohibited" >&2
+    exit 1
+  fi
+  if [ "$remote_sha" != "0000000000000000000000000000000000000000" ] &&
+     ! git merge-base --is-ancestor "$remote_sha" "$local_sha"
+  then
+    echo "OCOR: force/non-fast-forward push is prohibited" >&2
+    exit 1
+  fi
+done

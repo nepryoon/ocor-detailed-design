@@ -57,6 +57,7 @@ jobs:
           ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py
           --base "${{ github.event.pull_request.base.sha || github.event.before || 'origin/main' }}"
           --head "${{ github.sha }}"
+          --branch "${{ github.head_ref || github.ref_name }}"
 
       - name: Validate approved development plan and runner
         run: |
