@@ -1,0 +1,32 @@
+{
+  "claims": {"E1": 0, "E2": 0, "Production_readiness": "NO_GO", "runtime_conformance": "NOT_ESTABLISHED"},
+  "commands": [
+    {"command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0022.py", "result": {"failed": 0, "not_executed": 0, "passed": 13, "skipped": 0}, "status": "PASS"},
+    {"command": "pytest -q ocor-runtime/tests with live PostgreSQL 16.14 and qualifying Kafka regression", "result": {"failed": 0, "not_executed": 0, "passed": 439, "skipped": 0}, "status": "PASS"},
+    {"command": "ruff check causal reproducibility spike and task tests; git diff --check", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"}
+  ],
+  "commit": "aea1ef7c5ec7277fda416c6e4cbf7f1f94a974bd",
+  "created_at": "2026-09-02T05:11:14Z",
+  "environment": {"arithmetic": "Python Decimal", "fixture": "synthetic non-sensitive", "python": "3.12.14", "ruff": "0.16.1"},
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0022.py": "ef64317ae134f2c36d68841f0da917fa67e1d467d01bdf2cdd81a39758e9a715",
+    "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537",
+    "spikes/causal_reproducibility/oracle.py": "a9a34d1e6f48fc5a540c4c658ddd8853904fef1ba6fb791c602a747ac90306e9"
+  },
+  "raw_output_sha256": "1d9c6d7eb37c9a82dd9e4ec491b947c2f2bf15bfa1ccc94f1978fd6b4dc62bf8",
+  "requirement_results": [
+    {"case_id": "OCOR-DEV-0022-CAUSAL-REPRODUCIBILITY", "command": "pytest pinned identify-or-abstain causal result and drift matrix", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 13, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0022-REGRESSION", "command": "pytest -q ocor-runtime/tests with live PostgreSQL 16.14 and qualifying Kafka regression", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 439, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0022-QUALITY", "command": "ruff check causal reproducibility spike and task tests; git diff --check", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"}
+  ],
+  "residual_risks": [
+    "This G2 spike qualifies deterministic identify-or-abstain semantics on a sealed synthetic fixture; it is not BA-06 backend or runtime-conformance evidence.",
+    "The spike uses a bounded stratified estimator and does not claim general causal identification capability.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and compensating controls are not equivalent."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated spike commits; no runtime state, model registry, migration, or approved baseline is changed.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0022"
+}
