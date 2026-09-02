@@ -211,6 +211,25 @@ def test_task_branch_is_exact_and_never_main(plan, monkeypatch):
         delivery.assert_task_branch(plan, ROOT, task)
 
 
+def test_validation_launchers_are_deterministic(monkeypatch):
+    monkeypatch.setattr(delivery.sys, "executable", "/qualified/python")
+    assert delivery.validation_arguments("python scripts/check.py --flag") == [
+        "/qualified/python",
+        "scripts/check.py",
+        "--flag",
+    ]
+    assert delivery.validation_arguments("uv run pytest -q tests/test_one.py") == [
+        "uv",
+        "run",
+        "--project",
+        "ocor-runtime",
+        "--frozen",
+        "pytest",
+        "-q",
+        "tests/test_one.py",
+    ]
+
+
 def test_compensating_mode_is_explicitly_not_server_side_equivalent(plan):
     compensation = plan.config["compensating_protection"]
     assert compensation == {

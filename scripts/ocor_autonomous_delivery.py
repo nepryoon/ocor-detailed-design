@@ -387,6 +387,15 @@ def safe_command(command: str) -> list[str]:
     return arguments
 
 
+def validation_arguments(command: str) -> list[str]:
+    arguments = safe_command(command)
+    if arguments[:2] == ["uv", "run"]:
+        arguments[2:2] = ["--project", "ocor-runtime", "--frozen"]
+    elif arguments[0] in {"python", "python3"}:
+        arguments[0] = sys.executable
+    return arguments
+
+
 def prepare_worktree(plan: Plan, task: dict[str, Any]) -> Path:
     task_id = task["id"]
     slug = re.sub(r"[^a-z0-9]+", "-", task["title"].lower()).strip("-")[:48]
@@ -513,9 +522,7 @@ def classify_failure(stderr: str) -> str:
 def run_validation_commands(worktree: Path, task: dict[str, Any], log) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     for command in task.get("validation_commands", []):
-        arguments = safe_command(command)
-        if arguments[:2] == ["uv", "run"]:
-            arguments[2:2] = ["--project", "ocor-runtime", "--frozen"]
+        arguments = validation_arguments(command)
         started = utc_now()
         result = subprocess.run(
             arguments,
