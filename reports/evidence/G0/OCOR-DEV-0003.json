@@ -1,0 +1,67 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0003.py",
+      "result": {"failed": 0, "not_executed": 0, "passed": 6, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14",
+      "result": {"failed": 0, "not_executed": 0, "passed": 163, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "execute contract, unit, integration, backend, FGM-contract-readiness and evidence gate commands",
+      "result": {"failed": 0, "not_executed": 0, "passed": 158, "skipped": 0},
+      "status": "PASS"
+    }
+  ],
+  "commit": "10cf17a1870e080376ec1a1f4f4bfd5e9c6b0a19",
+  "created_at": "2026-09-02T02:42:34Z",
+  "environment": {
+    "postgres": "16.14",
+    "psycopg": "3.2.10",
+    "python": "3.12.14",
+    "uv": "0.12.5"
+  },
+  "inputs": {
+    ".github/workflows/ocor-poc-ci.yml": "8c266cc04df9a5dcabdc79e3dd083d44ea7ef2689c4989f2ab08fed3be7e47ab",
+    "ocor-runtime/devcontainer.json": "a19591dae2971edce47376fa0885e5470b99a638a39fb46d48e58fc7aa281cc7",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0003.py": "1309f2962dd9562a058fb28214afd6c39f943dfdb2b7bfd53d053d8737b3278c",
+    "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537"
+  },
+  "raw_output_sha256": "c422efe354fb3eaa5ff838ffff8c7d34ac83a3d8f80b0b287ae9ae900506015a",
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0003-TOPOLOGY",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0003.py",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 6, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0003-REGRESSION",
+      "command": "pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 163, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0003-LAYERED-GATES",
+      "command": "execute contract, unit, integration, backend, FGM-contract-readiness and evidence gate commands",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 158, "skipped": 0},
+      "status": "PASS"
+    }
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated task commits, remove the layered workflow and revalidate the prior G0 manifest.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0003"
+}

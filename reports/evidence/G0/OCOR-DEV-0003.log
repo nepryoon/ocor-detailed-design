@@ -1,0 +1,16 @@
+OCOR-DEV-0003 qualifying evidence
+test-first baseline: 6 FAIL because ocor-poc-ci.yml was absent (expected red)
+targeted topology suite: 6 PASS, 0 FAIL, 0 SKIPPED, 0 XFAIL, 0 NOT_EXECUTED
+complete regression: 163 PASS, 0 FAIL, 0 SKIPPED, 0 XFAIL, 0 collection errors
+contract/schema gate: 7 PASS
+runtime unit gate: 24 PASS
+real PostgreSQL 16.14 integration gate: 5 PASS
+backend compatibility gate: 38 PASS; explicitly not BA evidence
+FGM contract-readiness gate: 80 PASS across 10 conditional branches; explicitly not FGM runtime evidence
+evidence gate: 3 task records plus OCOR-DEV-0004 requirement ledger PASS
+negative aggregator case: one injected failure returns non-zero
+local repair: initial isolated integration command lacked the test extra and failed collection; exact frozen extra-test sync installed psycopg 3.2.10, then 5 PASS
+implementation commit: 10cf17a1870e080376ec1a1f4f4bfd5e9c6b0a19
+Python 3.12.14; uv 0.12.5; PostgreSQL 16.14
+inputs tree: 60a73de8e47b38e94aeb0e2b8dedc689fab6eb35
+E1=0; E2=0; runtime conformance NOT_ESTABLISHED; Production NO_GO
