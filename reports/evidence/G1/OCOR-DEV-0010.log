@@ -1,0 +1,36 @@
+OCOR-DEV-0010 qualifying raw evidence
+observed_at=2026-09-02T03:45:20Z
+implementation_commit=977487ba72883c6213654a529706b4711775b6b0
+inputs_tree=60a73de8e47b38e94aeb0e2b8dedc689fab6eb35
+
+$ pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0010.py in pre-provisioned test environment
+...............                                                          [100%]
+15 passed in 2.77s
+
+Generated model count: 54
+Pinned generated hashes:
+contract-descriptor.json 611226a9e0427882e57b5d8f89d726563688154a89d1dd3ba691546d1925e413
+ocor_contracts.py 6cf97b6f026d49b36c1114232240be3c6b1c53e728afc37abc3aac239ca9b418
+ocor_contracts.ts 0f8a104d8b8f2bc776abdb905f7f6910acdd50781380bde330a58a9fb2b6b0b0
+JSON Schema PASS; OpenAPI 3.1 PASS; Proto3 PASS; closed public records PASS;
+backend neutrality PASS; deterministic regenerate/check PASS.
+
+$ pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14
+........................................................................ [ 23%]
+........................................................................ [ 47%]
+........................................................................ [ 70%]
+........................................................................ [ 94%]
+..................                                                       [100%]
+306 passed in 4.24s
+
+$ ruff check ocor-runtime/tools/generate_contracts.py ocor-runtime/tests/tasks/test_ocor_dev_0010.py
+All checks passed!
+$ git diff --check
+PASS (no output)
+
+Versions: uv 0.12.5; Python 3.12.14; ruff 0.16.1; PostgreSQL 16.14;
+grpcio-tools 1.83.1; protobuf 7.36.0; openapi-spec-validator 0.7.2.
+Qualifying totals: 15 targeted PASS; 306 regression PASS; 0 failed; 0 skipped;
+0 xfail; 0 collection errors; 0 NOT_EXECUTED.
+This is G1 contract-generation evidence, not BA, FGM, E1, E2, runtime conformance,
+Production readiness, or server-side branch-protection evidence.
