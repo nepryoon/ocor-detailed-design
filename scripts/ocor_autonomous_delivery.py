@@ -395,6 +395,30 @@ def prepare_worktree(plan: Plan, task: dict[str, Any]) -> Path:
     if target.exists():
         if git_output(target, "status", "--porcelain"):
             raise DeliveryError(f"existing task worktree is dirty: {target}")
+        coordinator_head = git_output(plan.root, "rev-parse", "HEAD")
+        task_head = git_output(target, "rev-parse", "HEAD")
+        if task_head != coordinator_head:
+            task_is_behind = subprocess.run(
+                ["git", "-C", str(target), "merge-base", "--is-ancestor", task_head,
+                 coordinator_head],
+                check=False,
+            ).returncode == 0
+            coordinator_is_base = subprocess.run(
+                ["git", "-C", str(target), "merge-base", "--is-ancestor", coordinator_head,
+                 task_head],
+                check=False,
+            ).returncode == 0
+            if task_is_behind:
+                advanced = subprocess.run(
+                    ["git", "-C", str(target), "merge", "--ff-only", coordinator_head],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+                if advanced.returncode:
+                    raise DeliveryError(advanced.stderr.strip() or "task worktree fast-forward failed")
+            elif not coordinator_is_base:
+                raise DeliveryError("existing task worktree diverged from the integration commit")
         return target
     if subprocess.run(
         ["git", "-C", str(plan.root), "show-ref", "--verify", "--quiet", f"refs/heads/{branch}"],
@@ -771,6 +795,16 @@ def remote_delivery(plan: Plan, worktree: Path, task: dict[str, Any], args: Any)
         if ancestor.returncode:
             raise DeliveryError("post-merge main does not contain the exact PR head")
         assert_inputs_tree(plan, f"{remote}/{plan.config['integration_branch']}")
+        advanced = subprocess.run(
+            ["git", "-C", str(plan.root), "merge", "--ff-only", merged],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if advanced.returncode:
+            raise DeliveryError(advanced.stderr.strip() or "coordinator fast-forward failed")
+        if git_output(plan.root, "rev-parse", "HEAD") != merged:
+            raise DeliveryError("coordinator did not advance to post-merge main")
         return merged
     raise DeliveryError("merge completion was not verified")
 
@@ -844,6 +878,7 @@ def execute_task(plan: Plan, state: dict[str, Any], task: dict[str, Any], args) 
     state["tasks"][task_id]["status"] = "ACCEPTED"
     state["tasks"][task_id]["accepted_commit"] = accepted_commit
     state["tasks"][task_id]["merged_commit"] = merged_commit
+    state["integration_commit"] = merged_commit
     state["ownership_locks"].pop(task_id, None)
     state["history"].append({"task_id": task_id, "event": "ACCEPTED", "at": utc_now()})
     state["updated_at"] = utc_now()

@@ -7,6 +7,7 @@ import importlib.util
 import json
 import sys
 from argparse import Namespace
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -219,6 +220,28 @@ def test_compensating_mode_is_explicitly_not_server_side_equivalent(plan):
         "inputs_tree_sha": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
         "coordinator_branch_pattern": "^governed/[a-z0-9][a-z0-9._/-]*$",
     }
+
+
+def test_prepare_existing_task_worktree_rejects_divergence(plan, monkeypatch, tmp_path):
+    isolated = replace(plan, root=tmp_path)
+    task = plan.tasks["OCOR-DEV-0002"]
+    target = tmp_path / ".ocor/worktrees/OCOR-DEV-0002"
+    target.mkdir(parents=True)
+
+    def fake(_root, *args):
+        if args == ("status", "--porcelain"):
+            return ""
+        if args == ("rev-parse", "HEAD"):
+            return "a" * 40 if _root == tmp_path else "b" * 40
+        raise AssertionError(args)
+
+    class Result:
+        returncode = 1
+
+    monkeypatch.setattr(delivery, "git_output", fake)
+    monkeypatch.setattr(delivery.subprocess, "run", lambda *_args, **_kwargs: Result())
+    with pytest.raises(delivery.DeliveryError, match="diverged"):
+        delivery.prepare_worktree(isolated, task)
 
 
 def test_bounded_prompt_contains_one_task_and_prohibited_claims(plan):
