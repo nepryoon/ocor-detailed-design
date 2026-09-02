@@ -49,6 +49,16 @@
       "path": "OCOR-DEV-0004.log",
       "sha256": "9acd739bc48b75bd9d826c3eadb756ea28caea58d8c04e7fb7b1e4c62bf21b37",
       "task_id": "OCOR-DEV-0004-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0005.json",
+      "sha256": "8e990a46bd8db2d0fa700198621db52f25aa5ba113e0110813594e86a7bf50b6",
+      "task_id": "OCOR-DEV-0005"
+    },
+    {
+      "path": "OCOR-DEV-0005.log",
+      "sha256": "cbd2c059db50c39281e1a6b70dac97245f14e10e7585d70779dc7c8bd36df59c",
+      "task_id": "OCOR-DEV-0005-RAW"
     }
   ],
   "created_at": "2026-09-01T21:01:03.590307Z",
@@ -107,6 +117,33 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0004"
+    },
+    {
+      "case_id": "OCOR-DEV-0005-NEGATIVE",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0005.py",
+      "evidence_path": "OCOR-DEV-0005.json",
+      "raw_output_path": "OCOR-DEV-0005.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0005"
+    },
+    {
+      "case_id": "OCOR-DEV-0005-REGRESSION",
+      "command": "pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14",
+      "evidence_path": "OCOR-DEV-0005.json",
+      "raw_output_path": "OCOR-DEV-0005.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0005"
+    },
+    {
+      "case_id": "OCOR-DEV-0005-SCAN-SBOM",
+      "command": "execute pinned in-repository supply-chain scanner against repository",
+      "evidence_path": "OCOR-DEV-0005.json",
+      "raw_output_path": "OCOR-DEV-0005.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0005"
     }
   ],
   "schema_version": "1.0"
