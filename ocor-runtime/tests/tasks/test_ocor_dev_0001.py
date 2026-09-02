@@ -145,6 +145,82 @@ def test_scope_validator_accepts_delivery_control_fixture():
     assert scope.main(["--repo", str(ROOT), "--path", ".github/CODEOWNERS"]) == 0
 
 
+@pytest.mark.parametrize(
+    ("branch", "accepted"),
+    [
+        ("task/OCOR-DEV-0002-pin-toolchains", True),
+        ("governed/compensating-main-protection", True),
+        ("main", False),
+        ("feature/uncontrolled", False),
+        ("task/not-a-stable-id", False),
+    ],
+)
+def test_change_branch_protocol_is_fail_closed(branch, accepted):
+    assert scope.valid_change_branch(branch) is accepted
+
+
+def test_execution_preflight_rejects_main_dirty_detached_and_stale(plan, monkeypatch):
+    values = {
+        ("status", "--porcelain"): "",
+        ("branch", "--show-current"): "main",
+        ("rev-parse", "origin/main"): "a" * 40,
+        ("rev-parse", "HEAD"): "a" * 40,
+        ("rev-parse", "HEAD:inputs"): plan.config["compensating_protection"]["inputs_tree_sha"],
+    }
+
+    monkeypatch.setattr(delivery, "git_output", lambda _root, *args: values[args])
+    with pytest.raises(delivery.DeliveryError, match="on main"):
+        delivery.execution_preflight(plan)
+    values[("branch", "--show-current")] = ""
+    with pytest.raises(delivery.DeliveryError, match="detached"):
+        delivery.execution_preflight(plan)
+    values[("branch", "--show-current")] = "governed/test-run"
+    values[("status", "--porcelain")] = " M dirty"
+    with pytest.raises(delivery.DeliveryError, match="dirty"):
+        delivery.execution_preflight(plan)
+    values[("status", "--porcelain")] = ""
+    values[("rev-parse", "HEAD")] = "b" * 40
+    with pytest.raises(delivery.DeliveryError, match="stale"):
+        delivery.execution_preflight(plan)
+
+
+def test_execution_preflight_accepts_clean_governed_branch_at_exact_main(plan, monkeypatch):
+    expected = plan.config["compensating_protection"]["inputs_tree_sha"]
+
+    def fake(_root, *args):
+        return {
+            ("status", "--porcelain"): "",
+            ("branch", "--show-current"): "governed/test-run",
+            ("rev-parse", "origin/main"): "a" * 40,
+            ("rev-parse", "HEAD"): "a" * 40,
+            ("rev-parse", "HEAD:inputs"): expected,
+        }[args]
+
+    monkeypatch.setattr(delivery, "git_output", fake)
+    delivery.execution_preflight(plan)
+
+
+def test_task_branch_is_exact_and_never_main(plan, monkeypatch):
+    task = plan.tasks["OCOR-DEV-0002"]
+    expected = delivery.expected_task_branch(plan, task)
+    monkeypatch.setattr(delivery, "git_output", lambda *_args: expected)
+    assert delivery.assert_task_branch(plan, ROOT, task) == expected
+    monkeypatch.setattr(delivery, "git_output", lambda *_args: "task/OCOR-DEV-0002-wrong")
+    with pytest.raises(delivery.DeliveryError, match="unrecognised"):
+        delivery.assert_task_branch(plan, ROOT, task)
+
+
+def test_compensating_mode_is_explicitly_not_server_side_equivalent(plan):
+    compensation = plan.config["compensating_protection"]
+    assert compensation == {
+        "enabled": True,
+        "status": "EXTERNAL_CONTROL_PENDING",
+        "server_side_equivalent": False,
+        "inputs_tree_sha": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+        "coordinator_branch_pattern": "^governed/[a-z0-9][a-z0-9._/-]*$",
+    }
+
+
 def test_bounded_prompt_contains_one_task_and_prohibited_claims(plan):
     prompt = delivery.bounded_prompt(plan, plan.tasks["OCOR-DEV-0001"])
     assert "OCOR-DEV-0001" in prompt

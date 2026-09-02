@@ -12,6 +12,9 @@ from collections.abc import Sequence
 from pathlib import Path
 
 TASK_ID = re.compile(r"^OCOR-DEV-[0-9]{4}$")
+CHANGE_BRANCH = re.compile(
+    r"^(task/OCOR-DEV-[0-9]{4}-[a-z0-9][a-z0-9-]*|governed/[a-z0-9][a-z0-9._/-]*)$"
+)
 IMMUTABLE = (
     "inputs/",
     "docs/OCOR_LLD_v1.1.md",
@@ -25,6 +28,10 @@ def is_immutable(path: str) -> bool:
         normalized == protected.rstrip("/") or normalized.startswith(protected)
         for protected in IMMUTABLE
     )
+
+
+def valid_change_branch(branch: str) -> bool:
+    return bool(CHANGE_BRANCH.fullmatch(branch)) and branch != "main"
 
 
 def changed_paths(root: Path, base: str, head: str) -> list[str]:
@@ -82,12 +89,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--base", default="origin/main")
     parser.add_argument("--head", default="HEAD")
     parser.add_argument("--path", action="append", default=[])
+    parser.add_argument("--branch")
     parser.add_argument("--repo", type=Path, default=Path.cwd())
     args = parser.parse_args(argv)
     root = args.repo.resolve()
     try:
         paths = args.path or changed_paths(root, args.base, args.head)
         errors = validate_ledger(root)
+        if args.branch and not valid_change_branch(args.branch):
+            errors.append(f"unrecognised change branch: {args.branch}")
         forbidden = sorted(path for path in paths if is_immutable(path))
         if forbidden:
             errors.append(f"immutable path changes: {', '.join(forbidden)}")
