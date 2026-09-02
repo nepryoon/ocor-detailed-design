@@ -1,0 +1,187 @@
+name: OCOR PoC layered mandatory gates
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONHASHSEED: "0"
+  TZ: UTC
+
+jobs:
+  contract:
+    name: contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.5"
+      - name: Synchronize frozen environment
+        working-directory: ocor-runtime
+        run: uv sync --frozen --extra test
+      - name: Execute contract and schema tests
+        run: >-
+          uv run --project ocor-runtime --frozen pytest -q
+          ocor-runtime/tests/schemas/
+
+  unit:
+    name: unit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.5"
+      - name: Synchronize frozen environment
+        working-directory: ocor-runtime
+        run: uv sync --frozen --extra test
+      - name: Execute runtime unit tests
+        run: >-
+          uv run --project ocor-runtime --frozen pytest -q
+          ocor-runtime/tests/runtime/
+
+  integration:
+    name: integration-postgresql
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
+        env:
+          POSTGRES_USER: ocor
+          POSTGRES_PASSWORD: ocor
+          POSTGRES_DB: ocor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ocor -d ocor"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      OCOR_LIVE_POSTGRES_DSN: postgresql://ocor:ocor@127.0.0.1:5432/ocor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.5"
+      - name: Synchronize frozen environment
+        working-directory: ocor-runtime
+        run: uv sync --frozen --extra test
+      - name: Execute real PostgreSQL integration tests
+        run: >-
+          uv run --project ocor-runtime --frozen pytest -q
+          ocor-runtime/tests/integration/test_postgres_outbox_live.py
+
+  backend:
+    name: backend-compatibility-not-ba-evidence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.5"
+      - name: Synchronize frozen environment
+        working-directory: ocor-runtime
+        run: uv sync --frozen --extra test
+      - name: Execute backend compatibility tests
+        run: >-
+          uv run --project ocor-runtime --frozen pytest -q
+          ocor-runtime/tests/backend_assumptions/
+
+  fgm:
+    name: fgm-contract-readiness-not-runtime-evidence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.5"
+      - name: Synchronize frozen environment
+        working-directory: ocor-runtime
+        run: uv sync --frozen --extra test
+      - name: Validate governed-memory contract branches
+        run: >-
+          uv run --project ocor-runtime --frozen python
+          reports/tests/test_authoritative_contract_conformance.py
+
+  evidence:
+    name: evidence
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.5"
+      - name: Synchronize frozen environment
+        working-directory: ocor-runtime
+        run: uv sync --frozen --extra test
+      - name: Reject missing, skipped or non-content-addressed evidence
+        run: |
+          set -euo pipefail
+          mapfile -t tasks < <(jq -r '.artifacts[].task_id | select(test("^OCOR-DEV-[0-9]{4}$"))' reports/evidence/G0/MANIFEST.json)
+          test "${#tasks[@]}" -gt 0
+          for task in "${tasks[@]}"; do
+            ocor-runtime/.venv/bin/python scripts/validate_runtime_evidence.py \
+              --task "$task" --non-skipped --manifest reports/evidence/G0/MANIFEST.json
+          done
+          ocor-runtime/.venv/bin/python ocor-runtime/tools/evidence_manifest.py validate \
+            --task OCOR-DEV-0004 --non-skipped --manifest reports/evidence/G0/MANIFEST.json
+
+  mandatory-gates:
+    name: mandatory-gates
+    if: ${{ always() }}
+    needs:
+      - backend
+      - contract
+      - evidence
+      - fgm
+      - integration
+      - unit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      BACKEND_RESULT: ${{ needs.backend.result }}
+      CONTRACT_RESULT: ${{ needs.contract.result }}
+      EVIDENCE_RESULT: ${{ needs.evidence.result }}
+      FGM_RESULT: ${{ needs.fgm.result }}
+      INTEGRATION_RESULT: ${{ needs.integration.result }}
+      UNIT_RESULT: ${{ needs.unit.result }}
+    steps:
+      - name: Reject every non-success mandatory result
+        run: |
+          test "${BACKEND_RESULT}" = "success"
+          test "${CONTRACT_RESULT}" = "success"
+          test "${EVIDENCE_RESULT}" = "success"
+          test "${FGM_RESULT}" = "success"
+          test "${INTEGRATION_RESULT}" = "success"
+          test "${UNIT_RESULT}" = "success"
