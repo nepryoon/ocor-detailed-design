@@ -1,7 +1,8 @@
 # OCOR-DEV-REM-0008 assurance candidate
 
 This directory seals reproducible evidence for the candidate remediation of
-`OCOR-DEV-0008` at commit `47f42146e651cffeb4a8fc0662d7813c3e914ce1`.
+`OCOR-DEV-0008` on the integration-refreshed source commit
+`33a9c0e93191d6383e0b96468246dfd7424eb4f8`.
 
 The remediation aligns the Python Governed Context boundary with the approved
 schema, rejects non-array coercion, validates generated protobuf bindings before
@@ -14,10 +15,10 @@ resolved or formally governed.
 
 Test evidence:
 
-- focused current-branch campaign: 166 PASS, zero skipped;
-- complete runtime campaign with the local live PostgreSQL fixture: 348 PASS,
+- focused current-branch campaign: 119 PASS, zero skipped;
+- complete runtime campaign with the local live PostgreSQL fixture: 382 PASS,
   zero skipped;
-- mechanical revert campaign in a disposable, import-pinned worktree: 344 PASS,
+- mechanical revert campaign in a disposable, import-pinned worktree: 378 PASS,
   zero skipped;
 - independent read-only review: PASS with no findings.
 
