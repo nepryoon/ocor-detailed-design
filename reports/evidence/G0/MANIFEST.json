@@ -31,6 +31,16 @@
       "task_id": "OCOR-DEV-0002-RAW"
     },
     {
+      "path": "OCOR-DEV-0003.json",
+      "sha256": "40937ee136166d059799aab45c8b511793ceb0246f0a328d73e966dd33c9ec7d",
+      "task_id": "OCOR-DEV-0003"
+    },
+    {
+      "path": "OCOR-DEV-0003.log",
+      "sha256": "c422efe354fb3eaa5ff838ffff8c7d34ac83a3d8f80b0b287ae9ae900506015a",
+      "task_id": "OCOR-DEV-0003-RAW"
+    },
+    {
       "path": "OCOR-DEV-0004.json",
       "sha256": "8e1dcfd35e3bd4bd004a33c21404247f5bfe7b8ed28b2b83553291e802cda66c",
       "task_id": "OCOR-DEV-0004"
@@ -44,6 +54,33 @@
   "created_at": "2026-09-01T21:01:03.590307Z",
   "gate": "G0",
   "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0003-LAYERED-GATES",
+      "command": "execute contract, unit, integration, backend, FGM-contract-readiness and evidence gate commands",
+      "evidence_path": "OCOR-DEV-0003.json",
+      "raw_output_path": "OCOR-DEV-0003.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0003"
+    },
+    {
+      "case_id": "OCOR-DEV-0003-REGRESSION",
+      "command": "pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14",
+      "evidence_path": "OCOR-DEV-0003.json",
+      "raw_output_path": "OCOR-DEV-0003.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0003"
+    },
+    {
+      "case_id": "OCOR-DEV-0003-TOPOLOGY",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0003.py",
+      "evidence_path": "OCOR-DEV-0003.json",
+      "raw_output_path": "OCOR-DEV-0003.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0003"
+    },
     {
       "case_id": "OCOR-DEV-0004-POSITIVE",
       "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0004.py",
