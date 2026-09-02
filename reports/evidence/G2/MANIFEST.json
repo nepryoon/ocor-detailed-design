@@ -29,6 +29,16 @@
       "path": "OCOR-DEV-0020.log",
       "sha256": "2c6e101b78aaf71cd7ebd6b5b683d17e726d81f3bc0b2e8e4d2ed669dae4f560",
       "task_id": "OCOR-DEV-0020-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0022.json",
+      "sha256": "782b521b7a2de3c33024411050a16dfd0fa71b3fde36879ae517a65641b1566e",
+      "task_id": "OCOR-DEV-0022"
+    },
+    {
+      "path": "OCOR-DEV-0022.log",
+      "sha256": "1d9c6d7eb37c9a82dd9e4ec491b947c2f2bf15bfa1ccc94f1978fd6b4dc62bf8",
+      "task_id": "OCOR-DEV-0022-RAW"
     }
   ],
   "created_at": "2026-09-02T04:25:45Z",
@@ -114,6 +124,33 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0020"
+    },
+    {
+      "case_id": "OCOR-DEV-0022-CAUSAL-REPRODUCIBILITY",
+      "command": "pytest pinned identify-or-abstain causal result and drift matrix",
+      "evidence_path": "OCOR-DEV-0022.json",
+      "raw_output_path": "OCOR-DEV-0022.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0022"
+    },
+    {
+      "case_id": "OCOR-DEV-0022-QUALITY",
+      "command": "ruff check causal reproducibility spike and task tests; git diff --check",
+      "evidence_path": "OCOR-DEV-0022.json",
+      "raw_output_path": "OCOR-DEV-0022.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0022"
+    },
+    {
+      "case_id": "OCOR-DEV-0022-REGRESSION",
+      "command": "pytest -q ocor-runtime/tests with live PostgreSQL 16.14 and qualifying Kafka regression",
+      "evidence_path": "OCOR-DEV-0022.json",
+      "raw_output_path": "OCOR-DEV-0022.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0022"
     }
   ],
   "schema_version": "1.0"

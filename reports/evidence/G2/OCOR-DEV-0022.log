@@ -1,0 +1,35 @@
+OCOR-DEV-0022 qualifying raw-result record
+created_at=2026-09-02T05:11:14Z
+implementation_commit=aea1ef7c5ec7277fda416c6e4cbf7f1f94a974bd
+inputs_tree=60a73de8e47b38e94aeb0e2b8dedc689fab6eb35
+
+$ PYTHONPATH="$PWD:$PWD/ocor-runtime/src" /home/luca/projects/ocor-activation-final/ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0022.py
+.............                                                            [100%]
+13 passed in 0.02s
+
+Observed qualifying cases:
+- identical pinned model, factual data, intervention, release, branch, and seed reproduce one sealed IDENTIFIED result
+- stratified backdoor ATE is exactly -4 for the synthetic non-sensitive fixture
+- main contamination, release mismatch, missing facts, unresolved confounding, positivity failure, and OOD intervention return typed ABSTAIN without an estimate
+- model, data, and intervention pin mismatch fail loudly
+- unexplained result drift fails the reproduction check
+- the seed participates in lineage and the reproducibility seal
+
+$ OCOR_LIVE_POSTGRES_DSN=postgresql://ocor:REDACTED@127.0.0.1:55432/ocor PYTHONPATH="$PWD:$PWD/ocor-runtime/src" /home/luca/projects/ocor-activation-final/ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests
+........................................................................ [ 16%]
+........................................................................ [ 32%]
+........................................................................ [ 49%]
+........................................................................ [ 65%]
+........................................................................ [ 82%]
+........................................................................ [ 98%]
+.......                                                                  [100%]
+439 passed in 29.21s
+
+$ /home/luca/.local/bin/ruff check spikes/causal_reproducibility ocor-runtime/tests/tasks/test_ocor_dev_0022.py
+All checks passed!
+
+$ git diff --check
+exit=0
+
+Failures=0 Skipped=0 XFAIL=0 NOT_EXECUTED=0 CollectionErrors=0
+This is G2 causal reproducibility spike evidence, not BA-06 or final runtime-conformance evidence.
