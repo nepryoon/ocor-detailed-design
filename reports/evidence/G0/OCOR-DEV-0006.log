@@ -1,0 +1,18 @@
+OCOR-DEV-0006 qualifying evidence
+test-first baseline: 13 FAIL because deploy/local/compose.yaml was absent; missing-image negative already PASS
+targeted suite final: 13 PASS, 0 FAIL, 0 SKIPPED, 0 XFAIL, 0 NOT_EXECUTED
+complete regression final: 182 PASS, 0 FAIL, 0 SKIPPED, 0 XFAIL, 0 collection errors
+first live start: FAIL; Kafka and OpenSearch tmpfs ownership rejected writes
+second live start: FAIL; Kafka fixed, Keycloak tmpfs ownership rejected writes
+third live start: PASS after UID-bound tmpfs; all configured services healthy
+governance repair: MinIO candidate removed after runtime version disclosed AGPLv3; no object-store substitution or PASS claimed
+OpenSearch repair: 2.11.1 demo credential behaviour rejected; 3.2.0 honors required strong runtime credential
+clean down/up rerun: PASS with pull_policy=never and internal=true network
+healthy digest-bound services: PostgreSQL 16.14, Kafka 7.6.0, OPA 1.20.1, Keycloak 26.7.2, OpenSearch 3.2.0, Qdrant 1.15.1
+missing pinned image negative: non-zero without public pull fallback
+missing credential negative: compose config non-zero before service start
+supply-chain scanner 1.0.0: PASS, 0 blocking findings
+implementation commit: 77c4c34fdabdc2031b106a4552a31b0e2e4be855
+inputs tree: 60a73de8e47b38e94aeb0e2b8dedc689fab6eb35
+scope fence: G0 foundation dependencies only; no object-store, BA, FGM, PoC-conformance or Production claim
+E1=0; E2=0; runtime conformance NOT_ESTABLISHED; Production NO_GO

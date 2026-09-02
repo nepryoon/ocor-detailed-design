@@ -1,0 +1,154 @@
+name: ocor-local
+
+x-ocor-contract:
+  start-command: docker compose -f deploy/local/compose.yaml up --detach --wait --wait-timeout 240 --remove-orphans
+  evidence-fence: foundation dependencies only; not PoC conformance or Production readiness
+
+x-service-policy: &service-policy
+  pull_policy: never
+  restart: "no"
+  init: true
+  networks:
+    - ocor-internal
+  security_opt:
+    - no-new-privileges:true
+
+services:
+  postgres:
+    <<: *service-policy
+    image: postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
+    environment:
+      POSTGRES_DB: ocor
+      POSTGRES_USER: ocor
+      POSTGRES_PASSWORD: ${OCOR_LOCAL_POSTGRES_PASSWORD:?set OCOR_LOCAL_POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:55433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data:size=256m,mode=0700
+    labels:
+      org.ocor.image-digest: sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
+      org.ocor.health-contract: required
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ocor -d ocor && test -n \"$$POSTGRES_PASSWORD\""]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+  kafka:
+    <<: *service-policy
+    image: confluentinc/cp-kafka:7.6.0@sha256:24cdd3a7fa89d2bed150560ebea81ff1943badfa61e51d66bb541a6b0d7fb047
+    environment:
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,EXTERNAL://0.0.0.0:19092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,EXTERNAL://127.0.0.1:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+    ports:
+      - "127.0.0.1:19092:19092"
+    tmpfs:
+      - /var/lib/kafka/data:size=512m,mode=0750,uid=1000,gid=1000
+    labels:
+      org.ocor.image-digest: sha256:24cdd3a7fa89d2bed150560ebea81ff1943badfa61e51d66bb541a6b0d7fb047
+      org.ocor.health-contract: required
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "127.0.0.1:29092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+
+  opa:
+    <<: *service-policy
+    image: openpolicyagent/opa:1.20.1@sha256:39daf255ae7f25d81103f03a0c18308a50b7b5bb67907bed6166f70e24a970ff
+    command: ["run", "--server", "--addr", "0.0.0.0:8181"]
+    ports:
+      - "127.0.0.1:18181:8181"
+    labels:
+      org.ocor.image-digest: sha256:39daf255ae7f25d81103f03a0c18308a50b7b5bb67907bed6166f70e24a970ff
+      org.ocor.health-contract: required
+    healthcheck:
+      test: ["CMD", "/opa", "eval", "true"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  keycloak:
+    <<: *service-policy
+    image: quay.io/keycloak/keycloak:26.7.2@sha256:9d1f1b2b7261ff53c66cb1092dfcdc34a5fb77e81f9e6a6e75b8b6a795de8067
+    command: ["start-dev", "--http-port=8080"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ocor-admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${OCOR_LOCAL_KEYCLOAK_PASSWORD:?set OCOR_LOCAL_KEYCLOAK_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+    ports:
+      - "127.0.0.1:18080:8080"
+    tmpfs:
+      - /opt/keycloak/data:size=256m,mode=0750,uid=1000,gid=1000
+    labels:
+      org.ocor.image-digest: sha256:9d1f1b2b7261ff53c66cb1092dfcdc34a5fb77e81f9e6a6e75b8b6a795de8067
+      org.ocor.health-contract: required
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  opensearch:
+    <<: *service-policy
+    image: opensearchproject/opensearch:3.2.0@sha256:23297b8d8545e129dd58c254ed08d786dc552410ba772983ad2af31048d2f04b
+    environment:
+      discovery.type: single-node
+      bootstrap.memory_lock: "false"
+      OPENSEARCH_JAVA_OPTS: -Xms256m -Xmx256m
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OCOR_LOCAL_OPENSEARCH_PASSWORD:?set OCOR_LOCAL_OPENSEARCH_PASSWORD}
+    ports:
+      - "127.0.0.1:19200:9200"
+    tmpfs:
+      - /usr/share/opensearch/data:size=512m,mode=0750,uid=1000,gid=1000
+    labels:
+      org.ocor.image-digest: sha256:23297b8d8545e129dd58c254ed08d786dc552410ba772983ad2af31048d2f04b
+      org.ocor.health-contract: required
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          curl --fail --silent --insecure --user admin:$$OPENSEARCH_INITIAL_ADMIN_PASSWORD
+          https://127.0.0.1:9200/_cluster/health >/dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 45s
+
+  qdrant:
+    <<: *service-policy
+    image: qdrant/qdrant:v1.15.1@sha256:d122138f76868edba68d36cb0833139c1d1761f00f09e48e61f8314196e6a4c6
+    ports:
+      - "127.0.0.1:16333:6333"
+      - "127.0.0.1:16334:6334"
+    tmpfs:
+      - /qdrant/storage:size=256m,mode=0750
+    labels:
+      org.ocor.image-digest: sha256:d122138f76868edba68d36cb0833139c1d1761f00f09e48e61f8314196e6a4c6
+      org.ocor.health-contract: required
+    healthcheck:
+      test: ["CMD-SHELL", "grep -qi ':18BD ' /proc/net/tcp"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+
+networks:
+  ocor-internal:
+    internal: true

@@ -1,0 +1,85 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0006.py",
+      "result": {"failed": 0, "not_executed": 0, "passed": 13, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "docker compose -f deploy/local/compose.yaml up --detach --wait --wait-timeout 240 --remove-orphans after clean down",
+      "result": {"failed": 0, "not_executed": 0, "passed": 6, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "verify container health, image labels, local RepoDigests, versions and internal network",
+      "result": {"failed": 0, "not_executed": 0, "passed": 6, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14",
+      "result": {"failed": 0, "not_executed": 0, "passed": 182, "skipped": 0},
+      "status": "PASS"
+    }
+  ],
+  "commit": "77c4c34fdabdc2031b106a4552a31b0e2e4be855",
+  "created_at": "2026-09-02T03:05:58Z",
+  "environment": {
+    "docker_compose": "5.3.0",
+    "kafka": "7.6.0",
+    "keycloak": "26.7.2",
+    "opa": "1.20.1",
+    "opensearch": "3.2.0",
+    "postgres": "16.14",
+    "qdrant": "1.15.1"
+  },
+  "inputs": {
+    "deploy/local/compose.yaml": "4aadb004cad77dbe29540fc35fe2dc4be352e36d28c276462820c916459b7b74",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0006.py": "f53f983dd59d7bcf9e8191c4cd8c58f8673220a2d4341eb2490055a11e62e15b",
+    "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537"
+  },
+  "raw_output_sha256": "01d9c364a62ca3e13080f36deff0653a80b030c36068afcf23ff2172c2adbc9e",
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0006-CONTRACT",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0006.py",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 13, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0006-CLEAN-RERUN",
+      "command": "docker compose -f deploy/local/compose.yaml up --detach --wait --wait-timeout 240 --remove-orphans after clean down",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 6, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0006-DIGEST-HEALTH",
+      "command": "verify container health, image labels, local RepoDigests, versions and internal network",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 6, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0006-REGRESSION",
+      "command": "pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 182, "skipped": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "S3-compatible object-store selection remains unclaimed; the available MinIO candidate was rejected for disallowed AGPLv3 licensing.",
+    "This G0 environment is single-site, ephemeral and foundation-only; it is not BA, FGM, E1, E2 or Production evidence."
+  ],
+  "result": "PASS",
+  "rollback": "Run docker compose down --volumes --remove-orphans for project ocor-local, then revert the isolated task commits and revalidate the prior G0 manifest.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0006"
+}
