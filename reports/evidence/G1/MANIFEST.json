@@ -29,6 +29,16 @@
       "path": "OCOR-DEV-0009.log",
       "sha256": "eb111ccb2474cb6b978643469f3b0158ad9fbc4d2a8c1320a88cf12b483ecd27",
       "task_id": "OCOR-DEV-0009-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0010.json",
+      "sha256": "781dee6969828822e38a7833b235001ce47813bf4bb1dd8f2adc3d255ef4316d",
+      "task_id": "OCOR-DEV-0010"
+    },
+    {
+      "path": "OCOR-DEV-0010.log",
+      "sha256": "98456b06a3bda0bb115193e1181c00890098c4b7d76131f9906cea5afd8b7a89",
+      "task_id": "OCOR-DEV-0010-RAW"
     }
   ],
   "created_at": "2026-09-02T03:14:35Z",
@@ -114,6 +124,33 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0009"
+    },
+    {
+      "case_id": "OCOR-DEV-0010-DETERMINISTIC-GENERATION",
+      "command": "validate pinned sources and generate/check 54 Python and TypeScript models",
+      "evidence_path": "OCOR-DEV-0010.json",
+      "raw_output_path": "OCOR-DEV-0010.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0010"
+    },
+    {
+      "case_id": "OCOR-DEV-0010-QUALITY",
+      "command": "ruff check contract generator and task tests; git diff --check",
+      "evidence_path": "OCOR-DEV-0010.json",
+      "raw_output_path": "OCOR-DEV-0010.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0010"
+    },
+    {
+      "case_id": "OCOR-DEV-0010-REGRESSION",
+      "command": "pytest -q ocor-runtime/tests/ with live PostgreSQL 16.14",
+      "evidence_path": "OCOR-DEV-0010.json",
+      "raw_output_path": "OCOR-DEV-0010.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0010"
     }
   ],
   "schema_version": "1.0"
