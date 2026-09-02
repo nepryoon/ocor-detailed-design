@@ -1,0 +1,101 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "OCOR-DEV-REM-0008-20260902",
+  "task_id": "OCOR-DEV-REM-0008",
+  "source_task_id": "OCOR-DEV-0008",
+  "created_at": "2026-09-02T04:17:25Z",
+  "status": "INDEPENDENT_REVIEW_PASS_PENDING_INTEGRATION",
+  "repository_commit": "47f42146e651cffeb4a8fc0662d7813c3e914ce1",
+  "base_commit": "582ad4dbaf5fe96ab60ff111dc1ba1ebaa0facf6",
+  "diff_sha256": "6ef7f1fce91aaeb2e9c641f30160176c21909dad70dd79f1a1273bb0f58e2526",
+  "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+  "authority_digests": {
+    "ocor-runtime/docs/governance_dossier/ARA_DECISION_RECORD_v1.3.md": "d28bfdac638deb2a5122b5181ba2d2120019df2af5fa701187081ed32b73b5f6",
+    "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md": "dca9e218914a310ac53f92cded61ae29a40323b98daacb51028077d6c15cd2fb",
+    "docs/OCOR_LLD_v1.1.md": "bd464bfef50dc5a5e1b7ffac389fdf12be57a3b545225a92cf1564dc6a01d219",
+    "docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json": "d3276e91a90adcb8dab99e90a5d14aefa0fee9ec7d3e7f7f074fd3776bf38a5a",
+    "docs/development_plan/OCOR_DEPENDENCY_DAG.mmd": "8ccdd7773e69f96570f39a720450f67a777ce84df83717acc3cd3ee34d774e35"
+  },
+  "findings_addressed": [
+    "SCHEMA_KERNEL_CORRELATION_MISMATCH",
+    "SCHEMA_KERNEL_ARRAY_COERCION",
+    "PROTOBUF_BINDING_RAW_ATTRIBUTE_ERROR",
+    "STALE_ORIGINAL_TASK_EVIDENCE"
+  ],
+  "changed_files": {
+    "ocor-runtime/src/ocor_runtime/kernel/governed_context.py": "0f89cdf9903205af798fabeb2a44f4331bb8dece2b68235875745093d02ba681",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0008.py": "d078d94c1f240aa2d57ff9b4cbba69e29e245d5451dc523e686018f44da0f2eb"
+  },
+  "test_runs": [
+    {
+      "id": "focused-current-branch",
+      "command": "python -m pytest -q <task-0007 through task-0012 and OCOR-DEV-0008 focused paths>",
+      "working_tree_commit": "47f42146e651cffeb4a8fc0662d7813c3e914ce1",
+      "tests": 166,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "evidence_path": "focused-junit.xml",
+      "evidence_sha256": "35b226e834a759c29f92568d8e43f457ae3c3ed0912ffd3938706ed2f8ec6a3c"
+    },
+    {
+      "id": "complete-runtime-live-postgresql",
+      "command": "OCOR_LIVE_POSTGRES_DSN=<redacted-local-fixture> python -m pytest -q ocor-runtime/tests/",
+      "working_tree_commit": "47f42146e651cffeb4a8fc0662d7813c3e914ce1",
+      "tests": 348,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "evidence_path": "full-runtime-junit.xml",
+      "evidence_sha256": "5c3f28f6d867309009767ee786c08e1b29a8b14f7182cc36be8d85e888dcc8d7"
+    },
+    {
+      "id": "mechanical-revert-drill",
+      "command": "revert 47f4214 and cc07340 in a detached disposable worktree; run complete live-PostgreSQL runtime suite with cwd and PYTHONPATH pinned to that worktree",
+      "working_tree_commit": "b182279ad6db06a208a12396d1d626ad8590716b",
+      "tests": 344,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "exit_code": 0,
+      "evidence_path": "rollback-junit.xml",
+      "evidence_sha256": "08e82a84266dc5ddaf4a3e95b5ce9d4f75c0deb3a9a26beb7bbfc18cac581216",
+      "ephemeral_commit": true
+    }
+  ],
+  "static_checks": {
+    "ruff_repository_root": "PASS",
+    "ruff_runtime_root": "PASS",
+    "git_diff_check": "PASS",
+    "evidence_secret_scan": "PASS"
+  },
+  "independent_review": {
+    "path": "independent-review.json",
+    "sha256": "21bdfdc73ee55e77e5283ded14fdf8b32b03c4084c13a7728a6c7ef105e90e0c",
+    "reviewed_commit": "47f42146e651cffeb4a8fc0662d7813c3e914ce1",
+    "verdict": "PASS",
+    "blocker": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0
+  },
+  "governance": {
+    "approved_baselines_modified": false,
+    "inputs_modified": false,
+    "runtime_write_authority": "ocor-runtime/AGENTS.md",
+    "original_task_path_contract_expanded": false
+  },
+  "open_gates": [
+    "The branch must be refreshed against current origin/main and affected regressions rerun before integration.",
+    "The change must pass pull-request CI and merge before evidence can be promoted.",
+    "Reopened G0 authority and evidence-control defects remain programme blockers."
+  ],
+  "readiness_claims": {
+    "g1": "NOT_PROMOTED",
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "poc": "NO_GO",
+    "production": "NO_GO"
+  }
+}
