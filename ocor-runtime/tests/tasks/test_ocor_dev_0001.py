@@ -298,6 +298,16 @@ def test_scope_validator_accepts_delivery_control_fixture():
     assert scope.main(["--repo", str(ROOT), "--path", ".github/CODEOWNERS"]) == 0
 
 
+def test_task_branch_scope_accepts_owned_evidence_and_rejects_unowned_code():
+    branch = "task/OCOR-DEV-0070-container-runtime"
+    assert scope.task_scope_errors(
+        ROOT, branch, ["reports/evidence/G2/OCOR-DEV-0070.json"]
+    ) == []
+    assert scope.task_scope_errors(ROOT, branch, ["scripts/verify_external_services.py"]) == [
+        "task branch changed unowned paths: scripts/verify_external_services.py"
+    ]
+
+
 @pytest.mark.parametrize(
     ("branch", "accepted"),
     [
