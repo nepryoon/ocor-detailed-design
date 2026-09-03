@@ -1,0 +1,45 @@
+{
+  "baseline_commit": "69652a3c4bd6cdd13d54c0a7e326c9d44958f985",
+  "change_set": "CC-RCCAD-METHODOLOGY-ADOPTION",
+  "decision_id": "DEC-210",
+  "environment": {
+    "codex_cli": "0.152.1",
+    "docker": "29.7.2",
+    "git": "2.55.0",
+    "python": "3.14.7",
+    "uv": "NOT_AVAILABLE_LOCAL"
+  },
+  "evidence_fence": {
+    "E1": 0,
+    "E2": 0
+  },
+  "implementation_commit": "347f65a3bcd736f931fe0df2504ef412e65b5c32",
+  "phases": [
+    {
+      "command": "python3 -m unittest -v reports.tests.test_rccad_methodology",
+      "exit_code": 1,
+      "fingerprint": "FAILED (failures=2, errors=3); missing 14 required artifacts and validator",
+      "fingerprint_sha256": "c55c2b275f5260a89240c194da14ed0a5bf1241a7d55a0d055e5f9e00ab6b5c3",
+      "phase": "RED",
+      "result": "EXPECTED_FAILURE"
+    },
+    {
+      "command": "python3 -m unittest -v reports.tests.test_rccad_methodology && python3 scripts/validate_rccad.py --base-ref 69652a3c4bd6cdd13d54c0a7e326c9d44958f985",
+      "exit_code": 0,
+      "fingerprint": "Ran 5 tests; OK; validator PASS checked_artifacts=15 findings=0",
+      "fingerprint_sha256": "6a6b06068779bc1c1f4adf17d62a753ce7c9b89bcfac141fcddbd10fca598a84",
+      "phase": "GREEN",
+      "result": "PASS"
+    },
+    {
+      "command": "scope validator; acceptance suite; RCCAD validator; diff checks",
+      "exit_code": 0,
+      "fingerprint": "branch renamed to policy-conforming lowercase; scope PASS; 5 tests OK; RCCAD PASS; inputs unchanged",
+      "fingerprint_sha256": "3a942297e78cdd524bcd621bde2e07fbf08d6ef1d267351c11f5f7114f3ec50c",
+      "phase": "REFACTOR",
+      "result": "PASS"
+    }
+  ],
+  "schema_version": "1.0",
+  "test_scope": "methodology adoption only"
+}

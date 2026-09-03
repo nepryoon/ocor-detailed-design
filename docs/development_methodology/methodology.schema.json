@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ocor.example/schemas/development-methodology-v1.schema.json",
+  "additionalProperties": false,
+  "properties": {
+    "architecture_fitness_functions": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "blocking": {"const": true},
+          "command": {"minLength": 1, "type": "string"},
+          "id": {"pattern": "^AFF-[0-9]{3}$", "type": "string"},
+          "title": {"minLength": 1, "type": "string"}
+        },
+        "required": ["blocking", "command", "id", "title"],
+        "type": "object"
+      },
+      "maxItems": 10,
+      "minItems": 10,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "authoritative_sources": {
+      "additionalProperties": false,
+      "properties": {
+        "backlog": {"const": "docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json"},
+        "definition_of_done": {"const": "docs/development_methodology/OCOR_DEFINITION_OF_DONE.md"},
+        "dependency_dag": {"const": "docs/development_plan/OCOR_DEPENDENCY_DAG.mmd"},
+        "execution_state": {"const": "reports/development/EXECUTION_STATE.json"},
+        "handoff": {"const": "reports/development/MODEL_HANDOFF.json"},
+        "test_strategy": {"const": "docs/development_methodology/OCOR_TEST_STRATEGY.md"}
+      },
+      "required": ["backlog", "definition_of_done", "dependency_dag", "execution_state", "handoff", "test_strategy"],
+      "type": "object"
+    },
+    "decision_id": {"const": "DEC-210"},
+    "evidence_fence": {
+      "additionalProperties": false,
+      "properties": {"E1": {"const": 0}, "E2": {"const": 0}},
+      "required": ["E1", "E2"],
+      "type": "object"
+    },
+    "lifecycle": {
+      "prefixItems": [
+        {"const": "G0"}, {"const": "G1"}, {"const": "G2"}, {"const": "G3"},
+        {"const": "G4"}, {"const": "G5"}, {"const": "G6"}, {"const": "G7"}
+      ],
+      "maxItems": 8,
+      "minItems": 8,
+      "type": "array"
+    },
+    "methodology_id": {"const": "OCOR-RCCAD"},
+    "normative_precedence": {"items": {"type": "string"}, "minItems": 9, "type": "array"},
+    "schema_version": {"const": "1.0"},
+    "status": {"enum": ["EFFECTIVE_ON_MERGE", "EFFECTIVE"]},
+    "version": {"const": "1.0"}
+  },
+  "required": [
+    "architecture_fitness_functions", "authoritative_sources", "decision_id",
+    "evidence_fence", "lifecycle", "methodology_id", "normative_precedence",
+    "schema_version", "status", "version"
+  ],
+  "type": "object"
+}

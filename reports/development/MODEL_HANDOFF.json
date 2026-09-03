@@ -1,0 +1,65 @@
+{
+  "assumptions_requiring_revalidation": [
+    "External GitHub PR/check state was not queried because no configured GitHub connector is exposed in this session.",
+    "The current model name and reasoning effort are not exposed by the runtime."
+  ],
+  "baseline_commit": "69652a3c4bd6cdd13d54c0a7e326c9d44958f985",
+  "branch": "governed/dec-210-rccad-adoption",
+  "commands_run": [
+    {
+      "command": "sha256sum -c inputs/normative/SHA256SUMS",
+      "result": "PASS"
+    },
+    {
+      "command": "./.venv/bin/python3 scripts/verify.py --json",
+      "result": "NOT_EXECUTED"
+    },
+    {
+      "command": "python3 -m unittest -v reports.tests.test_rccad_methodology",
+      "result": "RED_EXPECTED_THEN_PASS"
+    },
+    {
+      "command": "python3 scripts/validate_rccad.py --base-ref 69652a3c4bd6cdd13d54c0a7e326c9d44958f985",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_ocor_change_scope.py --base 69652a3c4bd6cdd13d54c0a7e326c9d44958f985 --head HEAD --branch governed/dec-210-rccad-adoption",
+      "result": "PASS_AFTER_BRANCH_RENAME"
+    },
+    {
+      "command": "python3 scripts/validate_ocor_development_plan.py",
+      "result": "NOT_EXECUTED_MISSING_JSONSCHEMA"
+    },
+    {
+      "command": "python3 scripts/ocor_autonomous_delivery.py --validate",
+      "result": "NOT_EXECUTED_MISSING_JSONSCHEMA"
+    },
+    {
+      "command": "docker image ls --format ...",
+      "result": "NOT_EXECUTED_DOCKER_API_PERMISSION_DENIED"
+    },
+    {
+      "command": "independent verifier pass 1 on 347f65a3 and pass 2 on 96f056db",
+      "result": "NO_GO_FINDINGS_REMEDIATED"
+    }
+  ],
+  "completed_tasks": [
+    "repository reconciliation",
+    "DEC-210 allocation",
+    "TDD RED",
+    "local GREEN and REFACTOR gates"
+  ],
+  "current_task": "CC-RCCAD-METHODOLOGY-ADOPTION",
+  "evidence_paths": [
+    "reports/development/METHOD_COMPLIANCE.json",
+    "reports/tests/rccad_tdd_evidence.json"
+  ],
+  "exact_next_action": "Run fresh-context verifier pass 3 on the remediation commit, publish atomically to GitHub, then execute pinned CI before merge.",
+  "schema_version": "1.0",
+  "unresolved_blockers": [
+    "ENV-HARNESS-VENV-001",
+    "G2-REAL-SERVICES-001",
+    "GITHUB-BRANCH-PROTECTION-001"
+  ],
+  "worktree": "/home/luca/Projects/.ocor-worktrees/rccad-adoption"
+}

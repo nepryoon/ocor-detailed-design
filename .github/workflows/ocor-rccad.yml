@@ -1,0 +1,92 @@
+name: OCOR RCCAD methodology gates
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rccad-methodology:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
+        env:
+          POSTGRES_DB: ocor
+          POSTGRES_PASSWORD: ocor
+          POSTGRES_USER: ocor
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ocor -d ocor"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      OCOR_LIVE_POSTGRES_DSN: postgresql://ocor:ocor@127.0.0.1:5432/ocor
+      PYTHONHASHSEED: "0"
+      TZ: UTC
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.20.2"
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.5"
+      - name: Synchronize pinned validation environment
+        working-directory: ocor-runtime
+        run: uv sync --frozen --extra test
+      - name: Meta-validate schema and validate methodology instance
+        run: |
+          ocor-runtime/.venv/bin/python - <<'PY'
+          import json
+          from pathlib import Path
+          from jsonschema import Draft202012Validator
+
+          root = Path.cwd()
+          schema = json.loads((root / "docs/development_methodology/methodology.schema.json").read_text())
+          instance = json.loads((root / "docs/development_methodology/methodology.json").read_text())
+          Draft202012Validator.check_schema(schema)
+          Draft202012Validator(schema).validate(instance)
+          PY
+      - name: Validate RCCAD manifest, state, evidence and fitness functions
+        run: >-
+          ocor-runtime/.venv/bin/python scripts/validate_rccad.py
+          --base-ref "${{ github.event.pull_request.base.sha || 'origin/main' }}"
+      - name: Run RCCAD positive and negative acceptance tests
+        run: ocor-runtime/.venv/bin/python -m unittest -v reports.tests.test_rccad_methodology
+      - name: Validate authoritative plan and execution runner
+        run: |
+          ocor-runtime/.venv/bin/python scripts/validate_ocor_development_plan.py
+          ocor-runtime/.venv/bin/python scripts/ocor_autonomous_delivery.py --validate
+          ocor-runtime/.venv/bin/python scripts/ocor_autonomous_delivery.py --dry-run
+      - name: Execute dynamic architecture fitness portfolio
+        run: >-
+          uv run --project ocor-runtime --frozen pytest -q
+          ocor-runtime/tests/tasks/test_ocor_dev_0004.py
+          ocor-runtime/tests/tasks/test_ocor_dev_0007.py
+          ocor-runtime/tests/tasks/test_ocor_dev_0008.py
+          ocor-runtime/tests/tasks/test_ocor_dev_0009.py
+          ocor-runtime/tests/tasks/test_ocor_dev_0010.py
+          ocor-runtime/tests/tasks/test_ocor_dev_0011.py
+          ocor-runtime/tests/tasks/test_ocor_dev_0012.py
+          ocor-runtime/tests/tasks/test_ocor_dev_0013.py
+          ocor-runtime/tests/tasks/test_ocor_dev_0014.py
+      - name: Execute full runtime regression with real PostgreSQL
+        run: >-
+          uv run --project ocor-runtime --frozen pytest -q
+          --junitxml=reports/tests/rccad_runtime_junit.xml
+          ocor-runtime/tests/
+      - name: Prove immutable normative inputs
+        run: git diff --exit-code "${{ github.event.pull_request.base.sha || 'origin/main' }}" -- inputs/

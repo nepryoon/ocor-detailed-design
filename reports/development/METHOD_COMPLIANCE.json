@@ -1,0 +1,26 @@
+{
+  "architecture_fitness": "STATIC_PRECHECK_PASS__DYNAMIC_CI_REQUIRED",
+  "change_set": "CC-RCCAD-METHODOLOGY-ADOPTION",
+  "decision_id": "DEC-210",
+  "definition_of_done": "PENDING_INDEPENDENT_VERIFIER_AND_PINNED_CI",
+  "evidence_fence": {
+    "E1": 0,
+    "E2": 0
+  },
+  "immutable_inputs": "PASS",
+  "methodology": "OCOR-RCCAD v1.0",
+  "schema_validation": "NOT_EXECUTED_LOCAL_MISSING_JSONSCHEMA__MANDATORY_IN_CI",
+  "schema_version": "1.0",
+  "status": "LOCAL_GATES_PASS",
+  "tdd_evidence": "reports/tests/rccad_tdd_evidence.json",
+  "test_exceptions": [
+    {
+      "id": "TEST-INFRA-001",
+      "justification": "The live PostgreSQL test has a local environment guard; every qualifying CI job supplies OCOR_LIVE_POSTGRES_DSN and rejects skips.",
+      "path": "ocor-runtime/tests/integration/test_postgres_outbox_live.py",
+      "qualifying_ci_must_execute": true,
+      "type": "CONDITIONAL_INFRASTRUCTURE_GUARD"
+    }
+  ],
+  "verifier": "PASS_1_AND_PASS_2_NO_GO_REMEDIATED__PASS_3_PENDING"
+}

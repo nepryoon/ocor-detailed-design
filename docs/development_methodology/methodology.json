@@ -1,0 +1,102 @@
+{
+  "architecture_fitness_functions": [
+    {
+      "blocking": true,
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0011.py ocor-runtime/tests/tasks/test_ocor_dev_0012.py",
+      "id": "AFF-001",
+      "title": "component dependency boundaries"
+    },
+    {
+      "blocking": true,
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0011.py ocor-runtime/tests/tasks/test_ocor_dev_0014.py",
+      "id": "AFF-002",
+      "title": "ports and adapters isolation"
+    },
+    {
+      "blocking": true,
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0010.py -k backend_identifiers",
+      "id": "AFF-003",
+      "title": "backend-neutral canonical contracts"
+    },
+    {
+      "blocking": true,
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0010.py",
+      "id": "AFF-004",
+      "title": "schema and contract compatibility"
+    },
+    {
+      "blocking": true,
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0007.py",
+      "id": "AFF-005",
+      "title": "deterministic serialization and hashing"
+    },
+    {
+      "blocking": true,
+      "command": "python3 scripts/validate_rccad.py",
+      "id": "AFF-006",
+      "title": "no cross-boundary datastore access"
+    },
+    {
+      "blocking": true,
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0013.py -k idempotency",
+      "id": "AFF-007",
+      "title": "idempotency and deduplication"
+    },
+    {
+      "blocking": true,
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0004.py && python3 scripts/validate_rccad.py",
+      "id": "AFF-008",
+      "title": "provenance and evidence completeness"
+    },
+    {
+      "blocking": true,
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0009.py ocor-runtime/tests/tasks/test_ocor_dev_0014.py",
+      "id": "AFF-009",
+      "title": "authorization and fail-closed defaults"
+    },
+    {
+      "blocking": true,
+      "command": "python3 scripts/validate_ocor_development_plan.py",
+      "id": "AFF-010",
+      "title": "normative implementation test traceability"
+    }
+  ],
+  "authoritative_sources": {
+    "backlog": "docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json",
+    "definition_of_done": "docs/development_methodology/OCOR_DEFINITION_OF_DONE.md",
+    "dependency_dag": "docs/development_plan/OCOR_DEPENDENCY_DAG.mmd",
+    "execution_state": "reports/development/EXECUTION_STATE.json",
+    "handoff": "reports/development/MODEL_HANDOFF.json",
+    "test_strategy": "docs/development_methodology/OCOR_TEST_STRATEGY.md"
+  },
+  "decision_id": "DEC-210",
+  "evidence_fence": {
+    "E1": 0,
+    "E2": 0
+  },
+  "lifecycle": [
+    "G0",
+    "G1",
+    "G2",
+    "G3",
+    "G4",
+    "G5",
+    "G6",
+    "G7"
+  ],
+  "methodology_id": "OCOR-RCCAD",
+  "normative_precedence": [
+    "approved IRB",
+    "approved ADD",
+    "approved LLD",
+    "approved decisions",
+    "normative contracts schemas and registers",
+    "approved development plan and backlog",
+    "OCOR-RCCAD v1.0",
+    "existing implementation",
+    "fail-closed interpretation"
+  ],
+  "schema_version": "1.0",
+  "status": "EFFECTIVE_ON_MERGE",
+  "version": "1.0"
+}
