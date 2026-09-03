@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "OCOR-DEV-REM-0007-RCCAD-20260903",
+  "status": "QUALIFIED_CANDIDATE_PENDING_SEAL_CI_AND_INTEGRATION",
+  "source_task_id": "OCOR-DEV-0007",
+  "change_set": "OCOR-DEV-REM-0007-RCCAD",
+  "baseline_commit": "a09d1a6e573895e716b147c8046ea97b73b2e3a8",
+  "pull_request": 38,
+  "supersedes_draft_pull_request": 26,
+  "tdd": {
+    "characterization": {
+      "remote_commit": "133ac489141f1186650fc57f459298d482f3f18c",
+      "result": "PASS_ALL_APPLICABLE_WORKFLOWS",
+      "run_ids": [33716385268, 33716385289, 33716385292, 33716385299, 33716385286]
+    },
+    "red": {
+      "remote_commit": "79d18cf76c771ca724fa7037a5d3f659addd2e77",
+      "result": "EXPECTED_FAILURE",
+      "fingerprint": "ImportError DigestProviderError absent; 15 failed 244 passed; BA04 2**53 rejected as out of safe range",
+      "fingerprint_sha256": "2a136b5dcd53ec4bcb7455fa47c86d48b00bcd20cb72e681340bd5e3ed9772ce",
+      "run_ids": [33716576262, 33716576187, 33716576191]
+    },
+    "green": {
+      "remote_commit": "d15324375dcb63d2cd024bfe1648f529a7683a8c",
+      "result": "RUNTIME_BEHAVIOUR_PASS__NODE_DRIFT_EXPOSED_IN_LEGACY_WORKFLOWS",
+      "passing_run_ids": [33716692352, 33716692340, 33716692364]
+    },
+    "refactor": {
+      "remote_commit": "8a9a2280750282af156ebb3c026ca0730c53bb27",
+      "result": "PASS_ALL_APPLICABLE_WORKFLOWS",
+      "run_ids": [33716881688, 33716881607, 33716881556, 33716881600, 33716881636]
+    }
+  },
+  "changed_file_sha256": {
+    ".github/workflows/ocor-delivery-activation.yml": "4a2e5dac807291daa125c6b7039533648baa2bab36385b7a5fa4e840d7d97c59",
+    ".github/workflows/ocor-validation-closure.yml": "84763140480464d2b9907e01cf89458f3381379182937afd4bce9ab8861f04a5",
+    "ocor-runtime/src/ocor_runtime/canonical.py": "4fa3dac46eb2d6f0ffeaa7e67a6d12aa7c492609a8c89c8cbd0e0893400934ea",
+    "ocor-runtime/src/ocor_runtime/errors.py": "39f34742382b43dd0cc3a2a2656f12311d40c5d33849df311f9c6d77f4291a0a",
+    "ocor-runtime/src/ocor_runtime/kernel/canonical.py": "fd26f64749707f5da8e8b796b7d279ff2e21985d5f6af4d919fa3a42e1dcc7b9",
+    "ocor-runtime/tests/acceptance_ev/test_ev_001_010_semantics_identity.py": "9d0dedf72a31028151bb5853177d52271efe3b3c102a209d898d7c5c3e9e1c63",
+    "ocor-runtime/tests/backend_assumptions/test_ba04_canonicalization.py": "61e7b17a6554b53aa1c5c1342efb40462e00b6ef34a0a682c078256cd734d6b8",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0007.py": "f70008082cb2e50420979c32e3defc5961ef17f887edcb93e9c83e0038d446b8",
+    "ocor-runtime/tests/tasks/test_ocor_dev_rem_0007.py": "cad90d4d2ddd6334b6af68fc7b99d76b7d436da428dd56c37240980712603c49"
+  },
+  "independent_verifier": {
+    "identity": "rem0007_clean_verifier",
+    "model_and_effort": "NOT_ATTESTABLE",
+    "verdict": "GO_FOR_EVIDENCE_SEAL",
+    "blocker": 0,
+    "high": 0,
+    "medium": 0
+  },
+  "rollback": {
+    "procedure": "Revert the coherent PR #38 merge through a new revert commit and rerun all five workflows.",
+    "baseline_characterization": "PASS_ALL_APPLICABLE_WORKFLOWS at 133ac489141f1186650fc57f459298d482f3f18c",
+    "interpretation": "The characterization proves the pre-remediation baseline remains executable; reverting only production while retaining RED tests is intentionally non-green."
+  },
+  "immutable_inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "global_verified_requirements": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "poc": "NO_GO",
+    "production": "NO_GO"
+  },
+  "local_not_executed": [
+    "./.venv/bin/python3 scripts/verify.py --json: repository venv absent",
+    "pytest: repository/runtime venv absent and system Python has no pytest"
+  ]
+}

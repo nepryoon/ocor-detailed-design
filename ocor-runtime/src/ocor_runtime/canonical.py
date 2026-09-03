@@ -14,7 +14,7 @@ import math
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from .errors import CanonicalizationError
+from .errors import CanonicalizationError, DigestProviderError
 
 MAX_SAFE_INTEGER = 9_007_199_254_740_991
 
@@ -100,6 +100,24 @@ def _serialize_float(value: float) -> str:
     return sign + body
 
 
+def _serialize_integer(value: int) -> str:
+    """Serialize integers only when their value survives the binary64 boundary."""
+
+    if abs(value) <= MAX_SAFE_INTEGER:
+        return str(value)
+    try:
+        binary64 = float(value)
+    except OverflowError as exc:
+        raise CanonicalizationError(
+            "integer is not representable as an IEEE-754 binary64 value"
+        ) from exc
+    if not math.isfinite(binary64) or int(binary64) != value:
+        raise CanonicalizationError(
+            "integer is not exactly representable as an IEEE-754 binary64 value"
+        )
+    return _serialize_float(binary64)
+
+
 def _serialize(value: Any) -> str:
     if value is None:
         return "null"
@@ -110,11 +128,7 @@ def _serialize(value: Any) -> str:
     if isinstance(value, str):
         return _serialize_string(value)
     if isinstance(value, int):
-        if abs(value) > MAX_SAFE_INTEGER:
-            raise CanonicalizationError(
-                f"integer {value} exceeds the interoperable IEEE-754 safe range"
-            )
-        return str(value)
+        return _serialize_integer(value)
     if isinstance(value, float):
         return _serialize_float(value)
     if isinstance(value, Mapping):
@@ -148,7 +162,10 @@ def canonicalize(value: Any) -> bytes:
 def canonical_sha256(value: Any) -> str:
     """Return a lowercase SHA-256 digest over canonical UTF-8 JSON."""
 
-    return hashlib.sha256(canonicalize(value)).hexdigest()
+    try:
+        return hashlib.sha256(canonicalize(value)).hexdigest()
+    except OSError as exc:
+        raise DigestProviderError("SHA-256 provider failure") from exc
 
 
 def load_i_json(document: str | bytes | bytearray) -> Any:
@@ -158,23 +175,38 @@ def load_i_json(document: str | bytes | bytearray) -> Any:
         result: dict[str, Any] = {}
         for key, value in pairs:
             if key in result:
-                raise CanonicalizationError(f"duplicate object key: {key!r}")
+                raise CanonicalizationError("duplicate object key")
             result[key] = value
         return result
 
     def reject_constant(value: str) -> None:
         raise CanonicalizationError(f"non-finite JSON constant: {value}")
 
+    def parse_integer(value: str) -> int | float:
+        """Map JSON integers to the I-JSON binary64 domain without host-int drift."""
+
+        try:
+            binary64 = float(value)
+        except (OverflowError, ValueError) as exc:
+            raise CanonicalizationError("invalid I-JSON integer") from exc
+        if not math.isfinite(binary64):
+            raise CanonicalizationError(
+                "integer is not representable as an IEEE-754 binary64 value"
+            )
+        if abs(binary64) <= MAX_SAFE_INTEGER:
+            return int(value)
+        return binary64
+
     try:
         parsed = json.loads(
             document,
             object_pairs_hook=reject_duplicate_keys,
             parse_constant=reject_constant,
+            parse_int=parse_integer,
         )
     except CanonicalizationError:
         raise
-    except (UnicodeError, json.JSONDecodeError) as exc:
-        raise CanonicalizationError(f"invalid I-JSON: {exc}") from exc
+    except (UnicodeError, ValueError) as exc:
+        raise CanonicalizationError("invalid I-JSON document") from exc
     canonicalize(parsed)
     return parsed
-

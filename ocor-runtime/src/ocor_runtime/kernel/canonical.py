@@ -13,7 +13,7 @@ from itertools import pairwise
 from typing import Any, TypeVar
 
 from ..canonical import canonicalize, load_i_json
-from ..errors import CanonicalizationError
+from ..errors import CanonicalizationError, DigestProviderError, OCORError
 
 T = TypeVar("T")
 DIGEST = re.compile(r"urn:sha256:[0-9a-f]{64}")
@@ -24,12 +24,28 @@ UTC_TIMESTAMP = re.compile(
 )
 
 
-class IdentifierError(ValueError):
+class KernelBoundaryError(OCORError, ValueError):
+    """A typed kernel-boundary failure with a stable bounded reason code."""
+
+    code = "KERNEL_BOUNDARY_INVALID"
+
+
+class IdentifierError(KernelBoundaryError):
     """An identifier is absent, non-canonical or outside RFC 4122."""
 
+    code = "IDENTIFIER_INVALID"
 
-class TimestampError(ValueError):
+
+class TimestampError(KernelBoundaryError):
     """A timestamp cannot be represented at an OCOR UTC boundary."""
+
+    code = "TIMESTAMP_INVALID"
+
+
+class DigestError(CanonicalizationError):
+    """A canonical digest is malformed or does not bind the supplied value."""
+
+    code = "DIGEST_INVALID"
 
 
 def canonical_bytes(value: Any) -> bytes:
@@ -47,17 +63,20 @@ def parse_i_json(document: str | bytes | bytearray) -> Any:
 def canonical_digest(value: Any) -> str:
     """Return the normative lowercase SHA-256 URN for canonical bytes."""
 
-    return "urn:sha256:" + hashlib.sha256(canonical_bytes(value)).hexdigest()
+    try:
+        return "urn:sha256:" + hashlib.sha256(canonical_bytes(value)).hexdigest()
+    except OSError as exc:
+        raise DigestProviderError("SHA-256 provider failure") from exc
 
 
 def verify_canonical_digest(value: Any, claimed_digest: str) -> str:
     """Recalculate a digest and fail closed on malformed or mismatched claims."""
 
     if not isinstance(claimed_digest, str) or DIGEST.fullmatch(claimed_digest) is None:
-        raise CanonicalizationError("claimed digest is not a canonical SHA-256 URN")
+        raise DigestError("claimed digest is not a canonical SHA-256 URN")
     calculated = canonical_digest(value)
     if not hmac.compare_digest(calculated, claimed_digest):
-        raise CanonicalizationError("canonical digest mismatch")
+        raise DigestError("canonical digest mismatch")
     return calculated
 
 
@@ -80,7 +99,7 @@ def parse_utc_timestamp(value: str) -> datetime:
     try:
         parsed = datetime.fromisoformat(value.removesuffix("Z") + "+00:00")
     except ValueError as exc:
-        raise TimestampError(f"invalid UTC timestamp: {exc}") from exc
+        raise TimestampError("invalid UTC timestamp") from exc
     if parsed.utcoffset() != UTC.utcoffset(parsed):
         raise TimestampError("timestamp is not UTC")
     return parsed
