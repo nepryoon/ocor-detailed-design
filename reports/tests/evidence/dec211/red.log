@@ -1,0 +1,74 @@
+$ python3 -m unittest -v reports.tests.test_autonomous_tooling_policy
+test_bootstrap_tasks_and_dependencies_are_governed (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_bootstrap_tasks_and_dependencies_are_governed) ... FAIL
+test_decision_and_evidence_fence (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_decision_and_evidence_fence) ... ERROR
+test_lock_manifests_are_canonical_and_pinned (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_lock_manifests_are_canonical_and_pinned) ... ERROR
+test_required_artifacts_exist (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_required_artifacts_exist) ... FAIL
+test_scripts_have_non_mutating_contract_checks (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_scripts_have_non_mutating_contract_checks) ... FAIL
+
+======================================================================
+ERROR: test_decision_and_evidence_fence (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_decision_and_evidence_fence)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/luca/Projects/.ocor-worktrees/autonomous-completion-20260903T152855Z/reports/tests/test_autonomous_tooling_policy.py", line 68, in test_decision_and_evidence_fence
+    record = (ROOT / "ocor-runtime/docs/governance_dossier/ARA_DECISION_RECORD_v1.5.md").read_text(encoding="utf-8")
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/luca/Projects/.ocor-worktrees/autonomous-completion-20260903T152855Z/ocor-runtime/docs/governance_dossier/ARA_DECISION_RECORD_v1.5.md'
+
+======================================================================
+ERROR: test_lock_manifests_are_canonical_and_pinned (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_lock_manifests_are_canonical_and_pinned)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/luca/Projects/.ocor-worktrees/autonomous-completion-20260903T152855Z/reports/tests/test_autonomous_tooling_policy.py", line 43, in test_lock_manifests_are_canonical_and_pinned
+    data = json.loads(path.read_text(encoding="utf-8"))
+                      ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/luca/Projects/.ocor-worktrees/autonomous-completion-20260903T152855Z/infra/toolchain.lock.json'
+
+======================================================================
+FAIL: test_bootstrap_tasks_and_dependencies_are_governed (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_bootstrap_tasks_and_dependencies_are_governed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/luca/Projects/.ocor-worktrees/autonomous-completion-20260903T152855Z/reports/tests/test_autonomous_tooling_policy.py", line 60, in test_bootstrap_tasks_and_dependencies_are_governed
+    self.assertTrue(expected <= tasks.keys())
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_required_artifacts_exist (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_required_artifacts_exist)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/luca/Projects/.ocor-worktrees/autonomous-completion-20260903T152855Z/reports/tests/test_autonomous_tooling_policy.py", line 38, in test_required_artifacts_exist
+    self.assertEqual([], [item for item in REQUIRED if not (ROOT / item).is_file()])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != ['docs/development_methodology/OCOR_AUTONO[886 chars].md']
+
+Second list contains 18 additional elements.
+First extra element 0:
+'docs/development_methodology/OCOR_AUTONOMOUS_TOOLING_POLICY.md'
+
+Diff is 992 characters long. Set self.maxDiff to None to see it.
+
+======================================================================
+FAIL: test_scripts_have_non_mutating_contract_checks (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_scripts_have_non_mutating_contract_checks)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/luca/Projects/.ocor-worktrees/autonomous-completion-20260903T152855Z/reports/tests/test_autonomous_tooling_policy.py", line 84, in test_scripts_have_non_mutating_contract_checks
+    self.assertEqual(0, result.returncode, result.stdout + result.stderr)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 2 : python3: can't open file '/home/luca/Projects/.ocor-worktrees/autonomous-completion-20260903T152855Z/scripts/preflight_environment.py': [Errno 2] No such file or directory
+
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.030s
+
+FAILED (failures=3, errors=2)

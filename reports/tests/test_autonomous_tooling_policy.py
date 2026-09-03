@@ -102,6 +102,14 @@ class AutonomousToolingPolicyTests(unittest.TestCase):
         self.assertEqual(["RED", "GREEN", "REFACTOR"], [item["phase"] for item in evidence["phases"]])
         for phase in evidence["phases"]:
             self.assertEqual(hashlib.sha256(phase["fingerprint"].encode()).hexdigest(), phase["fingerprint_sha256"])
+            raw_log = ROOT / phase["raw_log"]
+            self.assertTrue(raw_log.is_file())
+            self.assertEqual(hashlib.sha256(raw_log.read_bytes()).hexdigest(), phase["raw_log_sha256"])
+            self.assertTrue(phase["commands"])
+            self.assertTrue(all(isinstance(command, list) and command for command in phase["commands"]))
+            raw = raw_log.read_text(encoding="utf-8")
+            for command in phase["commands"]:
+                self.assertIn("$ " + " ".join(command), raw)
         self.assertNotEqual(0, evidence["phases"][0]["exit_code"])
         self.assertTrue(all(item["exit_code"] == 0 for item in evidence["phases"][1:]))
         ancestry = subprocess.run(

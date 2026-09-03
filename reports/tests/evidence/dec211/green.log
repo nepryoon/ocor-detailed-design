@@ -1,0 +1,136 @@
+$ ocor-runtime/.venv/bin/python -m unittest -v reports.tests.test_autonomous_tooling_policy reports.tests.test_bootstrap_lock_validation reports.tests.test_rccad_methodology
+test_bootstrap_tasks_and_dependencies_are_governed (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_bootstrap_tasks_and_dependencies_are_governed) ... ok
+test_decision_and_evidence_fence (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_decision_and_evidence_fence) ... ok
+test_lock_manifests_are_canonical_and_pinned (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_lock_manifests_are_canonical_and_pinned) ... ok
+test_required_artifacts_exist (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_required_artifacts_exist) ... ok
+test_scripts_have_non_mutating_contract_checks (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_scripts_have_non_mutating_contract_checks) ... ok
+test_tdd_evidence_is_content_addressed_and_ancestral (reports.tests.test_autonomous_tooling_policy.AutonomousToolingPolicyTests.test_tdd_evidence_is_content_addressed_and_ancestral) ... ok
+test_container_integrity_must_equal_image_digest (reports.tests.test_bootstrap_lock_validation.BootstrapLockValidationTests.test_container_integrity_must_equal_image_digest) ... ok
+test_current_locks_are_schema_valid_and_canonical (reports.tests.test_bootstrap_lock_validation.BootstrapLockValidationTests.test_current_locks_are_schema_valid_and_canonical) ... ok
+test_duplicate_ids_are_rejected_semantically (reports.tests.test_bootstrap_lock_validation.BootstrapLockValidationTests.test_duplicate_ids_are_rejected_semantically) ... ok
+test_malformed_build_and_mutable_image_are_rejected (reports.tests.test_bootstrap_lock_validation.BootstrapLockValidationTests.test_malformed_build_and_mutable_image_are_rejected) ... ok
+test_non_official_or_non_https_tool_source_is_rejected (reports.tests.test_bootstrap_lock_validation.BootstrapLockValidationTests.test_non_official_or_non_https_tool_source_is_rejected) ... ok
+test_operational_validator_enforces_closed_schema_shape (reports.tests.test_bootstrap_lock_validation.BootstrapLockValidationTests.test_operational_validator_enforces_closed_schema_shape) ... ok
+test_preflight_rejects_missing_and_wrong_integrity_host_tool (reports.tests.test_bootstrap_lock_validation.BootstrapLockValidationTests.test_preflight_rejects_missing_and_wrong_integrity_host_tool) ... ok
+test_preflight_rejects_wrong_container_version (reports.tests.test_bootstrap_lock_validation.BootstrapLockValidationTests.test_preflight_rejects_wrong_container_version) ... ok
+test_preflight_rejects_wrong_host_version (reports.tests.test_bootstrap_lock_validation.BootstrapLockValidationTests.test_preflight_rejects_wrong_host_version) ... ok
+test_service_requires_exactly_one_pinned_acquisition_mode (reports.tests.test_bootstrap_lock_validation.BootstrapLockValidationTests.test_service_requires_exactly_one_pinned_acquisition_mode) ... ok
+test_tool_without_integrity_is_rejected (reports.tests.test_bootstrap_lock_validation.BootstrapLockValidationTests.test_tool_without_integrity_is_rejected) ... ok
+test_manifest_is_valid_and_canonical (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_manifest_is_valid_and_canonical) ... ok
+test_required_artifacts_exist (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_required_artifacts_exist) ... ok
+test_validator_accepts_repository_state (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_validator_accepts_repository_state) ... ok
+test_validator_fails_closed_on_missing_required_artifact (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_validator_fails_closed_on_missing_required_artifact) ... ok
+test_validator_rejects_input_changes (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_validator_rejects_input_changes) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.884s
+
+OK
+
+$ python3 scripts/verify_external_services.py --manifest-only
+{
+  "service_count": 11,
+  "status": "PASS"
+}
+
+$ python3 scripts/preflight_environment.py --require-ready
+{
+  "architecture": "x86_64",
+  "commands": {
+    "docker": "/usr/bin/docker",
+    "git": "/usr/bin/git",
+    "github-cli": "/usr/bin/gh",
+    "java": "eclipse-temurin@sha256:db1689535962d757a5adabf57387584ed543d38c0b9d1fe870123ea362ad73b0",
+    "node": "/usr/bin/node",
+    "python": "/home/luca/Projects/.ocor-worktrees/autonomous-completion-20260903T152855Z/ocor-runtime/.venv/bin/python",
+    "ruff": "/home/luca/.local/bin/ruff",
+    "uv": "/home/luca/.local/bin/uv"
+  },
+  "disk_available_bytes": 229226168320,
+  "docker": "READY",
+  "errors": [],
+  "platform": "Linux-7.2.2-1-cachyos-x86_64-with-glibc2.44",
+  "ports_available": {
+    "1729": false,
+    "3030": false,
+    "6363": false,
+    "8080": false,
+    "8181": false,
+    "8200": false
+  },
+  "secret_names_present": [],
+  "status": "PASS"
+}
+
+$ python3 scripts/bootstrap_development_environment.py --execute --skip-start --timeout 300
+{
+  "acquired": [
+    "kafka",
+    "keycloak",
+    "opa",
+    "openbao",
+    "postgresql",
+    "qdrant",
+    "spire-agent",
+    "spire-server",
+    "terminusdb",
+    "typedb"
+  ],
+  "secret_file": "/home/luca/Projects/.ocor-worktrees/autonomous-completion-20260903T152855Z/.ocor/bootstrap.env",
+  "started": false,
+  "status": "PASS"
+}
+
+$ ocor-runtime/.venv/bin/python scripts/validate_ocor_development_plan.py --base-ref d93e8870e975b2aeec715778f3c490ece0e0216f --authorized-extension
+{"verdict": "PASS", "counts": {"PASS": 37, "NOT_EXECUTED": 2}, "tasks": 84, "requirements": 285, "waves": 29, "critical_days": 161}
+
+$ ocor-runtime/.venv/bin/python scripts/validate_rccad.py --base-ref d93e8870e975b2aeec715778f3c490ece0e0216f
+{
+  "checked_artifacts": 22,
+  "dynamic_assurance": "CI_REQUIRED",
+  "findings": [],
+  "fitness_results": {
+    "AFF-001": "PASS_STATIC_PRECHECK",
+    "AFF-002": "PASS_STATIC_PRECHECK",
+    "AFF-003": "PASS_STATIC_PRECHECK",
+    "AFF-004": "PASS_STATIC_PRECHECK",
+    "AFF-005": "PASS_STATIC_PRECHECK",
+    "AFF-006": "PASS_STATIC_PRECHECK",
+    "AFF-007": "PASS_STATIC_PRECHECK",
+    "AFF-008": "PASS_STATIC_PRECHECK",
+    "AFF-009": "PASS_STATIC_PRECHECK",
+    "AFF-010": "PASS_STATIC_PRECHECK"
+  },
+  "methodology_sha256": "231ce3325537de85890b16e97f138bd6a4263fc1e240094ed26499af9aeeb6cd",
+  "status": "PASS_LOCAL_PRECHECK"
+}
+
+$ python3 scripts/verify_external_services.py
+{
+  "containers": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant": "READY",
+    "spire-agent": "READY",
+    "spire-server": "READY",
+    "terminusdb": "READY",
+    "typedb": "READY"
+  },
+  "services": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant-grpc": "READY",
+    "qdrant-http": "READY",
+    "terminusdb": "READY",
+    "typedb": "READY"
+  },
+  "status": "PASS"
+}

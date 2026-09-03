@@ -87,3 +87,14 @@
 - Evidence fence invariato: `E1=0`, `E2=0`, runtime conformance
   `NOT_ESTABLISHED`, PoC e Production `NO-GO`. La readiness infrastrutturale non
   accetta automaticamente i quattro spike funzionali G2.
+- Independent verifier pass 1: `NO-GO` con DEC211-B01/B02/B03, H01/H02/H03 e
+  M01. Remediation: raw log RED/GREEN/REFACTOR content-addressed con comandi
+  esatti; lock/schema strict e 10 test negativi; preflight byte/version per tutti
+  i tool; Fuseki image-ID fail-closed; Actions pinned a commit; checkout e prova
+  exact-head; allowlist change-set esatta; readiness esplicitamente preliminare.
+- Evidence rerun qualificante sul commit `4a061dbc9497dfec10925db755dbd05954e9dcf5`
+  `PASS`; manifest SHA-256
+  `8ccb2f686d07f7af642fc9e064a7b3997288c179dc8e7f72bfdaec1230bc4bb2`.
+- Independent verifier pass 3 `dec211_final_verify`: `GO`, zero `BLOCKER`,
+  `HIGH` e `MEDIUM`; exact command/raw hash, strict operational schema, preflight,
+  Fuseki ID, exact-file scope, immutable inputs e workflow exact-head verificati.

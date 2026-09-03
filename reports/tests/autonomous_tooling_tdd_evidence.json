@@ -2,42 +2,144 @@
   "baseline_commit": "d93e8870e975b2aeec715778f3c490ece0e0216f",
   "change_set": "CC-AUTONOMOUS-TOOLING-INFRASTRUCTURE-BOOTSTRAP",
   "decision_id": "DEC-211",
-  "environment": {
-    "docker": "29.7.2",
-    "git": "2.55.0",
-    "python_project": "3.12.11",
-    "ruff": "0.13.1",
-    "uv": "0.12.5"
-  },
   "evidence_fence": {
     "E1": 0,
     "E2": 0
   },
-  "implementation_commit": "f4f73c2ac6bfc1f36abcfecc8d6551f09c12ac02",
+  "implementation_commit": "4a061dbc9497dfec10925db755dbd05954e9dcf5",
   "phases": [
     {
-      "command": "python3 -m unittest -v reports.tests.test_autonomous_tooling_policy",
+      "commands": [
+        [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "reports.tests.test_autonomous_tooling_policy"
+        ]
+      ],
       "exit_code": 1,
-      "fingerprint": "FAILED (failures=3, errors=2); 18 required artifacts, DEC-211 record, lock files and bootstrap tasks absent",
-      "fingerprint_sha256": "00874cf0ad763fa318743a61760eee8323e8a9db8f6651146330a988c862de6b",
+      "fingerprint": "expected pre-implementation failures=3 errors=2",
+      "fingerprint_sha256": "90db01e6c5d891986014d2bb70fb88098f45b2e1e307035b38ab7be2a36c21af",
       "phase": "RED",
-      "raw_log_sha256": "01bd89685cc2c1af54984dc52546cbe1e30cc9879b19ce3d5604ce4be4c1a3e4",
-      "result": "EXPECTED_FAILURE"
+      "raw_log": "reports/tests/evidence/dec211/red.log",
+      "raw_log_sha256": "b995d8703901d2f06baeb270733f79242c91b2e75cdec4343fbbc498c8562254",
+      "result": "EXPECTED_FAILURE",
+      "source_raw_log_sha256": "01bd89685cc2c1af54984dc52546cbe1e30cc9879b19ce3d5604ce4be4c1a3e4"
     },
     {
-      "command": "acceptance, service probes, planning validator and RCCAD validator",
+      "commands": [
+        [
+          "ocor-runtime/.venv/bin/python",
+          "-m",
+          "unittest",
+          "-v",
+          "reports.tests.test_autonomous_tooling_policy",
+          "reports.tests.test_bootstrap_lock_validation",
+          "reports.tests.test_rccad_methodology"
+        ],
+        [
+          "python3",
+          "scripts/verify_external_services.py",
+          "--manifest-only"
+        ],
+        [
+          "python3",
+          "scripts/preflight_environment.py",
+          "--require-ready"
+        ],
+        [
+          "python3",
+          "scripts/bootstrap_development_environment.py",
+          "--execute",
+          "--skip-start",
+          "--timeout",
+          "300"
+        ],
+        [
+          "ocor-runtime/.venv/bin/python",
+          "scripts/validate_ocor_development_plan.py",
+          "--base-ref",
+          "d93e8870e975b2aeec715778f3c490ece0e0216f",
+          "--authorized-extension"
+        ],
+        [
+          "ocor-runtime/.venv/bin/python",
+          "scripts/validate_rccad.py",
+          "--base-ref",
+          "d93e8870e975b2aeec715778f3c490ece0e0216f"
+        ],
+        [
+          "python3",
+          "scripts/verify_external_services.py"
+        ]
+      ],
       "exit_code": 0,
-      "fingerprint": "Ran 10 acceptance tests; OK; 11 real services READY; planning 37 PASS; RCCAD AFF-001..010 PASS_STATIC_PRECHECK",
-      "fingerprint_sha256": "fd1b9831504498651da2fe1c534a6524778e0927df1eacf1e76da094088ab8ab",
+      "fingerprint": "acceptance, strict locks, plan, RCCAD and real-service probes passed",
+      "fingerprint_sha256": "80e174d991db9dbb7a4811becb16ac66aa5ece2f8a56cb2329c3169896a34853",
       "phase": "GREEN",
+      "raw_log": "reports/tests/evidence/dec211/green.log",
+      "raw_log_sha256": "ff81119a05a802a5c57f013290fe60cc137bfde8922a8c0262e42e1d69cbfe3d",
       "result": "PASS"
     },
     {
-      "command": "full runtime regression; clean reset/rebuild; bounded fault injection and recovery",
+      "commands": [
+        [
+          "uv",
+          "run",
+          "--project",
+          "ocor-runtime",
+          "--frozen",
+          "pytest",
+          "-q",
+          "ocor-runtime/tests/"
+        ],
+        [
+          "python3",
+          "scripts/reset_test_environment.py",
+          "--execute"
+        ],
+        [
+          "python3",
+          "scripts/bootstrap_development_environment.py",
+          "--execute",
+          "--timeout",
+          "300"
+        ],
+        [
+          "python3",
+          "scripts/fault_inject_test_environment.py",
+          "typedb",
+          "pause",
+          "--execute"
+        ],
+        [
+          "python3",
+          "scripts/verify_external_services.py",
+          "--timeout",
+          "0.5"
+        ],
+        [
+          "python3",
+          "scripts/fault_inject_test_environment.py",
+          "typedb",
+          "unpause",
+          "--execute"
+        ],
+        [
+          "python3",
+          "scripts/verify_external_services.py",
+          "--timeout",
+          "1"
+        ]
+      ],
       "exit_code": 0,
-      "fingerprint": "512 runtime tests PASS with real PostgreSQL; clean reset/rebuild PASS; TypeDB pause detected fail-closed and recovered",
-      "fingerprint_sha256": "f1ccb79b8765cb3cd62aa5dfd82c6a109d6ef834b4751f8742ee76fec32a0eca",
+      "fingerprint": "full runtime, clean rebuild and bounded TypeDB fault recovery passed",
+      "fingerprint_sha256": "4b9b47d5dcef3a011ce44fe117d3f71db62f209da355c3ad6df2d7b79ce64a2e",
       "phase": "REFACTOR",
+      "raw_log": "reports/tests/evidence/dec211/refactor.log",
+      "raw_log_sha256": "6ab909867dcf8c74b4f093a750e3c5ed47dd7ccde1bc76fb43f34e8f56a484af",
+      "recovery_max_attempts": 15,
       "result": "PASS"
     }
   ],
