@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The current model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "698590511d2a48f5f09083af47f75734ceacc750",
-  "branch": "governed/rem-0008-rccad-requalification",
+  "baseline_commit": "5a5ca88a6ce2aeffe01ba8a35b43487dad810753",
+  "branch": "governed/rem-0009-rccad-requalification",
   "commands_run": [
     {
       "command": "sha256sum -c inputs/normative/SHA256SUMS",
@@ -84,6 +84,22 @@
     {
       "command": "independent verifier rem0008_clean_verifier",
       "result": "GO_FOR_EVIDENCE_SEAL_ZERO_BLOCKER_HIGH_MEDIUM"
+    },
+    {
+      "command": "merge PR #39 and close superseded PR #29",
+      "result": "PASS_MERGE_5a5ca88a6ce2aeffe01ba8a35b43487dad810753"
+    },
+    {
+      "command": "GitHub Actions RED run 33737782028 on 9f215b8dd36bb9d83079098768b56f7231ff7f9d",
+      "result": "RED_EXPECTED_IMPORT_ERROR_INMEMORY_LEASE_STATE"
+    },
+    {
+      "command": "GitHub Actions runs 33737997879, 33737997940, 33737997911, 33737997908, 33737997959 on 5404f32c75c98bf1899d4caebf5dc0197228c988",
+      "result": "PASS_ALL_APPLICABLE_WORKFLOWS"
+    },
+    {
+      "command": "independent verifier rem0009_clean_verifier",
+      "result": "GO_FOR_EVIDENCE_SEAL_ZERO_BLOCKER_HIGH_MEDIUM_LOW"
     }
   ],
   "completed_tasks": [
@@ -92,21 +108,24 @@
     "TDD RED",
     "local GREEN and REFACTOR gates",
     "DEC-210 methodology merge a09d1a6e573895e716b147c8046ea97b73b2e3a8",
-    "REM-0007 RED and GREEN qualification"
+    "REM-0007 RED and GREEN qualification",
+    "REM-0008 RED, GREEN and integration",
+    "REM-0009 RED and GREEN qualification"
   ],
-  "current_task": "OCOR-DEV-REM-0008-RCCAD",
+  "current_task": "OCOR-DEV-REM-0009-RCCAD",
   "evidence_paths": [
     "reports/development/METHOD_COMPLIANCE.json",
     "reports/tests/rccad_tdd_evidence.json",
     "reports/assurance/OCOR-DEV-REM-0007-RCCAD/evidence.json",
-    "reports/assurance/OCOR-DEV-REM-0008-RCCAD/evidence.json"
+    "reports/assurance/OCOR-DEV-REM-0008-RCCAD/evidence.json",
+    "reports/assurance/OCOR-DEV-REM-0009-RCCAD/evidence.json"
   ],
-  "exact_next_action": "Publish this evidence-only seal to PR #39, require all five workflows on its exact remote HEAD, reverify main and PR HEAD, merge with expected_head_sha, then close superseded draft PR #29.",
+  "exact_next_action": "Publish this evidence-only seal to PR #40, require all five workflows on its exact remote HEAD, reverify main and PR HEAD, merge with expected_head_sha, then close superseded draft PR #31.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "ENV-HARNESS-VENV-001",
     "G2-REAL-SERVICES-001",
     "GITHUB-BRANCH-PROTECTION-001"
   ],
-  "worktree": "/home/luca/Projects/.ocor-worktrees/rem-0008-rccad"
+  "worktree": "/home/luca/Projects/.ocor-worktrees/rem-0009-rccad"
 }

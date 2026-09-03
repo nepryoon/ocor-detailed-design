@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "OCOR-DEV-REM-0009-RCCAD-20260903",
+  "status": "QUALIFIED_CANDIDATE_PENDING_SEAL_CI_AND_INTEGRATION",
+  "source_task_id": "OCOR-DEV-0009",
+  "baseline_commit": "5a5ca88a6ce2aeffe01ba8a35b43487dad810753",
+  "pull_request": 40,
+  "supersedes_draft_pull_request": 31,
+  "tdd": {
+    "red": {
+      "remote_commit": "9f215b8dd36bb9d83079098768b56f7231ff7f9d",
+      "result": "EXPECTED_FAILURE",
+      "fingerprint": "pytest collection ImportError: InMemoryLeaseState absent from governance kernel",
+      "fingerprint_sha256": "ef1165dc3083f7e9f1ba9a6832a7425a2b6a5ed7bd293e1062952fc1c552777e",
+      "run_id": 33737782028
+    },
+    "green": {
+      "remote_commit": "5404f32c75c98bf1899d4caebf5dc0197228c988",
+      "result": "PASS_ALL_APPLICABLE_WORKFLOWS",
+      "run_ids": [33737997879, 33737997940, 33737997911, 33737997908, 33737997959]
+    }
+  },
+  "changed_file_sha256": {
+    "ocor-runtime/src/ocor_runtime/kernel/governance.py": "2bce60bf33e5b2369cb11ec8c9d82bfbc5f033aa343b1a6657241086404b3449",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0009.py": "362b031b83f1e1b7b9d251a3d8fa661b31fb7c8552247ea4478cee6c86a7799c"
+  },
+  "independent_verifier": {
+    "identity": "rem0009_clean_verifier",
+    "model_and_effort": "NOT_EXPOSED",
+    "verdict": "GO_FOR_EVIDENCE_SEAL",
+    "blocker": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0
+  },
+  "assurance_boundary": {
+    "process_local_atomicity": "PASS",
+    "durable_restart_atomicity": "NOT_ESTABLISHED",
+    "multi_process_serialization": "NOT_ESTABLISHED",
+    "delivery_attempt_cotransaction": "NOT_ESTABLISHED"
+  },
+  "rollback": {
+    "procedure": "Revert the coherent PR #40 merge with a new revert commit and rerun all five workflows.",
+    "prior_evidence": "Historical disposable rollback campaign reported 400 PASS and zero skipped; it is provenance only and is not relied on as current RCCAD proof."
+  },
+  "immutable_inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "global_verified_requirements": 0,
+    "G1": "NOT_PROMOTED",
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "poc": "NO_GO",
+    "production": "NO_GO"
+  }
+}

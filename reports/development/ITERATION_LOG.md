@@ -36,3 +36,13 @@
 - GREEN `ce717f113e7b736238df7cc7ce0d471e09fa6790`: tutti i cinque workflow `33723246471/584/620/467/447` `PASS`.
 - Independent verifier: `GO_FOR_EVIDENCE_SEAL`, zero `BLOCKER`, `HIGH`, `MEDIUM`; scope esatto kernel+test, nessuna modifica a `inputs/`, ADD, LLD o contratti.
 - Claim fence invariato: `E1=0`, `E2=0`, zero global `Verified`; runtime conformance, PoC e Production restano `NO-GO`.
+
+## 2026-09-03 — OCOR-DEV-REM-0009-RCCAD
+
+- Baseline remota: 5a5ca88a6ce2aeffe01ba8a35b43487dad810753, tree 974c5ba3 coincidente con la worktree locale; PR #31 divergente selezionata per supersessione dopo il merge qualificato di REM-0008.
+- Digest normativi PASS; harness e pytest locali NOT_EXECUTED per .venv/uv assenti, senza installazioni o retry.
+- RED test-only 9f215b8dd36bb9d83079098768b56f7231ff7f9d: collection failure mirata perché il port autorevole InMemoryLeaseState non era presente. Fingerprint SHA-256 ef1165dc3083f7e9f1ba9a6832a7425a2b6a5ed7bd293e1062952fc1c552777e.
+- GREEN 5404f32c75c98bf1899d4caebf5dc0197228c988: tutti i cinque workflow 33737997879/940/911/908/959 PASS, inclusi full runtime e PostgreSQL reale pinned.
+- Independent verifier: GO_FOR_EVIDENCE_SEAL, zero BLOCKER, HIGH, MEDIUM, LOW; scope esatto kernel+test, nessuna modifica a inputs/, ADD o LLD.
+- Assurance boundary: consumo atomico e concorrenza sono qualificati solo process-local; restart durability, serializzazione multi-processo e co-transazione DeliveryAttempt restano NOT_ESTABLISHED.
+- Claim fence invariato: E1=0, E2=0, zero global Verified; G1 non è promosso, runtime conformance non è stabilita, PoC e Production restano NO-GO.
