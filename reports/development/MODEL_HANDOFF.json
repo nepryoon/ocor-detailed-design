@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The current model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "5a5ca88a6ce2aeffe01ba8a35b43487dad810753",
-  "branch": "governed/rem-0009-rccad-requalification",
+  "baseline_commit": "6afa0d962580a039f1903797dc304eacc9fcaea8",
+  "branch": "governed/rccad-terminal-blocked-state",
   "commands_run": [
     {
       "command": "sha256sum -c inputs/normative/SHA256SUMS",
@@ -100,6 +100,30 @@
     {
       "command": "independent verifier rem0009_clean_verifier",
       "result": "GO_FOR_EVIDENCE_SEAL_ZERO_BLOCKER_HIGH_MEDIUM_LOW"
+    },
+    {
+      "command": "GitHub Actions seal runs 33753565092, 33753565113, 33753565229, 33753565259, 33753565200 on 846c0966500cf210a929c572057831145cb60061",
+      "result": "PASS_ALL_APPLICABLE_WORKFLOWS"
+    },
+    {
+      "command": "merge PR #40 and close superseded PR #31",
+      "result": "PASS_MERGE_6afa0d962580a039f1903797dc304eacc9fcaea8"
+    },
+    {
+      "command": "GitHub open pull request reconciliation",
+      "result": "PASS_ZERO_OPEN_PULL_REQUESTS"
+    },
+    {
+      "command": "69-task DAG readiness analysis against 19 content-addressed completed tasks",
+      "result": "BLOCKED_ONLY_0016_0017_0018_0021_READY_ALL_WAITING_EXTERNAL_SERVICE_50_REMAINING"
+    },
+    {
+      "command": "python3 scripts/ocor_autonomous_delivery.py --status",
+      "result": "NOT_EXECUTED_MISSING_JSONSCHEMA"
+    },
+    {
+      "command": "independent verifier terminal_blocked_verifier",
+      "result": "GO_FOR_BLOCKED_STATE_MERGE_ZERO_BLOCKER_HIGH_MEDIUM_LOW"
     }
   ],
   "completed_tasks": [
@@ -110,22 +134,26 @@
     "DEC-210 methodology merge a09d1a6e573895e716b147c8046ea97b73b2e3a8",
     "REM-0007 RED and GREEN qualification",
     "REM-0008 RED, GREEN and integration",
-    "REM-0009 RED and GREEN qualification"
+    "REM-0009 RED, GREEN and integration",
+    "all divergent remediation PRs superseded and closed",
+    "terminal DAG reconciliation"
   ],
-  "current_task": "OCOR-DEV-REM-0009-RCCAD",
+  "current_task": "NONE__BLOCKED_EXTERNAL_SERVICES",
   "evidence_paths": [
     "reports/development/METHOD_COMPLIANCE.json",
     "reports/tests/rccad_tdd_evidence.json",
     "reports/assurance/OCOR-DEV-REM-0007-RCCAD/evidence.json",
     "reports/assurance/OCOR-DEV-REM-0008-RCCAD/evidence.json",
-    "reports/assurance/OCOR-DEV-REM-0009-RCCAD/evidence.json"
+    "reports/assurance/OCOR-DEV-REM-0009-RCCAD/evidence.json",
+    "reports/development/TERMINAL_BLOCKED_REPORT.json",
+    "reports/evidence/G2/blockers/MANIFEST.json"
   ],
-  "exact_next_action": "Publish this evidence-only seal to PR #40, require all five workflows on its exact remote HEAD, reverify main and PR HEAD, merge with expected_head_sha, then close superseded draft PR #31.",
+  "exact_next_action": "Provision the approved digest-pinned real services named in reports/evidence/G2/blockers/MANIFEST.json, then resume with task OCOR-DEV-0016; execute its real TerminusDB campaign without substitution.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "ENV-HARNESS-VENV-001",
     "G2-REAL-SERVICES-001",
     "GITHUB-BRANCH-PROTECTION-001"
   ],
-  "worktree": "/home/luca/Projects/.ocor-worktrees/rem-0009-rccad"
+  "worktree": "/home/luca/Projects/.ocor-worktrees/rccad-blocked-state"
 }
