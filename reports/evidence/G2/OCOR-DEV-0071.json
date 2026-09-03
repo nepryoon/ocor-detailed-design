@@ -1,0 +1,101 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "uv sync --project ocor-runtime --frozen --extra test; uv lock --project ocor-runtime --check; uv pip check",
+      "result": {"failed": 0, "not_executed": 0, "passed": 3, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "python -m pytest -q reports/tests/test_bootstrap_lock_validation.py",
+      "result": {"failed": 0, "not_executed": 0, "passed": 11, "skipped": 0, "subtests_passed": 2},
+      "status": "PASS"
+    },
+    {
+      "command": "repeat frozen sync and hash installed distribution set",
+      "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "python scripts/preflight_environment.py --require-ready; python scripts/verify_external_services.py --manifest-only",
+      "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest -q ocor-runtime/tests with live disposable PostgreSQL",
+      "result": {"failed": 0, "not_executed": 0, "passed": 513, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "clear, recreate and verify the disposable frozen environment",
+      "result": {"failed": 0, "not_executed": 0, "passed": 3, "skipped": 0},
+      "status": "PASS"
+    }
+  ],
+  "commit": "9151eba409897664c3bd2612602d90ad2a0f48c5",
+  "created_at": "2026-09-03T20:11:45Z",
+  "environment": {
+    "installed_distributions": 36,
+    "installed_set_sha256": "ae7b7815636f966114f8d5ca05ec5530bca797248e00df310480c820aef81ccf",
+    "operating_mode": "worktree-local disposable non-production virtual environment",
+    "python": "3.12.11",
+    "uv": "0.12.5"
+  },
+  "inputs": {
+    "infra/toolchain.lock.json": "943badd4f2e157d31ef081acb1f417c697470f3a119df725ca06eb5f4ff9ce70",
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/pyproject.toml": "690b0f074434e95da728725e02cfc35b45ccf08aec430fc9bed1be1057383bb1",
+    "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537"
+  },
+  "raw_output_sha256": "1ce375b5594caff5e8278529d62c536b9a4954c7aadbe91bd9d40f03a0a16bb8",
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0071-FROZEN-RESTORE",
+      "command": "create isolated Python 3.12.11 environment from uv.lock with --frozen",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 3, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0071-FAIL-CLOSED",
+      "command": "positive and negative lock, integrity, missing-tool and wrong-version matrix",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 11, "skipped": 0, "subtests_passed": 2},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0071-DETERMINISM",
+      "command": "repeat frozen sync and verify installed distribution-set hash",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0071-REGRESSION",
+      "command": "full runtime regression in restored environment",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 513, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0071-ROLLBACK-REBUILD",
+      "command": "clear and deterministically rebuild worktree-local disposable environment",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 3, "skipped": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This evidence qualifies only the frozen development Python environment; it does not establish backend or runtime conformance.",
+    "GitHub native branch protection remains unavailable; exact-head PR CI and evidence-seal controls remain mandatory."
+  ],
+  "result": "PASS",
+  "rollback": "Executed on the worktree-local disposable environment: uv venv --clear followed by frozen sync and pip compatibility verification completed successfully.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0071"
+}

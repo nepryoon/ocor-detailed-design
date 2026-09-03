@@ -1,0 +1,45 @@
+OCOR-DEV-0071 frozen Python environment qualification
+qualified_baseline_commit=9151eba409897664c3bd2612602d90ad2a0f48c5
+
+$ uv --version
+uv 0.12.5 (x86_64-unknown-linux-gnu)
+
+$ uv sync --project ocor-runtime --frozen --extra test
+Using CPython 3.12.11
+Created isolated environment and installed 36 packages from the frozen lock.
+exit=0
+
+$ uv lock --project ocor-runtime --check
+Resolved 39 packages in 1ms
+exit=0
+
+$ uv pip check --python ocor-runtime/.venv/bin/python
+Checked 36 packages in 33ms
+All installed packages are compatible
+
+$ ocor-runtime/.venv/bin/python --version
+Python 3.12.11
+
+$ ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_bootstrap_lock_validation.py
+11 passed, 2 subtests passed in 0.20s
+
+$ uv sync --project ocor-runtime --frozen --extra test
+Checked 36 packages in 0.64ms
+
+$ uv pip freeze --python ocor-runtime/.venv/bin/python | sha256sum
+ae7b7815636f966114f8d5ca05ec5530bca797248e00df310480c820aef81ccf  -
+
+$ python scripts/preflight_environment.py --require-ready
+status=PASS architecture=x86_64 docker=READY errors=0 python=repository-venv
+
+$ python scripts/verify_external_services.py --manifest-only
+{"service_count": 11, "status": "PASS"}
+
+$ OCOR_LIVE_POSTGRES_DSN=<redacted-local-disposable-dsn> python -m pytest -q ocor-runtime/tests
+513 passed in 34.44s
+
+$ uv venv --clear --python 3.12.11 ocor-runtime/.venv && uv sync --project ocor-runtime --frozen --extra test && uv pip check --python ocor-runtime/.venv/bin/python
+Recreated the disposable environment; installed 36 frozen packages; all installed packages are compatible.
+exit=0
+
+summary sync=0 lock_check=0 pip_check=0 negative_lock_suite=0 repeat_sync=0 preflight=0 manifest=0 regression=0 rollback_rebuild=0
