@@ -46,3 +46,14 @@
 - Independent verifier: GO_FOR_EVIDENCE_SEAL, zero BLOCKER, HIGH, MEDIUM, LOW; scope esatto kernel+test, nessuna modifica a inputs/, ADD o LLD.
 - Assurance boundary: consumo atomico e concorrenza sono qualificati solo process-local; restart durability, serializzazione multi-processo e co-transazione DeliveryAttempt restano NOT_ESTABLISHED.
 - Claim fence invariato: E1=0, E2=0, zero global Verified; G1 non è promosso, runtime conformance non è stabilita, PoC e Production restano NO-GO.
+
+## 2026-09-03 — RCCAD terminal reconciliation
+
+- REM-0009 integrato dalla PR #40 con merge 6afa0d962580a039f1903797dc304eacc9fcaea8 dopo cinque gate verdi sul seal esatto 846c0966500cf210a929c572057831145cb60061; PR draft #31 chiusa senza merge.
+- Riconciliazione GitHub: zero pull request aperte. Le PR divergenti #26, #29 e #31 sono state supersedute rispettivamente da #38, #39 e #40 con evidence seal e verifier puliti.
+- Analisi del DAG: 19 task hanno evidenza content-addressed; restano 50 task. I soli task direttamente ready sono OCOR-DEV-0016, OCOR-DEV-0017, OCOR-DEV-0018 e OCOR-DEV-0021.
+- Tutti i quattro task ready sono WAITING_EXTERNAL_SERVICE con test obbligatori NOT_EXECUTED: TerminusDB, TypeDB, Apache Jena/Fuseki, SPIFFE/SPIRE e OpenBao non sono disponibili come artefatti pinned approvati o endpoint autorizzati.
+- Escludendo i quattro root blocker, il fixed point del DAG non contiene alcun altro task indipendente raggiungibile. Lo stato terminale è pertanto BLOCKED, non COMPLETE.
+- Il runner autoritativo locale --status è NOT_EXECUTED perché jsonschema non è disponibile; il controllo non è stato ritentato. Il DAG è stato riconciliato in sola lettura dal backlog e dai manifesti.
+- Minimal unblock: fornire i servizi reali approvati e riprendere da OCOR-DEV-0016. Nessuna tecnologia sostitutiva è autorizzata.
+- Claim fence invariato: E1=0, E2=0, zero global Verified; G2 non è chiuso, runtime conformance non è stabilita, PoC e Production restano NO-GO.
