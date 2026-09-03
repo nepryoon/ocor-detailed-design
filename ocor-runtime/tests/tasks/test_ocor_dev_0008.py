@@ -12,6 +12,9 @@ import grpc_tools
 import pytest
 import yaml
 from jsonschema import Draft202012Validator
+
+# isort: split
+from ocor_runtime.kernel.canonical import IdentifierError, validate_correlation_id
 from ocor_runtime.kernel.governed_context import (
     GCS_FIELDS,
     GovernedContext,
@@ -138,13 +141,46 @@ def test_extra_or_alias_field_fails_closed(extra: str):
         ("classification_marking_ref", "sha256:" + "a" * 64),
         ("ontology_release_digest", "urn:sha256:" + "A" * 64),
         ("policy_bundle_digest", "urn:sha256:short"),
-        ("correlation_id", "not-a-uuid"),
     ],
 )
 def test_non_canonical_or_coerced_values_fail(field: str, bad_value: object):
     values = context_values()
     values[field] = bad_value
     with pytest.raises(GovernedContextError):
+        GovernedContext.from_mapping(values)
+
+
+def test_mapping_accepts_schema_valid_non_uuid_correlation_without_weakening_uuid_api():
+    values = context_values()
+    values["correlation_id"] = "request-from-approved-schema"
+    schema_path = (
+        Path(__file__).resolve().parents[2]
+        / "docs/governance_dossier/contracts/governed-context.schema.json"
+    )
+    validator = Draft202012Validator(json.loads(schema_path.read_text()))
+
+    assert validator.is_valid(values)
+    assert (
+        GovernedContext.from_mapping(values).correlation_id == values["correlation_id"]
+    )
+    with pytest.raises(IdentifierError, match="canonical UUID"):
+        validate_correlation_id(values["correlation_id"])  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("field", ["compartments", "actor_chain"])
+def test_mapping_rejects_tuple_where_approved_schema_rejects_non_array(field: str):
+    values = context_values()
+    values[field] = tuple(values[field])  # type: ignore[arg-type]
+    schema_path = (
+        Path(__file__).resolve().parents[2]
+        / "docs/governance_dossier/contracts/governed-context.schema.json"
+    )
+    validator = Draft202012Validator(json.loads(schema_path.read_text()))
+
+    assert not validator.is_valid(values)
+    with pytest.raises(
+        GovernedContextError, match=f"{field} must be a non-empty array"
+    ):
         GovernedContext.from_mapping(values)
 
 
@@ -274,6 +310,22 @@ def test_real_proto_tampered_digest_fails_before_dispatch(
     message.governed_context_digest = DIGEST_A
     with pytest.raises(GovernedContextError, match="digest mismatch"):
         GovernedContextCodec.from_proto(message, binding)
+
+
+@pytest.mark.parametrize("unverified_binding", [None, object()])
+def test_proto_rejects_unverified_binding_before_dereference(
+    registry_proto: ModuleType, unverified_binding: object
+):
+    message = registry_proto.InvocationContext()
+
+    with pytest.raises(
+        GovernedContextError, match="a verified binding is required"
+    ) as exc_info:
+        GovernedContextCodec.from_proto(
+            message,
+            unverified_binding,  # type: ignore[arg-type]
+        )
+    assert exc_info.value.code == "GOVERNED_CONTEXT_MISMATCH"
 
 
 def test_context_and_verified_binding_are_immutable(

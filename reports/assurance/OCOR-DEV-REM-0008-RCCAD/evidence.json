@@ -1,0 +1,48 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "OCOR-DEV-REM-0008-RCCAD-20260903",
+  "status": "QUALIFIED_CANDIDATE_PENDING_SEAL_CI_AND_INTEGRATION",
+  "source_task_id": "OCOR-DEV-0008",
+  "baseline_commit": "698590511d2a48f5f09083af47f75734ceacc750",
+  "pull_request": 39,
+  "supersedes_draft_pull_request": 29,
+  "tdd": {
+    "red": {
+      "remote_commit": "dde7e3e24dcaa5e68175763eebf9126b6df5bfb6",
+      "result": "EXPECTED_FAILURE",
+      "fingerprint": "5 failed: non-UUID correlation rejected; tuple arrays accepted; unverified protobuf binding dereferenced",
+      "fingerprint_sha256": "36210342b6030ba872a62d76f1492bccfd65c83c0bbf7919f6b6231f633f2fcf",
+      "run_id": 33723074188
+    },
+    "green": {
+      "remote_commit": "ce717f113e7b736238df7cc7ce0d471e09fa6790",
+      "result": "PASS_ALL_APPLICABLE_WORKFLOWS",
+      "run_ids": [33723246471, 33723246584, 33723246620, 33723246467, 33723246447]
+    }
+  },
+  "changed_file_sha256": {
+    "ocor-runtime/src/ocor_runtime/kernel/governed_context.py": "0f89cdf9903205af798fabeb2a44f4331bb8dece2b68235875745093d02ba681",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0008.py": "d078d94c1f240aa2d57ff9b4cbba69e29e245d5451dc523e686018f44da0f2eb"
+  },
+  "independent_verifier": {
+    "identity": "rem0008_clean_verifier",
+    "model_and_effort": "NOT_EXPOSED",
+    "verdict": "GO_FOR_EVIDENCE_SEAL",
+    "blocker": 0,
+    "high": 0,
+    "medium": 0
+  },
+  "rollback": {
+    "procedure": "Revert the coherent PR #39 merge with a new revert commit and rerun all five workflows.",
+    "prior_evidence": "Historical disposable rollback campaign: 378 PASS, zero skipped; current integration still requires post-revert CI."
+  },
+  "immutable_inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "global_verified_requirements": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "poc": "NO_GO",
+    "production": "NO_GO"
+  }
+}
