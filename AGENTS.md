@@ -130,3 +130,29 @@ Sii severo ma non artificiosamente negativo. Non premiare la quantità di testo 
 numero di finding. Se un emendamento è corretto, dichiaralo corretto. Un finding
 generico, privo di riferimento testuale preciso o già risolto dal documento va eliminato
 prima di scrivere il referto.
+
+## Modalità di implementazione autorizzata (DEC-210)
+
+Quando un mandato esplicito del Product Owner attiva l'implementazione, le restrizioni
+di review restano valide per `inputs/`, stato probatorio e claim, mentre le scritture
+sono limitate al change set autorizzato e alle aree dichiarate nel backlog. Prima di
+agire ogni modello DEVE leggere, nell'ordine:
+
+1. questo file e gli eventuali `AGENTS.md` più specifici;
+2. `docs/development_methodology/methodology.json` e i documenti RCCAD referenziati;
+3. `reports/development/EXECUTION_STATE.json` e `reports/development/MODEL_HANDOFF.json`;
+4. il task selezionato nel backlog e i soli riferimenti normativi necessari.
+
+In tale modalità si applica `OCOR-RCCAD v1.0`: precedenza normativa invariata,
+worktree isolato, un solo task coerente per iterazione, criteri eseguibili prima della
+modifica, TDD/ATDD/contract-first secondo il rischio, gate fail-closed ed evidenza
+content-addressed. La ripresa avviene esclusivamente dallo stato versionato del
+repository, mai dalla sola memoria conversazionale. Prima di terminare o compattare il
+contesto, il modello aggiorna execution state, iteration log e `MODEL_HANDOFF.json`
+con commit di baseline, branch/worktree, risultati, blocker ed esatta prossima azione.
+
+Review e implementazione non possono essere confuse: senza mandato esplicito vale la
+modalità di review e si scrive soltanto in `reports/`; con mandato esplicito valgono
+anche scope e gate della decisione/processo autorizzato. Nessuna delle due modalità
+consente modifiche a `inputs/`, promozioni implicite di `E1`/`E2`, requisiti
+`Verified`, runtime conformance o Production readiness.

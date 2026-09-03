@@ -1,0 +1,80 @@
+{
+  "assumptions_requiring_revalidation": [
+    "The current model name and reasoning effort are not exposed by the runtime."
+  ],
+  "baseline_commit": "69652a3c4bd6cdd13d54c0a7e326c9d44958f985",
+  "branch": "governed/dec-210-rccad-adoption",
+  "commands_run": [
+    {
+      "command": "sha256sum -c inputs/normative/SHA256SUMS",
+      "result": "PASS"
+    },
+    {
+      "command": "./.venv/bin/python3 scripts/verify.py --json",
+      "result": "NOT_EXECUTED"
+    },
+    {
+      "command": "python3 -m unittest -v reports.tests.test_rccad_methodology",
+      "result": "RED_EXPECTED_THEN_PASS"
+    },
+    {
+      "command": "python3 scripts/validate_rccad.py --base-ref 69652a3c4bd6cdd13d54c0a7e326c9d44958f985",
+      "result": "PASS"
+    },
+    {
+      "command": "python3 scripts/validate_ocor_change_scope.py --base 69652a3c4bd6cdd13d54c0a7e326c9d44958f985 --head HEAD --branch governed/dec-210-rccad-adoption",
+      "result": "PASS_AFTER_BRANCH_RENAME"
+    },
+    {
+      "command": "python3 scripts/validate_ocor_development_plan.py",
+      "result": "NOT_EXECUTED_MISSING_JSONSCHEMA"
+    },
+    {
+      "command": "python3 scripts/ocor_autonomous_delivery.py --validate",
+      "result": "NOT_EXECUTED_MISSING_JSONSCHEMA"
+    },
+    {
+      "command": "docker image ls --format ...",
+      "result": "NOT_EXECUTED_DOCKER_API_PERMISSION_DENIED"
+    },
+    {
+      "command": "independent verifier pass 1 on 347f65a3 and pass 2 on 96f056db",
+      "result": "NO_GO_FINDINGS_REMEDIATED"
+    },
+    {
+      "command": "independent verifier pass 3 on cad0047f",
+      "result": "GO_FOR_REMOTE_CI"
+    },
+    {
+      "command": "GitHub Actions run 33715342088",
+      "result": "FAIL_AFF_008_REMOTE_LOCAL_COMMIT_ANCESTRY"
+    },
+    {
+      "command": "GitHub Actions run 33715519982",
+      "result": "FAIL_IRRELEVANT_PLANNING_ONLY_SCOPE_CHECK__RCCAD_GATES_BEFORE_STEP_PASS"
+    },
+    {
+      "command": "GitHub Actions runs 33715707667, 33715707617, 33715707574, 33715707590, 33715707689 on d4c54a876bfb3cc60531596982be04b283d20615",
+      "result": "PASS_ALL_APPLICABLE_WORKFLOWS"
+    }
+  ],
+  "completed_tasks": [
+    "repository reconciliation",
+    "DEC-210 allocation",
+    "TDD RED",
+    "local GREEN and REFACTOR gates"
+  ],
+  "current_task": "CC-RCCAD-METHODOLOGY-ADOPTION",
+  "evidence_paths": [
+    "reports/development/METHOD_COMPLIANCE.json",
+    "reports/tests/rccad_tdd_evidence.json"
+  ],
+  "exact_next_action": "Publish this evidence-only seal to PR #37, require all five workflows to pass on its exact remote HEAD, reverify main and PR HEAD, then merge with expected_head_sha.",
+  "schema_version": "1.0",
+  "unresolved_blockers": [
+    "ENV-HARNESS-VENV-001",
+    "G2-REAL-SERVICES-001",
+    "GITHUB-BRANCH-PROTECTION-001"
+  ],
+  "worktree": "/home/luca/Projects/.ocor-worktrees/rccad-adoption"
+}
