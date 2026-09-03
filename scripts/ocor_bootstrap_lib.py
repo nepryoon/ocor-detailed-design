@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import hashlib
 import json
+import platform
+import re
 import subprocess
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -68,15 +71,59 @@ def validate_locks(repository: Path) -> list[str]:
     errors: list[str] = []
     tools = load_json(repository / "infra/toolchain.lock.json")
     services = load_json(repository / "infra/services.lock.json")
+    for name, value in (("toolchain", tools), ("services", services)):
+        path = repository / f"infra/{name}.lock.json"
+        if path.read_text(encoding="utf-8") != canonical_json(value):
+            errors.append(f"{name} lock is not canonical JSON")
     if tools.get("schema_version") != "1.0" or services.get("schema_version") != "1.0":
         errors.append("unsupported lock schema")
-    for item in services.get("services", []):
-        if "build" not in item and "@sha256:" not in str(item.get("image", "")):
+    for name, value in (("toolchain", tools), ("services", services)):
+        if value.get("architecture") != platform.machine():
+            errors.append(f"{name} lock architecture does not match host")
+        try:
+            acquired = str(value["acquired_at"])
+            datetime.fromisoformat(acquired.replace("Z", "+00:00"))
+        except (KeyError, ValueError):
+            errors.append(f"{name} lock acquisition timestamp is invalid")
+
+    tool_items = tools.get("tools", [])
+    service_items = services.get("services", [])
+    for label, items in (("tool", tool_items), ("service", service_items)):
+        identifiers = [item.get("id") for item in items if isinstance(item, dict)]
+        if len(identifiers) != len(set(identifiers)):
+            errors.append(f"duplicate {label} id")
+
+    sha256_pattern = re.compile(r"^[0-9a-f]{64}$")
+    sha512_pattern = re.compile(r"^[0-9a-f]{128}$")
+    image_pattern = re.compile(r"^[^\s@]+@sha256:([0-9a-f]{64})$")
+    for item in tool_items:
+        if item.get("official_source") is not True or not str(item.get("source", "")).startswith("https://"):
+            errors.append(f"tool source is not marked official HTTPS: {item.get('id')}")
+        if not sha256_pattern.fullmatch(str(item.get("integrity", ""))):
+            errors.append(f"tool integrity is not an exact SHA-256: {item.get('id')}")
+        provider = item.get("provider")
+        if provider == "container":
+            match = image_pattern.fullmatch(str(item.get("container_image", "")))
+            if not match or match.group(1) != item.get("integrity"):
+                errors.append(f"containerized tool image/integrity mismatch: {item.get('id')}")
+        elif provider not in {"host", "repository"}:
+            errors.append(f"unsupported tool provider: {item.get('id')}")
+
+    for item in service_items:
+        if item.get("official_source") is not True or not str(item.get("source", "")).startswith("https://"):
+            errors.append(f"service source is not marked official HTTPS: {item.get('id')}")
+        has_image = "image" in item
+        has_build = "build" in item
+        if has_image == has_build:
+            errors.append(f"service must declare exactly one of image/build: {item.get('id')}")
+        if has_image and not image_pattern.fullmatch(str(item.get("image", ""))):
             errors.append(f"service image is not digest-pinned: {item.get('id')}")
         build = item.get("build")
         if build and (
-            "@sha256:" not in str(build.get("base_image", ""))
-            or len(str(build.get("source_sha512", ""))) != 128
+            not image_pattern.fullmatch(str(build.get("base_image", "")))
+            or not sha512_pattern.fullmatch(str(build.get("source_sha512", "")))
+            or not sha256_pattern.fullmatch(str(build.get("output_sha256", "")))
+            or not (repository / str(build.get("dockerfile", ""))).is_file()
         ):
             errors.append(f"service build is not cryptographically pinned: {item.get('id')}")
     return errors

@@ -271,23 +271,60 @@ def main() -> int:
     v.check("inputs immutability", actual_inputs == base_inputs == state["inputs_tree"], actual_inputs)
     changed = subprocess.run(["git", "diff", "--name-only", args.base_ref, "--"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.splitlines()
     untracked = subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.splitlines()
-    extension_prefixes = (
+    extension_paths = {
         ".github/workflows/ocor-tooling-bootstrap.yml",
         "AGENTS.md",
-        "deploy/bootstrap/",
-        "docs/development_methodology/",
-        "infra/",
-        "ocor-runtime/docs/governance_dossier/",
-        "reports/development/",
+        "deploy/bootstrap/compose.yaml",
+        "deploy/bootstrap/fixtures/README.md",
+        "deploy/bootstrap/init/README.md",
+        "deploy/bootstrap/kubernetes/kustomization.yaml",
+        "deploy/bootstrap/kubernetes/namespace.yaml",
+        "deploy/bootstrap/kubernetes/network-policy.yaml",
+        "deploy/bootstrap/spire/agent.conf",
+        "deploy/bootstrap/spire/server.conf",
+        "docs/development_methodology/OCOR_AUTONOMOUS_TOOLING_POLICY.md",
+        "docs/development_methodology/OCOR_EXTERNAL_DEPENDENCY_POLICY.md",
+        "docs/development_methodology/OCOR_INFRASTRUCTURE_BOOTSTRAP_STRATEGY.md",
+        "infra/fuseki/Dockerfile",
+        "infra/services.lock.json",
+        "infra/services.lock.schema.json",
+        "infra/toolchain.lock.json",
+        "infra/toolchain.lock.schema.json",
+        "ocor-runtime/docs/governance_dossier/ARA_DECISION_RECORD_v1.5.md",
+        "ocor-runtime/docs/governance_dossier/registers/OCOR_Decision_Register_v1.5_APPROVED.md",
+        "ocor-runtime/docs/governance_dossier/registers/OCOR_Decision_Traceability_Index_v1.5_APPROVED.md",
+        "ocor-runtime/tests/tasks/test_ocor_dev_0001.py",
+        "reports/development/EXECUTION_STATE.json",
+        "reports/development/INFRASTRUCTURE_STATE.json",
+        "reports/development/ITERATION_LOG.md",
+        "reports/development/MODEL_HANDOFF.json",
+        "reports/development/RECONCILIATION_2026-09-03_DEC-211.md",
+        "reports/development/TOOLING_STATE.json",
+        "reports/development/environment-evidence-dec-211.json",
+        "reports/tests/autonomous_tooling_tdd_evidence.json",
+        "reports/tests/evidence/dec211/green.log",
+        "reports/tests/evidence/dec211/red.log",
+        "reports/tests/evidence/dec211/refactor.log",
+        "reports/tests/test_bootstrap_lock_validation.py",
         "reports/tests/test_autonomous_tooling_policy.py",
-        "scripts/",
-    )
+        "scripts/bootstrap_development_environment.py",
+        "scripts/capture_environment_evidence.py",
+        "scripts/fault_inject_test_environment.py",
+        "scripts/ocor_bootstrap_lib.py",
+        "scripts/preflight_environment.py",
+        "scripts/reset_test_environment.py",
+        "scripts/resume_autonomous_delivery.py",
+        "scripts/run_dec211_evidence.py",
+        "scripts/verify_external_services.py",
+        "scripts/validate_ocor_development_plan.py",
+        "scripts/validate_rccad.py",
+    }
     def allowed(path: str) -> bool:
         planning = path.startswith(("docs/development_plan/", "reports/planning/")) or path in {
             "scripts/build_ocor_development_plan.py",
             "scripts/validate_ocor_development_plan.py",
         }
-        return planning or (args.authorized_extension and path.startswith(extension_prefixes))
+        return planning or (args.authorized_extension and path in extension_paths)
     unauthorized = sorted(path for path in set(changed + untracked) if not allowed(path))
     v.check("authorized planning-only diff", not unauthorized, unauthorized)
 

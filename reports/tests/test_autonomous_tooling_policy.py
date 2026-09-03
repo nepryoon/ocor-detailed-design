@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import subprocess
@@ -21,11 +22,13 @@ REQUIRED = (
     "infra/services.lock.schema.json",
     "reports/development/TOOLING_STATE.json",
     "reports/development/INFRASTRUCTURE_STATE.json",
+    "reports/tests/autonomous_tooling_tdd_evidence.json",
     "scripts/preflight_environment.py",
     "scripts/bootstrap_development_environment.py",
     "scripts/verify_external_services.py",
     "scripts/reset_test_environment.py",
     "scripts/resume_autonomous_delivery.py",
+    "scripts/run_dec211_evidence.py",
     ".github/workflows/ocor-tooling-bootstrap.yml",
     "ocor-runtime/docs/governance_dossier/ARA_DECISION_RECORD_v1.5.md",
     "ocor-runtime/docs/governance_dossier/registers/OCOR_Decision_Register_v1.5_APPROVED.md",
@@ -92,6 +95,21 @@ class AutonomousToolingPolicyTests(unittest.TestCase):
         self.assertEqual(0, verify.returncode, verify.stdout + verify.stderr)
         payload = json.loads(verify.stdout)
         self.assertEqual("PASS", payload["status"])
+
+    def test_tdd_evidence_is_content_addressed_and_ancestral(self) -> None:
+        path = ROOT / "reports/tests/autonomous_tooling_tdd_evidence.json"
+        evidence = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(["RED", "GREEN", "REFACTOR"], [item["phase"] for item in evidence["phases"]])
+        for phase in evidence["phases"]:
+            self.assertEqual(hashlib.sha256(phase["fingerprint"].encode()).hexdigest(), phase["fingerprint_sha256"])
+        self.assertNotEqual(0, evidence["phases"][0]["exit_code"])
+        self.assertTrue(all(item["exit_code"] == 0 for item in evidence["phases"][1:]))
+        ancestry = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", evidence["implementation_commit"], "HEAD"],
+            cwd=ROOT,
+            check=False,
+        )
+        self.assertEqual(0, ancestry.returncode)
 
 
 if __name__ == "__main__":

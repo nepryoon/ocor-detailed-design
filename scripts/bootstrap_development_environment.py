@@ -84,15 +84,28 @@ def main() -> int:
             if pull.returncode:
                 raise BootstrapError(f"pull failed for {service['id']}: {pull.stderr[-1000:]}")
             acquired.append(service["id"])
-        present = run(["docker", "image", "inspect", "ocor/jena-fuseki:6.2.0"], cwd=repository, timeout=30)
-        if present.returncode:
+        fuseki = next(item for item in services if item["id"] == "fuseki")
+        expected_image_id = f"sha256:{fuseki['build']['output_sha256']}"
+        present = run(
+            ["docker", "image", "inspect", "ocor/jena-fuseki:6.2.0", "--format", "{{.Id}}"],
+            cwd=repository,
+            timeout=30,
+        )
+        if present.returncode or present.stdout.strip() != expected_image_id:
             build = retry(
-                ["docker", "build", "-t", "ocor/jena-fuseki:6.2.0", "infra/fuseki"],
+                ["docker", "build", "--no-cache", "-t", "ocor/jena-fuseki:6.2.0", "infra/fuseki"],
                 cwd=repository,
                 timeout=args.timeout,
             )
             if build.returncode:
                 raise BootstrapError(f"Fuseki build failed: {build.stderr[-1000:]}")
+            rebuilt = run(
+                ["docker", "image", "inspect", "ocor/jena-fuseki:6.2.0", "--format", "{{.Id}}"],
+                cwd=repository,
+                timeout=30,
+            )
+            if rebuilt.returncode or rebuilt.stdout.strip() != expected_image_id:
+                raise BootstrapError("Fuseki local image identity differs from the governed lock")
         env_file = repository / ".ocor/bootstrap.env"
         if not env_file.exists():
             env_file = write_secret_file(repository)

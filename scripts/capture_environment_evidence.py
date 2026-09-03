@@ -26,6 +26,20 @@ def main() -> int:
         cwd=repository, text=True, capture_output=True, check=False, timeout=30,
     )
     payload = {
+        "artifacts": {
+            relative: sha256(repository / relative)
+            for relative in (
+                "deploy/bootstrap/compose.yaml",
+                "infra/fuseki/Dockerfile",
+                "infra/services.lock.json",
+                "infra/toolchain.lock.json",
+                "scripts/bootstrap_development_environment.py",
+                "scripts/fault_inject_test_environment.py",
+                "scripts/preflight_environment.py",
+                "scripts/reset_test_environment.py",
+                "scripts/verify_external_services.py",
+            )
+        },
         "claims": {"E1": 0, "E2": 0, "runtime_conformance": "NOT_ESTABLISHED"},
         "git_head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repository, text=True).strip(),
         "locks": {
@@ -33,6 +47,7 @@ def main() -> int:
             "toolchain": sha256(repository / "infra/toolchain.lock.json"),
         },
         "schema_version": "1.0",
+        "readiness_scope": "container health and host transport only; functional G2 campaigns remain unqualified",
         "service_inventory": inspect.stdout.splitlines(),
         "status": "CAPTURED" if inspect.returncode == 0 else "PARTIAL",
     }
