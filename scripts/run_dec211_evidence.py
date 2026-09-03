@@ -75,9 +75,11 @@ def main() -> int:
         return 0
 
     red_source = Path(args.red_log)
-    red = red_source.read_bytes()
-    if digest(red) != RED_SHA256:
+    red_capture = red_source.read_bytes()
+    if digest(red_capture) != RED_SHA256:
         raise BootstrapError("RED log digest does not match the pre-implementation capture")
+    red_command = ["python3", "-m", "unittest", "-v", "reports.tests.test_autonomous_tooling_policy"]
+    red = b"$ " + " ".join(red_command).encode() + b"\n" + red_capture
 
     green_commands = [
         [
@@ -90,6 +92,7 @@ def main() -> int:
             "reports.tests.test_rccad_methodology",
         ],
         ["python3", "scripts/verify_external_services.py", "--manifest-only"],
+        ["python3", "scripts/preflight_environment.py", "--require-ready"],
         ["python3", "scripts/bootstrap_development_environment.py", "--execute", "--skip-start", "--timeout", "300"],
         [
             "ocor-runtime/.venv/bin/python",
@@ -165,7 +168,7 @@ def main() -> int:
         phases.append(
             {
                 "commands": (
-                    ["pre-implementation unittest capture"]
+                    [red_command]
                     if name == "red"
                     else (
                         green_commands
@@ -180,6 +183,7 @@ def main() -> int:
                 "raw_log": f"reports/tests/evidence/dec211/{name}.log",
                 "raw_log_sha256": digest(logs[name]),
                 "result": result,
+                **({"source_raw_log_sha256": RED_SHA256} if name == "red" else {}),
                 **({"recovery_max_attempts": 15} if name == "refactor" else {}),
             }
         )

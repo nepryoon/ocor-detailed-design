@@ -319,11 +319,16 @@ def main() -> int:
         "scripts/validate_ocor_development_plan.py",
         "scripts/validate_rccad.py",
     }
+    planning_paths = {
+        "docs/development_plan/OCOR_AGENT_CONTEXT_MANIFEST.json",
+        "docs/development_plan/OCOR_DEPENDENCY_DAG.mmd",
+        "docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json",
+        "reports/planning/OCOR_PLANNING_VALIDATION_REPORT.md",
+        "reports/planning/OCOR_PLAN_RUN_STATE.json",
+        "scripts/validate_ocor_development_plan.py",
+    }
     def allowed(path: str) -> bool:
-        planning = path.startswith(("docs/development_plan/", "reports/planning/")) or path in {
-            "scripts/build_ocor_development_plan.py",
-            "scripts/validate_ocor_development_plan.py",
-        }
+        planning = path in planning_paths
         return planning or (args.authorized_extension and path in extension_paths)
     unauthorized = sorted(path for path in set(changed + untracked) if not allowed(path))
     v.check("authorized planning-only diff", not unauthorized, unauthorized)

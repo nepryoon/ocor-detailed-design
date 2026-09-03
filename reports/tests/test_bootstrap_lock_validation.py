@@ -95,6 +95,23 @@ class BootstrapLockValidationTests(unittest.TestCase):
             (repository / "infra/services.lock.json").write_text(canonical_json(load("services")), encoding="utf-8")
             self.assertTrue(any("image/integrity mismatch" in item for item in validate_locks(repository)))
 
+    def test_operational_validator_enforces_closed_schema_shape(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary)
+            (repository / "infra/fuseki").mkdir(parents=True)
+            (repository / "infra/fuseki/Dockerfile").write_text("FROM scratch\n", encoding="utf-8")
+            tools = load("toolchain")
+            services = load("services")
+            tools["unexpected"] = True
+            services["services"][1]["unexpected"] = True
+            del services["services"][2]["license"]
+            (repository / "infra/toolchain.lock.json").write_text(canonical_json(tools), encoding="utf-8")
+            (repository / "infra/services.lock.json").write_text(canonical_json(services), encoding="utf-8")
+            errors = validate_locks(repository)
+            self.assertTrue(any("root does not match" in item for item in errors))
+            self.assertTrue(any("service fields do not match" in item for item in errors))
+            self.assertTrue(any("version/license" in item for item in errors))
+
     def test_preflight_rejects_missing_and_wrong_integrity_host_tool(self) -> None:
         item = load("toolchain")["tools"][0]
         with mock.patch("preflight_environment.shutil.which", return_value=None):

@@ -77,6 +77,10 @@ def validate_locks(repository: Path) -> list[str]:
             errors.append(f"{name} lock is not canonical JSON")
     if tools.get("schema_version") != "1.0" or services.get("schema_version") != "1.0":
         errors.append("unsupported lock schema")
+    if set(tools) != {"schema_version", "architecture", "acquired_at", "tools"}:
+        errors.append("toolchain lock root does not match its closed schema")
+    if set(services) != {"schema_version", "architecture", "acquired_at", "services"}:
+        errors.append("services lock root does not match its closed schema")
     for name, value in (("toolchain", tools), ("services", services)):
         if value.get("architecture") != platform.machine():
             errors.append(f"{name} lock architecture does not match host")
@@ -88,8 +92,14 @@ def validate_locks(repository: Path) -> list[str]:
 
     tool_items = tools.get("tools", [])
     service_items = services.get("services", [])
+    if not isinstance(tool_items, list):
+        errors.append("tools must be an array")
+        tool_items = []
+    if not isinstance(service_items, list):
+        errors.append("services must be an array")
+        service_items = []
     for label, items in (("tool", tool_items), ("service", service_items)):
-        identifiers = [item.get("id") for item in items if isinstance(item, dict)]
+        identifiers = [str(item.get("id")) for item in items if isinstance(item, dict)]
         if len(identifiers) != len(set(identifiers)):
             errors.append(f"duplicate {label} id")
 
@@ -97,19 +107,55 @@ def validate_locks(repository: Path) -> list[str]:
     sha512_pattern = re.compile(r"^[0-9a-f]{128}$")
     image_pattern = re.compile(r"^[^\s@]+@sha256:([0-9a-f]{64})$")
     for item in tool_items:
+        if not isinstance(item, dict):
+            errors.append("tool entry must be an object")
+            continue
+        common = {"id", "version", "source", "official_source", "license", "provider", "integrity"}
+        provider = item.get("provider")
+        provider_fields = (
+            {"container_image", "version_env"}
+            if provider == "container"
+            else {"command", "version_args", "version_pattern"}
+        )
+        if set(item) != common | provider_fields:
+            errors.append(f"tool fields do not match closed schema: {item.get('id')}")
+        if not re.fullmatch(r"[a-z0-9-]+", str(item.get("id", ""))):
+            errors.append(f"tool id is invalid: {item.get('id')}")
+        if not all(isinstance(item.get(field), str) and item[field] for field in ("version", "license")):
+            errors.append(f"tool version/license is invalid: {item.get('id')}")
         if item.get("official_source") is not True or not str(item.get("source", "")).startswith("https://"):
             errors.append(f"tool source is not marked official HTTPS: {item.get('id')}")
         if not sha256_pattern.fullmatch(str(item.get("integrity", ""))):
             errors.append(f"tool integrity is not an exact SHA-256: {item.get('id')}")
-        provider = item.get("provider")
         if provider == "container":
             match = image_pattern.fullmatch(str(item.get("container_image", "")))
             if not match or match.group(1) != item.get("integrity"):
                 errors.append(f"containerized tool image/integrity mismatch: {item.get('id')}")
         elif provider not in {"host", "repository"}:
             errors.append(f"unsupported tool provider: {item.get('id')}")
+        elif (
+            not isinstance(item.get("version_args"), list)
+            or not item["version_args"]
+            or not all(isinstance(argument, str) for argument in item["version_args"])
+        ):
+            errors.append(f"tool version arguments are invalid: {item.get('id')}")
+        try:
+            re.compile(str(item.get("version_pattern", "")))
+        except re.error:
+            errors.append(f"tool version pattern is invalid: {item.get('id')}")
 
     for item in service_items:
+        if not isinstance(item, dict):
+            errors.append("service entry must be an object")
+            continue
+        common = {"id", "version", "source", "official_source", "license"}
+        mode = {"build"} if "build" in item else {"image"}
+        if set(item) != common | mode:
+            errors.append(f"service fields do not match closed schema: {item.get('id')}")
+        if not re.fullmatch(r"[a-z0-9-]+", str(item.get("id", ""))):
+            errors.append(f"service id is invalid: {item.get('id')}")
+        if not all(isinstance(item.get(field), str) and item[field] for field in ("version", "license")):
+            errors.append(f"service version/license is invalid: {item.get('id')}")
         if item.get("official_source") is not True or not str(item.get("source", "")).startswith("https://"):
             errors.append(f"service source is not marked official HTTPS: {item.get('id')}")
         has_image = "image" in item
@@ -119,6 +165,17 @@ def validate_locks(repository: Path) -> list[str]:
         if has_image and not image_pattern.fullmatch(str(item.get("image", ""))):
             errors.append(f"service image is not digest-pinned: {item.get('id')}")
         build = item.get("build")
+        if build is not None and not isinstance(build, dict):
+            errors.append(f"service build must be an object: {item.get('id')}")
+            continue
+        if build and set(build) != {
+            "base_image",
+            "dockerfile",
+            "output_image",
+            "output_sha256",
+            "source_sha512",
+        }:
+            errors.append(f"service build fields do not match closed schema: {item.get('id')}")
         if build and (
             not image_pattern.fullmatch(str(build.get("base_image", "")))
             or not sha512_pattern.fullmatch(str(build.get("source_sha512", "")))
