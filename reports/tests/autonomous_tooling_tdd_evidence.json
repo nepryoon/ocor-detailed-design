@@ -1,0 +1,148 @@
+{
+  "baseline_commit": "d93e8870e975b2aeec715778f3c490ece0e0216f",
+  "change_set": "CC-AUTONOMOUS-TOOLING-INFRASTRUCTURE-BOOTSTRAP",
+  "decision_id": "DEC-211",
+  "evidence_fence": {
+    "E1": 0,
+    "E2": 0
+  },
+  "implementation_commit": "4a061dbc9497dfec10925db755dbd05954e9dcf5",
+  "phases": [
+    {
+      "commands": [
+        [
+          "python3",
+          "-m",
+          "unittest",
+          "-v",
+          "reports.tests.test_autonomous_tooling_policy"
+        ]
+      ],
+      "exit_code": 1,
+      "fingerprint": "expected pre-implementation failures=3 errors=2",
+      "fingerprint_sha256": "90db01e6c5d891986014d2bb70fb88098f45b2e1e307035b38ab7be2a36c21af",
+      "phase": "RED",
+      "raw_log": "reports/tests/evidence/dec211/red.log",
+      "raw_log_sha256": "b995d8703901d2f06baeb270733f79242c91b2e75cdec4343fbbc498c8562254",
+      "result": "EXPECTED_FAILURE",
+      "source_raw_log_sha256": "01bd89685cc2c1af54984dc52546cbe1e30cc9879b19ce3d5604ce4be4c1a3e4"
+    },
+    {
+      "commands": [
+        [
+          "ocor-runtime/.venv/bin/python",
+          "-m",
+          "unittest",
+          "-v",
+          "reports.tests.test_autonomous_tooling_policy",
+          "reports.tests.test_bootstrap_lock_validation",
+          "reports.tests.test_rccad_methodology"
+        ],
+        [
+          "python3",
+          "scripts/verify_external_services.py",
+          "--manifest-only"
+        ],
+        [
+          "python3",
+          "scripts/preflight_environment.py",
+          "--require-ready"
+        ],
+        [
+          "python3",
+          "scripts/bootstrap_development_environment.py",
+          "--execute",
+          "--skip-start",
+          "--timeout",
+          "300"
+        ],
+        [
+          "ocor-runtime/.venv/bin/python",
+          "scripts/validate_ocor_development_plan.py",
+          "--base-ref",
+          "d93e8870e975b2aeec715778f3c490ece0e0216f",
+          "--authorized-extension"
+        ],
+        [
+          "ocor-runtime/.venv/bin/python",
+          "scripts/validate_rccad.py",
+          "--base-ref",
+          "d93e8870e975b2aeec715778f3c490ece0e0216f"
+        ],
+        [
+          "python3",
+          "scripts/verify_external_services.py"
+        ]
+      ],
+      "exit_code": 0,
+      "fingerprint": "acceptance, strict locks, plan, RCCAD and real-service probes passed",
+      "fingerprint_sha256": "80e174d991db9dbb7a4811becb16ac66aa5ece2f8a56cb2329c3169896a34853",
+      "phase": "GREEN",
+      "raw_log": "reports/tests/evidence/dec211/green.log",
+      "raw_log_sha256": "ff81119a05a802a5c57f013290fe60cc137bfde8922a8c0262e42e1d69cbfe3d",
+      "result": "PASS"
+    },
+    {
+      "commands": [
+        [
+          "uv",
+          "run",
+          "--project",
+          "ocor-runtime",
+          "--frozen",
+          "pytest",
+          "-q",
+          "ocor-runtime/tests/"
+        ],
+        [
+          "python3",
+          "scripts/reset_test_environment.py",
+          "--execute"
+        ],
+        [
+          "python3",
+          "scripts/bootstrap_development_environment.py",
+          "--execute",
+          "--timeout",
+          "300"
+        ],
+        [
+          "python3",
+          "scripts/fault_inject_test_environment.py",
+          "typedb",
+          "pause",
+          "--execute"
+        ],
+        [
+          "python3",
+          "scripts/verify_external_services.py",
+          "--timeout",
+          "0.5"
+        ],
+        [
+          "python3",
+          "scripts/fault_inject_test_environment.py",
+          "typedb",
+          "unpause",
+          "--execute"
+        ],
+        [
+          "python3",
+          "scripts/verify_external_services.py",
+          "--timeout",
+          "1"
+        ]
+      ],
+      "exit_code": 0,
+      "fingerprint": "full runtime, clean rebuild and bounded TypeDB fault recovery passed",
+      "fingerprint_sha256": "4b9b47d5dcef3a011ce44fe117d3f71db62f209da355c3ad6df2d7b79ce64a2e",
+      "phase": "REFACTOR",
+      "raw_log": "reports/tests/evidence/dec211/refactor.log",
+      "raw_log_sha256": "6ab909867dcf8c74b4f093a750e3c5ed47dd7ccde1bc76fb43f34e8f56a484af",
+      "recovery_max_attempts": 15,
+      "result": "PASS"
+    }
+  ],
+  "schema_version": "1.0",
+  "test_scope": "governed development tooling and disposable infrastructure bootstrap only"
+}

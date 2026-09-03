@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import csv
 import hashlib
 import json
@@ -129,6 +130,14 @@ def markdown_fallback(paths: list[Path]) -> tuple[bool, str]:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--base-ref", default=BASE_COMMIT)
+    parser.add_argument(
+        "--authorized-extension",
+        action="store_true",
+        help="allow the DEC-211 planning/infrastructure extension scope",
+    )
+    args = parser.parse_args()
     v = Validation()
     v.check("required artifacts", all(path.exists() for path in REQUIRED if path.name != "OCOR_PLANNING_VALIDATION_REPORT.md"), [str(p.relative_to(ROOT)) for p in REQUIRED])
     schema = load_json(SCHEMA_PATH)
@@ -260,9 +269,67 @@ def main() -> int:
     actual_inputs = subprocess.run(["git", "rev-parse", "HEAD:inputs"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.strip()
     base_inputs = subprocess.run(["git", "rev-parse", f"{BASE_COMMIT}:inputs"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.strip()
     v.check("inputs immutability", actual_inputs == base_inputs == state["inputs_tree"], actual_inputs)
-    changed = subprocess.run(["git", "diff", "--name-only", BASE_COMMIT, "--"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.splitlines()
+    changed = subprocess.run(["git", "diff", "--name-only", args.base_ref, "--"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.splitlines()
     untracked = subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.splitlines()
-    allowed = lambda p: p.startswith(("docs/development_plan/", "reports/planning/")) or p in {"scripts/build_ocor_development_plan.py", "scripts/validate_ocor_development_plan.py"}
+    extension_paths = {
+        ".github/workflows/ocor-tooling-bootstrap.yml",
+        "AGENTS.md",
+        "deploy/bootstrap/compose.yaml",
+        "deploy/bootstrap/fixtures/README.md",
+        "deploy/bootstrap/init/README.md",
+        "deploy/bootstrap/kubernetes/kustomization.yaml",
+        "deploy/bootstrap/kubernetes/namespace.yaml",
+        "deploy/bootstrap/kubernetes/network-policy.yaml",
+        "deploy/bootstrap/spire/agent.conf",
+        "deploy/bootstrap/spire/server.conf",
+        "docs/development_methodology/OCOR_AUTONOMOUS_TOOLING_POLICY.md",
+        "docs/development_methodology/OCOR_EXTERNAL_DEPENDENCY_POLICY.md",
+        "docs/development_methodology/OCOR_INFRASTRUCTURE_BOOTSTRAP_STRATEGY.md",
+        "infra/fuseki/Dockerfile",
+        "infra/services.lock.json",
+        "infra/services.lock.schema.json",
+        "infra/toolchain.lock.json",
+        "infra/toolchain.lock.schema.json",
+        "ocor-runtime/docs/governance_dossier/ARA_DECISION_RECORD_v1.5.md",
+        "ocor-runtime/docs/governance_dossier/registers/OCOR_Decision_Register_v1.5_APPROVED.md",
+        "ocor-runtime/docs/governance_dossier/registers/OCOR_Decision_Traceability_Index_v1.5_APPROVED.md",
+        "ocor-runtime/tests/tasks/test_ocor_dev_0001.py",
+        "reports/development/EXECUTION_STATE.json",
+        "reports/development/INFRASTRUCTURE_STATE.json",
+        "reports/development/ITERATION_LOG.md",
+        "reports/development/MODEL_HANDOFF.json",
+        "reports/development/RECONCILIATION_2026-09-03_DEC-211.md",
+        "reports/development/TOOLING_STATE.json",
+        "reports/development/environment-evidence-dec-211.json",
+        "reports/tests/autonomous_tooling_tdd_evidence.json",
+        "reports/tests/evidence/dec211/green.log",
+        "reports/tests/evidence/dec211/red.log",
+        "reports/tests/evidence/dec211/refactor.log",
+        "reports/tests/test_bootstrap_lock_validation.py",
+        "reports/tests/test_autonomous_tooling_policy.py",
+        "scripts/bootstrap_development_environment.py",
+        "scripts/capture_environment_evidence.py",
+        "scripts/fault_inject_test_environment.py",
+        "scripts/ocor_bootstrap_lib.py",
+        "scripts/preflight_environment.py",
+        "scripts/reset_test_environment.py",
+        "scripts/resume_autonomous_delivery.py",
+        "scripts/run_dec211_evidence.py",
+        "scripts/verify_external_services.py",
+        "scripts/validate_ocor_development_plan.py",
+        "scripts/validate_rccad.py",
+    }
+    planning_paths = {
+        "docs/development_plan/OCOR_AGENT_CONTEXT_MANIFEST.json",
+        "docs/development_plan/OCOR_DEPENDENCY_DAG.mmd",
+        "docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json",
+        "reports/planning/OCOR_PLANNING_VALIDATION_REPORT.md",
+        "reports/planning/OCOR_PLAN_RUN_STATE.json",
+        "scripts/validate_ocor_development_plan.py",
+    }
+    def allowed(path: str) -> bool:
+        planning = path in planning_paths
+        return planning or (args.authorized_extension and path in extension_paths)
     unauthorized = sorted(path for path in set(changed + untracked) if not allowed(path))
     v.check("authorized planning-only diff", not unauthorized, unauthorized)
 
@@ -270,7 +337,7 @@ def main() -> int:
     critical_findings = [record for record in v.records if record["status"] == "FAIL"]
     report_lines = [
         "# OCOR Planning Validation Report", "",
-        f"Validation commit/base: `{BASE_COMMIT}`. Mechanical result: **{'PASS' if not critical_findings else 'FAIL'}**.", "",
+        f"Validation commit/base: `{args.base_ref}`. Mechanical result: **{'PASS' if not critical_findings else 'FAIL'}**.", "",
         f"Checks: {counts['PASS']} PASS, {counts['FAIL']} FAIL, {counts['NOT_EXECUTED']} NOT_EXECUTED. Optional unavailable tools are never counted as PASS.", "",
         "## Mechanical checks", "", "| Check | Status | Detail |", "|---|---|---|",
     ]

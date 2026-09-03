@@ -36,8 +36,10 @@ def plan():
 
 
 def test_backlog_schema_context_and_dag_parse(plan):
-    assert len(plan.tasks) == 69
-    assert len(plan.dag_nodes) == 69
+    original = {f"OCOR-DEV-{number:04d}" for number in range(1, 70)}
+    bootstrap = {f"OCOR-DEV-{number:04d}" for number in range(70, 85)}
+    assert set(plan.tasks) == original | bootstrap
+    assert len(plan.dag_nodes) == 84
     assert plan.context_for("OCOR-DEV-0001")["max_input_tokens"] == 28000
 
 

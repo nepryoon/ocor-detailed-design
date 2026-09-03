@@ -1,0 +1,45 @@
+{
+  "$id": "urn:ocor:toolchain-lock:1.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "sha256": {"pattern": "^[0-9a-f]{64}$", "type": "string"},
+    "tool": {
+      "additionalProperties": false,
+      "oneOf": [
+        {
+          "properties": {"provider": {"enum": ["host", "repository"]}},
+          "required": ["command", "integrity", "provider", "version_args", "version_pattern"]
+        },
+        {
+          "properties": {"provider": {"const": "container"}},
+          "required": ["container_image", "integrity", "provider", "version_env"]
+        }
+      ],
+      "properties": {
+        "command": {"pattern": "^[a-zA-Z0-9._-]+$", "type": "string"},
+        "container_image": {"pattern": "^[^\\s@]+@sha256:[0-9a-f]{64}$", "type": "string"},
+        "id": {"pattern": "^[a-z0-9-]+$", "type": "string"},
+        "integrity": {"$ref": "#/$defs/sha256"},
+        "license": {"minLength": 1, "type": "string"},
+        "official_source": {"const": true},
+        "provider": {"enum": ["host", "repository", "container"]},
+        "source": {"pattern": "^https://", "type": "string"},
+        "version": {"minLength": 1, "type": "string"},
+        "version_args": {"items": {"type": "string"}, "minItems": 1, "type": "array"},
+        "version_env": {"pattern": "^[A-Z][A-Z0-9_]*$", "type": "string"},
+        "version_pattern": {"minLength": 1, "type": "string"}
+      },
+      "required": ["id", "version", "source", "official_source", "license", "provider", "integrity"],
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "acquired_at": {"format": "date-time", "type": "string"},
+    "architecture": {"const": "x86_64"},
+    "schema_version": {"const": "1.0"},
+    "tools": {"items": {"$ref": "#/$defs/tool"}, "minItems": 1, "type": "array", "uniqueItems": true}
+  },
+  "required": ["schema_version", "architecture", "acquired_at", "tools"],
+  "type": "object"
+}

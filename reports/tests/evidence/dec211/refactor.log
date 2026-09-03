@@ -1,0 +1,257 @@
+$ uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/
+........................................................................ [ 14%]
+........................................................................ [ 28%]
+........................................................................ [ 42%]
+........................................................................ [ 56%]
+........................................................................ [ 70%]
+........................................................................ [ 84%]
+........................................................................ [ 98%]
+........                                                                 [100%]
+512 passed in 34.04s
+
+$ python3 scripts/reset_test_environment.py --execute
+{
+  "status": "PASS",
+  "stderr": "rminusdb-1 Removing \n Container ocor-bootstrap-terminusdb-1 Removed \n Container ocor-bootstrap-postgresql-1 Stopped \n Container ocor-bootstrap-postgresql-1 Removing \n Container ocor-bootstrap-postgresql-1 Removed \n Container ocor-bootstrap-spire-server-1 Stopped \n Container ocor-bootstrap-spire-server-1 Removing \n Container ocor-bootstrap-spire-server-1 Removed \n Container ocor-bootstrap-fuseki-1 Stopped \n Container ocor-bootstrap-fuseki-1 Removing \n Container ocor-bootstrap-fuseki-1 Removed \n Container ocor-bootstrap-openbao-1 Stopped \n Container ocor-bootstrap-openbao-1 Removing \n Container ocor-bootstrap-openbao-1 Removed \n Container ocor-bootstrap-kafka-1 Stopped \n Container ocor-bootstrap-kafka-1 Removing \n Container ocor-bootstrap-kafka-1 Removed \n Container ocor-bootstrap-keycloak-1 Stopped \n Container ocor-bootstrap-keycloak-1 Removing \n Container ocor-bootstrap-keycloak-1 Removed \n Network ocor-bootstrap_ocor-bootstrap Removing \n Network ocor-bootstrap_ocor-bootstrap Removed \n"
+}
+
+$ python3 scripts/bootstrap_development_environment.py --execute --timeout 300
+{
+  "acquired": [
+    "kafka",
+    "keycloak",
+    "opa",
+    "openbao",
+    "postgresql",
+    "qdrant",
+    "spire-agent",
+    "spire-server",
+    "terminusdb",
+    "typedb"
+  ],
+  "secret_file": "/home/luca/Projects/.ocor-worktrees/autonomous-completion-20260903T152855Z/.ocor/bootstrap.env",
+  "started": true,
+  "status": "PASS"
+}
+
+$ python3 scripts/fault_inject_test_environment.py typedb pause --execute
+{
+  "status": "PASS",
+  "stderr": ""
+}
+
+$ python3 scripts/verify_external_services.py --timeout 0.5
+{
+  "containers": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant": "READY",
+    "spire-agent": "READY",
+    "spire-server": "READY",
+    "terminusdb": "READY",
+    "typedb": "NOT_READY"
+  },
+  "services": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant-grpc": "READY",
+    "qdrant-http": "READY",
+    "terminusdb": "READY",
+    "typedb": "READY"
+  },
+  "status": "FAIL"
+}
+
+$ python3 scripts/fault_inject_test_environment.py typedb unpause --execute
+{
+  "status": "PASS",
+  "stderr": ""
+}
+
+$ python3 scripts/verify_external_services.py --timeout 1
+{
+  "containers": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant": "READY",
+    "spire-agent": "READY",
+    "spire-server": "READY",
+    "terminusdb": "READY",
+    "typedb": "NOT_READY"
+  },
+  "services": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant-grpc": "READY",
+    "qdrant-http": "READY",
+    "terminusdb": "READY",
+    "typedb": "READY"
+  },
+  "status": "FAIL"
+}
+
+$ python3 scripts/verify_external_services.py --timeout 1
+{
+  "containers": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant": "READY",
+    "spire-agent": "READY",
+    "spire-server": "READY",
+    "terminusdb": "READY",
+    "typedb": "NOT_READY"
+  },
+  "services": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant-grpc": "READY",
+    "qdrant-http": "READY",
+    "terminusdb": "READY",
+    "typedb": "READY"
+  },
+  "status": "FAIL"
+}
+
+$ python3 scripts/verify_external_services.py --timeout 1
+{
+  "containers": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant": "READY",
+    "spire-agent": "READY",
+    "spire-server": "READY",
+    "terminusdb": "READY",
+    "typedb": "NOT_READY"
+  },
+  "services": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant-grpc": "READY",
+    "qdrant-http": "READY",
+    "terminusdb": "READY",
+    "typedb": "READY"
+  },
+  "status": "FAIL"
+}
+
+$ python3 scripts/verify_external_services.py --timeout 1
+{
+  "containers": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant": "READY",
+    "spire-agent": "READY",
+    "spire-server": "READY",
+    "terminusdb": "READY",
+    "typedb": "NOT_READY"
+  },
+  "services": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant-grpc": "READY",
+    "qdrant-http": "READY",
+    "terminusdb": "READY",
+    "typedb": "READY"
+  },
+  "status": "FAIL"
+}
+
+$ python3 scripts/verify_external_services.py --timeout 1
+{
+  "containers": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant": "READY",
+    "spire-agent": "READY",
+    "spire-server": "READY",
+    "terminusdb": "READY",
+    "typedb": "NOT_READY"
+  },
+  "services": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant-grpc": "READY",
+    "qdrant-http": "READY",
+    "terminusdb": "READY",
+    "typedb": "READY"
+  },
+  "status": "FAIL"
+}
+
+$ python3 scripts/verify_external_services.py --timeout 1
+{
+  "containers": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant": "READY",
+    "spire-agent": "READY",
+    "spire-server": "READY",
+    "terminusdb": "READY",
+    "typedb": "READY"
+  },
+  "services": {
+    "fuseki": "READY",
+    "kafka": "READY",
+    "keycloak": "READY",
+    "opa": "READY",
+    "openbao": "READY",
+    "postgresql": "READY",
+    "qdrant-grpc": "READY",
+    "qdrant-http": "READY",
+    "terminusdb": "READY",
+    "typedb": "READY"
+  },
+  "status": "PASS"
+}

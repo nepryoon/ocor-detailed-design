@@ -1,159 +1,74 @@
 {
   "assumptions_requiring_revalidation": [
-    "The current model name and reasoning effort are not exposed by the runtime."
+    "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "6afa0d962580a039f1903797dc304eacc9fcaea8",
-  "branch": "governed/rccad-terminal-blocked-state",
+  "baseline_commit": "d93e8870e975b2aeec715778f3c490ece0e0216f",
+  "branch": "governed/dec-211-autonomous-tooling-bootstrap",
   "commands_run": [
     {
+      "command": "git fetch --prune origin; Git and GitHub exact-SHA reconciliation",
+      "result": "PASS_D93E8870E975B2AEEC715778F3C490ECE0E0216F"
+    },
+    {
+      "command": "archive stale local state",
+      "result": "PASS_B3960A93EFD94100420C856E66C1BF035C3850D9"
+    },
+    {
       "command": "sha256sum -c inputs/normative/SHA256SUMS",
-      "result": "PASS"
+      "result": "PASS_8_OF_8"
     },
     {
-      "command": "./.venv/bin/python3 scripts/verify.py --json",
-      "result": "NOT_EXECUTED"
+      "command": "uv sync --project ocor-runtime --frozen --extra test",
+      "result": "PASS_PYTHON_3_12_11_36_PACKAGES"
     },
     {
-      "command": "python3 -m unittest -v reports.tests.test_rccad_methodology",
-      "result": "RED_EXPECTED_THEN_PASS"
+      "command": "reports.tests.test_autonomous_tooling_policy RED",
+      "result": "EXPECTED_FAILURE_3_FAILURES_2_ERRORS_COMMIT_605504FE"
     },
     {
-      "command": "python3 scripts/validate_rccad.py --base-ref 69652a3c4bd6cdd13d54c0a7e326c9d44958f985",
-      "result": "PASS"
+      "command": "bootstrap_development_environment.py --execute",
+      "result": "PASS_11_REAL_SERVICES"
     },
     {
-      "command": "python3 scripts/validate_ocor_change_scope.py --base 69652a3c4bd6cdd13d54c0a7e326c9d44958f985 --head HEAD --branch governed/dec-210-rccad-adoption",
-      "result": "PASS_AFTER_BRANCH_RENAME"
+      "command": "verify_external_services.py",
+      "result": "PASS_ALL_HOST_ENDPOINTS_READY"
     },
     {
-      "command": "python3 scripts/validate_ocor_development_plan.py",
-      "result": "NOT_EXECUTED_MISSING_JSONSCHEMA"
+      "command": "validate_ocor_development_plan.py --base-ref d93e8870e975b2aeec715778f3c490ece0e0216f --authorized-extension",
+      "result": "PASS_37_PASS_2_OPTIONAL_NOT_EXECUTED_84_TASKS"
     },
     {
-      "command": "python3 scripts/ocor_autonomous_delivery.py --validate",
-      "result": "NOT_EXECUTED_MISSING_JSONSCHEMA"
+      "command": "validate_rccad.py --base-ref d93e8870e975b2aeec715778f3c490ece0e0216f",
+      "result": "PASS_LOCAL_PRECHECK_AFF_001_TO_AFF_010"
     },
     {
-      "command": "docker image ls --format ...",
-      "result": "NOT_EXECUTED_DOCKER_API_PERMISSION_DENIED"
-    },
-    {
-      "command": "independent verifier pass 1 on 347f65a3 and pass 2 on 96f056db",
-      "result": "NO_GO_FINDINGS_REMEDIATED"
-    },
-    {
-      "command": "independent verifier pass 3 on cad0047f",
-      "result": "GO_FOR_REMOTE_CI"
-    },
-    {
-      "command": "GitHub Actions run 33715342088",
-      "result": "FAIL_AFF_008_REMOTE_LOCAL_COMMIT_ANCESTRY"
-    },
-    {
-      "command": "GitHub Actions run 33715519982",
-      "result": "FAIL_IRRELEVANT_PLANNING_ONLY_SCOPE_CHECK__RCCAD_GATES_BEFORE_STEP_PASS"
-    },
-    {
-      "command": "GitHub Actions runs 33715707667, 33715707617, 33715707574, 33715707590, 33715707689 on d4c54a876bfb3cc60531596982be04b283d20615",
-      "result": "PASS_ALL_APPLICABLE_WORKFLOWS"
-    },
-    {
-      "command": "GitHub Actions RED runs on 79d18cf76c771ca724fa7037a5d3f659addd2e77",
-      "result": "RED_EXPECTED_15_FAILURES_AND_TYPED_ERROR_IMPORT_FAILURE"
-    },
-    {
-      "command": "GitHub Actions runs 33716881688, 33716881607, 33716881556, 33716881600, 33716881636 on 8a9a2280750282af156ebb3c026ca0730c53bb27",
-      "result": "PASS_ALL_APPLICABLE_WORKFLOWS"
-    },
-    {
-      "command": "independent verifier rem0007_clean_verifier",
-      "result": "GO_FOR_EVIDENCE_SEAL_ZERO_BLOCKER_HIGH_MEDIUM"
-    },
-    {
-      "command": "merge PR #38 and close superseded PR #26",
-      "result": "PASS_MERGE_698590511d2a48f5f09083af47f75734ceacc750"
-    },
-    {
-      "command": "GitHub Actions RED run 33723074188 on dde7e3e24dcaa5e68175763eebf9126b6df5bfb6",
-      "result": "RED_EXPECTED_5_GOVERNED_CONTEXT_FAILURES"
-    },
-    {
-      "command": "GitHub Actions runs 33723246471, 33723246584, 33723246620, 33723246467, 33723246447 on ce717f113e7b736238df7cc7ce0d471e09fa6790",
-      "result": "PASS_ALL_APPLICABLE_WORKFLOWS"
-    },
-    {
-      "command": "independent verifier rem0008_clean_verifier",
-      "result": "GO_FOR_EVIDENCE_SEAL_ZERO_BLOCKER_HIGH_MEDIUM"
-    },
-    {
-      "command": "merge PR #39 and close superseded PR #29",
-      "result": "PASS_MERGE_5a5ca88a6ce2aeffe01ba8a35b43487dad810753"
-    },
-    {
-      "command": "GitHub Actions RED run 33737782028 on 9f215b8dd36bb9d83079098768b56f7231ff7f9d",
-      "result": "RED_EXPECTED_IMPORT_ERROR_INMEMORY_LEASE_STATE"
-    },
-    {
-      "command": "GitHub Actions runs 33737997879, 33737997940, 33737997911, 33737997908, 33737997959 on 5404f32c75c98bf1899d4caebf5dc0197228c988",
-      "result": "PASS_ALL_APPLICABLE_WORKFLOWS"
-    },
-    {
-      "command": "independent verifier rem0009_clean_verifier",
-      "result": "GO_FOR_EVIDENCE_SEAL_ZERO_BLOCKER_HIGH_MEDIUM_LOW"
-    },
-    {
-      "command": "GitHub Actions seal runs 33753565092, 33753565113, 33753565229, 33753565259, 33753565200 on 846c0966500cf210a929c572057831145cb60061",
-      "result": "PASS_ALL_APPLICABLE_WORKFLOWS"
-    },
-    {
-      "command": "merge PR #40 and close superseded PR #31",
-      "result": "PASS_MERGE_6afa0d962580a039f1903797dc304eacc9fcaea8"
-    },
-    {
-      "command": "GitHub open pull request reconciliation",
-      "result": "PASS_ZERO_OPEN_PULL_REQUESTS"
-    },
-    {
-      "command": "69-task DAG readiness analysis against 19 content-addressed completed tasks",
-      "result": "BLOCKED_ONLY_0016_0017_0018_0021_READY_ALL_WAITING_EXTERNAL_SERVICE_50_REMAINING"
-    },
-    {
-      "command": "python3 scripts/ocor_autonomous_delivery.py --status",
-      "result": "NOT_EXECUTED_MISSING_JSONSCHEMA"
-    },
-    {
-      "command": "independent verifier terminal_blocked_verifier",
-      "result": "GO_FOR_BLOCKED_STATE_MERGE_ZERO_BLOCKER_HIGH_MEDIUM_LOW"
+      "command": "independent verifier dec211_final_verify",
+      "result": "GO_BLOCKER_0_HIGH_0_MEDIUM_0"
     }
   ],
   "completed_tasks": [
-    "repository reconciliation",
-    "DEC-210 allocation",
-    "TDD RED",
-    "local GREEN and REFACTOR gates",
-    "DEC-210 methodology merge a09d1a6e573895e716b147c8046ea97b73b2e3a8",
-    "REM-0007 RED and GREEN qualification",
-    "REM-0008 RED, GREEN and integration",
-    "REM-0009 RED, GREEN and integration",
-    "all divergent remediation PRs superseded and closed",
-    "terminal DAG reconciliation"
+    "authoritative stale-baseline reconciliation",
+    "DEC-211 allocation",
+    "TDD RED and local GREEN",
+    "pinned toolchain restoration",
+    "digest-pinned Compose bootstrap",
+    "real-service health verification"
   ],
-  "current_task": "NONE__BLOCKED_EXTERNAL_SERVICES",
+  "current_task": "CC-AUTONOMOUS-TOOLING-INFRASTRUCTURE-BOOTSTRAP__EVIDENCE_SEAL",
   "evidence_paths": [
-    "reports/development/METHOD_COMPLIANCE.json",
-    "reports/tests/rccad_tdd_evidence.json",
-    "reports/assurance/OCOR-DEV-REM-0007-RCCAD/evidence.json",
-    "reports/assurance/OCOR-DEV-REM-0008-RCCAD/evidence.json",
-    "reports/assurance/OCOR-DEV-REM-0009-RCCAD/evidence.json",
-    "reports/development/TERMINAL_BLOCKED_REPORT.json",
-    "reports/evidence/G2/blockers/MANIFEST.json"
+    "reports/development/RECONCILIATION_2026-09-03_DEC-211.md",
+    "reports/development/TOOLING_STATE.json",
+    "reports/development/INFRASTRUCTURE_STATE.json",
+    "reports/development/environment-evidence-dec-211.json",
+    "reports/tests/autonomous_tooling_tdd_evidence.json",
+    "reports/tests/evidence/dec211/green.log",
+    "reports/tests/evidence/dec211/red.log",
+    "reports/tests/evidence/dec211/refactor.log"
   ],
-  "exact_next_action": "Provision the approved digest-pinned real services named in reports/evidence/G2/blockers/MANIFEST.json, then resume with task OCOR-DEV-0016; execute its real TerminusDB campaign without substitution.",
+  "exact_next_action": "Commit the content-addressed evidence seal, push the branch, open a PR and require exact-head CI before merge.",
   "schema_version": "1.0",
   "unresolved_blockers": [
-    "ENV-HARNESS-VENV-001",
-    "G2-REAL-SERVICES-001",
-    "GITHUB-BRANCH-PROTECTION-001"
+    "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"
   ],
-  "worktree": "/home/luca/Projects/.ocor-worktrees/rccad-blocked-state"
+  "worktree": "/home/luca/Projects/.ocor-worktrees/autonomous-completion-20260903T152855Z"
 }

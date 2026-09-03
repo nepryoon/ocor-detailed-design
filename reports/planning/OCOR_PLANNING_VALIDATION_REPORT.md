@@ -1,6 +1,6 @@
 # OCOR Planning Validation Report
 
-Validation commit/base: `67cda4b44a8d27b831eb461b1e28d71e1d3398ab`. Mechanical result: **PASS**.
+Validation commit/base: `d93e8870e975b2aeec715778f3c490ece0e0216f`. Mechanical result: **PASS**.
 
 Checks: 37 PASS, 0 FAIL, 2 NOT_EXECUTED. Optional unavailable tools are never counted as PASS.
 
@@ -10,15 +10,15 @@ Checks: 37 PASS, 0 FAIL, 2 NOT_EXECUTED. Optional unavailable tools are never co
 |---|---|---|
 | required artifacts | `PASS` | ["docs/development_plan/OCOR_AI_FIRST_DEVELOPMENT_PLAN.md", "docs/development_plan/OCOR_AUTONOMOUS_EXECUTION_HARNESS.md", "docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json", "docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.schema.json", "docs/development_plan/OCOR_DEPENDENCY_DAG.mmd", "docs/development_plan/OCOR_RISK_AND_SPIKE_REGISTER.md", "docs/development_plan/OCOR_TRACEABILITY_PLAN.csv", "docs/development_plan/OCOR_AGENT_CONTEXT_MANIFEST.json", "reports/planning/OCOR_REPOSITORY_INVENTORY.md", "reports/planning/OCOR_REPOSITORY_INVENTORY.json", "reports/planning/OCOR_CURRENT_STATE_BASELINE.md", "reports/planning/OCOR_CURRENT_STATE_BASELINE.json", "reports/planning/OCOR_PLANNING_VALIDATION_REPORT.md", "reports/planning/OCOR_PLAN_RUN_STATE.json", "scripts/validate_ocor_development_plan.py"] |
 | JSON Schema validity | `PASS` | [] |
-| unique stable task IDs | `PASS` | "69 sequential IDs" |
+| unique stable task IDs | `PASS` | "84 sequential IDs" |
 | dependency referential integrity | `PASS` | [] |
-| DAG acyclicity | `PASS` | "69/69 topologically sorted" |
+| DAG acyclicity | `PASS` | "84/84 topologically sorted" |
 | all tasks reachable | `PASS` | [] |
 | all tasks converge on completion | `PASS` | [] |
-| critical path calculation | `PASS` | {"duration": 161, "waves": 28} |
-| gate coverage | `PASS` | {"G0": 6, "G1": 8, "G2": 13, "G3": 4, "G4": 18, "G5": 10, "G6": 7, "G7": 3} |
+| critical path calculation | `PASS` | {"duration": 161, "waves": 29} |
+| gate coverage | `PASS` | {"G0": 6, "G1": 8, "G2": 28, "G3": 4, "G4": 18, "G5": 10, "G6": 7, "G7": 3} |
 | gate entry/exit/task/test contracts | `PASS` | [] |
-| workstream coverage | `PASS` | {"WS-00": 4, "WS-13": 12, "WS-12": 2, "WS-01": 4, "WS-02": 4, "WS-03": 3, "WS-04": 5, "WS-11": 3, "WS-05": 5, "WS-06": 3, "WS-07": 5, "WS-08": 2, "WS-10": 15, "WS-09": 2} |
+| workstream coverage | `PASS` | {"WS-00": 4, "WS-13": 12, "WS-12": 17, "WS-01": 4, "WS-02": 4, "WS-03": 3, "WS-04": 5, "WS-11": 3, "WS-05": 5, "WS-06": 3, "WS-07": 5, "WS-08": 2, "WS-10": 15, "WS-09": 2} |
 | required task fields | `PASS` | {} |
 | acceptance criteria | `PASS` | "observable criteria on every task" |
 | negative acceptance criteria | `PASS` | "negative criteria on every task" |
@@ -36,9 +36,9 @@ Checks: 37 PASS, 0 FAIL, 2 NOT_EXECUTED. Optional unavailable tools are never co
 | memory-kind coverage | `PASS` | ["DISSENT", "EPISODIC", "PREFERENCE", "PROCEDURAL", "REFLECTION", "SEMANTIC", "TEAM_SHARED", "WORKING"] |
 | memory-scope coverage | `PASS` | ["AGENT", "DOMAIN", "FEDERATED", "PROJECT", "RUN", "TASK", "TEAM"] |
 | memory-lifecycle coverage | `PASS` | [] |
-| agent context consistency | `PASS` | {"tasks": 69, "roles": 9} |
+| agent context consistency | `PASS` | {"tasks": 84, "roles": 9} |
 | path and normative-link consistency | `PASS` | {"bad_paths": [], "hash_errors": []} |
-| Mermaid DAG fallback syntax | `PASS` | {"missing_nodes": [], "edges": 224} |
+| Mermaid DAG fallback syntax | `PASS` | {"missing_nodes": [], "edges": 251} |
 | Markdown deterministic fallback | `PASS` | "H1, whitespace, tab and fence checks" |
 | planning Python static analysis | `PASS` | "All checks passed!\n" |
 | external markdownlint | `NOT_EXECUTED` | "NOT_EXECUTED: markdownlint executable unavailable; deterministic fallback executed" |
