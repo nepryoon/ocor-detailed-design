@@ -1,6 +1,16 @@
 {
   "artifacts": [
     {
+      "path": "OCOR-DEV-0070.json",
+      "sha256": "1dfc7e7308a56852ef6214d4997023685e945b7bdcb792c4f56386d36a13949d",
+      "task_id": "OCOR-DEV-0070"
+    },
+    {
+      "path": "OCOR-DEV-0070.log",
+      "sha256": "df348a63b6b232b18613cd0293b83f965fee994d8483d72207b78e2ec4a0c820",
+      "task_id": "OCOR-DEV-0070-RAW"
+    },
+    {
       "path": "OCOR-DEV-0015.json",
       "sha256": "3bc0fc0619bec2a668fba37092658c91461b372dedc451026e76779a5fd41dbe",
       "task_id": "OCOR-DEV-0015"
@@ -54,6 +64,42 @@
   "created_at": "2026-09-02T04:25:45Z",
   "gate": "G2",
   "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0070-FAIL-CLOSED",
+      "command": "invalid isolated DOCKER_HOST makes Docker return non-zero",
+      "evidence_path": "OCOR-DEV-0070.json",
+      "raw_output_path": "OCOR-DEV-0070.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0070"
+    },
+    {
+      "case_id": "OCOR-DEV-0070-LIVE-RUNTIME",
+      "command": "live Docker client/server query plus exact service-lock validation",
+      "evidence_path": "OCOR-DEV-0070.json",
+      "raw_output_path": "OCOR-DEV-0070.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0070"
+    },
+    {
+      "case_id": "OCOR-DEV-0070-LOCK-NEGATIVE-MATRIX",
+      "command": "11 positive and negative canonical lock validation tests",
+      "evidence_path": "OCOR-DEV-0070.json",
+      "raw_output_path": "OCOR-DEV-0070.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0070"
+    },
+    {
+      "case_id": "OCOR-DEV-0070-REGRESSION",
+      "command": "full runtime regression with live disposable PostgreSQL and container runtime",
+      "evidence_path": "OCOR-DEV-0070.json",
+      "raw_output_path": "OCOR-DEV-0070.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0070"
+    },
     {
       "case_id": "OCOR-DEV-0015-CRASH-MATRIX",
       "command": "pytest real PostgreSQL process-crash and concurrent-retry matrix",

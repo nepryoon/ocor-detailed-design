@@ -1,0 +1,28 @@
+OCOR-DEV-0070 container-runtime availability qualification
+qualified_baseline_commit=88a525d31f174fd2c7cf3839363497cb03601d79
+
+$ DOCKER_HOST=unix:///tmp/ocor-does-not-exist/docker.sock docker version
+exit=1 (expected fail-closed result; output discarded because it includes host-specific diagnostics)
+
+$ docker version --format 'client={{.Client.Version}} server={{.Server.Version}}'
+client=29.7.2 server=29.7.2
+
+$ python scripts/verify_external_services.py --manifest-only
+{
+  "service_count": 11,
+  "status": "PASS"
+}
+
+$ python -m unittest -q reports.tests.test_bootstrap_lock_validation
+----------------------------------------------------------------------
+Ran 11 tests in 0.043s
+
+OK
+
+$ ruff check scripts/verify_external_services.py ocor-runtime/tests/tasks/test_ocor_dev_0070.py
+All checks passed!
+
+$ OCOR_LIVE_POSTGRES_DSN=<redacted-local-disposable-dsn> python -m pytest -q ocor-runtime/tests
+512 passed in 32.87s
+
+summary negative_nonzero=1 docker=0 manifest=0 lock_suite=0 regression=0
