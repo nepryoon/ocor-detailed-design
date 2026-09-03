@@ -106,18 +106,22 @@ def main() -> int:
         raise BootstrapError("GREEN evidence command failed")
 
     environment = load_secret_environment(repository)
+    pytest_command = ["uv", "run", "--project", "ocor-runtime", "--frozen", "pytest", "-q", "ocor-runtime/tests/"]
     refactor_commands = [
-        ["uv", "run", "--project", "ocor-runtime", "--frozen", "pytest", "-q", "ocor-runtime/tests/"],
         ["python3", "scripts/reset_test_environment.py", "--execute"],
         ["python3", "scripts/bootstrap_development_environment.py", "--execute", "--timeout", "300"],
         ["python3", "scripts/fault_inject_test_environment.py", "typedb", "pause", "--execute"],
     ]
-    refactor_code, refactor = run_group(refactor_commands, repository, env=environment)
+    refactor_code, refactor = execute(pytest_command, repository, env=environment)
+    if refactor_code:
+        raise BootstrapError("REFACTOR runtime regression command failed")
+    refactor_code, infrastructure_output = run_group(refactor_commands, repository)
+    refactor += b"\n" + infrastructure_output
     if refactor_code:
         raise BootstrapError("REFACTOR setup or regression command failed")
     try:
         failed_probe, output = execute(
-            ["python3", "scripts/verify_external_services.py", "--timeout", "0.5"], repository, env=environment
+            ["python3", "scripts/verify_external_services.py", "--timeout", "0.5"], repository
         )
         refactor += b"\n" + output
         if failed_probe != 1:
@@ -126,13 +130,12 @@ def main() -> int:
         _, output = execute(
             ["python3", "scripts/fault_inject_test_environment.py", "typedb", "unpause", "--execute"],
             repository,
-            env=environment,
         )
         refactor += b"\n" + output
     recovered = False
     for _ in range(15):
         code, output = execute(
-            ["python3", "scripts/verify_external_services.py", "--timeout", "1"], repository, env=environment
+            ["python3", "scripts/verify_external_services.py", "--timeout", "1"], repository
         )
         refactor += b"\n" + output
         if code == 0:
@@ -159,7 +162,11 @@ def main() -> int:
         summary = summaries[name]
         phases.append(
             {
-                "commands": (["pre-implementation unittest capture"] if name == "red" else (green_commands if name == "green" else refactor_commands)),
+                "commands": (
+                    ["pre-implementation unittest capture"]
+                    if name == "red"
+                    else (green_commands if name == "green" else [pytest_command, *refactor_commands])
+                ),
                 "exit_code": code,
                 "fingerprint": summary,
                 "fingerprint_sha256": digest(summary.encode()),
