@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import pytest
+
+# isort: split
+from ocor_runtime.canonical import canonical_sha256
+from ocor_runtime.errors import DigestProviderError
 from ocor_runtime.kernel import canonical as kernel
 from ocor_runtime.kernel.governed_context import (
     GovernedContext,
@@ -54,10 +58,16 @@ def test_boundary_fault_injection_rejects_corrupted_digest():
     assert failure.value.code == "GOVERNED_CONTEXT_MISMATCH"
 
 
-def test_hash_provider_failure_cannot_produce_a_false_digest(monkeypatch: pytest.MonkeyPatch):
+def test_hash_provider_failure_is_typed_bounded_and_cannot_produce_a_false_digest(
+    monkeypatch: pytest.MonkeyPatch,
+):
     def fail_hash(_payload: bytes) -> object:
-        raise OSError("injected hash provider failure")
+        raise OSError("x" * 10_000)
 
     monkeypatch.setattr(kernel.hashlib, "sha256", fail_hash)
-    with pytest.raises(OSError, match="injected hash provider failure"):
-        context().digest()
+    for operation in (context().digest, lambda: canonical_sha256({})):
+        with pytest.raises(DigestProviderError) as failure:
+            operation()
+        assert failure.value.code == "DIGEST_PROVIDER_FAILURE"
+        assert str(failure.value) == "SHA-256 provider failure"
+        assert isinstance(failure.value.__cause__, OSError)
