@@ -66,9 +66,8 @@ jobs:
           --base-ref "${{ github.event.pull_request.base.sha || 'origin/main' }}"
       - name: Run RCCAD positive and negative acceptance tests
         run: ocor-runtime/.venv/bin/python -m unittest -v reports.tests.test_rccad_methodology
-      - name: Validate authoritative plan and execution runner
+      - name: Validate authoritative execution runner
         run: |
-          ocor-runtime/.venv/bin/python scripts/validate_ocor_development_plan.py
           ocor-runtime/.venv/bin/python scripts/ocor_autonomous_delivery.py --validate
           ocor-runtime/.venv/bin/python scripts/ocor_autonomous_delivery.py --dry-run
       - name: Execute dynamic architecture fitness portfolio

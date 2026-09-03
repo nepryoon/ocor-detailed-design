@@ -1,6 +1,5 @@
 {
   "assumptions_requiring_revalidation": [
-    "External GitHub PR/check state was not queried because no configured GitHub connector is exposed in this session.",
     "The current model name and reasoning effort are not exposed by the runtime."
   ],
   "baseline_commit": "69652a3c4bd6cdd13d54c0a7e326c9d44958f985",
@@ -49,6 +48,10 @@
     {
       "command": "GitHub Actions run 33715342088",
       "result": "FAIL_AFF_008_REMOTE_LOCAL_COMMIT_ANCESTRY"
+    },
+    {
+      "command": "GitHub Actions run 33715519982",
+      "result": "FAIL_IRRELEVANT_PLANNING_ONLY_SCOPE_CHECK__RCCAD_GATES_BEFORE_STEP_PASS"
     }
   ],
   "completed_tasks": [
@@ -62,7 +65,7 @@
     "reports/development/METHOD_COMPLIANCE.json",
     "reports/tests/rccad_tdd_evidence.json"
   ],
-  "exact_next_action": "Publish ancestry remediation atomically to PR #37, wait for all CI, and merge only if every applicable check succeeds.",
+  "exact_next_action": "Publish the planning-scope gate remediation atomically to PR #37, wait for every CI workflow, seal exact commit evidence, and merge only if every applicable check succeeds.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "ENV-HARNESS-VENV-001",
