@@ -315,6 +315,7 @@ def main() -> int:
         "scripts/reset_test_environment.py",
         "scripts/resume_autonomous_delivery.py",
         "scripts/run_dec211_evidence.py",
+        "scripts/validate_ocor_change_scope.py",
         "scripts/verify_external_services.py",
         "scripts/validate_ocor_development_plan.py",
         "scripts/validate_rccad.py",

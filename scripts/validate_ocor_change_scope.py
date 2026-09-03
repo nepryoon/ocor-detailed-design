@@ -13,7 +13,7 @@ from pathlib import Path
 
 TASK_ID = re.compile(r"^OCOR-DEV-[0-9]{4}$")
 CHANGE_BRANCH = re.compile(
-    r"^(task/OCOR-DEV-[0-9]{4}-[a-z0-9][a-z0-9-]*|governed/[a-z0-9][a-z0-9._/-]*)$"
+    r"^(task/(?P<task_id>OCOR-DEV-[0-9]{4})-[a-z0-9][a-z0-9-]*|governed/[a-z0-9][a-z0-9._/-]*)$"
 )
 IMMUTABLE = (
     "inputs/",
@@ -32,6 +32,35 @@ def is_immutable(path: str) -> bool:
 
 def valid_change_branch(branch: str) -> bool:
     return bool(CHANGE_BRANCH.fullmatch(branch)) and branch != "main"
+
+
+def task_scope_errors(root: Path, branch: str, paths: Sequence[str]) -> list[str]:
+    """Enforce the backlog-owned path boundary for canonical task branches."""
+    match = CHANGE_BRANCH.fullmatch(branch)
+    task_id = match.group("task_id") if match else None
+    if not task_id:
+        return []
+    backlog = json.loads(
+        (root / "docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    task = next((item for item in backlog.get("tasks", []) if item.get("id") == task_id), None)
+    if task is None:
+        return [f"task branch references unknown task: {task_id}"]
+    allowed = list(task.get("expected_file_areas", [])) + list(task.get("evidence_outputs", []))
+    if task.get("evidence_outputs"):
+        evidence_parent = Path(task["evidence_outputs"][0]).parent
+        allowed.append(str(evidence_parent / "MANIFEST.json"))
+    unowned = sorted(
+        path
+        for path in paths
+        if not any(
+            path == area.rstrip("/") or path.startswith(area.rstrip("/") + "/")
+            for area in allowed
+        )
+    )
+    return [f"task branch changed unowned paths: {', '.join(unowned)}"] if unowned else []
 
 
 def changed_paths(root: Path, base: str, head: str) -> list[str]:
@@ -98,6 +127,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         errors = validate_ledger(root)
         if args.branch and not valid_change_branch(args.branch):
             errors.append(f"unrecognised change branch: {args.branch}")
+        elif args.branch:
+            errors.extend(task_scope_errors(root, args.branch, paths))
         forbidden = sorted(path for path in paths if is_immutable(path))
         if forbidden:
             errors.append(f"immutable path changes: {', '.join(forbidden)}")

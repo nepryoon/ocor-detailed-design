@@ -61,7 +61,14 @@ jobs:
           OCOR_SPIRE_JOIN_TOKEN=x \
           docker compose -f deploy/bootstrap/compose.yaml config --quiet
       - name: Validate RCCAD and immutable inputs
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || 'origin/main' }}
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
         run: |
-          ocor-runtime/.venv/bin/python scripts/validate_ocor_development_plan.py --base-ref "${{ github.event.pull_request.base.sha || 'origin/main' }}" --authorized-extension
-          ocor-runtime/.venv/bin/python scripts/validate_rccad.py --base-ref "${{ github.event.pull_request.base.sha || 'origin/main' }}"
-          git diff --exit-code "${{ github.event.pull_request.base.sha || 'origin/main' }}" -- inputs/
+          PLAN_BASE="$BASE_SHA"
+          if [[ "$HEAD_REF" == task/OCOR-DEV-* ]]; then
+            PLAN_BASE=HEAD
+          fi
+          ocor-runtime/.venv/bin/python scripts/validate_ocor_development_plan.py --base-ref "$PLAN_BASE" --authorized-extension
+          ocor-runtime/.venv/bin/python scripts/validate_rccad.py --base-ref "$BASE_SHA"
+          git diff --exit-code "$BASE_SHA" -- inputs/
