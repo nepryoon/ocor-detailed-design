@@ -156,3 +156,18 @@ modalità di review e si scrive soltanto in `reports/`; con mandato esplicito va
 anche scope e gate della decisione/processo autorizzato. Nessuna delle due modalità
 consente modifiche a `inputs/`, promozioni implicite di `E1`/`E2`, requisiti
 `Verified`, runtime conformance o Production readiness.
+
+## Tooling autonomo e bootstrap non-production (DEC-211)
+
+Con un mandato implementativo esplicito, `DEC-211` autorizza provisioning e
+self-repair repository-scoped secondo
+`docs/development_methodology/OCOR_AUTONOMOUS_TOOLING_POLICY.md`. Sono consentiti
+rete, registry ufficiali, dependency install in ambienti isolati, immagini
+digest-pinned, Compose/Kubernetes disposable e credenziali locali generate, limitati
+alle aree del change set/backlog. Le operazioni mutative richiedono flag esplicito,
+timeout, retry bounded, log strutturato, teardown e verifica di scope.
+
+Restano assoluti: `inputs/` immutabile; nessun production deploy o accesso a dati
+production; nessun secret in Git; nessuna sostituzione di tecnologie approvate;
+nessuna modifica semantica senza nuova decisione; nessun incremento implicito di
+`E1`, `E2`, `Verified` o dei claim `NO-GO`.

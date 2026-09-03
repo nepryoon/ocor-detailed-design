@@ -1,0 +1,25 @@
+{
+  "$id": "urn:ocor:toolchain-lock:1.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "tools": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {"pattern": "^[a-z0-9-]+$"},
+          "license": {"minLength": 1, "type": "string"},
+          "source": {"format": "uri", "type": "string"},
+          "version": {"minLength": 1, "type": "string"}
+        },
+        "required": ["id", "version", "source", "license"],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": ["schema_version", "tools"],
+  "type": "object"
+}

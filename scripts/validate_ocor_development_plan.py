@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import argparse
 import csv
 import hashlib
 import json
@@ -129,6 +130,14 @@ def markdown_fallback(paths: list[Path]) -> tuple[bool, str]:
 
 
 def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--base-ref", default=BASE_COMMIT)
+    parser.add_argument(
+        "--authorized-extension",
+        action="store_true",
+        help="allow the DEC-211 planning/infrastructure extension scope",
+    )
+    args = parser.parse_args()
     v = Validation()
     v.check("required artifacts", all(path.exists() for path in REQUIRED if path.name != "OCOR_PLANNING_VALIDATION_REPORT.md"), [str(p.relative_to(ROOT)) for p in REQUIRED])
     schema = load_json(SCHEMA_PATH)
@@ -260,9 +269,25 @@ def main() -> int:
     actual_inputs = subprocess.run(["git", "rev-parse", "HEAD:inputs"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.strip()
     base_inputs = subprocess.run(["git", "rev-parse", f"{BASE_COMMIT}:inputs"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.strip()
     v.check("inputs immutability", actual_inputs == base_inputs == state["inputs_tree"], actual_inputs)
-    changed = subprocess.run(["git", "diff", "--name-only", BASE_COMMIT, "--"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.splitlines()
+    changed = subprocess.run(["git", "diff", "--name-only", args.base_ref, "--"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.splitlines()
     untracked = subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.splitlines()
-    allowed = lambda p: p.startswith(("docs/development_plan/", "reports/planning/")) or p in {"scripts/build_ocor_development_plan.py", "scripts/validate_ocor_development_plan.py"}
+    extension_prefixes = (
+        ".github/workflows/ocor-tooling-bootstrap.yml",
+        "AGENTS.md",
+        "deploy/bootstrap/",
+        "docs/development_methodology/",
+        "infra/",
+        "ocor-runtime/docs/governance_dossier/",
+        "reports/development/",
+        "reports/tests/test_autonomous_tooling_policy.py",
+        "scripts/",
+    )
+    def allowed(path: str) -> bool:
+        planning = path.startswith(("docs/development_plan/", "reports/planning/")) or path in {
+            "scripts/build_ocor_development_plan.py",
+            "scripts/validate_ocor_development_plan.py",
+        }
+        return planning or (args.authorized_extension and path.startswith(extension_prefixes))
     unauthorized = sorted(path for path in set(changed + untracked) if not allowed(path))
     v.check("authorized planning-only diff", not unauthorized, unauthorized)
 
@@ -270,7 +295,7 @@ def main() -> int:
     critical_findings = [record for record in v.records if record["status"] == "FAIL"]
     report_lines = [
         "# OCOR Planning Validation Report", "",
-        f"Validation commit/base: `{BASE_COMMIT}`. Mechanical result: **{'PASS' if not critical_findings else 'FAIL'}**.", "",
+        f"Validation commit/base: `{args.base_ref}`. Mechanical result: **{'PASS' if not critical_findings else 'FAIL'}**.", "",
         f"Checks: {counts['PASS']} PASS, {counts['FAIL']} FAIL, {counts['NOT_EXECUTED']} NOT_EXECUTED. Optional unavailable tools are never counted as PASS.", "",
         "## Mechanical checks", "", "| Check | Status | Detail |", "|---|---|---|",
     ]

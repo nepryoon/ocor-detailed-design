@@ -1,0 +1,26 @@
+{
+  "$id": "urn:ocor:services-lock:1.0",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "services": {
+      "items": {
+        "additionalProperties": true,
+        "properties": {
+          "id": {"pattern": "^[a-z0-9-]+$"},
+          "image": {"type": "string"},
+          "license": {"minLength": 1, "type": "string"},
+          "source": {"format": "uri", "type": "string"},
+          "version": {"minLength": 1, "type": "string"}
+        },
+        "required": ["id", "version", "source", "license"],
+        "type": "object"
+      },
+      "minItems": 1,
+      "type": "array"
+    }
+  },
+  "required": ["schema_version", "services"],
+  "type": "object"
+}

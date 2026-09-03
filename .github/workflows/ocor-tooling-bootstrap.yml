@@ -1,0 +1,57 @@
+name: OCOR tooling and bootstrap policy
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tooling-policy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - uses: astral-sh/setup-uv@v6
+        with: {version: "0.12.5"}
+      - name: Restore pinned Python environment
+        run: |
+          uv sync --project ocor-runtime --frozen --extra test
+          uv tool install ruff==0.13.1
+      - name: Validate lock schemas and instances
+        run: |
+          ocor-runtime/.venv/bin/python - <<'PY'
+          import json
+          from pathlib import Path
+          from jsonschema import Draft202012Validator, FormatChecker
+          for name in ("toolchain", "services"):
+              schema = json.loads(Path(f"infra/{name}.lock.schema.json").read_text())
+              data = json.loads(Path(f"infra/{name}.lock.json").read_text())
+              Draft202012Validator.check_schema(schema)
+              Draft202012Validator(schema, format_checker=FormatChecker()).validate(data)
+          PY
+      - name: Run positive and negative tooling acceptance
+        run: ocor-runtime/.venv/bin/python -m unittest -v reports.tests.test_autonomous_tooling_policy
+      - name: Validate manifests and Compose rendering
+        run: |
+          python3 scripts/preflight_environment.py
+          python3 scripts/bootstrap_development_environment.py --check
+          python3 scripts/verify_external_services.py --manifest-only
+          python3 scripts/reset_test_environment.py
+          OCOR_LOCAL_TERMINUSDB_PASSWORD=x \
+          OCOR_LOCAL_KEYCLOAK_PASSWORD=x \
+          OCOR_LOCAL_OPENBAO_TOKEN=x \
+          OCOR_LOCAL_POSTGRES_PASSWORD=x \
+          OCOR_SPIRE_BOOTSTRAP_DIR=/tmp \
+          OCOR_SPIRE_JOIN_TOKEN=x \
+          docker compose -f deploy/bootstrap/compose.yaml config --quiet
+      - name: Validate RCCAD and immutable inputs
+        run: |
+          ocor-runtime/.venv/bin/python scripts/validate_ocor_development_plan.py --base-ref "${{ github.event.pull_request.base.sha || 'origin/main' }}" --authorized-extension
+          ocor-runtime/.venv/bin/python scripts/validate_rccad.py --base-ref "${{ github.event.pull_request.base.sha || 'origin/main' }}"
+          git diff --exit-code "${{ github.event.pull_request.base.sha || 'origin/main' }}" -- inputs/

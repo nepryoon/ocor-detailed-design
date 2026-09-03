@@ -58,3 +58,32 @@
 - Minimal unblock: fornire i servizi reali approvati e riprendere da OCOR-DEV-0016. Nessuna tecnologia sostitutiva è autorizzata.
 - Independent verifier terminale: GO_FOR_BLOCKED_STATE_MERGE, zero BLOCKER, HIGH, MEDIUM e LOW; modello/effort NOT_EXPOSED.
 - Claim fence invariato: E1=0, E2=0, zero global Verified; G2 non è chiuso, runtime conformance non è stabilita, PoC e Production restano NO-GO.
+
+## 2026-09-03 — CC-AUTONOMOUS-TOOLING-INFRASTRUCTURE-BOOTSTRAP / DEC-211
+
+- Baseline remota autoritativa verificata con Git e GitHub:
+  `d93e8870e975b2aeec715778f3c490ece0e0216f`. Il checkout obsoleto è preservato
+  integralmente nel commit `b3960a93efd94100420c856e66c1bf035c3850d9` sul
+  branch `archive/stale-reconciliation-20260903T152830Z`.
+- `DEC-210` è integrata. La ricerca su ref e PR ha confermato `DEC-211` come primo
+  identificativo libero; nessun file in `inputs/` è stato modificato.
+- RED test-only commit `605504fe3fd9b2aa3153f703accb72c9f5c15916`:
+  3 failure e 2 error attesi per policy, lock, strumenti, task e record assenti;
+  fingerprint SHA-256 `01bd89685cc2c1af54984dc52546cbe1e30cc9879b19ce3d5604ce4be4c1a3e4`.
+- Toolchain ripristinata con Python 3.12.11 e dipendenze locked; `ruff==0.13.1`
+  installato in user space e registrato nel lock.
+- Ambiente reale disposable avviato con 11 servizi pinned: TerminusDB, TypeDB,
+  Apache Jena/Fuseki, OPA, Keycloak, SPIRE server/agent, OpenBao, PostgreSQL,
+  Kafka e Qdrant. Tutti gli endpoint applicabili sono `READY`.
+- Un token OpenBao disposable è comparso durante una diagnostica locale; è stato
+  immediatamente ruotato e il container è stato ricreato. Nessun valore segreto è
+  persistito nel repository o nell'evidence.
+- GREEN locale: acceptance 10/10, RCCAD `AFF-001`–`AFF-010` static precheck PASS,
+  planning validator 37 PASS e 2 controlli opzionali `NOT_EXECUTED`, harness
+  documentale 14 PASS/0 FAIL/0 NOT_EXECUTED, lock schema PASS e service probe PASS.
+- Reset distruttivo limitato al progetto e clean rebuild `PASS`; fault injection
+  TypeDB `pause` rilevata fail-closed e ritorno a `READY` dopo `unpause` entro il
+  retry budget. La regressione runtime completa con PostgreSQL reale è 512/512 PASS.
+- Evidence fence invariato: `E1=0`, `E2=0`, runtime conformance
+  `NOT_ESTABLISHED`, PoC e Production `NO-GO`. La readiness infrastrutturale non
+  accetta automaticamente i quattro spike funzionali G2.

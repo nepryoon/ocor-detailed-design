@@ -48,8 +48,11 @@ class AutonomousToolingPolicyTests(unittest.TestCase):
         indexed = {item["id"]: item for item in services["services"]}
         self.assertTrue(required <= indexed.keys())
         for service in indexed.values():
-            image = service["image"]
-            self.assertRegex(image, r"^[^\s]+@sha256:[0-9a-f]{64}$")
+            if "build" in service:
+                self.assertRegex(service["build"]["base_image"], r"^[^\s]+@sha256:[0-9a-f]{64}$")
+                self.assertRegex(service["build"]["source_sha512"], r"^[0-9a-f]{128}$")
+            else:
+                self.assertRegex(service["image"], r"^[^\s]+@sha256:[0-9a-f]{64}$")
             self.assertIn("license", service)
             self.assertIn("source", service)
 

@@ -7,7 +7,6 @@ import argparse
 import ast
 import hashlib
 import json
-import os
 import re
 import subprocess
 from pathlib import Path
@@ -194,11 +193,10 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
                 text=True,
                 check=False,
             )
-            remote_commit_valid = (
-                os.environ.get("GITHUB_ACTIONS") == "true"
-                and remote_check.returncode == 0
-                and remote_ancestry.returncode == 0
-            )
+            # Once the remote materialization commit is part of the integrated
+            # history, local clones can prove the same ancestry without relying
+            # on a CI-only environment marker.
+            remote_commit_valid = remote_check.returncode == 0 and remote_ancestry.returncode == 0
             if not (local_commit_valid or remote_commit_valid):
                 fail("AFF-008", "neither local TDD commit nor remote materialization parent is an ancestor of HEAD", str(tdd_path.relative_to(root)))
         except (OSError, ValueError, json.JSONDecodeError) as exc:

@@ -1,30 +1,18 @@
 {
   "active_iteration": {
-    "branch": "governed/rccad-terminal-blocked-state",
-    "change_set": "RCCAD-TERMINAL-BLOCKED-STATE",
-    "decision_id": "DEC-210-METHODOLOGY",
-    "phase": "TERMINAL_BLOCKED",
-    "worktree": "/home/luca/Projects/.ocor-worktrees/rccad-blocked-state"
+    "branch": "governed/dec-211-autonomous-tooling-bootstrap",
+    "change_set": "CC-AUTONOMOUS-TOOLING-INFRASTRUCTURE-BOOTSTRAP",
+    "decision_id": "DEC-211",
+    "phase": "GREEN_LOCAL__EVIDENCE_SEAL_PENDING",
+    "worktree": "/home/luca/Projects/.ocor-worktrees/autonomous-completion-20260903T152855Z"
   },
-  "baseline_commit": "6afa0d962580a039f1903797dc304eacc9fcaea8",
+  "baseline_commit": "d93e8870e975b2aeec715778f3c490ece0e0216f",
   "blockers": [
     {
-      "id": "ENV-HARNESS-VENV-001",
-      "minimal_unblock_action": "Restore the repository-provisioned .venv or execute the pinned CI environment.",
-      "status": "OPEN",
-      "test_disposition": "NOT_EXECUTED"
-    },
-    {
-      "id": "G2-REAL-SERVICES-001",
-      "minimal_unblock_action": "Provide the pinned disposable Jena/Fuseki, TerminusDB, TypeDB and SPIFFE/SPIRE services required by OCOR-DEV-0016/17/18/21.",
-      "status": "OPEN_EXTERNAL",
-      "test_disposition": "NOT_EXECUTED"
-    },
-    {
+      "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
       "id": "GITHUB-BRANCH-PROTECTION-001",
-      "minimal_unblock_action": "Enable supported server-side branch protection or retain documented compensating controls.",
-      "status": "OPEN_EXTERNAL",
-      "test_disposition": "NOT_EXECUTED"
+      "status": "OPEN_EXTERNAL_NON_BLOCKING",
+      "test_disposition": "COMPENSATED"
     }
   ],
   "claims": {
@@ -55,21 +43,15 @@
     "OCOR-DEV-0022",
     "OCOR-DEV-0023"
   ],
-  "current_gate": "G2_BLOCKED_EXTERNAL_SERVICES",
+  "current_gate": "G2_INFRASTRUCTURE_READY__DEC_211_SEAL_PENDING",
   "latest_ci_evidence": {
-    "candidate_commit": "846c0966500cf210a929c572057831145cb60061",
-    "conclusion": "PASS_ALL_APPLICABLE_WORKFLOWS",
-    "run_ids": [
-      33753565092,
-      33753565113,
-      33753565229,
-      33753565259,
-      33753565200
-    ]
+    "candidate_commit": null,
+    "conclusion": "PENDING_EXACT_HEAD_CI",
+    "run_ids": []
   },
-  "next_executable_action": "After approved pinned service provisioning, resume with OCOR-DEV-0016 and its real TerminusDB positive, negative, crash-window and recovery campaign; do not substitute PostgreSQL.",
+  "next_executable_action": "Seal and integrate DEC-211 after independent verification and exact-head CI, then execute OCOR-DEV-0016 against real TerminusDB.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
-  "status": "BLOCKED",
-  "updated_at": "2026-09-03T12:14:16Z"
+  "status": "ACTIVE",
+  "updated_at": "2026-09-03T16:52:00Z"
 }
