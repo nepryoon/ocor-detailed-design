@@ -41,6 +41,14 @@
     {
       "command": "independent verifier pass 1 on 347f65a3 and pass 2 on 96f056db",
       "result": "NO_GO_FINDINGS_REMEDIATED"
+    },
+    {
+      "command": "independent verifier pass 3 on cad0047f",
+      "result": "GO_FOR_REMOTE_CI"
+    },
+    {
+      "command": "GitHub Actions run 33715342088",
+      "result": "FAIL_AFF_008_REMOTE_LOCAL_COMMIT_ANCESTRY"
     }
   ],
   "completed_tasks": [
@@ -54,7 +62,7 @@
     "reports/development/METHOD_COMPLIANCE.json",
     "reports/tests/rccad_tdd_evidence.json"
   ],
-  "exact_next_action": "Run fresh-context verifier pass 3 on the remediation commit, publish atomically to GitHub, then execute pinned CI before merge.",
+  "exact_next_action": "Publish ancestry remediation atomically to PR #37, wait for all CI, and merge only if every applicable check succeeds.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "ENV-HARNESS-VENV-001",

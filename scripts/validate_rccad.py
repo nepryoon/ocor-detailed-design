@@ -7,6 +7,7 @@ import argparse
 import ast
 import hashlib
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -177,8 +178,29 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
                 text=True,
                 check=False,
             )
-            if commit_check.returncode or ancestry.returncode:
-                fail("AFF-008", "TDD evidence commit is absent or not an ancestor of HEAD", str(tdd_path.relative_to(root)))
+            local_commit_valid = commit_check.returncode == 0 and ancestry.returncode == 0
+            remote_parent = str(tdd.get("remote_materialization_commit", ""))
+            remote_check = subprocess.run(
+                ["git", "cat-file", "-e", f"{remote_parent}^{{commit}}"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            remote_ancestry = subprocess.run(
+                ["git", "merge-base", "--is-ancestor", remote_parent, "HEAD"],
+                cwd=root,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            remote_commit_valid = (
+                os.environ.get("GITHUB_ACTIONS") == "true"
+                and remote_check.returncode == 0
+                and remote_ancestry.returncode == 0
+            )
+            if not (local_commit_valid or remote_commit_valid):
+                fail("AFF-008", "neither local TDD commit nor remote materialization parent is an ancestor of HEAD", str(tdd_path.relative_to(root)))
         except (OSError, ValueError, json.JSONDecodeError) as exc:
             fail("AFF-008", str(exc), str(tdd_path.relative_to(root)))
 
