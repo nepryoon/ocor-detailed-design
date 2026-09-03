@@ -112,6 +112,15 @@ def main() -> int:
         ["python3", "scripts/bootstrap_development_environment.py", "--execute", "--timeout", "300"],
         ["python3", "scripts/fault_inject_test_environment.py", "typedb", "pause", "--execute"],
     ]
+    fault_probe_command = ["python3", "scripts/verify_external_services.py", "--timeout", "0.5"]
+    unpause_command = [
+        "python3",
+        "scripts/fault_inject_test_environment.py",
+        "typedb",
+        "unpause",
+        "--execute",
+    ]
+    recovery_command = ["python3", "scripts/verify_external_services.py", "--timeout", "1"]
     refactor_code, refactor = execute(pytest_command, repository, env=environment)
     if refactor_code:
         raise BootstrapError("REFACTOR runtime regression command failed")
@@ -120,23 +129,16 @@ def main() -> int:
     if refactor_code:
         raise BootstrapError("REFACTOR setup or regression command failed")
     try:
-        failed_probe, output = execute(
-            ["python3", "scripts/verify_external_services.py", "--timeout", "0.5"], repository
-        )
+        failed_probe, output = execute(fault_probe_command, repository)
         refactor += b"\n" + output
         if failed_probe != 1:
             raise BootstrapError("faulted TypeDB was not detected fail-closed")
     finally:
-        _, output = execute(
-            ["python3", "scripts/fault_inject_test_environment.py", "typedb", "unpause", "--execute"],
-            repository,
-        )
+        _, output = execute(unpause_command, repository)
         refactor += b"\n" + output
     recovered = False
     for _ in range(15):
-        code, output = execute(
-            ["python3", "scripts/verify_external_services.py", "--timeout", "1"], repository
-        )
+        code, output = execute(recovery_command, repository)
         refactor += b"\n" + output
         if code == 0:
             recovered = True
@@ -165,7 +167,11 @@ def main() -> int:
                 "commands": (
                     ["pre-implementation unittest capture"]
                     if name == "red"
-                    else (green_commands if name == "green" else [pytest_command, *refactor_commands])
+                    else (
+                        green_commands
+                        if name == "green"
+                        else [pytest_command, *refactor_commands, fault_probe_command, unpause_command, recovery_command]
+                    )
                 ),
                 "exit_code": code,
                 "fingerprint": summary,
@@ -174,6 +180,7 @@ def main() -> int:
                 "raw_log": f"reports/tests/evidence/dec211/{name}.log",
                 "raw_log_sha256": digest(logs[name]),
                 "result": result,
+                **({"recovery_max_attempts": 15} if name == "refactor" else {}),
             }
         )
     evidence = {
