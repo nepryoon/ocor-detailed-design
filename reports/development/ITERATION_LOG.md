@@ -56,4 +56,5 @@
 - Escludendo i quattro root blocker, il fixed point del DAG non contiene alcun altro task indipendente raggiungibile. Lo stato terminale è pertanto BLOCKED, non COMPLETE.
 - Il runner autoritativo locale --status è NOT_EXECUTED perché jsonschema non è disponibile; il controllo non è stato ritentato. Il DAG è stato riconciliato in sola lettura dal backlog e dai manifesti.
 - Minimal unblock: fornire i servizi reali approvati e riprendere da OCOR-DEV-0016. Nessuna tecnologia sostitutiva è autorizzata.
+- Independent verifier terminale: GO_FOR_BLOCKED_STATE_MERGE, zero BLOCKER, HIGH, MEDIUM e LOW; modello/effort NOT_EXPOSED.
 - Claim fence invariato: E1=0, E2=0, zero global Verified; G2 non è chiuso, runtime conformance non è stabilita, PoC e Production restano NO-GO.
