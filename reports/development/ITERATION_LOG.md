@@ -28,3 +28,11 @@
 - REFACTOR/CI: Node `20.20.2` è stato pinning anche nei due workflow legacy, senza cambiare i test. Il commit remoto `8a9a2280750282af156ebb3c026ca0730c53bb27` ha superato tutti i workflow `33716881688/607/556/600/636`.
 - Independent verifier: `GO_FOR_EVIDENCE_SEAL`, zero `BLOCKER`, `HIGH` e `MEDIUM`; modello/effort `NOT_ATTESTABLE`. Il merge resta vietato fino al CI verde sull'HEAD del sigillo.
 - Claim fence invariato: `E1=0`, `E2=0`, zero global `Verified`; G1 non è ripromosso, runtime conformance non è stabilita, PoC e Production restano `NO-GO`.
+
+## 2026-09-03 — OCOR-DEV-REM-0008-RCCAD
+
+- Baseline remota: `698590511d2a48f5f09083af47f75734ceacc750`; PR #29 divergente selezionata per supersessione dopo il merge qualificato di REM-0007. Digest normativi `PASS`; harness e pytest locali `NOT_EXECUTED` per venv/uv assenti.
+- RED test-only `dde7e3e24dcaa5e68175763eebf9126b6df5bfb6`: cinque failure mirate per correlation ID schema-valid, tuple non-array e binding Proto non verificato dereferenziato.
+- GREEN `ce717f113e7b736238df7cc7ce0d471e09fa6790`: tutti i cinque workflow `33723246471/584/620/467/447` `PASS`.
+- Independent verifier: `GO_FOR_EVIDENCE_SEAL`, zero `BLOCKER`, `HIGH`, `MEDIUM`; scope esatto kernel+test, nessuna modifica a `inputs/`, ADD, LLD o contratti.
+- Claim fence invariato: `E1=0`, `E2=0`, zero global `Verified`; runtime conformance, PoC e Production restano `NO-GO`.
