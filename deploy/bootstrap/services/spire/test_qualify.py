@@ -39,7 +39,12 @@ class SpireQualifierTests(unittest.TestCase):
             qualify.validate_lock(lock)
 
     def test_runtime_must_be_running_exact_and_unpublished(self) -> None:
-        inspection = {"Config": {"Image": AGENT}, "State": {"Running": True, "Paused": False}, "NetworkSettings": {"Ports": {}}}
+        inspection = {
+            "Config": {"Image": AGENT},
+            "State": {"Running": True, "Paused": False},
+            "HostConfig": {"SecurityOpt": ["no-new-privileges:true"]},
+            "NetworkSettings": {"Ports": {}},
+        }
         qualify.validate_inspection(inspection, AGENT, "spire-agent")
         inspection["NetworkSettings"]["Ports"] = {"8081/tcp": [{"HostIp": "0.0.0.0", "HostPort": "8081"}]}
         with self.assertRaises(qualify.QualificationError):
