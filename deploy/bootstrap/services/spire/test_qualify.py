@@ -6,6 +6,7 @@ from __future__ import annotations
 import importlib.util
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 
 MODULE_PATH = Path(__file__).with_name("qualify.py")
@@ -38,6 +39,12 @@ class SpireQualifierTests(unittest.TestCase):
         with self.assertRaises(qualify.QualificationError):
             qualify.validate_lock(lock)
 
+    def test_duplicate_service_identity_is_rejected(self) -> None:
+        lock = self.lock()
+        lock["services"].append(dict(lock["services"][1]))
+        with self.assertRaises(qualify.QualificationError):
+            qualify.validate_lock(lock)
+
     def test_runtime_must_be_running_exact_and_unpublished(self) -> None:
         inspection = {
             "Config": {"Image": AGENT},
@@ -57,6 +64,11 @@ class SpireQualifierTests(unittest.TestCase):
         )
         with self.assertRaises(qualify.QualificationError):
             qualify.validate_configs('trust_domain = "wrong"', 'trust_domain = "ocor.test"')
+        with self.assertRaises(qualify.QualificationError):
+            qualify.validate_configs(
+                'trust_domain = "ocor.test"\ntrust_domain = "wrong"\nsocket_path = "/run/spire/sockets/server.sock"\nbind_address = "0.0.0.0"\n',
+                'trust_domain = "ocor.test"\nsocket_path = "/run/spire/sockets/agent.sock"\nserver_address = "spire-server"\n',
+            )
 
     def test_svid_identity_must_match_exactly(self) -> None:
         self.assertEqual(
@@ -65,6 +77,25 @@ class SpireQualifierTests(unittest.TestCase):
         )
         with self.assertRaises(qualify.QualificationError):
             qualify.validate_svid_output("SPIFFE ID: spiffe://other.test/workload/ocor-dev-0077")
+
+    def test_every_mutation_requires_execute(self) -> None:
+        for flag in ("recover_agent", "workload_svid", "fault", "invalid_token"):
+            values = {name: False for name in ("recover_agent", "workload_svid", "fault", "invalid_token")}
+            values[flag] = True
+            with self.assertRaises(qualify.QualificationError):
+                qualify.validate_mutation_flags(
+                    SimpleNamespace(**values, execute=False, env_file=None)
+                )
+        qualify.validate_mutation_flags(
+            SimpleNamespace(
+                recover_agent=False,
+                workload_svid=False,
+                fault=False,
+                invalid_token=False,
+                execute=False,
+                env_file=None,
+            )
+        )
 
 
 if __name__ == "__main__":

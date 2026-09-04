@@ -2,8 +2,9 @@
 
 `qualify.py` validates the exact digest-pinned SPIRE server and agent, their
 closed local configuration, runtime identity and workload X.509-SVID delivery.
-With `--recover-agent --execute --env-file PATH`, it performs a bounded,
-task-scoped recovery: generate a short-lived join token without logging it,
+The default invocation is strictly read-only. With `--recover-agent
+--workload-svid --invalid-token --fault --execute --env-file PATH`, it performs
+bounded, task-scoped mutation: generate a short-lived join token without logging it,
 atomically update the gitignored mode-0600 environment file, recreate only the
 SPIRE agent, verify readiness, create a deterministic disposable workload
 entry, fetch its SVID and remove the entry.
