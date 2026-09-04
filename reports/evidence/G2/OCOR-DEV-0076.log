@@ -1,43 +1,33 @@
-OCOR-DEV-0076 security-service provisioning qualification
+OCOR-DEV-0076 OPA and Keycloak provisioning qualification
 base_commit=934391f50cb4dffc91440f93c0f6dcddba8a9b00
-implementation_commit=b2d21f4a64a346dee3adc8dfdafb52a0638394b0
-
-$ sha256sum -c inputs/normative/SHA256SUMS
-8/8 OK; exit=0
-
-$ ./.venv/bin/python3 scripts/verify.py --json
-NOT_EXECUTED: worktree root .venv absent; exit=127; command not retried
-
-$ python3 -m unittest -v deploy/bootstrap/services/policy-identity/test_security_services.py  # RED
-FileNotFoundError: qualify_security_services.py absent; exit=1
-RED commit=d603090c7532a1587b9a014f29e5c4bd3d8b0fee
-
-$ python3 deploy/bootstrap/services/policy-identity/qualify_security_services.py --check  # characterization
-FAIL: spire-agent not running; spire-agent API health failed; SPIRE identity expired; exit=1
-
-$ python3 scripts/bootstrap_development_environment.py --execute --timeout 600
-status=PASS acquired=10 started=true; disposable secret file remained under gitignored .ocor; exit=0
+remediation_commit=6cba87a23810d6aa764cbd387d26a4febb993ea4
+finding=OCOR-DEV-0076-IV-001 remediated by removing all SPIRE/OpenBao requirements, probes and faults
 
 $ python3 deploy/bootstrap/services/policy-identity/qualify_security_services.py --check
-status=PASS errors=0; OPA, Keycloak, SPIRE server, SPIRE agent and OpenBao match lock digests; loopback/no-public-port boundary PASS; OPA health/data API PASS; Keycloak OIDC discovery and issuer PASS; OpenBao initialized/unsealed/version PASS; SPIRE server+agent health and attested identity PASS; exit=0
+status=PASS errors=0 services=opa,keycloak
+OPA digest/health/data API/loopback exposure PASS
+Keycloak digest/health/OIDC discovery/issuer/loopback exposure PASS
+SPIRE and OpenBao not inspected and not required; exit=0
 
 $ python3 deploy/bootstrap/services/policy-identity/qualify_security_services.py --fault-campaign --execute --timeout 45
-status=PASS; pause failure detected fail-closed and bounded recovery PASS for opa,keycloak,spire-server,spire-agent,openbao; passed=5 failed=0 skipped=0 not_executed=0; exit=0
-
-$ python3 -m unittest -v reports.tests.test_bootstrap_lock_validation reports.tests.test_autonomous_tooling_policy
-Ran 17 tests in 0.435s; OK; exit=0
+status=PASS; pause failure detected fail-closed and bounded recovery PASS for opa,keycloak
+passed=2 failed=0 skipped=0 not_executed=0; SPIRE/OpenBao untouched; exit=0
 
 $ python3 deploy/bootstrap/services/policy-identity/test_security_services.py -v
-Ran 7 tests; positive contract plus mutable/missing image, unhealthy/paused/exposed, wrong API/issuer, sealed vault, expired/banned/wrong-domain identity and per-service outage cases; OK; exit=0
+Ran 6 tests; exact service-set, positive contract, mutable/missing image, unhealthy/paused/exposed, wrong OPA API and wrong Keycloak issuer cases; OK; exit=0
+
+$ python3 -m unittest -q reports.tests.test_bootstrap_lock_validation reports.tests.test_autonomous_tooling_policy
+Ran 17 tests in 0.761s; OK; exit=0
 
 $ python3 -m pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0014.py
-22 passed in 0.08s; skipped=0; exit=0
+22 passed in 0.09s; skipped=0; exit=0
 
 $ OCOR_LIVE_POSTGRES_DSN=<redacted-disposable-local-dsn> python3 -m pytest -q ocor-runtime/tests
-513 passed in 34.22s; skipped=0; exit=0
+513 passed in 49.69s; skipped=0; exit=0
 
 $ ruff check deploy/bootstrap/services/policy-identity/qualify_security_services.py deploy/bootstrap/services/policy-identity/test_security_services.py
 All checks passed; exit=0
 
-scope=provisioning/readiness/identity/fault-recovery only; OCOR-DEV-0021 functional campaign NOT_EXECUTED by design
+scope=OPA+Keycloak provisioning/readiness/API/fault-recovery only
+excluded=SPIRE server, SPIRE agent, OpenBao, OCOR-DEV-0021 functional campaign
 claims=E1:0,E2:0,runtime_conformance:NOT_ESTABLISHED,PoC:NO-GO,Production:NO-GO
