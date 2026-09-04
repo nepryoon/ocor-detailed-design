@@ -36,7 +36,7 @@ def run(command: list[str], *, timeout: float = 30, check: bool = True) -> str:
         raise QualificationError(f"command unavailable or timed out: {command[0]}") from exc
     if check and completed.returncode:
         raise QualificationError(f"command failed ({completed.returncode}): {command[0]}")
-    return completed.stdout
+    return completed.stdout if completed.stdout else completed.stderr
 
 
 def validate_lock(lock: dict[str, Any]) -> dict[str, dict[str, Any]]:
