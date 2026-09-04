@@ -1,0 +1,33 @@
+OCOR-DEV-0076 OPA and Keycloak provisioning qualification
+base_commit=ac878c41d440eeccc81bd0bb5603beb3cfc6b861
+remediation_commit=57582baab5af42b2bf5b317064550163c971d9e7
+finding=OCOR-DEV-0076-IV-001 remediated by removing all SPIRE/OpenBao requirements, probes and faults
+
+$ python3 deploy/bootstrap/services/policy-identity/qualify_security_services.py --check
+status=PASS errors=0 services=opa,keycloak
+OPA digest/health/data API/loopback exposure PASS
+Keycloak digest/health/OIDC discovery/issuer/loopback exposure PASS
+SPIRE and OpenBao not inspected and not required; exit=0
+
+$ python3 deploy/bootstrap/services/policy-identity/qualify_security_services.py --fault-campaign --execute --timeout 45
+status=PASS; pause failure detected fail-closed and bounded recovery PASS for opa,keycloak
+passed=2 failed=0 skipped=0 not_executed=0; SPIRE/OpenBao untouched; exit=0
+
+$ python3 deploy/bootstrap/services/policy-identity/test_security_services.py -v
+Ran 6 tests; exact service-set, positive contract, mutable/missing image, unhealthy/paused/exposed, wrong OPA API and wrong Keycloak issuer cases; OK; exit=0
+
+$ python3 -m unittest -q reports.tests.test_bootstrap_lock_validation reports.tests.test_autonomous_tooling_policy
+Ran 17 tests in 0.761s; OK; exit=0
+
+$ python3 -m pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0014.py
+22 passed in 0.09s; skipped=0; exit=0
+
+$ OCOR_LIVE_POSTGRES_DSN=<redacted-disposable-local-dsn> python3 -m pytest -q ocor-runtime/tests
+513 passed in 49.69s; skipped=0; exit=0
+
+$ ruff check deploy/bootstrap/services/policy-identity/qualify_security_services.py deploy/bootstrap/services/policy-identity/test_security_services.py
+All checks passed; exit=0
+
+scope=OPA+Keycloak provisioning/readiness/API/fault-recovery only
+excluded=SPIRE server, SPIRE agent, OpenBao, OCOR-DEV-0021 functional campaign
+claims=E1:0,E2:0,runtime_conformance:NOT_ESTABLISHED,PoC:NO-GO,Production:NO-GO
