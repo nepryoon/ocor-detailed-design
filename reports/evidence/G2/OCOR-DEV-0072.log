@@ -1,0 +1,34 @@
+OCOR-DEV-0072 pinned CLI and test-tool qualification
+qualified_baseline_commit=69407c3f9e13b7d3a8ae211b47fe85be921d3552
+
+$ uv sync --project ocor-runtime --frozen --extra test
+Python 3.12.11; 36 frozen packages installed; exit=0
+
+$ python scripts/preflight_environment.py --require-ready
+status=PASS architecture=x86_64 docker=READY errors=0
+verified=docker,git,github-cli,java,node,python,ruff,uv
+
+$ python -m unittest -v reports.tests.test_bootstrap_lock_validation reports.tests.test_autonomous_tooling_policy
+Ran 17 tests in 0.456s
+OK
+
+$ python scripts/bootstrap_development_environment.py --check
+mode=CHECK_ONLY services=11 status=PASS
+
+$ python scripts/verify_external_services.py --manifest-only
+service_count=11 status=PASS
+
+$ pinned tool version probes
+Docker version 29.7.2
+git version 2.55.0
+gh version 2.99.0
+node v20.20.2
+Python 3.12.11
+ruff 0.13.1
+uv 0.12.5
+Java image eclipse-temurin@sha256:db1689535962d757a5adabf57387584ed543d38c0b9d1fe870123ea362ad73b0 inspected successfully
+
+$ OCOR_LIVE_POSTGRES_DSN=<redacted-local-disposable-dsn> python -m pytest -q ocor-runtime/tests
+513 passed in 34.08s
+
+summary frozen_sync=0 preflight=0 negative_policy_suite=0 bootstrap_check=0 manifest=0 version_probes=0 regression=0
