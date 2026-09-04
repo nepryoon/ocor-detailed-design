@@ -1,0 +1,43 @@
+{
+  "claims": {"E1": 0, "E2": 0, "Production_readiness": "NO_GO", "runtime_conformance": "NOT_ESTABLISHED"},
+  "commands": [
+    {"command": "uv sync --project ocor-runtime --frozen --extra test", "result": {"failed": 0, "not_executed": 0, "passed": 1, "skipped": 0}, "status": "PASS"},
+    {"command": "python scripts/preflight_environment.py --require-ready", "result": {"failed": 0, "not_executed": 0, "passed": 8, "skipped": 0}, "status": "PASS"},
+    {"command": "17 positive and negative tooling-policy and lock tests", "result": {"failed": 0, "not_executed": 0, "passed": 17, "skipped": 0}, "status": "PASS"},
+    {"command": "bootstrap check, service manifest check and exact version probes", "result": {"failed": 0, "not_executed": 0, "passed": 10, "skipped": 0}, "status": "PASS"},
+    {"command": "pytest -q ocor-runtime/tests with live disposable PostgreSQL", "result": {"failed": 0, "not_executed": 0, "passed": 513, "skipped": 0}, "status": "PASS"}
+  ],
+  "commit": "69407c3f9e13b7d3a8ae211b47fe85be921d3552",
+  "created_at": "2026-09-04T04:38:42Z",
+  "environment": {
+    "architecture": "x86_64",
+    "docker": "29.7.2",
+    "git": "2.55.0",
+    "github_cli": "2.99.0",
+    "java_image": "eclipse-temurin@sha256:db1689535962d757a5adabf57387584ed543d38c0b9d1fe870123ea362ad73b0",
+    "node": "20.20.2",
+    "python": "3.12.11",
+    "ruff": "0.13.1",
+    "uv": "0.12.5"
+  },
+  "inputs": {
+    "infra/toolchain.lock.json": "943badd4f2e157d31ef081acb1f417c697470f3a119df725ca06eb5f4ff9ce70",
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "scripts/bootstrap_development_environment.py": "ffe644144af84b383f6f609fa80460ab73ba8131a4fef9f1c5aa33f8fe9aa1ff",
+    "scripts/preflight_environment.py": "2fd8095514ca9e93dfb18c26f3a43e8bb36af670b64947431120e82b2140b467"
+  },
+  "raw_output_sha256": "f904cf2aee7acc84b9239cec8f53585d906bbaa834b9ffd7ecaed5760cc92bca",
+  "requirement_results": [
+    {"case_id": "OCOR-DEV-0072-EXACT-TOOLS", "command": "preflight exact version/integrity probes for eight governed tools", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 8, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0072-FAIL-CLOSED", "command": "missing, wrong-version, wrong-integrity, mutable and unofficial artifact negative matrix", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 17, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0072-REGRESSION", "command": "full runtime regression in the qualified tool environment", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 513, "skipped": 0}, "status": "PASS"}
+  ],
+  "residual_risks": [
+    "This evidence qualifies development CLI and test-tool availability only; it does not establish backend or runtime conformance.",
+    "Host tools remain governed by fail-closed byte/version preflight; replacement requires a new pinned lock and qualification."
+  ],
+  "result": "PASS",
+  "rollback": "Evidence-only qualification of already pinned host/repository tools: revert the isolated evidence commit; the worktree-local virtual environment is disposable and reproducible from uv.lock.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0072"
+}
