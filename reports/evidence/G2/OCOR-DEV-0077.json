@@ -1,0 +1,104 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "SPIRE qualifier unit suite, lock/policy suites, ruff and service-manifest validation",
+      "result": {"failed": 0, "not_executed": 0, "passed": 24, "skipped": 0, "subtests_passed": 2},
+      "status": "PASS"
+    },
+    {
+      "command": "real digest/config/version/readiness and workload X.509-SVID qualification",
+      "result": {"failed": 0, "not_executed": 0, "passed": 12, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "short-lived join-token rotation, agent-only recreation and superseded-registration cleanup",
+      "result": {"failed": 0, "not_executed": 0, "passed": 4, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "invalid-token fail-closed control plus bounded pause/unpause recovery",
+      "result": {"failed": 0, "not_executed": 0, "passed": 5, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "RCCAD architecture precheck, 513-test runtime regression and tool-backed document harness",
+      "result": {"failed": 0, "not_executed": 0, "passed": 537, "skipped": 0},
+      "status": "PASS"
+    }
+  ],
+  "commit": "ea674c71dd1d39f52dea2d88a0728ced3ba09355",
+  "created_at": "2026-09-04T14:18:36Z",
+  "environment": {
+    "architecture": "x86_64",
+    "docker": "29.7.2",
+    "network": "ocor-bootstrap isolated bridge; no SPIRE host ports",
+    "operating_mode": "local disposable non-production real service",
+    "spire_agent": "1.15.3",
+    "spire_agent_image": "ghcr.io/spiffe/spire-agent@sha256:41b0dcd8b258a69db9e2768292a060766fb76fd866e4bc925849981ea1b825ff",
+    "spire_server": "1.15.3",
+    "spire_server_image": "ghcr.io/spiffe/spire-server@sha256:4082f30d3e0ddc4000a171392c4ea174345ee44d161ee917c70b97b2ecfba141",
+    "trust_domain": "ocor.test"
+  },
+  "inputs": {
+    "deploy/bootstrap/compose.yaml": "9d9141e55b5b06d52d6a49ca1245bcbc54dfff058669fa92cae56f76b4994d83",
+    "deploy/bootstrap/services/spire/qualify.py": "ccafdafd100d2f6ab0237c0f9fe62eb89fb1317bdb317e42480501cd31e97164",
+    "deploy/bootstrap/services/spire/test_qualify.py": "19c13d73489422c8f3a90070d78ab05a421b00cfeaa6ec7fcf382ea8e5e5fdc6",
+    "deploy/bootstrap/spire/agent.conf": "cdfc88d1cdd4dccb3dbee4816c850c6acbd2ae20f80542dc10e7375bbea46ed7",
+    "deploy/bootstrap/spire/server.conf": "345e86922a6f7b24960809d8445b49cab37348ff34b90002edc4e4eb3f5f49f8",
+    "infra/services.lock.json": "1909ffe18d6ba546953eaf0b64fe6c7be8a58eefac3441ddd46f60a0a64bd879",
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35"
+  },
+  "raw_output_sha256": "ec353689598cd1e90f62da7a317d286bde7fe62782d5c2616e79286fa7db9364",
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0077-REAL-READINESS",
+      "command": "exact SPIRE server/agent digest, configuration, version, health, isolation and security-option checks",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 12, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0077-SVID",
+      "command": "create disposable registration, fetch exact workload X.509-SVID and delete registration",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 3, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0077-TOKEN-RECOVERY",
+      "command": "rotate unlogged short-lived token, recreate only agent and prune superseded agents",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 4, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0077-FAIL-CLOSED-RECOVERY",
+      "command": "invalid-token agent remains unready and is removed; paused real agent fails closed then recovers",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 5, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0077-REGRESSION",
+      "command": "unit/lock/policy, runtime, architecture and document regressions",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 561, "skipped": 0, "subtests_passed": 2},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This task qualifies disposable SPIRE server/agent provisioning and SVID delivery only; OCOR-DEV-0021 authorization, outage, stale-policy and latency semantics remain unqualified.",
+    "Join-token node attestation is intentionally non-reattestable; deterministic recovery rotates a short-lived token, recreates only the disposable agent and prunes superseded registrations.",
+    "The development Compose profile runs the SPIRE agent as the upstream image default user; workload isolation and production hardening remain subject to the dedicated security campaign."
+  ],
+  "result": "PASS",
+  "rollback": "The executed rollback path paused and unpaused only the disposable SPIRE agent. Credential recovery recreated only that agent, pruned superseded registrations, removed the temporary workload entry and left exactly one healthy agent; no adjacent service or production state was targeted.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0077"
+}
