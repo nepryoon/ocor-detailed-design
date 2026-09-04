@@ -286,11 +286,30 @@ def bounded_fault() -> dict[str, Any]:
     return {"paused_agent_unavailable": True, "unpause_recovery": "PASS"}
 
 
+def remove_container(name: str, *, allow_absent: bool) -> None:
+    removed = subprocess.run(
+        ["docker", "rm", "--force", name], capture_output=True, text=True, check=False, timeout=15
+    )
+    if removed.returncode:
+        inspected = subprocess.run(
+            ["docker", "inspect", name], capture_output=True, text=True, check=False, timeout=10
+        )
+        if allow_absent and inspected.returncode:
+            return
+        raise QualificationError("invalid-token container removal failed")
+    inspected = subprocess.run(
+        ["docker", "inspect", name], capture_output=True, text=True, check=False, timeout=10
+    )
+    if inspected.returncode == 0:
+        raise QualificationError("invalid-token container remains after removal")
+
+
 def invalid_token_control(
     *, image: str, agent_config: Path, bootstrap_dir: Path
 ) -> dict[str, Any]:
     name = "ocor-dev-0077-invalid-token"
-    run(["docker", "rm", "--force", name], check=False)
+    remove_container(name, allow_absent=True)
+    unready = False
     try:
         run([
             "docker", "run", "--detach", "--name", name,
@@ -316,9 +335,10 @@ def invalid_token_control(
         )
         if health.returncode == 0:
             raise QualificationError("invalid-token SPIRE agent became healthy")
-        return {"invalid_token_agent_unready": True, "cleanup": "PENDING"}
+        unready = True
     finally:
-        run(["docker", "rm", "--force", name], check=False)
+        remove_container(name, allow_absent=False)
+    return {"invalid_token_agent_unready": unready, "cleanup": "PASS"}
 
 
 def env_value(path: Path, key: str) -> str:
@@ -378,7 +398,6 @@ def qualify(args: argparse.Namespace) -> dict[str, Any]:
             agent_config=args.agent_config,
             bootstrap_dir=Path(env_value(args.env_file, "OCOR_SPIRE_BOOTSTRAP_DIR")),
         )
-        invalid["cleanup"] = "PASS"
     return {
         "schema_version": "1.0",
         "result": "PASS",

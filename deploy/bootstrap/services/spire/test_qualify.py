@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import importlib.util
+import subprocess
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 
 MODULE_PATH = Path(__file__).with_name("qualify.py")
@@ -96,6 +98,13 @@ class SpireQualifierTests(unittest.TestCase):
                 env_file=None,
             )
         )
+
+    def test_cleanup_failure_is_fail_closed(self) -> None:
+        failed = subprocess.CompletedProcess(["docker", "rm"], 1, "", "denied")
+        present = subprocess.CompletedProcess(["docker", "inspect"], 0, "[]", "")
+        with patch.object(qualify.subprocess, "run", side_effect=[failed, present]):
+            with self.assertRaises(qualify.QualificationError):
+                qualify.remove_container("test-container", allow_absent=False)
 
 
 if __name__ == "__main__":
