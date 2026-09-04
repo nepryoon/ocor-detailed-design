@@ -140,6 +140,33 @@ def wait_agent(timeout: float = 45) -> None:
     raise QualificationError("SPIRE agent did not become healthy within the bound")
 
 
+def agent_id(value: Any) -> str:
+    if not isinstance(value, dict):
+        raise QualificationError("attested agent ID has an unexpected representation")
+    identity = f"spiffe://{value.get('trust_domain', '')}{value.get('path', '')}"
+    if not identity.startswith("spiffe://ocor.test/spire/agent/"):
+        raise QualificationError("attested agent has an unexpected SPIFFE ID")
+    return identity
+
+
+def prune_superseded_agents() -> tuple[str, int]:
+    agents = json.loads(run([
+        "docker", "exec", SERVER, "/opt/spire/bin/spire-server", "agent", "list",
+        "-socketPath", SERVER_SOCKET, "-output", "json",
+    ])).get("agents", [])
+    if not agents:
+        raise QualificationError("SPIRE server reports no attested agent")
+    current = max(agents, key=lambda item: int(item.get("x509svid_expires_at", 0)))
+    current_id = agent_id(current.get("id"))
+    stale = [agent_id(item.get("id")) for item in agents if item is not current]
+    for identity in stale:
+        run([
+            "docker", "exec", SERVER, "/opt/spire/bin/spire-server", "agent", "evict",
+            "-socketPath", SERVER_SOCKET, "-spiffeID", identity,
+        ])
+    return current_id, len(stale)
+
+
 def recover_agent(env_file: Path, compose_file: Path) -> dict[str, Any]:
     token_payload = json.loads(
         run([
@@ -155,7 +182,13 @@ def recover_agent(env_file: Path, compose_file: Path) -> dict[str, Any]:
         "spire-agent",
     ], timeout=60)
     wait_agent()
-    return {"token_rotated": True, "agent_recreated": True, "agent_health": "READY"}
+    _, pruned = prune_superseded_agents()
+    return {
+        "token_rotated": True,
+        "agent_recreated": True,
+        "agent_health": "READY",
+        "superseded_agents_pruned": pruned,
+    }
 
 
 def validate_svid_output(output: str) -> str:
@@ -173,11 +206,7 @@ def workload_svid() -> dict[str, Any]:
     if not agents:
         raise QualificationError("SPIRE server reports no attested agent")
     parent = max(agents, key=lambda item: int(item.get("x509svid_expires_at", 0))).get("id")
-    if not isinstance(parent, dict):
-        raise QualificationError("attested agent ID has an unexpected representation")
-    parent_id = f"spiffe://{parent.get('trust_domain', '')}{parent.get('path', '')}"
-    if not parent_id.startswith("spiffe://ocor.test/spire/agent/"):
-        raise QualificationError("attested agent has an unexpected SPIFFE ID")
+    parent_id = agent_id(parent)
     created = json.loads(run([
         "docker", "exec", SERVER, "/opt/spire/bin/spire-server", "entry", "create",
         "-socketPath", SERVER_SOCKET, "-parentID", str(parent_id),
