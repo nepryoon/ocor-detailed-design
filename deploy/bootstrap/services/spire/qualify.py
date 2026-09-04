@@ -286,21 +286,26 @@ def bounded_fault() -> dict[str, Any]:
     return {"paused_agent_unavailable": True, "unpause_recovery": "PASS"}
 
 
+def container_absent(name: str) -> bool:
+    inspected = subprocess.run(
+        ["docker", "inspect", name], capture_output=True, text=True, check=False, timeout=10
+    )
+    if inspected.returncode == 0:
+        return False
+    if "no such object" in inspected.stderr.lower():
+        return True
+    raise QualificationError("invalid-token container absence could not be established")
+
+
 def remove_container(name: str, *, allow_absent: bool) -> None:
     removed = subprocess.run(
         ["docker", "rm", "--force", name], capture_output=True, text=True, check=False, timeout=15
     )
     if removed.returncode:
-        inspected = subprocess.run(
-            ["docker", "inspect", name], capture_output=True, text=True, check=False, timeout=10
-        )
-        if allow_absent and inspected.returncode:
+        if allow_absent and container_absent(name):
             return
         raise QualificationError("invalid-token container removal failed")
-    inspected = subprocess.run(
-        ["docker", "inspect", name], capture_output=True, text=True, check=False, timeout=10
-    )
-    if inspected.returncode == 0:
+    if not container_absent(name):
         raise QualificationError("invalid-token container remains after removal")
 
 

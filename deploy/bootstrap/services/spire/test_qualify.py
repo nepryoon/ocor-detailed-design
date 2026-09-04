@@ -106,6 +106,13 @@ class SpireQualifierTests(unittest.TestCase):
             with self.assertRaises(qualify.QualificationError):
                 qualify.remove_container("test-container", allow_absent=False)
 
+    def test_initial_cleanup_tolerates_only_confirmed_absence(self) -> None:
+        failed = subprocess.CompletedProcess(["docker", "rm"], 1, "", "daemon unavailable")
+        unknown = subprocess.CompletedProcess(["docker", "inspect"], 1, "", "daemon unavailable")
+        with patch.object(qualify.subprocess, "run", side_effect=[failed, unknown]):
+            with self.assertRaises(qualify.QualificationError):
+                qualify.remove_container("test-container", allow_absent=True)
+
 
 if __name__ == "__main__":
     unittest.main()
