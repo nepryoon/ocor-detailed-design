@@ -1,0 +1,49 @@
+OCOR-DEV-0077 real SPIFFE/SPIRE provisioning qualification
+qualified_implementation_commit=de61a4ee5dba361a4d9dca54e57c38cac397ec33
+baseline_commit=ac878c41d440eeccc81bd0bb5603beb3cfc6b861
+
+CASE OCOR-DEV-0077-TDD-RED
+qualifier_absent; test_qualify.py exit=1 expected
+
+CASE OCOR-DEV-0077-UNIT-LOCK-POLICY
+9 SPIRE qualifier tests PASS (including duplicate lock/config rejection, execute gate, fail-closed cleanup and strict not-found handling)
+17 lock/policy tests plus 2 subtests PASS
+ruff=PASS manifest_only=PASS service_count=11
+
+CASE OCOR-DEV-0077-REAL-IDENTITY-READINESS
+started_at=2026-09-04T14:41:18Z
+$ python3 deploy/bootstrap/services/spire/qualify.py --recover-agent --workload-svid --invalid-token --fault --execute --env-file <mode-0600-disposable-env>
+spire-server version=1.15.3 digest=sha256:4082f30d3e0ddc4000a171392c4ea174345ee44d161ee917c70b97b2ecfba141
+spire-agent version=1.15.3 digest=sha256:41b0dcd8b258a69db9e2768292a060766fb76fd866e4bc925849981ea1b825ff
+trust_domain=ocor.test server_health=healthy agent_health=READY
+server_host_ports=0 agent_host_ports=0 no_new_privileges=true
+workload_svid=spiffe://ocor.test/workload/ocor-dev-0077
+workload_entry_cleanup=PASS
+completed_at=2026-09-04T14:41:28Z
+
+CASE OCOR-DEV-0077-TOKEN-RECOVERY
+join_token_rotated_without_logging=PASS
+agent_recreated_only=PASS
+superseded_agent_registrations_pruned=1
+active_agent_count=1
+
+CASE OCOR-DEV-0077-NEGATIVE-AND-FAULT
+isolated_agent_with_invalid_token_health_exit=1 fail_closed=PASS cleanup=PASS
+invalid_token_campaign=CHECKED_IN_QUALIFIER
+final_container_removal_required=true docker_inspect_absent=PASS initial_absence_requires_explicit_not_found=true
+paused_agent_unavailable=true
+unpause_recovery=PASS
+active_agent_count=1 qualifier_workload_entries_after_cleanup=0
+
+CASE OCOR-DEV-0077-ADJACENT-NONINTERFERENCE
+opa running=true health=healthy start_unchanged_by_spire_commands=true
+keycloak running=true health=healthy start_unchanged_by_spire_commands=true
+openbao running=true health=healthy; no SPIRE command targeted this service
+
+CASE OCOR-DEV-0077-REGRESSION
+RCCAD AFF-001..AFF-010 static precheck PASS
+513 runtime tests PASS
+document harness PASS=14 FAIL=0 NOT_EXECUTED=0
+inputs checksums 8/8 PASS
+
+summary red=EXPECTED_FAILURE unit=0 mutation_gate=0 closed_validation=0 lock_policy=0 real_identity=0 svid=0 invalid_token=0 fault=0 recovery=0 cleanup=0 regression=0
