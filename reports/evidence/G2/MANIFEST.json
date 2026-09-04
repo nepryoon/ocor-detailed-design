@@ -1,5 +1,7 @@
 {
   "artifacts": [
+    {"path": "OCOR-DEV-0075.json", "sha256": "5a912e0847c6fbf250cd2238433b303ebf09e2e5e3f5dba32aa96495726c65a9", "task_id": "OCOR-DEV-0075"},
+    {"path": "OCOR-DEV-0075.log", "sha256": "bb0f09f2236ae95504fdb4727ab5330e882949331eaed2fa570d7de4ea131675", "task_id": "OCOR-DEV-0075-RAW"},
     {"path": "OCOR-DEV-0072.json", "sha256": "91694b3923fea17d02cd33693f1d3c78628c8c199813502654658fb7a152cc61", "task_id": "OCOR-DEV-0072"},
     {"path": "OCOR-DEV-0072.log", "sha256": "f904cf2aee7acc84b9239cec8f53585d906bbaa834b9ffd7ecaed5760cc92bca", "task_id": "OCOR-DEV-0072-RAW"},
     {
@@ -76,6 +78,11 @@
   "created_at": "2026-09-02T04:25:45Z",
   "gate": "G2",
   "requirement_results": [
+    {"case_id": "OCOR-DEV-0075-REAL-READINESS", "command": "exact version/build/image identity, healthy state, non-root runtime and loopback-only API probes", "evidence_path": "OCOR-DEV-0075.json", "raw_output_path": "OCOR-DEV-0075.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0075"},
+    {"case_id": "OCOR-DEV-0075-API-CONTRACT", "command": "positive ping/SELECT/ASK and negative malformed-query/absent-dataset checks against real Fuseki", "evidence_path": "OCOR-DEV-0075.json", "raw_output_path": "OCOR-DEV-0075.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0075"},
+    {"case_id": "OCOR-DEV-0075-FAIL-CLOSED-RECOVERY", "command": "bounded pause makes the endpoint unavailable, then unpause/restart restore health and query execution", "evidence_path": "OCOR-DEV-0075.json", "raw_output_path": "OCOR-DEV-0075.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0075"},
+    {"case_id": "OCOR-DEV-0075-LOCK-NEGATIVE-MATRIX", "command": "canonical lock policy positive and negative suite, including malformed build and mutable image rejection", "evidence_path": "OCOR-DEV-0075.json", "raw_output_path": "OCOR-DEV-0075.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0075"},
+    {"case_id": "OCOR-DEV-0075-REGRESSION", "command": "full runtime regression, architecture static checks and document harness", "evidence_path": "OCOR-DEV-0075.json", "raw_output_path": "OCOR-DEV-0075.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0075"},
     {"case_id": "OCOR-DEV-0072-EXACT-TOOLS", "command": "preflight exact version/integrity probes for eight governed tools", "evidence_path": "OCOR-DEV-0072.json", "raw_output_path": "OCOR-DEV-0072.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0072"},
     {"case_id": "OCOR-DEV-0072-FAIL-CLOSED", "command": "missing, wrong-version, wrong-integrity, mutable and unofficial artifact negative matrix", "evidence_path": "OCOR-DEV-0072.json", "raw_output_path": "OCOR-DEV-0072.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0072"},
     {"case_id": "OCOR-DEV-0072-REGRESSION", "command": "full runtime regression in the qualified tool environment", "evidence_path": "OCOR-DEV-0072.json", "raw_output_path": "OCOR-DEV-0072.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0072"},

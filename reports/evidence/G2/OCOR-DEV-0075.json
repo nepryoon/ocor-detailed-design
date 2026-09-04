@@ -1,0 +1,112 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "python3 scripts/verify_external_services.py --manifest-only; inspect live Fuseki version, image identity, health, user, security option and loopback publication",
+      "result": {"failed": 0, "not_executed": 0, "passed": 10, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "real Fuseki ping and SPARQL SELECT/ASK positive API checks",
+      "result": {"failed": 0, "not_executed": 0, "passed": 3, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "real Fuseki malformed-query and absent-dataset negative API checks",
+      "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "bounded Fuseki pause, fail-closed probe, unpause, restart and recovery campaign",
+      "result": {"failed": 0, "not_executed": 0, "passed": 7, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest bootstrap lock and autonomous tooling policy suites",
+      "result": {"failed": 0, "not_executed": 0, "passed": 17, "skipped": 0, "subtests_passed": 2},
+      "status": "PASS"
+    },
+    {
+      "command": "planning validation, RCCAD static architecture fitness and full runtime regression with live disposable PostgreSQL",
+      "result": {"failed": 0, "not_executed": 0, "passed": 560, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "tool-backed document harness",
+      "result": {"failed": 0, "not_executed": 0, "passed": 14, "skipped": 0},
+      "status": "PASS"
+    }
+  ],
+  "commit": "934391f50cb4dffc91440f93c0f6dcddba8a9b00",
+  "created_at": "2026-09-04T10:07:36Z",
+  "environment": {
+    "architecture": "x86_64",
+    "container": "ocor-bootstrap-fuseki-1",
+    "container_started_at_after_restart": "2026-09-04T10:04:21.664977638Z",
+    "docker": "29.7.2",
+    "host_binding": "127.0.0.1:3030",
+    "image": "ocor/jena-fuseki:6.2.0",
+    "image_id": "sha256:7a55d816b0031cae6f2e2c5262f0bd1bcd247ccbe8cf8c027347083227c574b7",
+    "operating_mode": "local disposable non-production real service",
+    "service": "Apache Jena Fuseki 6.2.0"
+  },
+  "inputs": {
+    "deploy/bootstrap/compose.yaml": "9d9141e55b5b06d52d6a49ca1245bcbc54dfff058669fa92cae56f76b4994d83",
+    "infra/fuseki/Dockerfile": "6018164d72dc46426414b4186ae5173c3fe801bd1923def389b52439048eff65",
+    "infra/services.lock.json": "1909ffe18d6ba546953eaf0b64fe6c7be8a58eefac3441ddd46f60a0a64bd879",
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "scripts/fault_inject_test_environment.py": "b0f12c794d398888711207658fd849deaf2083680fb73326af35772a943b88f5",
+    "scripts/verify_external_services.py": "25c7f89860d3fc3c627369456b8c58bdd62b772121f25d3e446c8ef3c04e6109"
+  },
+  "raw_output_sha256": "bb0f09f2236ae95504fdb4727ab5330e882949331eaed2fa570d7de4ea131675",
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0075-REAL-READINESS",
+      "command": "exact version/build/image identity, healthy state, non-root runtime and loopback-only API probes",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 10, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0075-API-CONTRACT",
+      "command": "positive ping/SELECT/ASK and negative malformed-query/absent-dataset checks against real Fuseki",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 5, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0075-FAIL-CLOSED-RECOVERY",
+      "command": "bounded pause makes the endpoint unavailable, then unpause/restart restore health and query execution",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 7, "skipped": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0075-LOCK-NEGATIVE-MATRIX",
+      "command": "canonical lock policy positive and negative suite, including malformed build and mutable image rejection",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 17, "skipped": 0, "subtests_passed": 2},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0075-REGRESSION",
+      "command": "full runtime regression, architecture static checks and document harness",
+      "requirement_id": "BR-003",
+      "result": {"failed": 0, "not_executed": 0, "passed": 537, "skipped": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This task qualifies provisioning, readiness, API reachability and bounded recovery of the real Fuseki service; it does not qualify OCOR-DEV-0018 RDF/JSON-LD/SHACL semantics or runtime conformance.",
+    "The development service intentionally uses an ephemeral in-memory dataset; deterministic fixture, backup and disaster-recovery qualification remain assigned to downstream tasks."
+  ],
+  "result": "PASS",
+  "rollback": "Executed task-scoped pause/unpause and restart recovery against the disposable Fuseki container. Evidence-only repository change is reverted through a new revert commit; no production state or persistent volume was changed.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0075"
+}
