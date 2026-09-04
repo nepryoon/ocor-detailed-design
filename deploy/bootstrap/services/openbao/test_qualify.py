@@ -85,7 +85,14 @@ class OpenBaoQualificationContractTests(unittest.TestCase):
         with self.assertRaisesRegex(qualify.QualificationError, "version"):
             qualify.validate_health(
                 200,
-                json.dumps({"initialized": True, "sealed": False, "version": "2.6.1"}),
+                json.dumps(
+                    {
+                        "initialized": True,
+                        "sealed": False,
+                        "standby": False,
+                        "version": "2.6.1",
+                    }
+                ),
                 "2.6.2",
             )
 
