@@ -1,0 +1,41 @@
+{
+  "claims": {"E1": 0, "E2": 0, "Production_readiness": "NO_GO", "runtime_conformance": "NOT_ESTABLISHED"},
+  "commands": [
+    {"command": "inspect live TerminusDB image identity and health", "result": {"failed": 0, "not_executed": 0, "passed": 2, "skipped": 0}, "status": "PASS"},
+    {"command": "TerminusDB /api/ok, /api/info and authentication matrix", "result": {"failed": 0, "not_executed": 0, "passed": 6, "skipped": 0}, "status": "PASS"},
+    {"command": "bounded pause, fail-closed detection, unpause and recovery", "result": {"failed": 0, "not_executed": 0, "passed": 4, "skipped": 0}, "status": "PASS"},
+    {"command": "11 canonical lock positive/negative tests", "result": {"failed": 0, "not_executed": 0, "passed": 11, "skipped": 0}, "status": "PASS"},
+    {"command": "pytest -q ocor-runtime/tests with real disposable services", "result": {"failed": 0, "not_executed": 0, "passed": 513, "skipped": 0}, "status": "PASS"}
+  ],
+  "commit": "934391f50cb4dffc91440f93c0f6dcddba8a9b00",
+  "created_at": "2026-09-04T10:05:14Z",
+  "environment": {
+    "image": "terminusdb/terminusdb-server@sha256:58f829d5a96b3bc8e63811270c766ea4603fae0c948dced724de481461b4d073",
+    "network_binding": "127.0.0.1:6363",
+    "storage": "tmpfs disposable",
+    "terminusdb": "12.0.7",
+    "terminusdb_store": "0.19.8"
+  },
+  "inputs": {
+    "deploy/bootstrap/compose.yaml": "9d9141e55b5b06d52d6a49ca1245bcbc54dfff058669fa92cae56f76b4994d83",
+    "infra/services.lock.json": "1909ffe18d6ba546953eaf0b64fe6c7be8a58eefac3441ddd46f60a0a64bd879",
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "scripts/fault_inject_test_environment.py": "b0f12c794d398888711207658fd849deaf2083680fb73326af35772a943b88f5",
+    "scripts/verify_external_services.py": "25c7f89860d3fc3c627369456b8c58bdd62b772121f25d3e446c8ef3c04e6109"
+  },
+  "raw_output_sha256": "35e7cb5062b2657cb514e3795fcea963386aedcc9b019097043bae36642bf081",
+  "requirement_results": [
+    {"case_id": "OCOR-DEV-0073-REAL-READINESS", "command": "digest identity, health and real API version probes", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 4, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0073-AUTH-NEGATIVE", "command": "wrong disposable credential returns HTTP 401", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 1, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0073-FAULT-RECOVERY", "command": "pause is detected as NOT_READY; unpause restores API and healthy state", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 4, "skipped": 0}, "status": "PASS"},
+    {"case_id": "OCOR-DEV-0073-REGRESSION", "command": "full runtime regression with real disposable services", "requirement_id": "BR-003", "result": {"failed": 0, "not_executed": 0, "passed": 513, "skipped": 0}, "status": "PASS"}
+  ],
+  "residual_risks": [
+    "This provisioning evidence does not qualify the OCOR-DEV-0016 TerminusDB concurrency, crash-window and reconciliation campaign.",
+    "Anonymous database-list access returned only an empty two-byte array; authorization semantics remain in the separate functional campaign."
+  ],
+  "result": "PASS",
+  "rollback": "Executed bounded rollback/recovery: pause produced NOT_READY, unpause restored TCP, HTTP 200 and healthy state; storage is disposable tmpfs.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0073"
+}
