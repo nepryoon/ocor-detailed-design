@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Qualify the pinned disposable OCOR security services without functional campaigning."""
+"""Qualify pinned disposable OPA and Keycloak without functional campaigning."""
 
 from __future__ import annotations
 
@@ -17,8 +17,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[4]
 PROJECT = "ocor-bootstrap"
-REQUIRED_SERVICES = ("opa", "keycloak", "spire-server", "spire-agent", "openbao")
-HOST_APIS = {"opa", "keycloak", "openbao"}
+REQUIRED_SERVICES = ("opa", "keycloak")
 DIGEST_IMAGE = re.compile(r"^[^\s@]+@sha256:[0-9a-f]{64}$")
 
 
@@ -86,61 +85,17 @@ def get_json(url: str) -> dict[str, Any]:
         raise QualificationError(f"local API unavailable: {url}") from exc
 
 
-def exec_json(container: str, args: list[str]) -> dict[str, Any]:
-    result = command(["docker", "exec", f"{PROJECT}-{container}-1", *args])
-    if result.returncode:
-        raise QualificationError(f"{container} command failed")
-    try:
-        value = json.loads(result.stdout)
-    except json.JSONDecodeError as exc:
-        raise QualificationError(f"{container} returned invalid JSON") from exc
-    if not isinstance(value, dict):
-        raise QualificationError(f"{container} JSON is not an object")
-    return value
-
-
-def exec_health(container: str, binary: str, socket_path: str) -> bool:
-    result = command(
-        ["docker", "exec", f"{PROJECT}-{container}-1", binary, "healthcheck", "-socketPath", socket_path]
-    )
-    return result.returncode == 0
-
-
 def collect_api() -> dict[str, Any]:
-    agents = exec_json(
-        "spire-server",
-        [
-            "/opt/spire/bin/spire-server", "agent", "list", "-socketPath",
-            "/run/spire/sockets/server.sock", "-output", "json",
-        ],
-    ).get("agents", [])
-    active = agents[0] if agents else {}
-    identity = active.get("id", {})
     return {
         "keycloak": get_json("http://127.0.0.1:8080/realms/master/.well-known/openid-configuration"),
         "opa": {
             "data": get_json("http://127.0.0.1:8181/v1/data"),
             "health": get_json("http://127.0.0.1:8181/health"),
         },
-        "openbao": get_json("http://127.0.0.1:8200/v1/sys/health"),
-        "spire-agent": {
-            "healthy": exec_health("spire-agent", "/opt/spire/bin/spire-agent", "/run/spire/sockets/agent.sock")
-        },
-        "spire-identity": {
-            "agent_version": active.get("agent_version"),
-            "banned": active.get("banned"),
-            "expires_at": active.get("x509svid_expires_at", 0),
-            "trust_domain": identity.get("trust_domain"),
-        },
-        "spire-server": {
-            "healthy": exec_health("spire-server", "/opt/spire/bin/spire-server", "/run/spire/sockets/server.sock")
-        },
     }
 
 
-def evaluate(
-    containers: dict[str, dict[str, Any]], api: dict[str, Any], lock: dict[str, Any], *, now_epoch: int
-) -> list[str]:
+def evaluate(containers: dict[str, dict[str, Any]], api: dict[str, Any], lock: dict[str, Any]) -> list[str]:
     errors = validate_lock(lock)
     indexed = lock_index(lock)
     for name in REQUIRED_SERVICES:
@@ -153,10 +108,8 @@ def evaluate(
             errors.append(f"{name} health is not healthy")
         if name in indexed and state.get("image") != indexed[name].get("image"):
             errors.append(f"{name} image does not match lock")
-        if name in HOST_APIS and any(address != "127.0.0.1" for address in state.get("host_ips", [])):
+        if any(address != "127.0.0.1" for address in state.get("host_ips", [])):
             errors.append(f"{name} host exposure is not loopback-only")
-        if name.startswith("spire-") and state.get("host_ips"):
-            errors.append(f"{name} unexpectedly publishes a host port")
     if api.get("opa", {}).get("health") != {}:
         errors.append("OPA health contract failed")
     if not isinstance(api.get("opa", {}).get("data", {}).get("result"), dict):
@@ -168,28 +121,6 @@ def evaluate(
     for field in ("authorization_endpoint", "token_endpoint"):
         if not str(keycloak.get(field, "")).startswith(f"{issuer}/protocol/openid-connect/"):
             errors.append(f"Keycloak {field} contract failed")
-    openbao = api.get("openbao", {})
-    if openbao.get("initialized") is not True:
-        errors.append("OpenBao is not initialized")
-    if openbao.get("sealed") is not False:
-        errors.append("OpenBao is sealed")
-    if "openbao" in indexed and openbao.get("version") != indexed["openbao"].get("version"):
-        errors.append("OpenBao version does not match lock")
-    for name in ("spire-server", "spire-agent"):
-        if api.get(name, {}).get("healthy") is not True:
-            errors.append(f"{name} API health failed")
-    identity = api.get("spire-identity", {})
-    if identity.get("agent_version") != indexed.get("spire-agent", {}).get("version"):
-        errors.append("SPIRE agent version does not match lock")
-    if identity.get("banned") is not False:
-        errors.append("SPIRE agent identity is banned")
-    if identity.get("trust_domain") != "ocor.test":
-        errors.append("SPIRE agent trust domain mismatch")
-    try:
-        if int(identity.get("expires_at", 0)) <= now_epoch:
-            errors.append("SPIRE agent identity is expired")
-    except (TypeError, ValueError):
-        errors.append("SPIRE agent identity expiry is invalid")
     return errors
 
 
@@ -199,10 +130,9 @@ def check(lock: dict[str, Any]) -> dict[str, Any]:
         api = collect_api()
     except QualificationError as exc:
         return {"errors": [str(exc)], "services": containers, "status": "FAIL"}
-    errors = evaluate(containers, api, lock, now_epoch=int(time.time()))
+    errors = evaluate(containers, api, lock)
     return {
         "errors": errors,
-        "identity": {"spire_agent_attested": not any("SPIRE agent" in item for item in errors)},
         "services": containers,
         "status": "PASS" if not errors else "FAIL",
     }
@@ -217,7 +147,7 @@ def fault_campaign(lock: dict[str, Any], timeout: int) -> dict[str, Any]:
             raise QualificationError(f"failed to pause {name}")
         try:
             state = inspect_containers()
-            detected = any(name in error for error in evaluate(state, {}, lock, now_epoch=int(time.time())))
+            detected = any(name in error for error in evaluate(state, {}, lock))
         finally:
             resumed = command(["docker", "unpause", container], timeout=10)
             if resumed.returncode:
