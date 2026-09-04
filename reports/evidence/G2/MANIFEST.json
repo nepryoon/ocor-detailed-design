@@ -1,6 +1,16 @@
 {
   "artifacts": [
     {
+      "path": "OCOR-DEV-0078.json",
+      "sha256": "e06db9326e939bb44ab4506a3769a80c4a9f84cf148b75e832f996be4ad279da",
+      "task_id": "OCOR-DEV-0078"
+    },
+    {
+      "path": "OCOR-DEV-0078.log",
+      "sha256": "752a4998838106c32c120cd0ebaa7e42866d794e4a9795c8249ba57d4d4b2605",
+      "task_id": "OCOR-DEV-0078-RAW"
+    },
+    {
       "path": "OCOR-DEV-0074.json",
       "sha256": "119338fb8184a4e00fc2f0a91ab88df613f7251d52ec810171fce40576b77521",
       "task_id": "OCOR-DEV-0074"
@@ -97,9 +107,54 @@
       "task_id": "OCOR-DEV-0023-RAW"
     }
   ],
-  "created_at": "2026-09-04T10:08:51Z",
+  "created_at": "2026-09-04T14:12:35Z",
   "gate": "G2",
   "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0078-PINNED-READINESS-ISOLATION",
+      "command": "exact lock/image/version, Docker health, no-new-privileges and loopback-only publication",
+      "evidence_path": "OCOR-DEV-0078.json",
+      "raw_output_path": "OCOR-DEV-0078.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0078"
+    },
+    {
+      "case_id": "OCOR-DEV-0078-AUTH-FAIL-CLOSED",
+      "command": "invalid token denied with HTTP 403 and disposable in-memory token accepted by system API",
+      "evidence_path": "OCOR-DEV-0078.json",
+      "raw_output_path": "OCOR-DEV-0078.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0078"
+    },
+    {
+      "case_id": "OCOR-DEV-0078-FAULT-RECOVERY",
+      "command": "OpenBao-only bounded pause detection, mandatory unpause and restart recovery",
+      "evidence_path": "OCOR-DEV-0078.json",
+      "raw_output_path": "OCOR-DEV-0078.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0078"
+    },
+    {
+      "case_id": "OCOR-DEV-0078-NEGATIVE-CONTRACTS",
+      "command": "mutable/unofficial lock, external binding, wrong image/version, sealed state and invalid-token matrix",
+      "evidence_path": "OCOR-DEV-0078.json",
+      "raw_output_path": "OCOR-DEV-0078.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0078"
+    },
+    {
+      "case_id": "OCOR-DEV-0078-REGRESSION",
+      "command": "full runtime regression after real OpenBao recovery",
+      "evidence_path": "OCOR-DEV-0078.json",
+      "raw_output_path": "OCOR-DEV-0078.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0078"
+    },
     {
       "case_id": "OCOR-DEV-0074-PINNED-READINESS",
       "command": "exact lock, running image, health, loopback bindings, gRPC and HTTP version checks",
