@@ -1,0 +1,46 @@
+OCOR-DEV-0074 real TypeDB provisioning qualification
+qualified_implementation_commit=9ab08a3d7d8e4592cf1cb7bd9274286ac6eb7b9f
+baseline_commit=934391f50cb4dffc91440f93c0f6dcddba8a9b00
+
+$ python3 deploy/bootstrap/services/typedb/test_qualify.py
+Ran 5 tests in 0.000s
+OK
+
+$ ruff check deploy/bootstrap/services/typedb
+All checks passed!
+
+$ python -m unittest -v reports.tests.test_bootstrap_lock_validation reports.tests.test_autonomous_tooling_policy
+Ran 17 tests in 0.586s
+OK
+
+$ python3 scripts/verify_external_services.py --manifest-only
+service_count=11 status=PASS
+
+$ python3 deploy/bootstrap/services/typedb/qualify.py --fault-recovery --execute
+service=typedb result=PASS
+locked_image=typedb/typedb@sha256:7555df2fffd5354553143facbfc81a58ce7036e4cc8b3b50bc7139faff4a721f
+locked_version=3.12.3 distribution=TypeDB_CE official_source=true license=MPL-2.0
+docker_health_before=healthy docker_health_after=healthy
+bindings=127.0.0.1:1729,127.0.0.1:8000
+grpc_tcp=READY http_health=204 http_version=3.12.3
+unauthenticated_database_access=FAIL_CLOSED_401_AUT2
+paused_service_detected_unavailable=true
+unpause_recovery=PASS restart_recovery=PASS
+
+$ OCOR_LIVE_POSTGRES_DSN=<redacted-disposable-container-credential> python -m pytest -q ocor-runtime/tests
+513 passed in 31.82s
+
+$ python3 scripts/verify.py --json
+PASS=14 FAIL=0 NOT_EXECUTED=0
+
+$ sha256sum -c inputs/normative/SHA256SUMS
+8 files OK
+
+environment architecture=x86_64 docker=29.7.2 python=3.12.11
+inputs_tree=60a73de8e47b38e94aeb0e2b8dedc689fab6eb35
+services_lock_sha256=1909ffe18d6ba546953eaf0b64fe6c7be8a58eefac3441ddd46f60a0a64bd879
+compose_sha256=9d9141e55b5b06d52d6a49ca1245bcbc54dfff058669fa92cae56f76b4994d83
+qualifier_sha256=680ef0e41554fb7928ef468ae4d757639e9de1fd8a578412699b5cd8926aa1eb
+qualifier_tests_sha256=9a52cd3714e2e39ee7f33b89a541e5c68266dc82fcb691b8ba1924898a363b13
+
+summary contract_tests=0 quality=0 lock_tests=0 manifest=0 real_service=0 fault_recovery=0 regression=0 normative_harness=0

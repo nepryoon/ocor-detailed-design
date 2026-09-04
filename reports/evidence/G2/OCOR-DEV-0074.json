@@ -1,0 +1,163 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "python3 deploy/bootstrap/services/typedb/test_qualify.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 5,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ruff check deploy/bootstrap/services/typedb",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "python -m unittest -v reports.tests.test_bootstrap_lock_validation reports.tests.test_autonomous_tooling_policy",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 17,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "python3 scripts/verify_external_services.py --manifest-only",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 11,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "python3 deploy/bootstrap/services/typedb/qualify.py --fault-recovery --execute",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 10,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "OCOR_LIVE_POSTGRES_DSN=<redacted-disposable-container-credential> python -m pytest -q ocor-runtime/tests",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 513,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "python3 scripts/verify.py --json",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 14,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "9ab08a3d7d8e4592cf1cb7bd9274286ac6eb7b9f",
+  "created_at": "2026-09-04T10:08:51Z",
+  "environment": {
+    "architecture": "x86_64",
+    "container": "ocor-bootstrap-typedb-1",
+    "docker": "29.7.2",
+    "grpc_endpoint": "127.0.0.1:1729",
+    "http_endpoint": "127.0.0.1:8000",
+    "image": "typedb/typedb@sha256:7555df2fffd5354553143facbfc81a58ce7036e4cc8b3b50bc7139faff4a721f",
+    "python": "3.12.11",
+    "service": "TypeDB CE",
+    "service_version": "3.12.3"
+  },
+  "inputs": {
+    "deploy/bootstrap/compose.yaml": "9d9141e55b5b06d52d6a49ca1245bcbc54dfff058669fa92cae56f76b4994d83",
+    "deploy/bootstrap/services/typedb/qualify.py": "680ef0e41554fb7928ef468ae4d757639e9de1fd8a578412699b5cd8926aa1eb",
+    "deploy/bootstrap/services/typedb/test_qualify.py": "9a52cd3714e2e39ee7f33b89a541e5c68266dc82fcb691b8ba1924898a363b13",
+    "infra/services.lock.json": "1909ffe18d6ba546953eaf0b64fe6c7be8a58eefac3441ddd46f60a0a64bd879",
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35"
+  },
+  "raw_output_sha256": "9d73507200c3460308785a852d6253121ee56f364176148c1bbc82cd72643c75",
+  "repair_history": [
+    "The recovery probe initially observed protocol readiness before Docker health returned to healthy; the implementation now waits for both within a bounded timeout.",
+    "A stale disposable PostgreSQL environment file was rejected by the regression setup; the passing run used the current container credential in memory without recording it."
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0074-PINNED-READINESS",
+      "command": "exact lock, running image, health, loopback bindings, gRPC and HTTP version checks",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 7,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0074-FAIL-CLOSED",
+      "command": "mutable lock, external binding, wrong version and unauthenticated database-access negative contracts",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 5,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0074-FAULT-RECOVERY",
+      "command": "real TypeDB pause detection, mandatory unpause and process restart recovery",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 3,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0074-REGRESSION",
+      "command": "full runtime regression with live disposable PostgreSQL and recovered real TypeDB",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 513,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This task qualifies TypeDB provisioning, identity, network exposure, protocol availability and bounded recovery only; it does not establish exact-at-commit projection semantics or runtime conformance.",
+    "TLS and authenticated functional data access remain in the dependent OCOR-DEV-0017 and security campaigns; unauthenticated data access was verified fail-closed here."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated implementation and evidence commits. The qualifying fault drill already restored the pre-existing disposable container; verify its locked image, loopback bindings, protocol endpoints and healthy state before redispatch.",
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0074"
+}

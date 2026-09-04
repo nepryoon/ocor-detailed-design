@@ -1,5 +1,15 @@
 {
   "artifacts": [
+    {
+      "path": "OCOR-DEV-0074.json",
+      "sha256": "119338fb8184a4e00fc2f0a91ab88df613f7251d52ec810171fce40576b77521",
+      "task_id": "OCOR-DEV-0074"
+    },
+    {
+      "path": "OCOR-DEV-0074.log",
+      "sha256": "9d73507200c3460308785a852d6253121ee56f364176148c1bbc82cd72643c75",
+      "task_id": "OCOR-DEV-0074-RAW"
+    },
     {"path": "OCOR-DEV-0075.json", "sha256": "5a912e0847c6fbf250cd2238433b303ebf09e2e5e3f5dba32aa96495726c65a9", "task_id": "OCOR-DEV-0075"},
     {"path": "OCOR-DEV-0075.log", "sha256": "bb0f09f2236ae95504fdb4727ab5330e882949331eaed2fa570d7de4ea131675", "task_id": "OCOR-DEV-0075-RAW"},
     {"path": "OCOR-DEV-0073.json", "sha256": "3a081e7818e91f848d8e04faca35e7fc7a18bb8a1f26960fb20be06bbe59ba67", "task_id": "OCOR-DEV-0073"},
@@ -77,9 +87,45 @@
       "task_id": "OCOR-DEV-0023-RAW"
     }
   ],
-  "created_at": "2026-09-02T04:25:45Z",
+  "created_at": "2026-09-04T10:08:51Z",
   "gate": "G2",
   "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0074-PINNED-READINESS",
+      "command": "exact lock, running image, health, loopback bindings, gRPC and HTTP version checks",
+      "evidence_path": "OCOR-DEV-0074.json",
+      "raw_output_path": "OCOR-DEV-0074.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0074"
+    },
+    {
+      "case_id": "OCOR-DEV-0074-FAIL-CLOSED",
+      "command": "mutable lock, external binding, wrong version and unauthenticated database-access negative contracts",
+      "evidence_path": "OCOR-DEV-0074.json",
+      "raw_output_path": "OCOR-DEV-0074.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0074"
+    },
+    {
+      "case_id": "OCOR-DEV-0074-FAULT-RECOVERY",
+      "command": "real TypeDB pause detection, mandatory unpause and process restart recovery",
+      "evidence_path": "OCOR-DEV-0074.json",
+      "raw_output_path": "OCOR-DEV-0074.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0074"
+    },
+    {
+      "case_id": "OCOR-DEV-0074-REGRESSION",
+      "command": "full runtime regression with live disposable PostgreSQL and recovered real TypeDB",
+      "evidence_path": "OCOR-DEV-0074.json",
+      "raw_output_path": "OCOR-DEV-0074.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0074"
+    },
     {"case_id": "OCOR-DEV-0075-REAL-READINESS", "command": "exact version/build/image identity, healthy state, non-root runtime and loopback-only API probes", "evidence_path": "OCOR-DEV-0075.json", "raw_output_path": "OCOR-DEV-0075.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0075"},
     {"case_id": "OCOR-DEV-0075-API-CONTRACT", "command": "positive ping/SELECT/ASK and negative malformed-query/absent-dataset checks against real Fuseki", "evidence_path": "OCOR-DEV-0075.json", "raw_output_path": "OCOR-DEV-0075.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0075"},
     {"case_id": "OCOR-DEV-0075-FAIL-CLOSED-RECOVERY", "command": "bounded pause makes the endpoint unavailable, then unpause/restart restore health and query execution", "evidence_path": "OCOR-DEV-0075.json", "raw_output_path": "OCOR-DEV-0075.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0075"},
