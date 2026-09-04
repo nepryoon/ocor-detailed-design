@@ -184,7 +184,11 @@ def workload_svid() -> dict[str, Any]:
         "-spiffeID", WORKLOAD_ID, "-selector", "unix:uid:0", "-x509SVIDTTL", "300",
         "-output", "json",
     ]))
-    entries = created.get("entries") or ([created] if created.get("id") else [])
+    entries = created.get("entries") or [
+        item.get("entry", {})
+        for item in created.get("results", [])
+        if item.get("status", {}).get("code") in (0, None)
+    ] or ([created] if created.get("id") else [])
     if len(entries) != 1 or not entries[0].get("id"):
         raise QualificationError("SPIRE workload registration returned no entry ID")
     entry_id = str(entries[0]["id"])
