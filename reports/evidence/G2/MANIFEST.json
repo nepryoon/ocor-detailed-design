@@ -1,6 +1,16 @@
 {
   "artifacts": [
     {
+      "path": "OCOR-DEV-0071.json",
+      "sha256": "489e50c7dfbcdcf0e94f1419c4c1dffd6bb799c5ed1450d4f491f34fe708b930",
+      "task_id": "OCOR-DEV-0071"
+    },
+    {
+      "path": "OCOR-DEV-0071.log",
+      "sha256": "1ce375b5594caff5e8278529d62c536b9a4954c7aadbe91bd9d40f03a0a16bb8",
+      "task_id": "OCOR-DEV-0071-RAW"
+    },
+    {
       "path": "OCOR-DEV-0070.json",
       "sha256": "1dfc7e7308a56852ef6214d4997023685e945b7bdcb792c4f56386d36a13949d",
       "task_id": "OCOR-DEV-0070"
@@ -64,6 +74,51 @@
   "created_at": "2026-09-02T04:25:45Z",
   "gate": "G2",
   "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0071-DETERMINISM",
+      "command": "repeat frozen sync and verify installed distribution-set hash",
+      "evidence_path": "OCOR-DEV-0071.json",
+      "raw_output_path": "OCOR-DEV-0071.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0071"
+    },
+    {
+      "case_id": "OCOR-DEV-0071-FAIL-CLOSED",
+      "command": "positive and negative lock, integrity, missing-tool and wrong-version matrix",
+      "evidence_path": "OCOR-DEV-0071.json",
+      "raw_output_path": "OCOR-DEV-0071.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0071"
+    },
+    {
+      "case_id": "OCOR-DEV-0071-FROZEN-RESTORE",
+      "command": "create isolated Python 3.12.11 environment from uv.lock with --frozen",
+      "evidence_path": "OCOR-DEV-0071.json",
+      "raw_output_path": "OCOR-DEV-0071.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0071"
+    },
+    {
+      "case_id": "OCOR-DEV-0071-REGRESSION",
+      "command": "full runtime regression in restored environment",
+      "evidence_path": "OCOR-DEV-0071.json",
+      "raw_output_path": "OCOR-DEV-0071.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0071"
+    },
+    {
+      "case_id": "OCOR-DEV-0071-ROLLBACK-REBUILD",
+      "command": "clear and deterministically rebuild worktree-local disposable environment",
+      "evidence_path": "OCOR-DEV-0071.json",
+      "raw_output_path": "OCOR-DEV-0071.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0071"
+    },
     {
       "case_id": "OCOR-DEV-0070-FAIL-CLOSED",
       "command": "invalid isolated DOCKER_HOST makes Docker return non-zero",
