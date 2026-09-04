@@ -2,6 +2,16 @@
   "artifacts": [
     {"path": "OCOR-DEV-0073.json", "sha256": "3a081e7818e91f848d8e04faca35e7fc7a18bb8a1f26960fb20be06bbe59ba67", "task_id": "OCOR-DEV-0073"},
     {"path": "OCOR-DEV-0073.log", "sha256": "35e7cb5062b2657cb514e3795fcea963386aedcc9b019097043bae36642bf081", "task_id": "OCOR-DEV-0073-RAW"},
+    {
+      "path": "OCOR-DEV-0076.json",
+      "sha256": "ba01ad50c1f878ed0d18e25399bafc6b86ca28236116a832a186c8fad154b512",
+      "task_id": "OCOR-DEV-0076"
+    },
+    {
+      "path": "OCOR-DEV-0076.log",
+      "sha256": "70c52e333dff760128594228a4ab314164d257866381589e2d4552fa7e4f6ff3",
+      "task_id": "OCOR-DEV-0076-RAW"
+    },
     {"path": "OCOR-DEV-0072.json", "sha256": "91694b3923fea17d02cd33693f1d3c78628c8c199813502654658fb7a152cc61", "task_id": "OCOR-DEV-0072"},
     {"path": "OCOR-DEV-0072.log", "sha256": "f904cf2aee7acc84b9239cec8f53585d906bbaa834b9ffd7ecaed5760cc92bca", "task_id": "OCOR-DEV-0072-RAW"},
     {
@@ -82,6 +92,42 @@
     {"case_id": "OCOR-DEV-0073-FAULT-RECOVERY", "command": "pause is detected as NOT_READY; unpause restores API and healthy state", "evidence_path": "OCOR-DEV-0073.json", "raw_output_path": "OCOR-DEV-0073.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0073"},
     {"case_id": "OCOR-DEV-0073-REAL-READINESS", "command": "digest identity, health and real API version probes", "evidence_path": "OCOR-DEV-0073.json", "raw_output_path": "OCOR-DEV-0073.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0073"},
     {"case_id": "OCOR-DEV-0073-REGRESSION", "command": "full runtime regression with real disposable services", "evidence_path": "OCOR-DEV-0073.json", "raw_output_path": "OCOR-DEV-0073.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0073"},
+    {
+      "case_id": "OCOR-DEV-0076-PINNED-READINESS-IDENTITY",
+      "command": "digest, exposure, readiness, API and SPIRE identity qualification against five real services",
+      "evidence_path": "OCOR-DEV-0076.json",
+      "raw_output_path": "OCOR-DEV-0076.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0076"
+    },
+    {
+      "case_id": "OCOR-DEV-0076-FAIL-CLOSED-RECOVERY",
+      "command": "bounded pause/detection/unpause/recovery matrix for each real security service",
+      "evidence_path": "OCOR-DEV-0076.json",
+      "raw_output_path": "OCOR-DEV-0076.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0076"
+    },
+    {
+      "case_id": "OCOR-DEV-0076-NEGATIVE-CONTRACTS",
+      "command": "positive and negative lock, exposure, API, sealed-state and identity contract suite",
+      "evidence_path": "OCOR-DEV-0076.json",
+      "raw_output_path": "OCOR-DEV-0076.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0076"
+    },
+    {
+      "case_id": "OCOR-DEV-0076-REGRESSION",
+      "command": "security task regression and complete runtime portfolio with live disposable PostgreSQL",
+      "evidence_path": "OCOR-DEV-0076.json",
+      "raw_output_path": "OCOR-DEV-0076.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0076"
+    },
     {"case_id": "OCOR-DEV-0072-EXACT-TOOLS", "command": "preflight exact version/integrity probes for eight governed tools", "evidence_path": "OCOR-DEV-0072.json", "raw_output_path": "OCOR-DEV-0072.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0072"},
     {"case_id": "OCOR-DEV-0072-FAIL-CLOSED", "command": "missing, wrong-version, wrong-integrity, mutable and unofficial artifact negative matrix", "evidence_path": "OCOR-DEV-0072.json", "raw_output_path": "OCOR-DEV-0072.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0072"},
     {"case_id": "OCOR-DEV-0072-REGRESSION", "command": "full runtime regression in the qualified tool environment", "evidence_path": "OCOR-DEV-0072.json", "raw_output_path": "OCOR-DEV-0072.log", "requirement_id": "BR-003", "status": "PASS", "task_id": "OCOR-DEV-0072"},

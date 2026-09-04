@@ -1,0 +1,186 @@
+{
+  "base_sha": "934391f50cb4dffc91440f93c0f6dcddba8a9b00",
+  "changed_paths": [
+    "deploy/bootstrap/services/policy-identity/qualify_security_services.py",
+    "deploy/bootstrap/services/policy-identity/test_security_services.py",
+    "reports/evidence/G2/MANIFEST.json",
+    "reports/evidence/G2/OCOR-DEV-0076.json",
+    "reports/evidence/G2/OCOR-DEV-0076.log"
+  ],
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "PoC_GO": "NO-GO",
+    "Production_readiness": "NO-GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "python3 scripts/bootstrap_development_environment.py --execute --timeout 600",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "python3 deploy/bootstrap/services/policy-identity/qualify_security_services.py --check",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 5,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "python3 deploy/bootstrap/services/policy-identity/qualify_security_services.py --fault-campaign --execute --timeout 45",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 5,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "python3 -m unittest -v reports.tests.test_bootstrap_lock_validation reports.tests.test_autonomous_tooling_policy",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 17,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "python3 deploy/bootstrap/services/policy-identity/test_security_services.py -v",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 7,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "python3 -m pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0014.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 22,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "OCOR_LIVE_POSTGRES_DSN=<redacted-disposable-local-dsn> python3 -m pytest -q ocor-runtime/tests",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 513,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "b2d21f4a64a346dee3adc8dfdafb52a0638394b0",
+  "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
+  "created_at": "2026-09-04T10:09:33Z",
+  "diagnostics": [
+    {
+      "command": "./.venv/bin/python3 scripts/verify.py --json",
+      "result": "NOT_EXECUTED: root worktree virtual environment absent; exit 127; not retried"
+    },
+    {
+      "command": "initial real-service characterization",
+      "result": "EXPECTED_FAIL: expired non-reattestable SPIRE agent identity detected before disposable bootstrap repair"
+    }
+  ],
+  "environment": {
+    "architecture": "x86_64",
+    "docker": "29.7.2",
+    "images": {
+      "keycloak": "quay.io/keycloak/keycloak@sha256:9d1f1b2b7261ff53c66cb1092dfcdc34a5fb77e81f9e6a6e75b8b6a795de8067",
+      "opa": "openpolicyagent/opa@sha256:39daf255ae7f25d81103f03a0c18308a50b7b5bb67907bed6166f70e24a970ff",
+      "openbao": "quay.io/openbao/openbao@sha256:11fd73a2102cda9c55d5d881a8c3210303146a7ec1e8ac76f526e175c6d24641",
+      "spire-agent": "ghcr.io/spiffe/spire-agent@sha256:41b0dcd8b258a69db9e2768292a060766fb76fd866e4bc925849981ea1b825ff",
+      "spire-server": "ghcr.io/spiffe/spire-server@sha256:4082f30d3e0ddc4000a171392c4ea174345ee44d161ee917c70b97b2ecfba141"
+    },
+    "python": "3.12.11",
+    "scope": "disposable local ocor-bootstrap project"
+  },
+  "head_sha": "b2d21f4a64a346dee3adc8dfdafb52a0638394b0",
+  "inputs": {
+    "deploy/bootstrap/services/policy-identity/qualify_security_services.py": "adb8d33bd1b1af4252aae61a297ca0b2f5513baa105d5bc8452bf7ba1a28e3fd",
+    "deploy/bootstrap/services/policy-identity/test_security_services.py": "cdb607cf2c2f9e9b8e20435e5f885cd682d93bc51f6e1d41f38e4f3c21e2d290",
+    "infra/services.lock.json": "1909ffe18d6ba546953eaf0b64fe6c7be8a58eefac3441ddd46f60a0a64bd879",
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35"
+  },
+  "raw_output_sha256": "70c52e333dff760128594228a4ab314164d257866381589e2d4552fa7e4f6ff3",
+  "requirement_ids": [
+    "BR-003"
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0076-PINNED-READINESS-IDENTITY",
+      "command": "digest, exposure, readiness, API and SPIRE identity qualification against five real services",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 5,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0076-FAIL-CLOSED-RECOVERY",
+      "command": "bounded pause/detection/unpause/recovery matrix for each real security service",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 5,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0076-NEGATIVE-CONTRACTS",
+      "command": "positive and negative lock, exposure, API, sealed-state and identity contract suite",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 24,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0076-REGRESSION",
+      "command": "security task regression and complete runtime portfolio with live disposable PostgreSQL",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 535,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This evidence qualifies provisioning, readiness, local API reachability and disposable identity only; it does not execute or accept the OCOR-DEV-0021 functional security-control campaign.",
+    "SPIRE join-token identities are intentionally non-reattestable; expiry is handled fail-closed by disposable bootstrap regeneration rather than silent reuse.",
+    "SPIRE and OpenBao observations in this bounded qualification do not independently complete OCOR-DEV-0077 or OCOR-DEV-0078."
+  ],
+  "result": "PASS",
+  "rollback": "Pause dispatch; revert the isolated task commits; run docker compose -p ocor-bootstrap down --volumes --remove-orphans; remove only the worktree-local gitignored .ocor directory; rerun the prior manifest checks.",
+  "schema_version": "1.0",
+  "security": "No credential value was logged or committed; host publications are loopback-only and SPIRE publishes no host port.",
+  "task_id": "OCOR-DEV-0076"
+}
