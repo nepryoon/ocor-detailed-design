@@ -1,0 +1,52 @@
+OCOR-DEV-0075 real Apache Jena/Fuseki provisioning qualification
+qualified_baseline_commit=934391f50cb4dffc91440f93c0f6dcddba8a9b00
+
+CASE OCOR-DEV-0075-DEPENDENCY-AND-BASELINE
+dependency_0072=PASS
+approved_add_lld_baseline=PASS
+inputs_tree=60a73de8e47b38e94aeb0e2b8dedc689fab6eb35
+
+CASE OCOR-DEV-0075-LOCK-AND-BUILD-IDENTITY
+service_manifest_status=PASS service_count=11
+locked_output_sha256=7a55d816b0031cae6f2e2c5262f0bd1bcd247ccbe8cf8c027347083227c574b7
+live_image_id=sha256:7a55d816b0031cae6f2e2c5262f0bd1bcd247ccbe8cf8c027347083227c574b7
+container_image_id=sha256:7a55d816b0031cae6f2e2c5262f0bd1bcd247ccbe8cf8c027347083227c574b7
+locked_version=6.2.0
+live_version=Apache Jena version 6.2.0
+host_binding=127.0.0.1:3030
+security_no_new_privileges=["no-new-privileges:true"]
+runtime_user=10001
+health=healthy
+
+CASE OCOR-DEV-0075-API-POSITIVE
+ping_http=200
+sparql_select_http=200 result_integer=1
+sparql_ask_after_restart_http=200 result=true
+
+CASE OCOR-DEV-0075-API-NEGATIVE
+malformed_query_http=400
+missing_dataset_http=404
+
+CASE OCOR-DEV-0075-BOUNDED-FAULT-AND-RECOVERY
+pause_action=PASS
+paused_ping_http=000 fail_closed=PASS
+unpause_action=PASS
+unpause_recovery_attempt=1 PASS
+restart_action=PASS
+restart_recovery_attempt=7 PASS
+post_restart_health=healthy
+
+CASE OCOR-DEV-0075-LOCK-NEGATIVE-AND-POLICY
+17 passed, 2 subtests passed
+
+CASE OCOR-DEV-0075-PLAN-AND-ARCHITECTURE
+planning_validator=PASS pass=37 fail=0 optional_not_executed=2 tasks=84 requirements=285
+rccad_static_precheck=PASS AFF-001..AFF-010
+
+CASE OCOR-DEV-0075-RUNTIME-REGRESSION
+513 passed in 31.65s
+
+CASE OCOR-DEV-0075-DOCUMENT-HARNESS
+PASS 14 FAIL 0 NOT_EXECUTED 0
+
+summary dependency=0 lock=0 identity=0 readiness=0 api_positive=0 api_negative=0 fault=0 recovery=0 policy=0 regression=0 document_harness=0
