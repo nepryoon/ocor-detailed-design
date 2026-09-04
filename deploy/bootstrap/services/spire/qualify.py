@@ -198,7 +198,27 @@ def validate_svid_output(output: str) -> str:
     return WORKLOAD_ID
 
 
+def cleanup_workload_entries() -> int:
+    payload = json.loads(run([
+        "docker", "exec", SERVER, "/opt/spire/bin/spire-server", "entry", "show",
+        "-socketPath", SERVER_SOCKET, "-output", "json",
+    ]))
+    stale = [
+        str(entry["id"])
+        for entry in payload.get("entries", [])
+        if entry.get("spiffe_id")
+        == {"trust_domain": "ocor.test", "path": "/workload/ocor-dev-0077"}
+    ]
+    for entry_id in stale:
+        run([
+            "docker", "exec", SERVER, "/opt/spire/bin/spire-server", "entry", "delete",
+            "-socketPath", SERVER_SOCKET, "-entryID", entry_id,
+        ])
+    return len(stale)
+
+
 def workload_svid() -> dict[str, Any]:
+    cleanup_workload_entries()
     agents = json.loads(run([
         "docker", "exec", SERVER, "/opt/spire/bin/spire-server", "agent", "list",
         "-socketPath", SERVER_SOCKET, "-output", "json",
@@ -239,6 +259,8 @@ def workload_svid() -> dict[str, Any]:
             "docker", "exec", SERVER, "/opt/spire/bin/spire-server", "entry", "delete",
             "-socketPath", SERVER_SOCKET, "-entryID", entry_id,
         ])
+        if cleanup_workload_entries():
+            raise QualificationError("workload registration cleanup was incomplete")
 
 
 def bounded_fault() -> dict[str, Any]:
