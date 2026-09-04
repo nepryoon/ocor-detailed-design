@@ -1,0 +1,46 @@
+OCOR-DEV-0078 real OpenBao-only provisioning qualification
+baseline_commit=ac878c41d440eeccc81bd0bb5603beb3cfc6b861
+implementation_commit=b9af1b1c584b18a5c4eef6913deeae792154ef97
+red_commit=10ce518
+
+$ sha256sum -c inputs/normative/SHA256SUMS
+8 files OK
+
+$ python3 scripts/verify.py --json
+PASS 14 FAIL 0 NOT_EXECUTED 0
+
+$ python3 deploy/bootstrap/services/openbao/test_qualify.py
+Ran 7 tests in 0.000s
+OK
+
+$ ruff check deploy/bootstrap/services/openbao
+All checks passed!
+
+$ python3 -m unittest -v reports.tests.test_bootstrap_lock_validation reports.tests.test_autonomous_tooling_policy
+Ran 17 tests in 0.445s
+OK
+
+$ python3 scripts/verify_external_services.py --manifest-only
+service_count=11 status=PASS
+
+$ python3 deploy/bootstrap/services/openbao/qualify.py --fault-recovery --execute
+service=openbao result=PASS
+locked_image=quay.io/openbao/openbao@sha256:11fd73a2102cda9c55d5d881a8c3210303146a7ec1e8ac76f526e175c6d24641
+official_source=true license=MPL-2.0 locked_version=2.6.2 observed_version=2.6.2
+docker_health=healthy initialized=true seal_state=UNSEALED standby=false
+host_binding=127.0.0.1:8200 no_new_privileges=true
+invalid_token=FAIL_CLOSED_403 authorized_system_api=PASS
+paused_service_detected_unavailable=true unpause_recovery=PASS restart_recovery=PASS
+other_services_inspected_or_mutated=false
+
+$ OCOR_LIVE_POSTGRES_DSN=<redacted-disposable-container-credential> python -m pytest -q ocor-runtime/tests
+513 passed in 31.13s
+
+environment architecture=x86_64 docker=29.7.2 python=3.12.11
+inputs_tree=60a73de8e47b38e94aeb0e2b8dedc689fab6eb35
+services_lock_sha256=1909ffe18d6ba546953eaf0b64fe6c7be8a58eefac3441ddd46f60a0a64bd879
+compose_sha256=9d9141e55b5b06d52d6a49ca1245bcbc54dfff058669fa92cae56f76b4994d83
+qualifier_sha256=11ad5fb329753c5b3dac3ae91f1aa338c9cbf3a40b77ade9d3e263bcc0e6ae6e
+qualifier_tests_sha256=d3c2caeeb03bbc833431b43db489ed8f3f915e2da47cdf64f5bc19dde8a0e6b7
+
+summary scope=0 contract=0 quality=0 lock_policy=0 manifest=0 real_auth=0 fault_recovery=0 regression=0 document_harness=0
