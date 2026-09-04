@@ -172,8 +172,11 @@ def workload_svid() -> dict[str, Any]:
     ])).get("agents", [])
     if not agents:
         raise QualificationError("SPIRE server reports no attested agent")
-    parent_id = max(agents, key=lambda item: int(item.get("x509svid_expires_at", 0))).get("id")
-    if not str(parent_id).startswith("spiffe://ocor.test/spire/agent/"):
+    parent = max(agents, key=lambda item: int(item.get("x509svid_expires_at", 0))).get("id")
+    if not isinstance(parent, dict):
+        raise QualificationError("attested agent ID has an unexpected representation")
+    parent_id = f"spiffe://{parent.get('trust_domain', '')}{parent.get('path', '')}"
+    if not parent_id.startswith("spiffe://ocor.test/spire/agent/"):
         raise QualificationError("attested agent has an unexpected SPIFFE ID")
     created = json.loads(run([
         "docker", "exec", SERVER, "/opt/spire/bin/spire-server", "entry", "create",
