@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/phase2-1-close-state-update",
-    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.1-CLOSE",
+    "branch": "governed/phase2-2-interpreter-pin",
+    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.2-INTERPRETER-PIN",
     "decision_id": "DEC-212",
-    "phase": "PHASE_2_1_MERGED__PHASE_2_2_NOT_STARTED",
+    "phase": "PHASE_2_2_IN_PROGRESS_PENDING_PR",
     "worktree": null
   },
-  "baseline_commit": "1cfa0a787ee620e462adfd0d25378f752c74af28",
+  "baseline_commit": "589cda9f252a0417537e94876bc6df429f4179ca",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -96,7 +96,8 @@
       "status": "MERGED"
     },
     "phase_2_2_interpreter_pin": {
-      "status": "NOT_STARTED"
+      "detail": "requires-python/.python-version/uv.lock/all workflows pinned to exact 3.12.11; new fail-closed test added. Local sandbox has no exact 3.12.11 interpreter so uv lock/sync/run could not be exercised end-to-end locally (documented risk); real qualifying gate is CI's actions/setup-python, already proven to provision exactly 3.12.11 in every prior PR this session.",
+      "status": "IN_PROGRESS_PENDING_PR"
     },
     "phase_2_3_typescript_sdk": {
       "status": "NOT_STARTED"
@@ -108,9 +109,9 @@
       "status": "NOT_STARTED"
     }
   },
-  "next_executable_action": "Phase 2.2 (mandate CC-LANGUAGE-POLICY-AND-GAP-CLOSURE): pin the interpreter to the patch in requires-python, uv.lock, .python-version and every workflow, plus a test that fails if the running interpreter diverges from the pin. One task, one branch, one PR. Before Phase 2.4, resolve escalation PHASE2-4-BACKLOG-GENERATOR-DRIFT.",
+  "next_executable_action": "Merge the Phase 2.2 PR (interpreter pin), watching CI closely for any uv/interpreter-resolution failure given the local sandbox could not verify this end-to-end; if CI fails on interpreter resolution, diagnose and fix at the root (e.g. UV_PYTHON_PREFERENCE or explicit --python), not by loosening the pin. Verify post-merge SHA, update state, then Phase 2.3 (mandate CC-LANGUAGE-POLICY-AND-GAP-CLOSURE): real TypeScript SDK under ocor-runtime/sdk/typescript with tsconfig strict, tsc compilation in CI, and the NFR-022 cross-SDK conformance suite.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-12T20:45:00Z"
+  "updated_at": "2026-09-12T21:05:00Z"
 }

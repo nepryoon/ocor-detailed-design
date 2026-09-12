@@ -363,3 +363,66 @@
 - Prossima azione: Fase 2.2 del mandato — pin dell'interprete alla patch in
   `requires-python`, `uv.lock`, `.python-version` e in tutti i workflow, più
   un test che fallisca se l'interprete in esecuzione diverge dal pin.
+
+## 2026-09-12 — Fase 2.2: pin dell'interprete alla patch
+
+- `ocor-runtime/pyproject.toml`: `requires-python` da `>=3.11` a `==3.12.11`.
+  Nuovo `ocor-runtime/.python-version` con `3.12.11`. Header di
+  `ocor-runtime/uv.lock` allineato allo stesso valore. Dodici occorrenze di
+  `python-version: "3.12"` (pin di sola minor) corrette a `"3.12.11"` in
+  cinque workflow (`ocor-rccad`, `ocor-poc-ci` ×6, `ocor-supply-chain`,
+  `ocor-delivery-activation`, `ocor-validation-closure`);
+  `ocor-tooling-bootstrap.yml` era già esatto. Nuovo
+  `ocor-runtime/tests/test_interpreter_pin.py`: fallisce chiuso se
+  l'interprete in esecuzione diverge dal pin, letto da `.python-version`
+  invece di essere ripetuto in chiaro nel test.
+- **Limite di verifica locale, dichiarato esplicitamente**: questo sandbox
+  non possiede l'interprete esatto `3.12.11` (né come build standalone di
+  `uv`, né altrove) e non può scaricarlo. Di conseguenza `uv lock`, `uv sync
+  --frozen` e `uv run` rifiutano categoricamente di eseguire non appena
+  `requires-python` diventa `==3.12.11`. Tutta la verifica locale ha quindi
+  invocato l'interprete della venv esistente direttamente
+  (`ocor-runtime/.venv/bin/python`), bypassando il wrapper di `uv`. La riga
+  `requires-python` nell'header di `uv.lock` è stata corretta a mano come
+  eccezione documentata — è una copia letterale del campo già dichiarato in
+  `pyproject.toml`, non una decisione di risoluzione delle dipendenze; nessuna
+  versione di pacchetto o `resolution-markers` è stata toccata a mano.
+- Confermato che il pin non è fittizio: `infra/toolchain.lock.json` fissa già
+  Python `3.12.11` con hash di integrità reale, e ogni run CI di questa
+  sessione (PR #54–60) ha già usato `actions/setup-python` con `"3.12.11"`
+  con successo (il dump d'ambiente di un job precedente mostrava
+  `pythonLocation: /opt/hostedtoolcache/Python/3.12.11/x64`). Il gate
+  qualificante reale per questa modifica resta quindi la CI, non questo
+  sandbox.
+- Regressione pytest completa (invocazione diretta della venv):
+  `2 failed, 499 passed, 5 skipped, 10 errors`. Le due nuove failure
+  condividono la stessa unica causa già dichiarata sopra, non un difetto
+  logico: `test_interpreter_pin.py::test_running_interpreter_matches_the_pin`
+  fallisce esattamente come previsto (`3.12.14 != 3.12.11`);
+  `test_ocor_dev_0002.py::test_two_clean_environments_resolve_identical_lock_and_image_digests`
+  fallisce nel suo stesso sottoprocesso `uv lock --check` con l'identico
+  errore di interprete assente. I 10 errori pre-esistenti restano il gap
+  `OCOR_LIVE_POSTGRES_DSN` già dichiarato. Entrambe le nuove failure sono
+  attese verdi in CI.
+- Audit di sicurezza prima della modifica: `ocor-runtime/pyproject.toml` e
+  `ocor-runtime/uv.lock` sono già referenziati come input in 15+ evidenze di
+  task precedenti (`OCOR-DEV-0002`..`0071`), ma come manifest di progetto
+  condivisi e in evoluzione continua — non il deliverable unico e sigillato
+  di un singolo task — esattamente come confermato dal precedente già
+  accettato in Fase 2.1 (PR #59, che ha già modificato entrambi con successo).
+  Stesso ragionamento per `ocor-poc-ci.yml`/`ocor-supply-chain.yml` rispetto
+  al precedente `ocor-tooling-bootstrap.yml` già modificato in Fase 2.1.
+  Nessun file di evidenza sigillata a task singolo è stato toccato.
+- Gate locali: `sha256sum -c` `PASS` 8/8; `ocor-runtime/.venv/bin/python -m
+  mypy` `PASS` 44/44; `ruff check .` `PASS`; `verify.py --json` `PASS` 14/0/0;
+  `validate_rccad.py` `PASS_LOCAL_PRECHECK` 0 finding; `validate_language_policy.py`
+  `PASS`; `validate_ocor_change_scope.py` `PASS` 9 percorsi;
+  `validate_ocor_development_plan.py --authorized-extension` `PASS` 37/2/0
+  dopo self-hash settle; sintassi YAML valida su tutti i workflow.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti globali `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC` e `Production` `NO-GO`.
+- Prossima azione: aprire la PR, seguire la CI con particolare attenzione al
+  primo passo `uv` di ogni workflow (rischio di risoluzione dell'interprete
+  dichiarato sopra); se rosso, correggere alla radice (mai allentare il pin);
+  se verde, merge, verifica SHA post-merge, poi Fase 2.3 — SDK TypeScript
+  reale e suite di conformità cross-SDK.
