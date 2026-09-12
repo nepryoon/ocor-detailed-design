@@ -233,3 +233,29 @@
   mypy strict su `ocor-runtime/src` e `scripts/`, configurazione `ruff` per
   l'intero repository, entrambi pinnati alla patch, cablati come job CI
   bloccanti.
+
+## 2026-09-12 — Chiusura Fase 1B
+
+- PR #57 aperta e integrata: merge `3911228e7b657bf1bd2b1fc17f49fcad9bef3e5c`.
+  Il primo push (`1fddb4f`) ha fatto fallire il check `tooling-policy` per lo
+  stesso motivo già osservato in Fase 0/PR #54: il nuovo file di evidenza
+  `reports/evidence/local-gates/phase1b-independent-review-corrections-20260912.json`
+  non era ancora nell'allowlist `extension_paths` di
+  `scripts/validate_ocor_development_plan.py`. Corretto alla radice
+  (allowlist estesa, self-hash di `OCOR_PLAN_RUN_STATE.json` fatto assestare
+  con una seconda esecuzione locale prima del push), non aggirato. Secondo
+  push (`040275f`): 12/12 check verdi sull'HEAD esatto
+  (run id `34707732916/919/927/931/939/980`).
+- Verifica pre-merge: `origin/main` invariato a `50c3bbbe` dal momento della
+  creazione del branch; `gh pr view 57` → `mergeStateStatus: CLEAN`,
+  `mergeable: MERGEABLE`. Nessun rebase necessario.
+- Verifica post-merge: SHA di `origin/main` = `3911228e7b657bf1bd2b1fc17f49fcad9bef3e5c`,
+  coincidente con il merge commit riportato da GitHub.
+- `EXECUTION_STATE.json` e `MODEL_HANDOFF.json` risincronizzati al nuovo HEAD;
+  `latest_ci_evidence` aggiornato ai run reali del secondo push.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti globali `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC` e `Production` `NO-GO`.
+- Prossima azione: Fase 2.1 del mandato — mypy strict su `ocor-runtime/src` e
+  `scripts/`, configurazione `ruff` per l'intero repository, entrambi pinnati
+  alla patch, cablati come job CI bloccanti. Task del backlog ordinario
+  indipendente dal mandato, sempre dependency-ready: `OCOR-DEV-0079`.
