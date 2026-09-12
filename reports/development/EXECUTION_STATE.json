@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/phase1-close-state-update",
-    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-1-CLOSE",
+    "branch": "governed/phase1-independent-review-corrections",
+    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-1B-CORRECTIONS",
     "decision_id": "DEC-212",
-    "phase": "PHASE_1_MERGED__PHASE_2_NOT_STARTED",
+    "phase": "PHASE_1B_CORRECTIONS_IN_PROGRESS",
     "worktree": null
   },
-  "baseline_commit": "7c7f9b5b6a5135aa2583445697f54e9ff1dfcf3e",
+  "baseline_commit": "50c3bbbe41e4c9cbc1a7112847decd37e80405df",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -54,9 +54,16 @@
   ],
   "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__LANGUAGE_POLICY_ADOPTED",
   "latest_ci_evidence": {
-    "candidate_commit": null,
-    "conclusion": "PENDING_EXACT_HEAD_CI",
-    "run_ids": []
+    "candidate_commit": "de3bcac74959caa71d7c0d647abc5578ea0d4bfb",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR56_MERGED_50c3bbbe41e4c9cbc1a7112847decd37e80405df",
+    "run_ids": [
+      34701203516,
+      34701203523,
+      34701203528,
+      34701203530,
+      34701203535,
+      34701203562
+    ]
   },
   "mandate_phase_status": {
     "phase_0_reconciliation": {
@@ -69,6 +76,14 @@
       "merge_commit": "7c7f9b5b6a5135aa2583445697f54e9ff1dfcf3e",
       "pr": 55,
       "status": "MERGED"
+    },
+    "phase_1b_independent_review_corrections": {
+      "corrections": {
+        "execution_state_ci_evidence": "DONE",
+        "language_policy_hypothesis_disclosure": "DONE_OI-008_NOT_OI-024",
+        "toolchain_typescript_pin": "DONE_7.0.2_VERIFIED_ON_REGISTRY"
+      },
+      "status": "IN_PROGRESS_PENDING_PR"
     },
     "phase_2_1_type_gate": {
       "status": "NOT_STARTED"
@@ -86,9 +101,9 @@
       "status": "NOT_STARTED"
     }
   },
-  "next_executable_action": "Phase 2.1 (mandate CC-LANGUAGE-POLICY-AND-GAP-CLOSURE): add mypy strict on ocor-runtime/src and scripts, plus a repo-wide ruff config, both pinned to the patch and installed in the isolated environment; wire both as blocking CI jobs. One task, one branch, one PR. The backlog's own dependency-ready task, independent of this mandate, is OCOR-DEV-0079.",
+  "next_executable_action": "Merge this corrections PR, then start Phase 2.1 (mandate CC-LANGUAGE-POLICY-AND-GAP-CLOSURE): mypy strict on ocor-runtime/src and scripts, plus a repo-wide ruff config, both pinned to the patch, wired as blocking CI jobs. The backlog's own dependency-ready task, independent of this mandate, is OCOR-DEV-0079.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-12T15:04:21Z"
+  "updated_at": "2026-09-12T18:00:00Z"
 }
