@@ -2,14 +2,42 @@
   "branch": "governed/phase0-state-reconciliation-20260912",
   "baseline_commit": "a8f44364d74c4e5953954f8cf4997032ccc68f05",
   "gates": [
-    {"command": "sha256sum -c inputs/normative/SHA256SUMS", "result": "PASS_8_OF_8"},
-    {"command": "uv sync --project ocor-runtime --frozen --extra test", "result": "PASS_3_PACKAGES"},
-    {"command": "./.venv/bin/python3 scripts/verify.py --json", "result": "PASS_14_FAIL_0_NOT_EXECUTED_0"},
-    {"command": "./.venv/bin/python3 scripts/validate_rccad.py --base-ref a8f44364d74c4e5953954f8cf4997032ccc68f05", "result": "PASS_LOCAL_PRECHECK_AFF_001_TO_AFF_010"},
-    {"command": "./.venv/bin/python3 scripts/validate_ocor_change_scope.py --base origin/main --branch governed/phase0-state-reconciliation-20260912", "result": "PASS_6_CHANGED_PATHS_IMMUTABLE_UNTOUCHED"},
-    {"command": "(cd ocor-runtime && uv run --extra test pytest -q)", "result": "PARTIAL_498_PASSED_5_SKIPPED_10_ERROR_MISSING_OCOR_LIVE_POSTGRES_DSN_environment_NOT_EXECUTED_no_diff_to_ocor_runtime_src_or_tests_in_this_change"},
-    {"command": "scripts/validate_language_policy.py", "result": "NOT_APPLICABLE_script_does_not_exist_yet_created_in_mandate_Phase_1"},
-    {"command": "ruff / mypy / tsc", "result": "NOT_APPLICABLE_not_yet_wired_into_repo_addressed_in_mandate_Phase_2.1_and_2.3"}
+    {
+      "command": "sha256sum -c inputs/normative/SHA256SUMS",
+      "result": "PASS_8_OF_8"
+    },
+    {
+      "command": "uv sync --project ocor-runtime --frozen --extra test",
+      "result": "PASS_3_PACKAGES"
+    },
+    {
+      "command": "./.venv/bin/python3 scripts/verify.py --json",
+      "result": "PASS_14_FAIL_0_NOT_EXECUTED_0"
+    },
+    {
+      "command": "./.venv/bin/python3 scripts/validate_rccad.py --base-ref a8f44364d74c4e5953954f8cf4997032ccc68f05",
+      "result": "PASS_LOCAL_PRECHECK_AFF_001_TO_AFF_010"
+    },
+    {
+      "command": "./.venv/bin/python3 scripts/validate_ocor_change_scope.py --base origin/main --branch governed/phase0-state-reconciliation-20260912",
+      "result": "PASS_6_CHANGED_PATHS_IMMUTABLE_UNTOUCHED"
+    },
+    {
+      "command": "(cd ocor-runtime && uv run --extra test pytest -q)",
+      "result": "PARTIAL_498_PASSED_5_SKIPPED_10_ERROR_MISSING_OCOR_LIVE_POSTGRES_DSN_environment_NOT_EXECUTED_no_diff_to_ocor_runtime_src_or_tests_in_this_change"
+    },
+    {
+      "command": "scripts/validate_language_policy.py",
+      "result": "NOT_APPLICABLE_script_does_not_exist_yet_created_in_mandate_Phase_1"
+    },
+    {
+      "command": "ruff / mypy / tsc",
+      "result": "NOT_APPLICABLE_not_yet_wired_into_repo_addressed_in_mandate_Phase_2.1_and_2.3"
+    },
+    {
+      "command": ".github/workflows tooling-policy job: scripts/validate_ocor_development_plan.py --base-ref <base> --authorized-extension",
+      "result": "INITIAL_FAIL_authorized_extension_allowlist_missing_TERMINAL_BLOCKED_REPORT.json_and_G2_blockers_MANIFEST.json_and_the_two_new_reconciliation_files__fixed_by_extending_extension_paths_in_scripts/validate_ocor_development_plan.py__rerun_PASS_37_PASS_2_NOT_EXECUTED_0_FAIL"
+    }
   ],
   "note": "This change touches only reports/development/* and reports/evidence/G2/blockers/MANIFEST.json (state reconciliation); it does not touch ocor-runtime/src, ocor-runtime/tests, inputs/, or docs/detailed_design/."
 }
