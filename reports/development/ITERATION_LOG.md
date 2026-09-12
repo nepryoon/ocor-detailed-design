@@ -738,3 +738,79 @@
   esecuzione backlog via
   `./.venv/bin/python3 scripts/ocor_autonomous_delivery.py --next` a partire
   da `OCOR-DEV-0079`.
+
+## 2026-09-12 — Fase 3: harness di benchmark eseguito, esito reale per il componente 1
+
+- PR #68 mergiata (chore(state): close Phase 2.4 tracking): tutti e 13 i
+  check verdi, merge `5a08f78c9e429c2e80ec93b9d05c029e9e46cfb9`, verifica
+  post-merge con `git fetch origin main` conferma `origin/main == 5a08f78`.
+  Un piccolo commit di assestamento (`a19c321`) ha corretto il base-ref
+  auto-embedded di `OCOR_PLANNING_VALIDATION_REPORT.md`, prodotto dalla
+  stessa esecuzione del validator già usata per i gate — nessun problema
+  nuovo, solo output mecc anico del tool.
+- Branch `governed/phase3-language-migration-benchmark` da `main`
+  (`5a08f78c9e429c2e80ec93b9d05c029e9e46cfb9`).
+- Costruito `scripts/run_language_migration_benchmark.py` (harness
+  riproducibile e content-addressed) e un nuovo CLI Node dedicato,
+  `ocor-runtime/sdk/typescript/src/cli/benchmark_canonicalize.ts`
+  (timing interno con `process.hrtime.bigint()`, distinto dal CLI di
+  conformità NFR-022 il cui contratto di stdout è già asserito byte per
+  byte e non è stato toccato).
+- Corpus sigillato: 200 documenti deterministici (LCG proprio, seed
+  `20260912`), ciascuno ~10 KB serializzato (10000–10121 byte, esattamente
+  il payload di riferimento di `OCOR_LANGUAGE_POLICY.md` §3) —
+  `reports/benchmarks/fixtures/phase3_canonical_corpus.json`,
+  `sha256=2ce8879bc8e5697a4f51e37a3ae1262da4995c2fdba7f2ba23e6e3e775da80b7`.
+- **Componente 1 (kernel di canonicalizzazione RFC 8785) — misurato per
+  davvero**: mediana Python / mediana Node = **4.24×** (range su 3 run
+  consecutive con lo stesso corpus sigillato: 4.24×–4.77×, stabile, non
+  rumore), soglia >3× — **superata**. p95 assoluto Python: 1.77–1.96 ms,
+  soglia >2 ms — non superata (ma la clausola è un OR, quindi la soglia
+  è comunque superata). Esito: **`MIGRATION_THRESHOLD_EXCEEDED`**.
+- Per `OCOR_LANGUAGE_POLICY.md` §3, il superamento autorizza l'apertura di
+  una nuova decisione di migrazione per il solo componente — non
+  l'esecuzione autonoma della migrazione, che sostituirebbe
+  un'architettura approvata (`AFF-001`) ed è una delle condizioni di
+  escalation esplicite del mandato (§5.4). Registrata l'escalation
+  `PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED`,
+  riservata al Product Owner sotto dual control (`NFR-081`/`DEC-174`).
+  Dettaglio completo e raccomandazione in
+  `reports/development/PHASE3_LANGUAGE_MIGRATION_DECISION.md`.
+- **Componenti 2–4 (percorso di commit C3, backbone eventi C5, proiezione
+  C4) — `NOT_YET_MEASURABLE`**, ciascuno con motivo concreto e non
+  fabbricato: componente 2 richiede PostgreSQL reale (stesso gap già
+  documentato della suite live di `test_ocor_dev_0015.py`); componenti 3 e
+  4 non hanno ancora un'implementazione reale in `ocor_runtime` (solo FSM
+  obsoleta / reticolo di marking), per
+  `docs/planning/OCOR_CURRENT_STATE_BASELINE.json`. Questo è un esito
+  parziale onesto, non un sostituto di `NO_MIGRATION_JUSTIFIED`.
+- Aggiunto `reports/tests/test_language_migration_benchmark_harness.py`
+  (11 test): soglie del harness allineate a `OCOR_LANGUAGE_POLICY.md` §3
+  per tutti e 4 i componenti, hash del corpus sigillato invariato,
+  determinismo del generatore, payload ~10 KB, componenti 2–4 mai
+  fabbricati, smoke test end-to-end (guardia `TEST-INFRA-004`), nessun
+  claim proibito nell'evidenza sigillata.
+- **Trovato e corretto un gap della PR #67**: `test_backlog_generator_reality_parity.py`
+  non era mai stato cablato in nessun job CI (solo eseguito localmente) —
+  corretto insieme al nuovo test, entrambi ora nel job `type-and-lint-gate`
+  di `ocor-tooling-bootstrap.yml`.
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (45 file, 1 fix
+  `no-any-return`), `tsc --strict` (nuovo CLI compilato pulito),
+  `validate_rccad.py` PASS (dopo aver registrato `TEST-INFRA-004` in
+  `METHOD_COMPLIANCE.json`), `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS (12 percorsi), pytest completo
+  `2 failed, 532 passed, 5 skipped, 10 errors` (stessi gap sandbox noti, +11
+  rispetto alla fase precedente = i nuovi test di questa iterazione),
+  `validate_ocor_development_plan.py --authorized-extension` PASS dopo il
+  consueto doppio-run di assestamento self-hash.
+- Evidenza sigillata:
+  `reports/evidence/local-gates/phase3-language-migration-benchmark-20260912.json`,
+  `reports/benchmarks/phase3_language_migration_benchmark_20260912.json`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- **Fase 3 chiusa come processo** (misura reale per tutto ciò che è oggi
+  misurabile, escalation registrata per il solo componente 1, esito onesto
+  e non bloccante per i componenti 2–4). Prossima azione: esecuzione
+  backlog via `./.venv/bin/python3 scripts/ocor_autonomous_delivery.py --next`
+  a partire da `OCOR-DEV-0079` — l'escalation del componente 1 non blocca
+  questo passo.
