@@ -133,3 +133,37 @@
 - Prossima azione: Fase 1 del mandato — allocare il prossimo `DEC-*` libero e
   autorare `docs/development_methodology/OCOR_LANGUAGE_POLICY.md` con
   `scripts/validate_language_policy.py` (RED poi GREEN), cablato in CI.
+
+## 2026-09-12 — Chiusura Fase 1 (CC-LANGUAGE-POLICY-AND-GAP-CLOSURE / DEC-212)
+
+- PR #54 (Fase 0, riconciliazione di stato) integrata: merge
+  `b698f6b847f1afcd429e2dd7b7d72ab01d425a02`. Tutti i 12 check CI verdi
+  sull'HEAD esatto; un check (`tooling-policy`) inizialmente rosso per
+  allowlist troppo stretta in `scripts/validate_ocor_development_plan.py`,
+  corretto alla radice estendendo `extension_paths` con i percorsi di questo
+  change set, non aggirato.
+- PR #55 (Fase 1, `DEC-212`) integrata: merge
+  `7c7f9b5b6a5135aa2583445697f54e9ff1dfcf3e`. Allocato `DEC-212` dopo verifica
+  in sola lettura che nessun ref/tag/PR/registro lo referenziasse già (ultimo
+  libero dopo `DEC-211`). Autorato
+  `docs/development_methodology/OCOR_LANGUAGE_POLICY.md` (tabella normativa
+  per kernel, C1-C8, harness/validatori e spike G2, qualificatori `deploy/`,
+  generatore di contratti, SDK generati, adapter, policy OPA, infra/CI, formati
+  dichiarativi) e `scripts/validate_language_policy.py` (gate fail-closed).
+  RED su stub pre-implementazione, GREEN sull'implementazione reale,
+  REFACTOR dopo pulizia `ruff`. Durante RED/GREEN è emerso che `spikes/**`
+  (oracoli G2) mancava dalla bozza iniziale della policy: aggiunto prima di
+  dichiarare GREEN. Gate cablato nei tre workflow che già eseguono validazione
+  di processo (`ocor-tooling-bootstrap`, `ocor-rccad`, `ocor-delivery-activation`).
+- `DEC-212` non supersede alcuna decisione precedente e lascia invariato il
+  profilo SDK di `DEC-075`/`FR-047`/`FR-048` (Python e TypeScript generati,
+  Rust differito): la distinzione fra i due piani è esplicita nel documento.
+- Un job CI (`rccad-methodology`) è fallito una volta per un flake di rete
+  transitorio verso Docker Hub durante il pull dell'immagine Kafka pinnata
+  (`confluentinc/cp-kafka:7.6.0`), non correlato al diff; il rerun dello stesso
+  commit è risultato verde.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti globali `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC` e `Production` `NO-GO`.
+- Prossima azione: Fase 2.1 del mandato — mypy strict su `ocor-runtime/src` e
+  `scripts/`, configurazione `ruff` per l'intero repository, entrambi pinnati
+  alla patch, cablati come job CI bloccanti.
