@@ -21,6 +21,20 @@
       "path": "ocor-runtime/tests/integration/test_postgres_outbox_live.py",
       "qualifying_ci_must_execute": true,
       "type": "CONDITIONAL_INFRASTRUCTURE_GUARD"
+    },
+    {
+      "id": "TEST-INFRA-002",
+      "justification": "The TypeScript SDK compile-check has a local-tooling guard (tsc on PATH); every qualifying CI job installs Node 20.20.2 and TypeScript 7.0.2 before this test runs and never hits the skip.",
+      "path": "reports/tests/test_generate_contracts_reference_resolution.py",
+      "qualifying_ci_must_execute": true,
+      "type": "CONDITIONAL_INFRASTRUCTURE_GUARD"
+    },
+    {
+      "id": "TEST-INFRA-003",
+      "justification": "The TypeScript SDK conformance suite has a local-tooling guard (node on PATH, SDK built); every qualifying CI job installs Node 20.20.2 and runs npm install/tsc build before this test runs and never hits the skip.",
+      "path": "ocor-runtime/tests/sdk/test_typescript_sdk_conformance.py",
+      "qualifying_ci_must_execute": true,
+      "type": "CONDITIONAL_INFRASTRUCTURE_GUARD"
     }
   ],
   "verifier": "GO_FOR_BLOCKED_STATE_MERGE__ZERO_BLOCKER_HIGH_MEDIUM_LOW"

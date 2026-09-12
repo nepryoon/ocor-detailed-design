@@ -25,6 +25,8 @@ jobs:
         with: {python-version: "3.12.11"}
       - uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff # v6
         with: {version: "0.12.5"}
+      - uses: actions/setup-node@v4
+        with: {node-version: "20.20.2"}
       - name: Restore pinned Python environment
         run: |
           uv sync --project ocor-runtime --frozen --extra test --extra lint
@@ -33,6 +35,15 @@ jobs:
         run: ocor-runtime/.venv/bin/python -m mypy
       - name: ruff check, repository-wide (DEC-212 Phase 2.1)
         run: ruff check .
+      - name: "tsc --strict (DEC-212 Phase 2.3: TypeScript SDK)"
+        working-directory: ocor-runtime/sdk/typescript
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+      - name: Contract generator reference-resolution remediation (OCOR-DEV-REM-0010)
+        run: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_generate_contracts_reference_resolution.py
+      - name: NFR-022 cross-SDK conformance (DEC-212 Phase 2.3)
+        run: ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests/sdk/test_typescript_sdk_conformance.py
   tooling-policy:
     runs-on: ubuntu-24.04
     timeout-minutes: 30

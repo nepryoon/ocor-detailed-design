@@ -31,10 +31,19 @@ PINNED_SOURCE_HASHES = {
     "ocor_registry.proto": "7de0aa5f592a013f2f067866ce6dbb27c1ecbffefcc14eb3a0e0d959bfc24694",
 }
 # Filled only with hashes produced from the pinned source set and this generator version.
+# Regenerated 2026-09-12 (Phase 2.3 / OCOR-DEV-REM-0010): the previous hashes
+# were produced by a generator whose $ref resolution silently emitted the
+# unprefixed component name for cross-referenced Gateway/Memory records
+# (e.g. `QueryContext` instead of the real `GatewayQueryContext`) and never
+# resolved plain scalar/alias components at all (`Digest`, `GovernedContext`,
+# `Refs`, `NonEmptyRefs`) -- ocor_contracts.ts from that generator does not
+# compile under tsc --strict. See reports/tests/test_generate_contracts_reference_resolution.py
+# for the RED/GREEN evidence; the model inventory (54 models, same names) is
+# unchanged, only cross-reference resolution is corrected.
 PINNED_GENERATED_HASHES = {
-    "contract-descriptor.json": "611226a9e0427882e57b5d8f89d726563688154a89d1dd3ba691546d1925e413",
-    "ocor_contracts.py": "6cf97b6f026d49b36c1114232240be3c6b1c53e728afc37abc3aac239ca9b418",
-    "ocor_contracts.ts": "0f8a104d8b8f2bc776abdb905f7f6910acdd50781380bde330a58a9fb2b6b0b0",
+    "contract-descriptor.json": "4871b09cf38c1e806291d30ed95bcdb4d183d2b660ceb30582afa540e1bbbc90",
+    "ocor_contracts.py": "443dfe4ff302a65bcdb1be3b0fb60a7a992cb9c05fe8811e5f421e1bf8c864b1",
+    "ocor_contracts.ts": "2fbb7c7d3a8858e37dc16707b80e73957b029aa8205e664a0f3815bdab8b5696",
 }
 ARTIFACT_NAMES = ("contract-descriptor.json", "ocor_contracts.py", "ocor_contracts.ts")
 FORBIDDEN_BACKEND = re.compile(
@@ -219,10 +228,13 @@ def _safe_name(value: str) -> str:
     return result
 
 
-def _schema_type(schema: Mapping[str, Any], language: str) -> str:
+def _schema_type(schema: Mapping[str, Any], language: str, index: Mapping[str, Mapping[str, str]]) -> str:
     if "$ref" in schema:
-        name = str(schema["$ref"]).rsplit("/", 1)[-1]
-        return _safe_name(name)
+        ref = str(schema["$ref"])
+        resolved = index.get(ref)
+        if resolved is None:
+            raise ContractGenerationError(f"unresolved contract reference: {ref}")
+        return resolved[language]
     kind = schema.get("type")
     if kind == "string":
         return "str" if language == "python" else "string"
@@ -233,12 +245,96 @@ def _schema_type(schema: Mapping[str, Any], language: str) -> str:
     if kind == "boolean":
         return "bool" if language == "python" else "boolean"
     if kind == "array":
-        child = _schema_type(schema.get("items", {}), language)
+        child = _schema_type(schema.get("items", {}), language, index)
         return f"list[{child}]" if language == "python" else f"ReadonlyArray<{child}>"
     return "object"
 
 
-def _schema_model(name: str, schema: Mapping[str, Any], source: str) -> dict[str, object]:
+def _build_reference_index(validated: Mapping[str, object]) -> dict[str, dict[str, str]]:
+    """Resolve every ``$ref`` used by the pinned contract set to the type
+    text that should appear at its use site, keyed by the exact ``$ref``
+    string and then by language (``{"python": ..., "typescript": ...}``).
+
+    Three shapes occur in the pinned contracts, each addressed differently:
+
+    - a whole JSON Schema document, addressed by other documents via its
+      bare relative filename (e.g. ``./governed-context.schema.json``);
+      resolves to that document's own generated model name.
+    - an OpenAPI ``components.schemas`` entry that is itself an object
+      record (``type: object`` or has ``properties``), addressed locally as
+      ``#/components/schemas/<name>``; resolves to that record's
+      ``Gateway``/``Memory``-prefixed generated model name -- the prefix a
+      bare ``rsplit("/")[-1]`` cannot recover, which is what made every such
+      reference resolve to a name nothing declares.
+    - a plain scalar or array component/``$defs`` entry that is not itself
+      an object record (a SHA-256 digest string, a non-empty string array),
+      addressed as ``#/components/schemas/<name>`` or ``#/$defs/<name>``;
+      resolves to its literal underlying type (``str``/``string``,
+      ``list[str]``/``ReadonlyArray<string>``) inlined at every use site,
+      rather than a named alias -- so the generated model inventory (and
+      every existing consumer of it) is unchanged: this fix only makes
+      reference resolution correct, it adds no new model.
+    """
+
+    ref_target: dict[str, str] = {}
+    external_index: dict[str, str] = {}
+    for source, document in validated["json"].items():  # type: ignore[union-attr]
+        title = document.get("title") or Path(source).stem
+        external_index[source] = _safe_name(str(title))
+
+    alias_schemas: dict[str, Mapping[str, Any]] = {}
+
+    def register_alias(rendered: str, schema: Mapping[str, Any]) -> None:
+        existing = alias_schemas.get(rendered)
+        if existing is not None and existing != schema:
+            raise ContractGenerationError(f"conflicting alias definitions for {rendered}")
+        alias_schemas[rendered] = schema
+
+    for source, document in validated["json"].items():  # type: ignore[union-attr]
+        for def_name, def_schema in document.get("$defs", {}).items():
+            if not isinstance(def_schema, Mapping):
+                continue
+            rendered = _safe_name(def_name)
+            register_alias(rendered, def_schema)
+            ref_target[f"#/$defs/{def_name}"] = rendered
+
+    for source, document in validated["openapi"].items():  # type: ignore[union-attr]
+        prefix = "Memory" if "memory" in source else "Gateway"
+        schemas = document.get("components", {}).get("schemas", {})
+        for name, schema in schemas.items():
+            if not isinstance(schema, Mapping):
+                continue
+            ref_key = f"#/components/schemas/{name}"
+            if schema.get("type") == "object" or "properties" in schema:
+                ref_target[ref_key] = prefix + _safe_name(name)
+            elif set(schema) == {"$ref"} and str(schema["$ref"]).removeprefix("./") in external_index:
+                ref_target[ref_key] = external_index[str(schema["$ref"]).removeprefix("./")]
+            elif "type" in schema:
+                rendered = _safe_name(name)
+                register_alias(rendered, schema)
+                ref_target[ref_key] = rendered
+            # Any other shape (e.g. an allOf composition) is intentionally
+            # left unindexed: nothing in the pinned contract set references
+            # it as a nested field type, and _schema_type fails closed if
+            # that ever changes.
+
+    # Every alias schema in the pinned contract set is a terminal
+    # scalar/array (never itself a $ref); render its literal type text per
+    # language with an index empty of aliases so a future alias that DOES
+    # indirect through another reference fails closed here instead of
+    # resolving silently to the wrong thing.
+    alias_types = {
+        rendered: {"python": _schema_type(schema, "python", {}), "typescript": _schema_type(schema, "typescript", {})}
+        for rendered, schema in alias_schemas.items()
+    }
+
+    resolved: dict[str, dict[str, str]] = {}
+    for ref_key, target in ref_target.items():
+        resolved[ref_key] = alias_types.get(target, {"python": target, "typescript": target})
+    return resolved
+
+
+def _schema_model(name: str, schema: Mapping[str, Any], source: str, index: Mapping[str, Mapping[str, str]]) -> dict[str, object]:
     required = set(schema.get("required", []))
     properties = schema.get("properties", {})
     fields = []
@@ -247,8 +343,8 @@ def _schema_model(name: str, schema: Mapping[str, Any], source: str) -> dict[str
             fields.append(
                 {
                     "name": field_name,
-                    "python_type": _schema_type(field_schema, "python"),
-                    "typescript_type": _schema_type(field_schema, "typescript"),
+                    "python_type": _schema_type(field_schema, "python", index),
+                    "typescript_type": _schema_type(field_schema, "typescript", index),
                     "required": field_name in required,
                 }
             )
@@ -256,15 +352,16 @@ def _schema_model(name: str, schema: Mapping[str, Any], source: str) -> dict[str
 
 
 def _models(validated: Mapping[str, object]) -> list[dict[str, object]]:
+    index = _build_reference_index(validated)
     models: list[dict[str, object]] = []
     for source, document in validated["json"].items():  # type: ignore[union-attr]
         title = document.get("title") or Path(source).stem
-        models.append(_schema_model(str(title), document, source))
+        models.append(_schema_model(str(title), document, source, index))
     for source, document in validated["openapi"].items():  # type: ignore[union-attr]
         prefix = "Memory" if "memory" in source else "Gateway"
         for name, schema in sorted(document.get("components", {}).get("schemas", {}).items()):
             if isinstance(schema, Mapping) and (schema.get("type") == "object" or "properties" in schema):
-                models.append(_schema_model(prefix + name, schema, source))
+                models.append(_schema_model(prefix + name, schema, source, index))
     descriptor: descriptor_pb2.FileDescriptorSet = validated["proto"]  # type: ignore[assignment]
     type_names = descriptor_pb2.FieldDescriptorProto.Type
     for file_descriptor in descriptor.file:

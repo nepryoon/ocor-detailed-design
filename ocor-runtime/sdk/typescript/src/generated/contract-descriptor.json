@@ -1,0 +1,2389 @@
+{
+  "generator_version": "1.0.0",
+  "models": [
+    {
+      "fields": [
+        {
+          "name": "mode",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "required_commit",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "wait_timeout_ms",
+          "python_type": "int",
+          "required": false,
+          "typescript_type": "number"
+        }
+      ],
+      "name": "GatewayConsistency",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "contract_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "contract_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "contract_version",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "parameters",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        }
+      ],
+      "name": "GatewayContractCall",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "accepting_decision_ref",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "contested_by_count",
+          "python_type": "int",
+          "required": false,
+          "typescript_type": "number"
+        },
+        {
+          "name": "status",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        }
+      ],
+      "name": "GatewayEpistemicStatus",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "context",
+          "python_type": "GatewayQueryContext",
+          "required": true,
+          "typescript_type": "GatewayQueryContext"
+        },
+        {
+          "name": "explanation_contract",
+          "python_type": "GatewayContractCall",
+          "required": true,
+          "typescript_type": "GatewayContractCall"
+        },
+        {
+          "name": "max_depth",
+          "python_type": "int",
+          "required": false,
+          "typescript_type": "number"
+        },
+        {
+          "name": "target",
+          "python_type": "GatewayResourceRef",
+          "required": true,
+          "typescript_type": "GatewayResourceRef"
+        }
+      ],
+      "name": "GatewayExplainRequest",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "context",
+          "python_type": "GatewayQueryContext",
+          "required": true,
+          "typescript_type": "GatewayQueryContext"
+        },
+        {
+          "name": "object_ref",
+          "python_type": "GatewayResourceRef",
+          "required": true,
+          "typescript_type": "GatewayResourceRef"
+        },
+        {
+          "name": "view_contract",
+          "python_type": "GatewayContractCall",
+          "required": true,
+          "typescript_type": "GatewayContractCall"
+        }
+      ],
+      "name": "GatewayGetObjectRequest",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "object",
+          "python_type": "GatewayObjectSnapshot",
+          "required": true,
+          "typescript_type": "GatewayObjectSnapshot"
+        },
+        {
+          "name": "served",
+          "python_type": "GatewayServedContext",
+          "required": true,
+          "typescript_type": "GatewayServedContext"
+        }
+      ],
+      "name": "GatewayGetObjectResponse",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "edge_type_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "from_ref",
+          "python_type": "GatewayResourceRef",
+          "required": true,
+          "typescript_type": "GatewayResourceRef"
+        },
+        {
+          "name": "marking_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "to_ref",
+          "python_type": "GatewayResourceRef",
+          "required": true,
+          "typescript_type": "GatewayResourceRef"
+        }
+      ],
+      "name": "GatewayGraphEdge",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "marking_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "node_kind",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "node_ref",
+          "python_type": "GatewayResourceRef",
+          "required": true,
+          "typescript_type": "GatewayResourceRef"
+        }
+      ],
+      "name": "GatewayGraphNode",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "edges",
+          "python_type": "list[GatewayGraphEdge]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<GatewayGraphEdge>"
+        },
+        {
+          "name": "nodes",
+          "python_type": "list[GatewayGraphNode]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<GatewayGraphNode>"
+        },
+        {
+          "name": "served",
+          "python_type": "GatewayServedContext",
+          "required": true,
+          "typescript_type": "GatewayServedContext"
+        }
+      ],
+      "name": "GatewayGraphResponse",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "adjudication_status",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "candidate_ref",
+          "python_type": "GatewayResourceRef",
+          "required": true,
+          "typescript_type": "GatewayResourceRef"
+        },
+        {
+          "name": "score",
+          "python_type": "float",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "score_semantics",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        }
+      ],
+      "name": "GatewayIdentityCandidate",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "items",
+          "python_type": "list[GatewayObjectSnapshot]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<GatewayObjectSnapshot>"
+        },
+        {
+          "name": "next_page_token",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "served",
+          "python_type": "GatewayServedContext",
+          "required": true,
+          "typescript_type": "GatewayServedContext"
+        }
+      ],
+      "name": "GatewayObjectPageResponse",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "context",
+          "python_type": "GatewayQueryContext",
+          "required": true,
+          "typescript_type": "GatewayQueryContext"
+        },
+        {
+          "name": "object_set_contract",
+          "python_type": "GatewayContractCall",
+          "required": true,
+          "typescript_type": "GatewayContractCall"
+        },
+        {
+          "name": "page_size",
+          "python_type": "int",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "page_token",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "GatewayObjectSetRequest",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "claim_refs",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "epistemic_status",
+          "python_type": "GatewayEpistemicStatus",
+          "required": true,
+          "typescript_type": "GatewayEpistemicStatus"
+        },
+        {
+          "name": "evidence_refs",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "explanation_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "identity_candidates",
+          "python_type": "list[GatewayIdentityCandidate]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<GatewayIdentityCandidate>"
+        },
+        {
+          "name": "link_refs",
+          "python_type": "list[GatewayResourceRef]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<GatewayResourceRef>"
+        },
+        {
+          "name": "marking_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "object_ref",
+          "python_type": "GatewayResourceRef",
+          "required": true,
+          "typescript_type": "GatewayResourceRef"
+        },
+        {
+          "name": "object_schema",
+          "python_type": "GatewaySchemaPin",
+          "required": true,
+          "typescript_type": "GatewaySchemaPin"
+        },
+        {
+          "name": "provenance_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "system_time",
+          "python_type": "GatewayTemporalInterval",
+          "required": true,
+          "typescript_type": "GatewayTemporalInterval"
+        },
+        {
+          "name": "uncertainty",
+          "python_type": "GatewayUncertainty",
+          "required": true,
+          "typescript_type": "GatewayUncertainty"
+        },
+        {
+          "name": "valid_time",
+          "python_type": "GatewayTemporalInterval",
+          "required": true,
+          "typescript_type": "GatewayTemporalInterval"
+        },
+        {
+          "name": "values",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        }
+      ],
+      "name": "GatewayObjectSnapshot",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "correlation_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "deferred_element",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "detail",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "instance",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "reason_code",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "served",
+          "python_type": "GatewayServedContext",
+          "required": false,
+          "typescript_type": "GatewayServedContext"
+        },
+        {
+          "name": "status",
+          "python_type": "int",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "title",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "type",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "GatewayProblem",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "context",
+          "python_type": "GatewayQueryContext",
+          "required": true,
+          "typescript_type": "GatewayQueryContext"
+        },
+        {
+          "name": "direction",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "include_evidence",
+          "python_type": "bool",
+          "required": false,
+          "typescript_type": "boolean"
+        },
+        {
+          "name": "max_depth",
+          "python_type": "int",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "target",
+          "python_type": "GatewayResourceRef",
+          "required": true,
+          "typescript_type": "GatewayResourceRef"
+        }
+      ],
+      "name": "GatewayProvenanceRequest",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "branch",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "classification_marking_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "compartments",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "consistency",
+          "python_type": "GatewayConsistency",
+          "required": true,
+          "typescript_type": "GatewayConsistency"
+        },
+        {
+          "name": "correlation_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "domain_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "governed_context_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "logic_version",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "ontology_release_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "organization_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "policy_bundle_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "purpose",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "request_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "scenario_id",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "tenant_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "GatewayQueryContext",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "resource_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "resource_type_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "GatewayResourceRef",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "schema_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "version",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "GatewaySchemaPin",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "object",
+          "python_type": "GatewayObjectSnapshot",
+          "required": true,
+          "typescript_type": "GatewayObjectSnapshot"
+        },
+        {
+          "name": "score",
+          "python_type": "float",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "score_semantics",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        }
+      ],
+      "name": "GatewaySearchHit",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "context",
+          "python_type": "GatewayQueryContext",
+          "required": true,
+          "typescript_type": "GatewayQueryContext"
+        },
+        {
+          "name": "page_size",
+          "python_type": "int",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "page_token",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "search_contract",
+          "python_type": "GatewayContractCall",
+          "required": true,
+          "typescript_type": "GatewayContractCall"
+        },
+        {
+          "name": "text",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "GatewaySearchRequest",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "hits",
+          "python_type": "list[GatewaySearchHit]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<GatewaySearchHit>"
+        },
+        {
+          "name": "next_page_token",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "served",
+          "python_type": "GatewayServedContext",
+          "required": true,
+          "typescript_type": "GatewayServedContext"
+        }
+      ],
+      "name": "GatewaySearchResponse",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "branch",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "ontology_release",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "provenance_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "redaction_count",
+          "python_type": "int",
+          "required": false,
+          "typescript_type": "number"
+        },
+        {
+          "name": "result_marking_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "served_commit",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "staleness_ms",
+          "python_type": "int",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "watermark",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "GatewayServedContext",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "from",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "to",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        }
+      ],
+      "name": "GatewayTemporalInterval",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "context",
+          "python_type": "GatewayQueryContext",
+          "required": true,
+          "typescript_type": "GatewayQueryContext"
+        },
+        {
+          "name": "start",
+          "python_type": "list[GatewayResourceRef]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<GatewayResourceRef>"
+        },
+        {
+          "name": "traversal_contract",
+          "python_type": "GatewayContractCall",
+          "required": true,
+          "typescript_type": "GatewayContractCall"
+        }
+      ],
+      "name": "GatewayTraverseRequest",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "calibration_ref",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "semantics",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "value",
+          "python_type": "object",
+          "required": false,
+          "typescript_type": "object"
+        }
+      ],
+      "name": "GatewayUncertainty",
+      "source": "ocor-named-query-gateway.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "deadline",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "governed_context",
+          "python_type": "OCORGovernedContextV12",
+          "required": true,
+          "typescript_type": "OCORGovernedContextV12"
+        },
+        {
+          "name": "governed_context_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "operation_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "MemoryGovernedEnvelope",
+      "source": "ocor-governed-memory.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "assembly_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "audit_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "context_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "context_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "governed_context_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "ordering_profile_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "query_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "redaction_refs",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "selected_item_version_refs",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "truncation_record",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        }
+      ],
+      "name": "MemoryMemoryContextAssembly",
+      "source": "ocor-governed-memory.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "content_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "content_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "evidence_refs",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "explanation_ref",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "final_score",
+          "python_type": "float",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "memory_item_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "memory_version",
+          "python_type": "int",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "provenance_refs",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "result_marking_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "score_factors",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        }
+      ],
+      "name": "MemoryMemoryHit",
+      "source": "ocor-governed-memory.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "audit_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "content_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "governed_context_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "lifecycle_status",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "memory_item_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "memory_version",
+          "python_type": "int",
+          "required": true,
+          "typescript_type": "number"
+        }
+      ],
+      "name": "MemoryMemoryReceipt",
+      "source": "ocor-governed-memory.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "audit_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "governed_context_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "hits",
+          "python_type": "list[MemoryMemoryHit]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<MemoryMemoryHit>"
+        },
+        {
+          "name": "query_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "ranking_profile_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "retrieval_mode",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        }
+      ],
+      "name": "MemoryMemorySearchResponse",
+      "source": "ocor-governed-memory.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "audit_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "governed_context_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "operation_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "operation_kind",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "status",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        }
+      ],
+      "name": "MemoryOperationReceipt",
+      "source": "ocor-governed-memory.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "correlation_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "reason_code",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "status",
+          "python_type": "int",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "title",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "type",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "MemoryProblem",
+      "source": "ocor-governed-memory.openapi.yaml"
+    },
+    {
+      "fields": [
+        {
+          "name": "action_instance_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "capability_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "delegation_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "effective_principal_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "expires_at",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "fencing_token",
+          "python_type": "int",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "gate_package_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "governed_context_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "issued_at",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "lease_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "stop_epoch",
+          "python_type": "int",
+          "required": true,
+          "typescript_type": "number"
+        }
+      ],
+      "name": "OCORCapabilityLease",
+      "source": "capability-lease.schema.json"
+    },
+    {
+      "fields": [
+        {
+          "name": "actor_chain",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "classification_marking_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "compartments",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "correlation_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "domain_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "effective_principal_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "ontology_release_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "organization_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "policy_bundle_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "purpose",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "tenant_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "OCORGovernedContextV12",
+      "source": "governed-context.schema.json"
+    },
+    {
+      "fields": [
+        {
+          "name": "agent_id",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "agent_run_id",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "classification_marking_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "compartments",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "confidence",
+          "python_type": "float",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "consolidates_refs",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "content_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "content_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "content_schema_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "correction_of_ref",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "created_at",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "deletion_epoch",
+          "python_type": "int",
+          "required": false,
+          "typescript_type": "number"
+        },
+        {
+          "name": "derived_from_refs",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "domain_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "embedding_digest",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "embedding_dimensions",
+          "python_type": "int",
+          "required": false,
+          "typescript_type": "number"
+        },
+        {
+          "name": "embedding_model_digest",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "embedding_model_ref",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "embedding_normalization_profile",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "embedding_ref",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "evidence_refs",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "expires_at",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "federation_policy_ref",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "governed_context_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "instruction_approval_ref",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "instruction_eligible",
+          "python_type": "bool",
+          "required": true,
+          "typescript_type": "boolean"
+        },
+        {
+          "name": "language",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "legal_hold_ref",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "lifecycle_status",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "memory_item_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "memory_kind",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "memory_scope",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "memory_version",
+          "python_type": "int",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "ontology_release_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "organization_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "owner_principal_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "policy_bundle_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "prior_lifecycle_status",
+          "python_type": "object",
+          "required": false,
+          "typescript_type": "object"
+        },
+        {
+          "name": "project_id",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "provenance_refs",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "purpose",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "representation_kinds",
+          "python_type": "list[object]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<object>"
+        },
+        {
+          "name": "retention_policy_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "source_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "source_kind",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "source_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "supersedes_ref",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "taint_labels",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "task_id",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "team_id",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "team_run_id",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "tenant_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "uncertainty_ref",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "valid_from",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "valid_until",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "OCORGovernedMemoryItemFullPoCProfile",
+      "source": "governed-memory-item.schema.json"
+    },
+    {
+      "fields": [
+        {
+          "name": "reason_code",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "explanation_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "RegistryAbstention",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "pin",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "input_schema",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "output_schema",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "dependencies",
+          "python_type": "list[object]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<object>"
+        },
+        {
+          "name": "effect_class",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "deterministic",
+          "python_type": "bool",
+          "required": true,
+          "typescript_type": "boolean"
+        },
+        {
+          "name": "execution_owner",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "budget",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "policy_refs",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "artifact_signature_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "provenance_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "RegistryFunctionDescriptor",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "invocation_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "output",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "effect_class",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "result_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "provenance_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "classification_marking_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "served_commit",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "watermark",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "RegistryFunctionResult",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "request_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "tenant_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "domain_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "compartments",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        },
+        {
+          "name": "purpose",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "ontology_release_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "logic_version",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "branch",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "scenario_id",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "correlation_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "causation_id",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "delegation_ref",
+          "python_type": "str",
+          "required": false,
+          "typescript_type": "string"
+        },
+        {
+          "name": "classification_marking_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "organization_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "policy_bundle_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "governed_context_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "RegistryInvocationContext",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "function_pin",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "context",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "input",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "idempotency_key",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "RegistryInvokeFunctionRequest",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "model_pin",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "deployment_pin",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "mapping_pin",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "context",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "input",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "input_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "RegistryInvokeModelRequest",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "model_pin",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "deployment_pin",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "mapping_pin",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "input_schema",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "output_schema",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "effect_class",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "validity_envelope_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "training_lineage_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "owner_principal_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "risk_class",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "approval_status",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "artifact_signature_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "RegistryModelDescriptor",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "invocation_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "output_kind",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "output",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "abstention",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "validity",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "uncertainty",
+          "python_type": "object",
+          "required": false,
+          "typescript_type": "object"
+        },
+        {
+          "name": "result_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "provenance_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "classification_marking_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "RegistryModelResult",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "descriptor",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "signed_manifest_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "change_proposal_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "RegistryPublishFunctionRequest",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "descriptor",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "signed_manifest_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "change_proposal_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "RegistryPublishModelRequest",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "registry_commit",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "descriptor_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "accepted_at",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "audit_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "RegistryPublishReceipt",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "pin",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "context",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        }
+      ],
+      "name": "RegistryResolveFunctionRequest",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "model_pin",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "deployment_pin",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "mapping_pin",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "context",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        }
+      ],
+      "name": "RegistryResolveModelRequest",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "timeout",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "cpu_millis",
+          "python_type": "int",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "memory_bytes",
+          "python_type": "int",
+          "required": true,
+          "typescript_type": "number"
+        },
+        {
+          "name": "output_bytes",
+          "python_type": "int",
+          "required": true,
+          "typescript_type": "number"
+        }
+      ],
+      "name": "RegistryResourceBudget",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "schema_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "semantic_version",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "schema_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "protobuf_type_url",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "RegistrySchemaPin",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "schema",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "value",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        }
+      ],
+      "name": "RegistryTypedValue",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "semantics",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "value",
+          "python_type": "object",
+          "required": true,
+          "typescript_type": "object"
+        },
+        {
+          "name": "calibration_ref",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "RegistryUncertaintyDescriptor",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "inside_envelope",
+          "python_type": "bool",
+          "required": true,
+          "typescript_type": "boolean"
+        },
+        {
+          "name": "envelope_version",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "failed_conditions",
+          "python_type": "list[str]",
+          "required": true,
+          "typescript_type": "ReadonlyArray<string>"
+        }
+      ],
+      "name": "RegistryValidityAssessment",
+      "source": "ocor_registry.proto"
+    },
+    {
+      "fields": [
+        {
+          "name": "resource_id",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "semantic_version",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "artifact_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        },
+        {
+          "name": "contract_digest",
+          "python_type": "str",
+          "required": true,
+          "typescript_type": "string"
+        }
+      ],
+      "name": "RegistryVersionPin",
+      "source": "ocor_registry.proto"
+    }
+  ],
+  "source_sha256": {
+    "capability-lease.schema.json": "d16951ad374f33138541370d55d0cd474ae0672ae3fa0a134d0a10ae030ddf0e",
+    "governed-context.schema.json": "04671e932f7378c34b07fc01881755c7c5af66787ef2f6a3ca2da5bd86c22a88",
+    "governed-memory-item.schema.json": "8d0167be6467a8cfb4e41e4c7cc1e8f207b578456238a7da41f7a4da091e47b5",
+    "ocor-governed-memory.openapi.yaml": "526caa147715aaffc6d4003889db1111e50d6cd17cd9fc61dbfad28f58343d9b",
+    "ocor-named-query-gateway.openapi.yaml": "652403f5aab29312452f9814a0fe87f74b6a142c361de415c4d79b3b8406e03e",
+    "ocor_registry.proto": "7de0aa5f592a013f2f067866ce6dbb27c1ecbffefcc14eb3a0e0d959bfc24694"
+  }
+}
