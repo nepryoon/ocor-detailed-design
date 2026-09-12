@@ -426,3 +426,30 @@
   dichiarato sopra); se rosso, correggere alla radice (mai allentare il pin);
   se verde, merge, verifica SHA post-merge, poi Fase 2.3 — SDK TypeScript
   reale e suite di conformità cross-SDK.
+
+## 2026-09-12 — Chiusura Fase 2.2
+
+- PR #61 aperta e integrata: merge `47ca9017c8f8f5f89d5155daea13f05314f1025f`.
+  **Il rischio dichiarato sulla risoluzione dell'interprete non si è
+  concretizzato**: `type-and-lint-gate`, `unit`, `integration-postgresql` e
+  `validation-closure` (tutti basati su `uv`) sono passati puliti sul pin
+  esatto `3.12.11` già al primo push, confermando che l'interprete fornito
+  su `PATH` da `actions/setup-python` soddisfa il vincolo `requires-python`
+  esatto senza bisogno di download da parte di `uv`.
+  Il primo push è comunque fallito su `tooling-policy`, ma per una causa
+  diversa e già nota: un self-hash di `scripts/validate_ocor_development_plan.py`
+  non assestato dopo una terza modifica al file nella stessa iterazione (le
+  prime due erano state assestate correttamente, la terza — l'aggiunta del
+  percorso di evidenza Fase 2.2 — no). Corretto e ripushato (`7b97e96`):
+  12/12 check verdi.
+- Verifica pre-merge: `mergeStateStatus: CLEAN`. Verifica post-merge: SHA di
+  `origin/main` coincidente con il merge commit.
+- `EXECUTION_STATE.json` e `MODEL_HANDOFF.json` risincronizzati; `latest_ci_evidence`
+  aggiornato ai run reali.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti globali `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC` e `Production` `NO-GO`.
+- Prossima azione: Fase 2.3 del mandato — SDK TypeScript reale sotto
+  `ocor-runtime/sdk/typescript`, generato dal generatore esistente, mai
+  scritto a mano; `tsconfig` strict; compilazione `tsc` in CI; suite di
+  conformance cross-SDK `NFR-022` su fixture condivise fra SDK Python, SDK
+  TypeScript e descrittore MCP.

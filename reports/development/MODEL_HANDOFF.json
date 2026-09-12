@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "589cda9f252a0417537e94876bc6df429f4179ca",
-  "branch": "governed/phase2-2-interpreter-pin",
+  "baseline_commit": "47ca9017c8f8f5f89d5155daea13f05314f1025f",
+  "branch": "governed/phase2-2-close-state-update",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -60,6 +60,10 @@
     {
       "command": "uv python list / uv python install 3.12.11 / uv lock / uv sync --frozen (ocor-runtime, this shell)",
       "result": "ALL_FAILED_no_exact_3.12.11_interpreter_obtainable_in_this_sandbox; confirmed real and available in GitHub Actions via prior CI environment dumps (pythonLocation: /opt/hostedtoolcache/Python/3.12.11/x64)"
+    },
+    {
+      "command": "gh pr merge 61 --merge",
+      "result": "MERGED_47ca9017c8f8f5f89d5155daea13f05314f1025f_ALL_12_CHECKS_GREEN_ON_EXACT_HEAD_7b97e96"
     }
   ],
   "completed_tasks": [
@@ -69,9 +73,10 @@
     "Phase 1B: PR #57 merged (3911228e), closing the 3 independent-review corrections (OI-008 vs OI-024, real CI evidence, verified TypeScript 7.0.2 pin); a follow-up commit on the same PR fixed a real tooling-policy CI failure at the root (missing allowlist entry for the new evidence file in scripts/validate_ocor_development_plan.py's extension_paths, plus the self-hash settle in OCOR_PLAN_RUN_STATE.json), not bypassed.",
     "Phase 2.1 (pending PR/merge): mypy --strict on ocor-runtime/src and scripts/ (0 errors, precise per-module override for grpcio-tools' missing stubs, 2 files excluded for content-addressed sealed-evidence/generator-drift reasons) and a repository-wide ruff gate (5 files excluded for frozen-review-corpus/sealed-evidence reasons), wired as a new blocking type-and-lint-gate job. mypy pinned via a new lint optional-dependency group (mypy==2.3.1 + exact-pinned type stubs, all verified real on PyPI), uv.lock regenerated. Fixed 9 files with precise type annotations/unused-import removals/ambiguous-name renames; no runtime behavior changed (full pytest regression unchanged: 498 passed). Audited every reports/evidence/**/*.json inputs/artifact_hashes dict before editing anything, caught and reverted 3 edits that would have invalidated sealed evidence for OCOR-DEV-0004/0015/0072, and discovered that scripts/build_ocor_development_plan.py silently deletes OCOR-DEV-0070..0084 if re-run -- registered as a non-blocking escalation for Phase 2.4 rather than masked or worked around.",
     "Phase 2.1: PR #59 merged (1cfa0a78), all 12 checks green on exact head including the new type-and-lint-gate job on the first CI run.",
-    "Phase 2.2 (pending PR/merge): interpreter pinned to exact 3.12.11 in requires-python, new .python-version, uv.lock header, and all 6 CI workflows; new fail-closed test_interpreter_pin.py. Local sandbox has no exact 3.12.11 interpreter (uv lock/sync/run all refuse), so verification bypassed uv's wrapper (direct venv invocation) and one uv.lock line was hand-edited as a documented, justified exception (a literal copy of pyproject.toml's own field). Two new local-only test failures are expected and documented (both trace to the same missing-interpreter root cause, not a logic defect); CI is the real qualifying gate since actions/setup-python has already proven it provisions exactly 3.12.11 in every prior PR this session."
+    "Phase 2.2 (pending PR/merge): interpreter pinned to exact 3.12.11 in requires-python, new .python-version, uv.lock header, and all 6 CI workflows; new fail-closed test_interpreter_pin.py. Local sandbox has no exact 3.12.11 interpreter (uv lock/sync/run all refuse), so verification bypassed uv's wrapper (direct venv invocation) and one uv.lock line was hand-edited as a documented, justified exception (a literal copy of pyproject.toml's own field). Two new local-only test failures are expected and documented (both trace to the same missing-interpreter root cause, not a logic defect); CI is the real qualifying gate since actions/setup-python has already proven it provisions exactly 3.12.11 in every prior PR this session.",
+    "Phase 2.2: PR #61 merged (47ca9017). Disclosed interpreter-resolution risk did not materialize -- every uv-based CI step passed cleanly on the exact 3.12.11 pin. First push failed on an unrelated, already-familiar self-hash-settle miss; fixed on second push, all 12 checks green."
   ],
-  "current_task": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.2-INTERPRETER-PIN",
+  "current_task": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.2-CLOSE__STATE_UPDATE",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -82,7 +87,7 @@
     "reports/evidence/local-gates/phase2-1-mypy-ruff-gates-20260912.json",
     "reports/evidence/local-gates/phase2-2-interpreter-pin-20260912.json"
   ],
-  "exact_next_action": "Push branch, open PR for Phase 2.2, watch CI very closely for the first uv-related step in each workflow (interpreter resolution risk flagged above); if green, merge, verify post-merge SHA, update state, then start Phase 2.3 (TypeScript SDK + cross-SDK conformance).",
+  "exact_next_action": "Start Phase 2.3: real TypeScript SDK under ocor-runtime/sdk/typescript generated by the existing generator, tsconfig strict, tsc compilation wired into CI, and the NFR-022 cross-SDK conformance suite. One branch, full iteration cycle to merge, then Phase 2.4 (resolve PHASE2-4-BACKLOG-GENERATOR-DRIFT first, then the FR-047 traceability fix and DAG regeneration), then Phase 3 (benchmark harness).",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"
