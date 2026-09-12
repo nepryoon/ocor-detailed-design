@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/phase2-4-backlog-generator-drift",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__PHASE-2.4-RESOLVE-GENERATOR-DRIFT",
+    "branch": "governed/phase2-4-close-state-generator-drift",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__PHASE-2.4-CLOSE-STATE-GENERATOR-DRIFT",
     "decision_id": "DEC-211",
-    "phase": "PHASE_2_4_GENERATOR_DRIFT_FIX_PUSHED__AWAITING_CI",
+    "phase": "PHASE_2_4_CLOSED__PHASE_3_NEXT",
     "worktree": null
   },
-  "baseline_commit": "3caf7a68bfdee11eb1abc4dec857cf130c89f912",
+  "baseline_commit": "9bd2821464339f406df26cc3b2dd8579330c80fb",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -52,17 +52,17 @@
     "OCOR-DEV-0077",
     "OCOR-DEV-0078"
   ],
-  "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__LANGUAGE_POLICY_ADOPTED",
+  "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__LANGUAGE_POLICY_ADOPTED__PHASE_2_4_CLOSED",
   "latest_ci_evidence": {
-    "candidate_commit": "f4eda6813bc3b5b4b777c875701f848f565c78df",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR65_MERGED_dcfca5086ac20ed1b99548c4eb02b57f92dee66c",
+    "candidate_commit": "fbdec46c5d2a33f7dcfaaec743237a01ef30a7a0",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR67_MERGED_9bd2821464339f406df26cc3b2dd8579330c80fb",
     "run_ids": [
-      34715378315,
-      34715378318,
-      34715378320,
-      34715378324,
-      34715378330,
-      34715378340
+      34716799046,
+      34716799061,
+      34716799068,
+      34716799075,
+      34716799087,
+      34716799109
     ]
   },
   "mandate_phase_status": {
@@ -108,19 +108,18 @@
       "status": "MERGED"
     },
     "phase_2_4_traceability": {
-      "branch": "governed/phase2-4-backlog-generator-drift",
-      "detail": "FR-047 traceability reallocation merged (PR #65). PHASE2-4-BACKLOG-GENERATOR-DRIFT now resolved: scripts/build_ocor_development_plan.py generates all 84 tasks (WS12_TASK_SPECS added), verified in-memory to reproduce the committed backlog/DAG/context-manifest bit-for-bit with a permanent regression test locking the invariant in. Registered a new, distinct, non-blocking finding: build_trace()/OCOR_TRACEABILITY_PLAN.csv has its own separate staleness (2/285 rows: BR-003, FR-047) from an order-sensitive requirement-ownership heuristic, tracked separately (PHASE2-4-TRACEABILITY-GENERATOR-DRIFT-BUILD-TRACE) and not required before Phase 2.4 closes.",
-      "merge_commit": null,
-      "pr": null,
-      "status": "PR_PENDING"
+      "detail": "FR-047 traceability reallocation merged (PR #65). PHASE2-4-BACKLOG-GENERATOR-DRIFT resolved and merged (PR #67): scripts/build_ocor_development_plan.py generates all 84 tasks (WS12_TASK_SPECS added), verified in-memory to reproduce the committed backlog/DAG/context-manifest bit-for-bit, with a permanent regression test (reports/tests/test_backlog_generator_reality_parity.py) locking the invariant in. Registered a new, distinct, non-blocking finding: build_trace()/OCOR_TRACEABILITY_PLAN.csv has its own separate staleness (2/285 rows: BR-003, FR-047) from an order-sensitive requirement-ownership heuristic, tracked separately (PHASE2-4-TRACEABILITY-GENERATOR-DRIFT-BUILD-TRACE) and not required for Phase 2.4 to close.",
+      "merge_commit": "9bd2821464339f406df26cc3b2dd8579330c80fb",
+      "pr": 67,
+      "status": "MERGED"
     },
     "phase_3_benchmark": {
       "status": "NOT_STARTED"
     }
   },
-  "next_executable_action": "Push branch governed/phase2-4-backlog-generator-drift, open PR, poll CI to green, merge, verify post-merge SHA, then Phase 2.4 is fully closed. Next: Phase 3 (reproducible content-addressed benchmark harness measuring the 4 candidate components against the OI-008/ASM-010/NFR-080 migration thresholds already corrected in OCOR_LANGUAGE_POLICY.md \u00a73), then backlog execution via ./.venv/bin/python3 scripts/ocor_autonomous_delivery.py --next starting at OCOR-DEV-0079.",
+  "next_executable_action": "Phase 2.4 is fully closed. Start Phase 3: a reproducible, content-addressed benchmark harness measuring the 4 candidate components against the OI-008/ASM-010/NFR-080 migration thresholds already corrected in docs/development_methodology/OCOR_LANGUAGE_POLICY.md \u00a73. Outcome must be either NO_MIGRATION_JUSTIFIED (a valid, complete outcome) or, if a threshold is exceeded, a new decision scoped only to that component with a full differential protocol before any merge. Then backlog execution via ./.venv/bin/python3 scripts/ocor_autonomous_delivery.py --next starting at OCOR-DEV-0079, unblocking the WS-12 chain through 0084 and then the four G2 spikes 0016/0017/0018/0021.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-12T23:15:00Z"
+  "updated_at": "2026-09-12T20:50:00Z"
 }
