@@ -35,6 +35,13 @@
       "path": "ocor-runtime/tests/sdk/test_typescript_sdk_conformance.py",
       "qualifying_ci_must_execute": true,
       "type": "CONDITIONAL_INFRASTRUCTURE_GUARD"
+    },
+    {
+      "id": "TEST-INFRA-004",
+      "justification": "The Phase 3 language-migration benchmark end-to-end smoke test has a local-tooling guard (node v20.20.2 on PATH, compiled benchmark oracle present); every qualifying CI job installs Node 20.20.2 and runs npm install/tsc build (which compiles the benchmark oracle alongside the rest of the SDK) before this test runs and never hits the skip.",
+      "path": "reports/tests/test_language_migration_benchmark_harness.py",
+      "qualifying_ci_must_execute": true,
+      "type": "CONDITIONAL_INFRASTRUCTURE_GUARD"
     }
   ],
   "verifier": "GO_FOR_BLOCKED_STATE_MERGE__ZERO_BLOCKER_HIGH_MEDIUM_LOW"

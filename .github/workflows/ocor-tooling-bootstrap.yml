@@ -44,6 +44,10 @@ jobs:
         run: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_generate_contracts_reference_resolution.py
       - name: NFR-022 cross-SDK conformance (DEC-212 Phase 2.3)
         run: ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests/sdk/test_typescript_sdk_conformance.py
+      - name: Backlog generator reality-parity regression (DEC-212 Phase 2.4)
+        run: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_backlog_generator_reality_parity.py
+      - name: Phase 3 language-migration benchmark harness guards (DEC-212 Phase 3)
+        run: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_language_migration_benchmark_harness.py
   tooling-policy:
     runs-on: ubuntu-24.04
     timeout-minutes: 30

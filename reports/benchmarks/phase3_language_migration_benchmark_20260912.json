@@ -1,0 +1,54 @@
+{
+  "components": [
+    {
+      "component": "rfc8785_canonicalization_kernel",
+      "environment": {
+        "cpu_count": 14,
+        "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.43",
+        "python_version": "3.12.14"
+      },
+      "measurements": {
+        "corpus_documents": 200,
+        "corpus_sha256": "2ce8879bc8e5697a4f51e37a3ae1262da4995c2fdba7f2ba23e6e3e775da80b7",
+        "median_ratio_python_over_node": 4.236631768273046,
+        "node_median_ns": 411432.5,
+        "python_median_ns": 1743088.0,
+        "python_p95_ms": 1.769612,
+        "repeats_per_document": 25
+      },
+      "outcome": "MIGRATION_THRESHOLD_EXCEEDED",
+      "status": "MEASURED",
+      "thresholds": {
+        "median_ratio_gt": 3.0,
+        "python_p95_ms_gt": 2.0
+      }
+    },
+    {
+      "component": "c3_commit_path",
+      "reason": "Requires a live PostgreSQL backend, exactly like ocor-runtime/tests/tasks/test_ocor_dev_0015.py's live suite, which is NOT_EXECUTED in this sandbox for the same, already-documented reason (no local PostgreSQL). Real measurement requires wiring this component into a CI job with the same Postgres service the integration-postgresql workflow step already provisions; not fabricated here.",
+      "status": "NOT_YET_MEASURABLE",
+      "thresholds": {
+        "p95_ms_gt": 15.0
+      }
+    },
+    {
+      "component": "c5_event_backbone",
+      "reason": "No real C5 event-backbone implementation exists yet: ocor_runtime.c5_actions is the obsolete 32-transition action FSM, not the approved Kafka-backed event backbone (OCOR-DEV-0040/0041, WS-06, not yet executed), per docs/planning/OCOR_CURRENT_STATE_BASELINE.json. There is nothing to benchmark until that backlog task lands.",
+      "status": "NOT_YET_MEASURABLE",
+      "thresholds": {
+        "p95_ms_gt": 20.0,
+        "throughput_floor_msg_s": 5000
+      }
+    },
+    {
+      "component": "c4_projection",
+      "reason": "No real C4 projection adapter exists yet: ocor_runtime.c4_marking implements only the marking lattice, not a TypeDB/Jena projection adapter (OCOR-DEV-0037/0038, WS-05, not yet executed), per docs/planning/OCOR_CURRENT_STATE_BASELINE.json. There is nothing to benchmark until those backlog tasks land.",
+      "status": "NOT_YET_MEASURABLE",
+      "thresholds": {
+        "projection_lag_p95_ms_gt": 200.0
+      }
+    }
+  ],
+  "policy_reference": "docs/development_methodology/OCOR_LANGUAGE_POLICY.md#3-soglie-di-migrazione",
+  "schema_version": "1.0"
+}
