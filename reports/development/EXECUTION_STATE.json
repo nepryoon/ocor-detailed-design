@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/phase3-close-state",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__PHASE-3-CLOSE-STATE",
+    "branch": "governed/ocor-dev-0079-typed-service-health-checks",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0079",
     "decision_id": "DEC-211",
-    "phase": "PHASE_3_CLOSED__BACKLOG_EXECUTION_NEXT",
+    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0079_PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "4532dded147f77f025f65fd45d53b6a8043671e9",
+  "baseline_commit": "1dc3a0824b08b446ffb07598dded9f526b02d008",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -50,19 +50,20 @@
     "OCOR-DEV-0075",
     "OCOR-DEV-0076",
     "OCOR-DEV-0077",
-    "OCOR-DEV-0078"
+    "OCOR-DEV-0078",
+    "OCOR-DEV-0079"
   ],
   "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__LANGUAGE_POLICY_ADOPTED__PHASE_2_4_CLOSED__PHASE_3_CLOSED",
   "latest_ci_evidence": {
-    "candidate_commit": "6d19ca58b8e6a9262bff9bb44f228d58854ddd50",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR69_MERGED_4532dded147f77f025f65fd45d53b6a8043671e9",
+    "candidate_commit": "de3fb197aa6c91af7a729c2727bcce9cc686989f",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR70_MERGED_1dc3a0824b08b446ffb07598dded9f526b02d008",
     "run_ids": [
-      34720091571,
-      34720091578,
-      34720091580,
-      34720091586,
-      34720091589,
-      34720091603
+      34721397032,
+      34721397055,
+      34721397060,
+      34721397072,
+      34721397080,
+      34721397121
     ]
   },
   "mandate_phase_status": {
@@ -123,9 +124,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Phases 2.2-2.4 and 3 are fully closed and merged (PR #54-69). Start backlog execution via ./.venv/bin/python3 scripts/ocor_autonomous_delivery.py --next starting at OCOR-DEV-0079, unblocking the WS-12 chain through 0084 and then the four G2 spikes 0016/0017/0018/0021, then the rest of G2 through G7 in DAG order. The component-1 migration escalation (reserved to the Product Owner) does not block this.",
+  "next_executable_action": "Push branch governed/ocor-dev-0079-typed-service-health-checks, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0079 sealed with real evidence against a live 11-service Docker stack (TerminusDB/TypeDB/Fuseki/OPA/Keycloak/OpenBao/SPIRE server+agent/PostgreSQL/Kafka/Qdrant), including real fault injection and recovery. Next: OCOR-DEV-0080 (Implement deterministic service initialization), which depends only on OCOR-DEV-0079.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-12T21:59:00Z"
+  "updated_at": "2026-09-12T23:00:00Z"
 }

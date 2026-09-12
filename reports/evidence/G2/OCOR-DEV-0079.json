@@ -1,0 +1,114 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0079",
+  "commit": "1dc3a0824b08b446ffb07598dded9f526b02d008",
+  "created_at": "2026-09-12T22:45:00Z",
+  "environment": {
+    "orchestrator": "docker compose -p ocor-bootstrap (deploy/bootstrap/compose.yaml)",
+    "services_live": [
+      "terminusdb 12.0.7-noroot", "typedb 3.12.3", "fuseki 6.2.0 (locally built)",
+      "opa 1.20.1", "keycloak 26.7.2", "openbao 2.6.2",
+      "spire-server 1.15.3", "spire-agent 1.15.3",
+      "postgresql 16", "kafka 7.6.0", "qdrant 1.15.1"
+    ],
+    "spire_trust_domain": "ocor.test",
+    "spire_bootstrap": "disposable self-signed CA generated for this run; SPIRE server started first, a real join token was generated via `docker exec spire-server ... token generate`, then the agent was started and attested against it",
+    "storage": "tmpfs/ephemeral (compose default), disposable per docs/development_methodology/OCOR_INFRASTRUCTURE_BOOTSTRAP_STRATEGY.md",
+    "secrets": "session-local, generated fresh, never committed to Git"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "deploy/bootstrap/compose.yaml": "9d9141e55b5b06d52d6a49ca1245bcbc54dfff058669fa92cae56f76b4994d83",
+    "infra/services.lock.json": "1909ffe18d6ba546953eaf0b64fe6c7be8a58eefac3441ddd46f60a0a64bd879",
+    "scripts/verify_external_services.py": "4e46a764c8a1588413cc0800797752177c11c5ab2da3afbaea47752847281c97",
+    "scripts/ocor_bootstrap_lib.py": "a29870e67cac33d3d574b923293a558dd9490e1598ee87e743c9f34cd0bcda48"
+  },
+  "commands": [
+    {
+      "command": "docker compose -p ocor-bootstrap up -d (9 non-SPIRE services), then spire-server, then spire-agent after real join-token generation",
+      "result": {"passed": 11, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "python3 scripts/verify_external_services.py --manifest-only",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "python3 scripts/verify_external_services.py --typed --execute (typed positive+negative probes for all 9 typed-check groups covering 11 services)",
+      "result": {"passed": 9, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "python3 scripts/verify_external_services.py (legacy port/container scan, backward compatibility preserved)",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "bounded fault injection: docker pause/unpause terminusdb and kafka, typed check detects DEGRADED while paused and READY after recovery",
+      "result": {"passed": 2, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0079.py -v (unit/negative/contract coverage for the typed-status logic)",
+      "result": {"passed": 17, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression (ocor-runtime/tests/ + 3 reports/tests suites)",
+      "result": {"passed": 549, "failed": 0, "skipped": 5, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0079-TYPED-STATUS-CONTRACT",
+      "requirement_id": "BR-003",
+      "command": "unit/negative tests for ServiceStatus/ServiceHealth and the qualify-payload status mapping",
+      "result": {"passed": 17, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0079-REAL-POSITIVE",
+      "requirement_id": "BR-003",
+      "command": "typed check reports READY for all 11 live, healthy, digest-pinned, loopback-only services",
+      "result": {"passed": 9, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0079-REAL-NEGATIVE",
+      "requirement_id": "BR-003",
+      "command": "real fail-closed checks: wrong-credential TerminusDB/PostgreSQL access, absent Fuseki dataset, absent Kafka topic, absent Qdrant collection all rejected as expected",
+      "result": {"passed": 5, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0079-FAULT-RECOVERY",
+      "requirement_id": "BR-003",
+      "command": "pause is detected as DEGRADED for terminusdb and kafka; unpause restores READY within the bounded window",
+      "result": {"passed": 2, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0079-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "result": {"passed": 549, "failed": 0, "skipped": 5, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "The 5 skipped/erroring cases (interpreter-pin exactness and 5 live-PostgreSQL tests requiring the psycopg driver) are a pre-existing, already-documented local-venv gap unrelated to this task; a real PostgreSQL 16 IS live and reachable in this run (verified directly via pg_isready and a real wrong-password rejection over the compose network), but ocor-runtime/.venv has no psycopg installed, so ocor-runtime/tests/tasks/test_ocor_dev_0015.py's own live suite still cannot exercise it. Installing psycopg to close that specific gap is out of scope for this task and is noted as a distinct future opportunity now that real Docker infrastructure is confirmed available in this environment.",
+    "SPIRE bootstrap in this run used a freshly generated, disposable, non-committed self-signed CA and join token; this is a from-scratch bootstrap procedure that was not previously documented step-by-step anywhere in the repository (only the steady-state rotation flow in deploy/bootstrap/services/spire/qualify.py was), so a future rerun must reconstruct the same two-phase sequence (server up -> generate real join token -> agent up) rather than assume a persisted environment file.",
+    "This provisioning/health-check evidence does not qualify OCOR-DEV-0016/0017/0018 (the C3/C4-backend concurrency, exact-at-commit and marking-safe projection spikes), which remain separate, not-yet-run tasks."
+  ],
+  "rollback_procedure_verified": "Executed bounded rollback/recovery for two independently-checked services (terminusdb, kafka): docker pause produced a typed DEGRADED status with a specific reason, docker unpause restored READY within the bounded window, and the full 11-container stack was confirmed healthy afterward with `docker compose ps`.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "c694a63b42d13705e15a0f89657b72800e63026efe337723d904bdcd7bd342ac",
+  "result": "PASS"
+}
