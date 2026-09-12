@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "50c3bbbe41e4c9cbc1a7112847decd37e80405df",
-  "branch": "governed/phase1-independent-review-corrections",
+  "baseline_commit": "3911228e7b657bf1bd2b1fc17f49fcad9bef3e5c",
+  "branch": "governed/phase1b-close-state-update",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -32,14 +32,19 @@
     {
       "command": "python3 scripts/validate_language_policy.py && python3 scripts/validate_rccad.py --root .",
       "result": "PASS after also syncing MODEL_HANDOFF.json/EXECUTION_STATE.json baseline_commit and branch"
+    },
+    {
+      "command": "gh pr merge 57 --merge",
+      "result": "MERGED_3911228e7b657bf1bd2b1fc17f49fcad9bef3e5c_ALL_12_CHECKS_GREEN_ON_EXACT_HEAD_040275f"
     }
   ],
   "completed_tasks": [
     "Phase 0: reconciled EXECUTION_STATE/MODEL_HANDOFF/ITERATION_LOG to real evidence (28 sealed tasks, not 19); superseded TERMINAL_BLOCKED_REPORT.json and G2/blockers/MANIFEST.json",
     "Phase 1: allocated DEC-212, authored OCOR_LANGUAGE_POLICY.md and the fail-closed scripts/validate_language_policy.py (RED/GREEN/REFACTOR), wired into 3 CI workflows, added ARA Decision Record v1.6 and append-only registers",
-    "Phase 1B: corrected 3 findings from independent verification before starting Phase 2.1 -- (1) OCOR_LANGUAGE_POLICY.md Sec.3 now discloses the p95<50ms budget as a working hypothesis dependent on OI-008 (numeric acceptance thresholds), not the previously-misattributed OI-024 (which actually governs DEC-131 dual-control authority thresholds, unrelated to latency); neither OI is closed. (2) EXECUTION_STATE.json latest_ci_evidence populated with the real PR#56 exact-head CI (candidate commit de3bcac7, 6 unique green workflow runs, merge 50c3bbbe). (3) infra/toolchain.lock.json gained a schema-valid typescript/tsc entry, version 7.0.2 verified as real and current on the npm registry, integrity = sha256 of the installed bin/tsc entrypoint."
+    "Phase 1B: corrected 3 findings from independent verification before starting Phase 2.1 -- (1) OCOR_LANGUAGE_POLICY.md Sec.3 now discloses the p95<50ms budget as a working hypothesis dependent on OI-008 (numeric acceptance thresholds), not the previously-misattributed OI-024 (which actually governs DEC-131 dual-control authority thresholds, unrelated to latency); neither OI is closed. (2) EXECUTION_STATE.json latest_ci_evidence populated with the real PR#56 exact-head CI (candidate commit de3bcac7, 6 unique green workflow runs, merge 50c3bbbe). (3) infra/toolchain.lock.json gained a schema-valid typescript/tsc entry, version 7.0.2 verified as real and current on the npm registry, integrity = sha256 of the installed bin/tsc entrypoint.",
+    "Phase 1B: PR #57 merged (3911228e), closing the 3 independent-review corrections (OI-008 vs OI-024, real CI evidence, verified TypeScript 7.0.2 pin); a follow-up commit on the same PR fixed a real tooling-policy CI failure at the root (missing allowlist entry for the new evidence file in scripts/validate_ocor_development_plan.py's extension_paths, plus the self-hash settle in OCOR_PLAN_RUN_STATE.json), not bypassed."
   ],
-  "current_task": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-1B-CORRECTIONS",
+  "current_task": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-1B-CLOSE__STATE_UPDATE",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -48,7 +53,7 @@
     "docs/development_methodology/OCOR_LANGUAGE_POLICY.md",
     "reports/evidence/local-gates/phase1b-independent-review-corrections-20260912.json"
   ],
-  "exact_next_action": "Push branch, open PR for Phase 1B corrections, wait for CI green on exact head, merge, verify post-merge SHA, then update the three state files again and start Phase 2.1 (mypy strict + repo-wide ruff, blocking CI jobs).",
+  "exact_next_action": "Start Phase 2.1: add mypy (strict) on ocor-runtime/src and scripts/, plus a repo-wide ruff config, both pinned to the patch and installed in the isolated environment (following infra/toolchain.lock.json's existing ruff==0.13.1 pin pattern); wire both as blocking CI jobs with zero errors and no blanket ignores. One branch, full iteration cycle to merge, then Phase 2.2 (interpreter pin), 2.3 (TypeScript SDK + cross-SDK conformance), 2.4 (traceability), then Phase 3 (benchmark harness).",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"
