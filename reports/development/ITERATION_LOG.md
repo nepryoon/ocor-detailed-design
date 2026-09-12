@@ -650,3 +650,66 @@
   bootstrap di infrastruttura), verificare in una directory di scratch che
   una rigenerazione riproduca esattamente backlog/DAG/context-manifest reali
   per `OCOR-DEV-0070`–`0084`, e solo allora considerare la Fase 2.4 chiusa.
+
+## 2026-09-12 — Chiusura Fase 2.4: risolta PHASE2-4-BACKLOG-GENERATOR-DRIFT
+
+- Branch `governed/phase2-4-backlog-generator-drift` da `main`
+  (`3caf7a68bfdee11eb1abc4dec857cf130c89f912`, merge PR #66).
+- Causa radice confermata: `TASK_SPECS` in
+  `scripts/build_ocor_development_plan.py` descriveva solo 69 task; i 15 task
+  `OCOR-DEV-0070`–`0084` (catena WS-12 di riparazione del bootstrap
+  infrastrutturale) erano stati adottati nel backlog committato fuori banda,
+  senza mai aggiornare il generatore. Una rigenerazione reale li avrebbe
+  cancellati in silenzio, insieme agli archi di dipendenza che li usano
+  (`OCOR-DEV-0016/0017/0018/0021 -> OCOR-DEV-0084`).
+- Correzione: aggiunto `WS12_TASK_SPECS` (15 tuple) e un ramo dedicato in
+  `build_tasks()`; aggiunta la dipendenza `84` ai task 16/17/18/21 (il
+  backlog reale la richiede); aggiunto un override post-hoc per
+  `requirement_ids` di FR-047 che riproduce la correzione manuale della PR
+  #65 (il matching a parola chiave di `requirement_owner()` per WS-09
+  intercetta la sottostringa "tool" dentro il titolo stesso di FR-047 —
+  esattamente il difetto già corretto a mano — così una rigenerazione futura
+  ora riproduce, invece di annullare, la correzione); riscritta
+  `context_manifest()` con un helper `_task_context_entry()` che assegna ai
+  task 70–84 il ruolo reale "Infrastructure and Operations Agent" con
+  `paths`/token-budget dedicati, distinguendoli dai task 6 e 49 (che usano
+  `workstream=WS-12` ma la formula generica).
+- Verifica: confronto in memoria (mai scritto su disco prima della verifica,
+  come richiesto dal mandato) di `build_tasks()`/`dag_text()`/
+  `context_manifest()` contro i file committati reali —
+  **0 mismatch su tutti gli 84 task e ogni campo**, DAG e context-manifest
+  byte-identici. `build_trace()`/`OCOR_TRACEABILITY_PLAN.csv` lasciato
+  volutamente fuori scope: ha una propria staleness distinta e preesistente
+  (2/285 righe, `BR-003` e `FR-047`, causata da un'euristica di ownership
+  "vince l'ultimo task nell'ordine di iterazione" sensibile all'ordine —
+  mai stata corretta per costruzione, solo accidentalmente stabile prima
+  dell'aggiunta di WS-12) — registrata come nuova escalation separata,
+  non bloccante, non confusa con questa.
+- Aggiunto test di non-regressione permanente
+  `reports/tests/test_backlog_generator_reality_parity.py` (RED/GREEN, RED
+  sigillato in `reports/tests/evidence/rem_backlog_generator_drift/red.log`,
+  fingerprint `94c2781e8c0072dd4e7c1b84c9772aeedd7159fa78e00f521efb946bc7748841`)
+  che blocca in CI qualunque futura regressione di questo tipo.
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (44 file, scope
+  invariato), `validate_rccad.py` PASS, `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS (7 percorsi), pytest completo
+  `2 failed, 521 passed, 5 skipped, 10 errors` (stessi gap sandbox noti,
+  +5 rispetto alla fase precedente = i nuovi test di questa iterazione),
+  `validate_ocor_development_plan.py --authorized-extension` PASS dopo il
+  consueto doppio-run di assestamento self-hash (modificato
+  `scripts/validate_ocor_development_plan.py` per l'ultima volta prima di
+  eseguirlo, come da lezione appresa dalle 3 occorrenze precedenti).
+  `OCOR_PLAN_RUN_STATE.json.artifact_hashes` aggiornato a mano per
+  `scripts/build_ocor_development_plan.py` (unica eccezione documentata: il
+  percorso di rigenerazione reale invocherebbe anche `build_trace()`, non
+  sicuro per la staleness nota sopra).
+- Evidenza sigillata:
+  `reports/evidence/local-gates/phase2-4-backlog-generator-drift-20260912.json`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- **Fase 2.4 ora completamente chiusa** (in attesa di merge PR). Prossima
+  azione: Fase 3 (harness di benchmark riproducibile e content-addressed per
+  i 4 componenti candidati, contro le soglie di migrazione già corrette in
+  `OCOR_LANGUAGE_POLICY.md` §3), poi esecuzione backlog via
+  `./.venv/bin/python3 scripts/ocor_autonomous_delivery.py --next` a partire
+  da `OCOR-DEV-0079`.
