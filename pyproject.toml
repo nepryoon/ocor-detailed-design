@@ -1,0 +1,50 @@
+[tool.mypy]
+# DEC-212/OCOR_LANGUAGE_POLICY.md Phase 2.1: strict, blocking type gate for the
+# active Python codebase (kernel + components + harness/validators + tooling).
+python_version = "3.12"
+strict = true
+mypy_path = "ocor-runtime/src"
+files = ["ocor-runtime/src", "scripts"]
+exclude = [
+  # Content-addressed evidence input for the already-accepted task
+  # OCOR-DEV-0072 (reports/evidence/G2/OCOR-DEV-0072.json) and the DEC-211
+  # environment evidence record (reports/development/environment-evidence-dec-211.json).
+  # Editing it would invalidate sealed acceptance evidence; the file is already
+  # ruff-clean and has no mypy findings of its own to fix.
+  "^scripts/preflight_environment\\.py$",
+  # Self-hash-tracked in reports/planning/OCOR_PLAN_RUN_STATE.json, whose only
+  # sanctioned update path is re-running the script -- but doing so today
+  # silently drops OCOR-DEV-0070..0084 from the backlog because its TASK_SPECS
+  # source of truth has drifted from the committed 84-task backlog (a
+  # pre-existing bug, unrelated to this gate). Registered as an escalation for
+  # Phase 2.4 (backlog/DAG regeneration); left out of this gate's scope until
+  # that drift is fixed. Already ruff-clean.
+  "^scripts/build_ocor_development_plan\\.py$",
+]
+
+[[tool.mypy.overrides]]
+# grpcio-tools ships no stubs or py.typed marker upstream (verified against
+# the installed distribution); this is the only precise, per-module exception
+# in this gate -- it does not weaken checking of any first-party module.
+module = ["grpc_tools", "grpc_tools.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+target-version = "py312"
+extend-exclude = [
+  # Frozen point-in-time conformance suites from the completed ADD v1.1 and
+  # v1.2 candidate architectural reviews. test_v12_candidate.py and
+  # test_v12_semantics.py are content-addressed in reports/OCOR_ADD_v1.2_SHA256SUMS;
+  # test_schema_conformance.py is the sibling v1.1 artifact from the same
+  # historical review corpus. None are part of the active runtime/tooling
+  # codebase this gate covers.
+  "reports/tests/test_v12_candidate.py",
+  "reports/tests/test_v12_semantics.py",
+  "reports/tests/test_schema_conformance.py",
+  # Content-addressed evidence inputs for the already-accepted tasks
+  # OCOR-DEV-0004 (reports/evidence/G0/OCOR-DEV-0004.json) and OCOR-DEV-0015
+  # (reports/evidence/G2/OCOR-DEV-0015.json). Their sys.path-before-import
+  # idiom trips E402; editing either file would invalidate sealed evidence.
+  "ocor-runtime/tests/tasks/test_ocor_dev_0004.py",
+  "ocor-runtime/tests/tasks/test_ocor_dev_0015.py",
+]

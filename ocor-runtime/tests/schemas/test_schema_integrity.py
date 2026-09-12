@@ -10,7 +10,6 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-import pytest
 import yaml
 from jsonschema import Draft202012Validator, FormatChecker
 from referencing import Registry, Resource

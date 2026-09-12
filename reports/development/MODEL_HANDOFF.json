@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "3911228e7b657bf1bd2b1fc17f49fcad9bef3e5c",
-  "branch": "governed/phase1b-close-state-update",
+  "baseline_commit": "a0d2899c8ff199d690dd231b1409dbfbe751bb05",
+  "branch": "governed/phase2-1-mypy-ruff-gates",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -36,24 +36,42 @@
     {
       "command": "gh pr merge 57 --merge",
       "result": "MERGED_3911228e7b657bf1bd2b1fc17f49fcad9bef3e5c_ALL_12_CHECKS_GREEN_ON_EXACT_HEAD_040275f"
+    },
+    {
+      "command": "mypy --strict probe run to gauge scope, then fix pass, then ocor-runtime/.venv/bin/python -m mypy from repo root",
+      "result": "43 errors -> 0 (2 files excluded, 1 justified per-module stub override)"
+    },
+    {
+      "command": "ruff check --isolated . baseline, then fix pass, then ruff check . with root pyproject.toml",
+      "result": "125 errors -> 0 (5 files excluded, all content-addressed or frozen-review-corpus)"
+    },
+    {
+      "command": "uv lock && uv sync --frozen --extra test --extra lint (ocor-runtime)",
+      "result": "PASS_resolved_46_packages"
+    },
+    {
+      "command": "python3 scripts/build_ocor_development_plan.py (exploratory, to settle a self-hash) then git checkout -- to discard",
+      "result": "DISCOVERED_generator_drops_OCOR-DEV-0070..0084_reverted_before_commit_escalation_registered"
     }
   ],
   "completed_tasks": [
     "Phase 0: reconciled EXECUTION_STATE/MODEL_HANDOFF/ITERATION_LOG to real evidence (28 sealed tasks, not 19); superseded TERMINAL_BLOCKED_REPORT.json and G2/blockers/MANIFEST.json",
     "Phase 1: allocated DEC-212, authored OCOR_LANGUAGE_POLICY.md and the fail-closed scripts/validate_language_policy.py (RED/GREEN/REFACTOR), wired into 3 CI workflows, added ARA Decision Record v1.6 and append-only registers",
     "Phase 1B: corrected 3 findings from independent verification before starting Phase 2.1 -- (1) OCOR_LANGUAGE_POLICY.md Sec.3 now discloses the p95<50ms budget as a working hypothesis dependent on OI-008 (numeric acceptance thresholds), not the previously-misattributed OI-024 (which actually governs DEC-131 dual-control authority thresholds, unrelated to latency); neither OI is closed. (2) EXECUTION_STATE.json latest_ci_evidence populated with the real PR#56 exact-head CI (candidate commit de3bcac7, 6 unique green workflow runs, merge 50c3bbbe). (3) infra/toolchain.lock.json gained a schema-valid typescript/tsc entry, version 7.0.2 verified as real and current on the npm registry, integrity = sha256 of the installed bin/tsc entrypoint.",
-    "Phase 1B: PR #57 merged (3911228e), closing the 3 independent-review corrections (OI-008 vs OI-024, real CI evidence, verified TypeScript 7.0.2 pin); a follow-up commit on the same PR fixed a real tooling-policy CI failure at the root (missing allowlist entry for the new evidence file in scripts/validate_ocor_development_plan.py's extension_paths, plus the self-hash settle in OCOR_PLAN_RUN_STATE.json), not bypassed."
+    "Phase 1B: PR #57 merged (3911228e), closing the 3 independent-review corrections (OI-008 vs OI-024, real CI evidence, verified TypeScript 7.0.2 pin); a follow-up commit on the same PR fixed a real tooling-policy CI failure at the root (missing allowlist entry for the new evidence file in scripts/validate_ocor_development_plan.py's extension_paths, plus the self-hash settle in OCOR_PLAN_RUN_STATE.json), not bypassed.",
+    "Phase 2.1 (pending PR/merge): mypy --strict on ocor-runtime/src and scripts/ (0 errors, precise per-module override for grpcio-tools' missing stubs, 2 files excluded for content-addressed sealed-evidence/generator-drift reasons) and a repository-wide ruff gate (5 files excluded for frozen-review-corpus/sealed-evidence reasons), wired as a new blocking type-and-lint-gate job. mypy pinned via a new lint optional-dependency group (mypy==2.3.1 + exact-pinned type stubs, all verified real on PyPI), uv.lock regenerated. Fixed 9 files with precise type annotations/unused-import removals/ambiguous-name renames; no runtime behavior changed (full pytest regression unchanged: 498 passed). Audited every reports/evidence/**/*.json inputs/artifact_hashes dict before editing anything, caught and reverted 3 edits that would have invalidated sealed evidence for OCOR-DEV-0004/0015/0072, and discovered that scripts/build_ocor_development_plan.py silently deletes OCOR-DEV-0070..0084 if re-run -- registered as a non-blocking escalation for Phase 2.4 rather than masked or worked around."
   ],
-  "current_task": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-1B-CLOSE__STATE_UPDATE",
+  "current_task": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.1-TYPE-LINT-GATE",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
     "reports/evidence/local-gates/phase1-language-policy-20260912.json",
     "reports/tests/language_policy_tdd_evidence.json",
     "docs/development_methodology/OCOR_LANGUAGE_POLICY.md",
-    "reports/evidence/local-gates/phase1b-independent-review-corrections-20260912.json"
+    "reports/evidence/local-gates/phase1b-independent-review-corrections-20260912.json",
+    "reports/evidence/local-gates/phase2-1-mypy-ruff-gates-20260912.json"
   ],
-  "exact_next_action": "Start Phase 2.1: add mypy (strict) on ocor-runtime/src and scripts/, plus a repo-wide ruff config, both pinned to the patch and installed in the isolated environment (following infra/toolchain.lock.json's existing ruff==0.13.1 pin pattern); wire both as blocking CI jobs with zero errors and no blanket ignores. One branch, full iteration cycle to merge, then Phase 2.2 (interpreter pin), 2.3 (TypeScript SDK + cross-SDK conformance), 2.4 (traceability), then Phase 3 (benchmark harness).",
+  "exact_next_action": "Push branch, open PR for Phase 2.1, wait for CI green on exact head (watch the new type-and-lint-gate job specifically), merge, verify post-merge SHA, update state, then start Phase 2.2 (interpreter pin).",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"

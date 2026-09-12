@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/phase1b-close-state-update",
-    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-1B-CLOSE",
+    "branch": "governed/phase2-1-mypy-ruff-gates",
+    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.1-TYPE-LINT-GATE",
     "decision_id": "DEC-212",
-    "phase": "PHASE_1B_MERGED__PHASE_2_1_NOT_STARTED",
+    "phase": "PHASE_2_1_IN_PROGRESS_PENDING_PR",
     "worktree": null
   },
-  "baseline_commit": "3911228e7b657bf1bd2b1fc17f49fcad9bef3e5c",
+  "baseline_commit": "a0d2899c8ff199d690dd231b1409dbfbe751bb05",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -88,7 +88,8 @@
       "status": "MERGED"
     },
     "phase_2_1_type_gate": {
-      "status": "NOT_STARTED"
+      "detail": "mypy --strict on ocor-runtime/src and scripts, ruff repo-wide, both zero-error and wired as a new blocking type-and-lint-gate CI job. Two files excluded from mypy and five from ruff for content-addressed sealed-evidence/frozen-review-corpus reasons (see reports/evidence/local-gates/phase2-1-mypy-ruff-gates-20260912.json). One non-blocking escalation registered: scripts/build_ocor_development_plan.py's TASK_SPECS has drifted from the real 84-task backlog (OCOR-DEV-0070..0084 missing) -- must be reconciled before Phase 2.4 regenerates the DAG.",
+      "status": "IN_PROGRESS_PENDING_PR"
     },
     "phase_2_2_interpreter_pin": {
       "status": "NOT_STARTED"
@@ -103,9 +104,9 @@
       "status": "NOT_STARTED"
     }
   },
-  "next_executable_action": "Phase 2.1 (mandate CC-LANGUAGE-POLICY-AND-GAP-CLOSURE): add mypy strict on ocor-runtime/src and scripts, plus a repo-wide ruff config, both pinned to the patch and installed in the isolated environment; wire both as blocking CI jobs. One task, one branch, one PR. The backlog's own dependency-ready task, independent of this mandate, is OCOR-DEV-0079.",
+  "next_executable_action": "Merge the Phase 2.1 PR (mypy strict + repo-wide ruff CI gate), verify post-merge SHA, update state, then Phase 2.2 (mandate CC-LANGUAGE-POLICY-AND-GAP-CLOSURE): pin the interpreter to the patch in requires-python/uv.lock/.python-version and every workflow, plus a test that fails if the running interpreter diverges from the pin. Before starting Phase 2.4 later, first resolve the PHASE2-4-BACKLOG-GENERATOR-DRIFT escalation (scripts/build_ocor_development_plan.py is missing OCOR-DEV-0070..0084 from its TASK_SPECS).",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-12T19:20:00Z"
+  "updated_at": "2026-09-12T20:10:00Z"
 }

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import argparse
 import subprocess
+from collections.abc import Callable
 from pathlib import Path
 
 
@@ -43,7 +44,7 @@ def is_declarative_contract_location(path: str) -> bool:
 # extension with an empty tuple is authorized nowhere in the project (any
 # occurrence fails) -- this is the "alternative vietate" enforcement for every
 # language not selected by the policy table for any area.
-AUTHORIZATIONS: dict[str, tuple] = {
+AUTHORIZATIONS: dict[str, tuple[Callable[[str], bool], ...]] = {
     ".py": (
         lambda p: under(p, "ocor-runtime"),
         lambda p: under(p, "scripts"),

@@ -11,7 +11,7 @@ from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from enum import Enum
 from types import MappingProxyType
-from typing import Any, Callable
+from typing import Any
 
 from .canonical import canonical_sha256, canonicalize
 from .errors import (
