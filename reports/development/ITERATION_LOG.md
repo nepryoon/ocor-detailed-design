@@ -545,3 +545,23 @@
   l'allocazione di `FR-047`, aggiungere i task mancanti al backlog e
   rigenerare il DAG.
 
+
+## 2026-09-12 — Chiusura Fase 2.3
+
+- PR #63 aperta e integrata al primo tentativo: merge
+  `b4510123dee21c054876ecca97b02d33b971318a`. Tutti i 12 check verdi
+  sull'HEAD esatto `5428ab37` al primo push, incluso il nuovo step `tsc` e
+  le due nuove suite pytest nel job `type-and-lint-gate`.
+- Verifica pre-merge: `mergeStateStatus: CLEAN`. Verifica post-merge: SHA di
+  `origin/main` coincidente con il merge commit.
+- `EXECUTION_STATE.json` e `MODEL_HANDOFF.json` risincronizzati; `latest_ci_evidence`
+  aggiornato ai run reali.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti globali `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC` e `Production` `NO-GO`.
+- Prossima azione: Fase 2.4 del mandato. Prima risolvere l'escalation
+  `PHASE2-4-BACKLOG-GENERATOR-DRIFT` (riconciliare `TASK_SPECS` del
+  generatore con `OCOR-DEV-0070`–`0084` e verificare che una rigenerazione
+  riproduca l'84-task backlog reale senza perdite), poi correggere
+  l'allocazione di `FR-047` in `OCOR_TRACEABILITY_PLAN.csv`, aggiungere i
+  task mancanti al backlog e rigenerare il DAG. Nessuna promozione a
+  Verified.
