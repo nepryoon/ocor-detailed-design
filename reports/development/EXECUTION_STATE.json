@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/phase2-1-mypy-ruff-gates",
-    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.1-TYPE-LINT-GATE",
+    "branch": "governed/phase2-1-close-state-update",
+    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.1-CLOSE",
     "decision_id": "DEC-212",
-    "phase": "PHASE_2_1_IN_PROGRESS_PENDING_PR",
+    "phase": "PHASE_2_1_MERGED__PHASE_2_2_NOT_STARTED",
     "worktree": null
   },
-  "baseline_commit": "a0d2899c8ff199d690dd231b1409dbfbe751bb05",
+  "baseline_commit": "1cfa0a787ee620e462adfd0d25378f752c74af28",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -54,15 +54,15 @@
   ],
   "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__LANGUAGE_POLICY_ADOPTED",
   "latest_ci_evidence": {
-    "candidate_commit": "040275f405b762744d633280bfe1c449014c508a",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR57_MERGED_3911228e7b657bf1bd2b1fc17f49fcad9bef3e5c",
+    "candidate_commit": "5123650ea4f3acf33b96b4069d8e508793321f9a",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR59_MERGED_1cfa0a787ee620e462adfd0d25378f752c74af28",
     "run_ids": [
-      34707732916,
-      34707732919,
-      34707732927,
-      34707732931,
-      34707732939,
-      34707732980
+      34710650062,
+      34710650063,
+      34710650066,
+      34710650069,
+      34710650077,
+      34710650090
     ]
   },
   "mandate_phase_status": {
@@ -88,8 +88,12 @@
       "status": "MERGED"
     },
     "phase_2_1_type_gate": {
-      "detail": "mypy --strict on ocor-runtime/src and scripts, ruff repo-wide, both zero-error and wired as a new blocking type-and-lint-gate CI job. Two files excluded from mypy and five from ruff for content-addressed sealed-evidence/frozen-review-corpus reasons (see reports/evidence/local-gates/phase2-1-mypy-ruff-gates-20260912.json). One non-blocking escalation registered: scripts/build_ocor_development_plan.py's TASK_SPECS has drifted from the real 84-task backlog (OCOR-DEV-0070..0084 missing) -- must be reconciled before Phase 2.4 regenerates the DAG.",
-      "status": "IN_PROGRESS_PENDING_PR"
+      "escalations": [
+        "PHASE2-4-BACKLOG-GENERATOR-DRIFT (non-blocking, must resolve before Phase 2.4 DAG regeneration)"
+      ],
+      "merge_commit": "1cfa0a787ee620e462adfd0d25378f752c74af28",
+      "pr": 59,
+      "status": "MERGED"
     },
     "phase_2_2_interpreter_pin": {
       "status": "NOT_STARTED"
@@ -104,9 +108,9 @@
       "status": "NOT_STARTED"
     }
   },
-  "next_executable_action": "Merge the Phase 2.1 PR (mypy strict + repo-wide ruff CI gate), verify post-merge SHA, update state, then Phase 2.2 (mandate CC-LANGUAGE-POLICY-AND-GAP-CLOSURE): pin the interpreter to the patch in requires-python/uv.lock/.python-version and every workflow, plus a test that fails if the running interpreter diverges from the pin. Before starting Phase 2.4 later, first resolve the PHASE2-4-BACKLOG-GENERATOR-DRIFT escalation (scripts/build_ocor_development_plan.py is missing OCOR-DEV-0070..0084 from its TASK_SPECS).",
+  "next_executable_action": "Phase 2.2 (mandate CC-LANGUAGE-POLICY-AND-GAP-CLOSURE): pin the interpreter to the patch in requires-python, uv.lock, .python-version and every workflow, plus a test that fails if the running interpreter diverges from the pin. One task, one branch, one PR. Before Phase 2.4, resolve escalation PHASE2-4-BACKLOG-GENERATOR-DRIFT.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-12T20:10:00Z"
+  "updated_at": "2026-09-12T20:45:00Z"
 }
