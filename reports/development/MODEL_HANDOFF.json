@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "5a08f78c9e429c2e80ec93b9d05c029e9e46cfb9",
-  "branch": "governed/phase3-language-migration-benchmark",
+  "baseline_commit": "4532dded147f77f025f65fd45d53b6a8043671e9",
+  "branch": "governed/phase3-close-state",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -120,6 +120,10 @@
     {
       "command": "grep .github/workflows/*.yml for which CI jobs actually collect reports/tests/*.py",
       "result": "DISCOVERED_gap_from_PR_#67: reports/tests/test_backlog_generator_reality_parity.py was never wired into any CI job (only run locally); fixed by adding it, and the new Phase 3 harness test, to ocor-tooling-bootstrap.yml's type-and-lint-gate job"
+    },
+    {
+      "command": "gh pr merge 69 --merge",
+      "result": "MERGED_4532dded147f77f025f65fd45d53b6a8043671e9_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_6d19ca5; post-merge git fetch confirms origin/main == mergeCommit.oid"
     }
   ],
   "completed_tasks": [
@@ -138,9 +142,10 @@
     "Phase 2.4 (generator-drift part): resolved PHASE2-4-BACKLOG-GENERATOR-DRIFT. Added WS12_TASK_SPECS (15 tuples) and a dedicated WS-12 generation branch to scripts/build_ocor_development_plan.py's build_tasks(); added dependency 84 to tasks 16/17/18/21 (real backlog requires it); added a post-hoc requirement_ids override reproducing PR #65's FR-047 fix so a future regeneration cannot silently revert it (root cause: requirement_owner()'s WS-09 keyword rule matches the substring 'tool' inside FR-047's own title); rewrote context_manifest() via a new _task_context_entry() helper so tasks 70-84 get the real 'Infrastructure and Operations Agent' role distinct from tasks 6/49 (which share workstream=WS-12 but use the generic formula). Verified in-memory (never written to disk pre-verification, per mandate) that the fixed generator reproduces the committed 84-task backlog/DAG/context-manifest bit-for-bit. Added a permanent regression test (reports/tests/test_backlog_generator_reality_parity.py, RED/GREEN) to prevent recurrence. Discovered build_trace()/OCOR_TRACEABILITY_PLAN.csv has its own separate, pre-existing, order-sensitive staleness (2/285 rows) -- registered as a new non-blocking finding, explicitly out of scope for this fix.",
     "Phase 2.4 (generator-drift part): PR #67 merged (9bd28214). All 13 checks green on the first push. Post-merge SHA verified against origin/main. Phase 2.4 is now fully closed.",
     "Phase 2.4 (state close): PR #68 merged (5a08f78c). All 13 checks green on the first push; a small follow-up commit settled the validator's own self-embedded base-ref. Post-merge SHA verified.",
-    "Phase 3 (pending PR/merge): built and ran the reproducible, content-addressed language-migration benchmark harness (scripts/run_language_migration_benchmark.py) required by OCOR_LANGUAGE_POLICY.md \u00a73. Component 1 (RFC 8785 canonicalization kernel) MEASURED for real: median ratio Python/Node 4.24x-4.77x across 3 runs on the same sealed 200-document, ~10KB-payload corpus (threshold >3x) -> MIGRATION_THRESHOLD_EXCEEDED. Registered escalation PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED (opening a migration decision is policy-authorized; performing the migration is not -- it would substitute approved architecture, AFF-001 -- so no migration work was undertaken, only the decision package). Components 2-4 (C3 commit path, C5 event backbone, C4 projection) honestly reported NOT_YET_MEASURABLE with concrete, non-fabricated reasons (no live Postgres; no real C4/C5 implementation exists yet). Full decision package: reports/development/PHASE3_LANGUAGE_MIGRATION_DECISION.md. Added reports/tests/test_language_migration_benchmark_harness.py (11 tests) and, having discovered PR #67's test_backlog_generator_reality_parity.py was never wired into CI, fixed both gaps by wiring both regression tests into ocor-tooling-bootstrap.yml's type-and-lint-gate job."
+    "Phase 3: built and ran the reproducible, content-addressed language-migration benchmark harness (scripts/run_language_migration_benchmark.py) required by OCOR_LANGUAGE_POLICY.md \u00a73. Component 1 (RFC 8785 canonicalization kernel) MEASURED for real: median ratio Python/Node 4.24x-4.77x across 3 runs on the same sealed 200-document, ~10KB-payload corpus (threshold >3x) -> MIGRATION_THRESHOLD_EXCEEDED. Registered escalation PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED (opening a migration decision is policy-authorized; performing the migration is not -- it would substitute approved architecture, AFF-001 -- so no migration work was undertaken, only the decision package). Components 2-4 (C3 commit path, C5 event backbone, C4 projection) honestly reported NOT_YET_MEASURABLE with concrete, non-fabricated reasons (no live Postgres; no real C4/C5 implementation exists yet). Full decision package: reports/development/PHASE3_LANGUAGE_MIGRATION_DECISION.md. Added reports/tests/test_language_migration_benchmark_harness.py (11 tests) and, having discovered PR #67's test_backlog_generator_reality_parity.py was never wired into CI, fixed both gaps by wiring both regression tests into ocor-tooling-bootstrap.yml's type-and-lint-gate job.",
+    "Phase 3: PR #69 merged (4532dded). All 13 checks green on the first push. Post-merge SHA verified against origin/main. Phase 3 is now fully closed as a process; the component-1 migration escalation remains open, reserved to the Product Owner, and does not block backlog execution."
   ],
-  "current_task": "CC-OCOR-DELIVERY-COMPLETION__PHASE-3-BENCHMARK-HARNESS",
+  "current_task": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-EXECUTION-OCOR-DEV-0079",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -159,7 +164,7 @@
     "reports/benchmarks/phase3_language_migration_benchmark_20260912.json",
     "reports/evidence/local-gates/phase3-language-migration-benchmark-20260912.json"
   ],
-  "exact_next_action": "Push branch governed/phase3-language-migration-benchmark, open the PR, poll CI to green (Monitor armed on gh pr checks), merge only on green, verify post-merge SHA, sync all three state files. This closes Phase 3 as a process. Then start backlog execution via ./.venv/bin/python3 scripts/ocor_autonomous_delivery.py --next starting at OCOR-DEV-0079, unblocking the WS-12 chain through 0084 and then the four G2 spikes 0016/0017/0018/0021. The component-1 migration escalation (reserved to the Product Owner) does not block this.",
+  "exact_next_action": "Phases 2.2-2.4 and 3 are fully closed and merged (PR #54-69). Start backlog execution via ./.venv/bin/python3 scripts/ocor_autonomous_delivery.py --next starting at OCOR-DEV-0079, unblocking the WS-12 chain through 0084 and then the four G2 spikes 0016/0017/0018/0021, then the rest of G2 through G7 in DAG order per the mandate. The component-1 migration escalation (reserved to the Product Owner) does not block this.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"
