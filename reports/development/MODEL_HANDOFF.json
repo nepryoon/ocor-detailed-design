@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "47ca9017c8f8f5f89d5155daea13f05314f1025f",
-  "branch": "governed/phase2-2-close-state-update",
+  "baseline_commit": "efe784a2fce3f4f572f8c56d6f88eea8c08535c1",
+  "branch": "governed/phase2-3-typescript-sdk",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -64,6 +64,18 @@
     {
       "command": "gh pr merge 61 --merge",
       "result": "MERGED_47ca9017c8f8f5f89d5155daea13f05314f1025f_ALL_12_CHECKS_GREEN_ON_EXACT_HEAD_7b97e96"
+    },
+    {
+      "command": "npx tsc --project tsconfig.json against the generator's pre-fix output (first ever real compile)",
+      "result": "FAILED_19_TS2304_errors; RED log sealed at reports/tests/evidence/rem_generate_contracts_refs/red.log"
+    },
+    {
+      "command": "git stash / git stash pop to reproduce the pre-fix generator output for RED evidence without losing the in-progress fix",
+      "result": "PASS_clean_reversible_capture"
+    },
+    {
+      "command": "npm install && npm run build (clean-room rebuild) + full NFR-022 conformance suite",
+      "result": "PASS_zero_tsc_errors_4_of_4_conformance_tests"
     }
   ],
   "completed_tasks": [
@@ -74,9 +86,10 @@
     "Phase 2.1 (pending PR/merge): mypy --strict on ocor-runtime/src and scripts/ (0 errors, precise per-module override for grpcio-tools' missing stubs, 2 files excluded for content-addressed sealed-evidence/generator-drift reasons) and a repository-wide ruff gate (5 files excluded for frozen-review-corpus/sealed-evidence reasons), wired as a new blocking type-and-lint-gate job. mypy pinned via a new lint optional-dependency group (mypy==2.3.1 + exact-pinned type stubs, all verified real on PyPI), uv.lock regenerated. Fixed 9 files with precise type annotations/unused-import removals/ambiguous-name renames; no runtime behavior changed (full pytest regression unchanged: 498 passed). Audited every reports/evidence/**/*.json inputs/artifact_hashes dict before editing anything, caught and reverted 3 edits that would have invalidated sealed evidence for OCOR-DEV-0004/0015/0072, and discovered that scripts/build_ocor_development_plan.py silently deletes OCOR-DEV-0070..0084 if re-run -- registered as a non-blocking escalation for Phase 2.4 rather than masked or worked around.",
     "Phase 2.1: PR #59 merged (1cfa0a78), all 12 checks green on exact head including the new type-and-lint-gate job on the first CI run.",
     "Phase 2.2 (pending PR/merge): interpreter pinned to exact 3.12.11 in requires-python, new .python-version, uv.lock header, and all 6 CI workflows; new fail-closed test_interpreter_pin.py. Local sandbox has no exact 3.12.11 interpreter (uv lock/sync/run all refuse), so verification bypassed uv's wrapper (direct venv invocation) and one uv.lock line was hand-edited as a documented, justified exception (a literal copy of pyproject.toml's own field). Two new local-only test failures are expected and documented (both trace to the same missing-interpreter root cause, not a logic defect); CI is the real qualifying gate since actions/setup-python has already proven it provisions exactly 3.12.11 in every prior PR this session.",
-    "Phase 2.2: PR #61 merged (47ca9017). Disclosed interpreter-resolution risk did not materialize -- every uv-based CI step passed cleanly on the exact 3.12.11 pin. First push failed on an unrelated, already-familiar self-hash-settle miss; fixed on second push, all 12 checks green."
+    "Phase 2.2: PR #61 merged (47ca9017). Disclosed interpreter-resolution risk did not materialize -- every uv-based CI step passed cleanly on the exact 3.12.11 pin. First push failed on an unrelated, already-familiar self-hash-settle miss; fixed on second push, all 12 checks green.",
+    "Phase 2.3 (pending PR/merge): real TypeScript SDK under ocor-runtime/sdk/typescript (package.json, tsconfig strict, errors.ts/canonical.ts hand-written kernel support, generated ocor_contracts.ts committed byte-identical to the generator's own output), tsc==7.0.2 wired into the type-and-lint-gate CI job, NFR-022 cross-SDK conformance suite (canonical byte/digest/error-model/idempotency-binding identity on shared fixtures, driving the compiled TypeScript as a subprocess the way Node.js already serves as the REM-0007 oracle). Discovered, while performing the FIRST real tsc compile of the generator's own output, that generate_contracts.py's $ref resolution has been silently broken since OCOR-DEV-0010 (missing Gateway/Memory prefix awareness, no handling for scalar/alias components) -- fixed via a proper RED/GREEN remediation (OCOR-DEV-REM-0010) that left the sealed test_ocor_dev_0010.py completely untouched and re-verified its full 15/15 suite green against the fix, and only corrects reference resolution (54-model inventory unchanged)."
   ],
-  "current_task": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.2-CLOSE__STATE_UPDATE",
+  "current_task": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.3-TYPESCRIPT-SDK",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -85,9 +98,11 @@
     "docs/development_methodology/OCOR_LANGUAGE_POLICY.md",
     "reports/evidence/local-gates/phase1b-independent-review-corrections-20260912.json",
     "reports/evidence/local-gates/phase2-1-mypy-ruff-gates-20260912.json",
-    "reports/evidence/local-gates/phase2-2-interpreter-pin-20260912.json"
+    "reports/evidence/local-gates/phase2-2-interpreter-pin-20260912.json",
+    "reports/evidence/local-gates/phase2-3-typescript-sdk-20260912.json",
+    "reports/tests/evidence/rem_generate_contracts_refs/red.log"
   ],
-  "exact_next_action": "Start Phase 2.3: real TypeScript SDK under ocor-runtime/sdk/typescript generated by the existing generator, tsconfig strict, tsc compilation wired into CI, and the NFR-022 cross-SDK conformance suite. One branch, full iteration cycle to merge, then Phase 2.4 (resolve PHASE2-4-BACKLOG-GENERATOR-DRIFT first, then the FR-047 traceability fix and DAG regeneration), then Phase 3 (benchmark harness).",
+  "exact_next_action": "Push branch, open PR for Phase 2.3, watch CI closely for the new tsc/npm steps and the two new pytest steps in type-and-lint-gate, merge on green, verify post-merge SHA, update state, then start Phase 2.4 -- resolving PHASE2-4-BACKLOG-GENERATOR-DRIFT first.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"

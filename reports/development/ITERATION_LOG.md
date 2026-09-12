@@ -453,3 +453,95 @@
   scritto a mano; `tsconfig` strict; compilazione `tsc` in CI; suite di
   conformance cross-SDK `NFR-022` su fixture condivise fra SDK Python, SDK
   TypeScript e descrittore MCP.
+## 2026-09-12 — Fase 2.3: SDK TypeScript reale + remediation OCOR-DEV-REM-0010
+
+- Nuovo `ocor-runtime/sdk/typescript/`: `package.json` (`typescript==7.0.2`,
+  `@types/node==20.19.43`, entrambe verificate reali sul registry ufficiale),
+  `tsconfig.json` (`strict: true` più `noUncheckedIndexedAccess`,
+  `exactOptionalPropertyTypes`, `noUnusedLocals/Parameters`), `src/errors.ts`
+  ed `src/canonical.ts` (kernel di supporto scritto a mano — la stessa
+  distinzione che il runtime Python traccia fra il proprio `canonical.py`
+  scritto a mano e `ocor_contracts.py` generato — porting di
+  `ocor_runtime.canonical`/`errors.py` che sfrutta il fatto che
+  `String(number)` e l'ordinamento di default delle stringhe in ECMAScript
+  **sono già** l'algoritmo che RFC 8785 richiede, invece di re-derivarli come
+  fa la porta Python), `src/generated/ocor_contracts.ts` (generato dal
+  generatore esistente, mai scritto a mano — bit-identico a una sua
+  esecuzione fresca, verificato meccanicamente da entrambe le nuove suite).
+- **Scoperta un difetto reale e non rilevato in precedenza**: la prima vera
+  compilazione `tsc --strict` dell'output del generatore (mai eseguita
+  prima — la suite sigillata `test_ocor_dev_0010.py` verifica solo che la
+  riga di dichiarazione di ogni modello sia presente, mai che il file nel
+  suo insieme risolva o compili) ha prodotto 19 errori `TS2304: Cannot find
+  name` distinti. La risoluzione dei `$ref` in
+  `ocor-runtime/tools/generate_contracts.py` prendeva l'ultimo segmento del
+  percorso senza conoscenza del prefisso `Gateway`/`Memory` che `_models()`
+  applica ai record oggetto di origine OpenAPI, e non gestiva affatto i
+  `$ref` verso componenti non-oggetto (una stringa digest SHA-256, un array
+  `Refs`/`NonEmptyRefs`, un alias `GovernedContext` che inoltra a un intero
+  documento JSON Schema esterno). Raw log sigillato con fingerprint SHA-256
+  in `reports/tests/evidence/rem_generate_contracts_refs/red.log`.
+- **Remediation OCOR-DEV-REM-0010**: `ocor-runtime/tools/generate_contracts.py`
+  è input sigillato di `OCOR-DEV-0010`
+  (`reports/evidence/G1/OCOR-DEV-0010.json`), così come la sua suite
+  `test_ocor_dev_0010.py`. Corretta la sola risoluzione dei riferimenti
+  (nuova `_build_reference_index()`), aggiornati i `PINNED_GENERATED_HASHES`
+  al nuovo output corretto; l'inventario dei modelli (54, stessi nomi) resta
+  invariato. La suite sigillata `test_ocor_dev_0010.py` è stata lasciata
+  **completamente non modificata** e riverificata verde 15/15 contro il
+  generatore corretto, dimostrando che la correzione è compatibile con il
+  significato storico dell'evidenza sigillata, non lo invalida. Nuova suite
+  `reports/tests/test_generate_contracts_reference_resolution.py` (13 test):
+  fingerprint del log RED, verifica che ogni `$ref` del set di contratti
+  pinnati risolva ora a un modello dichiarato o a un primitivo riconosciuto,
+  controlli puntuali sui 9 casi precedentemente rotti, verifica che
+  l'inventario dei modelli sia invariato, e (quando `tsc` è su `PATH`)
+  ricompila da zero l'intero SDK committato.
+- Nuova suite `ocor-runtime/tests/sdk/test_typescript_sdk_conformance.py`
+  (NFR-022, 4 test): identità byte-per-byte del testo canonico e del digest
+  SHA-256 fra Python e TypeScript su 23 fixture (ordinamento delle chiavi,
+  escaping di stringhe unicode/di controllo, confine `MAX_SAFE_INTEGER`,
+  soglie di notazione scientifica ±21/-7); identità del modello di errore
+  (codice `CANONICALIZATION_INVALID`) su fixture con surrogati UTF-16 non
+  accoppiati; parità dei campi generati fra una generazione Python fresca e
+  l'SDK TypeScript committato; identità del binding di idempotenza (la
+  semantica di idempotenza del descrittore MCP lega una richiesta al proprio
+  digest canonico: richieste con campi riordinati producono lo stesso
+  digest in entrambi gli SDK, un campo cambiato no). La suite pilota l'SDK
+  TypeScript compilato come sottoprocesso, lo stesso schema con cui
+  `DEC-166`/`REM-0007` usa già Node.js come oracolo cross-language per i
+  valori limite dell'implementazione Python.
+- Due nuovi controlli di skip condizionale (`tsc`/`node` non disponibili in
+  locale, sempre disponibili in CI) registrati in
+  `reports/development/METHOD_COMPLIANCE.json.test_exceptions`
+  (`TEST-INFRA-002`, `TEST-INFRA-003`), stesso schema del guard PostgreSQL
+  già esistente (`TEST-INFRA-001`); `validate_rccad.py` falliva
+  `RCCAD-UNJUSTIFIED-SKIP` prima della registrazione.
+- Nuovo step `tsc --strict` e le due nuove suite pytest cablati nel job
+  `type-and-lint-gate` di `.github/workflows/ocor-tooling-bootstrap.yml`
+  (`actions/setup-node@v4`, stesso pin `20.20.2` già in uso altrove nel
+  repository).
+- Gate locali: `sha256sum -c` `PASS` 8/8; `npm run build` da stato pulito
+  (`rm -rf node_modules dist`) `PASS` zero errori; le due nuove suite pytest
+  `PASS` 17/17 contro l'SDK ricompilato da zero; `ocor-runtime/.venv/bin/python
+  -m mypy` `PASS` 44/44 (invariato, `ocor-runtime/tools/` è fuori scope);
+  `ruff check .` `PASS`; `validate_rccad.py` `PASS_LOCAL_PRECHECK` 0 finding
+  dopo la registrazione degli skip; `validate_language_policy.py` `PASS`;
+  `validate_ocor_change_scope.py` `PASS` 11 percorsi;
+  `validate_ocor_development_plan.py --authorized-extension` `PASS` 37/2/0
+  dopo self-hash settle; regressione pytest completa `2 failed, 516 passed,
+  5 skipped, 10 errors` — le due failure e i dieci errori sono
+  esclusivamente i gap sandbox già dichiarati nelle Fasi 2.2 e precedenti
+  (interprete `3.12.11` esatto assente, PostgreSQL live assente), non una
+  regressione.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti globali `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC` e `Production` `NO-GO`.
+  Nessuna evidenza sigillata invalidata; profilo SDK `DEC-075`/`FR-047`/`FR-048`
+  invariato.
+- Prossima azione: aprire la PR, attendere CI verde sull'HEAD esatto (in
+  particolare i nuovi step `tsc`/conformance nel job `type-and-lint-gate`),
+  merge, verifica SHA post-merge, poi Fase 2.4 del mandato — prima risolvere
+  l'escalation `PHASE2-4-BACKLOG-GENERATOR-DRIFT`, poi correggere
+  l'allocazione di `FR-047`, aggiungere i task mancanti al backlog e
+  rigenerare il DAG.
+
