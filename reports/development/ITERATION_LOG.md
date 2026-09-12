@@ -626,3 +626,27 @@
   e verificare che una rigenerazione riproduca l'84-task backlog reale prima
   di rigenerare mai il DAG per davvero). Solo allora la Fase 2.4 è chiusa;
   segue la Fase 3.
+
+## 2026-09-12 — Chiusura parziale Fase 2.4 (FR-047)
+
+- PR #65 aperta e integrata: merge `dcfca5086ac20ed1b99548c4eb02b57f92dee66c`.
+  Il primo push ha fatto fallire di nuovo `tooling-policy` per lo stesso
+  self-hash di `scripts/validate_ocor_development_plan.py` non assestato
+  dopo l'ultima di due modifiche nella stessa iterazione — terza occorrenza
+  di questo esatto errore in questa sessione. Corretto e ripushato
+  (`f4eda68`): 12/12 check verdi.
+- Verifica pre-merge: `mergeStateStatus: CLEAN`. Verifica post-merge: SHA di
+  `origin/main` coincidente con il merge commit.
+- `EXECUTION_STATE.json` e `MODEL_HANDOFF.json` risincronizzati;
+  `latest_ci_evidence` aggiornato ai run reali.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti globali `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC` e `Production` `NO-GO`.
+- **Fase 2.4 non ancora completamente chiusa**: resta l'escalation
+  `PHASE2-4-BACKLOG-GENERATOR-DRIFT`. Prossima azione: risolverla come task a
+  sé stante — estendere `scripts/build_ocor_development_plan.py` con un
+  percorso di generazione dedicato al workstream `WS-12` (template diverso da
+  quello dei task 1-69: `objective`/`rationale`/`normative_references`/
+  `validation_commands`/`bounded_agent_context_pack` specifici per il
+  bootstrap di infrastruttura), verificare in una directory di scratch che
+  una rigenerazione riproduca esattamente backlog/DAG/context-manifest reali
+  per `OCOR-DEV-0070`–`0084`, e solo allora considerare la Fase 2.4 chiusa.

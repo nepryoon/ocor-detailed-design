@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/phase2-4-fr047-traceability",
-    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.4-FR047-TRACEABILITY",
+    "branch": "governed/phase2-4-close-state-fr047",
+    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.4-CLOSE-FR047",
     "decision_id": "DEC-212",
-    "phase": "PHASE_2_4_IN_PROGRESS_PENDING_PR",
+    "phase": "PHASE_2_4_FR047_MERGED__GENERATOR_DRIFT_ESCALATION_OPEN",
     "worktree": null
   },
-  "baseline_commit": "30609bad5c7acc057549785347a68b88b3f91149",
+  "baseline_commit": "dcfca5086ac20ed1b99548c4eb02b57f92dee66c",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -54,15 +54,15 @@
   ],
   "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__LANGUAGE_POLICY_ADOPTED",
   "latest_ci_evidence": {
-    "candidate_commit": "5428ab374241dcdb070f95b42c60ab02a0f0ef93",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR63_MERGED_b4510123dee21c054876ecca97b02d33b971318a",
+    "candidate_commit": "f4eda6813bc3b5b4b777c875701f848f565c78df",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR65_MERGED_dcfca5086ac20ed1b99548c4eb02b57f92dee66c",
     "run_ids": [
-      34714597615,
-      34714597619,
-      34714597642,
-      34714597647,
-      34714597650,
-      34714597748
+      34715378315,
+      34715378318,
+      34715378320,
+      34715378324,
+      34715378330,
+      34715378340
     ]
   },
   "mandate_phase_status": {
@@ -108,16 +108,18 @@
       "status": "MERGED"
     },
     "phase_2_4_traceability": {
-      "detail": "FR-047 misallocation corrected: OCOR_TRACEABILITY_PLAN.csv now points FR-047 at OCOR-DEV-0010 (the real SDK-generation task, already accepted and extended in Phase 2.3) instead of OCOR-DEV-0047 (an unrelated C8 tool-boundary-sandbox task). No new backlog task needed, no dependency edges changed, no DAG regeneration performed. PHASE2-4-BACKLOG-GENERATOR-DRIFT escalation still open, tracked as its own next task before any future DAG regeneration.",
-      "status": "IN_PROGRESS_PENDING_PR"
+      "detail": "FR-047 traceability reallocation merged. PHASE2-4-BACKLOG-GENERATOR-DRIFT escalation still open and is now the sole remaining item before Phase 2.4 can be declared fully closed.",
+      "merge_commit": "dcfca5086ac20ed1b99548c4eb02b57f92dee66c",
+      "pr": 65,
+      "status": "PARTIALLY_MERGED"
     },
     "phase_3_benchmark": {
       "status": "NOT_STARTED"
     }
   },
-  "next_executable_action": "Merge the FR-047 traceability PR, verify post-merge SHA, update state, then resolve escalation PHASE2-4-BACKLOG-GENERATOR-DRIFT as its own task: extend scripts/build_ocor_development_plan.py's TASK_SPECS/task-generation logic to cover OCOR-DEV-0070..0084 (the WS-12 infrastructure bootstrap-repair workstream, currently only present in the committed backlog JSON, never in the generator), then verify a full regeneration reproduces the real 84-task backlog exactly before ever regenerating the DAG for real. Only after that is Phase 2.4 fully closed; Phase 3 (benchmark harness) follows.",
+  "next_executable_action": "Resolve escalation PHASE2-4-BACKLOG-GENERATOR-DRIFT as its own task: extend scripts/build_ocor_development_plan.py to generate the WS-12 infrastructure-bootstrap-repair workstream (OCOR-DEV-0070..0084), which uses a distinct template (objective/rationale/normative_references/validation_commands/bounded_agent_context_pack) from tasks 1-69. Verify in a scratch directory that a full regeneration reproduces the real 84-task backlog, DAG, and context manifest bit-for-bit before ever committing a regenerated artifact. Only then is Phase 2.4 fully closed; Phase 3 (benchmark harness) follows.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-12T22:35:00Z"
+  "updated_at": "2026-09-12T22:45:00Z"
 }
