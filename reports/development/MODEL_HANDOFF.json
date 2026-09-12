@@ -2,16 +2,16 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "d93e8870e975b2aeec715778f3c490ece0e0216f",
-  "branch": "governed/dec-211-autonomous-tooling-bootstrap",
+  "baseline_commit": "a8f44364d74c4e5953954f8cf4997032ccc68f05",
+  "branch": "governed/phase0-state-reconciliation-20260912",
   "commands_run": [
     {
-      "command": "git fetch --prune origin; Git and GitHub exact-SHA reconciliation",
-      "result": "PASS_D93E8870E975B2AEEC715778F3C490ECE0E0216F"
+      "command": "git fetch --prune origin",
+      "result": "PASS_A8F44364D74C4E5953954F8CF4997032CCC68F05"
     },
     {
-      "command": "archive stale local state",
-      "result": "PASS_B3960A93EFD94100420C856E66C1BF035C3850D9"
+      "command": "git checkout -B main origin/main",
+      "result": "PASS_LOCAL_MAIN_ALIGNED_TO_EXACT_ORIGIN_SHA"
     },
     {
       "command": "sha256sum -c inputs/normative/SHA256SUMS",
@@ -19,56 +19,47 @@
     },
     {
       "command": "uv sync --project ocor-runtime --frozen --extra test",
-      "result": "PASS_PYTHON_3_12_11_36_PACKAGES"
+      "result": "PASS_3_PACKAGES"
     },
     {
-      "command": "reports.tests.test_autonomous_tooling_policy RED",
-      "result": "EXPECTED_FAILURE_3_FAILURES_2_ERRORS_COMMIT_605504FE"
+      "command": "scripts/ocor_autonomous_delivery.py --status (fresh local state, none existed under gitignored .ocor/)",
+      "result": "PASS_84_TASKS_ALL_PENDING"
     },
     {
-      "command": "bootstrap_development_environment.py --execute",
-      "result": "PASS_11_REAL_SERVICES"
+      "command": "scripts/ocor_autonomous_delivery.py --accept-evidence <each of 28 sealed tasks> --execute",
+      "result": "PASS_28_ACCEPTED_MATCHES_reports/evidence/G2/MANIFEST.json"
     },
     {
-      "command": "verify_external_services.py",
-      "result": "PASS_ALL_HOST_ENDPOINTS_READY"
+      "command": "scripts/ocor_autonomous_delivery.py --status (post-reconciliation)",
+      "result": "PASS_28_ACCEPTED_56_PENDING_NEXT_READY_OCOR-DEV-0079"
     },
     {
-      "command": "validate_ocor_development_plan.py --base-ref d93e8870e975b2aeec715778f3c490ece0e0216f --authorized-extension",
-      "result": "PASS_37_PASS_2_OPTIONAL_NOT_EXECUTED_84_TASKS"
+      "command": "git log --oneline --grep=DEC-211 --all",
+      "result": "FOUND_MERGE_88a525d31f174fd2c7cf3839363497cb03601d79_PR_42_ANCESTOR_OF_HEAD"
     },
     {
-      "command": "validate_rccad.py --base-ref d93e8870e975b2aeec715778f3c490ece0e0216f",
-      "result": "PASS_LOCAL_PRECHECK_AFF_001_TO_AFF_010"
-    },
-    {
-      "command": "independent verifier dec211_final_verify",
-      "result": "GO_BLOCKER_0_HIGH_0_MEDIUM_0"
+      "command": "git ls-tree -r --name-only origin/main | grep OCOR-DEV-007",
+      "result": "FOUND_0070..0078_TASK_BRANCHES_MERGED_PR_48_TO_53"
     }
   ],
   "completed_tasks": [
-    "authoritative stale-baseline reconciliation",
-    "DEC-211 allocation",
-    "TDD RED and local GREEN",
-    "pinned toolchain restoration",
-    "digest-pinned Compose bootstrap",
-    "real-service health verification"
+    "exact-SHA reconciliation of local checkout to origin/main",
+    "reconstruction of true completed-task state (28 sealed G2 tasks, not the stale 19) from content-addressed evidence and merged PR history rather than the stale tracking files",
+    "rebuild of gitignored local runner state (.ocor/delivery/state.json) via the runner's own --accept-evidence mechanism for all 28 already-sealed tasks",
+    "supersession (not deletion) of TERMINAL_BLOCKED_REPORT.json and reports/evidence/G2/blockers/MANIFEST.json now that OCOR-DEV-0073..0078 qualified real external-service provisioning"
   ],
-  "current_task": "CC-AUTONOMOUS-TOOLING-INFRASTRUCTURE-BOOTSTRAP__EVIDENCE_SEAL",
+  "current_task": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-0-RECONCILIATION__EVIDENCE_SEAL",
   "evidence_paths": [
-    "reports/development/RECONCILIATION_2026-09-03_DEC-211.md",
-    "reports/development/TOOLING_STATE.json",
-    "reports/development/INFRASTRUCTURE_STATE.json",
-    "reports/development/environment-evidence-dec-211.json",
-    "reports/tests/autonomous_tooling_tdd_evidence.json",
-    "reports/tests/evidence/dec211/green.log",
-    "reports/tests/evidence/dec211/red.log",
-    "reports/tests/evidence/dec211/refactor.log"
+    "reports/development/RECONCILIATION_2026-09-12_STATE.md",
+    "reports/development/ITERATION_LOG.md",
+    "reports/evidence/G2/MANIFEST.json",
+    "reports/evidence/G2/blockers/MANIFEST.json",
+    "reports/development/TERMINAL_BLOCKED_REPORT.json"
   ],
-  "exact_next_action": "Commit the content-addressed evidence seal, push the branch, open a PR and require exact-head CI before merge.",
+  "exact_next_action": "Open the PR for governed/phase0-state-reconciliation-20260912, require exact-head CI, merge, verify the post-merge SHA, then start Phase 1 (CC-LANGUAGE-POLICY-*): allocate the next free DEC-*, author OCOR_LANGUAGE_POLICY.md and scripts/validate_language_policy.py (RED then GREEN), and wire the gate into CI.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"
   ],
-  "worktree": "/home/luca/Projects/.ocor-worktrees/autonomous-completion-20260903T152855Z"
+  "worktree": null
 }

@@ -1,73 +1,79 @@
 {
-  "schema_version": "1.0",
-  "terminal_state": "BLOCKED",
-  "recorded_at": "2026-09-03T12:14:16Z",
   "baseline_commit": "6afa0d962580a039f1903797dc304eacc9fcaea8",
   "baseline_tree": "e7e0c9d906ff7559d5309d33e9145db9904a7cee",
-  "open_pull_requests": 0,
-  "completed_evidence_tasks": 19,
-  "remaining_backlog_tasks": 50,
-  "direct_ready_tasks": [
-    "OCOR-DEV-0016",
-    "OCOR-DEV-0017",
-    "OCOR-DEV-0018",
-    "OCOR-DEV-0021"
-  ],
-  "direct_ready_disposition": "ALL_WAITING_EXTERNAL_SERVICE",
-  "independent_reachable_tasks_after_excluding_blocked_roots": [],
   "blocker_manifest": {
     "path": "reports/evidence/G2/blockers/MANIFEST.json",
     "sha256": "490cfe9f52df4f7e948baf5d65c5754a6abe61018ec7135632f7ef6a3313019b"
   },
   "blocking_tasks": [
     {
-      "task_id": "OCOR-DEV-0016",
-      "service": "TerminusDB",
       "evidence": "reports/evidence/G2/blockers/OCOR-DEV-0016.json",
-      "sha256": "3c7b228df6a3a978f459b36d938f0e81a0de95f8f324e968251ef0ac60de292a"
+      "service": "TerminusDB",
+      "sha256": "3c7b228df6a3a978f459b36d938f0e81a0de95f8f324e968251ef0ac60de292a",
+      "task_id": "OCOR-DEV-0016"
     },
     {
-      "task_id": "OCOR-DEV-0017",
-      "service": "TypeDB",
       "evidence": "reports/evidence/G2/blockers/OCOR-DEV-0017.json",
-      "sha256": "8712b0857d5cb431f9762988a417f39ca7f6f350fdeac10d609e13fdd14611f1"
+      "service": "TypeDB",
+      "sha256": "8712b0857d5cb431f9762988a417f39ca7f6f350fdeac10d609e13fdd14611f1",
+      "task_id": "OCOR-DEV-0017"
     },
     {
-      "task_id": "OCOR-DEV-0018",
-      "service": "Apache Jena/Fuseki",
       "evidence": "reports/evidence/G2/blockers/OCOR-DEV-0018.json",
-      "sha256": "1f744bf9642c8cfe0b8f39931717abfc0969c61276725149dc120c9b33087694"
+      "service": "Apache Jena/Fuseki",
+      "sha256": "1f744bf9642c8cfe0b8f39931717abfc0969c61276725149dc120c9b33087694",
+      "task_id": "OCOR-DEV-0018"
     },
     {
-      "task_id": "OCOR-DEV-0021",
-      "service": "SPIFFE/SPIRE and OpenBao",
       "evidence": "reports/evidence/G2/blockers/OCOR-DEV-0021.json",
-      "sha256": "35fa10e324a26dc29f983d289f128ec55c23161cee57ca525714a41b50f6830a"
+      "service": "SPIFFE/SPIRE and OpenBao",
+      "sha256": "35fa10e324a26dc29f983d289f128ec55c23161cee57ca525714a41b50f6830a",
+      "task_id": "OCOR-DEV-0021"
     }
   ],
-  "minimal_unblock_action": "Provide approved digest-pinned disposable artifacts or approved reachable endpoints and intended credentials/configuration for the four blocking campaigns, then resume with task OCOR-DEV-0016.",
-  "independent_verifier": {
-    "identity": "terminal_blocked_verifier",
-    "model_and_effort": "NOT_EXPOSED",
-    "verdict": "GO_FOR_BLOCKED_STATE_MERGE",
-    "blocker": 0,
-    "high": 0,
-    "medium": 0,
-    "low": 0
-  },
-  "local_controls": {
-    "normative_sha256": "PASS",
-    "prescribed_root_harness": "NOT_EXECUTED_MISSING_VENV",
-    "authoritative_runner_status": "NOT_EXECUTED_MISSING_JSONSCHEMA",
-    "remote_ci_on_last_integrated_change": "PASS_ALL_FIVE_WORKFLOWS"
-  },
   "claims": {
     "E1": 0,
     "E2": 0,
-    "global_verified_requirements": 0,
     "G2": "NOT_CLOSED",
-    "runtime_conformance": "NOT_ESTABLISHED",
+    "global_verified_requirements": 0,
     "poc": "NO_GO",
-    "production": "NO_GO"
-  }
+    "production": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "completed_evidence_tasks": 19,
+  "direct_ready_disposition": "ALL_WAITING_EXTERNAL_SERVICE",
+  "direct_ready_tasks": [
+    "OCOR-DEV-0016",
+    "OCOR-DEV-0017",
+    "OCOR-DEV-0018",
+    "OCOR-DEV-0021"
+  ],
+  "independent_reachable_tasks_after_excluding_blocked_roots": [],
+  "independent_verifier": {
+    "blocker": 0,
+    "high": 0,
+    "identity": "terminal_blocked_verifier",
+    "low": 0,
+    "medium": 0,
+    "model_and_effort": "NOT_EXPOSED",
+    "verdict": "GO_FOR_BLOCKED_STATE_MERGE"
+  },
+  "local_controls": {
+    "authoritative_runner_status": "NOT_EXECUTED_MISSING_JSONSCHEMA",
+    "normative_sha256": "PASS",
+    "prescribed_root_harness": "NOT_EXECUTED_MISSING_VENV",
+    "remote_ci_on_last_integrated_change": "PASS_ALL_FIVE_WORKFLOWS"
+  },
+  "minimal_unblock_action": "Provide approved digest-pinned disposable artifacts or approved reachable endpoints and intended credentials/configuration for the four blocking campaigns, then resume with task OCOR-DEV-0016.",
+  "open_pull_requests": 0,
+  "recorded_at": "2026-09-03T12:14:16Z",
+  "remaining_backlog_tasks": 50,
+  "schema_version": "1.0",
+  "superseded": {
+    "reason": "OCOR-DEV-0073..0078 qualified real TerminusDB, TypeDB, Apache Jena/Fuseki, OPA/Keycloak, SPIFFE/SPIRE and OpenBao provisioning; the WAITING_EXTERNAL_SERVICE condition recorded here no longer holds. Preserved as historical evidence of the real blocked state observed on 2026-09-03; not deleted.",
+    "superseded_at": "2026-09-12T14:35:23Z",
+    "superseded_by_commit": "205fefa/ac878c4/c5c3d30/26222b7/74fe5cb/a8f4436 (PR #48-#53 merges, tip a8f44364d74c4e5953954f8cf4997032ccc68f05)",
+    "superseded_by_report": "reports/development/RECONCILIATION_2026-09-12_STATE.md"
+  },
+  "terminal_state": "BLOCKED"
 }
