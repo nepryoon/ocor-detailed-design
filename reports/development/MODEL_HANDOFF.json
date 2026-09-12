@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "30609bad5c7acc057549785347a68b88b3f91149",
-  "branch": "governed/phase2-4-fr047-traceability",
+  "baseline_commit": "dcfca5086ac20ed1b99548c4eb02b57f92dee66c",
+  "branch": "governed/phase2-4-close-state-fr047",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -84,6 +84,10 @@
     {
       "command": "grep FR-047 across the traceability CSV, requirement register, and backlog; look up OCOR-DEV-0047 and OCOR-DEV-0010's actual titles/workstreams",
       "result": "CONFIRMED_the_mandate's_claim_and_identified_the_correct_task"
+    },
+    {
+      "command": "gh pr merge 65 --merge",
+      "result": "MERGED_dcfca5086ac20ed1b99548c4eb02b57f92dee66c_ALL_12_CHECKS_GREEN_ON_EXACT_HEAD_f4eda681"
     }
   ],
   "completed_tasks": [
@@ -97,9 +101,10 @@
     "Phase 2.2: PR #61 merged (47ca9017). Disclosed interpreter-resolution risk did not materialize -- every uv-based CI step passed cleanly on the exact 3.12.11 pin. First push failed on an unrelated, already-familiar self-hash-settle miss; fixed on second push, all 12 checks green.",
     "Phase 2.3 (pending PR/merge): real TypeScript SDK under ocor-runtime/sdk/typescript (package.json, tsconfig strict, errors.ts/canonical.ts hand-written kernel support, generated ocor_contracts.ts committed byte-identical to the generator's own output), tsc==7.0.2 wired into the type-and-lint-gate CI job, NFR-022 cross-SDK conformance suite (canonical byte/digest/error-model/idempotency-binding identity on shared fixtures, driving the compiled TypeScript as a subprocess the way Node.js already serves as the REM-0007 oracle). Discovered, while performing the FIRST real tsc compile of the generator's own output, that generate_contracts.py's $ref resolution has been silently broken since OCOR-DEV-0010 (missing Gateway/Memory prefix awareness, no handling for scalar/alias components) -- fixed via a proper RED/GREEN remediation (OCOR-DEV-REM-0010) that left the sealed test_ocor_dev_0010.py completely untouched and re-verified its full 15/15 suite green against the fix, and only corrects reference resolution (54-model inventory unchanged).",
     "Phase 2.3: PR #63 merged (b4510123). All 12 checks green on the first push, including the new tsc build step and both new pytest suites in type-and-lint-gate.",
-    "Phase 2.4 (partial, pending PR/merge): fixed the FR-047 traceability misallocation named by the mandate. Confirmed OCOR-DEV-0047 (C8 tool boundary sandbox/kill switch) has no relation to FR-047 ('generate the Python/TypeScript SDKs and typed MCP contracts'), almost certainly a number-matching slip; reassigned to OCOR-DEV-0010, the real, already-accepted SDK-generation task. Updated both requirement_ids lists in the backlog to match. No new task added -- the fix was a pure reallocation, no dependency edges changed, no DAG regeneration needed or performed. PHASE2-4-BACKLOG-GENERATOR-DRIFT remains open for its own dedicated iteration."
+    "Phase 2.4 (partial, pending PR/merge): fixed the FR-047 traceability misallocation named by the mandate. Confirmed OCOR-DEV-0047 (C8 tool boundary sandbox/kill switch) has no relation to FR-047 ('generate the Python/TypeScript SDKs and typed MCP contracts'), almost certainly a number-matching slip; reassigned to OCOR-DEV-0010, the real, already-accepted SDK-generation task. Updated both requirement_ids lists in the backlog to match. No new task added -- the fix was a pure reallocation, no dependency edges changed, no DAG regeneration needed or performed. PHASE2-4-BACKLOG-GENERATOR-DRIFT remains open for its own dedicated iteration.",
+    "Phase 2.4 (FR-047 part): PR #65 merged (dcfca508). First push failed tooling-policy on the same self-hash-settle miss as before (edited validate_ocor_development_plan.py twice, only settled after the first); fixed and green on second push, all 12 checks passed."
   ],
-  "current_task": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.4-FR047-TRACEABILITY",
+  "current_task": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.4-CLOSE-FR047",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -113,7 +118,7 @@
     "reports/tests/evidence/rem_generate_contracts_refs/red.log",
     "reports/evidence/local-gates/phase2-4-fr047-traceability-20260912.json"
   ],
-  "exact_next_action": "Push branch, open PR for the FR-047 fix, watch CI, merge on green, verify post-merge SHA, update state, then start the PHASE2-4-BACKLOG-GENERATOR-DRIFT remediation as its own task/iteration.",
+  "exact_next_action": "Start the PHASE2-4-BACKLOG-GENERATOR-DRIFT remediation: extend scripts/build_ocor_development_plan.py with a WS-12-specific task-generation path, verify a scratch-directory regeneration reproduces the real backlog/DAG/context-manifest for tasks 70-84 exactly, then commit. Only after that resolve is confirmed should any real regeneration of the committed backlog/DAG be attempted.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"
