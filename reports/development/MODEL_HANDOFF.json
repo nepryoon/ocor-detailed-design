@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "4532dded147f77f025f65fd45d53b6a8043671e9",
-  "branch": "governed/phase3-close-state",
+  "baseline_commit": "1dc3a0824b08b446ffb07598dded9f526b02d008",
+  "branch": "governed/ocor-dev-0079-typed-service-health-checks",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -124,6 +124,38 @@
     {
       "command": "gh pr merge 69 --merge",
       "result": "MERGED_4532dded147f77f025f65fd45d53b6a8043671e9_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_6d19ca5; post-merge git fetch confirms origin/main == mergeCommit.oid"
+    },
+    {
+      "command": "gh pr merge 70 --merge",
+      "result": "MERGED_1dc3a0824b08b446ffb07598dded9f526b02d008_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_de3fb19; post-merge git fetch confirms origin/main == mergeCommit.oid"
+    },
+    {
+      "command": "docker ps / docker info",
+      "result": "DISCOVERED_Docker_is_available_in_this_sandbox_with_all_11_required_service_ports_free; pre-existing unrelated containers (eci-dev-control-plane, open-webui) left untouched"
+    },
+    {
+      "command": "docker compose --env-file <session-local, never-committed> -p ocor-bootstrap up -d terminusdb typedb fuseki opa keycloak openbao postgresql kafka qdrant",
+      "result": "PASS_all_9_healthy_within_1_minute; fuseki built locally from infra/fuseki/Dockerfile per the lock's declared source hash"
+    },
+    {
+      "command": "generate a disposable self-signed CA (openssl req -x509 ...) for OCOR_SPIRE_BOOTSTRAP_DIR, up spire-server, docker exec spire-server ... token generate for a real join token, then up spire-agent",
+      "result": "PASS_node_attestation_successful_spire-agent_healthy; this from-scratch two-phase bootstrap sequence was not previously documented anywhere in the repo (only steady-state rotation was, in deploy/bootstrap/services/spire/qualify.py)"
+    },
+    {
+      "command": "run the 4 existing per-service qualify.py/qualify_security_services.py modules (typedb, openbao, spire, policy-identity) against the freshly bootstrapped live stack",
+      "result": "PASS_all_4_result_PASS_confirming_the_bootstrap_is_correct_before_writing_new_code"
+    },
+    {
+      "command": "extend scripts/verify_external_services.py with typed ServiceStatus/ServiceHealth and 5 new inline checks (terminusdb, fuseki, postgresql, kafka, qdrant) for the services lacking a dedicated qualify module; reuse the other 4 via subprocess",
+      "result": "PASS_typed_check_all_11_services_READY_including_real_negative_probes_under_--execute_(wrong-credential/absent-resource checks all FAIL_CLOSED)"
+    },
+    {
+      "command": "bounded fault injection: docker pause/unpause terminusdb and kafka, typed check before/after",
+      "result": "PASS_both_detected_DEGRADED_while_paused_and_recovered_to_READY_within_the_bounded_window; full stack confirmed healthy afterward"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0079.py -v (17 unit/negative/contract tests, no live dependency)",
+      "result": "PASS_17_of_17"
     }
   ],
   "completed_tasks": [
@@ -143,9 +175,11 @@
     "Phase 2.4 (generator-drift part): PR #67 merged (9bd28214). All 13 checks green on the first push. Post-merge SHA verified against origin/main. Phase 2.4 is now fully closed.",
     "Phase 2.4 (state close): PR #68 merged (5a08f78c). All 13 checks green on the first push; a small follow-up commit settled the validator's own self-embedded base-ref. Post-merge SHA verified.",
     "Phase 3: built and ran the reproducible, content-addressed language-migration benchmark harness (scripts/run_language_migration_benchmark.py) required by OCOR_LANGUAGE_POLICY.md \u00a73. Component 1 (RFC 8785 canonicalization kernel) MEASURED for real: median ratio Python/Node 4.24x-4.77x across 3 runs on the same sealed 200-document, ~10KB-payload corpus (threshold >3x) -> MIGRATION_THRESHOLD_EXCEEDED. Registered escalation PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED (opening a migration decision is policy-authorized; performing the migration is not -- it would substitute approved architecture, AFF-001 -- so no migration work was undertaken, only the decision package). Components 2-4 (C3 commit path, C5 event backbone, C4 projection) honestly reported NOT_YET_MEASURABLE with concrete, non-fabricated reasons (no live Postgres; no real C4/C5 implementation exists yet). Full decision package: reports/development/PHASE3_LANGUAGE_MIGRATION_DECISION.md. Added reports/tests/test_language_migration_benchmark_harness.py (11 tests) and, having discovered PR #67's test_backlog_generator_reality_parity.py was never wired into CI, fixed both gaps by wiring both regression tests into ocor-tooling-bootstrap.yml's type-and-lint-gate job.",
-    "Phase 3: PR #69 merged (4532dded). All 13 checks green on the first push. Post-merge SHA verified against origin/main. Phase 3 is now fully closed as a process; the component-1 migration escalation remains open, reserved to the Product Owner, and does not block backlog execution."
+    "Phase 3: PR #69 merged (4532dded). All 13 checks green on the first push. Post-merge SHA verified against origin/main. Phase 3 is now fully closed as a process; the component-1 migration escalation remains open, reserved to the Product Owner, and does not block backlog execution.",
+    "Phase 3 (state close): PR #70 merged (1dc3a082). All 13 checks green on the first push. Post-merge SHA verified.",
+    "OCOR-DEV-0079 (pending PR/merge): implemented typed service health checks. Discovered Docker is genuinely available in this sandbox (all 11 required ports free, no conflicting containers); bootstrapped the real full compose stack from scratch (9 services directly, SPIRE via its own two-phase server-then-agent join-token flow with a freshly generated disposable CA) using session-local, never-committed secrets. Verified the 4 existing per-service qualify modules (typedb, openbao, spire, policy-identity) all PASS against the fresh stack before writing new code. Extended scripts/verify_external_services.py with a typed ServiceStatus enum/ServiceHealth dataclass (READY/DEGRADED/UNREACHABLE/NOT_PROVISIONED replacing the old untyped READY/NOT_READY strings that conflated 'checked and broken' with 'never provisioned'); the 4 covered services are driven as subprocesses of their existing modules, and 5 new inline typed checks (terminusdb, fuseki, postgresql, kafka, qdrant) add lock validation, live Docker inspection, and real positive+negative protocol probes (wrong-credential TerminusDB/PostgreSQL access, absent Fuseki dataset, absent Kafka topic, absent Qdrant collection, all verified FAIL_CLOSED). Ran real bounded fault injection (docker pause/unpause) against terminusdb and kafka, confirming DEGRADED-then-READY detection and full-stack recovery. Added 17 unit/negative/contract tests (no live dependency, always run in CI) and sealed real evidence (reports/evidence/G2/OCOR-DEV-0079.json + .log) against the live 11-service stack, mirroring OCOR-DEV-0073/0075's prior real-evidence pattern. Backward compatibility preserved: the old --manifest-only and legacy port/container-scan CLI modes are unchanged."
   ],
-  "current_task": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-EXECUTION-OCOR-DEV-0079",
+  "current_task": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-EXECUTION-OCOR-DEV-0080",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -162,9 +196,11 @@
     "reports/evidence/local-gates/phase2-4-backlog-generator-drift-20260912.json",
     "reports/development/PHASE3_LANGUAGE_MIGRATION_DECISION.md",
     "reports/benchmarks/phase3_language_migration_benchmark_20260912.json",
-    "reports/evidence/local-gates/phase3-language-migration-benchmark-20260912.json"
+    "reports/evidence/local-gates/phase3-language-migration-benchmark-20260912.json",
+    "reports/evidence/G2/OCOR-DEV-0079.json",
+    "reports/evidence/G2/OCOR-DEV-0079.log"
   ],
-  "exact_next_action": "Phases 2.2-2.4 and 3 are fully closed and merged (PR #54-69). Start backlog execution via ./.venv/bin/python3 scripts/ocor_autonomous_delivery.py --next starting at OCOR-DEV-0079, unblocking the WS-12 chain through 0084 and then the four G2 spikes 0016/0017/0018/0021, then the rest of G2 through G7 in DAG order per the mandate. The component-1 migration escalation (reserved to the Product Owner) does not block this.",
+  "exact_next_action": "Push branch governed/ocor-dev-0079-typed-service-health-checks, open the PR, poll CI to green (Monitor armed on gh pr checks), merge only on green, verify post-merge SHA, sync all three state files. Then continue backlog execution via ./.venv/bin/python3 scripts/ocor_autonomous_delivery.py --next: OCOR-DEV-0080 (Implement deterministic service initialization) is next, depending only on OCOR-DEV-0079. The real 11-service Docker stack this iteration bootstrapped can be reused directly for 0080 if still running; otherwise repeat the same bootstrap (session-local secrets, SPIRE two-phase join-token flow). The component-1 migration escalation (reserved to the Product Owner) does not block this.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"

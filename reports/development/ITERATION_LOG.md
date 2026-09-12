@@ -837,3 +837,68 @@
   partire da `OCOR-DEV-0079`, sbloccando la catena WS-12 fino a `0084` e
   poi gli spike G2 `0016`/`0017`/`0018`/`0021`, poi il resto di G2–G7
   nell'ordine del DAG.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0079 (typed service health checks, reale)
+
+- PR #70 mergiata (chore(state): close Phase 3 tracking): tutti e 13 i
+  check verdi, merge `1dc3a0824b08b446ffb07598dded9f526b02d008`, verifica
+  post-merge con `git fetch origin main` conferma
+  `origin/main == 1dc3a08`.
+- `scripts/ocor_autonomous_delivery.py --status`/`--next` confermano
+  `OCOR-DEV-0079` come unico task dependency-ready (28 `ACCEPTED`,
+  56 `PENDING`).
+- **Scoperta**: Docker è realmente disponibile in questo sandbox (porte dei
+  10 servizi tutte libere, nessun conflitto con i container preesistenti
+  non-ocor-bootstrap `eci-dev-control-plane`/`open-webui`, mai toccati).
+  Bootstrap completo dello stack reale da zero: 9 servizi
+  (TerminusDB/TypeDB/Fuseki/OPA/Keycloak/OpenBao/PostgreSQL/Kafka/Qdrant)
+  avviati direttamente con segreti generati solo per questa sessione (mai
+  committati); SPIRE con il flusso a due fasi (server su, join token reale
+  generato via `docker exec spire-server ... token generate`, poi agent su
+  con attestazione riuscita) usando una CA auto-firmata usa-e-getta appena
+  generata per `OCOR_SPIRE_BOOTSTRAP_DIR` — sequenza non documentata prima
+  passo-passo altrove nel repo. Verificati i 4 moduli `qualify.py`/
+  `qualify_security_services.py` già esistenti (typedb, openbao, spire,
+  policy-identity) contro lo stack appena avviato: tutti `PASS` reali,
+  prima di scrivere qualunque codice nuovo.
+- Estesa `scripts/verify_external_services.py` con stato tipizzato
+  (`ServiceStatus`: `READY`/`DEGRADED`/`UNREACHABLE`/`NOT_PROVISIONED`,
+  `ServiceHealth` dataclass) al posto del precedente `READY`/`NOT_READY`
+  non tipizzato che confondeva "controllato e rotto" con "mai
+  provisionato". I 4 servizi già coperti sono guidati come sottoprocessi
+  dei moduli esistenti; aggiunti 5 controlli tipizzati inline per i
+  servizi senza modulo dedicato (TerminusDB, Fuseki, PostgreSQL, Kafka,
+  Qdrant): validazione lock, ispezione Docker reale, prova di protocollo
+  positiva e — sotto `--execute` — negativa reale (credenziale errata su
+  TerminusDB/PostgreSQL, dataset Fuseki assente, topic Kafka assente,
+  collezione Qdrant assente: tutte verificate `FAIL_CLOSED`).
+  Retrocompatibilità preservata (`--manifest-only` e la scansione
+  porta/container precedente invariate).
+- **Fault injection reale**: `docker pause`/`unpause` su TerminusDB e
+  Kafka — rilevati `DEGRADED` durante la pausa, tornati `READY` entro la
+  finestra limitata dopo l'unpause; stack completo confermato integro con
+  `docker compose ps` al termine.
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0079.py` (17 test
+  unit/negative/contract sulla logica tipizzata pura, nessuna dipendenza
+  live, eseguiti sempre in CI).
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (45 file, 1 fix
+  `no-any-return`), `validate_rccad.py` PASS, `validate_language_policy.py`
+  PASS, pytest completo `2 failed, 549 passed, 5 skipped, 10 errors`
+  (stessi gap sandbox noti, +17 rispetto alla fase precedente = i nuovi
+  test di questa iterazione).
+- Evidenza sigillata contro lo stack live reale:
+  `reports/evidence/G2/OCOR-DEV-0079.json` +
+  `reports/evidence/G2/OCOR-DEV-0079.log`, aggiunta a
+  `reports/evidence/G2/MANIFEST.json` (diff puramente additivo, nessuna
+  riformattazione). `scripts/validate_runtime_evidence.py --task
+  OCOR-DEV-0079 --non-skipped` PASS.
+- Rischio residuo dichiarato: i 5 test PostgreSQL live restano
+  `NOT_EXECUTED` localmente perché `ocor-runtime/.venv` non ha `psycopg`
+  installato — non più per assenza di un vero PostgreSQL (che ora è
+  realmente in esecuzione e raggiungibile, verificato direttamente), ma
+  per un gap del venv locale, fuori scope per questo task e segnalato come
+  opportunità futura distinta.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: `OCOR-DEV-0080` ("Implement deterministic service
+  initialization"), che dipende solo da `OCOR-DEV-0079`.
