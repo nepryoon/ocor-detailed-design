@@ -62,7 +62,7 @@ class RccadAdoptionTests(unittest.TestCase):
         self.assertEqual({f"AFF-{number:03d}": "PASS_STATIC_PRECHECK" for number in range(1, 11)}, payload["fitness_results"])
 
     def test_validator_fails_closed_on_missing_required_artifact(self) -> None:
-        with tempfile.TemporaryDirectory() as temporary:
+        with tempfile.TemporaryDirectory() as _:
             result = subprocess.run(
                 [
                     "python3",

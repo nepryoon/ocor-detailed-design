@@ -16,7 +16,16 @@ Dipendenze: jsonschema, PyYAML, openapi-spec-validator, rdflib, grpcio-tools.
 L'ambiente governato è definito da ocor-runtime/uv.lock.
 """
 from __future__ import annotations
-import argparse, collections, hashlib, json, os, re, subprocess, sys, tempfile
+import argparse
+import collections
+import hashlib
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+from typing import Any
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_ADD = os.path.join(ROOT, "inputs", "normative", "OCOR_Architectural_Design_Document_v1.1.md")
@@ -27,10 +36,10 @@ CORE_TOTAL = 693
 OPENAPI_VALIDATOR_VERSION = "0.9.0"
 OPENAPI_VALIDATOR_WHEEL_SHA256 = "222fecffc7714f6d0a6ad62c0e4b66cc2b7dbfafb7b93acfc6c308abbdb51af8"
 
-results: list[dict] = []
+results: list[dict[str, Any]] = []
 
 
-def record(check: str, status: str, detail: str, data=None) -> None:
+def record(check: str, status: str, detail: str, data: Any = None) -> None:
     results.append({"check": check, "status": status, "detail": detail, "data": data})
     icon = {"PASS": "PASS", "FAIL": "FAIL", "NOT_EXECUTED": "SKIP", "INFO": "INFO"}[status]
     print(f"[{icon}] {check}\n       {detail}")
@@ -38,10 +47,11 @@ def record(check: str, status: str, detail: str, data=None) -> None:
 
 # ───────────────────────── estrazione blocchi ─────────────────────────
 
-def fenced_blocks(text: str):
+def fenced_blocks(text: str) -> list[tuple[str, int, str]]:
     """Restituisce (lang, riga_iniziale_1based, corpo) per ogni blocco recintato."""
     lines = text.split("\n")
-    out, i = [], 0
+    out: list[tuple[str, int, str]] = []
+    i = 0
     while i < len(lines):
         m = re.match(r"^(~~~|```)(\w*)\s*$", lines[i])
         if m:
@@ -90,14 +100,15 @@ def check_digests(add_path: str) -> None:
 
 # ───────────────────────── 2. schemi formali ─────────────────────────
 
-def check_schemas(text: str):
+def check_schemas(text: str) -> dict[str, Any]:
     try:
         from jsonschema.validators import validator_for
         from jsonschema import Draft202012Validator  # noqa: F401
     except ImportError:
         record("JSON Schema", "NOT_EXECUTED", "jsonschema non installato — pip install jsonschema")
         return {}
-    schemas, failures = {}, []
+    schemas: dict[str, Any] = {}
+    failures: list[str] = []
     for lang, ln, body in fenced_blocks(text):
         if lang != "json":
             continue
@@ -256,16 +267,16 @@ def check_turtle(text: str) -> None:
 
 # ───────── 3. il controllo che ha catturato RV-01 ─────────
 
-def check_unsatisfiable_branches(schemas: dict) -> None:
+def check_unsatisfiable_branches(schemas: dict[str, Any]) -> None:
     """
     Cerca i campi richiesti da un ramo condizionale ma non dichiarati fra le
     properties di uno schema con additionalProperties: false.
     Un campo così rende il ramo INSODDISFACIBILE: nessuna istanza può validare.
     È la classe del difetto RV-01 dichiarato in ADD §8.0.
     """
-    findings = []
+    findings: list[tuple[str, str]] = []
 
-    def scan(node, path, closed_props):
+    def scan(node: Any, path: str, closed_props: set[str] | None) -> None:
         if not isinstance(node, dict):
             return
         if node.get("additionalProperties") is False and "properties" in node:
@@ -306,9 +317,9 @@ def check_unsatisfiable_branches(schemas: dict) -> None:
                "nessun campo richiesto da un condizionale risulta non dichiarato")
 
 
-def count_conditional_branches(schemas: dict) -> None:
+def count_conditional_branches(schemas: dict[str, Any]) -> None:
     """Conta i rami condizionali per schema: il revisore DEVE coprirli con casi positivi."""
-    rows = []
+    rows: list[tuple[str, int]] = []
     for sid, doc in schemas.items():
         n = len(json.dumps(doc).split('"if"')) - 1
         rows.append((sid, n))
@@ -321,7 +332,7 @@ def count_conditional_branches(schemas: dict) -> None:
 
 def check_fsm(text: str) -> None:
     lines = text.split("\n")
-    idx = [i for i, l in enumerate(lines) if "stateDiagram-v2" in l]
+    idx = [i for i, line in enumerate(lines) if "stateDiagram-v2" in line]
     if not idx:
         record("FSM", "NOT_EXECUTED", "diagramma di stato non trovato")
         return
@@ -333,7 +344,7 @@ def check_fsm(text: str) -> None:
     edges = re.findall(r"([A-Z_\[\]\*]+)\s*-->\s*([A-Z_\[\]\*]+)", sd)
     dia = {s for e in edges for s in e} - {"[*]"}
 
-    ti = [i for i, l in enumerate(lines) if l.startswith("| `ACT-T01`")]
+    ti = [i for i, line in enumerate(lines) if line.startswith("| `ACT-T01`")]
     if not ti:
         record("FSM — bijezione", "NOT_EXECUTED", "tabella delle transizioni non trovata")
         return
@@ -353,8 +364,11 @@ def check_fsm(text: str) -> None:
     else:
         record("FSM — bijezione diagramma/tabella", "PASS", f"{len(dia & tst)} stati in corrispondenza")
 
-    nums = sorted({int(re.match(r"\d+", x).group())
-                   for x in set(re.findall(r"ACT-T(\d+[a-c]?)", text))})
+    nums = sorted({
+        int(match.group())
+        for x in set(re.findall(r"ACT-T(\d+[a-c]?)", text))
+        if (match := re.match(r"\d+", x)) is not None
+    })
     if nums and nums == list(range(1, max(nums) + 1)):
         record("FSM — famiglia ACT-T", "PASS", f"ACT-T01–T{max(nums):02d} contigui, più le varianti a/b/c")
     else:
@@ -381,8 +395,8 @@ RANGE = re.compile(r"\b(DEC|BR|FR|NFR|ARC|CAP|ELM|RSK)-(\d{1,4})\s*[–—-]\s*"
 SINGLE = re.compile(r"\b(DEC|BR|FR|NFR|ARC|CAP|ELM|RSK)-(\d{1,4})\b")
 
 
-def expand(text: str):
-    f = collections.defaultdict(set)
+def expand(text: str) -> dict[str, set[int]]:
+    f: collections.defaultdict[str, set[int]] = collections.defaultdict(set)
     for m in RANGE.finditer(text):
         p, a, b = m.group(1), int(m.group(2)), int(m.group(3))
         if b > a and b - a <= 60:
@@ -394,7 +408,7 @@ def expand(text: str):
 
 def check_traceability(text: str) -> None:
     lines = text.split("\n")
-    hdr = [i for i, l in enumerate(lines) if l.startswith("| Subsystem ADD |")]
+    hdr = [i for i, line in enumerate(lines) if line.startswith("| Subsystem ADD |")]
     if not hdr:
         record("Tracciabilità §7", "NOT_EXECUTED", "matrice §7 non trovata")
         return
@@ -435,9 +449,9 @@ def check_evidence_fence(text: str) -> None:
     record("Evidence fence", "FAIL" if claims else "PASS",
            f"'E1=0' ricorre {e1} volte; claim probatori non supportati: {claims or 'nessuno'}")
     for tok in ("DEC-197",):
-        occ = [l for l in text.split("\n") if tok in l]
-        assigned = [l for l in occ if "non assegna" not in l and "Nessun identificativo" not in l
-                    and "_Draft_" not in l]
+        occ = [line for line in text.split("\n") if tok in line]
+        assigned = [line for line in occ if "non assegna" not in line and "Nessun identificativo" not in line
+                    and "_Draft_" not in line]
         record(f"Nessun {tok} assegnato", "FAIL" if assigned else "PASS",
                f"{len(occ)} occorrenze, tutte in forma negativa o come nome di file"
                if not assigned else f"assegnazione sospetta: {assigned[:1]}")

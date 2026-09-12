@@ -141,7 +141,7 @@ class MarkingSchemeDefinition:
             if isinstance(relation, Mapping):
                 relations.append((str(relation["lower"]), str(relation["upper"])))
             else:
-                relations.append(tuple(relation))  # type: ignore[arg-type]
+                relations.append(tuple(relation))
         return cls(
             str(scheme_id),
             labels=tuple(definition["labels"]),

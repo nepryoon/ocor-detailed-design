@@ -325,8 +325,8 @@ def validate(args: argparse.Namespace) -> dict[str, Any]:
             if not all(task.get(field) for field in ("id", "requirement_ids", "validation_commands", "acceptance_criteria", "negative_acceptance_criteria", "evidence_outputs")):
                 fail("AFF-010", "backlog task lacks requirement/test/evidence traceability", str(task.get("id", "UNKNOWN")))
         trace = load_object(trace_path)
-        identifiers = [row.get("requirement_id") for row in trace.get("rows", [])]
-        if len(identifiers) != 285 or len(set(identifiers)) != 285:
+        requirement_identifiers = [row.get("requirement_id") for row in trace.get("rows", [])]
+        if len(requirement_identifiers) != 285 or len(set(requirement_identifiers)) != 285:
             fail("AFF-010", "authoritative requirement traceability is not a 285-row bijection", str(trace_path.relative_to(root)))
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         fail("AFF-010", str(exc), str(backlog_path.relative_to(root)))

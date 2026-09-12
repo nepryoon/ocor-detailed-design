@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import replace
-
 import pytest
 
 from ocor_runtime.c3_store import AtomicOutboxStore, CrashWindow
@@ -69,7 +67,8 @@ def test_ba01_ratified_postgresql_fallback_is_selectable_and_has_reconciler():
     class NonAtomicBackend:
         supports_atomic_multi_document_writes = False
 
-    factory = lambda: None  # connection is acquired lazily by the scaffold
+    def factory() -> None:
+        return None  # connection is acquired lazily by the scaffold
     selected = select_atomic_backend(
         NonAtomicBackend(), postgres_connection_factory=factory
     )

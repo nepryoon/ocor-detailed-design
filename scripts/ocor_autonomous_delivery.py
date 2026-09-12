@@ -24,7 +24,7 @@ from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import IO, Any
 
 TASK_ID = re.compile(r"^OCOR-DEV-[0-9]{4}$")
 TERMINAL_SUCCESS = {"ACCEPTED"}
@@ -96,7 +96,7 @@ def atomic_json(path: Path, value: dict[str, Any]) -> None:
 
 
 def evidence_manifest_path(root: Path, task: dict[str, Any]) -> Path:
-    return root / "reports/evidence" / task["delivery_gate"] / "MANIFEST.json"
+    return root / "reports/evidence" / str(task["delivery_gate"]) / "MANIFEST.json"
 
 
 def path_overlap(left: str, right: str) -> bool:
@@ -346,7 +346,8 @@ class Plan:
         return errors
 
     def context_for(self, task_id: str) -> dict[str, Any]:
-        for item in self.context.get("tasks", []):
+        tasks: list[dict[str, Any]] = self.context.get("tasks", [])
+        for item in tasks:
             if item.get("task_id") == task_id:
                 return item
         raise DeliveryError(f"no context manifest entry for {task_id}")
@@ -578,10 +579,10 @@ def validation_arguments(command: str) -> list[str]:
 
 
 def prepare_worktree(plan: Plan, task: dict[str, Any]) -> Path:
-    task_id = task["id"]
+    task_id: str = task["id"]
     slug = re.sub(r"[^a-z0-9]+", "-", task["title"].lower()).strip("-")[:48]
     branch = f"{plan.config['task_branch_prefix']}{task_id}-{slug}"
-    target = plan.root / plan.config["worktree_path"] / task_id
+    target = plan.root / str(plan.config["worktree_path"]) / task_id
     if target.exists():
         if git_output(target, "status", "--porcelain"):
             raise DeliveryError(f"existing task worktree is dirty: {target}")
@@ -700,7 +701,7 @@ def classify_failure(stderr: str) -> str:
     return "BLOCKED_INFRASTRUCTURE" if any(item in lowered for item in infrastructure) else "FAILED_IMPLEMENTATION"
 
 
-def run_validation_commands(worktree: Path, task: dict[str, Any], log) -> list[dict[str, Any]]:
+def run_validation_commands(worktree: Path, task: dict[str, Any], log: IO[str]) -> list[dict[str, Any]]:
     results: list[dict[str, Any]] = []
     for command in task.get("validation_commands", []):
         arguments = validation_arguments(command)
@@ -997,7 +998,7 @@ def remote_delivery(plan: Plan, worktree: Path, task: dict[str, Any], args: Any)
     raise DeliveryError("merge completion was not verified")
 
 
-def execute_task(plan: Plan, state: dict[str, Any], task: dict[str, Any], args) -> None:
+def execute_task(plan: Plan, state: dict[str, Any], task: dict[str, Any], args: Any) -> None:
     task_id = task["id"]
     if state.get("emergency_stop"):
         raise DeliveryError("emergency stop is active")

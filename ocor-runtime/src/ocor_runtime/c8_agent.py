@@ -289,7 +289,7 @@ class _ExpressionEvaluator:
         if isinstance(node, ast.Dict):
             if any(key is None for key in node.keys):
                 raise SandboxViolation("dictionary unpacking is forbidden")
-            keys = [self.evaluate(key) for key in node.keys]
+            keys = [self.evaluate(key) for key in node.keys if key is not None]
             if not all(isinstance(key, str) for key in keys):
                 raise SandboxViolation("sandbox dictionary keys must be strings")
             if len(set(keys)) != len(keys):
@@ -538,7 +538,7 @@ class AgentKernel:
                 )
             model_result = model(prompt, max_output_tokens=max_output_tokens)
             if not isinstance(model_result, ModelResult):
-                model_result = ModelResult(model_result)  # type: ignore[arg-type]
+                model_result = ModelResult(model_result)
             response = self._coerce_response(model_result.response)
             rendered = canonicalize_json(
                 {

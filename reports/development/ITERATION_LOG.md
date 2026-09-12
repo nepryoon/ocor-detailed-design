@@ -259,3 +259,90 @@
   `scripts/`, configurazione `ruff` per l'intero repository, entrambi pinnati
   alla patch, cablati come job CI bloccanti. Task del backlog ordinario
   indipendente dal mandato, sempre dependency-ready: `OCOR-DEV-0079`.
+
+## 2026-09-12 — Fase 2.1: gate bloccante mypy strict + ruff repo-wide
+
+- Nuovo `pyproject.toml` alla radice del repository con `[tool.mypy]`
+  (`strict = true`, `files = ["ocor-runtime/src", "scripts"]`) e `[tool.ruff]`
+  (`extend-exclude` per i cinque file frozen/content-addressed sotto). `mypy`
+  pinnato alla patch (`mypy==2.3.1`) in un nuovo gruppo `lint` di
+  `ocor-runtime/pyproject.toml`, insieme a `types-jsonschema==4.26.0.20260518`
+  e `types-PyYAML==6.0.12.20260906`: tutte e tre le versioni verificate reali
+  sul registry PyPI ufficiale prima del pin, non assunte. `ocor-runtime/uv.lock`
+  rigenerato con `uv lock`.
+- Prova iniziale `mypy --strict ocor-runtime/src scripts`: 43 errori in 10 file,
+  ridotti a 34 dopo l'installazione degli stub mancanti. Corretti con
+  annotazioni di tipo precise, cast puntuali o rinomina di variabili in 9 file
+  (`ocor_runtime/c3_store.py`, `c4_marking.py`, `c8_agent.py`,
+  `scripts/verify.py`, `scripts/ocor_autonomous_delivery.py`,
+  `scripts/validate_language_policy.py`, `scripts/validate_rccad.py`,
+  `ocor-runtime/tests/backend_assumptions/test_ba01_atomic_outbox.py`,
+  `ocor-runtime/tests/schemas/test_schema_integrity.py`); nessun comportamento
+  a runtime modificato. Due commenti `# type: ignore` risultati non più
+  necessari (`c4_marking.py`, `c8_agent.py`) sono stati rimossi solo dopo aver
+  verificato che il comportamento sottostante restava invariato.
+  `grpc_tools`/`grpcio-tools` non pubblica stub né `py.typed`: unica eccezione
+  concessa, un override puntuale per quel solo modulo di terze parti, non un
+  ignore generalizzato del codice proprio.
+- Prova iniziale `ruff check --isolated .` (regola di default E4/E7/E9/F, come
+  già in uso): 125 errori. Corretti 11 in file attivi non sigillati (import
+  inutilizzati, una `lambda` sostituita con `def`, `E401`/`E741` in
+  `scripts/verify.py`, una variabile inutilizzata in
+  `reports/tests/test_rccad_methodology.py`).
+- **Audit dell'evidenza sigillata prima di ogni modifica**: analizzati
+  programmaticamente tutti i campi `inputs`/`artifact_hashes` di
+  `reports/evidence/**/*.json` e `reports/development/*.json` per ogni file
+  `.py` nello scope del nuovo gate. Trovate e **annullate prima del commit**
+  tre modifiche che avrebbero invalidato evidenza già accettata:
+  - `scripts/preflight_environment.py` è input sigillato di `OCOR-DEV-0072`
+    (`reports/evidence/G2/OCOR-DEV-0072.json`) e dell'evidenza ambientale
+    `DEC-211` (`reports/development/environment-evidence-dec-211.json`).
+  - `ocor-runtime/tests/tasks/test_ocor_dev_0004.py` e `test_ocor_dev_0015.py`
+    sono input sigillati rispettivamente di `OCOR-DEV-0004`
+    (`reports/evidence/G0/OCOR-DEV-0004.json`) e `OCOR-DEV-0015`
+    (`reports/evidence/G2/OCOR-DEV-0015.json`).
+  Tutti e tre sono stati esclusi dal gate nuovo con motivazione puntuale in
+  linea nella configurazione, invece di essere modificati.
+- **Scoperta e escalation** (non bloccante per questa fase): rieseguire
+  `scripts/build_ocor_development_plan.py` per far assestare il proprio
+  self-hash in `reports/planning/OCOR_PLAN_RUN_STATE.json` ha **cancellato
+  silenziosamente `OCOR-DEV-0070`–`0084`** dal backlog rigenerato, perché la
+  lista `TASK_SPECS` dello script non è mai stata aggiornata quando quei 15
+  task sono stati aggiunti al backlog reale. Nessuno script referenzia
+  `OCOR-DEV-0070` o superiore, confermando che non esiste un secondo
+  generatore che li copra. La rigenerazione è stata scartata (`git checkout
+  --`) prima di qualunque commit; il file è escluso anche dal nuovo gate
+  mypy (già pulito per `ruff`). Escalation registrata in
+  `reports/evidence/local-gates/phase2-1-mypy-ruff-gates-20260912.json`
+  (`PHASE2-4-BACKLOG-GENERATOR-DRIFT`): va risolta prima che la Fase 2.4
+  rigeneri il DAG, non prima.
+- Cinque file esclusi dal nuovo gate `ruff` con motivazione in linea nel
+  `pyproject.toml`: i tre artefatti frozen della review ADD v1.1/v1.2
+  (`test_v12_candidate.py` e `test_v12_semantics.py`, content-addressed in
+  `reports/OCOR_ADD_v1.2_SHA256SUMS`; `test_schema_conformance.py`, sibling
+  v1.1 dello stesso corpus storico) e i due file di evidenza sigillata sopra
+  (`test_ocor_dev_0004.py`, `test_ocor_dev_0015.py`).
+  `scripts/preflight_environment.py` e `scripts/build_ocor_development_plan.py`
+  erano già puliti per `ruff`, quindi esclusi solo dal gate `mypy`.
+  Nessuna delle esclusioni promuove evidenza o requisiti.
+- Nuovo job bloccante `type-and-lint-gate` in
+  `.github/workflows/ocor-tooling-bootstrap.yml`: stesso pattern di checkout
+  exact-head, Python 3.12.11 + uv 0.12.5 pinnati, `uv sync --extra test --extra
+  lint`, poi `ocor-runtime/.venv/bin/python -m mypy` e `ruff check .`.
+- Gate locali: `sha256sum -c` `PASS` 8/8; `ocor-runtime/.venv/bin/python -m
+  mypy` `PASS` 44/44 file; `ruff check .` (0.13.1 pinnato) `PASS`;
+  `validate_rccad.py` `PASS_LOCAL_PRECHECK` 0 finding; `validate_ocor_change_scope.py`
+  `PASS` 14 percorsi; `validate_ocor_development_plan.py --authorized-extension`
+  `PASS` 37/2/0 dopo self-hash settle; `validate_language_policy.py` `PASS`;
+  regressione pytest completa su `ocor-runtime/tests/` (stessa invocazione
+  della CI) `498 passed, 5 skipped, 10 errors` — gli errori sono lo stesso gap
+  pre-esistente `OCOR_LIVE_POSTGRES_DSN` di `test_ocor_dev_0015.py` osservato
+  in ogni iterazione precedente, non una regressione; `reports/verify_report.json`
+  bit-identico alla baseline committata dopo un run con l'ambiente reale
+  completo.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti globali `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC` e `Production` `NO-GO`. Nessuna
+  evidenza sigillata invalidata; nessun requisito promosso.
+- Prossima azione: aprire la PR, attendere CI verde sull'HEAD esatto (in
+  particolare il nuovo job `type-and-lint-gate`), merge, verifica SHA
+  post-merge, poi Fase 2.2 del mandato — pin dell'interprete alla patch.
