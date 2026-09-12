@@ -188,12 +188,12 @@ TASK_SPECS = [
     (13, "Define C3 commit, revision, idempotency and outbox ports", "WS-04", "G1", [8, 9, 10], "ocor-runtime/src/ocor_runtime/c3/ports.py", "Commit receipts bind revision, state, idempotency, evidence, GCS and outbox event.", "A receipt missing any binding or reusing a key with different content is rejected.", 3),
     (14, "Define security-control ports and fail-closed policy contract", "WS-11", "G1", [5, 8, 9, 10], "ocor-runtime/src/ocor_runtime/security/ports.py", "Identity, policy, workload identity, secrets and stop epoch expose typed availability/failure semantics.", "Unavailable control plane cannot degrade to permit or anonymous identity.", 4),
     (15, "SPIKE C3 revision-state-idempotency-outbox atomicity", "WS-04", "G2", [13], "spikes/c3_atomicity/", "Crash-window matrix proves all-or-none durable visibility and identical retry receipts.", "Any partial state/outbox/idempotency visibility falsifies the hypothesis.", 4),
-    (16, "SPIKE selected C3 backend behaviour", "WS-04", "G2", [6, 13, 15], "spikes/c3_backend/", "Selected backend meets locking, isolation, failure and reconciliation oracles under real concurrency.", "Lost update, phantom receipt or unreconciled commit triggers governed backend decision.", 5),
-    (17, "SPIKE TypeDB exact-at-commit semantics", "WS-05", "G2", [6, 12, 13], "spikes/typedb_exact_commit/", "Queries at required commit return exact projection or PROJECTION_NOT_READY with observable watermark.", "Returning older facts as exact-at-commit falsifies the adapter approach.", 5),
-    (18, "SPIKE Jena marking-safe projection", "WS-05", "G2", [6, 8, 14], "spikes/jena_marking/", "RDF/JSON-LD/SHACL projection preserves marking joins and filters existence/count paths.", "Any unauthorized triple, count or error-shape leak fails the spike.", 5),
+    (16, "SPIKE selected C3 backend behaviour", "WS-04", "G2", [6, 13, 15, 84], "spikes/c3_backend/", "Selected backend meets locking, isolation, failure and reconciliation oracles under real concurrency.", "Lost update, phantom receipt or unreconciled commit triggers governed backend decision.", 5),
+    (17, "SPIKE TypeDB exact-at-commit semantics", "WS-05", "G2", [6, 12, 13, 84], "spikes/typedb_exact_commit/", "Queries at required commit return exact projection or PROJECTION_NOT_READY with observable watermark.", "Returning older facts as exact-at-commit falsifies the adapter approach.", 5),
+    (18, "SPIKE Jena marking-safe projection", "WS-05", "G2", [6, 8, 14, 84], "spikes/jena_marking/", "RDF/JSON-LD/SHACL projection preserves marking joins and filters existence/count paths.", "Any unauthorized triple, count or error-shape leak fails the spike.", 5),
     (19, "SPIKE Kafka ordering replay and deduplication", "WS-06", "G2", [6, 10, 13], "spikes/kafka_delivery/", "Real Kafka preserves aggregate order, deterministic replay and dedup under broker/consumer faults.", "Out-of-order externally visible effect or unrecoverable poison event fails.", 5),
     (20, "SPIKE executable fidelity of 44 C6 transitions", "WS-07", "G2", [9, 13, 14], "spikes/c6_fsm_fidelity/", "A generated transition table matches all 44 LLD IDs, sources, guards, effects and destinations.", "Missing/extra transition or altered durable effect fails equality.", 5),
-    (21, "SPIKE identity-policy latency and failure semantics", "WS-11", "G2", [6, 14], "spikes/control_plane_latency/", "OPA/Keycloak/SPIFFE/OpenBao timeouts remain bounded and deny with correlated audit evidence.", "Timeout, stale policy or identity outage resulting in permit fails.", 4),
+    (21, "SPIKE identity-policy latency and failure semantics", "WS-11", "G2", [6, 14, 84], "spikes/control_plane_latency/", "OPA/Keycloak/SPIFFE/OpenBao timeouts remain bounded and deny with correlated audit evidence.", "Timeout, stale policy or identity outage resulting in permit fails.", 4),
     (22, "SPIKE causal reproducibility", "WS-08", "G2", [7, 9, 13], "spikes/causal_reproducibility/", "Pinned model/data/intervention seeds reproduce sealed causal results and identify-or-abstain outcomes.", "Same inputs yielding an unexplained digest change fails.", 5),
     (23, "SPIKE vector-index partition isolation", "WS-10", "G2", [6, 8, 14], "spikes/vector_partition/", "Authorized partitions return stable ranked results without cross-scope candidates or metadata leakage.", "Injected foreign-scope vectors influence result, rank, count or timing envelope and fail.", 5),
     (24, "SPIKE cross-compartment non-interference", "WS-10", "G2", [18, 21, 23], "spikes/non_interference/", "Paired fixtures are observationally equivalent across content, existence, rank, count, cache and bounded timing.", "Any distinguishable unauthorized compartment signal fails.", 6),
@@ -242,6 +242,32 @@ TASK_SPECS = [
     (67, "Close 285-requirement runtime traceability ledger", "WS-13", "G7", [60, 61, 62, 63, 64, 65, 66], "reports/evidence/G7/requirement_results.json", "Every approved requirement points to implementation commit and qualifying non-skipped test/evidence hashes.", "Unmapped, documentation-only, mock-only or unreproducible evidence leaves the requirement unverified.", 6),
     (68, "Perform independent adversarial conformance review", "WS-13", "G7", [67], "reports/evidence/G7/independent_review.md", "A reviewer independent of implementation paths reproduces manifests, samples negative cases and records all findings/dispositions.", "Self-authored summary without raw-evidence reproduction cannot close review.", 5),
     (69, "Assemble governed PoC-GO candidate decision package", "WS-13", "G7", [68], "reports/evidence/G7/poc_go_candidate/", "Package binds exact commit, environment, 285 results, BA/FGM/FSM/mission/recovery evidence, limitations and residual risks.", "Any mandatory red/unavailable result produces NO-GO and no approval record.", 4),
+]
+
+# WS-12 infrastructure-bootstrap-repair workstream (OCOR-DEV-0070..0084),
+# adopted under DEC-211 to close the gap the four G2 backend spikes were
+# blocked on (OCOR-DEV-0016/0017/0018/0021's WAITING_EXTERNAL_SERVICE state,
+# superseded once these are accepted). These 15 tasks share one uniform
+# template distinct from TASK_SPECS's -- see build_tasks()'s WS-12 branch --
+# so they are kept in their own compact per-task tuple list of
+# (number, title, deps, area) rather than forced into the nine-field
+# TASK_SPECS shape.
+WS12_TASK_SPECS = [
+    (70, "Verify container runtime availability", [6], "infra/services.lock.json"),
+    (71, "Restore frozen Python environment", [2], "infra/toolchain.lock.json"),
+    (72, "Install required CLI and test tools", [70, 71], "scripts/bootstrap_development_environment.py"),
+    (73, "Provision real TerminusDB", [72], "deploy/bootstrap/services/terminusdb/"),
+    (74, "Provision real TypeDB", [72], "deploy/bootstrap/services/typedb/"),
+    (75, "Provision real Apache Jena Fuseki", [72], "deploy/bootstrap/services/fuseki/"),
+    (76, "Provision OPA and Keycloak", [72], "deploy/bootstrap/services/policy-identity/"),
+    (77, "Provision SPIFFE SPIRE server and agent", [72], "deploy/bootstrap/services/spire/"),
+    (78, "Provision OpenBao", [72], "deploy/bootstrap/services/openbao/"),
+    (79, "Implement typed service health checks", [73, 74, 75, 76, 77, 78], "scripts/verify_external_services.py"),
+    (80, "Implement deterministic service initialization", [79], "deploy/bootstrap/init/"),
+    (81, "Load deterministic synthetic test fixtures", [80], "deploy/bootstrap/fixtures/"),
+    (82, "Implement service reset and teardown", [80], "scripts/reset_test_environment.py"),
+    (83, "Implement bounded fault injection", [79], "scripts/fault_inject_test_environment.py"),
+    (84, "Capture reproducible environment evidence", [81, 82, 83], "scripts/capture_environment_evidence.py"),
 ]
 
 SPIKE_DETAILS = {
@@ -484,6 +510,66 @@ def build_tasks(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         }
         tasks.append(task)
 
+    for number, title, deps, area in WS12_TASK_SPECS:
+        tasks.append({
+            "id": task_id(number),
+            "title": title,
+            "workstream": "WS-12",
+            "delivery_gate": "G2",
+            "objective": f"{title} with pinned artifacts, deterministic checks and content-addressed evidence.",
+            "rationale": "Repairs the governed infrastructure-bootstrap dependency gap without changing approved architecture.",
+            "requirement_ids": ["BR-003"],
+            "normative_references": list(WORKSTREAM_REFERENCES["WS-12"]),
+            "affected_components": [],
+            "expected_file_areas": [area, f"reports/evidence/G2/{task_id(number)}.json"],
+            "prohibited_file_areas": [
+                "inputs/", "ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVED_BASELINE.md",
+                "docs/OCOR_LLD_v1.1.md",
+            ],
+            "hard_dependencies": [task_id(d) for d in deps],
+            "soft_dependencies": [],
+            "parallel_group": f"G2-WS-12-{number:04d}",
+            "integration_point": "DEC-211 infrastructure bootstrap workstream",
+            "preconditions": ["All hard dependencies are merged and green", f"Approved ADD/LLD hashes match {BASE_COMMIT}"],
+            "bounded_agent_context_pack": ["infra/services.lock.json", "docs/development_methodology/OCOR_INFRASTRUCTURE_BOOTSTRAP_STRATEGY.md", area],
+            "assumptions": ["Candidate implementations require spike evidence before hardening", "Mocks may support unit tests but never qualifying runtime evidence"],
+            "implementation_procedure": [
+                "Verify context-manifest hashes and task dependencies.",
+                "Add the smallest contract-compliant implementation behind an explicit port.",
+                "Add positive, negative and fault tests before broad integration.",
+                "Emit raw results and a content-addressed handoff; stop after two failed repair cycles.",
+            ],
+            "migration_and_compatibility_procedure": "Preserve existing public imports through versioned adapters; use expand-migrate-contract for persisted data and remove shims only after consumer inventory is empty.",
+            "required_test_levels": ["unit", "contract", "negative", "integration", "fault-injection"],
+            "validation_commands": [
+                "python3 scripts/verify_external_services.py --manifest-only",
+                f"python3 scripts/validate_runtime_evidence.py --task {task_id(number)} --non-skipped --manifest reports/evidence/G2/MANIFEST.json",
+            ],
+            "acceptance_criteria": [
+                f"{title} completes against the exact lock manifest without a skipped qualifying control.",
+                f"Evidence manifest contains task_id={task_id(number)}, commit, commands, environment and raw-output hashes.",
+            ],
+            "negative_acceptance_criteria": ["A mutable, unhealthy, substituted or externally exposed service fails readiness.", "A SKIPPED, UNAVAILABLE, mock-only or NOT_EXECUTED qualifying case is not accepted."],
+            "evidence_outputs": [f"reports/evidence/G2/{task_id(number)}.json", f"reports/evidence/G2/{task_id(number)}.log"],
+            "rollback_procedure": "Stop dispatch, revert the isolated task commit through a new revert commit, execute versioned down/forward recovery in a disposable environment, and revalidate the prior evidence manifest.",
+            "security_considerations": "Fail closed on missing identity, Authority, purpose, marking, lease, policy, evidence or stop state; never log secrets or unauthorized content.",
+            "observability_requirements": ["correlation_id and causation_id on every boundary", "stable error code and bounded metric cardinality", "trace plus audit receipt for durable effects"],
+            "expected_duration_days": 1,
+            "ai_token_estimate": {
+                "input_context": [21000, 37000],
+                "implementation": [22500, 54000],
+                "review_and_repair": [12000, 30000],
+                "likely_retries": [1, 2],
+                "confidence_interval": "-25%/+60%; higher for real-service and fault-injection tasks",
+            },
+            "compute_estimate": {"local": "15–40 CPU-h", "external_services": "0–80 service-h depending on qualifying backend", "gpu": "0 by default; 2–20 GPU-h only for governed embedding/model fixtures"},
+            "uncertainty": "MEDIUM",
+            "confidence": 0.75,
+            "failure_and_escalation_conditions": ["Two materially different repairs fail", "Normative conflict is found", "Required real service or credential is unavailable", "A change would substitute approved architecture"],
+            "definition_of_done": ["Named acceptance and negative criteria are observed", "Required validations exit zero with no mandatory skip", "Independent review accepts hashes and trace links", "Rollback drill or mechanically reviewed rollback is recorded"],
+            "coverage": {"components": [], "fsm_transitions": [], "ba_campaigns": [], "fgm_campaigns": [], "memory_kinds": [], "memory_scopes": [], "memory_lifecycle": []},
+        })
+
     by_num = {int(task["id"][-4:]): task for task in tasks}
     component_tasks = {1: 32, 2: 34, 3: 36, 4: 39, 5: 41, 6: 44, 7: 45, 8: 47}
     for component, number in component_tasks.items():
@@ -550,6 +636,18 @@ def build_tasks(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
         target = by_num[number]
         if row["requirement_id"] not in target["requirement_ids"]:
             target["requirement_ids"].append(row["requirement_id"])
+
+    # FR-047 ("SDK e tool MCP generati") keyword-matches WS-09's "tool"
+    # branch above -- landing on task 47, the C8 agent tool-invocation
+    # sandbox -- purely because its own title contains the word "tool";
+    # the real owner is task 10, which materializes the generated SDK/MCP
+    # contracts FR-047 actually describes. Phase 2.4 corrected this in
+    # OCOR_TRACEABILITY_PLAN.csv and the committed backlog; mirrored here so
+    # a future regeneration reproduces the fix instead of reverting it.
+    if "FR-047" in by_num[47]["requirement_ids"]:
+        by_num[47]["requirement_ids"].remove("FR-047")
+    if "FR-047" not in by_num[10]["requirement_ids"]:
+        by_num[10]["requirement_ids"].append("FR-047")
 
     _order, waves, _critical, _duration = topological(tasks)
     for task in tasks:
@@ -897,7 +995,37 @@ def context_manifest(tasks: list[dict[str, Any]]) -> dict[str, Any]:
             {"path": "reports/traceability/OCOR_IRB_ADD_LLD_v1.1_Matrix.json", "sha256": sha256(ROOT / "reports/traceability/OCOR_IRB_ADD_LLD_v1.1_Matrix.json")},
         ],
         "roles": [{"role": role, "required_context": ["AGENTS.md", "task record", "normative anchors", "owned source/tests", "dependency handoffs"], "output_contract": "structured handoff plus evidence manifest", "max_context_tokens": 60000 if role in {"Delivery Coordinator", "Independent Conformance Reviewer"} else 40000} for role in roles],
-        "tasks": [{"task_id": t["id"], "role": "Governed Memory Agent" if t["workstream"] == "WS-10" else "Verification and Evidence Agent" if t["workstream"] == "WS-13" else "Component Implementation Agent", "paths": sorted({"AGENTS.md", *t["bounded_agent_context_pack"]}), "max_input_tokens": t["ai_token_estimate"]["input_context"][1], "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD", "exclusions": t["prohibited_file_areas"]} for t in tasks],
+        "tasks": [_task_context_entry(t) for t in tasks],
+    }
+
+
+def _task_context_entry(t: dict[str, Any]) -> dict[str, Any]:
+    # WS-12 ("Deployment, operations and recovery") also covers two ordinary
+    # TASK_SPECS tasks (6, 49) that use the generic formula below -- only
+    # the WS12_TASK_SPECS-generated infrastructure-bootstrap-repair tasks
+    # (OCOR-DEV-0070..0084) were adopted with a concrete "Infrastructure and
+    # Operations Agent" role, a smaller fixed token budget, and a
+    # services-lock/area/strategy-doc path order distinct from
+    # bounded_agent_context_pack's own storage order -- reproduced exactly
+    # rather than folded into the generic formula.
+    if 70 <= int(t["id"][-4:]) <= 84:
+        services_lock, strategy_doc, area = t["bounded_agent_context_pack"]
+        return {
+            "task_id": t["id"],
+            "role": "Infrastructure and Operations Agent",
+            "paths": ["AGENTS.md", services_lock, area, strategy_doc],
+            "max_input_tokens": 30000,
+            "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+            "exclusions": t["prohibited_file_areas"],
+        }
+    role = "Governed Memory Agent" if t["workstream"] == "WS-10" else "Verification and Evidence Agent" if t["workstream"] == "WS-13" else "Component Implementation Agent"
+    return {
+        "task_id": t["id"],
+        "role": role,
+        "paths": sorted({"AGENTS.md", *t["bounded_agent_context_pack"]}),
+        "max_input_tokens": t["ai_token_estimate"]["input_context"][1],
+        "source_hash_policy": "resolve at dispatch; reject drift from integration HEAD",
+        "exclusions": t["prohibited_file_areas"],
     }
 
 

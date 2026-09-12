@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "dcfca5086ac20ed1b99548c4eb02b57f92dee66c",
-  "branch": "governed/phase2-4-close-state-fr047",
+  "baseline_commit": "3caf7a68bfdee11eb1abc4dec857cf130c89f912",
+  "branch": "governed/phase2-4-backlog-generator-drift",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -88,6 +88,18 @@
     {
       "command": "gh pr merge 65 --merge",
       "result": "MERGED_dcfca5086ac20ed1b99548c4eb02b57f92dee66c_ALL_12_CHECKS_GREEN_ON_EXACT_HEAD_f4eda681"
+    },
+    {
+      "command": "git stash / restore original TASK_SPECS-only generator, re-run build_tasks() to capture RED evidence of the 15-task silent drop, then stash pop to restore the in-progress fix",
+      "result": "PASS_clean_reversible_capture; RED log sealed at reports/tests/evidence/rem_backlog_generator_drift/red.log (sha256 94c2781e8c0072dd4e7c1b84c9772aeedd7159fa78e00f521efb946bc7748841)"
+    },
+    {
+      "command": "in-memory REPL comparison of the fixed build_tasks()/dag_text()/context_manifest() against the committed docs/development_plan/{OCOR_IMPLEMENTATION_BACKLOG.json,OCOR_DEPENDENCY_DAG.mmd,OCOR_AGENT_CONTEXT_MANIFEST.json}, never written to disk until verified",
+      "result": "0_mismatches_across_all_84_tasks_and_every_field; DAG and context-manifest byte-identical"
+    },
+    {
+      "command": "same in-memory comparison extended to build_trace()/OCOR_TRACEABILITY_PLAN.csv (285 rows), to check for any additional drift before declaring the escalation resolved",
+      "result": "2_of_285_rows_would_differ_if_regenerated_BR-003_and_FR-047_both_traced_to_a_pre-existing_order-sensitive_by_ws[rid]='last task wins'_ownership_heuristic_in_build_trace()_unrelated_to_this_fix_and_deliberately_left_out_of_scope_as_a_new_separate_non-blocking_finding"
     }
   ],
   "completed_tasks": [
@@ -102,9 +114,10 @@
     "Phase 2.3 (pending PR/merge): real TypeScript SDK under ocor-runtime/sdk/typescript (package.json, tsconfig strict, errors.ts/canonical.ts hand-written kernel support, generated ocor_contracts.ts committed byte-identical to the generator's own output), tsc==7.0.2 wired into the type-and-lint-gate CI job, NFR-022 cross-SDK conformance suite (canonical byte/digest/error-model/idempotency-binding identity on shared fixtures, driving the compiled TypeScript as a subprocess the way Node.js already serves as the REM-0007 oracle). Discovered, while performing the FIRST real tsc compile of the generator's own output, that generate_contracts.py's $ref resolution has been silently broken since OCOR-DEV-0010 (missing Gateway/Memory prefix awareness, no handling for scalar/alias components) -- fixed via a proper RED/GREEN remediation (OCOR-DEV-REM-0010) that left the sealed test_ocor_dev_0010.py completely untouched and re-verified its full 15/15 suite green against the fix, and only corrects reference resolution (54-model inventory unchanged).",
     "Phase 2.3: PR #63 merged (b4510123). All 12 checks green on the first push, including the new tsc build step and both new pytest suites in type-and-lint-gate.",
     "Phase 2.4 (partial, pending PR/merge): fixed the FR-047 traceability misallocation named by the mandate. Confirmed OCOR-DEV-0047 (C8 tool boundary sandbox/kill switch) has no relation to FR-047 ('generate the Python/TypeScript SDKs and typed MCP contracts'), almost certainly a number-matching slip; reassigned to OCOR-DEV-0010, the real, already-accepted SDK-generation task. Updated both requirement_ids lists in the backlog to match. No new task added -- the fix was a pure reallocation, no dependency edges changed, no DAG regeneration needed or performed. PHASE2-4-BACKLOG-GENERATOR-DRIFT remains open for its own dedicated iteration.",
-    "Phase 2.4 (FR-047 part): PR #65 merged (dcfca508). First push failed tooling-policy on the same self-hash-settle miss as before (edited validate_ocor_development_plan.py twice, only settled after the first); fixed and green on second push, all 12 checks passed."
+    "Phase 2.4 (FR-047 part): PR #65 merged (dcfca508). First push failed tooling-policy on the same self-hash-settle miss as before (edited validate_ocor_development_plan.py twice, only settled after the first); fixed and green on second push, all 12 checks passed.",
+    "Phase 2.4 (generator-drift part, pending PR/merge): resolved PHASE2-4-BACKLOG-GENERATOR-DRIFT. Added WS12_TASK_SPECS (15 tuples) and a dedicated WS-12 generation branch to scripts/build_ocor_development_plan.py's build_tasks(); added dependency 84 to tasks 16/17/18/21 (real backlog requires it); added a post-hoc requirement_ids override reproducing PR #65's FR-047 fix so a future regeneration cannot silently revert it (root cause: requirement_owner()'s WS-09 keyword rule matches the substring 'tool' inside FR-047's own title); rewrote context_manifest() via a new _task_context_entry() helper so tasks 70-84 get the real 'Infrastructure and Operations Agent' role distinct from tasks 6/49 (which share workstream=WS-12 but use the generic formula). Verified in-memory (never written to disk pre-verification, per mandate) that the fixed generator reproduces the committed 84-task backlog/DAG/context-manifest bit-for-bit. Added a permanent regression test (reports/tests/test_backlog_generator_reality_parity.py, RED/GREEN) to prevent recurrence. Discovered build_trace()/OCOR_TRACEABILITY_PLAN.csv has its own separate, pre-existing, order-sensitive staleness (2/285 rows) -- registered as a new non-blocking finding, explicitly out of scope for this fix."
   ],
-  "current_task": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.4-CLOSE-FR047",
+  "current_task": "CC-OCOR-DELIVERY-COMPLETION__PHASE-2.4-RESOLVE-GENERATOR-DRIFT",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -116,9 +129,11 @@
     "reports/evidence/local-gates/phase2-2-interpreter-pin-20260912.json",
     "reports/evidence/local-gates/phase2-3-typescript-sdk-20260912.json",
     "reports/tests/evidence/rem_generate_contracts_refs/red.log",
-    "reports/evidence/local-gates/phase2-4-fr047-traceability-20260912.json"
+    "reports/evidence/local-gates/phase2-4-fr047-traceability-20260912.json",
+    "reports/tests/evidence/rem_backlog_generator_drift/red.log",
+    "reports/evidence/local-gates/phase2-4-backlog-generator-drift-20260912.json"
   ],
-  "exact_next_action": "Start the PHASE2-4-BACKLOG-GENERATOR-DRIFT remediation: extend scripts/build_ocor_development_plan.py with a WS-12-specific task-generation path, verify a scratch-directory regeneration reproduces the real backlog/DAG/context-manifest for tasks 70-84 exactly, then commit. Only after that resolve is confirmed should any real regeneration of the committed backlog/DAG be attempted.",
+  "exact_next_action": "Push branch governed/phase2-4-backlog-generator-drift, open the PR, poll CI to green (Monitor armed on gh pr checks), merge only on green, verify post-merge SHA, sync all three state files. This closes Phase 2.4 in full. Then start Phase 3: a reproducible content-addressed benchmark harness measuring the 4 candidate components against the already-corrected OI-008/ASM-010/NFR-080 migration thresholds in OCOR_LANGUAGE_POLICY.md \u00a73, outcome NO_MIGRATION_JUSTIFIED or a scoped migration decision. Then backlog execution via ./.venv/bin/python3 scripts/ocor_autonomous_delivery.py --next starting at OCOR-DEV-0079 (unblocks the WS-12 chain through 0084, then the four G2 spikes 0016/0017/0018/0021).",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"

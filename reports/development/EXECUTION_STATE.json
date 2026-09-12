@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/phase2-4-close-state-fr047",
-    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.4-CLOSE-FR047",
-    "decision_id": "DEC-212",
-    "phase": "PHASE_2_4_FR047_MERGED__GENERATOR_DRIFT_ESCALATION_OPEN",
+    "branch": "governed/phase2-4-backlog-generator-drift",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__PHASE-2.4-RESOLVE-GENERATOR-DRIFT",
+    "decision_id": "DEC-211",
+    "phase": "PHASE_2_4_GENERATOR_DRIFT_FIX_PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "dcfca5086ac20ed1b99548c4eb02b57f92dee66c",
+  "baseline_commit": "3caf7a68bfdee11eb1abc4dec857cf130c89f912",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -89,7 +89,7 @@
     },
     "phase_2_1_type_gate": {
       "escalations": [
-        "PHASE2-4-BACKLOG-GENERATOR-DRIFT (non-blocking, must resolve before Phase 2.4 DAG regeneration)"
+        "PHASE2-4-BACKLOG-GENERATOR-DRIFT (RESOLVED in PR #67; see phase_2_4_traceability)"
       ],
       "merge_commit": "1cfa0a787ee620e462adfd0d25378f752c74af28",
       "pr": 59,
@@ -108,18 +108,19 @@
       "status": "MERGED"
     },
     "phase_2_4_traceability": {
-      "detail": "FR-047 traceability reallocation merged. PHASE2-4-BACKLOG-GENERATOR-DRIFT escalation still open and is now the sole remaining item before Phase 2.4 can be declared fully closed.",
-      "merge_commit": "dcfca5086ac20ed1b99548c4eb02b57f92dee66c",
-      "pr": 65,
-      "status": "PARTIALLY_MERGED"
+      "branch": "governed/phase2-4-backlog-generator-drift",
+      "detail": "FR-047 traceability reallocation merged (PR #65). PHASE2-4-BACKLOG-GENERATOR-DRIFT now resolved: scripts/build_ocor_development_plan.py generates all 84 tasks (WS12_TASK_SPECS added), verified in-memory to reproduce the committed backlog/DAG/context-manifest bit-for-bit with a permanent regression test locking the invariant in. Registered a new, distinct, non-blocking finding: build_trace()/OCOR_TRACEABILITY_PLAN.csv has its own separate staleness (2/285 rows: BR-003, FR-047) from an order-sensitive requirement-ownership heuristic, tracked separately (PHASE2-4-TRACEABILITY-GENERATOR-DRIFT-BUILD-TRACE) and not required before Phase 2.4 closes.",
+      "merge_commit": null,
+      "pr": null,
+      "status": "PR_PENDING"
     },
     "phase_3_benchmark": {
       "status": "NOT_STARTED"
     }
   },
-  "next_executable_action": "Resolve escalation PHASE2-4-BACKLOG-GENERATOR-DRIFT as its own task: extend scripts/build_ocor_development_plan.py to generate the WS-12 infrastructure-bootstrap-repair workstream (OCOR-DEV-0070..0084), which uses a distinct template (objective/rationale/normative_references/validation_commands/bounded_agent_context_pack) from tasks 1-69. Verify in a scratch directory that a full regeneration reproduces the real 84-task backlog, DAG, and context manifest bit-for-bit before ever committing a regenerated artifact. Only then is Phase 2.4 fully closed; Phase 3 (benchmark harness) follows.",
+  "next_executable_action": "Push branch governed/phase2-4-backlog-generator-drift, open PR, poll CI to green, merge, verify post-merge SHA, then Phase 2.4 is fully closed. Next: Phase 3 (reproducible content-addressed benchmark harness measuring the 4 candidate components against the OI-008/ASM-010/NFR-080 migration thresholds already corrected in OCOR_LANGUAGE_POLICY.md \u00a73), then backlog execution via ./.venv/bin/python3 scripts/ocor_autonomous_delivery.py --next starting at OCOR-DEV-0079.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-12T22:45:00Z"
+  "updated_at": "2026-09-12T23:15:00Z"
 }
