@@ -713,3 +713,28 @@
   `OCOR_LANGUAGE_POLICY.md` §3), poi esecuzione backlog via
   `./.venv/bin/python3 scripts/ocor_autonomous_delivery.py --next` a partire
   da `OCOR-DEV-0079`.
+
+## 2026-09-12 — PR #67 mergiata: Fase 2.4 definitivamente chiusa
+
+- PR #67 aperta e integrata senza correzioni: tutti e 13 i check verdi al
+  primo push (commit `fbdec46`). `mergeStateStatus: CLEAN`,
+  `mergeable: MERGEABLE`. Merge: `9bd2821464339f406df26cc3b2dd8579330c80fb`.
+  Verifica post-merge: `git fetch origin main` conferma
+  `origin/main == 9bd2821` (fast-forward pulito da `3caf7a6`).
+- `EXECUTION_STATE.json`/`MODEL_HANDOFF.json` risincronizzati su branch
+  `governed/phase2-4-close-state-generator-drift`, `baseline_commit` ==
+  `9bd2821...`, `latest_ci_evidence` aggiornato ai 6 run id reali della PR
+  #67 (`34716799046/061/068/075/087/109`). `current_task` avanzato a
+  `CC-OCOR-DELIVERY-COMPLETION__PHASE-3-BENCHMARK-HARNESS`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- **Fasi 2.1–2.4 del mandato ora tutte chiuse e mergiate** (PR #54–#67).
+  Prossima azione: Fase 3 — harness di benchmark riproducibile e
+  content-addressed per i 4 componenti candidati rispetto alle soglie di
+  migrazione OI-008/ASM-010/NFR-080 già corrette in
+  `OCOR_LANGUAGE_POLICY.md` §3; esito atteso `NO_MIGRATION_JUSTIFIED` oppure
+  una decisione di migrazione scoperta al solo componente coinvolto con
+  protocollo differenziale completo prima di ogni merge. Solo dopo,
+  esecuzione backlog via
+  `./.venv/bin/python3 scripts/ocor_autonomous_delivery.py --next` a partire
+  da `OCOR-DEV-0079`.
