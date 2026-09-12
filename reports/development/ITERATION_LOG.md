@@ -902,3 +902,53 @@
   `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
 - Prossima azione: `OCOR-DEV-0080` ("Implement deterministic service
   initialization"), che dipende solo da `OCOR-DEV-0079`.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0080 (inizializzazione deterministica, reale)
+
+- PR #71 mergiata (typed service health checks): tutti e 13 i check verdi,
+  merge `751836ef2cb836ee77e7908bbdeba0dd1846678e`, verifica post-merge con
+  `git fetch origin main` conferma `origin/main == 751836e`. Lo stack Docker
+  reale a 11 servizi da `OCOR-DEV-0079` è rimasto in esecuzione e riusato
+  direttamente per questa iterazione, senza un nuovo bootstrap.
+- Implementato `deploy/bootstrap/init/initialize_services.py`: 5 passi
+  ordinati e idempotenti come da `deploy/bootstrap/init/README.md` (trust
+  SPIRE, realm Keycloak, policy OPA, path OpenBao, database grafo). Ogni
+  passo verifica prima lo stato esistente: se assente lo crea
+  (`CREATED`), se presente e conforme non tocca nulla (`ALREADY_INITIALIZED`),
+  se presente ma diverso dall'atteso fallisce chiuso (`DRIFT_DETECTED`,
+  mai sovrascrittura silenziosa). Nessun contenuto di policy di sicurezza
+  reale viene inventato: OPA riceve solo un placeholder `default allow =
+  false` (fail-closed, ambito WS-11 differito), il realm Keycloak è un
+  guscio vuoto, i database grafo sono vuoti senza schema.
+- **Verifica reale contro lo stack live**: RUN 1 (stato pulito) →
+  `CREATED` per Keycloak/OPA/OpenBao/database grafo, `ALREADY_INITIALIZED`
+  per SPIRE (passo di sola verifica, trust già stabilito a `OCOR-DEV-0079`);
+  RUN 2 (ri-esecuzione) → `ALREADY_INITIALIZED` su tutti i 5 passi, zero
+  chiamate mutanti; RUN 3 (drift reale: policy OPA mutata esternamente via
+  API) → `DRIFT_DETECTED`, script fallito chiuso (`exit=1`), nessuna
+  sovrascrittura; RUN 4 (ripristino contenuto corretto) → recupero
+  completo a `PASS`. Un vero drill di rollback eseguito, non solo
+  descritto.
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0080.py` (16 test
+  unit/negative/contract, ogni chiamata di rete/sottoprocesso sostituita
+  con un doppio deterministico, nessuna dipendenza live).
+- Corretto `scripts/validate_language_policy.py`: aggiunta
+  `deploy/bootstrap/init` alle aree autorizzate per `.py` e `.rego`
+  (mancava, bloccava il nuovo file e la policy OPA seminale).
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (45 file,
+  `deploy/bootstrap/` resta fuori scope mypy come i moduli `qualify.py`
+  esistenti), `validate_rccad.py` PASS, `validate_language_policy.py` PASS
+  dopo la correzione, pytest completo `2 failed, 565 passed, 5 skipped,
+  10 errors` (stessi gap sandbox noti, +16 rispetto alla fase precedente),
+  `validate_ocor_development_plan.py --authorized-extension` PASS dopo il
+  consueto doppio-run di assestamento self-hash.
+- Evidenza sigillata contro lo stack live reale, incluso il drill di
+  drift/rollback: `reports/evidence/G2/OCOR-DEV-0080.json` +
+  `reports/evidence/G2/OCOR-DEV-0080.log`, aggiunta a
+  `reports/evidence/G2/MANIFEST.json` (diff puramente additivo).
+  `scripts/validate_runtime_evidence.py --task OCOR-DEV-0080 --non-skipped`
+  PASS.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: `OCOR-DEV-0081` ("Load deterministic synthetic test
+  fixtures"), che dipende solo da `OCOR-DEV-0080`.

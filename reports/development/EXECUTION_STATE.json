@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-0079-typed-service-health-checks",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0079",
+    "branch": "governed/ocor-dev-0080-deterministic-service-init",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0080",
     "decision_id": "DEC-211",
-    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0079_PUSHED__AWAITING_CI",
+    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0080_PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "1dc3a0824b08b446ffb07598dded9f526b02d008",
+  "baseline_commit": "751836ef2cb836ee77e7908bbdeba0dd1846678e",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -51,19 +51,20 @@
     "OCOR-DEV-0076",
     "OCOR-DEV-0077",
     "OCOR-DEV-0078",
-    "OCOR-DEV-0079"
+    "OCOR-DEV-0079",
+    "OCOR-DEV-0080"
   ],
   "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__LANGUAGE_POLICY_ADOPTED__PHASE_2_4_CLOSED__PHASE_3_CLOSED",
   "latest_ci_evidence": {
-    "candidate_commit": "de3fb197aa6c91af7a729c2727bcce9cc686989f",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR70_MERGED_1dc3a0824b08b446ffb07598dded9f526b02d008",
+    "candidate_commit": "5104e94c0b67d15a605b23acaf68bf0ab5270e8f",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR71_MERGED_751836ef2cb836ee77e7908bbdeba0dd1846678e",
     "run_ids": [
-      34721397032,
-      34721397055,
-      34721397060,
-      34721397072,
-      34721397080,
-      34721397121
+      34723594277,
+      34723594281,
+      34723594285,
+      34723594287,
+      34723594304,
+      34723594311
     ]
   },
   "mandate_phase_status": {
@@ -124,9 +125,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/ocor-dev-0079-typed-service-health-checks, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0079 sealed with real evidence against a live 11-service Docker stack (TerminusDB/TypeDB/Fuseki/OPA/Keycloak/OpenBao/SPIRE server+agent/PostgreSQL/Kafka/Qdrant), including real fault injection and recovery. Next: OCOR-DEV-0080 (Implement deterministic service initialization), which depends only on OCOR-DEV-0079.",
+  "next_executable_action": "Push branch governed/ocor-dev-0080-deterministic-service-init, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0080 sealed with real evidence against the same live 11-service Docker stack: idempotent creation, idempotent re-run, and a real drift-detection/rollback drill (external OPA policy mutation detected and rejected, then recovered). Next: OCOR-DEV-0081 (Load deterministic synthetic test fixtures), which depends only on OCOR-DEV-0080.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-12T23:00:00Z"
+  "updated_at": "2026-09-12T23:35:00Z"
 }
