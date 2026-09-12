@@ -98,3 +98,38 @@
 - Independent verifier pass 3 `dec211_final_verify`: `GO`, zero `BLOCKER`,
   `HIGH` e `MEDIUM`; exact command/raw hash, strict operational schema, preflight,
   Fuseki ID, exact-file scope, immutable inputs e workflow exact-head verificati.
+
+## 2026-09-12 — Riconciliazione autoritativa (Fase 0, CC-LANGUAGE-POLICY-AND-GAP-CLOSURE)
+
+- Mandato esplicito del Product Owner del 2026-09-12: attiva la modalità di
+  implementazione autorizzata (`DEC-210`) e il tooling autonomo (`DEC-211`), già
+  entrambi integrati in `main`, per una nuova policy dei linguaggi e la chiusura di
+  tre lacune note. Nessuna modifica a `inputs/`; nessun nuovo `DEC-*` allocato in
+  questa iterazione, che è pura riconciliazione di stato.
+- Allineamento esatto a `origin/main` `a8f44364d74c4e5953954f8cf4997032ccc68f05`;
+  `sha256sum -c inputs/normative/SHA256SUMS` `PASS` 8/8; `uv sync --project
+  ocor-runtime --frozen --extra test` `PASS`.
+- `EXECUTION_STATE.json` e `MODEL_HANDOFF.json` dichiaravano ancora 19 task completati
+  e `DEC-211` come ultima iterazione; l'evidenza sigillata in
+  `reports/evidence/G2/MANIFEST.json` ne conta realmente 28
+  (`OCOR-DEV-0015/0019/0020/0022/0023` e `OCOR-DEV-0070`–`0078`), integrati dai merge
+  `88a525d3` (PR #42, `DEC-211`) e `PR #48`–`#53` (provisioning reale dei servizi).
+  Dettaglio completo in `reports/development/RECONCILIATION_2026-09-12_STATE.md`.
+- Stato locale del runner autoritativo ricostruito da zero (file gitignored, mai
+  committato) con `scripts/ocor_autonomous_delivery.py --accept-evidence <task>
+  --execute` per ciascuno dei 28 task sigillati: 28/28 `PASS`. Esito:
+  `dependency_ready = ["OCOR-DEV-0079"]`, `external_blockers = []`.
+- I quattro spike `OCOR-DEV-0016/0017/0018/0021` non attendono più un servizio
+  esterno: `OCOR-DEV-0073`–`0078` hanno qualificato provisioning reale per
+  TerminusDB, TypeDB, Fuseki, OPA/Keycloak, SPIFFE/SPIRE e OpenBao. Restano tuttavia
+  sequenziati dietro altri task `PENDING` per ordinaria dipendenza di backlog
+  (incluso `OCOR-DEV-0084` per `OCOR-DEV-0016`), non per blocco esterno.
+- `reports/development/TERMINAL_BLOCKED_REPORT.json` e
+  `reports/evidence/G2/blockers/MANIFEST.json` sono marcati `SUPERSEDED` con motivo
+  e commit di superamento, senza essere cancellati.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti globali `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC` e `Production` `NO-GO`. Nessun
+  requisito promosso, nessuna capability differita attivata.
+- Prossima azione: Fase 1 del mandato — allocare il prossimo `DEC-*` libero e
+  autorare `docs/development_methodology/OCOR_LANGUAGE_POLICY.md` con
+  `scripts/validate_language_policy.py` (RED poi GREEN), cablato in CI.
