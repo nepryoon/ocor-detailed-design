@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/phase2-3-close-state-update",
-    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.3-CLOSE",
+    "branch": "governed/phase2-4-fr047-traceability",
+    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-2.4-FR047-TRACEABILITY",
     "decision_id": "DEC-212",
-    "phase": "PHASE_2_3_MERGED__PHASE_2_4_NOT_STARTED",
+    "phase": "PHASE_2_4_IN_PROGRESS_PENDING_PR",
     "worktree": null
   },
-  "baseline_commit": "b4510123dee21c054876ecca97b02d33b971318a",
+  "baseline_commit": "30609bad5c7acc057549785347a68b88b3f91149",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -108,15 +108,16 @@
       "status": "MERGED"
     },
     "phase_2_4_traceability": {
-      "status": "NOT_STARTED"
+      "detail": "FR-047 misallocation corrected: OCOR_TRACEABILITY_PLAN.csv now points FR-047 at OCOR-DEV-0010 (the real SDK-generation task, already accepted and extended in Phase 2.3) instead of OCOR-DEV-0047 (an unrelated C8 tool-boundary-sandbox task). No new backlog task needed, no dependency edges changed, no DAG regeneration performed. PHASE2-4-BACKLOG-GENERATOR-DRIFT escalation still open, tracked as its own next task before any future DAG regeneration.",
+      "status": "IN_PROGRESS_PENDING_PR"
     },
     "phase_3_benchmark": {
       "status": "NOT_STARTED"
     }
   },
-  "next_executable_action": "Phase 2.4 (mandate CC-LANGUAGE-POLICY-AND-GAP-CLOSURE). FIRST resolve escalation PHASE2-4-BACKLOG-GENERATOR-DRIFT: reconcile scripts/build_ocor_development_plan.py's TASK_SPECS with OCOR-DEV-0070..0084 and verify a regeneration reproduces the real 84-task backlog without loss. THEN correct the FR-047 allocation in OCOR_TRACEABILITY_PLAN.csv (currently points to OCOR-DEV-0047 on the C8 tool boundary), add any missing backlog tasks per the schema, and regenerate the DAG. No promotion to Verified.",
+  "next_executable_action": "Merge the FR-047 traceability PR, verify post-merge SHA, update state, then resolve escalation PHASE2-4-BACKLOG-GENERATOR-DRIFT as its own task: extend scripts/build_ocor_development_plan.py's TASK_SPECS/task-generation logic to cover OCOR-DEV-0070..0084 (the WS-12 infrastructure bootstrap-repair workstream, currently only present in the committed backlog JSON, never in the generator), then verify a full regeneration reproduces the real 84-task backlog exactly before ever regenerating the DAG for real. Only after that is Phase 2.4 fully closed; Phase 3 (benchmark harness) follows.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-12T22:15:00Z"
+  "updated_at": "2026-09-12T22:35:00Z"
 }

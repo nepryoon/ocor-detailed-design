@@ -565,3 +565,64 @@
   l'allocazione di `FR-047` in `OCOR_TRACEABILITY_PLAN.csv`, aggiungere i
   task mancanti al backlog e rigenerare il DAG. Nessuna promozione a
   Verified.
+
+## 2026-09-12 — Fase 2.4 (parziale): correzione allocazione FR-047
+
+- Confermata la denuncia esatta del mandato: `OCOR_TRACEABILITY_PLAN.csv`
+  allocava `FR-047` ("SDK e tool MCP generati" — il sistema DEVE generare SDK
+  Python e TypeScript e contratti MCP tipizzati) a `OCOR-DEV-0047`
+  ("Implement C8 tool boundary sandbox budgets and kill switch", WS-09, G4)
+  — un task sul sandbox di invocazione tool dell'agent kernel, senza alcuna
+  relazione con la generazione di SDK. `OCOR-DEV-0047.requirement_ids`
+  raggruppa una ventina di requisiti includendo `FR-047`, quasi certamente
+  per uno scambio numero-task/numero-requisito (047 con 047) piuttosto che
+  per una relazione semantica reale.
+- Identificato `OCOR-DEV-0010` ("Materialize contract-first SDK boundaries
+  and drift checks", WS-01, G1) come il task corretto: è quello che possiede
+  `ocor-runtime/tools/generate_contracts.py`, già accettato
+  (`completed_evidence_tasks`), ed esteso proprio in questa sessione (Fase
+  2.3) con l'SDK TypeScript reale e la suite di conformance cross-SDK che il
+  criterio di accettazione di `FR-047` nomina esplicitamente ("lo stesso
+  mission scenario è invocabile da entrambi gli SDK e tramite MCP").
+- Corretto `docs/development_plan/OCOR_TRACEABILITY_PLAN.csv`: riga `FR-047`
+  con `owning_workstream` `WS-09`→`WS-01`, `implementation_task`
+  `OCOR-DEV-0047`→`OCOR-DEV-0010`, `qualifying_test`/`required_backend`/
+  `expected_evidence` estesi per nominare la suite reale e l'evidenza
+  sigillata di `OCOR-DEV-0010`; `verification_task` (`OCOR-DEV-0065`, prova
+  di integrazione a mission-thread completo) e `target_gate`/
+  `current_baseline_status` lasciati invariati perché ancora corretti.
+  Aggiornati coerentemente i due `requirement_ids` nel backlog (rimosso
+  `FR-047` da `OCOR-DEV-0047`, aggiunto a `OCOR-DEV-0010`) — diff di sole 4
+  righe, nessuna riformattazione incidentale. Nessun task nuovo aggiunto:
+  è una pura riallocazione a un task esistente e già corretto. Nessuna
+  `hard_dependencies` è cambiata, quindi nessuna rigenerazione del DAG era
+  necessaria né è stata eseguita.
+- `reports/planning/OCOR_PLAN_RUN_STATE.json.artifact_hashes` per i due file
+  di pianificazione toccati aggiornato a mano (calcolo diretto dello
+  sha256, non una decisione di risoluzione) come eccezione documentata: la
+  sola via sanzionata (rieseguire `scripts/build_ocor_development_plan.py`)
+  resta non sicura finché l'escalation `PHASE2-4-BACKLOG-GENERATOR-DRIFT`
+  (`TASK_SPECS` privo di `OCOR-DEV-0070`–`0084`) non è risolta — non
+  necessaria per QUESTA correzione, perché nessuna rigenerazione è stata
+  eseguita.
+- Gate locali: `sha256sum -c` `PASS` 8/8; `validate_ocor_development_plan.py
+  --authorized-extension` `PASS` 37/2/0 dopo assestamento (allowlist,
+  self-hash, artifact-hash), inclusi `285 requirement allocation` `PASS`
+  (rows: 285, missing: []) e `qualifying trace assignments` `PASS`;
+  `validate_rccad.py` `PASS_LOCAL_PRECHECK` 0 finding; `verify.py --json`
+  `PASS` 14/0/0 (`reports/verify_report.json` invariato);
+  `validate_language_policy.py` `PASS`; `validate_ocor_change_scope.py`
+  `PASS` 5 percorsi; `ruff check .`/`mypy` `PASS` invariati; regressione
+  pytest completa `2 failed, 516 passed, 5 skipped, 10 errors` — stessi gap
+  sandbox già dichiarati, nessuna nuova failure.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti globali `Verified`
+  (`FR-047` resta `PARTIALLY_IMPLEMENTED`, in attesa della verifica a
+  mission-thread completo di `OCOR-DEV-0065`), `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC` e `Production` `NO-GO`.
+- Prossima azione: aprire la PR, attendere CI verde, merge, verifica SHA
+  post-merge, poi risolvere l'escalation `PHASE2-4-BACKLOG-GENERATOR-DRIFT`
+  come task a sé stante (estendere `TASK_SPECS`/la logica di generazione di
+  `scripts/build_ocor_development_plan.py` per coprire `OCOR-DEV-0070`–`0084`
+  e verificare che una rigenerazione riproduca l'84-task backlog reale prima
+  di rigenerare mai il DAG per davvero). Solo allora la Fase 2.4 è chiusa;
+  segue la Fase 3.
