@@ -346,3 +346,20 @@
 - Prossima azione: aprire la PR, attendere CI verde sull'HEAD esatto (in
   particolare il nuovo job `type-and-lint-gate`), merge, verifica SHA
   post-merge, poi Fase 2.2 del mandato — pin dell'interprete alla patch.
+
+## 2026-09-12 — Chiusura Fase 2.1
+
+- PR #59 aperta e integrata al primo tentativo: merge
+  `1cfa0a787ee620e462adfd0d25378f752c74af28`. Tutti i 12 check verdi
+  sull'HEAD esatto `5123650e` al primo push, incluso il nuovo job
+  `type-and-lint-gate` (run id `34710650062/063/066/069/077/090`).
+- Verifica pre-merge: `mergeStateStatus: CLEAN`, `mergeable: MERGEABLE`.
+  Verifica post-merge: SHA di `origin/main` coincidente con il merge commit
+  riportato da GitHub.
+- `EXECUTION_STATE.json` e `MODEL_HANDOFF.json` risincronizzati al nuovo HEAD;
+  `latest_ci_evidence` aggiornato ai run reali.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti globali `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC` e `Production` `NO-GO`.
+- Prossima azione: Fase 2.2 del mandato — pin dell'interprete alla patch in
+  `requires-python`, `uv.lock`, `.python-version` e in tutti i workflow, più
+  un test che fallisca se l'interprete in esecuzione diverge dal pin.
