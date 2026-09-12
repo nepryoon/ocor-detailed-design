@@ -167,3 +167,69 @@
 - Prossima azione: Fase 2.1 del mandato — mypy strict su `ocor-runtime/src` e
   `scripts/`, configurazione `ruff` per l'intero repository, entrambi pinnati
   alla patch, cablati come job CI bloccanti.
+
+## 2026-09-12 — Fase 1B: tre correzioni dalla verifica indipendente (§4 del mandato)
+
+- Nuovo mandato esplicito del Product Owner del 2026-09-12 (CC-OCOR-DELIVERY-COMPLETION):
+  riconciliato HEAD reale `50c3bbbe41e4c9cbc1a7112847decd37e80405df` (`origin/main`,
+  PR #56), coincidente con quanto il mandato assumeva. Nessuna divergenza da
+  riconciliare oltre a quanto già registrato il 2026-09-12 in Fase 0/1.
+- §4.1: `docs/development_methodology/OCOR_LANGUAGE_POLICY.md` §3 ancorava le
+  quattro soglie di migrazione a un "budget ipotetico p95 < 50 ms" attribuito a
+  `NFR-076` (che classifica solo L0/L1/L2, senza fissare alcun numero) e a `OI-024`.
+  Verifica sui registri normativi (`inputs/normative/OCOR_Registers_v0.9.md`,
+  `OCOR_Requirement_Register_v0.9.md`): `OI-024` governa le soglie di
+  rischio/costo per l'autorità dual-control su azioni critiche
+  (`DEC-131`/`FR-136`/`FR-137`), non le soglie di latenza; l'open item corretto
+  per soglie numeriche di accettazione è `OI-008`, con il processo di
+  fissazione descritto in `ASM-010`/`DEC-170`/`NFR-080`. Corretto il riferimento
+  a `OI-008` (non a `OI-024`, mai citato come fosse quello giusto), dichiarato
+  esplicitamente il valore come ipotesi di lavoro non approvata, e ribadito che
+  `NFR-080` impone comunque classe di servizio/percentile/finestra/workload/
+  ambiente/comportamento al superamento per ogni SLO. Non chiuso `OI-008`, non
+  creato alcun nuovo identificativo di baseline.
+- §4.2: `EXECUTION_STATE.json.latest_ci_evidence` era `PENDING_EXACT_HEAD_CI`
+  con `candidate_commit: null` nonostante tre PR mergiate con check verdi.
+  Popolato con i dati reali via `gh pr checks 56`: head `de3bcac74959caa71d7c0d647abc5578ea0d4bfb`,
+  12/12 check `pass` su 6 run id GitHub Actions distinti
+  (`34701203516/523/528/530/535/562`), merge `50c3bbbe41e4c9cbc1a7112847decd37e80405df`.
+  `baseline_commit` e `active_iteration` risincronizzati a HEAD e al branch di
+  questa iterazione in entrambi `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`
+  dopo che `scripts/validate_rccad.py` ha rilevato `RCCAD-STATE-HANDOFF-DRIFT`
+  fra i due file.
+- §4.3: `infra/toolchain.lock.json` non conteneva alcuna voce TypeScript.
+  Verificato prima sul registry ufficiale npm che `typescript@7.0.2` esiste
+  davvero ed è il dist-tag `latest` corrente (non un'assunzione del mandato);
+  installato in un ambiente isolato (`npm install typescript@7.0.2`), confermato
+  `tsc --version` → `Version 7.0.2` e calcolato l'hash SHA-256 reale
+  dell'eseguibile risolto (`node_modules/typescript/bin/tsc`,
+  `2219f428a7e55aaf1f7ad85b9b0f0cf5078aeb76ccc9a7c6036c92d48f492ffd`), verificato
+  anche il checksum SHA-1 del tarball npm contro quello pubblicato dal registry
+  prima di fidarsi del contenuto. Aggiunta una voce `provider: host` conforme a
+  `infra/toolchain.lock.schema.json`, stesso pattern di `node`/`ruff`.
+- Gate locali: `sha256sum -c inputs/normative/SHA256SUMS` `PASS` 8/8;
+  `scripts/validate_language_policy.py` `PASS`; `scripts/validate_rccad.py`
+  `PASS_LOCAL_PRECHECK` (0 finding dopo le due correzioni sopra);
+  `scripts/validate_ocor_change_scope.py --base origin/main` `PASS`, 4 percorsi
+  cambiati, superfici immutabili intatte, ledger dei task stabile;
+  `scripts/validate_ocor_development_plan.py --base-ref origin/main
+  --authorized-extension` `PASS` 37/2/0; `scripts/verify.py --json` `PASS` 11/0,
+  3 `NOT_EXECUTED` per dipendenze Python opzionali assenti in questa shell
+  locale (`openapi-spec-validator`, `grpcio-tools`, `rdflib`) — `reports/verify_report.json`
+  lasciato intatto (non sovrascritto con un risultato localmente degradato) perché
+  questo change set non tocca alcun file che quel referto copre.
+  `mypy`/`tsc --strict`/`ruff` repo-wide/regressione pytest completa: `NOT_APPLICABLE`
+  (nessun sorgente Python o TypeScript toccato) e comunque `NOT_EXECUTED` in
+  questa shell perché la toolchain pinnata byte-per-byte (`ruff==0.13.1`,
+  `uv==0.12.5`, `python==3.12.11` con hash esatto) non è quella osservata
+  localmente (`ruff 0.16.1`, `uv 0.5.9`); il gate qualificante resta la CI
+  sull'exact-head al push, come per le tre PR precedenti.
+- Evidenza sigillata: `reports/evidence/local-gates/phase1b-independent-review-corrections-20260912.json`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti globali `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC` e `Production` `NO-GO`. Nessun
+  `OI-*`/`ASM-*`/`RSK-*` chiuso, nessuna capability differita attivata.
+- Prossima azione: aprire la PR di questa correzione, attendere CI verde
+  sull'HEAD esatto, merge, verifica SHA post-merge, poi Fase 2.1 del mandato —
+  mypy strict su `ocor-runtime/src` e `scripts/`, configurazione `ruff` per
+  l'intero repository, entrambi pinnati alla patch, cablati come job CI
+  bloccanti.

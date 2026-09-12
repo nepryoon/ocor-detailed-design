@@ -57,19 +57,45 @@ licenza a scegliere un'altra versione.
 
 ## 3. Soglie di migrazione — fissate ora, prima di qualunque misura (Fase 3)
 
+**Natura del budget di riferimento — ipotesi di lavoro, non requisito approvato.**
+`NFR-076` classifica i workload in L0/L1/L2 e non fissa alcun budget di latenza
+numerico; nessuna decisione approvata fissa oggi un p95 per il fast path L0. Il
+valore "p95 < 50 ms" usato in questa sezione per derivare le quattro soglie sotto
+è pertanto un'**ipotesi di lavoro** dell'autore di questo documento, non un
+requisito. Dipende dalla chiusura di `OI-008` (soglie numeriche di accettazione,
+"Open ma non bloccante per la IRB; blocca i gate PoC finché non congelata tramite
+benchmark") e dal processo di fissazione descritto in `ASM-010`/`DEC-170` (le
+soglie PoC sono fissate da un benchmark di caratterizzazione preregistrato, prima
+di qualunque prova di accettazione). Questo documento **non chiude `OI-008`** e
+non introduce alcun nuovo identificativo di baseline: la Fase 3 (misura reale)
+resta condizionata all'esito di quella chiusura, e se il benchmark preregistrato
+di `OI-008` fissasse un budget diverso da 50 ms, le quattro soglie sottostanti
+andrebbero ricalibrate di conseguenza prima di essere invocate per aprire una
+nuova decisione di migrazione. Indipendentemente dal valore del budget, `NFR-080`
+resta il vincolo che per ogni SLO impone di dichiarare: classe di servizio,
+percentile, finestra, workload, ambiente e comportamento al superamento — nessuno
+dei quali è opzionale, e nessuno dei quali questo paragrafo modifica.
+
+*(Correzione rispetto alla stesura precedente: le soglie erano ancorate a
+`OI-024`, che nel registro normativo governa le soglie di rischio/costo per
+l'autorità dual-control su azioni critiche — `DEC-131`/`FR-136`/`FR-137` — non le
+soglie di latenza. L'open item che effettivamente governa le soglie numeriche di
+performance è `OI-008`. Il riferimento è corretto qui, senza chiudere né l'uno né
+l'altro.)*
+
 Le soglie seguenti sono le uniche condizioni che, se superate da un benchmark
 riproducibile eseguito secondo `docs/development_methodology/OCOR_LANGUAGE_POLICY.md`
-§3 e ancorato a `DEC-166`/`NFR-076` (budget ipotetico p95 < 50 ms per il fast path
-L0) e `DEC-170`/`NFR-080` (regola di fissazione degli SLO, nessun tuning sul test),
+§3 e ancorato al budget ipotetico sopra descritto (`OI-008`) e a
+`DEC-170`/`NFR-080` (regola di fissazione degli SLO, nessun tuning sul test),
 autorizzano — da sole — l'apertura di una nuova decisione di migrazione per il
 **solo** componente interessato. Sono fissate prima di eseguire qualunque misura,
 per costruzione, così da escludere ogni tuning post-hoc.
 
 | Componente | Soglia di migrazione | Ancoraggio |
 |---|---|---|
-| Kernel di canonicalizzazione RFC 8785 e digest | Mediana Python sul corpus di riferimento supera **3×** la mediana dell'oracolo Node.js pinnato sullo stesso corpus/hardware, **oppure** il p95 assoluto supera **2 ms** per documento al payload di riferimento (10 KB) | 2 ms equivale a più del 4% del budget ipotetico p95 < 50 ms di `NFR-076`; l'oracolo Node.js è già pinnato in CI per REM-0007 |
-| Percorso di commit di C3 (canonicalizzazione + digest + scrittura atomica, esclusa latenza di rete esterna) | p95 supera **15 ms** al carico di riferimento del harness | 15 ms equivale al 30% del budget ipotetico p95 < 50 ms di `NFR-076` |
-| Backbone eventi di C5 (pubblicazione fino ad ack, partizione pinnata di riferimento) | Throughput sostenuto sotto **5.000 messaggi/s** per partizione, **oppure** p95 pubblicazione-ack supera **20 ms** | 20 ms equivale al 40% del budget ipotetico p95 < 50 ms di `NFR-076`; il floor di throughput è scelto per restare ampiamente entro le capacità dichiarate di `confluentinc/cp-kafka` 7.6.0 su hardware di riferimento non specializzato |
+| Kernel di canonicalizzazione RFC 8785 e digest | Mediana Python sul corpus di riferimento supera **3×** la mediana dell'oracolo Node.js pinnato sullo stesso corpus/hardware, **oppure** il p95 assoluto supera **2 ms** per documento al payload di riferimento (10 KB) | 2 ms equivale a più del 4% del budget ipotetico p95 < 50 ms §3 (`OI-008`, non un requisito approvato); l'oracolo Node.js è già pinnato in CI per REM-0007 |
+| Percorso di commit di C3 (canonicalizzazione + digest + scrittura atomica, esclusa latenza di rete esterna) | p95 supera **15 ms** al carico di riferimento del harness | 15 ms equivale al 30% del budget ipotetico p95 < 50 ms §3 (`OI-008`, non un requisito approvato) |
+| Backbone eventi di C5 (pubblicazione fino ad ack, partizione pinnata di riferimento) | Throughput sostenuto sotto **5.000 messaggi/s** per partizione, **oppure** p95 pubblicazione-ack supera **20 ms** | 20 ms equivale al 40% del budget ipotetico p95 < 50 ms §3 (`OI-008`, non un requisito approvato); il floor di throughput è scelto per restare ampiamente entro le capacità dichiarate di `confluentinc/cp-kafka` 7.6.0 su hardware di riferimento non specializzato |
 | Proiezione di C4 | Projection lag p95 sotto carico sostenuto di riferimento supera **200 ms** | Budget di freshness implicito in `NFR-077` (branch/commit/watermark esposti devono restare utilizzabili per `at-least-commit`/`exact-at-commit` senza introdurre staleness percepibile oltre un ordine di grandezza rispetto al fast path) |
 
 Nessuna soglia superata → esito `NO_MIGRATION_JUSTIFIED`, con i numeri pubblicati
