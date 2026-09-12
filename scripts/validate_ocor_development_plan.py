@@ -312,6 +312,7 @@ def main() -> int:
         "reports/evidence/G2/blockers/MANIFEST.json",
         "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
         "reports/evidence/local-gates/phase1-language-policy-20260912.json",
+        "reports/evidence/local-gates/phase1b-independent-review-corrections-20260912.json",
         "reports/development/environment-evidence-dec-211.json",
         "reports/tests/autonomous_tooling_tdd_evidence.json",
         "reports/tests/evidence/dec211/green.log",
