@@ -171,3 +171,16 @@ Restano assoluti: `inputs/` immutabile; nessun production deploy o accesso a dat
 production; nessun secret in Git; nessuna sostituzione di tecnologie approvate;
 nessuna modifica semantica senza nuova decisione; nessun incremento implicito di
 `E1`, `E2`, `Verified` o dei claim `NO-GO`.
+
+## Politica dei linguaggi di implementazione (DEC-212)
+
+Il linguaggio di implementazione autorizzato per ogni parte del progetto — kernel,
+componenti C1–C8, harness/validatori, qualificatori `deploy/`, generatore di
+contratti, SDK generati, adapter, policy OPA, infrastruttura/CI e formati
+dichiarativi — è fissato in
+`docs/development_methodology/OCOR_LANGUAGE_POLICY.md`, insieme alle soglie
+misurabili che soltanto esse autorizzerebbero una migrazione futura. Il gate
+eseguibile `scripts/validate_language_policy.py` lo impone fail-closed in CI.
+Questa policy è distinta e non sovrapposta al profilo degli SDK generati
+(`DEC-075`/`FR-047`/`FR-048`, Python e TypeScript, Rust differito), che resta
+invariato.

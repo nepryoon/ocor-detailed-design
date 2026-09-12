@@ -10,6 +10,10 @@ sostituisce il backlog, il DAG o i registri normativi esistenti.
 - `OCOR_DEFINITION_OF_DONE.md`: condizioni cumulative di completamento.
 - `OCOR_MODEL_OPERATING_PROFILE.md`: routing e fingerprint del modello/ambiente.
 - `methodology.schema.json`: contratto JSON del manifest.
+- `OCOR_LANGUAGE_POLICY.md`: linguaggio di implementazione autorizzato per ogni
+  area del progetto, versioni pinnate e soglie di migrazione (`DEC-212`), distinto
+  dal profilo degli SDK generati (`DEC-075`/`FR-047`/`FR-048`). Applicato fail-closed
+  da `scripts/validate_language_policy.py`.
 
 Lo stato volatile ma durevole è soltanto in `reports/development/`; le evidenze di
 gate restano in `reports/evidence/`.

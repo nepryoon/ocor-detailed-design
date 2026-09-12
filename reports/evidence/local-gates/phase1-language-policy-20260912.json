@@ -1,0 +1,18 @@
+{
+  "branch": "governed/dec-212-language-policy",
+  "decision_id": "DEC-212",
+  "baseline_commit": "b698f6b847f1afcd429e2dd7b7d72ab01d425a02",
+  "gates": [
+    {"command": "sha256sum -c inputs/normative/SHA256SUMS", "result": "PASS_8_OF_8"},
+    {"command": "./.venv/bin/python3 scripts/verify.py --json", "result": "PASS_14_FAIL_0_NOT_EXECUTED_0"},
+    {"command": "./.venv/bin/python3 -m unittest -v reports.tests.test_validate_language_policy (RED against pre-implementation stub)", "result": "EXPECTED_FAILURE_5_ERRORS_reports/tests/evidence/dec212/red.log"},
+    {"command": "./.venv/bin/python3 -m unittest -v reports.tests.test_validate_language_policy (GREEN against real implementation)", "result": "PASS_5_reports/tests/evidence/dec212/green.log"},
+    {"command": "ruff (0.13.1) check scripts/validate_language_policy.py reports/tests/test_validate_language_policy.py", "result": "INITIAL_FAIL_F401_unused_sys_import_fixed_then_PASS_reports/tests/evidence/dec212/refactor.log"},
+    {"command": "./.venv/bin/python3 scripts/validate_language_policy.py", "result": "PASS_real_tracked_tree_no_violations"},
+    {"command": "./.venv/bin/python3 scripts/validate_rccad.py --base-ref b698f6b847f1afcd429e2dd7b7d72ab01d425a02", "result": "PASS_LOCAL_PRECHECK_AFF_001_TO_AFF_010"},
+    {"command": "./.venv/bin/python3 scripts/validate_ocor_change_scope.py --base origin/main --branch governed/dec-212-language-policy", "result": "PASS_immutable_untouched_task_ledger_stable"},
+    {"command": "tooling-policy CI job: scripts/validate_ocor_development_plan.py --authorized-extension", "result": "extended extension_paths for the new Phase 1 files, same pattern as the Phase 0 fix; PASS on second run after self-hash settle"},
+    {"command": "mypy / tsc", "result": "NOT_APPLICABLE_not_yet_wired_addressed_in_mandate_Phase_2.1_and_2.3"}
+  ],
+  "note": "This change adds a new policy document, gate script, tests/evidence, ARA Decision Record v1.6 (DEC-212) and its append-only registers, three CI wiring edits, and two doc pointer updates (AGENTS.md, development_methodology/README.md). It does not touch inputs/, docs/detailed_design/, ocor-runtime/src, or the backlog/DAG. E1=0, E2=0, runtime conformance NOT_ESTABLISHED, PoC/Production NO-GO unchanged. DEC-075/FR-047/FR-048 SDK profile left untouched."
+}
