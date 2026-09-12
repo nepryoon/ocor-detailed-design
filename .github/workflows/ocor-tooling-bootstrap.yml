@@ -72,3 +72,7 @@ jobs:
           ocor-runtime/.venv/bin/python scripts/validate_ocor_development_plan.py --base-ref "$PLAN_BASE" --authorized-extension
           ocor-runtime/.venv/bin/python scripts/validate_rccad.py --base-ref "$BASE_SHA"
           git diff --exit-code "$BASE_SHA" -- inputs/
+      - name: Validate language policy (DEC-212)
+        run: |
+          ocor-runtime/.venv/bin/python -m unittest -v reports.tests.test_validate_language_policy
+          ocor-runtime/.venv/bin/python scripts/validate_language_policy.py

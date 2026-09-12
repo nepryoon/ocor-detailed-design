@@ -1,0 +1,38 @@
+{
+  "change_set": "CC-OCOR-LANGUAGE-POLICY",
+  "decision_id": "DEC-212",
+  "phases": [
+    {
+      "command": "./.venv/bin/python3 -m unittest reports.tests.test_validate_language_policy -v",
+      "exit_code": 1,
+      "fingerprint": "FAILED (errors=11) \u2014 NotImplementedError: language policy gate not yet implemented",
+      "fingerprint_sha256": "9e9648a1d5a0277ae92fd0d1dd0eb022f6c5de0b74a79eea1bd5b02bd8a4c135",
+      "phase": "RED",
+      "raw_log": "reports/tests/evidence/dec212/red.log",
+      "raw_log_sha256": "30a212c6d5e594aec8b6cac467f12e975a91b2a75ce30fca4c1d2b62254fbcb1",
+      "result": "EXPECTED_FAILURE"
+    },
+    {
+      "command": "./.venv/bin/python3 -m unittest reports.tests.test_validate_language_policy -v",
+      "exit_code": 0,
+      "fingerprint": "OK \u2014 Ran 5 tests in 0.031s, exit 0",
+      "fingerprint_sha256": "54c960b9d8f59d356d05e1062d4621625f7e1d7cf1f2370ab6d7fbcc06010a64",
+      "phase": "GREEN",
+      "raw_log": "reports/tests/evidence/dec212/green.log",
+      "raw_log_sha256": "63ff53efddcc144d58f7a53b76b02679698d27f02e73e7a7b37b8d0a18411771",
+      "result": "PASS"
+    },
+    {
+      "command": "./.venv/bin/python3 -m unittest reports.tests.test_validate_language_policy -v",
+      "exit_code": 0,
+      "fingerprint": "OK \u2014 Ran 5 tests in 0.038s after extracting extension_of() helper and removing an unused import flagged by ruff 0.13.1, exit 0",
+      "fingerprint_sha256": "234bc8341c256effa0d36318ef3a2e9e08c1e43b94981d426ac1443775efccd3",
+      "phase": "REFACTOR",
+      "raw_log": "reports/tests/evidence/dec212/refactor.log",
+      "raw_log_sha256": "3ebade1c1da9ead1c9362484915d0a6f78348095af059bfd361222f2353da235",
+      "result": "PASS"
+    }
+  ],
+  "schema_version": "1.0",
+  "test_module": "reports/tests/test_validate_language_policy.py"
+}

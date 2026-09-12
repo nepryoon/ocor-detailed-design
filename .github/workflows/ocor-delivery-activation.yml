@@ -64,6 +64,11 @@ jobs:
           --head "${{ github.sha }}"
           --branch "${{ github.head_ref || github.ref_name }}"
 
+      - name: Validate language policy (DEC-212)
+        run: |
+          ocor-runtime/.venv/bin/python -m unittest -v reports.tests.test_validate_language_policy
+          ocor-runtime/.venv/bin/python scripts/validate_language_policy.py
+
       - name: Validate approved development plan and runner
         run: |
           set -euo pipefail
