@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/phase0-state-reconciliation-20260912",
-    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-0-RECONCILIATION",
-    "decision_id": null,
-    "phase": "RECONCILIATION_EVIDENCE_SEALED__AWAITING_EXACT_HEAD_CI",
+    "branch": "governed/phase1-close-state-update",
+    "change_set": "CC-LANGUAGE-POLICY-AND-GAP-CLOSURE__PHASE-1-CLOSE",
+    "decision_id": "DEC-212",
+    "phase": "PHASE_1_MERGED__PHASE_2_NOT_STARTED",
     "worktree": null
   },
-  "baseline_commit": "a8f44364d74c4e5953954f8cf4997032ccc68f05",
+  "baseline_commit": "7c7f9b5b6a5135aa2583445697f54e9ff1dfcf3e",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -52,15 +52,43 @@
     "OCOR-DEV-0077",
     "OCOR-DEV-0078"
   ],
-  "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__BACKLOG_RESUMING",
+  "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__LANGUAGE_POLICY_ADOPTED",
   "latest_ci_evidence": {
     "candidate_commit": null,
     "conclusion": "PENDING_EXACT_HEAD_CI",
     "run_ids": []
   },
-  "next_executable_action": "Merge this reconciliation, then allocate the next free DEC-* and author docs/development_methodology/OCOR_LANGUAGE_POLICY.md plus scripts/validate_language_policy.py under a new governed change set (mandate Phase 1: language policy and executable gate). The backlog's own dependency-ready task, independent of that new change set, is OCOR-DEV-0079 (OCOR-DEV-0016/0017/0018/0021 are no longer externally blocked now that OCOR-DEV-0073..0078 qualified real TerminusDB/TypeDB/Fuseki/OPA-Keycloak/SPIFFE-SPIRE/OpenBao provisioning, but remain sequenced behind other pending hard dependencies including OCOR-DEV-0084).",
+  "mandate_phase_status": {
+    "phase_0_reconciliation": {
+      "merge_commit": "b698f6b847f1afcd429e2dd7b7d72ab01d425a02",
+      "pr": 54,
+      "status": "MERGED"
+    },
+    "phase_1_language_policy": {
+      "decision_id": "DEC-212",
+      "merge_commit": "7c7f9b5b6a5135aa2583445697f54e9ff1dfcf3e",
+      "pr": 55,
+      "status": "MERGED"
+    },
+    "phase_2_1_type_gate": {
+      "status": "NOT_STARTED"
+    },
+    "phase_2_2_interpreter_pin": {
+      "status": "NOT_STARTED"
+    },
+    "phase_2_3_typescript_sdk": {
+      "status": "NOT_STARTED"
+    },
+    "phase_2_4_traceability": {
+      "status": "NOT_STARTED"
+    },
+    "phase_3_benchmark": {
+      "status": "NOT_STARTED"
+    }
+  },
+  "next_executable_action": "Phase 2.1 (mandate CC-LANGUAGE-POLICY-AND-GAP-CLOSURE): add mypy strict on ocor-runtime/src and scripts, plus a repo-wide ruff config, both pinned to the patch and installed in the isolated environment; wire both as blocking CI jobs. One task, one branch, one PR. The backlog's own dependency-ready task, independent of this mandate, is OCOR-DEV-0079.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-12T14:35:23Z"
+  "updated_at": "2026-09-12T15:04:21Z"
 }
