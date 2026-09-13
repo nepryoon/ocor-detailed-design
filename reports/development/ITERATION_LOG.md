@@ -1983,8 +1983,7 @@
   `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
 - `OCOR-DEV-0027`: tutti e 13 i check verdi al primo push. PR #89
   mergiata (`53ad2e5bb76f7b59a5ffae9863b685338027edbe`), SHA
-  post-merge verificata. Con questo si chiude l'intero wave 13
-  (`OCOR-DEV-0026`/`0027`).
+  post-merge verificata.
 
 ## 2026-09-13 — Sincronizzazione stato: OCOR-DEV-0027 (post-merge)
 
@@ -1996,13 +1995,17 @@
   `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0027`
   aggiunto a `completed_evidence_tasks`. Verificata l'assenza di
   `RCCAD-STATE-HANDOFF-DRIFT`.
+- **Correzione**: `OCOR-DEV-0030` ha `parallel_wave=13` nel backlog
+  JSON, la stessa wave di `OCOR-DEV-0026`/`0027` — il wave 13 NON è
+  ancora chiuso interamente, contrariamente a quanto scritto in una
+  bozza precedente di questo stesso commit prima della correzione.
 - Nessun codice sorgente toccato: gate locali rieseguiti comunque per
   protocollo standard e confermati invariati.
 - Prossima azione: `OCOR-DEV-0030` (Build retained governed-action
-  slice, gate G3), unico task pronto del wave 14, dipendente da
-  `OCOR-DEV-0020`/`0021`/`0029` (tutti mergiati). Trattandosi di codice
-  retained, verificare proattivamente quale backend reale richiede e
-  se è già provisionato in CI; se tocca un client di backend reale,
-  instradarlo sotto un sotto-albero
+  slice, gate G3), unico task rimasto pronto del wave 13, dipendente
+  da `OCOR-DEV-0020`/`0021`/`0029` (tutti mergiati). Trattandosi di
+  codice retained, verificare proattivamente quale backend reale
+  richiede e se è già provisionato in CI; se tocca un client di
+  backend reale, instradarlo sotto un sotto-albero
   `ocor-runtime/src/ocor_runtime/**/adapters/` fin da subito, per
   `AFF-002`/`AFF-006`.
