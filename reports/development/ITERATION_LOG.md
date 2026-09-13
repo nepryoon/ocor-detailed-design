@@ -2457,3 +2457,88 @@
   (OCOR-DEV-0012) e la composizione di OCOR-DEV-0034 dove utile;
   criterio di accettazione negativo: "silent stale fallback or backend
   query leakage is rejected".
+
+## 2026-09-13 — OCOR-DEV-0035: C2 policy-filtered planning consistency e watermarks
+
+- Nuovo `ocor_runtime.c2.planner`: `ConsistencyPlanner` pianifica se la
+  consistenza richiesta da una richiesta già autorizzata dalla policy
+  può essere onorata, usando SOLO i port sigillati `PolicyDecisionPort`
+  (OCOR-DEV-0012/0034, invariato) e `WatermarkPort` (OCOR-DEV-0012,
+  invariato) — mai la query reale sui dati della projection
+  (`ProjectionReadPort.read`). La policy viene valutata per prima: una
+  query non registrata o comunque negata non raggiunge mai nemmeno il
+  controllo del watermark.
+- `BEST_AVAILABLE` restituisce un piano senza commit richiesto ma con
+  il watermark reale osservato allegato (così un chiamante può sempre
+  mostrare il proprio lavoro, mai un successo nudo senza evidenza);
+  `EXACT_AT_COMMIT`/`AT_LEAST_COMMIT` confrontano il watermark reale
+  con il commit richiesto e sollevano `PROJECTION_NOT_READY` nominando
+  il watermark reale osservato quando non ha ancora raggiunto il
+  commit — mai un fallback silenzioso a `BEST_AVAILABLE`, mai una
+  query reale al backend solo per calcolare il piano. Il confronto
+  per uguaglianza rispecchia deliberatamente la stessa semantica già
+  stabilita dal `ConsistencyRequirement.verify_served` sigillato e
+  dall'adapter di OCOR-DEV-0017, invece di inventare un nuovo ordine
+  per `AT_LEAST_COMMIT`.
+- Aggiunti 8 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0035.py`, tutti contro
+  TypeDB reale (per il watermark), nessun mock: conformità al Protocol
+  per il wrapper di test dell'adapter TypeDB come `WatermarkPort`;
+  `BEST_AVAILABLE` con watermark reale allegato; `EXACT_AT_COMMIT` che
+  procede quando il watermark corrisponde; `EXACT_AT_COMMIT` e
+  `AT_LEAST_COMMIT` che riportano `PROJECTION_NOT_READY` con il
+  watermark reale finché non lo raggiunge; uno spy `WatermarkPort` che
+  PROVA, non solo asserisce per commento, che un diniego di policy
+  interrompe il flusso prima del controllo del watermark; un diniego
+  che non trapela mai alcun piano; e un test di fault-injection reale
+  (una vera porta TCP locale chiusa) che prova che un guasto del
+  backend di watermark si propaga invece di ripiegare silenziosamente
+  su un esito permissivo.
+- Nessun bug trovato nel nuovo codice di questo task: tutti e 8 i test
+  sono passati al primo tentativo.
+- Gate locali tutti verdi: `ruff`, `mypy`, `validate_rccad.py` PASS
+  (nessun import diretto di client backend in `planner.py`, tutte le
+  porte sono iniettate), `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS (7 percorsi), pytest completo
+  via lo script `pytest` nudo con `OCOR_LIVE_POSTGRES_DSN` impostato
+  contro il PostgreSQL reale di ocor-bootstrap: `2 failed, 721 passed`
+  (stessi 2 fallimenti noti) più `29 passed` per le 3 suite
+  `reports/tests/`, `validate_ocor_development_plan.py --base-ref
+  origin/main --authorized-extension` PASS dopo il consueto
+  doppio-run.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0035.json` +
+  `reports/evidence/G4/OCOR-DEV-0035.log`.
+  `reports/evidence/G4/MANIFEST.json` esteso con inserimento
+  chirurgico (2 nuovi artifact, 9 nuovi requirement_results).
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task, non incluso nel commit del
+  task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0035`: tutti e 13 i check verdi al primo push. PR #101
+  mergiata (`bfd928d2036f37ecf7a09658b45a3b0848afbea5`), SHA
+  post-merge verificata. Chiude interamente il wave 16
+  (`OCOR-DEV-0033/0034/0035`).
+
+## 2026-09-13 — Sincronizzazione stato: OCOR-DEV-0035 (post-merge, wave 16 chiuso)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #101, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0035`).
+- `baseline_commit` aggiornato a
+  `bfd928d2036f37ecf7a09658b45a3b0848afbea5` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0035`
+  aggiunto a `completed_evidence_tasks`.
+- Ricalcolata la prontezza dal backlog JSON: nessun nuovo task
+  numericamente più basso è stato sbloccato da `OCOR-DEV-0035`, quindi
+  i 7 task rimanenti del wave 15
+  (`0036/0037/0038/0040/0042/0046/0048`) tornano ad essere il fronte
+  di lavoro; selezionato `OCOR-DEV-0036` ("Complete C3 single-writer
+  recovery and reconciliation") per ordine numerico.
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
+- Prossima azione: implementare `ocor-runtime/src/ocor_runtime/c3/recovery.py`,
+  riusando `PostgresC3Service` (OCOR-DEV-0029) e il pattern di
+  composizione di OCOR-DEV-0031; criterio di accettazione: scrittori
+  concorrenti, ACK perso, outbox corrotto e fixture di riavvio
+  convergono senza effetti canonici duplicati.
