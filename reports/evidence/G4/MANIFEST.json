@@ -72,6 +72,16 @@
       "path": "OCOR-DEV-0038.log",
       "sha256": "1b04b1144d5ac9024ed46ba570c9e6a4516be30278e904ad35ebfd8bc7dcf046",
       "task_id": "OCOR-DEV-0038-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0039.json",
+      "sha256": "0205a64d69fa43c219fd13c204eafd4e972f0d60139d43a8df242e59cadebb60",
+      "task_id": "OCOR-DEV-0039"
+    },
+    {
+      "path": "OCOR-DEV-0039.log",
+      "sha256": "3396a226a23ceabfbe706c26948fde37283f6c6e62cc181c2a6c8ebb1f3c1f62",
+      "task_id": "OCOR-DEV-0039-RAW"
     }
   ],
   "requirement_results": [
@@ -722,6 +732,69 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0038"
+    },
+    {
+      "case_id": "OCOR-DEV-0039-REBUILD-REPRODUCES-CANONICAL-DIGEST-AND-WATERMARK",
+      "command": "rebuild() reproduces the real canonical commit's digest and watermark in the live projection",
+      "evidence_path": "OCOR-DEV-0039.json",
+      "raw_output_path": "OCOR-DEV-0039.log",
+      "requirement_id": "FR-019",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0039"
+    },
+    {
+      "case_id": "OCOR-DEV-0039-REBUILD-CANONICAL-NOT-FOUND",
+      "command": "rebuilding a never-committed aggregate raises CANONICAL_NOT_FOUND rather than fabricating a projection",
+      "evidence_path": "OCOR-DEV-0039.json",
+      "raw_output_path": "OCOR-DEV-0039.log",
+      "requirement_id": "FR-138",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0039"
+    },
+    {
+      "case_id": "OCOR-DEV-0039-REAL-OUT-OF-BAND-DRIFT-IS-QUARANTINED-NOT-REPAIRED",
+      "command": "a real, direct, out-of-band tamper of the live TypeDB projection is detected and quarantined, never silently repaired",
+      "evidence_path": "OCOR-DEV-0039.json",
+      "raw_output_path": "OCOR-DEV-0039.log",
+      "requirement_id": "FR-148",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0039"
+    },
+    {
+      "case_id": "OCOR-DEV-0039-SERVING-QUARANTINED-PROJECTION-PROHIBITED",
+      "command": "read_if_healthy raises PROJECTION_QUARANTINED for a quarantined aggregate, before ever delegating to the projection's own read",
+      "evidence_path": "OCOR-DEV-0039.json",
+      "raw_output_path": "OCOR-DEV-0039.log",
+      "requirement_id": "FR-148",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0039"
+    },
+    {
+      "case_id": "OCOR-DEV-0039-SUCCESSFUL-REBUILD-CLEARS-QUARANTINE",
+      "command": "a fresh rebuild pass after the underlying tamper is externally corrected clears quarantine for real",
+      "evidence_path": "OCOR-DEV-0039.json",
+      "raw_output_path": "OCOR-DEV-0039.log",
+      "requirement_id": "FR-148",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0039"
+    },
+    {
+      "case_id": "OCOR-DEV-0039-TYPEDB-UNREACHABILITY-DURING-PEEK-FAILS-CLOSED",
+      "command": "a real TypeDB unreachability during the drift-detection peek propagates rather than defaulting to a false 'no drift' conclusion",
+      "evidence_path": "OCOR-DEV-0039.json",
+      "raw_output_path": "OCOR-DEV-0039.log",
+      "requirement_id": "NFR-024",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0039"
+    },
+    {
+      "case_id": "OCOR-DEV-0039-REGRESSION",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0039.json",
+      "raw_output_path": "OCOR-DEV-0039.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0039"
     }
   ]
 }
