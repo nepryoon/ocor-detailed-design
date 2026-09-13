@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0036",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0036",
+    "branch": "governed/state-sync-ocor-dev-0037",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0037",
     "decision_id": "DEC-211",
     "phase": "G4_WAVE_15_IN_PROGRESS",
     "worktree": null
   },
-  "baseline_commit": "ab06c8fc7fd996c40e8728dc5c55c6a4be56967c",
+  "baseline_commit": "7fa50fcc40a15cdad46a6c0c1b24bec630744d68",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -73,19 +73,20 @@
     "OCOR-DEV-0033",
     "OCOR-DEV-0034",
     "OCOR-DEV-0035",
-    "OCOR-DEV-0036"
+    "OCOR-DEV-0036",
+    "OCOR-DEV-0037"
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "f61ab4f",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR103_MERGED_ab06c8fc7fd996c40e8728dc5c55c6a4be56967c",
+    "candidate_commit": "6076af8",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR105_MERGED_7fa50fcc40a15cdad46a6c0c1b24bec630744d68",
     "run_ids": [
-      34773502699,
-      34773502719,
-      34773502740,
-      34773502766,
-      34773502773,
-      34773502792
+      34774417930,
+      34774417937,
+      34774417945,
+      34774417949,
+      34774417950,
+      34774417970
     ]
   },
   "mandate_phase_status": {
@@ -146,7 +147,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0036 merged (PR #103, ab06c8fc7fd996c40e8728dc5c55c6a4be56967c), all 13 checks green on the first push. This implements ocor_runtime.c3.recovery.SingleWriterRecoveryCoordinator, composing the sealed PostgresC3Service (OCOR-DEV-0029, untouched) through its own sealed public methods and a NEW separate adapter (c3/adapters/recovery_lock.py) for the one new capability needed (a real PostgreSQL advisory lock), so OCOR-DEV-0029's own sealed evidence stayed untouched. Recomputed readiness directly from the backlog JSON: no new lower-numbered task was unlocked, so wave 15's remaining 6 ready tasks are 0037/0038/0040/0042/0046/0048; OCOR-DEV-0037 ('Implement C4 TypeDB projection adapter', depends on OCOR-DEV-0017/0029/0031) is selected next by numeric order.",
+  "next_executable_action": "OCOR-DEV-0037 merged (PR #105, 7fa50fcc40a15cdad46a6c0c1b24bec630744d68), all 13 checks green on the first push. This implements ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter, the retained version of OCOR-DEV-0017's spike, closing a real conformance gap (the spike's own watermark() never actually satisfied the sealed WatermarkPort signature) and making fact-ingest and watermark-advance atomic in one real transaction. Recomputed readiness directly from the backlog JSON: no new lower-numbered task was unlocked, so wave 15's remaining 5 ready tasks are 0038/0040/0042/0046/0048; OCOR-DEV-0038 ('Implement C4 Jena RDF SHACL adapter', depends on OCOR-DEV-0018/0029/0031) is selected next by numeric order.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
