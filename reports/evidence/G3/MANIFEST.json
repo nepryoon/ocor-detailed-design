@@ -12,6 +12,16 @@
       "path": "OCOR-DEV-0028.log",
       "sha256": "bb576d2ad7a9a7f867d328d6caabbdb657e0ce1f3cc55e5c2acb6c4d2281e9ba",
       "task_id": "OCOR-DEV-0028-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0029.json",
+      "sha256": "f3802676f93b25129bf5d67a85adb82849bc0dbf3a501ae0bca6fd3d961cfa4b",
+      "task_id": "OCOR-DEV-0029"
+    },
+    {
+      "path": "OCOR-DEV-0029.log",
+      "sha256": "07232a1efba2a7eaa1a282d421992d2b70ce139db56ac7cf8ef309f404d47139",
+      "task_id": "OCOR-DEV-0029-RAW"
     }
   ],
   "requirement_results": [
@@ -77,6 +87,96 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0028"
+    },
+    {
+      "case_id": "OCOR-DEV-0029-SATISFIES-EVERY-SEALED-PORT",
+      "command": "PostgresC3Service is a real isinstance match for every sealed C3 Protocol: GovernedCommitPort, CanonicalReadPort, RevisionPort, RecoveryPort, OutboxRelayPort",
+      "evidence_path": "OCOR-DEV-0029.json",
+      "raw_output_path": "OCOR-DEV-0029.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0029"
+    },
+    {
+      "case_id": "OCOR-DEV-0029-ATOMIC-COMMIT",
+      "command": "a real commit persists state, revision and a matching unacknowledged outbox envelope atomically against real PostgreSQL",
+      "evidence_path": "OCOR-DEV-0029.json",
+      "raw_output_path": "OCOR-DEV-0029.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0029"
+    },
+    {
+      "case_id": "OCOR-DEV-0029-IDEMPOTENT-REPLAY",
+      "command": "a repeated commit with the identical idempotency key and content returns the byte-identical receipt marked replayed=True",
+      "evidence_path": "OCOR-DEV-0029.json",
+      "raw_output_path": "OCOR-DEV-0029.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0029"
+    },
+    {
+      "case_id": "OCOR-DEV-0029-IDEMPOTENCY-CONFLICT",
+      "command": "reusing an idempotency key with different command content is rejected with IDEMPOTENCY_CONFLICT",
+      "evidence_path": "OCOR-DEV-0029.json",
+      "raw_output_path": "OCOR-DEV-0029.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0029"
+    },
+    {
+      "case_id": "OCOR-DEV-0029-REVISION-CONFLICT",
+      "command": "a commit whose expected_revision does not match the real current revision is rejected with REVISION_CONFLICT",
+      "evidence_path": "OCOR-DEV-0029.json",
+      "raw_output_path": "OCOR-DEV-0029.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0029"
+    },
+    {
+      "case_id": "OCOR-DEV-0029-REAL-CONCURRENCY-LOCKING",
+      "command": "two distinct commands racing the same aggregate/expected_revision on real PostgreSQL connections: exactly one succeeds, the other receives a real REVISION_CONFLICT",
+      "evidence_path": "OCOR-DEV-0029.json",
+      "raw_output_path": "OCOR-DEV-0029.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0029"
+    },
+    {
+      "case_id": "OCOR-DEV-0029-REAL-CRASH-ZERO-PARTIAL-VISIBILITY",
+      "command": "a real subprocess crash mid-commit leaves zero visible state and an empty outbox, then a fresh commit of the identical command succeeds normally",
+      "evidence_path": "OCOR-DEV-0029.json",
+      "raw_output_path": "OCOR-DEV-0029.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0029"
+    },
+    {
+      "case_id": "OCOR-DEV-0029-RECONCILE-REPAIRS-CORRUPTION",
+      "command": "a real simulated corruption fixture (a derived outbox row deleted directly against the database) is repaired by reconcile()",
+      "evidence_path": "OCOR-DEV-0029.json",
+      "raw_output_path": "OCOR-DEV-0029.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0029"
+    },
+    {
+      "case_id": "OCOR-DEV-0029-OUTBOX-CLAIM-ACKNOWLEDGE",
+      "command": "a real committed outbox envelope is claimed and then acknowledged, after which it no longer appears in a fresh claim",
+      "evidence_path": "OCOR-DEV-0029.json",
+      "raw_output_path": "OCOR-DEV-0029.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0029"
+    },
+    {
+      "case_id": "OCOR-DEV-0029-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0029.json",
+      "raw_output_path": "OCOR-DEV-0029.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0029"
     }
   ]
 }
