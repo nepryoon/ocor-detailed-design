@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0",
+  "gate": "G3",
+  "created_at": "2026-09-13T08:10:00Z",
+  "artifacts": [
+    {
+      "path": "OCOR-DEV-0028.json",
+      "sha256": "45dc5a08440afba5bb2a9b437dad642141f235befa231ba558d3283ff0559512",
+      "task_id": "OCOR-DEV-0028"
+    },
+    {
+      "path": "OCOR-DEV-0028.log",
+      "sha256": "bb576d2ad7a9a7f867d328d6caabbdb657e0ce1f3cc55e5c2acb6c4d2281e9ba",
+      "task_id": "OCOR-DEV-0028-RAW"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0028-DETERMINISTIC-COMPILE",
+      "command": "a versioned DSL fixture (mixed YAML and JSON sources) compiles to an immutable canonical IR release, including a migration-metadata artifact",
+      "evidence_path": "OCOR-DEV-0028.json",
+      "raw_output_path": "OCOR-DEV-0028.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0028"
+    },
+    {
+      "case_id": "OCOR-DEV-0028-REPRODUCIBLE-DIGEST",
+      "command": "verify_deterministic_build proves two independent compilations of the identical request produce byte-identical canonical bytes, ir_digest and artifacts",
+      "evidence_path": "OCOR-DEV-0028.json",
+      "raw_output_path": "OCOR-DEV-0028.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0028"
+    },
+    {
+      "case_id": "OCOR-DEV-0028-UNRESOLVED-IMPORT-REJECTED",
+      "command": "an import reference absent from the dependency lock is rejected by the sealed CompilerRequest constructor before the retained builder ever runs",
+      "evidence_path": "OCOR-DEV-0028.json",
+      "raw_output_path": "OCOR-DEV-0028.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0028"
+    },
+    {
+      "case_id": "OCOR-DEV-0028-MALFORMED-SYNTAX-REJECTED",
+      "command": "genuinely malformed YAML is rejected with a SOURCE_INVALID diagnostic, never silently parsed as something else",
+      "evidence_path": "OCOR-DEV-0028.json",
+      "raw_output_path": "OCOR-DEV-0028.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0028"
+    },
+    {
+      "case_id": "OCOR-DEV-0028-SHAPE-CONTRACT-ENFORCED",
+      "command": "parsed content missing required keys, or whose 'fields' is not a mapping, is rejected with TYPE_ERROR; a declared id mismatch is rejected with CONSTRAINT_ERROR",
+      "evidence_path": "OCOR-DEV-0028.json",
+      "raw_output_path": "OCOR-DEV-0028.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0028"
+    },
+    {
+      "case_id": "OCOR-DEV-0028-NO-PARTIAL-RELEASE-ON-REJECTION",
+      "command": "a rejected compilation never returns any CanonicalIrRelease object, partial or otherwise",
+      "evidence_path": "OCOR-DEV-0028.json",
+      "raw_output_path": "OCOR-DEV-0028.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0028"
+    },
+    {
+      "case_id": "OCOR-DEV-0028-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0028.json",
+      "raw_output_path": "OCOR-DEV-0028.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0028"
+    }
+  ]
+}

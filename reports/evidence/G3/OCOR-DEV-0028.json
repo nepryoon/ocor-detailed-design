@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0028",
+  "commit": "c13a634b94bd1b6f6aed52e54d252746242e050d",
+  "created_at": "2026-09-13T08:10:00Z",
+  "environment": {
+    "orchestrator": "none required: the retained C1 compiler slice is a pure, in-memory, deterministic component with no external service dependency",
+    "reused_deliverable": "ocor_runtime.c1.ports (OCOR-DEV-0011, sealed and unmodified) supplies SourceUnit/CompilerRequest/DependencyLockEntry/CanonicalIrRelease/ArtifactManifestEntry, the C1Error/C1Diagnostic/DiagnosticCode fail-closed contract, and the generic verify_deterministic_build reproducibility oracle; this task adds only a real YAML/JSON parser, a semantic validator, and a canonical IR builder implementing those sealed Protocols"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c1/compiler.py": "5b99e7ccfe077480c11544d112d7fd57049553846c1cb2d4df5fd66f3dca92b1",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0028.py": "77873eb1fab0f076bb799af974637196165049896a70c9538e785f4d06b26fc6"
+  },
+  "commands": [
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0028.py -v",
+      "result": {"passed": 8, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, ocor-runtime/tests/ (OCOR_LIVE_POSTGRES_DSN set locally, pointed at the ocor-bootstrap postgresql service)",
+      "result": {"passed": 633, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, 3 reports/tests suites",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0028-DETERMINISTIC-COMPILE",
+      "requirement_id": "BR-003",
+      "command": "a versioned DSL fixture (mixed YAML and JSON sources) compiles to an immutable canonical IR release, including a migration-metadata artifact summarizing the release's resource/version identity, with a real SHA-256 ir_digest",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0028-REPRODUCIBLE-DIGEST",
+      "requirement_id": "BR-003",
+      "command": "verify_deterministic_build (sealed, OCOR-DEV-0011) proves two independent compilations of the identical request produce byte-identical canonical bytes, ir_digest and artifacts",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0028-UNRESOLVED-IMPORT-REJECTED",
+      "requirement_id": "BR-003",
+      "command": "an import reference absent from the dependency lock is rejected by the sealed CompilerRequest constructor itself, before the retained builder ever runs",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0028-MALFORMED-SYNTAX-REJECTED",
+      "requirement_id": "BR-003",
+      "command": "genuinely malformed YAML (unterminated flow sequence) is rejected with a SOURCE_INVALID diagnostic, never silently parsed as something else",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0028-SHAPE-CONTRACT-ENFORCED",
+      "requirement_id": "BR-003",
+      "command": "parsed content missing required keys, or whose 'fields' is not a mapping, is rejected with a TYPE_ERROR diagnostic; a declared id that does not match its own SourceUnit.resource_id is rejected with a CONSTRAINT_ERROR diagnostic",
+      "result": {"passed": 3, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0028-NO-PARTIAL-RELEASE-ON-REJECTION",
+      "requirement_id": "BR-003",
+      "command": "the negative acceptance criterion proven directly: a rejected compilation never returns any CanonicalIrRelease object, partial or otherwise",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0028-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 662, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This is the smallest contract-compliant slice: RetainedOacParser/RetainedSemanticValidator/RetainedCanonicalIrBuilder implement OacParser/SemanticValidator/CanonicalIrBuilder only. IrSigner (real cryptographic signing), ReleasePublisher, SemanticDiffEngine, MigrationPlanner, ArtifactGenerator (beyond the one migration-metadata artifact), CompatibilityChecker and ConformanceSuitePort remain unimplemented Protocols in the sealed ports module, each its own future task.",
+    "signature_envelope_ref is an honestly-labeled unsigned placeholder (urn:ocor:unsigned:<core-digest>), not a real signature envelope; no signing claim is made or implied.",
+    "The DSL's minimal shape contract (a top-level 'id' plus a 'fields' mapping) is deliberately narrow, matching 'the smallest contract-compliant implementation'; it does not attempt to anticipate every future schema shape the real C1 ontology DSL will need.",
+    "canonical_digest (RFC 8785) requires I-JSON-safe values; a 'fields' mapping containing a non-JSON-safe YAML type (e.g. a date or a custom tag) would raise from the canonicalizer rather than from this module's own validation -- an honest current limitation, not a silently swallowed case.",
+    "The same pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope."
+  ],
+  "rollback_procedure_verified": "This component is pure and stateless (no durable side effects, no external service, no persisted state to roll back); a rollback is a plain revert of the isolated commit, mechanically reviewed rather than drilled, consistent with the task's own rollback_procedure for a component with no runtime state.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "bb576d2ad7a9a7f867d328d6caabbdb657e0ce1f3cc55e5c2acb6c4d2281e9ba",
+  "result": "PASS"
+}
