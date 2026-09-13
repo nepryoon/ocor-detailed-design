@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0017",
+  "commit": "a2ea8f467cc47891add109fbcd1b2e8567c49399",
+  "created_at": "2026-09-13T04:20:00Z",
+  "environment": {
+    "orchestrator": "docker compose -p ocor-bootstrap (deploy/bootstrap/compose.yaml), same live stack provisioned by the WS-12 chain (OCOR-DEV-0079..0084)",
+    "backend_under_test": "the real TypeDB service (http://127.0.0.1:8000, TypeDB HTTP v1 API), a C4 projection adapter backend",
+    "reused_deliverable": "ocor_runtime.c2.ports (OCOR-DEV-0012, sealed and unmodified) supplies the ConsistencyMode/ConsistencyRequirement/ServedContext/NamedQueryRequest contract; this task adds only a real TypeDB-backed ProjectionReadPort/WatermarkPort implementation",
+    "secrets": "TypeDB dev-mode default credentials (admin/password), the same literal already used unmodified by deploy/bootstrap/fixtures/load_fixtures.py; no new secret introduced"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "spikes/typedb_exact_commit/adapter.py": "cb72c04da615f175a6492365af1c5e81abd0395598d9fa6279536014a39ad25e",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0017.py": "70714ba056f00b5178684e0882435e38850212b7c68434855f60d56243303055"
+  },
+  "commands": [
+    {
+      "command": "empirical TypeDB syntax probes against the real live instance before writing the adapter: undefined-type reference (HTTP 400 INF2), redefinition of an identical schema (HTTP 200, idempotent, no check-before-mutate needed), duplicate @key insert (HTTP 400 CNT9, confirming updates need delete-then-insert)",
+      "result": {"passed": 3, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0017.py -v against the real live TypeDB, repeated 5 times to demonstrate determinism",
+      "result": {"passed": 30, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, ocor-runtime/tests/ (OCOR_LIVE_POSTGRES_DSN set locally, pointed at the ocor-bootstrap postgresql service)",
+      "result": {"passed": 601, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, 3 reports/tests suites",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0017-EXACT-MATCH",
+      "requirement_id": "BR-003",
+      "command": "a fact ingested and watermarked at the same commit is served exactly, with served.canonical_commit and served.projection_watermark both equal to the required commit",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0017-AHEAD-OF-WATERMARK",
+      "requirement_id": "BR-003",
+      "command": "a fact ingested into TypeDB but not yet watermarked fails closed with CONSISTENCY_DOWNGRADE under EXACT_AT_COMMIT, and the watermark itself is never falsely advanced",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0017-ROW-MOVED-PAST-WATERMARK",
+      "requirement_id": "BR-003",
+      "command": "a fact whose row has been updated to a newer commit while the watermark still reads the older one fails closed with CONSISTENCY_DOWNGRADE when the older commit is requested exactly -- never silently serves the newer content mislabeled as the older, requested commit",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0017-PROJECTION-NOT-READY",
+      "requirement_id": "BR-003",
+      "command": "AT_LEAST_COMMIT mode reports PROJECTION_NOT_READY (not a generic error) while behind, with the current watermark independently observable via a separate call, then succeeds once the watermark is advanced",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0017-STALE-ACROSS-PROGRESSION",
+      "requirement_id": "BR-003",
+      "command": "across a real two-commit progression (ingest+watermark commit-1, read exact, ingest commit-2, read exact commit-1 again, watermark commit-2, read exact commit-2, read exact commit-1 again) the superseded commit is never served as exact once it is stale, in either direction",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0017-NOT-FOUND-AFTER-CONSISTENCY",
+      "requirement_id": "BR-003",
+      "command": "a query for a fact that was never ingested, at a watermark that honestly matches the required commit, reaches RESULT_NOT_FOUND rather than a falsified consistency failure -- consistency is checked before existence, not used to mask it",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0017-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 630, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This spike models projection lag with an explicit, test-driven advance_watermark step rather than a real asynchronous outbox consumer; it proves the READ-side contract enforcement is correct given any watermark/row state, not the specific timing of a production catch-up pipeline (which does not exist yet, per the same gap already disclosed in the Phase 3 language-migration decision for components 3-5).",
+    "TypeDB's `define` was empirically observed to be idempotent on this instance (redefining an identical schema is a no-op, not an error); this is a live-verified behavior of this TypeDB version, not a documented guarantee this spike asserts generally.",
+    "The @key constraint forces fact updates to be modeled as delete-then-insert (two transactions) rather than a single atomic update; a production projection writer would need its own concurrency discipline for that two-step sequence, which is out of this read-side spike's scope.",
+    "The same pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope."
+  ],
+  "rollback_procedure_verified": "Every test begins from adapter.reset() (a real delete of all spike-fact and spike-watermark instances against the live schema) and the schema itself is defined idempotently by initialize(), so a fresh run from a clean or partially-populated database converges to the same state -- verified directly by 5 consecutive full test-suite runs with no manual cleanup between them.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "6a5063f97c8b61f9a6e3d408991f8f86c14afa39d1a7bfdfc53fa787fd253acd",
+  "result": "PASS"
+}

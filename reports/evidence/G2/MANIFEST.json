@@ -177,6 +177,16 @@
       "path": "OCOR-DEV-0016.log",
       "sha256": "6ac8a2c017234eda7f6246414c766284cc1711a918a99eaea95b7a1721935816",
       "task_id": "OCOR-DEV-0016-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0017.json",
+      "sha256": "cdc9b5bb58b898b3b03139a2ab68b85716989819288259bd4b5514b2baf5d1e3",
+      "task_id": "OCOR-DEV-0017"
+    },
+    {
+      "path": "OCOR-DEV-0017.log",
+      "sha256": "6a5063f97c8b61f9a6e3d408991f8f86c14afa39d1a7bfdfc53fa787fd253acd",
+      "task_id": "OCOR-DEV-0017-RAW"
     }
   ],
   "created_at": "2026-09-04T14:12:35Z",
@@ -837,6 +847,69 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0016"
+    },
+    {
+      "case_id": "OCOR-DEV-0017-EXACT-MATCH",
+      "command": "a fact ingested and watermarked at the same commit is served exactly, with served.canonical_commit and served.projection_watermark both equal to the required commit",
+      "evidence_path": "OCOR-DEV-0017.json",
+      "raw_output_path": "OCOR-DEV-0017.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0017"
+    },
+    {
+      "case_id": "OCOR-DEV-0017-AHEAD-OF-WATERMARK",
+      "command": "a fact ingested but not yet watermarked fails closed with CONSISTENCY_DOWNGRADE under EXACT_AT_COMMIT, and the watermark is never falsely advanced",
+      "evidence_path": "OCOR-DEV-0017.json",
+      "raw_output_path": "OCOR-DEV-0017.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0017"
+    },
+    {
+      "case_id": "OCOR-DEV-0017-ROW-MOVED-PAST-WATERMARK",
+      "command": "a fact whose row has moved to a newer commit while the watermark still reads the older one fails closed rather than silently serving the newer content mislabeled as the older, requested commit",
+      "evidence_path": "OCOR-DEV-0017.json",
+      "raw_output_path": "OCOR-DEV-0017.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0017"
+    },
+    {
+      "case_id": "OCOR-DEV-0017-PROJECTION-NOT-READY",
+      "command": "AT_LEAST_COMMIT mode reports PROJECTION_NOT_READY while behind, with the current watermark independently observable, then succeeds once the watermark is advanced",
+      "evidence_path": "OCOR-DEV-0017.json",
+      "raw_output_path": "OCOR-DEV-0017.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0017"
+    },
+    {
+      "case_id": "OCOR-DEV-0017-STALE-ACROSS-PROGRESSION",
+      "command": "across a real two-commit progression, the superseded commit is never served as exact once it is stale, in either direction",
+      "evidence_path": "OCOR-DEV-0017.json",
+      "raw_output_path": "OCOR-DEV-0017.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0017"
+    },
+    {
+      "case_id": "OCOR-DEV-0017-NOT-FOUND-AFTER-CONSISTENCY",
+      "command": "a query for a never-ingested fact at a watermark that honestly matches the required commit reaches RESULT_NOT_FOUND rather than a falsified consistency failure",
+      "evidence_path": "OCOR-DEV-0017.json",
+      "raw_output_path": "OCOR-DEV-0017.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0017"
+    },
+    {
+      "case_id": "OCOR-DEV-0017-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0017.json",
+      "raw_output_path": "OCOR-DEV-0017.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0017"
     }
   ],
   "schema_version": "1.0"

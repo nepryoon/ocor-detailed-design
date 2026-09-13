@@ -1288,3 +1288,80 @@
   polling CI, merge a gate verdi, verifica SHA post-merge. Poi proseguire
   con uno degli altri spike G2 dello stesso wave 11:
   `OCOR-DEV-0017`/`0018`/`0021`.
+- `OCOR-DEV-0016`: PR #77 mergiata (`a2ea8f467cc47891add109fbcd1b2e8567c49399`),
+  tutti e 13 i check verdi al primo push, SHA post-merge verificata.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0017 (SPIKE TypeDB exact-at-commit semantics)
+
+- Secondo spike G2 dopo la chiusura di WS-12, selezionato per ordine
+  numerico fra `0017`/`0018`/`0021` (stesso wave 11, dipendenze già
+  soddisfatte). Dipende da `OCOR-DEV-0006`, `OCOR-DEV-0012`, `OCOR-DEV-0013`,
+  `OCOR-DEV-0084`, tutti già mergiati.
+- Riutilizzato senza modifiche il contratto sigillato di `OCOR-DEV-0012`
+  (`ocor_runtime.c2.ports`: `ConsistencyMode`/`ConsistencyRequirement`/
+  `ServedContext`/`NamedQueryRequest.verify_served`); aggiunto
+  `spikes/typedb_exact_commit/adapter.py` (nuovo) con un
+  `TypeDBExactCommitAdapter` reale che implementa `ProjectionReadPort`/
+  `WatermarkPort` contro TypeDB reale (HTTP v1: signin/transazione/query/
+  commit/close, stesso pattern già validato in `OCOR-DEV-0081`), modellando
+  una proiezione C4 con ritardo asincrono: `ingest`/aggiornamento scrivono
+  un fatto marcato con il commit che lo ha prodotto, `advance_watermark` è
+  un passo SEPARATO che simula il momento in cui la pipeline di proiezione
+  ha applicato quel commit ed è sicuro leggerlo.
+- **Probe empirici reali contro TypeDB prima di scrivere l'adapter** (non
+  assunti, verificati): un riferimento a un tipo non definito fallisce con
+  HTTP 400 `INF2`; ridefinire uno schema identico è idempotente (HTTP 200,
+  nessun errore — `initialize()` non necessita quindi di un probe
+  check-before-mutate); un secondo insert con lo stesso valore `@key`
+  fallisce con HTTP 400 `CNT9` (motiva perché un aggiornamento di un fatto
+  esistente deve cancellare-e-reinserire, non un update in-place).
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0017.py` (6 test, tutti
+  contro TypeDB reale, nessun mock): corrispondenza esatta quando fatto e
+  watermark coincidono; fallimento chiuso (`CONSISTENCY_DOWNGRADE`) quando
+  un fatto è ingerito ma il watermark non è ancora avanzato — e il
+  watermark non viene mai falsamente avanzato; fallimento chiuso quando la
+  riga è stata aggiornata a un commit più recente mentre il watermark resta
+  al commit più vecchio richiesto (prova diretta del criterio negativo:
+  "restituire fatti più vecchi come exact-at-commit falsifica l'approccio",
+  qui nella forma speculare — mai servire contenuto più nuovo etichettato
+  come il commit più vecchio richiesto); modalità `AT_LEAST_COMMIT` che
+  riporta `PROJECTION_NOT_READY` con un watermark osservabile
+  separatamente, poi successo dopo l'avanzamento; progressione reale a due
+  commit in cui il commit superato non viene mai servito come esatto in
+  nessuna delle due direzioni; `RESULT_NOT_FOUND` raggiunto solo dopo che
+  la coerenza è confermata (mai una falsificazione della coerenza usata per
+  mascherare una semplice assenza).
+- **Bug del primo tentativo, corretto prima di sigillare**: `ServedContext`
+  e `Watermark` (contratto sigillato di `OCOR-DEV-0012`) richiedono stringhe
+  non vuote per `canonical_commit`/`projection_watermark`; usare `""` come
+  sentinella per "nessun watermark ancora" faceva fallire la costruzione
+  con `QUERY_CONTRACT_INVALID` prima ancora di raggiungere la verifica di
+  coerenza — corretto introducendo la sentinella non vuota
+  `urn:ocor:commit:none`, garantita per costruzione a non coincidere mai
+  con un commit reale generato dai test.
+- `scripts/validate_language_policy.py` verificato: nessuna nuova area
+  necessaria (`spikes/` e `scripts/` già autorizzati).
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (45 file,
+  `spikes/` e `tests/` fuori scope per policy), `validate_rccad.py` PASS,
+  `validate_language_policy.py` PASS, `validate_ocor_change_scope.py` PASS
+  (9 percorsi), pytest completo con `OCOR_LIVE_POSTGRES_DSN` locale:
+  `2 failed, 630 passed, 0 skipped, 0 errors` (stessi 2 fallimenti noti e
+  preesistenti del pin dell'interprete, +6 rispetto alla fase precedente),
+  `validate_ocor_development_plan.py --authorized-extension` PASS dopo il
+  consueto doppio-run di assestamento self-hash.
+- Evidenza sigillata contro TypeDB reale:
+  `reports/evidence/G2/OCOR-DEV-0017.json` +
+  `reports/evidence/G2/OCOR-DEV-0017.log`, aggiunta a
+  `reports/evidence/G2/MANIFEST.json` (diff puramente additivo, 73 righe).
+  `scripts/validate_runtime_evidence.py --task OCOR-DEV-0017 --non-skipped`
+  PASS.
+- Manutenzione ambiente: `fuseki` nuovamente OOM-killed (exit 137) dal
+  container host preesistente non correlato; riavviato il solo servizio
+  interessato, come nelle iterazioni precedenti, senza toccare il
+  container non correlato.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: push del branch
+  `governed/ocor-dev-0017-typedb-exact-commit-spike`, apertura PR, polling
+  CI, merge a gate verdi, verifica SHA post-merge. Poi proseguire con uno
+  degli spike G2 rimanenti dello stesso wave 11: `OCOR-DEV-0018`/`0021`.
