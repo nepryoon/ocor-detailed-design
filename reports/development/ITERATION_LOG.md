@@ -2364,3 +2364,96 @@
   `OCOR-DEV-0033` ha sbloccato un task numericamente più basso prima
   di procedere, poi selezionare per ordine numerico sull'intero
   insieme pronto.
+
+## 2026-09-13 — OCOR-DEV-0034: C2 named-query gateway e identity resolution
+
+- Nuovo `ocor_runtime.c2.gateway`: `NamedQueryGateway` (implementa il
+  `NamedQueryPort` sigillato, OCOR-DEV-0012) garantisce che solo le
+  named query registrate vengano eseguite, e solo dopo che identità,
+  scopo, marking e policy siano tutti dispositivi. Lo scopo è già
+  fail-closed dentro il costruttore sigillato di `NamedQueryRequest`;
+  questo task fornisce le PRIME implementazioni reali dei port
+  sigillati `AuthorityResolutionPort` (`IdentityBackedAuthority`,
+  delega al retained `c2_identity.IdentityRegistry`, invariato) e
+  `PolicyDecisionPort` (`RegistrationAndMarkingPolicy`, combina un
+  allow-list esplicito nome/versione con un controllo reale di
+  marking-join contro `spikes.jena_marking.adapter` di OCOR-DEV-0018,
+  invariato), poi delega a un `ProjectionReadPort` iniettato
+  (`spikes.typedb_exact_commit.adapter` di OCOR-DEV-0017, invariato)
+  per la lettura vera e propria.
+- Design deliberato: un contratto non registrato, una versione non
+  registrata e un diniego di marking restituiscono tutti lo stesso
+  codice `ARBITRARY_QUERY_FORBIDDEN` — un chiamante non può distinguere
+  quale barriera è stata attraversata dal solo errore; nessuna
+  risposta, parziale o meno, viene mai restituita su alcun percorso di
+  diniego.
+- Aggiunti 14 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0034.py`, tutti contro
+  Fuseki e TypeDB reali, nessun mock: conformità ai Protocol per le 3
+  nuove classi; percorso positivo completo fino a una lettura TypeDB
+  reale; diniego per contratto non registrato, versione non
+  registrata, identità mai registrata (abstain), risorsa fuori
+  clearance, risorsa priva del tutto della propria marcatura, e
+  riferimento di clearance non risolvibile; una query registrata senza
+  parametro risorsa che salta il marking join; rifiuto di scopo
+  mancante e di forma di query arbitraria al confine del costruttore
+  sigillato; un test di fault-injection reale (una vera porta TCP
+  locale chiusa, stesso pattern a basso raggio d'impatto già stabilito
+  in OCOR-DEV-0026/0027) che prova che un guasto del backend di
+  marking si propaga invece di ripiegare silenziosamente su un
+  permesso.
+- Un bug di scrittura del test trovato e corretto prima della
+  sigillatura: un test si aspettava `C2Error` da un `GovernedContext`
+  con scopo mancante, ma il costruttore sigillato di `GovernedContext`
+  solleva il proprio `GovernedContextError` distinto — corretto il
+  tipo di eccezione atteso nel test, nessuna modifica al codice di
+  produzione necessaria.
+- Verificato proattivamente, prima di aprire la PR, che TypeDB e
+  Fuseki fossero già forniti in tutti e 3 i workflow CI che eseguono
+  l'intera suite di test (già risolto durante OCOR-DEV-0017/0018).
+- Gate locali tutti verdi: `ruff`, `mypy`, `validate_rccad.py` PASS
+  (nessun import diretto di client backend in `gateway.py`, tutte le
+  porte sono iniettate), `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS (7 percorsi), pytest completo
+  via lo script `pytest` nudo con `OCOR_LIVE_POSTGRES_DSN` impostato
+  contro il PostgreSQL reale di ocor-bootstrap: `2 failed, 713 passed`
+  (stessi 2 fallimenti noti) più `29 passed` per le 3 suite
+  `reports/tests/`, `validate_ocor_development_plan.py --base-ref
+  origin/main --authorized-extension` PASS dopo il consueto
+  doppio-run.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0034.json` +
+  `reports/evidence/G4/OCOR-DEV-0034.log`.
+  `reports/evidence/G4/MANIFEST.json` esteso con inserimento
+  chirurgico (2 nuovi artifact, 15 nuovi requirement_results).
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task, non incluso nel commit del
+  task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0034`: tutti e 13 i check verdi al primo push. PR #99
+  mergiata (`1af39d6feefbec7a21edeff4c635cf4c406919d8`), SHA
+  post-merge verificata.
+
+## 2026-09-13 — Sincronizzazione stato: OCOR-DEV-0034 (post-merge, wave 16 OCOR-DEV-0035 pronto)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #99, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0034`).
+- `baseline_commit` aggiornato a
+  `1af39d6feefbec7a21edeff4c635cf4c406919d8` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0034`
+  aggiunto a `completed_evidence_tasks`.
+- Ricalcolata la prontezza dal backlog JSON: `OCOR-DEV-0035` ("Implement
+  C2 policy-filtered planning consistency and watermarks", wave 16) è
+  appena diventato pronto, dipendente solo da `OCOR-DEV-0034` —
+  numericamente più basso dei 7 task rimanenti del wave 15
+  (`0036/0037/0038/0040/0042/0046/0048`), quindi selezionato per
+  ordine numerico sull'intero insieme pronto, secondo la convenzione
+  già stabilita in questa sessione.
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
+- Prossima azione: implementare `ocor-runtime/src/ocor_runtime/c2/planner.py`
+  riusando i port sigillati `WatermarkPort`/`ConsistencyRequirement`
+  (OCOR-DEV-0012) e la composizione di OCOR-DEV-0034 dove utile;
+  criterio di accettazione negativo: "silent stale fallback or backend
+  query leakage is rejected".
