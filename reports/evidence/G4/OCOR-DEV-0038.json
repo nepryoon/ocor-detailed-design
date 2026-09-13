@@ -1,0 +1,147 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0038",
+  "commit": "80047f8ee8673ccd3d5f99802c5cbffca72bb69e",
+  "created_at": "2026-09-13T20:40:00Z",
+  "environment": {
+    "orchestrator": "real backend behind a new, self-contained retained adapter -- no orchestration process of its own",
+    "backend_under_test": "real, live Fuseki (ocor-bootstrap fuseki service), via its SPARQL 1.1 query/update HTTP endpoints",
+    "reused_deliverable": "ocor_runtime.c4_marking.MarkingEngine/MarkingSet (sealed, reused unmodified) for the authorization decision; the same real marking-join query pattern already proven for real by spikes.jena_marking.adapter (OCOR-DEV-0018); rdflib (already a project dependency, 7.1.4) for real JSON-LD serialization -- no new external dependency added"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c4/jena_adapter.py": "cd7a4006c380c9c6f72ce7d68d8194242642c9ed5a1fc178abc883c95420f716",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0038.py": "02e67020bc53c397e81553a8e3f054be5119f35a98bd929bce5a9221a2028898"
+  },
+  "commands": [
+    {
+      "command": "read spikes.jena_marking.adapter (OCOR-DEV-0018) in full and confirmed no pyshacl (or any general SHACL processor) is a project dependency (checked ocor-runtime/pyproject.toml and uv.lock) -- decided the smallest contract-compliant SHACL-equivalent for this task's own scope is an explicit, closed required-property/closed-predicate shape check expressed directly in Python, rather than adding a new external dependency (a new pyshacl dependency would require pyproject.toml/uv.lock changes outside this task's own expected_file_areas and outside the smallest-slice principle)",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "design: publish(resource_id, properties) validates the closed predicate vocabulary (ALLOWED_PREDICATES) and the required-property set (REQUIRED_PROPERTIES) and a non-empty, well-formed provenanceRef BEFORE issuing any SPARQL write -- an unauthorized predicate or lossy/missing provenance blocks publication entirely (the task's own two negative acceptance criteria, made structural); list_authorized/exists_authorized reuse the exact real marking-join pattern OCOR-DEV-0018 already proved (a resource is never returned without its classification joined in the same query); to_json_ld is denied via exists_authorized for any clearance that does not authorize the resource, then serializes via a real SPARQL CONSTRUCT + rdflib Graph.serialize(format='json-ld') -- a real JSON-LD serializer, never hand-rolled",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "ruff check ocor-runtime/src/ocor_runtime/c4/jena_adapter.py ocor-runtime/tests/tasks/test_ocor_dev_0038.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python -m mypy src/ocor_runtime/c4/jena_adapter.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "applied the OCOR-DEV-0037 lesson proactively: the fault-injection test expects the real raw urllib.error.URLError (a genuine connection-refused failure), not a translated JenaAdapterError, since _request only translates HTTP-level error responses -- no bug needed fixing this time because the lesson was applied up front",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0038.py -v via the bare pytest console script (matching CI's uv run --project ocor-runtime --frozen pytest exactly), repeated 4 times for determinism, against real Fuseki -- all 8 tests passed on the first attempt",
+      "result": {"passed": 32, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_rccad.py --root . (AFF-002/AFF-006: this file uses stdlib urllib for real HTTP calls, not a literal psycopg/kafka/qdrant_client/terminusdb_client/typedb import, so no adapters/ subtree is needed, matching the spike's own layout)",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_language_policy.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression via the bare pytest console script (matching CI exactly), ocor-runtime/tests/, with OCOR_LIVE_POSTGRES_DSN set against the real ocor-bootstrap PostgreSQL instance",
+      "result": {"passed": 745, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "the 3 CI-wired reports/tests suites: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/{test_generate_contracts_reference_resolution,test_backlog_generator_reality_parity,test_language_migration_benchmark_harness}.py",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0038-VALID-PUBLICATION-READABLE-AND-JSON-LD",
+      "requirement_id": "FR-168",
+      "command": "a publication satisfying the closed shape and non-lossy provenance is readable and serializes to real, well-formed JSON-LD via rdflib",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-UNAUTHORIZED-PREDICATE-BLOCKS-PUBLICATION",
+      "requirement_id": "FR-168",
+      "command": "a predicate outside the closed vocabulary blocks publication entirely (UNAUTHORIZED_PREDICATE) -- no triple is ever written, verified by an empty authorized list afterward",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-MISSING-REQUIRED-PROPERTY-BLOCKS-PUBLICATION",
+      "requirement_id": "FR-168",
+      "command": "a missing required property blocks publication entirely (SHAPE_VIOLATION), verified by an empty authorized list afterward",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-LOSSY-PROVENANCE-BLOCKS-PUBLICATION",
+      "requirement_id": "FR-168",
+      "command": "an empty or fabricated provenanceRef blocks publication entirely (PROVENANCE_INVALID) -- the task's own second negative acceptance criterion, made executable",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-LIST-AUTHORIZED-FILTERS-BY-REAL-MARKING-JOIN",
+      "requirement_id": "BR-003",
+      "command": "list_authorized returns only resources at or below the requester's real clearance, reusing OCOR-DEV-0018's marking-join pattern",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-COUNT-NEVER-DIVERGES-RAW-COUNT-WOULD-LEAK",
+      "requirement_id": "BR-003",
+      "command": "the authorized count never diverges from the authorized list length; the raw, marking-blind count would leak but the public API never exposes it",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-JSON-LD-DENIED-FOR-UNAUTHORIZED-CLEARANCE",
+      "requirement_id": "BR-003",
+      "command": "to_json_ld is denied (MARKING_DENIED) for a clearance that does not authorize the resource, identical to the marking-safe read path",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-FUSEKI-UNREACHABILITY-FAILS-CLOSED",
+      "requirement_id": "NFR-051",
+      "command": "a real Fuseki unreachability (a genuine closed local TCP port) propagates as a real urllib.error.URLError before any triple is written, never a partial publication",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 774, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This adapter's SHACL-equivalent is an explicit, closed required-property/closed-predicate check rather than a general SHACL processor (no pyshacl dependency exists in this project); a future task adopting a richer, arbitrary SHACL shape vocabulary would need to add that dependency deliberately, which is a policy/dependency decision outside this task's own smallest-slice scope.",
+    "publish's atomicity is a single SPARQL INSERT DATA statement covering exactly one resource's triples; a caller publishing many resources from one C3 commit would need one publish call per resource, matching the closed-shape validation's own per-resource scope.",
+    "The pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope; it produces the same 2 pre-existing, unrelated regression failures documented in every prior evidence file this session."
+  ],
+  "rollback_procedure_verified": "Every test resets the real Fuseki dataset via adapter.reset() before running; verified directly by 4 consecutive full test-suite runs with no manual cleanup between them, and by every blocked-publication test proving the authorized list stays empty afterward -- no partial triple ever survives a rejected publish.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "1b04b1144d5ac9024ed46ba570c9e6a4516be30278e904ad35ebfd8bc7dcf046",
+  "result": "PASS"
+}

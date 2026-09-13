@@ -62,6 +62,16 @@
       "path": "OCOR-DEV-0037.log",
       "sha256": "32a46c4c3f113cebdda896b2a821be27e789fcab8fbc6c030da7ed27407629ec",
       "task_id": "OCOR-DEV-0037-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0038.json",
+      "sha256": "69b6fa81003c66ac10948cdc5013cbf58669861cc1244346f7f345233d8f9c9f",
+      "task_id": "OCOR-DEV-0038"
+    },
+    {
+      "path": "OCOR-DEV-0038.log",
+      "sha256": "1b04b1144d5ac9024ed46ba570c9e6a4516be30278e904ad35ebfd8bc7dcf046",
+      "task_id": "OCOR-DEV-0038-RAW"
     }
   ],
   "requirement_results": [
@@ -631,6 +641,87 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0037"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-VALID-PUBLICATION-READABLE-AND-JSON-LD",
+      "command": "a publication satisfying the closed shape and non-lossy provenance is readable and serializes to real, well-formed JSON-LD via rdflib",
+      "evidence_path": "OCOR-DEV-0038.json",
+      "raw_output_path": "OCOR-DEV-0038.log",
+      "requirement_id": "FR-168",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0038"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-UNAUTHORIZED-PREDICATE-BLOCKS-PUBLICATION",
+      "command": "a predicate outside the closed vocabulary blocks publication entirely, no triple is ever written",
+      "evidence_path": "OCOR-DEV-0038.json",
+      "raw_output_path": "OCOR-DEV-0038.log",
+      "requirement_id": "FR-168",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0038"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-MISSING-REQUIRED-PROPERTY-BLOCKS-PUBLICATION",
+      "command": "a missing required property blocks publication entirely",
+      "evidence_path": "OCOR-DEV-0038.json",
+      "raw_output_path": "OCOR-DEV-0038.log",
+      "requirement_id": "FR-168",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0038"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-LOSSY-PROVENANCE-BLOCKS-PUBLICATION",
+      "command": "an empty or fabricated provenanceRef blocks publication entirely",
+      "evidence_path": "OCOR-DEV-0038.json",
+      "raw_output_path": "OCOR-DEV-0038.log",
+      "requirement_id": "FR-168",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0038"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-LIST-AUTHORIZED-FILTERS-BY-REAL-MARKING-JOIN",
+      "command": "list_authorized returns only resources at or below the requester's real clearance",
+      "evidence_path": "OCOR-DEV-0038.json",
+      "raw_output_path": "OCOR-DEV-0038.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0038"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-COUNT-NEVER-DIVERGES-RAW-COUNT-WOULD-LEAK",
+      "command": "the authorized count never diverges from the authorized list length; the raw count would leak but is never exposed",
+      "evidence_path": "OCOR-DEV-0038.json",
+      "raw_output_path": "OCOR-DEV-0038.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0038"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-JSON-LD-DENIED-FOR-UNAUTHORIZED-CLEARANCE",
+      "command": "to_json_ld is denied for a clearance that does not authorize the resource",
+      "evidence_path": "OCOR-DEV-0038.json",
+      "raw_output_path": "OCOR-DEV-0038.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0038"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-FUSEKI-UNREACHABILITY-FAILS-CLOSED",
+      "command": "a real Fuseki unreachability propagates before any triple is written, never a partial publication",
+      "evidence_path": "OCOR-DEV-0038.json",
+      "raw_output_path": "OCOR-DEV-0038.log",
+      "requirement_id": "NFR-051",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0038"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-REGRESSION",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0038.json",
+      "raw_output_path": "OCOR-DEV-0038.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0038"
     }
   ]
 }
