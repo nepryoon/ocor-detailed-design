@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "4630340f135fa0cab64c7926c8ae38bd0588cb0f",
-  "branch": "governed/ocor-dev-0027-context-replay",
+  "baseline_commit": "53ad2e5bb76f7b59a5ffae9863b685338027edbe",
+  "branch": "governed/state-sync-ocor-dev-0027",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -428,6 +428,14 @@
     {
       "command": "full local pytest regression with OCOR_LIVE_POSTGRES_DSN set (ocor-runtime/tests/ + 3 reports/tests suites)",
       "result": "PASS_2_failed_656_passed_0_skipped_0_errors_plus_29_passed (the 2 failures are the pre-existing, unrelated interpreter-pin gap)"
+    },
+    {
+      "command": "gh pr checks 89; gh pr merge 89 --merge; git fetch origin main",
+      "result": "13/13 checks pass on the first push; PR #89 MERGED_53ad2e5bb76f7b59a5ffae9863b685338027edbe; post-merge SHA verified; wave 13 fully closed"
+    },
+    {
+      "command": "compute the next DAG-ready task set directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks after OCOR-DEV-0027 merged",
+      "result": "ready set = {OCOR-DEV-0030} -- the only remaining ready task, gate G3, depending on OCOR-DEV-0020/0021/0029 (all merged); note OCOR-DEV-0030 has parallel_wave=13 in the backlog JSON, the same wave as 0026/0027, so wave 13 was not yet fully closed by 0027's merge"
     }
   ],
   "completed_tasks": [
@@ -482,9 +490,10 @@
     "State sync (OCOR-DEV-0026): dedicated state-sync-only PR, mirroring the OCOR-DEV-0029/PR #86 pattern, opened immediately after OCOR-DEV-0026's merge per the Product Owner's standing instruction. No source code touched.",
     "OCOR-DEV-0026: PR #87 merged (a78d054d22ac85839181c833a0acc8deed8aa9c8). All 13 checks green on the first push. Post-merge SHA verified.",
     "State sync (OCOR-DEV-0026): PR #88 merged (4630340f135fa0cab64c7926c8ae38bd0588cb0f). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0027 (pending PR/merge): SPIKE deterministic context-assembly replay. Proves that a context-assembly receipt digest is a pure, deterministic function of exactly five pinned dimensions -- item versions, ordering, redactions, truncation and representation. New spikes/context_replay/replay.py: PinnedItem/AssemblyRequest/ContextReceipt dataclasses and assemble_context(), which orders candidates via a real cosine-similarity search against OCOR-DEV-0023's sealed QdrantHarness (reused unmodified) and computes the receipt digest via ocor_runtime.kernel.canonical.canonical_digest (sealed RFC 8785 canonicalization, also reused unmodified) over a representation that folds in every pinned dimension. Proactively confirmed no CI change was needed: Qdrant self-provisions the same way OCOR-DEV-0023/0024/0025 already do. Added 8 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0027.py, all against a real self-provisioned Qdrant container, no mocks: identical pinned inputs reproduce an identical digest; bumping an item version changes it; changing redaction changes it; changing the query vector changes both the real ranking order and the digest; changing truncation changes it and sets the truncated flag; changing only the representation version changes the digest even with identical ordering; two independent assemblies are proven equivalent via OCOR-DEV-0024's sealed assert_observationally_equivalent helper (reused unmodified); and a real TCP connection refusal against a genuinely closed local port during ranking fails closed (ContextReplayError) rather than returning a silent partial context -- the same lower-blast-radius real-fault pattern established in OCOR-DEV-0026."
+    "OCOR-DEV-0027 (pending PR/merge): SPIKE deterministic context-assembly replay. Proves that a context-assembly receipt digest is a pure, deterministic function of exactly five pinned dimensions -- item versions, ordering, redactions, truncation and representation. New spikes/context_replay/replay.py: PinnedItem/AssemblyRequest/ContextReceipt dataclasses and assemble_context(), which orders candidates via a real cosine-similarity search against OCOR-DEV-0023's sealed QdrantHarness (reused unmodified) and computes the receipt digest via ocor_runtime.kernel.canonical.canonical_digest (sealed RFC 8785 canonicalization, also reused unmodified) over a representation that folds in every pinned dimension. Proactively confirmed no CI change was needed: Qdrant self-provisions the same way OCOR-DEV-0023/0024/0025 already do. Added 8 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0027.py, all against a real self-provisioned Qdrant container, no mocks: identical pinned inputs reproduce an identical digest; bumping an item version changes it; changing redaction changes it; changing the query vector changes both the real ranking order and the digest; changing truncation changes it and sets the truncated flag; changing only the representation version changes the digest even with identical ordering; two independent assemblies are proven equivalent via OCOR-DEV-0024's sealed assert_observationally_equivalent helper (reused unmodified); and a real TCP connection refusal against a genuinely closed local port during ranking fails closed (ContextReplayError) rather than returning a silent partial context -- the same lower-blast-radius real-fault pattern established in OCOR-DEV-0026.",
+    "OCOR-DEV-0027: PR #89 merged (53ad2e5bb76f7b59a5ffae9863b685338027edbe). All 13 checks green on the first push. Post-merge SHA verified. OCOR-DEV-0030 (gate G3) is also part of wave 13 (parallel_wave=13), so wave 13 is not yet fully closed; it remains as the one final wave-13 task."
   ],
-  "current_task": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0027",
+  "current_task": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0027",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -538,7 +547,7 @@
     "reports/evidence/G2/OCOR-DEV-0027.json",
     "reports/evidence/G2/OCOR-DEV-0027.log"
   ],
-  "exact_next_action": "Push branch governed/ocor-dev-0027-context-replay, open the PR, poll CI to green (Monitor armed on gh pr checks), merge only on green, verify post-merge SHA, sync all three state files immediately at merge time. After this merges, wave 13's only remaining ready task is OCOR-DEV-0030 (Build retained governed-action slice, gate G3) -- confirm readiness directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks, not scripts/ocor_autonomous_delivery.py --status, which remains stale. Before writing any new retained (non-spike) src/ code touching a real backend client, route the client import through an ocor-runtime/src/ocor_runtime/**/adapters/ subtree up front, per AFF-002/AFF-006 (lesson from OCOR-DEV-0029). Before opening the next PR, proactively verify its required real backend is already provisioned in CI (or self-provisions) and fix any gap before the first push; if the shared backend is used concurrently by many other sealed tasks, prefer a real, lower-blast-radius fault (e.g. a refused connection) over a broader CI refactor. The real 11-service Docker stack remains available locally and should be reused directly if still running (check docker compose -p ocor-bootstrap ps first; fuseki has repeatedly been OOM-killed by an unrelated large host container and simply needs restarting each time, never touch that unrelated container itself). The component-1 migration escalation (DISPOSED_DEFERRED by the Product Owner) does not block this.",
+  "exact_next_action": "State sync for OCOR-DEV-0027's merge is complete (this PR). Wave 13 is NOT yet fully closed: OCOR-DEV-0030 (Build retained governed-action slice, gate G3) also has parallel_wave=13 in the backlog JSON, and is now the sole remaining ready task, depending on OCOR-DEV-0020/0021/0029 (all merged). Since it is retained (non-spike) code, proactively check what real backend it needs and whether it is already provisioned in CI before the first push; route any real backend client through an ocor-runtime/src/ocor_runtime/**/adapters/ subtree up front, per AFF-002/AFF-006 (lesson from OCOR-DEV-0029). If the shared backend is used concurrently by many other sealed tasks, prefer a real, lower-blast-radius fault (e.g. a refused connection) over a broader CI refactor for any fault-injection test. The real 11-service Docker stack remains available locally and should be reused directly if still running (check docker compose -p ocor-bootstrap ps first; fuseki has repeatedly been OOM-killed by an unrelated large host container and simply needs restarting each time, never touch that unrelated container itself). The component-1 migration escalation (DISPOSED_DEFERRED by the Product Owner) does not block this.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"
