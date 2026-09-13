@@ -1815,11 +1815,34 @@
   esplicita del Product Owner.
 - Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
   `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
-- Prossima azione: push del branch
-  `governed/ocor-dev-0029-c3-canonical-commit-slice`, apertura PR,
-  polling CI, merge a gate verdi, verifica SHA post-merge. Con questo si
-  chiude l'intero wave 12 (`OCOR-DEV-0024`/`0025`/`0028`/`0029`). Poi
-  proseguire con i due spike G2 rimanenti del wave 13: `OCOR-DEV-0026`
-  (SPIKE restore without resurrection) e `OCOR-DEV-0027` (SPIKE
-  deterministic context-assembly replay), entrambi con dipendenze già
-  soddisfatte.
+- `OCOR-DEV-0029`: `gh pr create` ha incontrato due errori transitori
+  dell'API di GitHub (502 Bad Gateway, poi un errore GraphQL di classe
+  500), entrambi non correlati al contenuto del repository; riuscito al
+  terzo tentativo come PR #85. Tutti e 13 i check verdi al primo push.
+  PR #85 mergiata (`7e1cf57bfe98c314f2cfb1ae0469249428e0ab8f`), SHA
+  post-merge verificata. Con questo si chiude l'intero wave 12
+  (`OCOR-DEV-0024`/`0025`/`0028`/`0029`).
+
+## 2026-09-13 — Sincronizzazione stato: OCOR-DEV-0029 (post-merge)
+
+- Per istruzione esplicita del Product Owner ("aggiorna i tre file di
+  stato SUBITO... non rimandare"), sincronizzazione immediata dei tre
+  file di stato subito dopo il merge della PR #85, su un branch
+  dedicato (`governed/state-sync-ocor-dev-0029`), invece di rimandarla
+  al commit dell'iterazione successiva come accaduto in precedenza per
+  `OCOR-DEV-0024`/`0025` e per `OCOR-DEV-0028`.
+- `baseline_commit` aggiornato a
+  `7e1cf57bfe98c314f2cfb1ae0469249428e0ab8f` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `branch` allineato al
+  branch di questa stessa iterazione di sincronizzazione. Verificata
+  l'assenza di `RCCAD-STATE-HANDOFF-DRIFT` tramite
+  `scripts/validate_rccad.py --root .`.
+- Nessun codice sorgente toccato: gate locali (sha256sum, ruff, mypy,
+  RCCAD, language-policy, change-scope, plan-validator, pytest
+  completo) rieseguiti comunque per protocollo standard e confermati
+  invariati.
+- Prossima azione: determinare la prontezza del wave 13 direttamente da
+  `docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json` e
+  `completed_evidence_tasks`. Candidati noti con dipendenze già
+  soddisfatte: `OCOR-DEV-0026` (SPIKE restore without resurrection) e
+  `OCOR-DEV-0027` (SPIKE deterministic context-assembly replay).
