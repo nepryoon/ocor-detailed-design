@@ -22,6 +22,16 @@
       "path": "OCOR-DEV-0029.log",
       "sha256": "07232a1efba2a7eaa1a282d421992d2b70ce139db56ac7cf8ef309f404d47139",
       "task_id": "OCOR-DEV-0029-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0030.json",
+      "sha256": "070b8dc72387b1d7e14a7b0c2e3b4e6bab15c64c0d59dc6b9cd90badc4b771c6",
+      "task_id": "OCOR-DEV-0030"
+    },
+    {
+      "path": "OCOR-DEV-0030.log",
+      "sha256": "41b397de5233b1730057115029a43d3068a69281d606a91bf9bd38b59c495c21",
+      "task_id": "OCOR-DEV-0030-RAW"
     }
   ],
   "requirement_results": [
@@ -177,6 +187,96 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0029"
+    },
+    {
+      "case_id": "OCOR-DEV-0030-HAPPY-PATH-CROSSES-ALL-FOUR-GATES",
+      "command": "a risk-bearing action with a valid capability lease, a granted Human Gate approval and an accepted Decision crosses all four gates and reaches a simulated effect, with the durable canonical commit written before EMISSION-FENCE releases it",
+      "evidence_path": "OCOR-DEV-0030.json",
+      "raw_output_path": "OCOR-DEV-0030.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0030"
+    },
+    {
+      "case_id": "OCOR-DEV-0030-MISSING-AUTHORITY-DENIES-FIRST",
+      "command": "a lease that does not grant the requested capability is denied at Authority (AUTHORITY_DENIED) before any other gate, the durable store and the sink are never touched",
+      "evidence_path": "OCOR-DEV-0030.json",
+      "raw_output_path": "OCOR-DEV-0030.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0030"
+    },
+    {
+      "case_id": "OCOR-DEV-0030-RISK-BEARING-WITHOUT-APPROVAL-DENIED",
+      "command": "a risk-bearing action with no Human Gate approval is denied (APPROVAL_MISSING)",
+      "evidence_path": "OCOR-DEV-0030.json",
+      "raw_output_path": "OCOR-DEV-0030.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0030"
+    },
+    {
+      "case_id": "OCOR-DEV-0030-REJECTED-APPROVAL-DENIED",
+      "command": "a risk-bearing action with an explicitly rejected Human Gate approval is denied (APPROVAL_MISSING)",
+      "evidence_path": "OCOR-DEV-0030.json",
+      "raw_output_path": "OCOR-DEV-0030.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0030"
+    },
+    {
+      "case_id": "OCOR-DEV-0030-MISSING-DECISION-DENIED",
+      "command": "an action with no Decision record is denied (DECISION_MISSING)",
+      "evidence_path": "OCOR-DEV-0030.json",
+      "raw_output_path": "OCOR-DEV-0030.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0030"
+    },
+    {
+      "case_id": "OCOR-DEV-0030-REJECTED-DECISION-DENIED-WITH-RATIONALE",
+      "command": "a rejected Decision denies the action (DECISION_REJECTED) and preserves the rationale in the error",
+      "evidence_path": "OCOR-DEV-0030.json",
+      "raw_output_path": "OCOR-DEV-0030.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0030"
+    },
+    {
+      "case_id": "OCOR-DEV-0030-NON-RISK-BEARING-SKIPS-HUMAN-GATE",
+      "command": "a non-risk-bearing action succeeds with no Human Gate approval present, matching ACT-T07's NOT_REQUIRED disposition",
+      "evidence_path": "OCOR-DEV-0030.json",
+      "raw_output_path": "OCOR-DEV-0030.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0030"
+    },
+    {
+      "case_id": "OCOR-DEV-0030-FAILING-SINK-LEAVES-NO-RECEIPT-RETRY-SUCCEEDS",
+      "command": "a sink that raises during EMISSION-FENCE release leaves no emission receipt while the canonical commit remains durable and pending; a fresh retry against the same fence and store succeeds",
+      "evidence_path": "OCOR-DEV-0030.json",
+      "raw_output_path": "OCOR-DEV-0030.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0030"
+    },
+    {
+      "case_id": "OCOR-DEV-0030-GATE-NAMES-TRACEABLE-TO-SEALED-LLD-TABLE",
+      "command": "the engine's four gate names (G-AUTHORITY, Human Gate, G-DECISION, EMISSION-FENCE) are traceable to the sealed, LLD-digest-verified 44-transition table (OCOR-DEV-0020), not invented independently",
+      "evidence_path": "OCOR-DEV-0030.json",
+      "raw_output_path": "OCOR-DEV-0030.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0030"
+    },
+    {
+      "case_id": "OCOR-DEV-0030-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0030.json",
+      "raw_output_path": "OCOR-DEV-0030.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0030"
     }
   ]
 }

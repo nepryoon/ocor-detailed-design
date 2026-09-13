@@ -2001,11 +2001,69 @@
   bozza precedente di questo stesso commit prima della correzione.
 - Nessun codice sorgente toccato: gate locali rieseguiti comunque per
   protocollo standard e confermati invariati.
-- Prossima azione: `OCOR-DEV-0030` (Build retained governed-action
-  slice, gate G3), unico task rimasto pronto del wave 13, dipendente
-  da `OCOR-DEV-0020`/`0021`/`0029` (tutti mergiati). Trattandosi di
-  codice retained, verificare proattivamente quale backend reale
-  richiede e se è già provisionato in CI; se tocca un client di
-  backend reale, instradarlo sotto un sotto-albero
-  `ocor-runtime/src/ocor_runtime/**/adapters/` fin da subito, per
-  `AFF-002`/`AFF-006`.
+- `OCOR-DEV-0027`: PR #90 mergiata (`c783d7c2b8b3e6824176764cbda0a683dd44c105`)
+  sul commit corretto (13/13 check verdi), SHA post-merge verificata.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0030 (Build retained governed-action slice)
+
+- Confermato dal backlog JSON: unico task pronto, gate `G3`,
+  dipendente da `OCOR-DEV-0020`/`0021`/`0029` (tutti mergiati).
+- Prima di scrivere codice, letto `docs/OCOR_LLD_v1.1.md` §§2.6/3.1/
+  3.2/4: il workflow C6 completo è una FSM normativa a 44 transizioni
+  (`ACT-T01`..`ACT-T31b`); questo task è la slice contract-compliant
+  più piccola del percorso rappresentativo che un'azione a rischio
+  attraversa — non l'intera FSM (di cui lo spike sigillato
+  `OCOR-DEV-0020` prova già la fedeltà esecutiva strutturale).
+- Scoperto, prima di scrivere qualunque cosa, che
+  `ocor_runtime.c6_capabilities.CapabilityAuthority` (Authority) e
+  `ocor_runtime.c7_emission.EmissionFence` (EMISSION-FENCE) esistono
+  già come codice retained sigillato da una fase precedente della
+  delivery — riusati direttamente senza modifiche. `Approval` e
+  `Decision` sono gli unici due nuovi record realmente necessari,
+  poiché nessun record Human Gate o Decision esisteva ancora.
+- Implementato `ocor-runtime/src/ocor_runtime/c6/engine.py`:
+  `GovernedActionEngine.execute()` attraversa, in ordine stretto,
+  Authority (`G-AUTHORITY`), Human Gate (`G-APPROVAL`), Decision
+  (`G-DECISION`) ed EMISSION-FENCE prima di qualunque effetto
+  simulato, fail-closed a ogni gate. Componente puro, in-memory,
+  deterministico — nessun backend esterno necessario (come la slice
+  compilatore C1 di `OCOR-DEV-0028`), quindi nessuna preoccupazione
+  `AFF-002`/`AFF-006` (zero import di client di backend diretti,
+  verificato con `validate_rccad.py`).
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0030.py` (9 test):
+  percorso felice completo attraverso tutti e quattro i gate fino
+  all'effetto simulato; diniego all'Authority (lease con capability
+  sbagliata); diniego all'Human Gate (approvazione mancante o
+  esplicitamente rifiutata) per un'azione a rischio; un'azione non a
+  rischio salta interamente l'Human Gate (`ACT-T07`, `NOT_REQUIRED`);
+  diniego alla Decision (mancante o rifiutata, con rationale
+  preservato); un sink che fallisce lascia il commit canonico durevole
+  ma non rilasciato, con un retry sicuro sullo stesso fence; un test
+  di fedeltà che traccia i quattro nomi dei gate fino alla tabella
+  sigillata a 44 transizioni di `OCOR-DEV-0020` (verificata contro il
+  digest LLD approvato), a riprova che i nomi non sono stati inventati
+  indipendentemente.
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (50 file,
+  +1 rispetto a prima), `validate_rccad.py` PASS (tutti i 10 AFF
+  `PASS_STATIC_PRECHECK`), `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS (7 percorsi), pytest completo
+  con `OCOR_LIVE_POSTGRES_DSN` locale: `2 failed, 665 passed, 0
+  skipped, 0 errors` (stessi 2 fallimenti noti) più `29 passed` per le
+  3 suite `reports/tests/`, `validate_ocor_development_plan.py
+  --base-ref origin/main --authorized-extension` PASS dopo il
+  consueto doppio-run.
+- Evidenza sigillata: `reports/evidence/G3/OCOR-DEV-0030.json` +
+  `reports/evidence/G3/OCOR-DEV-0030.log`, aggiunta a
+  `reports/evidence/G3/MANIFEST.json` (diff puramente additivo, 100
+  righe, inserimento chirurgico).
+- Aggiornamento dei tre file di stato eseguito in questa stessa
+  iterazione (non rimandato).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: push del branch
+  `governed/ocor-dev-0030-c6-governed-action-slice`, apertura PR,
+  polling CI, merge a gate verdi, verifica SHA post-merge. Con questo
+  si chiude l'intero wave 13 (`OCOR-DEV-0026`/`0027`/`0030`). Poi
+  determinare il prossimo task pronto direttamente dal backlog JSON,
+  verificando sempre il campo `parallel_wave` per etichettare
+  correttamente il wave di ogni candidato.

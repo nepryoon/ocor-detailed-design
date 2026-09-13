@@ -1,0 +1,40 @@
+=== RUN 1: pytest ocor-runtime/tests/tasks/test_ocor_dev_0030.py -v -- pure in-memory, deterministic, no external backend needed (repeated x4 for stability, run 1 shown verbatim) ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 9 items
+
+ocor-runtime/tests/tasks/test_ocor_dev_0030.py::test_happy_path_crosses_all_four_gates_before_the_simulated_effect PASSED [ 11%]
+ocor-runtime/tests/tasks/test_ocor_dev_0030.py::test_missing_authority_denies_before_any_other_gate PASSED [ 22%]
+ocor-runtime/tests/tasks/test_ocor_dev_0030.py::test_risk_bearing_action_without_approval_is_denied PASSED [ 33%]
+ocor-runtime/tests/tasks/test_ocor_dev_0030.py::test_risk_bearing_action_with_rejected_approval_is_denied PASSED [ 44%]
+ocor-runtime/tests/tasks/test_ocor_dev_0030.py::test_missing_decision_is_denied PASSED [ 55%]
+ocor-runtime/tests/tasks/test_ocor_dev_0030.py::test_rejected_decision_is_denied_with_rationale_preserved PASSED [ 66%]
+ocor-runtime/tests/tasks/test_ocor_dev_0030.py::test_non_risk_bearing_action_does_not_require_a_human_gate_approval PASSED [ 77%]
+ocor-runtime/tests/tasks/test_ocor_dev_0030.py::test_a_failing_sink_leaves_no_emission_receipt_and_a_retry_succeeds PASSED [ 88%]
+ocor-runtime/tests/tasks/test_ocor_dev_0030.py::test_engine_gate_names_are_traceable_to_the_sealed_lld_transition_table PASSED [100%]
+
+============================== 9 passed in 0.08s ===============================
+
+=== RUN 2..4: repeat runs, summary lines only, to demonstrate determinism ===
+.........                                                                [100%]
+9 passed in 0.05s
+.........                                                                [100%]
+9 passed in 0.06s
+.........                                                                [100%]
+9 passed in 0.05s
+
+=== full local pytest regression, ocor-runtime/tests/ ===
+
+ocor-runtime/tests/test_interpreter_pin.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0002.py::test_two_clean_environments_resolve_identical_lock_and_image_digests
+FAILED ocor-runtime/tests/test_interpreter_pin.py::test_running_interpreter_matches_the_pin
+2 failed, 665 passed in 81.21s (0:01:21)
+
+=== full local pytest regression, 3 reports/tests suites ===
+.............................                                            [100%]
+29 passed in 3.94s
