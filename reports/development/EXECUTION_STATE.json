@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0033",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0033",
+    "branch": "governed/state-sync-ocor-dev-0034",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0034",
     "decision_id": "DEC-211",
-    "phase": "G4_WAVE_15_IN_PROGRESS__WAVE_16_OCOR_DEV_0033_CLOSED",
+    "phase": "G4_WAVE_15_IN_PROGRESS__WAVE_16_OCOR_DEV_0035_READY",
     "worktree": null
   },
-  "baseline_commit": "305772453f25223d8c01e83a70ad944d1e7ac7a6",
+  "baseline_commit": "1af39d6feefbec7a21edeff4c635cf4c406919d8",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -70,19 +70,20 @@
     "OCOR-DEV-0030",
     "OCOR-DEV-0031",
     "OCOR-DEV-0032",
-    "OCOR-DEV-0033"
+    "OCOR-DEV-0033",
+    "OCOR-DEV-0034"
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "fffeb23",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR97_MERGED_305772453f25223d8c01e83a70ad944d1e7ac7a6",
+    "candidate_commit": "ed10a54",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR99_MERGED_1af39d6feefbec7a21edeff4c635cf4c406919d8",
     "run_ids": [
-      34769673634,
-      34769673637,
-      34769673639,
-      34769673643,
-      34769673644,
-      34769673651
+      34771724639,
+      34771724644,
+      34771724586,
+      34771724622,
+      34771724652,
+      34771724766
     ]
   },
   "mandate_phase_status": {
@@ -143,7 +144,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0033 merged (PR #97, 305772453f25223d8c01e83a70ad944d1e7ac7a6), all 13 checks green on the first push. This completes ocor_runtime.c1.releases (RetainedSemanticDiffEngine/RetainedCompatibilityChecker/RetainedMigrationPlanner/RetainedArtifactGenerator), making the negative acceptance criterion 'a BREAKING change without a governed migration plan is blocked' executable. Recompute readiness directly from the backlog JSON (never trust --status): wave 15's 8 remaining ready tasks are 0034/0036/0037/0038/0040/0042/0046/0048, plus any newly-unlocked lower-numbered task depending on OCOR-DEV-0033. Select the next task by numeric order across the whole ready set, one task per iteration.",
+  "next_executable_action": "OCOR-DEV-0034 merged (PR #99, 1af39d6feefbec7a21edeff4c635cf4c406919d8), all 13 checks green on the first push. This implements ocor_runtime.c2.gateway (NamedQueryGateway, IdentityBackedAuthority, RegistrationAndMarkingPolicy), the first real implementations of the sealed AuthorityResolutionPort/PolicyDecisionPort, composed with real Fuseki marking and real TypeDB projection reads. Recomputed readiness directly from the backlog JSON: OCOR-DEV-0035 (wave 16, 'Implement C2 policy-filtered planning consistency and watermarks') just became ready, depending only on OCOR-DEV-0034 -- lower-numbered than the remaining wave-15 tasks (0036/0037/0038/0040/0042/0046/0048), so selected next by the established numeric-order-across-the-whole-ready-set convention. New file ocor-runtime/src/ocor_runtime/c2/planner.py expected: a planner proving policy filters and returning either the required commit or PROJECTION_NOT_READY with observable watermarks, reusing the sealed WatermarkPort/ConsistencyRequirement (OCOR-DEV-0012) and this task's own gateway composition where useful.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
