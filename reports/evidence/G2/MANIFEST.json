@@ -227,6 +227,16 @@
       "path": "OCOR-DEV-0025.log",
       "sha256": "9647e536c04dfd663c849c96331356e2c29ee1f203e1b5a744a4b8da40e1d943",
       "task_id": "OCOR-DEV-0025-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0026.json",
+      "sha256": "5286b7e9692a985cde632acadae1a75b052df6ef974d895a246868e5e422ed58",
+      "task_id": "OCOR-DEV-0026"
+    },
+    {
+      "path": "OCOR-DEV-0026.log",
+      "sha256": "92a4a135499cfa877b4aa69373fcbdddbb71aedd4b0bc410b19c0ac86e252643",
+      "task_id": "OCOR-DEV-0026-RAW"
     }
   ],
   "created_at": "2026-09-04T14:12:35Z",
@@ -1184,6 +1194,69 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0025"
+    },
+    {
+      "case_id": "OCOR-DEV-0026-RESTORE-OF-NEVER-DELETED-ITEM-SUCCEEDS",
+      "command": "restoring an item with no tombstone in the journal succeeds and is confirmed present on all 3 real backends",
+      "evidence_path": "OCOR-DEV-0026.json",
+      "raw_output_path": "OCOR-DEV-0026.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0026"
+    },
+    {
+      "case_id": "OCOR-DEV-0026-TOMBSTONED-RESTORE-REFUSED-NEVER-REAPPEARS",
+      "command": "restoring a genuinely, independently-confirmed-deleted item is refused (REFUSED_TOMBSTONED) and the item remains absent from all 3 real backends afterward",
+      "evidence_path": "OCOR-DEV-0026.json",
+      "raw_output_path": "OCOR-DEV-0026.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0026"
+    },
+    {
+      "case_id": "OCOR-DEV-0026-JOURNAL-WRITE-GATED-ON-FULL-SAGA-SUCCESS",
+      "command": "a deletion saga that reports DELETION_INCOMPLETE never tombstones the journal, so a later restore of a still-partially-present item is never wrongly refused",
+      "evidence_path": "OCOR-DEV-0026.json",
+      "raw_output_path": "OCOR-DEV-0026.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0026"
+    },
+    {
+      "case_id": "OCOR-DEV-0026-JOURNAL-CHECKED-BEFORE-ANY-TARGET-WRITE",
+      "command": "restore consults the tombstone journal before ever calling put()/contains()/tombstone() on any target -- proven directly via a call-order spy",
+      "evidence_path": "OCOR-DEV-0026.json",
+      "raw_output_path": "OCOR-DEV-0026.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0026"
+    },
+    {
+      "case_id": "OCOR-DEV-0026-UNREACHABLE-JOURNAL-FAILS-CLOSED",
+      "command": "a journal that cannot be reached (a real TCP connection refusal from a genuinely closed local port) is refused exactly like a tombstoned item, never silently treated as safe to restore",
+      "evidence_path": "OCOR-DEV-0026.json",
+      "raw_output_path": "OCOR-DEV-0026.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0026"
+    },
+    {
+      "case_id": "OCOR-DEV-0026-NO-FALSE-POSITIVE-CROSS-ITEM-BLOCKING",
+      "command": "restoring a distinct, never-tombstoned item succeeds normally even immediately after an unrelated item's tombstone is recorded in the same journal",
+      "evidence_path": "OCOR-DEV-0026.json",
+      "raw_output_path": "OCOR-DEV-0026.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0026"
+    },
+    {
+      "case_id": "OCOR-DEV-0026-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0026.json",
+      "raw_output_path": "OCOR-DEV-0026.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0026"
     }
   ],
   "schema_version": "1.0"
