@@ -137,6 +137,16 @@
       "path": "OCOR-DEV-0081.log",
       "sha256": "3389d16bef7d4b0f66dff5d32650b5165f3b58b223523b67035178cfda445c7b",
       "task_id": "OCOR-DEV-0081-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0082.json",
+      "sha256": "b6e0b2bab4efa010e4d02b7bdbe52ada44c5492892bee164fe2247b46a351554",
+      "task_id": "OCOR-DEV-0082"
+    },
+    {
+      "path": "OCOR-DEV-0082.log",
+      "sha256": "358a44a2b85a3bce9eb2d433f8449bd10a14de6915460237e81f854e03795158",
+      "task_id": "OCOR-DEV-0082-RAW"
     }
   ],
   "created_at": "2026-09-04T14:12:35Z",
@@ -626,6 +636,51 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0081"
+    },
+    {
+      "case_id": "OCOR-DEV-0082-CONTRACT",
+      "command": "unit/negative tests for each reset target's reset/already-reset branch, plus the teardown command shape and the --reset/--env-file argument guard, no live dependency",
+      "evidence_path": "OCOR-DEV-0082.json",
+      "raw_output_path": "OCOR-DEV-0082.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0082"
+    },
+    {
+      "case_id": "OCOR-DEV-0082-REAL-RESET",
+      "command": "real reset of the Keycloak realm, OPA policy, OpenBao mount and both graph databases against the live, previously-initialized stack, with every container left running",
+      "evidence_path": "OCOR-DEV-0082.json",
+      "raw_output_path": "OCOR-DEV-0082.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0082"
+    },
+    {
+      "case_id": "OCOR-DEV-0082-REAL-IDEMPOTENCY",
+      "command": "real re-invocation against the now-reset stack reports ALREADY_RESET for all 4 targets with zero mutating calls",
+      "evidence_path": "OCOR-DEV-0082.json",
+      "raw_output_path": "OCOR-DEV-0082.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0082"
+    },
+    {
+      "case_id": "OCOR-DEV-0082-REAL-ROUND-TRIP",
+      "command": "reset followed by OCOR-DEV-0080's real initializer successfully recreates all 4 targets from scratch, proving reset is a genuine, complete inverse",
+      "evidence_path": "OCOR-DEV-0082.json",
+      "raw_output_path": "OCOR-DEV-0082.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0082"
+    },
+    {
+      "case_id": "OCOR-DEV-0082-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0082.json",
+      "raw_output_path": "OCOR-DEV-0082.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0082"
     }
   ],
   "schema_version": "1.0"

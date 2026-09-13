@@ -1,0 +1,115 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0082",
+  "commit": "48b6d01a254d0ceb78fb9ad4ec96088e1835c5fb",
+  "created_at": "2026-09-13T00:40:00Z",
+  "environment": {
+    "orchestrator": "docker compose -p ocor-bootstrap (deploy/bootstrap/compose.yaml), same live stack as OCOR-DEV-0079/0080/0081",
+    "reset_scope": "exactly undoes OCOR-DEV-0080's 4 mutating init steps (Keycloak realm, OPA policy, OpenBao mount, TerminusDB/TypeDB ocor_default databases) without stopping any container",
+    "reset_excludes": "SPIRE trust is never created by OCOR-DEV-0080 (verify-only), so reset has nothing to undo there without breaking every service's identity",
+    "teardown_scope": "pre-existing full `docker compose down --volumes --remove-orphans`, unchanged; exercised only in dry-run form in this evidence to avoid destroying the live stack other in-progress backlog tasks depend on",
+    "secrets": "session-local, generated for OCOR-DEV-0079, never committed to Git"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "scripts/reset_test_environment.py": "ebdb26fbfb666b281e953a444adb3fb6f8e1746d8cf7afcce71470cfd93b48bd"
+  },
+  "commands": [
+    {
+      "command": "confirm the stack is currently initialized (typed health check PASS) before resetting",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "--reset and --teardown dry-run modes (default, no mutation)",
+      "result": {"passed": 2, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "RUN 1: real --reset --execute against the initialized live stack -- all 4 targets report RESET",
+      "result": {"passed": 4, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "RUN 2: idempotent re-invocation -- all 4 targets report ALREADY_RESET, no mutating calls",
+      "result": {"passed": 4, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "docker compose ps immediately after reset -- all 11 containers still Up/healthy, proving reset never touches containers",
+      "result": {"passed": 11, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "RUN 3: reset -> re-init round-trip -- OCOR-DEV-0080's initialize_services.py rebuilds all 4 previously-reset targets from scratch (CREATED), proving reset genuinely returns to OCOR-DEV-0079's baseline, not a partial/inconsistent state",
+      "result": {"passed": 4, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "re-load OCOR-DEV-0081's synthetic fixtures, restoring the exact state other in-progress backlog tasks expect the live stack to be in",
+      "result": {"passed": 2, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0082.py -v (10 unit/negative/contract tests, all network calls faked)",
+      "result": {"passed": 10, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression (ocor-runtime/tests/ + 3 reports/tests suites)",
+      "result": {"passed": 587, "failed": 0, "skipped": 5, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0082-CONTRACT",
+      "requirement_id": "BR-003",
+      "command": "unit/negative tests for each reset target's reset/already-reset branch, plus the teardown command shape and the --reset/--env-file argument guard, no live dependency",
+      "result": {"passed": 10, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0082-REAL-RESET",
+      "requirement_id": "BR-003",
+      "command": "real reset of the Keycloak realm, OPA policy, OpenBao mount and both graph databases against the live, previously-initialized stack, with every container left running",
+      "result": {"passed": 4, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0082-REAL-IDEMPOTENCY",
+      "requirement_id": "BR-003",
+      "command": "real re-invocation against the now-reset stack reports ALREADY_RESET for all 4 targets with zero mutating calls",
+      "result": {"passed": 4, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0082-REAL-ROUND-TRIP",
+      "requirement_id": "BR-003",
+      "command": "reset followed by OCOR-DEV-0080's real initializer successfully recreates all 4 targets from scratch, proving reset is a genuine, complete inverse rather than a partial or lossy operation",
+      "result": {"passed": 4, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0082-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "result": {"passed": 587, "failed": 0, "skipped": 5, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "--teardown's actual destructive execution (docker compose down --volumes --remove-orphans) was deliberately never run in this evidence capture: doing so would have destroyed the live 11-service stack every other in-progress WS-12 backlog task (OCOR-DEV-0079/0080/0081, and future 0083/0084) depends on. Its command construction is verified (teardown_command()), and its execution path is the pre-existing, previously-accepted `run()` helper already used elsewhere in this codebase -- the risk of it not working is assessed as low, but it has not been exercised for real in this session.",
+    "--reset deliberately never touches SPIRE trust, since OCOR-DEV-0080 only ever verifies (never creates) it; a genuine SPIRE reset would require regenerating the bootstrap CA and re-running the full two-phase join-token bootstrap OCOR-DEV-0079 performed, which is out of this task's scope.",
+    "The same pre-existing local-venv gap noted in prior WS-12 evidence (no psycopg installed) is unchanged and out of this task's scope."
+  ],
+  "rollback_procedure_verified": "This task's own subject matter IS the rollback/reset primitive; RUN 1/2/3 above are the executed proof: reset undoes OCOR-DEV-0080's initialization for real, is idempotent, and is a genuine complete inverse (the re-init round-trip in RUN 3 recreates every target from scratch with no residual state).",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "358a44a2b85a3bce9eb2d433f8449bd10a14de6915460237e81f854e03795158",
+  "result": "PASS"
+}
