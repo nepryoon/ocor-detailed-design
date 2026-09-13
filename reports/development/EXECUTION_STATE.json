@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-0032-c1-frontend",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0032",
+    "branch": "governed/state-sync-ocor-dev-0032",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0032",
     "decision_id": "DEC-211",
-    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0032_PUSHED__AWAITING_CI",
+    "phase": "G4_WAVE_15_IN_PROGRESS__WAVE_16_OPENED",
     "worktree": null
   },
-  "baseline_commit": "947b2b2586fb89c1d5342199bba2f091b061ef9c",
+  "baseline_commit": "00b51e710c24832d09cf87a8f139edfa74f37a1d",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -68,19 +68,20 @@
     "OCOR-DEV-0026",
     "OCOR-DEV-0027",
     "OCOR-DEV-0030",
-    "OCOR-DEV-0031"
+    "OCOR-DEV-0031",
+    "OCOR-DEV-0032"
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "b071f91",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR94_MERGED_947b2b2586fb89c1d5342199bba2f091b061ef9c",
+    "candidate_commit": "14cb104",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR95_MERGED_00b51e710c24832d09cf87a8f139edfa74f37a1d",
     "run_ids": [
-      34764898751,
-      34764898743,
-      34764898718,
-      34764898726,
-      34764898732,
-      34764898722
+      34766469810,
+      34766469862,
+      34766469773,
+      34766469811,
+      34766469767,
+      34766469780
     ]
   },
   "mandate_phase_status": {
@@ -141,9 +142,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/ocor-dev-0032-c1-frontend, open PR, poll CI to green, merge, verify post-merge SHA, sync the three state files immediately. OCOR-DEV-0032 (Complete C1 parser type-checker and semantic validation) completes OCOR-DEV-0028's minimal C1 slice with a new, parallel ocor_runtime.c1.frontend module: a closed type grammar (declare-and-satisfy field types), ambiguous-execution-ownership rejection, and semantic cross-resource reference resolution/cycle detection -- all producing stable, correctly-coded diagnostics on a negative corpus, plus deterministic compilation on a valid corpus. OCOR-DEV-0028's sealed compiler.py is completely untouched. A genuine design bug (require_resolved_references wrongly rejecting a legitimate diamond reference graph as a duplicate) was found and fixed before sealing. Pure in-memory component, no external backend, no AFF-002/AFF-006 concern. First task to seal evidence under gate G4 (reports/evidence/G4/MANIFEST.json created fresh). After this merges, determine the next DAG-ready task directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks (checking parallel_wave); wave 15 has 8 more ready tasks (0034/0036/0037/0038/0040/0042/0046/0048).",
+  "next_executable_action": "OCOR-DEV-0032 merged (PR #95, 00b51e710c24832d09cf87a8f139edfa74f37a1d), all 13 checks green on the first push. Recomputed readiness directly from the backlog: OCOR-DEV-0033 (wave 16, 'Complete C1 releases semantic diff migration and generators') just became ready, depending only on OCOR-DEV-0032 -- lower-numbered than the 8 remaining wave-15 tasks, so selected next by the established numeric-order-among-all-ready convention. New file ocor-runtime/src/ocor_runtime/c1/releases.py expected: implements the remaining sealed C1 Protocols (SemanticDiffEngine.compare, CompatibilityChecker.check, MigrationPlanner.plan, ArtifactGenerator.generate) over CanonicalIrRelease pairs -- content-addressed, immutable, pure in-memory, no external backend. After this, wave 15's 8 remaining ready tasks (0034/0036/0037/0038/0040/0042/0046/0048) remain available.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T15:50:00Z"
+  "updated_at": "2026-09-13T16:20:00Z"
 }

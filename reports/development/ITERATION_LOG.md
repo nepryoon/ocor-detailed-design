@@ -2264,8 +2264,32 @@
   iterazione (non rimandato).
 - Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
   `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
-- Prossima azione: push del branch
-  `governed/ocor-dev-0032-c1-frontend`, apertura PR, polling CI,
-  merge a gate verdi, verifica SHA post-merge. Poi proseguire con uno
-  degli altri 8 task pronti del wave 15 (`OCOR-DEV-0034`/`0036`/
-  `0037`/`0038`/`0040`/`0042`/`0046`/`0048`) per ordine numerico.
+- `OCOR-DEV-0032`: tutti e 13 i check verdi al primo push. PR #95
+  mergiata (`00b51e710c24832d09cf87a8f139edfa74f37a1d`), SHA
+  post-merge verificata.
+
+## 2026-09-13 — Sincronizzazione stato: OCOR-DEV-0032 (post-merge, apertura wave 16)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #95, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0032`).
+- `baseline_commit` aggiornato a
+  `00b51e710c24832d09cf87a8f139edfa74f37a1d` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0032`
+  aggiunto a `completed_evidence_tasks`. Verificata l'assenza di
+  `RCCAD-STATE-HANDOFF-DRIFT`.
+- Ricalcolata la prontezza dal backlog JSON: `OCOR-DEV-0033`
+  ("Complete C1 releases semantic diff migration and generators",
+  wave 16) è appena diventato pronto, dipendente solo da
+  `OCOR-DEV-0032` — numericamente più basso degli 8 task rimanenti
+  del wave 15, quindi selezionato per ordine numerico sull'intero
+  insieme pronto (non limitato a un singolo wave), secondo la
+  convenzione già stabilita in questa sessione.
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
+- Prossima azione: leggere per intero la voce di `OCOR-DEV-0033` nel
+  backlog JSON prima di progettare qualunque cosa (già fatto:
+  richiede `ocor-runtime/src/ocor_runtime/c1/releases.py`,
+  implementando i Protocol sigillati rimanenti `SemanticDiffEngine`/
+  `CompatibilityChecker`/`MigrationPlanner`/`ArtifactGenerator` su
+  coppie di `CanonicalIrRelease`, puro in-memory, nessun backend).
