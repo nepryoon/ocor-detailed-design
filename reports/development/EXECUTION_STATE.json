@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-0017-typedb-exact-commit-spike",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0017",
+    "branch": "governed/ocor-dev-0018-jena-marking-safe-projection-spike",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0018",
     "decision_id": "DEC-211",
-    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0017_PUSHED__AWAITING_CI",
+    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0018_PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "a2ea8f467cc47891add109fbcd1b2e8567c49399",
+  "baseline_commit": "d573b7e119b195837cc9a7f122369c06ace1523d",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -58,19 +58,20 @@
     "OCOR-DEV-0083",
     "OCOR-DEV-0084",
     "OCOR-DEV-0016",
-    "OCOR-DEV-0017"
+    "OCOR-DEV-0017",
+    "OCOR-DEV-0018"
   ],
   "current_gate": "G2_WS12_CLOSED__G2_SPIKES_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "823f0ba",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR77_MERGED_a2ea8f467cc47891add109fbcd1b2e8567c49399",
+    "candidate_commit": "08c223e",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR78_MERGED_d573b7e119b195837cc9a7f122369c06ace1523d_after_a_TypeDB_CI_service_fix_on_the_second_push",
     "run_ids": [
-      34734272245,
-      34734272249,
-      34734272250,
-      34734272251,
-      34734272260,
-      34734272261
+      34737205916,
+      34737205918,
+      34737205929,
+      34737205931,
+      34737205942,
+      34737205945
     ]
   },
   "mandate_phase_status": {
@@ -131,9 +132,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/ocor-dev-0017-typedb-exact-commit-spike, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0017 (SPIKE TypeDB exact-at-commit semantics) reuses OCOR-DEV-0012's sealed C2 named-query/consistency contract (ocor_runtime.c2.ports) unmodified and adds a real TypeDB-backed ProjectionReadPort/WatermarkPort adapter (spikes/typedb_exact_commit/adapter.py) proving that queries at a required commit either return the exact projection or fail closed with an observable watermark -- never an older or newer fact mislabeled as exact -- against the live TypeDB instance in the ocor-bootstrap stack. Next: one of the remaining wave-11 G2 spikes -- OCOR-DEV-0018 (SPIKE Jena marking-safe projection) or OCOR-DEV-0021 (SPIKE identity-policy latency and failure semantics) -- both already have their hard_dependencies satisfied.",
+  "next_executable_action": "Push branch governed/ocor-dev-0018-jena-marking-safe-projection-spike, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0018 (SPIKE Jena marking-safe projection) reuses ocor_runtime.c4_marking's sealed MarkingEngine/MarkingSchemeDefinition/MarkingSet unmodified and adds a real Fuseki-backed marking-safe projection adapter (spikes/jena_marking/adapter.py), proving that a resource is never disclosed without its marking joined in the same SPARQL query, and that count/existence operations are structurally derived from the same filtered list so they can never diverge or leak. Learning from OCOR-DEV-0017's CI failure, this iteration proactively added a real, ephemeral Fuseki service (build+run, since its image is built from source) to the same 3 CI workflows already carrying TypeDB, before ever opening the PR. Next: the last wave-11 G2 spike, OCOR-DEV-0021 (SPIKE identity-policy latency and failure semantics), which already has its hard_dependencies satisfied.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T04:40:00Z"
+  "updated_at": "2026-09-13T05:10:00Z"
 }

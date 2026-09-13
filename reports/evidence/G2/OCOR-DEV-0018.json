@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0018",
+  "commit": "d573b7e119b195837cc9a7f122369c06ace1523d",
+  "created_at": "2026-09-13T04:55:00Z",
+  "environment": {
+    "orchestrator": "docker compose -p ocor-bootstrap (deploy/bootstrap/compose.yaml), same live stack provisioned by the WS-12 chain (OCOR-DEV-0079..0084)",
+    "backend_under_test": "the real Fuseki/Jena service (http://127.0.0.1:3030, SPARQL 1.1 Query/Update over the pre-configured in-memory 'ocor' dataset), a C4 projection adapter backend",
+    "reused_deliverable": "ocor_runtime.c4_marking (sealed and unmodified) supplies the MarkingEngine/MarkingSchemeDefinition/MarkingSet finite lattice and is_authorized decision; this task adds only a real Fuseki-backed marking-safe projection port around it",
+    "ci_provisioning": "proactively added a real, ephemeral Fuseki service (build infra/fuseki's pinned Dockerfile + run + health-wait) to the same 3 CI workflows already fixed for TypeDB in OCOR-DEV-0017 (delivery-activation, rccad-methodology, validation-closure), rather than waiting for CI to fail on this task the same way"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "spikes/jena_marking/adapter.py": "8c0961189ce76c92272a8e33fa78f30247b41b106c7833e21b3b22fbf8f4812a",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0018.py": "72e42a83803ed92cbd6a79a378107d9da958aa45a5b3e5accb02991866340a63"
+  },
+  "commands": [
+    {
+      "command": "empirical Fuseki probes against the real live instance before finalizing the adapter: querying /ocor/sparql without an explicit Accept header returned SPARQL-XML (not JSON), causing the first test run to fail with json.JSONDecodeError -- fixed by sending Accept: application/sparql-results+json explicitly on every query",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0018.py -v against the real live Fuseki, repeated 5 times to demonstrate determinism",
+      "result": {"passed": 30, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "CI provisioning proof: docker build + docker run (alternate port, never touching the live ocor-bootstrap-fuseki-1 container) of the exact recipe added to the 3 affected CI workflows, followed by a real health check and a real SPARQL query against it",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, ocor-runtime/tests/ (OCOR_LIVE_POSTGRES_DSN set locally, pointed at the ocor-bootstrap postgresql service)",
+      "result": {"passed": 607, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, 3 reports/tests suites",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0018-MARKING-FILTER",
+      "requirement_id": "BR-003",
+      "command": "list_authorized returns only resources whose classification is dominated by the caller's clearance, verified against a real Fuseki dataset with UNCLASSIFIED/SECRET/TOP_SECRET resources",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0018-COUNT-NEVER-DIVERGES",
+      "requirement_id": "BR-003",
+      "command": "count_authorized always equals len(list_authorized) at every clearance level, by construction (structurally prevents the count-leak negative acceptance criterion)",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0018-RAW-COUNT-WOULD-LEAK",
+      "requirement_id": "BR-003",
+      "command": "a real, raw, marking-blind SPARQL COUNT over the same dataset differs from the authorized count for a low-clearance caller, demonstrating why marking-aware filtering is required and that the adapter's public API never exposes the raw number",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0018-EXISTENCE-INDISTINGUISHABLE",
+      "requirement_id": "BR-003",
+      "command": "exists_authorized returns the identical shape (a plain bool False) for a forbidden resource and for a resource that never existed, defeating an error-shape existence-probe leak",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0018-UNMARKED-NEVER-DISCLOSED",
+      "requirement_id": "BR-003",
+      "command": "a resource ingested without its classification triple is never returned by list_authorized, even at the highest clearance -- the SPARQL marking join is fail-closed, not an implicit least-restrictive default",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0018-NO-CONTENT-LEAK-IN-PAYLOAD",
+      "requirement_id": "BR-003",
+      "command": "the serialized payload returned to a low-clearance caller never contains an unauthorized resource's identifier, label or classification anywhere in it",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0018-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 636, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "The marking scheme used here (a 3-level totally-ordered classification lattice) is a minimal instantiation of ocor_runtime.c4_marking's general finite-lattice engine, chosen for spike clarity; the sealed engine itself supports arbitrary partial-order lattices and multiple concurrent schemes, neither of which this spike needed to exercise to prove the projection-safety property.",
+    "count_authorized and exists_authorized are deliberately implemented by deriving from list_authorized's own filtered result rather than independent SPARQL COUNT/ASK queries; this is what structurally guarantees they cannot diverge, but it means a production implementation optimizing for large result sets would need a different (still marking-safe) strategy, which is out of this read-side spike's scope.",
+    "This task added a real, ephemeral Fuseki service (via a build+run step, since infra/fuseki/Dockerfile is built from source rather than a pre-built pullable image) to the same 3 CI workflows already carrying a TypeDB service from OCOR-DEV-0017; every future PR now also builds this image in those 3 jobs.",
+    "The same pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope."
+  ],
+  "rollback_procedure_verified": "Every test begins from adapter.reset() (a real SPARQL DELETE WHERE against the live in-memory dataset) so a fresh run from a clean or partially-populated dataset converges to the same state -- verified directly by 5 consecutive full test-suite runs with no manual cleanup between them. The CI provisioning step itself was rehearsed end-to-end locally (build, run, health-wait, query, teardown) on an alternate port before being added to any workflow.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "cef441c109021a5d9d51970dbc117709baa3eb6d16bfcef461e60c4812d42cdf",
+  "result": "PASS"
+}

@@ -1365,3 +1365,83 @@
   `governed/ocor-dev-0017-typedb-exact-commit-spike`, apertura PR, polling
   CI, merge a gate verdi, verifica SHA post-merge. Poi proseguire con uno
   degli spike G2 rimanenti dello stesso wave 11: `OCOR-DEV-0018`/`0021`.
+- `OCOR-DEV-0017`: primo push, 3 check CI rossi (`delivery-activation`,
+  `rccad-methodology`, `validation-closure`) perché quei job eseguono
+  l'intera suite `ocor-runtime/tests/` con un container Postgres reale ma
+  senza TypeDB — causa radice corretta aggiungendo un container TypeDB
+  reale ai 3 workflow (stesso digest immagine di `compose.yaml`) e rendendo
+  `initialize()` capace di creare il database `ocor_default` se assente.
+  Evidenza aggiornata nello stesso commit/PR. Secondo push: tutti e 13 i
+  check verdi. PR #78 mergiata
+  (`d573b7e119b195837cc9a7f122369c06ace1523d`), SHA post-merge verificata.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0018 (SPIKE Jena marking-safe projection)
+
+- Terzo spike G2 dopo la chiusura di WS-12, selezionato per ordine numerico
+  fra `0018`/`0021` (stesso wave 11). Dipende da `OCOR-DEV-0006`,
+  `OCOR-DEV-0008`, `OCOR-DEV-0014`, `OCOR-DEV-0084`, tutti già mergiati.
+- Riutilizzato senza modifiche il reticolo di marcatura sigillato di C4
+  (`ocor_runtime.c4_marking`: `MarkingEngine`/`MarkingSchemeDefinition`/
+  `MarkingSet`/`is_authorized`); aggiunto `spikes/jena_marking/adapter.py`
+  (nuovo) con un `JenaMarkingProjectionAdapter` reale contro Fuseki live
+  (dataset in-memory preconfigurato `/ocor` dal `CMD ["--mem", "/ocor"]`
+  di `infra/fuseki/Dockerfile`, SPARQL 1.1 Query/Update via HTTP).
+- Design chiave: `list_authorized` esegue un'UNICA query SPARQL che
+  congiunge risorsa e classificazione nello stesso pattern grafico (la
+  "marking join" richiesta dai criteri di accettazione — una risorsa priva
+  del triplo di classificazione non può mai comparire, nemmeno con la
+  clearance più alta); `count_authorized`/`exists_authorized` sono
+  deliberatamente derivate dallo stesso risultato filtrato di
+  `list_authorized` invece che da query SPARQL COUNT/ASK indipendenti, così
+  da non poter mai divergere (soddisfa strutturalmente il criterio negativo
+  "count ... leak").
+- **Probe empirico reale contro Fuseki, bug trovato e corretto prima di
+  sigillare**: interrogare `/ocor/sparql` senza un header `Accept`
+  esplicito restituisce SPARQL-XML, non JSON — la prima esecuzione dei
+  test falliva con `json.JSONDecodeError`; corretto inviando sempre
+  `Accept: application/sparql-results+json`.
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0018.py` (6 test, tutti
+  contro Fuseki reale, nessun mock): filtro per clearance; count mai
+  divergente dalla lista autorizzata; dimostrazione diretta che un COUNT
+  SPARQL grezzo e cieco alla marcatura perderebbe informazione (differisce
+  dal conteggio autorizzato) mentre l'API pubblica non lo espone mai;
+  `exists_authorized` restituisce la stessa forma (`bool` `False`) per una
+  risorsa proibita e per una mai esistita, indistinguibili; una risorsa
+  senza il triplo di classificazione non è mai divulgata nemmeno con
+  `TOP_SECRET`; il payload restituito a una clearance bassa non contiene
+  mai, in nessuna forma, contenuto non autorizzato.
+- **Lezione applicata proattivamente da `OCOR-DEV-0017`**: prima di aprire
+  la PR, verificato che né Fuseki fosse provisionato in CI — aggiunto
+  preventivamente uno step "Build and start Fuseki" (build della stessa
+  immagine pinnata di `infra/fuseki/Dockerfile` + `docker run` + attesa di
+  salute reale) ai 3 workflow già corretti per TypeDB in `OCOR-DEV-0017`
+  (`delivery-activation`, `rccad-methodology`, `validation-closure`), dato
+  che l'immagine è costruita da sorgente e non può essere dichiarata come
+  `services:` con una semplice `image:`. Rieseguita localmente l'intera
+  ricetta CI (build, run su porta alternativa, attesa di salute, query
+  SPARQL reale, pulizia) prima di aggiungerla ai workflow, senza mai
+  toccare lo stack `ocor-bootstrap` live.
+- `scripts/validate_language_policy.py` verificato: nessuna nuova area
+  necessaria.
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (45 file,
+  `spikes/` e `tests/` fuori scope per policy), `validate_rccad.py` PASS,
+  `validate_language_policy.py` PASS, `validate_ocor_change_scope.py` PASS
+  (12 percorsi), `yaml.safe_load` dei 3 workflow modificati PASS, pytest
+  completo con `OCOR_LIVE_POSTGRES_DSN` locale: `2 failed, 636 passed, 0
+  skipped, 0 errors` (stessi 2 fallimenti noti e preesistenti del pin
+  dell'interprete, +6 rispetto alla fase precedente),
+  `validate_ocor_development_plan.py --authorized-extension` PASS dopo il
+  consueto doppio-run di assestamento self-hash.
+- Evidenza sigillata contro Fuseki reale, incluso il rehearsal completo
+  della ricetta CI: `reports/evidence/G2/OCOR-DEV-0018.json` +
+  `reports/evidence/G2/OCOR-DEV-0018.log`, aggiunta a
+  `reports/evidence/G2/MANIFEST.json` (diff puramente additivo, 73 righe).
+  `scripts/validate_runtime_evidence.py --task OCOR-DEV-0018 --non-skipped`
+  PASS.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: push del branch
+  `governed/ocor-dev-0018-jena-marking-safe-projection-spike`, apertura
+  PR, polling CI, merge a gate verdi, verifica SHA post-merge. Poi
+  proseguire con l'ultimo spike G2 dello stesso wave 11: `OCOR-DEV-0021`
+  (SPIKE latenza e semantica di fallimento identity-policy).
