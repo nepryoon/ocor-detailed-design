@@ -50,6 +50,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Build and start Fuseki
+        run: |
+          set -euo pipefail
+          docker build -t ocor/jena-fuseki:ci infra/fuseki
+          docker run -d --name fuseki -p 3030:3030 ocor/jena-fuseki:ci
+          timeout 90 bash -c 'until curl -sf http://127.0.0.1:3030/$/ping >/dev/null; do sleep 2; done'
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:

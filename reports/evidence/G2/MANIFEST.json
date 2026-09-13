@@ -187,6 +187,16 @@
       "path": "OCOR-DEV-0017.log",
       "sha256": "15e9c4edcd37be83a3349ed305392424d94119bceb7e074e54dd8b62c3402700",
       "task_id": "OCOR-DEV-0017-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0018.json",
+      "sha256": "59e50d6299c90f104aeccfc079ba91dccc61778e8761a0e68bbaab70081aa8f9",
+      "task_id": "OCOR-DEV-0018"
+    },
+    {
+      "path": "OCOR-DEV-0018.log",
+      "sha256": "cef441c109021a5d9d51970dbc117709baa3eb6d16bfcef461e60c4812d42cdf",
+      "task_id": "OCOR-DEV-0018-RAW"
     }
   ],
   "created_at": "2026-09-04T14:12:35Z",
@@ -910,6 +920,69 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0017"
+    },
+    {
+      "case_id": "OCOR-DEV-0018-MARKING-FILTER",
+      "command": "list_authorized returns only resources whose classification is dominated by the caller's clearance, against a real Fuseki dataset",
+      "evidence_path": "OCOR-DEV-0018.json",
+      "raw_output_path": "OCOR-DEV-0018.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0018"
+    },
+    {
+      "case_id": "OCOR-DEV-0018-COUNT-NEVER-DIVERGES",
+      "command": "count_authorized always equals len(list_authorized) at every clearance level, by construction",
+      "evidence_path": "OCOR-DEV-0018.json",
+      "raw_output_path": "OCOR-DEV-0018.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0018"
+    },
+    {
+      "case_id": "OCOR-DEV-0018-RAW-COUNT-WOULD-LEAK",
+      "command": "a real, raw, marking-blind SPARQL COUNT differs from the authorized count for a low-clearance caller, and the adapter's public API never exposes the raw number",
+      "evidence_path": "OCOR-DEV-0018.json",
+      "raw_output_path": "OCOR-DEV-0018.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0018"
+    },
+    {
+      "case_id": "OCOR-DEV-0018-EXISTENCE-INDISTINGUISHABLE",
+      "command": "exists_authorized returns the identical shape for a forbidden resource and for a resource that never existed",
+      "evidence_path": "OCOR-DEV-0018.json",
+      "raw_output_path": "OCOR-DEV-0018.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0018"
+    },
+    {
+      "case_id": "OCOR-DEV-0018-UNMARKED-NEVER-DISCLOSED",
+      "command": "a resource without a classification triple is never returned by list_authorized, even at the highest clearance",
+      "evidence_path": "OCOR-DEV-0018.json",
+      "raw_output_path": "OCOR-DEV-0018.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0018"
+    },
+    {
+      "case_id": "OCOR-DEV-0018-NO-CONTENT-LEAK-IN-PAYLOAD",
+      "command": "the serialized payload returned to a low-clearance caller never contains an unauthorized resource's identifier, label or classification anywhere in it",
+      "evidence_path": "OCOR-DEV-0018.json",
+      "raw_output_path": "OCOR-DEV-0018.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0018"
+    },
+    {
+      "case_id": "OCOR-DEV-0018-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0018.json",
+      "raw_output_path": "OCOR-DEV-0018.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0018"
     }
   ],
   "schema_version": "1.0"
