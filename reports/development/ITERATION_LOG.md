@@ -2293,3 +2293,74 @@
   implementando i Protocol sigillati rimanenti `SemanticDiffEngine`/
   `CompatibilityChecker`/`MigrationPlanner`/`ArtifactGenerator` su
   coppie di `CanonicalIrRelease`, puro in-memory, nessun backend).
+
+## 2026-09-13 — OCOR-DEV-0033: completamento C1 releases (semantic diff, migrazione, generatori)
+
+- Implementati i Protocol sigillati rimanenti di C1 (OCOR-DEV-0011,
+  `ocor_runtime.c1.ports`, riusato invariato) in
+  `ocor-runtime/src/ocor_runtime/c1/releases.py`:
+  `RetainedSemanticDiffEngine.compare` (digest strutturale
+  content-addressed su risorse aggiunte/rimosse/cambiate, direzionale),
+  `RetainedCompatibilityChecker.check` (`IDENTICAL`/`COMPATIBLE`/
+  `BREAKING` — una risorsa rimossa, una dichiarazione di tipo di campo
+  rimossa, o un tipo di campo esistente cambiato sono tutti `BREAKING`),
+  `RetainedMigrationPlanner.plan` (piano di migrazione content-addressed
+  con proprio `plan_digest`, passi ordinati retire/expand-migrate-contract/
+  introduce), `RetainedArtifactGenerator` (`generate()` incondizionato
+  come da Protocol sigillato; nuovo `generate_governed()` che rende
+  eseguibile il criterio di accettazione negativo di questo task — un
+  cambiamento `BREAKING` non può mai raggiungere la generazione senza un
+  piano di migrazione governato esplicito e non vuoto).
+- Riusa `ocor_runtime.c1.frontend` (OCOR-DEV-0032, invariato) per
+  costruire fixture `CanonicalIrRelease` reali per i 14 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0033.py` — tutti passati al
+  primo tentativo, nessun bug trovato nel nuovo codice di questo task
+  (a differenza di ogni altro task di questa wave).
+- Rilevamento ambientale non bloccante: un OOM transitorio e non
+  correlato di Fuseki (`ocor-bootstrap-fuseki-1`, causato da un
+  container host di grandi dimensioni non correlato che condivide lo
+  stesso demone Docker — pattern ricorrente in questa sessione) ha
+  causato 15 errori non correlati nel primo tentativo di regressione
+  completa; diagnosticato via `docker compose -p ocor-bootstrap ps` e
+  risolto riavviando solo il servizio fuseki; confermato non correlato
+  con una seconda esecuzione pulita (`699 passed`, 2 fallimenti noti
+  preesistenti).
+- Gate locali tutti verdi: `ruff`, `mypy` (52 file, +1),
+  `validate_rccad.py` PASS (10/10 AFF `PASS_STATIC_PRECHECK`, nessun
+  finding), `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS (7 percorsi), pytest completo
+  via lo script `pytest` nudo: `2 failed, 699 passed, 0 skipped, 0
+  errors` (stessi 2 fallimenti noti) più `29 passed` per le 3 suite
+  `reports/tests/`, `validate_ocor_development_plan.py --base-ref
+  origin/main --authorized-extension` PASS dopo il consueto
+  doppio-run (FAIL poi PASS).
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0033.json` +
+  `reports/evidence/G4/OCOR-DEV-0033.log`. `reports/evidence/G4/
+  MANIFEST.json` esteso con inserimento chirurgico (2 nuovi artifact,
+  11 nuovi requirement_results), preservando la formattazione delle
+  voci preesistenti.
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task (pattern OCOR-DEV-0032/PR #96),
+  non incluso nel commit del task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0033`: tutti e 13 i check verdi al primo push. PR #97
+  mergiata (`305772453f25223d8c01e83a70ad944d1e7ac7a6`), SHA
+  post-merge verificata (`git fetch origin main` +
+  `git rev-parse origin/main`).
+
+## 2026-09-13 — Sincronizzazione stato: OCOR-DEV-0033 (post-merge)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #97, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0033`).
+- `baseline_commit` aggiornato a
+  `305772453f25223d8c01e83a70ad944d1e7ac7a6` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0033`
+  aggiunto a `completed_evidence_tasks`.
+- Prossima azione: ricalcolare la prontezza direttamente dal backlog
+  JSON (mai fidarsi di `--status`). Wave 15 ha ancora 8 task pronti
+  (`OCOR-DEV-0034/0036/0037/0038/0040/0042/0046/0048`); verificare se
+  `OCOR-DEV-0033` ha sbloccato un task numericamente più basso prima
+  di procedere, poi selezionare per ordine numerico sull'intero
+  insieme pronto.
