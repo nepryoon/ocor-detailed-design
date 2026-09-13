@@ -2741,3 +2741,77 @@
   output RDF/JSON-LD supera fixture SHACL e di non-interferenza del
   marking; criterio negativo: triple non autorizzate o provenance
   lossy bloccano la pubblicazione.
+
+## 2026-09-13 — OCOR-DEV-0038: C4 Jena RDF SHACL adapter
+
+- Nuovo `ocor_runtime.c4.jena_adapter.JenaSHACLProjectionAdapter`,
+  estende il pattern di marking reale di OCOR-DEV-0018 (Fuseki,
+  invariato) con un vero percorso di pubblicazione. Confermato che
+  nessun `pyshacl` (o processore SHACL generico) è dipendenza di
+  progetto — implementato lo SHACL-equivalent minimo direttamente:
+  una shape chiusa a required-property/closed-predicate applicata
+  PRIMA di qualunque scrittura SPARQL, invece di aggiungere una nuova
+  dipendenza esterna (che avrebbe richiesto modifiche a
+  pyproject.toml/uv.lock fuori dallo scope di questo task).
+- Un predicato non autorizzato (`ALLOWED_PREDICATES`) o una
+  `provenanceRef` mancante/lossy bloccano la pubblicazione per intero
+  — i due criteri di accettazione negativi del task, resi strutturali;
+  una risorsa rifiutata non diventa mai parzialmente visibile.
+- Le letture (`list_authorized`/`exists_authorized`) riusano lo stesso
+  identico pattern di marking-join reale già provato da OCOR-DEV-0018.
+  `to_json_ld` è negato via `exists_authorized` per qualunque
+  clearance non autorizzata, altrimenti serializza JSON-LD reale e
+  ben formato via `rdflib` (già dipendenza di progetto, 7.1.4) su un
+  vero risultato SPARQL CONSTRUCT.
+- Aggiunti 8 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0038.py`, tutti contro
+  Fuseki reale, nessun mock — tutti e 8 passati al primo tentativo,
+  nessun bug trovato (la lezione di OCOR-DEV-0037 su
+  `urllib.error.URLError` non tradotto da `_request` è stata applicata
+  proattivamente al tipo di eccezione atteso nel test di
+  fault-injection).
+- Gate locali tutti verdi: `ruff`, `mypy`, `validate_rccad.py` PASS,
+  `validate_language_policy.py` PASS, `validate_ocor_change_scope.py`
+  PASS (7 percorsi), pytest completo via lo script `pytest` nudo con
+  `OCOR_LIVE_POSTGRES_DSN` impostato contro il PostgreSQL reale di
+  ocor-bootstrap: `2 failed, 745 passed` (stessi 2 fallimenti noti)
+  più `29 passed` per le 3 suite `reports/tests/`,
+  `validate_ocor_development_plan.py --base-ref origin/main
+  --authorized-extension` PASS dopo il consueto doppio-run.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0038.json` +
+  `reports/evidence/G4/OCOR-DEV-0038.log`.
+  `reports/evidence/G4/MANIFEST.json` esteso con inserimento
+  chirurgico (2 nuovi artifact, 9 nuovi requirement_results).
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task, non incluso nel commit del
+  task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0038`: tutti e 13 i check verdi al primo push. PR #107
+  mergiata (`80962a15fd677cbca610c8382639443d5f70c1c2`), SHA
+  post-merge verificata.
+
+## 2026-09-13 — Sincronizzazione stato: OCOR-DEV-0038 (post-merge, wave 16 OCOR-DEV-0039 pronto)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #107, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0038`).
+- `baseline_commit` aggiornato a
+  `80962a15fd677cbca610c8382639443d5f70c1c2` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0038`
+  aggiunto a `completed_evidence_tasks`.
+- Ricalcolata la prontezza dal backlog JSON: `OCOR-DEV-0039` ("Implement
+  C4 rebuild and drift reconciliation", wave 16) è appena diventato
+  pronto, dipendente da `OCOR-DEV-0037` e `OCOR-DEV-0038` (entrambi
+  appena mergiati) — numericamente più basso dei 4 task rimanenti del
+  wave 15 (`0040/0042/0046/0048`), quindi selezionato per ordine
+  numerico sull'intero insieme pronto.
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
+- Prossima azione: implementare `ocor-runtime/src/ocor_runtime/c4/rebuild.py`,
+  riusando `TypeDBProjectionAdapter` (OCOR-DEV-0037) e
+  `JenaSHACLProjectionAdapter` (OCOR-DEV-0038); criterio di
+  accettazione: il rebuild della projection dal log canonico riproduce
+  digest/watermark e la deriva viene messa in quarantena; criterio
+  negativo: servire una projection divergente dopo una riconciliazione
+  fallita è vietato.
