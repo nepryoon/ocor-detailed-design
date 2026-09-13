@@ -1207,3 +1207,84 @@
   eseguibili gli spike G2 `OCOR-DEV-0016`/`0017`/`0018`/`0021` (le cui
   `hard_dependencies` sono state estese a includere `OCOR-DEV-0084` dalla
   correzione del generator-drift di Fase 2.4).
+- `OCOR-DEV-0084`: PR #76 mergiata (`cbf53da9be6d13e77d545679dacebc2398f5af97`),
+  tutti e 13 i check verdi al primo push, SHA post-merge verificata. Catena
+  WS-12 (`OCOR-DEV-0070`..`0084`) chiusa.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0016 (SPIKE selected C3 backend behaviour)
+
+- Primo spike G2 eseguibile dopo la chiusura della catena WS-12. Dipende
+  da `OCOR-DEV-0006`, `OCOR-DEV-0013`, `OCOR-DEV-0015`, `OCOR-DEV-0084`,
+  tutti già mergiati. `scripts/ocor_autonomous_delivery.py --status`
+  riportava uno stato interno non allineato (proprio state file separato,
+  mai aggiornato dall'esecuzione manuale di questa sessione); confermata
+  invece la reale prontezza dei quattro spike G2 (`0016`/`0017`/`0018`/`0021`,
+  tutti wave 11) direttamente da `docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json`
+  e da `completed_evidence_tasks`; selezionato `OCOR-DEV-0016` per primo
+  (ordine numerico, stessa convenzione usata per tutta la catena WS-12).
+- **Scoperta significativa**: lo stack Docker `ocor-bootstrap` include un
+  PostgreSQL reale (`127.0.0.1:55433`) già provisionato dalla catena WS-12;
+  per la prima volta in questa sessione è stato possibile impostare
+  `OCOR_LIVE_POSTGRES_DSN` anche in locale (non solo in CI), riqualificando
+  per reale in locale i 10 test live-Postgres di `OCOR-DEV-0015`
+  (precedentemente `errors` per gap noto di sandbox) e i 5 nuovi test di
+  `OCOR-DEV-0016`.
+- Riutilizzato senza modifiche l'oracolo sigillato di `OCOR-DEV-0015`
+  (`spikes/c3_atomicity/oracle.py::PostgreSQLAtomicCommitOracle`); aggiunto
+  `spikes/c3_backend/concurrency_oracle.py` (nuovo) con l'harness di race
+  reale (`race_distinct_commands`, due comandi DISTINTI sulla stessa
+  `expected_revision`, ciascuno con una propria connessione PostgreSQL
+  reale) e due probe indipendenti fuori-banda: `observe_lock_contention`
+  (prova diretta sul wire della mutua esclusione del lock consultivo reale,
+  non solo inferita dall'esito) e `sample_revision_during` (lettura
+  continua da una connessione indipendente durante una race live, per
+  provare l'assenza di dirty read).
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0016.py` (5 test, tutti
+  contro PostgreSQL reale, nessun mock):
+  locking (due comandi distinti in race, uno vince, l'altro riceve un vero
+  conflitto di revisione, verificato ripetendo 5 volte senza flakiness);
+  prova diretta del lock su wire; isolamento (lettore concorrente non
+  osserva mai un valore di revisione fuori dal set valido durante una
+  race); fallimento sotto concorrenza reale (crash di processo reale via
+  subprocess, sincronizzato deterministicamente — non a tempo — con un
+  probe che attende l'osservazione reale del lock consultivo prima di
+  rilasciare il writer superstite, che completa con successo e il ledger
+  riconciliato accetta correttamente un ulteriore commit); riconciliazione
+  (falsificazione sintetica di un'anomalia `phantom_receipt`, tipo diverso
+  da quello già coperto da `OCOR-DEV-0015`).
+- **Bug del primo tentativo, corretto prima di sigillare**: la prima
+  versione del test di fallimento-sotto-concorrenza avviava crash e
+  writer superstite come una race "a freddo" senza sincronizzazione,
+  genuinamente non deterministica (in alcune esecuzioni il writer
+  superstite vinceva il lock per primo, facendo fallire il worker di
+  crash con un conflitto di revisione invece di farlo effettivamente
+  crashare) — corretto bloccando il thread principale su
+  `observe_lock_contention` finché il subprocess di crash non viene
+  osservato detenere realmente il lock, prima di rilasciare il writer
+  superstite; verificato deterministico su 5 esecuzioni consecutive.
+- `scripts/validate_language_policy.py` verificato: nessuna nuova area
+  necessaria (`spikes/` e `scripts/` già autorizzati dalla Fase 0/`0015`).
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (45 file,
+  `spikes/` e `tests/` fuori scope per policy, come già per
+  `spikes/c3_atomicity/` di `OCOR-DEV-0015`), `validate_rccad.py` PASS,
+  `validate_language_policy.py` PASS, `validate_ocor_change_scope.py` PASS
+  (9 percorsi), pytest completo con `OCOR_LIVE_POSTGRES_DSN` impostato
+  localmente per la prima volta: `2 failed, 624 passed, 0 skipped, 0
+  errors` (gli unici 2 fallimenti sono il gap noto e preesistente del pin
+  dell'interprete, indipendente da questo task; zero errori, contro i 10
+  della baseline precedente senza DSN locale),
+  `validate_ocor_development_plan.py --authorized-extension` PASS dopo il
+  consueto doppio-run di assestamento self-hash.
+- Evidenza sigillata contro il backend PostgreSQL reale selezionato:
+  `reports/evidence/G2/OCOR-DEV-0016.json` +
+  `reports/evidence/G2/OCOR-DEV-0016.log`, aggiunta a
+  `reports/evidence/G2/MANIFEST.json` (diff puramente additivo, 55 righe).
+  `scripts/validate_runtime_evidence.py --task OCOR-DEV-0016 --non-skipped`
+  PASS.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: push del branch
+  `governed/ocor-dev-0016-c3-backend-concurrency-spike`, apertura PR,
+  polling CI, merge a gate verdi, verifica SHA post-merge. Poi proseguire
+  con uno degli altri spike G2 dello stesso wave 11:
+  `OCOR-DEV-0017`/`0018`/`0021`.

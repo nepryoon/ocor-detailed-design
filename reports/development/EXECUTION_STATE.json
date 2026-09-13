@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-0084-capture-environment-evidence",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0084",
+    "branch": "governed/ocor-dev-0016-c3-backend-concurrency-spike",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0016",
     "decision_id": "DEC-211",
-    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0084_PUSHED__AWAITING_CI",
+    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0016_PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "e1b4fe1657d7222bc17b41b04feff8658a1cc6d1",
+  "baseline_commit": "cbf53da9be6d13e77d545679dacebc2398f5af97",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -56,19 +56,20 @@
     "OCOR-DEV-0081",
     "OCOR-DEV-0082",
     "OCOR-DEV-0083",
-    "OCOR-DEV-0084"
+    "OCOR-DEV-0084",
+    "OCOR-DEV-0016"
   ],
-  "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__LANGUAGE_POLICY_ADOPTED__PHASE_2_4_CLOSED__PHASE_3_CLOSED__WS12_CHAIN_CLOSING",
+  "current_gate": "G2_WS12_CLOSED__G2_SPIKES_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "a16ee50",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR75_MERGED_e1b4fe1657d7222bc17b41b04feff8658a1cc6d1",
+    "candidate_commit": "de75ec6",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR76_MERGED_cbf53da9be6d13e77d545679dacebc2398f5af97",
     "run_ids": [
-      34730792011,
-      34730792040,
-      34730792044,
-      34730792053,
-      34730792148,
-      34730792152
+      34732524406,
+      34732524448,
+      34732524449,
+      34732524452,
+      34732524457,
+      34732524626
     ]
   },
   "mandate_phase_status": {
@@ -129,9 +130,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/ocor-dev-0084-capture-environment-evidence, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0084 sealed with real evidence against the same live 11-service Docker stack: capture_environment_evidence.py extended with a typed environment_status field (folding in verify_external_services.py's typed_health_checks rather than only the raw docker compose ps inventory), proved for real with a positive capture (all healthy -> PASS), a negative fault-injection capture (typedb paused -> DEGRADED, exit 1, never a silent PASS), and a recovery capture (unpaused, polled back to PASS). Also fixed a real env-file auto-discovery defect (the pre-existing .ocor/bootstrap.env default never matched this session's actual secrets path) via a new --env-file argument. This is the LAST task in the WS-12 infrastructure-bootstrap-repair chain (OCOR-DEV-0070..0084): once merged, G2 spikes OCOR-DEV-0016 (C3 backend behaviour), OCOR-DEV-0017 (TypeDB exact-at-commit semantics), OCOR-DEV-0018 (Jena marking-safe projection) and OCOR-DEV-0021 (identity-policy latency/failure semantics) become executable -- check scripts/ocor_autonomous_delivery.py --status to confirm DAG-order selection, or proceed directly to one of them since they are read-only spikes, not provisioning tasks.",
+  "next_executable_action": "Push branch governed/ocor-dev-0016-c3-backend-concurrency-spike, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0016 (SPIKE selected C3 backend behaviour) is the first G2 spike executed after the WS-12 chain closed. It reuses OCOR-DEV-0015's sealed PostgreSQLAtomicCommitOracle unmodified and adds a real-concurrency race harness (spikes/c3_backend/concurrency_oracle.py) proving locking, isolation, failure-under-concurrency and reconciliation against the real, live PostgreSQL backend now available locally via the ocor-bootstrap Docker stack (127.0.0.1:55433) -- the first time this session has been able to set OCOR_LIVE_POSTGRES_DSN locally rather than relying on CI's ephemeral service container. This retroactively qualified OCOR-DEV-0015's own 10 previously-erroring live-Postgres tests as real local passes too. Next: one of the remaining wave-11 G2 spikes -- OCOR-DEV-0017 (SPIKE TypeDB exact-at-commit semantics), OCOR-DEV-0018 (SPIKE Jena marking-safe projection), OCOR-DEV-0021 (SPIKE identity-policy latency and failure semantics) -- all have their hard_dependencies already satisfied.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T02:30:00Z"
+  "updated_at": "2026-09-13T03:30:00Z"
 }

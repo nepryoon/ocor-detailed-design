@@ -1,0 +1,135 @@
+=== docker compose ps (real 11-service ocor-bootstrap stack, reused unmodified) ===
+NAME                            STATUS
+ocor-bootstrap-fuseki-1         Up 2 hours (healthy)
+ocor-bootstrap-kafka-1          Up 4 hours (healthy)
+ocor-bootstrap-keycloak-1       Up About an hour (healthy)
+ocor-bootstrap-opa-1            Up 2 hours (healthy)
+ocor-bootstrap-openbao-1        Up 4 hours (healthy)
+ocor-bootstrap-postgresql-1     Up 4 hours (healthy)
+ocor-bootstrap-qdrant-1         Up 4 hours (healthy)
+ocor-bootstrap-spire-agent-1    Up 4 hours
+ocor-bootstrap-spire-server-1   Up 4 hours (healthy)
+ocor-bootstrap-terminusdb-1     Up 4 hours (healthy)
+ocor-bootstrap-typedb-1         Up 4 hours (healthy)
+
+=== RUN 1: pytest tests/tasks/test_ocor_dev_0016.py -v against the real live Postgres backend (repeated x5 for stability, run 1 shown verbatim) ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/luca/projects/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collected 5 items
+
+tests/tasks/test_ocor_dev_0016.py .....                                  [100%]
+
+============================== 5 passed in 2.50s ===============================
+
+=== RUN 2..5: repeat runs, summary lines only, to demonstrate the real-concurrency races are not flaky ===
+-- run 2 --
+.....                                                                    [100%]
+5 passed in 2.48s
+-- run 3 --
+.....                                                                    [100%]
+5 passed in 2.47s
+-- run 4 --
+.....                                                                    [100%]
+5 passed in 2.54s
+-- run 5 --
+.....                                                                    [100%]
+5 passed in 2.59s
+
+=== Negative proof: revert the deterministic crash-synchronization fix to show the naive cold-start race is genuinely nondeterministic (documents why the fix was necessary; not part of the shipped test) ===
+(shown as narrative in ITERATION_LOG.md; the fixed, deterministic version is what ships and is exercised above and in the full regression below)
+
+=== ruff check spikes/c3_backend/ ocor-runtime/tests/tasks/test_ocor_dev_0016.py ===
+All checks passed!
+
+=== mypy (scope: ocor-runtime/src + scripts; spikes/ and tests/ are outside this gate's scope by policy, same as OCOR-DEV-0015's spikes/c3_atomicity/) ===
+Success: no issues found in 45 source files
+
+=== full local pytest regression, ocor-runtime/tests/ (OCOR_LIVE_POSTGRES_DSN set for the first time locally, pointed at the real ocor-bootstrap postgresql service) ===
+........................................................................ [ 12%]
+........................................................................ [ 24%]
+..........F............................................................. [ 36%]
+........................................................................ [ 48%]
+........................................................................ [ 60%]
+........................................................................ [ 72%]
+........................................................................ [ 84%]
+........................................................................ [ 96%]
+...................F.                                                    [100%]
+=================================== FAILURES ===================================
+_____ test_two_clean_environments_resolve_identical_lock_and_image_digests _____
+
+tmp_path = PosixPath('/tmp/pytest-of-luca/pytest-46/test_two_clean_environments_re0')
+
+    def test_two_clean_environments_resolve_identical_lock_and_image_digests(tmp_path):
+        first = materialize_clean_environment(tmp_path / "first")
+        second = materialize_clean_environment(tmp_path / "second")
+        assert fingerprint(first) == fingerprint(second)
+        for environment in (first, second):
+            result = subprocess.run(
+                ["uv", "lock", "--project", str(environment), "--check"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+>           assert result.returncode == 0, result.stdout + result.stderr
+E           AssertionError: error: No interpreter found for Python ==3.12.11 in managed installations or search path
+E             
+E           assert 2 == 0
+E            +  where 2 = CompletedProcess(args=['uv', 'lock', '--project', '/tmp/pytest-of-luca/pytest-46/test_two_clean_environments_re0/first...code=2, stdout='', stderr='error: No interpreter found for Python ==3.12.11 in managed installations or search path\n').returncode
+
+tests/tasks/test_ocor_dev_0002.py:52: AssertionError
+___________________ test_running_interpreter_matches_the_pin ___________________
+
+    def test_running_interpreter_matches_the_pin() -> None:
+        pin = PIN_PATH.read_text(encoding="utf-8").strip()
+        actual = platform.python_version()
+>       assert actual == pin, (
+            f"running interpreter {actual} diverges from the pinned {pin} in "
+            f"{PIN_PATH}; the environment is not the governed one"
+        )
+E       AssertionError: running interpreter 3.12.14 diverges from the pinned 3.12.11 in /home/luca/projects/ocor-detailed-design/ocor-runtime/.python-version; the environment is not the governed one
+E       assert '3.12.14' == '3.12.11'
+E         
+E         - 3.12.11
+E         ?       ^
+E         + 3.12.14
+E         ?       ^
+
+tests/test_interpreter_pin.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED tests/tasks/test_ocor_dev_0002.py::test_two_clean_environments_resolve_identical_lock_and_image_digests
+FAILED tests/test_interpreter_pin.py::test_running_interpreter_matches_the_pin
+2 failed, 595 passed in 36.94s
+
+=== full local pytest regression, 3 reports/tests suites ===
+.............................                                            [100%]
+29 passed in 5.05s
+
+=== sha256sum -c inputs/normative/SHA256SUMS ===
+exit=0
+
+=== scripts/validate_rccad.py --root . ===
+{
+  "checked_artifacts": 22,
+  "dynamic_assurance": "CI_REQUIRED",
+  "findings": [],
+  "fitness_results": {
+    "AFF-001": "PASS_STATIC_PRECHECK",
+    "AFF-002": "PASS_STATIC_PRECHECK",
+    "AFF-003": "PASS_STATIC_PRECHECK",
+    "AFF-004": "PASS_STATIC_PRECHECK",
+    "AFF-005": "PASS_STATIC_PRECHECK",
+    "AFF-006": "PASS_STATIC_PRECHECK",
+    "AFF-007": "PASS_STATIC_PRECHECK",
+    "AFF-008": "PASS_STATIC_PRECHECK",
+    "AFF-009": "PASS_STATIC_PRECHECK",
+    "AFF-010": "PASS_STATIC_PRECHECK"
+  },
+  "methodology_sha256": "231ce3325537de85890b16e97f138bd6a4263fc1e240094ed26499af9aeeb6cd",
+  "status": "PASS_LOCAL_PRECHECK"
+}
+
+=== scripts/validate_language_policy.py ===
+PASS: no tracked file uses a monitored extension outside its authorized area
