@@ -2654,3 +2654,90 @@
   fatti/relazioni e watermark si committano atomicamente e il
   comportamento exact-at-commit rispetta il port; criterio negativo:
   una projection stantia non può mai spacciarsi per esatta.
+
+## 2026-09-13 — OCOR-DEV-0037: C4 TypeDB projection adapter
+
+- Nuovo `ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter`,
+  versione retained (non-spike) di
+  `spikes.typedb_exact_commit.adapter` (OCOR-DEV-0017): un
+  `ProjectionReadPort`/`WatermarkPort` sigillato (OCOR-DEV-0012,
+  invariato) contro TypeDB reale, reimplementando la stessa superficie
+  API HTTP v1 reale già provata dallo spike invece di importare il
+  codice dello spike nel codice retained (`spikes/` è fuori dal
+  pythonpath di ocor-runtime in produzione, stesso precedente già
+  stabilito da OCOR-DEV-0028).
+- L'unica vera differenza comportamentale: `apply_commit()` inserisce
+  un fatto E avanza il watermark a quel commit atomicamente, in UNA
+  sola transazione di scrittura TypeDB reale (lo spike mantiene
+  `ingest()`/`advance_watermark()` deliberatamente separati apposta
+  per modellare ed esercitare le race fra un fatto e il suo watermark
+  nei propri test — questo adapter retained è il percorso di
+  produzione reale che un consumer C5 userebbe, dove la deriva fra
+  fatto e watermark non deve mai essere possibile in condizioni
+  normali). `read()`/`current()` riusano lo stesso identico
+  `NamedQueryRequest.verify_served` fail-closed già provato dallo
+  spike: una projection stantia non può mai spacciarsi per esatta.
+- Confermato che la regex `DIRECT_CLIENTS` di AFF-002/AFF-006
+  rileva solo import letterali di `psycopg`/`kafka`/`qdrant_client`/
+  `terminusdb_client`/`typedb`, non `urllib` — quindi le chiamate HTTP
+  reali di questo file non richiedono un sottoalbero `adapters/`,
+  rispecchiando esattamente il layout a file singolo dello spike.
+- Aggiunti 8 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0037.py`, tutti contro
+  TypeDB reale, nessun mock.
+- Due bug genuini trovati e corretti prima della sigillatura: (1) la
+  prima bozza rispecchiava il metodo `watermark()` dello spike stesso
+  (senza argomenti), che NON rispetta davvero la firma sigillata
+  `WatermarkPort.current(projection_id, branch)` —
+  `isinstance(adapter, WatermarkPort)` falliva genuinamente; corretto
+  rinominando in `current(self, projection_id, branch)`, chiudendo un
+  vero gap di conformità che lo spike stesso non aveva mai chiuso; (2)
+  il test di fault-injection si aspettava `TypeDBAdapterError` da un
+  host irraggiungibile, ma un vero guasto di connessione solleva
+  direttamente `urllib.error.URLError` (non catturato da `_request`,
+  che traduce solo le risposte di errore a livello HTTP) — corretto il
+  tipo di eccezione atteso nel test invece di aggiungere un except
+  generico nel codice di produzione.
+- Gate locali tutti verdi: `ruff`, `mypy`, `validate_rccad.py` PASS,
+  `validate_language_policy.py` PASS, `validate_ocor_change_scope.py`
+  PASS (7 percorsi), pytest completo via lo script `pytest` nudo con
+  `OCOR_LIVE_POSTGRES_DSN` impostato contro il PostgreSQL reale di
+  ocor-bootstrap: `2 failed, 737 passed` (stessi 2 fallimenti noti)
+  più `29 passed` per le 3 suite `reports/tests/`,
+  `validate_ocor_development_plan.py --base-ref origin/main
+  --authorized-extension` PASS dopo il consueto doppio-run.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0037.json` +
+  `reports/evidence/G4/OCOR-DEV-0037.log`.
+  `reports/evidence/G4/MANIFEST.json` esteso con inserimento
+  chirurgico (2 nuovi artifact, 9 nuovi requirement_results).
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task, non incluso nel commit del
+  task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0037`: tutti e 13 i check verdi al primo push. PR #105
+  mergiata (`7fa50fcc40a15cdad46a6c0c1b24bec630744d68`), SHA
+  post-merge verificata.
+
+## 2026-09-13 — Sincronizzazione stato: OCOR-DEV-0037 (post-merge)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #105, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0037`).
+- `baseline_commit` aggiornato a
+  `7fa50fcc40a15cdad46a6c0c1b24bec630744d68` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0037`
+  aggiunto a `completed_evidence_tasks`.
+- Ricalcolata la prontezza dal backlog JSON: nessun nuovo task
+  numericamente più basso è stato sbloccato da `OCOR-DEV-0037`, quindi
+  i 5 task rimanenti del wave 15 (`0038/0040/0042/0046/0048`) restano
+  il fronte di lavoro; selezionato `OCOR-DEV-0038` ("Implement C4 Jena
+  RDF SHACL adapter") per ordine numerico.
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
+- Prossima azione: implementare `ocor-runtime/src/ocor_runtime/c4/jena_adapter.py`,
+  riusando lo spike `spikes.jena_marking.adapter` (OCOR-DEV-0018) e
+  `PostgresC3Service` (OCOR-DEV-0029); criterio di accettazione:
+  output RDF/JSON-LD supera fixture SHACL e di non-interferenza del
+  marking; criterio negativo: triple non autorizzate o provenance
+  lossy bloccano la pubblicazione.
