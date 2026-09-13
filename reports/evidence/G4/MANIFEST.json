@@ -52,6 +52,16 @@
       "path": "OCOR-DEV-0036.log",
       "sha256": "d0f1c5edaac1a017f6a7a4c4374afff2eb4819998f8ebd4d8eb42d735734b035",
       "task_id": "OCOR-DEV-0036-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0037.json",
+      "sha256": "f4dd317d8d0f4f575ca45e7ccc56ee523311bde592fd93c1ecbd46bd3ef2a472",
+      "task_id": "OCOR-DEV-0037"
+    },
+    {
+      "path": "OCOR-DEV-0037.log",
+      "sha256": "32a46c4c3f113cebdda896b2a821be27e789fcab8fbc6c030da7ed27407629ec",
+      "task_id": "OCOR-DEV-0037-RAW"
     }
   ],
   "requirement_results": [
@@ -540,6 +550,87 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0036"
+    },
+    {
+      "case_id": "OCOR-DEV-0037-ADAPTER-CONFORMS-TO-SEALED-PORTS",
+      "command": "TypeDBProjectionAdapter satisfies both the sealed ProjectionReadPort and WatermarkPort Protocols",
+      "evidence_path": "OCOR-DEV-0037.json",
+      "raw_output_path": "OCOR-DEV-0037.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0037"
+    },
+    {
+      "case_id": "OCOR-DEV-0037-APPLY-COMMIT-ADVANCES-FACT-AND-WATERMARK-TOGETHER",
+      "command": "apply_commit ingests a fact and advances the watermark to the same commit atomically, in one real TypeDB transaction",
+      "evidence_path": "OCOR-DEV-0037.json",
+      "raw_output_path": "OCOR-DEV-0037.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0037"
+    },
+    {
+      "case_id": "OCOR-DEV-0037-APPLY-COMMIT-REPLACES-PRIOR-FACT-ATOMICALLY",
+      "command": "a second apply_commit for the same fact_id replaces both the fact content and the watermark together",
+      "evidence_path": "OCOR-DEV-0037.json",
+      "raw_output_path": "OCOR-DEV-0037.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0037"
+    },
+    {
+      "case_id": "OCOR-DEV-0037-EXACT-AT-COMMIT-NEVER-MASQUERADES-STALE-AS-EXACT",
+      "command": "a request pinned to a commit newer than what has actually landed fails closed with CONSISTENCY_DOWNGRADE rather than serving the stale row as exact",
+      "evidence_path": "OCOR-DEV-0037.json",
+      "raw_output_path": "OCOR-DEV-0037.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0037"
+    },
+    {
+      "case_id": "OCOR-DEV-0037-AT-LEAST-COMMIT-PROJECTION-NOT-READY-BEFORE-LANDING",
+      "command": "AT_LEAST_COMMIT reports PROJECTION_NOT_READY before the required commit lands, then serves it correctly once it lands for real",
+      "evidence_path": "OCOR-DEV-0037.json",
+      "raw_output_path": "OCOR-DEV-0037.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0037"
+    },
+    {
+      "case_id": "OCOR-DEV-0037-BEST-AVAILABLE-SERVES-CURRENT-WATERMARK",
+      "command": "BEST_AVAILABLE serves whatever the real, current watermark is with zero staleness reported for a freshly-applied commit",
+      "evidence_path": "OCOR-DEV-0037.json",
+      "raw_output_path": "OCOR-DEV-0037.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0037"
+    },
+    {
+      "case_id": "OCOR-DEV-0037-RESULT-NOT-FOUND-ONLY-AFTER-CONSISTENCY-CONFIRMED",
+      "command": "a never-ingested fact at an otherwise-satisfied consistency requirement raises RESULT_NOT_FOUND only after the consistency check itself passes",
+      "evidence_path": "OCOR-DEV-0037.json",
+      "raw_output_path": "OCOR-DEV-0037.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0037"
+    },
+    {
+      "case_id": "OCOR-DEV-0037-TYPEDB-UNREACHABILITY-FAILS-CLOSED",
+      "command": "a real TypeDB unreachability propagates as a real urllib.error.URLError and never serves a fabricated response",
+      "evidence_path": "OCOR-DEV-0037.json",
+      "raw_output_path": "OCOR-DEV-0037.log",
+      "requirement_id": "NFR-051",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0037"
+    },
+    {
+      "case_id": "OCOR-DEV-0037-REGRESSION",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0037.json",
+      "raw_output_path": "OCOR-DEV-0037.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0037"
     }
   ]
 }
