@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-0027-context-replay",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0027",
+    "branch": "governed/state-sync-ocor-dev-0027",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0027",
     "decision_id": "DEC-211",
-    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0027_PUSHED__AWAITING_CI",
+    "phase": "WAVE_13_CLOSED__WAVE_14_NEXT",
     "worktree": null
   },
-  "baseline_commit": "4630340f135fa0cab64c7926c8ae38bd0588cb0f",
+  "baseline_commit": "53ad2e5bb76f7b59a5ffae9863b685338027edbe",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -65,19 +65,20 @@
     "OCOR-DEV-0025",
     "OCOR-DEV-0028",
     "OCOR-DEV-0029",
-    "OCOR-DEV-0026"
+    "OCOR-DEV-0026",
+    "OCOR-DEV-0027"
   ],
-  "current_gate": "G2_WAVE_13_SPIKES_IN_PROGRESS",
+  "current_gate": "WAVE_13_CLOSED__WAVE_14_G3_NEXT",
   "latest_ci_evidence": {
-    "candidate_commit": "2f7b34a",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR88_MERGED_4630340f135fa0cab64c7926c8ae38bd0588cb0f",
+    "candidate_commit": "a97b510",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR89_MERGED_53ad2e5bb76f7b59a5ffae9863b685338027edbe",
     "run_ids": [
-      34753202921,
-      34753202818,
-      34753202831,
-      34753202893,
-      34753202947,
-      34753202835
+      34754769809,
+      34754769823,
+      34754769835,
+      34754769843,
+      34754769848,
+      34754769798
     ]
   },
   "mandate_phase_status": {
@@ -138,9 +139,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/ocor-dev-0027-context-replay, open PR, poll CI to green, merge, verify post-merge SHA, sync the three state files immediately. OCOR-DEV-0027 (SPIKE deterministic context-assembly replay) proves that a context-assembly receipt digest is a pure, deterministic function of pinned item versions, ordering (a real Qdrant similarity ranking), redactions, truncation and representation -- replaying identical pinned inputs reproduces the identical digest, and changing any one dimension changes it. Composes OCOR-DEV-0023's sealed QdrantHarness and OCOR-DEV-0024's sealed equivalence helper, both unmodified, plus the sealed kernel canonical_digest for the receipt itself. No new CI provisioning needed (Qdrant self-provisions). After this merges, wave 13's only remaining ready task is OCOR-DEV-0030 (Build retained governed-action slice, gate G3) -- confirm readiness directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks. If it touches a real backend client, route it through an ocor-runtime/src/ocor_runtime/**/adapters/ subtree up front, per AFF-002/AFF-006.",
+  "next_executable_action": "OCOR-DEV-0027 merged (PR #89, 53ad2e5bb76f7b59a5ffae9863b685338027edbe), all 13 checks green on the first push. This closes wave 13 entirely (OCOR-DEV-0026/0027). Next: OCOR-DEV-0030 (Build retained governed-action slice, gate G3), wave 14's only ready task, depending on OCOR-DEV-0020/0021/0029 (all merged) -- confirm readiness directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks. Since it is retained (non-spike) code, proactively check what real backend it needs and whether it is already provisioned in CI before the first push; if it touches a real backend client, route it through an ocor-runtime/src/ocor_runtime/**/adapters/ subtree up front, per AFF-002/AFF-006.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T11:45:00Z"
+  "updated_at": "2026-09-13T12:05:00Z"
 }
