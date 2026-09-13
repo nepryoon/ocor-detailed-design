@@ -207,6 +207,16 @@
       "path": "OCOR-DEV-0021.log",
       "sha256": "32bd3d711868a62a725783b1802d4539149caf931f70aec0bb8b97efcc4f59a9",
       "task_id": "OCOR-DEV-0021-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0024.json",
+      "sha256": "c6b1f4635191864191ca460e2da548c594356836c5f927b4b54dbba782f2c30f",
+      "task_id": "OCOR-DEV-0024"
+    },
+    {
+      "path": "OCOR-DEV-0024.log",
+      "sha256": "d1997eb871be627393467a27c7acfa2f74bd4d2e967fc690bce09cae55403219",
+      "task_id": "OCOR-DEV-0024-RAW"
     }
   ],
   "created_at": "2026-09-04T14:12:35Z",
@@ -1047,6 +1057,78 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0021"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-JENA-CONTENT-COUNT-EXISTENCE",
+      "command": "a low-clearance observer's Jena content list, count and existence checks are byte-identical before and after a TOP_SECRET resource is ingested elsewhere",
+      "evidence_path": "OCOR-DEV-0024.json",
+      "raw_output_path": "OCOR-DEV-0024.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0024"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-QDRANT-RANK-COUNT",
+      "command": "a low-partition Qdrant search's ranked result set and count are unaffected by upserting 200 foreign vectors into a high partition afterward",
+      "evidence_path": "OCOR-DEV-0024.json",
+      "raw_output_path": "OCOR-DEV-0024.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0024"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-QDRANT-TIMING",
+      "command": "a low-partition search's bounded timing envelope still admits the observed timing after the high partition is populated",
+      "evidence_path": "OCOR-DEV-0024.json",
+      "raw_output_path": "OCOR-DEV-0024.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0024"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-QDRANT-EXISTENCE-HIDING",
+      "command": "access to a real, populated high partition and to a fabricated, nonexistent one are denied with the identical error and reason code",
+      "evidence_path": "OCOR-DEV-0024.json",
+      "raw_output_path": "OCOR-DEV-0024.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0024"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-CROSS-SERVICE-TIMING",
+      "command": "OPA's own bounded-probe availability and timing envelope are unaffected by a real pause/unpause fault-injection cycle on the unrelated OpenBao service",
+      "evidence_path": "OCOR-DEV-0024.json",
+      "raw_output_path": "OCOR-DEV-0024.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0024"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-CACHE-STABILITY",
+      "command": "repeated low-clearance queries against both Jena and Qdrant return identical results before and after high-compartment population in both backends",
+      "evidence_path": "OCOR-DEV-0024.json",
+      "raw_output_path": "OCOR-DEV-0024.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0024"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-EQUIVALENCE-ORACLE-FALSIFIABLE",
+      "command": "assert_observationally_equivalent raises NonInterferenceViolation on a real, constructed divergence, proving it is not vacuously true",
+      "evidence_path": "OCOR-DEV-0024.json",
+      "raw_output_path": "OCOR-DEV-0024.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0024"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0024.json",
+      "raw_output_path": "OCOR-DEV-0024.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0024"
     }
   ],
   "schema_version": "1.0"
