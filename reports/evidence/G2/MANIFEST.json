@@ -217,6 +217,16 @@
       "path": "OCOR-DEV-0024.log",
       "sha256": "d1997eb871be627393467a27c7acfa2f74bd4d2e967fc690bce09cae55403219",
       "task_id": "OCOR-DEV-0024-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0025.json",
+      "sha256": "ac46e71c1e99a61d4492257cfbfd046a151de019ee116e4a4b8af30b0d12994b",
+      "task_id": "OCOR-DEV-0025"
+    },
+    {
+      "path": "OCOR-DEV-0025.log",
+      "sha256": "9647e536c04dfd663c849c96331356e2c29ee1f203e1b5a744a4b8da40e1d943",
+      "task_id": "OCOR-DEV-0025-RAW"
     }
   ],
   "created_at": "2026-09-04T14:12:35Z",
@@ -1129,6 +1139,51 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0024"
+    },
+    {
+      "case_id": "OCOR-DEV-0025-FULL-DELETION",
+      "command": "a deletion request across real PostgreSQL, TypeDB and Qdrant reports DELETED with all three backends acknowledged and independently re-verified absent",
+      "evidence_path": "OCOR-DEV-0025.json",
+      "raw_output_path": "OCOR-DEV-0025.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0025"
+    },
+    {
+      "case_id": "OCOR-DEV-0025-REAL-PARTIAL-FAILURE-AND-RECOVERY",
+      "command": "a real pause/unpause fault-injection cycle on TypeDB during deletion reports DELETION_INCOMPLETE with the paused target in remaining, then recovers and a retry reports DELETED",
+      "evidence_path": "OCOR-DEV-0025.json",
+      "raw_output_path": "OCOR-DEV-0025.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0025"
+    },
+    {
+      "case_id": "OCOR-DEV-0025-NO-TRUST-IN-SELF-REPORTED-SUCCESS",
+      "command": "a target whose tombstone() succeeds without raising, but whose independent contains() still returns true, is correctly classified as remaining",
+      "evidence_path": "OCOR-DEV-0025.json",
+      "raw_output_path": "OCOR-DEV-0025.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0025"
+    },
+    {
+      "case_id": "OCOR-DEV-0025-UNREACHABLE-FAILS-CLOSED",
+      "command": "a target whose tombstone() and contains() both raise is classified as remaining, never silently dropped or treated as acknowledged",
+      "evidence_path": "OCOR-DEV-0025.json",
+      "raw_output_path": "OCOR-DEV-0025.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0025"
+    },
+    {
+      "case_id": "OCOR-DEV-0025-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0025.json",
+      "raw_output_path": "OCOR-DEV-0025.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0025"
     }
   ],
   "schema_version": "1.0"

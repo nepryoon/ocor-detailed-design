@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0025",
+  "commit": "e003fdc453420f8d5942dd9c39261d1ccf0a73ea",
+  "created_at": "2026-09-13T07:45:00Z",
+  "environment": {
+    "orchestrator": "docker compose -p ocor-bootstrap (deploy/bootstrap/compose.yaml, PostgreSQL/TypeDB) plus a real, self-provisioned, ephemeral Qdrant container per test run (spikes.vector_partition.oracle.QdrantHarness, OCOR-DEV-0023, sealed and unmodified)",
+    "backends_under_test": "real PostgreSQL (metadata), real TypeDB (content), real Qdrant (cache/index) -- three independent backends representing the task's metadata/content/indexes/cache/replicas categories",
+    "reused_deliverable": "spikes.vector_partition.oracle.QdrantHarness (OCOR-DEV-0023, sealed) for Qdrant provisioning/teardown and its generic HTTP request() method; scripts/fault_inject_test_environment.py's fault_command/http_reachable/_poll (OCOR-DEV-0083, sealed) for real TypeDB pause/unpause fault injection -- both reused completely unmodified",
+    "ci_provisioning": "proactively converted TypeDB's CI provisioning from a native GitHub Actions services: block (which names its container internally, not as ocor-bootstrap-typedb-1) to a manual docker run --name ocor-bootstrap-typedb-1 step across all 3 CI workflows, matching the convention already established for Fuseki/OPA/Keycloak/OpenBao -- found and fixed before ever opening a PR, applying the exact lesson from OCOR-DEV-0021's reactive fix"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "spikes/memory_deletion/saga.py": "7675009dbccbaff0d87095a4f656f4b40b7d69c4dbcda15f26b640f06128db4f",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0025.py": "8561409cbe1c3bbe0d5b0e02002da16a8f43c87c430f34aae6f0d4266fa97763"
+  },
+  "commands": [
+    {
+      "command": "CI provisioning fix (proactive, before any push): converted TypeDB from services: to a manual docker run --name ocor-bootstrap-typedb-1 step across all 3 CI workflows, rehearsed locally on alternate ports (1730/8001) before adding to any workflow",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0025.py -v against the real live stack, repeated 4 times to demonstrate determinism (each run self-provisions and tears down a fresh Qdrant container, and performs a real pause/unpause fault-injection cycle on TypeDB)",
+      "result": {"passed": 16, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "post-run stack-integrity verification: no leftover self-provisioned Qdrant spike containers, the persistent 11-service ocor-bootstrap stack (including TypeDB, confirmed genuinely healthy via a direct HTTP check after the Docker healthcheck settle delay) unaffected",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, ocor-runtime/tests/ (OCOR_LIVE_POSTGRES_DSN set locally, pointed at the ocor-bootstrap postgresql service)",
+      "result": {"passed": 625, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, 3 reports/tests suites",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0025-FULL-DELETION",
+      "requirement_id": "BR-003",
+      "command": "a deletion request across real PostgreSQL, TypeDB and Qdrant, all healthy, reports DELETED with all three backends acknowledged and independently re-verified absent",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0025-REAL-PARTIAL-FAILURE-AND-RECOVERY",
+      "requirement_id": "BR-003",
+      "command": "a real pause/unpause fault-injection cycle on TypeDB during deletion: the saga reports DELETION_INCOMPLETE with content-typedb in remaining and the item still genuinely present there, then recovers and a retry against the remaining target alone reports DELETED",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0025-NO-TRUST-IN-SELF-REPORTED-SUCCESS",
+      "requirement_id": "BR-003",
+      "command": "a target whose tombstone() call succeeds without raising, but whose independent contains() check still returns true, is correctly classified as remaining -- the saga never trusts a target's own success signal, only its own fresh contains() re-check",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0025-UNREACHABLE-FAILS-CLOSED",
+      "requirement_id": "BR-003",
+      "command": "a target whose tombstone() and contains() both raise (a real network-failure shape) is classified as remaining, never silently dropped from the receipt or treated as acknowledged",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0025-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 654, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This spike maps the task's five conceptual categories (metadata, content, indexes, cache, replicas) onto three real, distinct backends (PostgreSQL, TypeDB, Qdrant); it does not stand up five physically separate systems, since the property being proven -- DELETION_INCOMPLETE until every independent store confirms absence, never a false DELETED -- is fully exercised by three backends and does not strengthen with a fourth or fifth.",
+    "The saga orchestrator itself (run_deletion_saga) is generic and accepts any object satisfying the DeletionTarget protocol; only the concrete PostgreSQL/TypeDB/Qdrant targets are new sealed-adapter-reusing code -- a synthetic LyingTarget/UnreachableTarget is used only in two pure unit/contract tests of the orchestrator's own classification logic, never as a substitute for real backend evidence (both real end-to-end tests use exclusively real backends).",
+    "The real fault-injection drill targets TypeDB specifically (pause/unpause); PostgreSQL and Qdrant were not independently fault-injected in this task's evidence, since OCOR-DEV-0016 (PostgreSQL concurrency/failure) and OCOR-DEV-0023 (Qdrant partition isolation, with its own fault-tolerant design) already sealed real fault-injection evidence for those two backends independently.",
+    "The same pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope."
+  ],
+  "rollback_procedure_verified": "The TypeDB pause/unpause cycle recovers in a finally block before the test's own assertions run; the Qdrant fixture tears down its self-provisioned container in a finally block regardless of test outcome. Verified directly by the post-run check that no self-provisioned Qdrant containers were left behind, that TypeDB was genuinely healthy again (confirmed via a direct HTTP call past the Docker healthcheck's own settle delay), and that the persistent 11-service stack remained healthy across 4 consecutive full test-suite runs including 4 real pause/unpause cycles. The CI provisioning fix was rehearsed end-to-end locally (start, health-wait, real endpoint check, teardown) on alternate ports before being added to any workflow.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "9647e536c04dfd663c849c96331356e2c29ee1f203e1b5a744a4b8da40e1d943",
+  "result": "PASS"
+}
