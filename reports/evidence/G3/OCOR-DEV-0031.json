@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0031",
+  "commit": "c452a38680058b66d47588ea1dccee433d183487",
+  "created_at": "2026-09-13T14:45:00Z",
+  "environment": {
+    "orchestrator": "docker compose -p ocor-bootstrap (deploy/bootstrap/compose.yaml: PostgreSQL, TypeDB, Fuseki) plus real, self-provisioned, ephemeral Kafka and Qdrant containers per test run",
+    "backends_under_test": "real PostgreSQL (canonical commit), real TypeDB (exact-at-commit projection), real Fuseki (marking-safe projection), real self-provisioned Qdrant (context-assembly ranking), real self-provisioned Kafka (event backbone) -- five independent real backends crossed by one content-addressed fixture",
+    "reused_deliverable": "ocor_runtime.c1.compiler (OCOR-DEV-0028), ocor_runtime.c2_identity/ocor_runtime.c8_agent (retained, predating this session), ocor_runtime.c3.service.PostgresC3Service (OCOR-DEV-0029), ocor_runtime.c6.engine.GovernedActionEngine (OCOR-DEV-0030), ocor_runtime.c7_emission.EmissionFence + ocor_runtime.c3_store.AtomicOutboxStore (retained, predating this session), spikes.typedb_exact_commit.adapter (OCOR-DEV-0017), spikes.jena_marking.adapter (OCOR-DEV-0018), spikes.kafka_delivery.oracle (OCOR-DEV-0019), spikes.causal_reproducibility.oracle (OCOR-DEV-0022), spikes.context_replay.replay (OCOR-DEV-0027) -- all reused completely unmodified; this task adds no new production code, only the integration test itself",
+    "ci_provisioning": "no new CI provisioning needed: PostgreSQL/TypeDB/Fuseki are already real and provisioned in all 3 CI workflows from prior tasks; Kafka and Qdrant self-provision via a real docker run inside the test process itself, the same mechanism OCOR-DEV-0019/0023 already exercise successfully"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/tests/mission_thread/test_first_governed_slice.py": "3bd287af9235acbb66b94ea379ad09a2e818e27d114fd3b6004d8165dee24448"
+  },
+  "commands": [
+    {
+      "command": "read docs/OCOR_LLD_v1.1.md sections 2.1-2.9, 3 and 4 and the full sealed/spiked source of every C1-C8 component named as a hard dependency before designing the thread; discovered that all required components already exist as sealed retained code or sealed spikes -- confirmed the task's single expected_file_areas entry (the test file itself) is correct: no new production code is needed",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "proactive CI-provisioning check before writing any code: confirmed PostgreSQL/TypeDB/Fuseki are already real and provisioned in all 3 CI workflows, and Kafka/Qdrant self-provision -- no gap, no CI change needed",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "PR #93 first push CI failure: delivery-activation/rccad-methodology/validation-closure all failed with ModuleNotFoundError: No module named 'spikes' during collection of ocor-runtime/tests/mission_thread/test_first_governed_slice.py",
+      "result": {"passed": 0, "failed": 3, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "root-cause via gh api .../jobs/<id>/logs and local reproduction with the bare ocor-runtime/.venv/bin/pytest console script (matching CI's uv run --project ocor-runtime --frozen pytest invocation exactly, unlike the local 'python -m pytest' invocation used earlier, which auto-prepends the CWD to sys.path and had masked the bug): this file's spikes.* imports silently relied on another already-collected test module's own top-level sys.path.insert(0, REPOSITORY_ROOT) side effect (an established but undocumented cross-file dependency shared by 13 existing task test files) having already executed in the same pytest session; ocor-runtime/tests/mission_thread/ sorts alphabetically before ocor-runtime/tests/tasks/, so this new file is collected and imported first, before any of those side effects run",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "fix: added this file's own explicit sys.path.insert(0, REPOSITORY_ROOT) before the spikes.* imports, matching the established, collection-order-independent pattern already used by test_ocor_dev_0004/0015/0016/0017/0018/0021/0024/0025/0029/0079/0082/0083/0084.py; re-verified via the bare pytest console script (not python -m pytest) that the whole ocor-runtime/tests/ tree collects with zero ModuleNotFoundError regardless of file ordering",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/mission_thread/test_first_governed_slice.py -v via the bare pytest console script against the real live stack, repeated 3 times to demonstrate determinism (each run mints a fresh correlation_id, a fresh self-provisioned Kafka broker and a fresh self-provisioned Qdrant collection)",
+      "result": {"passed": 15, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "post-run stack-integrity verification: no leftover self-provisioned Kafka/Qdrant spike containers, the persistent 11-service ocor-bootstrap stack unaffected",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression via the bare pytest console script (matching CI exactly), ocor-runtime/tests/ (OCOR_LIVE_POSTGRES_DSN set locally, pointed at the ocor-bootstrap postgresql service)",
+      "result": {"passed": 670, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, 3 reports/tests suites",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0031-FULL-THREAD-PRODUCES-CORRELATED-RECEIPTS",
+      "requirement_id": "BR-003",
+      "command": "a single content-addressed mission fixture, identified by one correlation_id, crosses real PostgreSQL (C3 canonical), real TypeDB (C4 exact-at-commit projection), real Fuseki (C4 marking-safe projection), real Qdrant (C4/C2 context-assembly), real Kafka (C5 event), C6's governed-action engine (action) and the causal-reproducibility oracle (C7 causal), reusing the C2/C8 identity registry and agent kernel throughout; the C7 causal query's causation_id is the C6 action's own real emission event id, a genuine causal chain rather than a shared label",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0031-CAUSAL-RECEIPT-REPRODUCES",
+      "requirement_id": "BR-003",
+      "command": "re-running the C7 causal step with identical pinned model/data/intervention digests and the same correlation_id/causation_id reproduces a byte-identical outcome, verified via the sealed verify_reproduction oracle",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0031-AUTHORITY-DENIAL-HALTS-THE-THREAD",
+      "requirement_id": "BR-003",
+      "command": "an action denied at Authority (a lease granting the wrong capability) never reaches the canonical commit, projection, event or causal steps -- the thread halts with zero durable state and zero sink calls",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0031-PROJECTION-EXACT-AT-COMMIT-ENFORCED",
+      "requirement_id": "BR-003",
+      "command": "a real TypeDB projection read demanding EXACT_AT_COMMIT consistency against a genuine C3 commit fails closed (PROJECTION_NOT_READY/CONSISTENCY_DOWNGRADE) when the watermark has not yet advanced to that commit, never silently serving a stale row as exact",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0031-KAFKA-BROKER-RESTART-DETECTED-AND-RECOVERS",
+      "requirement_id": "BR-003",
+      "command": "a real Kafka broker restart mid-thread is a genuine fault-injection drill (a real docker restart against the self-provisioned, per-test-run isolated broker, never the shared ocor-bootstrap stack): events produced before and after the restart are both durably delivered and consumed in order",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0031-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 699, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This task adds zero new production code -- every C1-C8 component crossed by the thread already existed as sealed retained code or a sealed spike before this task began; the sole new artifact is the integration test itself, matching the backlog's own single expected_file_areas entry exactly.",
+    "The Kafka fault-injection drill restarts the self-provisioned, per-test-run isolated broker (its own ocor-spike-0019-<uuid> container), never the shared ocor-bootstrap-kafka-1 container other tasks depend on -- consistent with the lower-blast-radius principle established in OCOR-DEV-0026/0027.",
+    "The C4 'projection' receipt is deliberately a bundle of three independent real reads (TypeDB exact-at-commit, Fuseki marking-safe, Qdrant-ranked context assembly) rather than a single mechanism, since the approved architecture assigns projection responsibilities across multiple backend-specific adapters; all three are exercised in the happy-path thread.",
+    "C2 (Unified Semantic Gateway) has no dedicated 'receipt' artifact distinct from the identity resolution (ResolutionOutcome) and the sealed NamedQueryRequest/Response contract already exercised by the C4 projection reads -- C2 is the query/identity substrate the other receipts are built on, not a seventh independent receipt kind, matching the acceptance criteria's own six named receipt kinds (canonical, projection, event, causal, agent, action).",
+    "The same pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope.",
+    "A genuine CI-only failure (ModuleNotFoundError: No module named 'spikes') was found and fixed before this evidence was sealed -- see the commands log above. It never reproduced locally under 'python -m pytest' (which auto-prepends the CWD to sys.path), only under the bare 'pytest' console script CI actually invokes; all local verification after the fix used the bare console script to match CI exactly. This also surfaces a latent fragility in 13 existing task test files that rely on collection-order side effects for their own spikes.* imports rather than each declaring its own sys.path.insert; those files are unmodified by this task (out of scope) but the same class of bug could recur for any future test file that sorts alphabetically ahead of them."
+  ],
+  "rollback_procedure_verified": "Every test mints a fresh correlation_id, a fresh self-provisioned Kafka broker/volume and a fresh self-provisioned Qdrant collection, torn down in fixture finally blocks regardless of outcome, so no test leaves residual state another run could collide with. Verified directly by 3 consecutive full test-suite runs with no manual cleanup between them, and by the post-run stack-integrity check confirming all 11 persistent services remained healthy. The Kafka broker-restart drill is itself a real recovery proof: durable delivery survives a genuine container restart with zero message loss or duplication.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "69f3751f7f056786ae6cae60ca5a03b185636a5c9e84dfbbb461358b11c54ad9",
+  "result": "PASS"
+}

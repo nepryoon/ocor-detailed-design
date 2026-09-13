@@ -1,0 +1,69 @@
+=== CI FAILURE ROOT-CAUSE FINDING: PR #93's first push failed delivery-activation/rccad-methodology/validation-closure with ModuleNotFoundError: No module named 'spikes' ===
+Root cause: this file's own module-level imports relied on ANOTHER test module's sys.path.insert(0, REPOSITORY_ROOT) side effect having already run in the same pytest session (an established but undocumented cross-file dependency several existing task test files rely on). ocor-runtime/tests/mission_thread/ sorts alphabetically BEFORE ocor-runtime/tests/tasks/, so when the whole suite is collected in one pytest invocation, this new file is imported before any tasks/test_ocor_dev_XXXX.py file's sys.path.insert has executed. Local testing had masked this because 'python -m pytest' (used locally) auto-prepends the CWD to sys.path, unlike the bare 'pytest' console script CI invokes via 'uv run --project ocor-runtime --frozen pytest'.
+Fix: added this file's own explicit sys.path.insert(0, REPOSITORY_ROOT), matching the established, collection-order-independent pattern already used by test_ocor_dev_0004/0015/0016/0017/0018/0021/0024/0025/0029/0079/0082/0083/0084.py.
+
+=== docker compose ps (real 11-service ocor-bootstrap stack, plus self-provisioned ephemeral Kafka and Qdrant per test run) ===
+ocor-bootstrap-fuseki-1: Up 54 minutes (healthy)
+ocor-bootstrap-kafka-1: Up 16 hours (healthy)
+ocor-bootstrap-keycloak-1: Up 13 hours (healthy)
+ocor-bootstrap-opa-1: Up 13 hours (healthy)
+ocor-bootstrap-openbao-1: Up 16 hours (healthy)
+ocor-bootstrap-postgresql-1: Up 16 hours (healthy)
+ocor-bootstrap-qdrant-1: Up 16 hours (healthy)
+ocor-bootstrap-spire-agent-1: Up 16 hours
+ocor-bootstrap-spire-server-1: Up 16 hours (healthy)
+ocor-bootstrap-terminusdb-1: Up 16 hours (healthy)
+ocor-bootstrap-typedb-1: Up 16 hours (healthy)
+
+=== RUN 1: pytest ocor-runtime/tests/mission_thread/test_first_governed_slice.py -v via the BARE pytest console script (matching CI's exact invocation, uv run --project ocor-runtime --frozen pytest), after the sys.path fix (repeated x3 for stability, run 1 shown verbatim) ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 5 items
+
+ocor-runtime/tests/mission_thread/test_first_governed_slice.py::test_mission_thread_produces_correlated_receipts_across_all_governed_components PASSED [ 20%]
+ocor-runtime/tests/mission_thread/test_first_governed_slice.py::test_causal_receipt_reproduces_identically_with_the_same_pinned_inputs PASSED [ 40%]
+ocor-runtime/tests/mission_thread/test_first_governed_slice.py::test_action_denied_at_authority_halts_the_thread_before_any_effect PASSED [ 60%]
+ocor-runtime/tests/mission_thread/test_first_governed_slice.py::test_typedb_projection_read_enforces_exact_at_commit_consistency_with_the_real_canonical_commit PASSED [ 80%]
+ocor-runtime/tests/mission_thread/test_first_governed_slice.py::test_a_real_kafka_broker_restart_during_the_event_step_is_detected_and_recovers PASSED [100%]
+
+============================== 5 passed in 53.40s ==============================
+
+=== RUN 2..3: repeat runs, summary lines only, to demonstrate determinism ===
+.....                                                                    [100%]
+5 passed in 53.04s
+.....                                                                    [100%]
+5 passed in 50.45s
+
+=== full local pytest regression via the BARE pytest console script (matching CI exactly), ocor-runtime/tests/ ===
+
+ocor-runtime/tests/test_interpreter_pin.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0002.py::test_two_clean_environments_resolve_identical_lock_and_image_digests
+FAILED ocor-runtime/tests/test_interpreter_pin.py::test_running_interpreter_matches_the_pin
+2 failed, 670 passed in 141.00s (0:02:20)
+
+=== full local pytest regression, 3 reports/tests suites ===
+.............................                                            [100%]
+29 passed in 5.23s
+
+=== whole-tree collection check with bare pytest (matching CI): no ModuleNotFoundError anywhere ===
+tests/test_interpreter_pin.py::test_running_interpreter_is_cpython
+
+672 tests collected in 0.37s
+
+=== post-run stack-integrity verification ===
+ocor-bootstrap-fuseki-1: Up 59 minutes (healthy)
+ocor-bootstrap-kafka-1: Up 16 hours (healthy)
+ocor-bootstrap-keycloak-1: Up 13 hours (healthy)
+ocor-bootstrap-opa-1: Up 13 hours (healthy)
+ocor-bootstrap-openbao-1: Up 16 hours (healthy)
+ocor-bootstrap-postgresql-1: Up 16 hours (healthy)
+ocor-bootstrap-qdrant-1: Up 16 hours (healthy)
+ocor-bootstrap-spire-agent-1: Up 16 hours
+ocor-bootstrap-spire-server-1: Up 16 hours (healthy)
+ocor-bootstrap-terminusdb-1: Up 16 hours (healthy)
+ocor-bootstrap-typedb-1: Up 16 hours (healthy)
