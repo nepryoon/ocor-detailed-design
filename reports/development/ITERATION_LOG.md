@@ -2161,8 +2161,49 @@
   iterazione (non rimandato).
 - Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
   `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
-- Prossima azione: push del branch
-  `governed/ocor-dev-0031-mission-thread`, apertura PR, polling CI,
-  merge a gate verdi, verifica SHA post-merge. Poi determinare il
-  prossimo task pronto direttamente dal backlog JSON, verificando
-  sempre `parallel_wave`.
+- `OCOR-DEV-0031`: al primo push, 3 job CI (`delivery-activation`,
+  `rccad-methodology`, `validation-closure`) hanno fallito con
+  `ModuleNotFoundError: No module named 'spikes'` durante la raccolta
+  di `test_first_governed_slice.py`. Causa radice: il file si basava
+  implicitamente su un side-effect `sys.path.insert` di un altro
+  modulo di test già raccolto nella stessa sessione pytest — una
+  dipendenza cross-file non documentata condivisa da 13 file di test
+  esistenti. `mission_thread/` viene raccolta alfabeticamente PRIMA di
+  `tasks/`, quindi il nuovo file veniva importato prima che quei
+  side-effect fossero eseguiti; i test locali con `python -m pytest`
+  (che antepone automaticamente la CWD a `sys.path`) non avevano mai
+  rivelato il problema, a differenza dello script `pytest` nudo che la
+  CI invoca davvero. Corretto aggiungendo un proprio
+  `sys.path.insert(0, REPOSITORY_ROOT)` esplicito, riverificato con lo
+  script `pytest` nudo (non `python -m pytest`): 5/5 test passano,
+  l'intero albero si raccoglie senza errori, regressione invariata.
+  Evidenza risigillata con i nuovi hash e la scoperta della causa
+  radice. Commit di correzione pushato come nuovo commit sullo stesso
+  branch. Tutti e 13 i check verdi sul commit corretto. PR #93
+  mergiata (`47df17176f050c644105b73c3ae7aae085e86a76`), SHA
+  post-merge verificata. Con questo si chiude l'intero wave 14 e si
+  apre il gate **G4**.
+
+## 2026-09-13 — Sincronizzazione stato: OCOR-DEV-0031 (post-merge, apertura G4)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #93, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0031`).
+- `baseline_commit` aggiornato a
+  `47df17176f050c644105b73c3ae7aae085e86a76` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0031`
+  aggiunto a `completed_evidence_tasks`. Verificata l'assenza di
+  `RCCAD-STATE-HANDOFF-DRIFT`.
+- Ricalcolata la prontezza del prossimo wave dal backlog JSON: ready
+  set = `{OCOR-DEV-0032, 0034, 0036, 0037, 0038, 0040, 0042, 0046,
+  0048}`, 9 task, tutti `parallel_wave=15`, gate **G4**, tutti
+  dipendenti solo da `OCOR-DEV-0031`. Selezionato `OCOR-DEV-0032`
+  ("Complete C1 parser type-checker and semantic validation") per
+  ordine numerico.
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
+- Prossima azione: leggere per intero la voce di `OCOR-DEV-0032` nel
+  backlog JSON prima di progettare qualunque cosa. Per ogni nuovo file
+  di test che importa `spikes.*`, includere sempre il proprio
+  `sys.path.insert(0, REPOSITORY_ROOT)` esplicito e verificare
+  localmente con lo script `pytest` nudo, non `python -m pytest`.
