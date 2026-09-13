@@ -1,0 +1,65 @@
+=== docker compose ps (real 11-service ocor-bootstrap stack, reused unmodified; no new CI provisioning needed -- Qdrant self-provisions per OCOR-DEV-0023) ===
+ocor-bootstrap-fuseki-1: Up 6 hours (healthy)
+ocor-bootstrap-kafka-1: Up 13 hours (healthy)
+ocor-bootstrap-keycloak-1: Up 10 hours (healthy)
+ocor-bootstrap-opa-1: Up 10 hours (healthy)
+ocor-bootstrap-openbao-1: Up 13 hours (healthy)
+ocor-bootstrap-postgresql-1: Up 13 hours (healthy)
+ocor-bootstrap-qdrant-1: Up 13 hours (healthy)
+ocor-bootstrap-spire-agent-1: Up 13 hours
+ocor-bootstrap-spire-server-1: Up 13 hours (healthy)
+ocor-bootstrap-terminusdb-1: Up 13 hours (healthy)
+ocor-bootstrap-typedb-1: Up 13 hours (healthy)
+
+=== RUN 1: pytest ocor-runtime/tests/tasks/test_ocor_dev_0027.py -v against a real, self-provisioned, ephemeral Qdrant container (repeated x4 for stability, run 1 shown verbatim) ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 8 items
+
+ocor-runtime/tests/tasks/test_ocor_dev_0027.py::test_replay_with_identical_pinned_inputs_reproduces_identical_receipt_digest PASSED [ 12%]
+ocor-runtime/tests/tasks/test_ocor_dev_0027.py::test_changing_a_pinned_item_version_changes_the_digest PASSED [ 25%]
+ocor-runtime/tests/tasks/test_ocor_dev_0027.py::test_changing_redaction_changes_the_digest PASSED [ 37%]
+ocor-runtime/tests/tasks/test_ocor_dev_0027.py::test_changing_the_query_vector_changes_ordering_and_the_digest PASSED [ 50%]
+ocor-runtime/tests/tasks/test_ocor_dev_0027.py::test_changing_truncation_changes_the_digest_and_sets_the_truncated_flag PASSED [ 62%]
+ocor-runtime/tests/tasks/test_ocor_dev_0027.py::test_changing_representation_version_changes_the_digest PASSED [ 75%]
+ocor-runtime/tests/tasks/test_ocor_dev_0027.py::test_two_independent_assemblies_are_observationally_equivalent_via_the_sealed_helper PASSED [ 87%]
+ocor-runtime/tests/tasks/test_ocor_dev_0027.py::test_an_unreachable_ranking_backend_fails_closed_never_a_silent_partial_context PASSED [100%]
+
+============================== 8 passed in 3.88s ===============================
+
+=== RUN 2..4: repeat runs, summary lines only, to demonstrate determinism ===
+........                                                                 [100%]
+8 passed in 4.12s
+........                                                                 [100%]
+8 passed in 4.62s
+........                                                                 [100%]
+8 passed in 4.36s
+
+=== full local pytest regression, ocor-runtime/tests/ ===
+
+ocor-runtime/tests/test_interpreter_pin.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0002.py::test_two_clean_environments_resolve_identical_lock_and_image_digests
+FAILED ocor-runtime/tests/test_interpreter_pin.py::test_running_interpreter_matches_the_pin
+2 failed, 656 passed in 81.44s (0:01:21)
+
+=== full local pytest regression, 3 reports/tests suites ===
+.............................                                            [100%]
+29 passed in 3.88s
+
+=== post-run stack-integrity verification ===
+ocor-bootstrap-fuseki-1: Up 6 hours (healthy)
+ocor-bootstrap-kafka-1: Up 13 hours (healthy)
+ocor-bootstrap-keycloak-1: Up 10 hours (healthy)
+ocor-bootstrap-opa-1: Up 10 hours (healthy)
+ocor-bootstrap-openbao-1: Up 13 hours (healthy)
+ocor-bootstrap-postgresql-1: Up 13 hours (healthy)
+ocor-bootstrap-qdrant-1: Up 13 hours (healthy)
+ocor-bootstrap-spire-agent-1: Up 13 hours
+ocor-bootstrap-spire-server-1: Up 13 hours (healthy)
+ocor-bootstrap-terminusdb-1: Up 13 hours (healthy)
+ocor-bootstrap-typedb-1: Up 13 hours (healthy)

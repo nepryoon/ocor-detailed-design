@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0026",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0026",
+    "branch": "governed/ocor-dev-0027-context-replay",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0027",
     "decision_id": "DEC-211",
-    "phase": "WAVE_13_IN_PROGRESS",
+    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0027_PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "a78d054d22ac85839181c833a0acc8deed8aa9c8",
+  "baseline_commit": "4630340f135fa0cab64c7926c8ae38bd0588cb0f",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -69,15 +69,15 @@
   ],
   "current_gate": "G2_WAVE_13_SPIKES_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "1ee2155",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR87_MERGED_a78d054d22ac85839181c833a0acc8deed8aa9c8",
+    "candidate_commit": "2f7b34a",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR88_MERGED_4630340f135fa0cab64c7926c8ae38bd0588cb0f",
     "run_ids": [
-      34751937430,
-      34751937439,
-      34751937433,
-      34751937440,
-      34751937423,
-      34751937428
+      34753202921,
+      34753202818,
+      34753202831,
+      34753202893,
+      34753202947,
+      34753202835
     ]
   },
   "mandate_phase_status": {
@@ -138,9 +138,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0026 merged (PR #87, a78d054d22ac85839181c833a0acc8deed8aa9c8), all 13 checks green on the first push. Wave 13 now has one G2 spike left: OCOR-DEV-0027 (SPIKE deterministic context-assembly replay), plus OCOR-DEV-0030 (Build retained governed-action slice, gate G3) which became ready once OCOR-DEV-0029 merged -- confirm readiness and pick the next task directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks (scripts/ocor_autonomous_delivery.py --status remains stale/unreliable). Before opening the next PR, proactively verify its required real backend is already provisioned in CI (or self-provisions) and fix any gap before the first push. If the next task is retained (non-spike, gate G3) and touches a real backend client, route it through an ocor-runtime/src/ocor_runtime/**/adapters/ subtree up front, per AFF-002/AFF-006.",
+  "next_executable_action": "Push branch governed/ocor-dev-0027-context-replay, open PR, poll CI to green, merge, verify post-merge SHA, sync the three state files immediately. OCOR-DEV-0027 (SPIKE deterministic context-assembly replay) proves that a context-assembly receipt digest is a pure, deterministic function of pinned item versions, ordering (a real Qdrant similarity ranking), redactions, truncation and representation -- replaying identical pinned inputs reproduces the identical digest, and changing any one dimension changes it. Composes OCOR-DEV-0023's sealed QdrantHarness and OCOR-DEV-0024's sealed equivalence helper, both unmodified, plus the sealed kernel canonical_digest for the receipt itself. No new CI provisioning needed (Qdrant self-provisions). After this merges, wave 13's only remaining ready task is OCOR-DEV-0030 (Build retained governed-action slice, gate G3) -- confirm readiness directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks. If it touches a real backend client, route it through an ocor-runtime/src/ocor_runtime/**/adapters/ subtree up front, per AFF-002/AFF-006.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T11:00:00Z"
+  "updated_at": "2026-09-13T11:45:00Z"
 }

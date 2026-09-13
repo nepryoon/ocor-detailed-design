@@ -1933,3 +1933,56 @@
   (SPIKE deterministic context-assembly replay) e `OCOR-DEV-0030`
   (Build retained governed-action slice, gate G3, diventato pronto dopo
   il merge di `OCOR-DEV-0029`).
+
+## 2026-09-13 — Backlog: OCOR-DEV-0027 (SPIKE deterministic context-assembly replay)
+
+- Ricalcolata la prontezza del wave 13 dal backlog JSON: ready set =
+  `{OCOR-DEV-0027, OCOR-DEV-0030}`. Selezionato `OCOR-DEV-0027` per
+  ordine numerico.
+- Verifica proattiva del provisioning CI: confermato che Qdrant si
+  autoprovisiona già nei 3 workflow CI (da `OCOR-DEV-0023`/`0024`/
+  `0025`) — nessun gap, nessuna modifica CI necessaria.
+- Implementato `spikes/context_replay/replay.py`: dimostra che il
+  digest di ricevuta di un context-assembly è funzione pura e
+  deterministica di esattamente cinque dimensioni pinnate — versioni
+  degli item, ordinamento (una vera ricerca di similarità coseno
+  contro Qdrant, riusando senza modifiche `QdrantHarness` da
+  `OCOR-DEV-0023`), redazioni, troncamento e rappresentazione. Il
+  digest di ricevuta usa `ocor_runtime.kernel.canonical.canonical_digest`
+  (canonicalizzazione RFC 8785 sigillata), mai un hash fatto a mano.
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0027.py` (8 test,
+  tutti contro un vero container Qdrant autoprovisionato, nessun
+  mock): input pinnati identici riproducono un digest identico;
+  cambiare la versione di un item cambia il digest; cambiare la
+  redazione cambia il digest; cambiare il vettore di query cambia sia
+  il vero ordinamento di ranking sia il digest; cambiare il
+  troncamento cambia il digest e imposta il flag `truncated`; cambiare
+  solo la versione di rappresentazione cambia il digest anche con
+  ordinamento identico; due assemblaggi indipendenti sono provati
+  equivalenti tramite l'helper sigillato `assert_observationally_equivalent`
+  di `OCOR-DEV-0024` (riusato senza modifiche); un vero rifiuto di
+  connessione TCP su una porta locale chiusa durante il ranking
+  fallisce in modo chiuso (`ContextReplayError`) invece di restituire
+  un contesto parziale silenzioso — stesso pattern a basso raggio
+  d'impatto stabilito in `OCOR-DEV-0026`.
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (49 file,
+  invariato), `validate_rccad.py` PASS, `validate_language_policy.py`
+  PASS, `validate_ocor_change_scope.py` PASS (7 percorsi), pytest
+  completo con `OCOR_LIVE_POSTGRES_DSN` locale: `2 failed, 656 passed,
+  0 skipped, 0 errors` (stessi 2 fallimenti noti) più `29 passed` per
+  le 3 suite `reports/tests/`, `validate_ocor_development_plan.py
+  --base-ref origin/main --authorized-extension` PASS dopo il consueto
+  doppio-run (`FAIL` poi `PASS`).
+- Evidenza sigillata: `reports/evidence/G2/OCOR-DEV-0027.json` +
+  `reports/evidence/G2/OCOR-DEV-0027.log`, aggiunta a
+  `reports/evidence/G2/MANIFEST.json` (diff puramente additivo, 91
+  righe, inserimento chirurgico).
+- Aggiornamento dei tre file di stato eseguito in questa stessa
+  iterazione (non rimandato).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: push del branch
+  `governed/ocor-dev-0027-context-replay`, apertura PR, polling CI,
+  merge a gate verdi, verifica SHA post-merge. Con questo, l'unico
+  task rimanente pronto del wave 13 sarà `OCOR-DEV-0030` (Build
+  retained governed-action slice, gate G3).
