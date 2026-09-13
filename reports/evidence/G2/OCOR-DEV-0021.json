@@ -83,6 +83,16 @@
       "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
       "result": {"passed": 643, "failed": 2, "skipped": 0, "not_executed": 0},
       "status": "PASS"
+    },
+    {
+      "command": "real CI feedback (PR #81, first push): 3 jobs failed with 'No such container: ocor-bootstrap-opa-1' because the docker run recipe named the CI containers opa/keycloak/openbao, but the reused fault_command() (OCOR-DEV-0083, sealed) constructs the target name as ocor-bootstrap-<service>-1, docker compose's own convention. Root-caused and fixed: renamed every docker run --name in the CI recipe (fuseki, opa, keycloak, openbao) across all 3 workflows to that convention -- no test or adapter code changed, since the mismatch was entirely in the CI provisioning step",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "post-fix re-verification: ruff, mypy, RCCAD, language policy, yaml.safe_load of the 3 workflow files, pytest ocor-runtime/tests/tasks/test_ocor_dev_0021.py -v (unaffected locally, since the local ocor-bootstrap stack already used the correct naming), full local pytest regression",
+      "result": {"passed": 643, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
     }
   ],
   "residual_risks": [
@@ -98,6 +108,6 @@
     "runtime_conformance": "NOT_ESTABLISHED",
     "Production_readiness": "NO_GO"
   },
-  "raw_output_sha256": "a4538218230b16d89ae7af74ded6061c70efa2437ebe058fa3cb800da61ba79a",
+  "raw_output_sha256": "32bd3d711868a62a725783b1802d4539149caf931f70aec0bb8b97efcc4f59a9",
   "result": "PASS"
 }
