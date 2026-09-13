@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0039",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0039",
+    "branch": "governed/state-sync-ocor-dev-0040",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0040",
     "decision_id": "DEC-211",
-    "phase": "G4_WAVE_15_IN_PROGRESS",
+    "phase": "G4_WAVE_15_IN_PROGRESS__WAVE_16_OCOR_DEV_0041_READY",
     "worktree": null
   },
-  "baseline_commit": "02859b0e3dd36824975414b19ee213af2bf2043d",
+  "baseline_commit": "916446c03c22317dd928d8bc89bed87f34e6a83d",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -76,19 +76,20 @@
     "OCOR-DEV-0036",
     "OCOR-DEV-0037",
     "OCOR-DEV-0038",
-    "OCOR-DEV-0039"
+    "OCOR-DEV-0039",
+    "OCOR-DEV-0040"
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "2415f69",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR109_MERGED_02859b0e3dd36824975414b19ee213af2bf2043d",
+    "candidate_commit": "efbe8af",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR111_MERGED_916446c03c22317dd928d8bc89bed87f34e6a83d",
     "run_ids": [
-      34776167788,
-      34776167796,
-      34776167804,
-      34776167823,
-      34776167833,
-      34776167839
+      34777513400,
+      34777513407,
+      34777513412,
+      34777513422,
+      34777513432,
+      34777513481
     ]
   },
   "mandate_phase_status": {
@@ -149,7 +150,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0039 merged (PR #109, 02859b0e3dd36824975414b19ee213af2bf2043d), all 13 checks green on the first push. This implements ocor_runtime.c4.rebuild.ProjectionDriftDetector (LLD 2.4's ProjectionDriftDetector), composing OCOR-DEV-0029/0037 exclusively through their sealed public methods, quarantining real drift instead of silently repairing it. This closes wave 16 entirely (OCOR-DEV-0033/0034/0035/0039). Recomputed readiness directly from the backlog JSON: no new lower-numbered task was unlocked, so wave 15's remaining 4 ready tasks (0040/0042/0046/0048) are next by numeric order; OCOR-DEV-0040 ('Implement C5 canonical event backbone', depends on OCOR-DEV-0019/0029/0031) is selected next.",
+  "next_executable_action": "OCOR-DEV-0040 merged (PR #111, 916446c03c22317dd928d8bc89bed87f34e6a83d), all 13 checks green on the first push, confirming the self-provisioned Kafka broker design works correctly across all 3 full-sweep CI jobs. This implements ocor_runtime.c5.backbone.CanonicalEventBackbone, the first retained C5 component. Recomputed readiness directly from the backlog JSON: OCOR-DEV-0041 (wave 16) just became ready, lower-numbered than wave 15's remaining 3 tasks (0042/0046/0048), so selected next by the established numeric-order-across-the-whole-ready-set convention; OCOR-DEV-0041 is 'Implement C5 registry replay backpressure DLQ and quarantine' (depends only on OCOR-DEV-0040).",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
