@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-0030-c6-governed-action-slice",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0030",
+    "branch": "governed/state-sync-ocor-dev-0030",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0030",
     "decision_id": "DEC-211",
-    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0030_PUSHED__AWAITING_CI",
+    "phase": "WAVE_13_CLOSED__NEXT_WAVE_TBD",
     "worktree": null
   },
-  "baseline_commit": "c783d7c2b8b3e6824176764cbda0a683dd44c105",
+  "baseline_commit": "c9ac9ca4615337193202846d06a4b5f6e38afcbc",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -66,19 +66,20 @@
     "OCOR-DEV-0028",
     "OCOR-DEV-0029",
     "OCOR-DEV-0026",
-    "OCOR-DEV-0027"
+    "OCOR-DEV-0027",
+    "OCOR-DEV-0030"
   ],
-  "current_gate": "G3_WAVE_13_FINAL_TASK_IN_PROGRESS",
+  "current_gate": "WAVE_13_CLOSED__NEXT_WAVE_TBD",
   "latest_ci_evidence": {
-    "candidate_commit": "09fe3b9",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR90_MERGED_c783d7c2b8b3e6824176764cbda0a683dd44c105",
+    "candidate_commit": "b28f36a",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR91_MERGED_c9ac9ca4615337193202846d06a4b5f6e38afcbc",
     "run_ids": [
-      34756160882,
-      34756160913,
-      34756160878,
-      34756160868,
-      34756160885,
-      34756160881
+      34757888250,
+      34757888183,
+      34757888201,
+      34757888279,
+      34757888232,
+      34757888240
     ]
   },
   "mandate_phase_status": {
@@ -139,9 +140,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/ocor-dev-0030-c6-governed-action-slice, open PR, poll CI to green, merge, verify post-merge SHA, sync the three state files immediately. OCOR-DEV-0030 (Build retained governed-action slice) is the smallest contract-compliant slice of LLD v1.1 section 3's normative 44-transition C6 workflow: a risk-bearing action must cross, in strict order, Authority (reusing the already-sealed ocor_runtime.c6_capabilities.CapabilityAuthority), Human Gate (new Approval record), Decision (new Decision record) and EMISSION-FENCE (reusing the already-sealed ocor_runtime.c7_emission.EmissionFence) before any simulated effect. Pure in-memory component, no external backend, no AFF-002/AFF-006 concern. This closes wave 13 entirely (OCOR-DEV-0026/0027/0030). Next: determine the next DAG-ready task set directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks (checking parallel_wave to label waves correctly), not scripts/ocor_autonomous_delivery.py --status, which remains stale.",
+  "next_executable_action": "OCOR-DEV-0030 merged (PR #91, c9ac9ca4615337193202846d06a4b5f6e38afcbc), all 13 checks green on the first push. This closes wave 13 entirely (OCOR-DEV-0026/0027/0030). Next (wave 14, confirmed via parallel_wave): OCOR-DEV-0031 (Integrate first real C1-C8 synthetic mission thread, gate G3), the sole ready task, depending on OCOR-DEV-0017/0018/0019/0022/0024/0027/0028/0029/0030 (all merged) -- a significantly larger integration task than the recent single-component slices. Confirm scope and required real backends directly from the backlog JSON entry before starting; proactively check CI provisioning for any real backend it needs.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T12:45:00Z"
+  "updated_at": "2026-09-13T13:15:00Z"
 }

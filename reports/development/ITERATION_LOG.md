@@ -2060,10 +2060,32 @@
   iterazione (non rimandato).
 - Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
   `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
-- Prossima azione: push del branch
-  `governed/ocor-dev-0030-c6-governed-action-slice`, apertura PR,
-  polling CI, merge a gate verdi, verifica SHA post-merge. Con questo
-  si chiude l'intero wave 13 (`OCOR-DEV-0026`/`0027`/`0030`). Poi
-  determinare il prossimo task pronto direttamente dal backlog JSON,
-  verificando sempre il campo `parallel_wave` per etichettare
-  correttamente il wave di ogni candidato.
+- `OCOR-DEV-0030`: tutti e 13 i check verdi al primo push. PR #91
+  mergiata (`c9ac9ca4615337193202846d06a4b5f6e38afcbc`), SHA
+  post-merge verificata. Con questo si chiude l'intero wave 13
+  (`OCOR-DEV-0026`/`0027`/`0030`).
+
+## 2026-09-13 — Sincronizzazione stato: OCOR-DEV-0030 (post-merge, chiusura wave 13)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #91, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0030`).
+- `baseline_commit` aggiornato a
+  `c9ac9ca4615337193202846d06a4b5f6e38afcbc` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0030`
+  aggiunto a `completed_evidence_tasks`. Verificata l'assenza di
+  `RCCAD-STATE-HANDOFF-DRIFT`.
+- Ricalcolata la prontezza del prossimo wave dal backlog JSON
+  (verificando `parallel_wave` su ogni candidato, come da lezione
+  appresa in questa iterazione): ready set = `{OCOR-DEV-0031}`,
+  `parallel_wave=14`, "Integrate first real C1-C8 synthetic mission
+  thread", gate `G3`, dipendente da `OCOR-DEV-0017`/`0018`/`0019`/
+  `0022`/`0024`/`0027`/`0028`/`0029`/`0030` (tutti mergiati) — un
+  task di integrazione significativamente più ampio delle recenti
+  slice a singolo componente.
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
+- Prossima azione: leggere per intero la voce di `OCOR-DEV-0031` nel
+  backlog JSON (expected_file_areas, acceptance criteria, backend
+  reali richiesti) prima di progettare qualunque cosa, dato che è un
+  task di integrazione multi-componente, non una slice singola.
