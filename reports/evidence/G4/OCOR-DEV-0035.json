@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0035",
+  "commit": "ea7ecc51a8830af14b59abe51e248ed44ce06abc",
+  "created_at": "2026-09-13T19:45:00Z",
+  "environment": {
+    "orchestrator": "real backends composed behind the sealed C2 ports -- no orchestration process of its own",
+    "backend_under_test": "real, live TypeDB (watermark, OCOR-DEV-0017's spike adapter, reused unmodified)",
+    "reused_deliverable": "ocor_runtime.c2.ports (OCOR-DEV-0012, sealed, reused unmodified) for PolicyDecisionPort/WatermarkPort/ConsistencyMode/Watermark/NamedQueryRequest; ocor_runtime.c2.gateway (OCOR-DEV-0034, reused unmodified) for RegisteredNamedQuery/RegistrationAndMarkingPolicy; spikes.typedb_exact_commit.adapter.TypeDBExactCommitAdapter (OCOR-DEV-0017, reused unmodified) for the real watermark"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c2/planner.py": "b42901e84c1c5c473bff57d05198ebe75047df945d66fd51f6cba0dae13e247f",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0035.py": "28cadf8cf565c9c76b55b91fc27a8a002e18a7e2f73e8c1025d57a2fe175f50f"
+  },
+  "commands": [
+    {
+      "command": "read ocor_runtime.c2.ports in full (PolicyDecisionPort, WatermarkPort, ConsistencyRequirement.verify_served) and LLD v1.1 section 2.2's gateway algorithm steps 3-4 before designing planner.py -- the smallest contract-compliant slice plans policy and consistency using ONLY the sealed PolicyDecisionPort and WatermarkPort, never the real projection data query (ProjectionReadPort.read), matching the objective's own 'planner' framing distinct from the gateway's actual read",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "design: ConsistencyPlanner.plan(request) evaluates PolicyDecisionPort.decide() FIRST (an unregistered or otherwise denied query never reaches the watermark check at all); only on PERMIT does it consult WatermarkPort.current() -- BEST_AVAILABLE returns a plan with no required_commit and the real observed watermark (never a silent stale fallback disguised as success, since the watermark is always attached to the result); EXACT_AT_COMMIT/AT_LEAST_COMMIT compare the real observed watermark against required_commit and raise PROJECTION_NOT_READY (naming the real observed watermark) rather than issuing the real backend data query to find out",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "ruff check ocor-runtime/src/ocor_runtime/c2/planner.py ocor-runtime/tests/tasks/test_ocor_dev_0035.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python -m mypy src/ocor_runtime/c2/planner.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0035.py -v via the bare pytest console script (matching CI's uv run --project ocor-runtime --frozen pytest exactly), repeated 4 times for determinism, against real TypeDB",
+      "result": {"passed": 32, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_rccad.py --root . (AFF-002/AFF-006 direct-backend-client check: planner.py imports no backend client directly -- PolicyDecisionPort/WatermarkPort are both injected, so no adapters/ subtree is needed)",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_language_policy.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression via the bare pytest console script (matching CI exactly), ocor-runtime/tests/, with OCOR_LIVE_POSTGRES_DSN set against the real ocor-bootstrap PostgreSQL instance",
+      "result": {"passed": 721, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "the 3 CI-wired reports/tests suites: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/{test_generate_contracts_reference_resolution,test_backlog_generator_reality_parity,test_language_migration_benchmark_harness}.py",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0035-WATERMARK-PORT-CONFORMS-TO-SEALED-PORT",
+      "requirement_id": "BR-003",
+      "command": "the test's TypeDB watermark adapter wrapper satisfies the sealed WatermarkPort Protocol",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-BEST-AVAILABLE-RETURNS-PLAN-WITH-REAL-WATERMARK",
+      "requirement_id": "BR-003",
+      "command": "a BEST_AVAILABLE request returns a plan with no required commit and the real, observed TypeDB watermark attached -- never a bare success with no evidence of what was actually served",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-EXACT-AT-COMMIT-PROCEEDS-WHEN-WATERMARK-MATCHES",
+      "requirement_id": "BR-003",
+      "command": "EXACT_AT_COMMIT proceeds with the required commit when the real TypeDB watermark already matches it",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-EXACT-AT-COMMIT-PROJECTION-NOT-READY-WITH-REAL-WATERMARK",
+      "requirement_id": "BR-003",
+      "command": "EXACT_AT_COMMIT raises PROJECTION_NOT_READY naming the real observed watermark when it has not yet caught up, without ever issuing the real backend data query",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-AT-LEAST-COMMIT-PROJECTION-NOT-READY-UNTIL-WATERMARK-CATCHES-UP",
+      "requirement_id": "BR-003",
+      "command": "AT_LEAST_COMMIT raises PROJECTION_NOT_READY until the real watermark is advanced, then proceeds once it does -- proving the planner is re-evaluated against fresh state, not cached",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-UNREGISTERED-CONTRACT-NEVER-REACHES-WATERMARK-CHECK",
+      "requirement_id": "BR-003",
+      "command": "an unregistered contract is denied by a spy WatermarkPort that raises if ever consulted, proving -- not merely asserting -- that policy is evaluated strictly before the watermark",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-DENIED-POLICY-NEVER-LEAKS-WATERMARK",
+      "requirement_id": "BR-003",
+      "command": "a denied policy decision never returns any plan, partial or otherwise -- no watermark is ever attached to a denial",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-WATERMARK-BACKEND-FAILURE-FAULT-INJECTION",
+      "requirement_id": "NFR-068",
+      "command": "a real, lower-blast-radius network fault (a genuine closed local TCP port) inside the watermark port propagates as a real OSError and never silently defaults to BEST_AVAILABLE or any other permissive outcome",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 750, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "ConsistencyPlanner's AT_LEAST_COMMIT handling uses the same equality-based watermark comparison as the sealed ConsistencyRequirement.verify_served's own simplified model (a single, monotonically-advancing watermark string, not a partially-ordered commit lineage) -- this mirrors the existing sealed contract's own semantics (see OCOR-DEV-0017's adapter and its test for the identical pattern) rather than inventing new AT_LEAST_COMMIT ordering semantics; a richer commit-lineage model is out of this task's scope.",
+    "The planner deliberately never calls ProjectionReadPort.read() -- its PROCEED outcome is a plan, not a served response; a caller must still invoke the actual projection read afterward (and that read still independently re-verifies consistency via the sealed NamedQueryRequest.verify_served, so a plan is advisory, not a bypass of the sealed contract's own enforcement).",
+    "The pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope; it produces the same 2 pre-existing, unrelated regression failures documented in every prior evidence file this session."
+  ],
+  "rollback_procedure_verified": "Every test constructs a fresh TypeDBExactCommitAdapter/ConsistencyPlanner/RegistrationAndMarkingPolicy per test case and resets the real backend's state in fixtures; no shared mutable state persists across tests. Verified directly by 4 consecutive test-suite runs with no manual cleanup between them, and by the denial tests proving no plan is ever returned or leaked on either fail-closed path (policy denial, watermark not caught up).",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "6ed699f89387cfc011cd2fc2f7dce24e1878233b863635f6329e72e57422ed7e",
+  "result": "PASS"
+}
