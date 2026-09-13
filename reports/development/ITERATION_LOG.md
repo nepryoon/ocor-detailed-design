@@ -1647,3 +1647,111 @@
   apertura PR, polling CI, merge a gate verdi, verifica SHA post-merge.
   Poi determinare il prossimo task pronto del wave 12 in ordine numerico:
   `OCOR-DEV-0025` (SPIKE distributed deletion saga).
+- `OCOR-DEV-0024`: tutti e 13 i check verdi al primo push (l'auto-
+  provisioning di Qdrant ha funzionato senza problemi in CI). PR #82
+  mergiata (`e003fdc453420f8d5942dd9c39261d1ccf0a73ea`), SHA post-merge
+  verificata.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0025 (SPIKE distributed deletion saga)
+
+- Secondo task del wave 12. Dipende da `OCOR-DEV-0016`, `OCOR-DEV-0017`,
+  `OCOR-DEV-0018`, `OCOR-DEV-0019`, `OCOR-DEV-0023`, tutti già mergiati.
+- Aggiunto `spikes/memory_deletion/saga.py` (nuovo) con
+  `run_deletion_saga`: tenta un tombstone su ogni target, poi — a
+  prescindere dall'esito di `tombstone()` — riverifica sempre
+  indipendentemente con `contains()` come unico arbitro fra riconosciuto
+  e rimanente. Nessun target è mai creduto sulla parola; un target
+  irraggiungibile fallisce chiuso. Target reali: PostgreSQL (metadata),
+  TypeDB (contenuto), Qdrant auto-provisionato via `QdrantHarness`
+  (`OCOR-DEV-0023`, sigillato, riutilizzato senza modifiche) per
+  cache/indice.
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0025.py` (4 test,
+  tutti contro backend reali, nessun mock): cancellazione completa sui 3
+  backend con stato `DELETED`; un ciclo reale di fault-injection
+  pausa/ripresa su TypeDB durante la cancellazione, che riporta
+  `DELETION_INCOMPLETE` con il contenuto genuinamente ancora presente,
+  poi recupera e un retry successivo riporta `DELETED`; un target
+  "bugiardo" che dichiara successo senza cancellare nulla, dimostrando
+  che la saga non si fida mai del segnale del backend; un target
+  irraggiungibile classificato correttamente come rimanente.
+- **Provisioning CI proattivo applicato PRIMA di aprire la PR**: scoperto
+  che il provisioning CI di TypeDB usava un blocco nativo `services:` di
+  GitHub Actions, che nomina il container internamente e non come
+  `ocor-bootstrap-typedb-1` — la stessa categoria di problema già
+  incontrata reattivamente in `OCOR-DEV-0021` per OPA/Keycloak/OpenBao.
+  Convertito a un passo `docker run --name ocor-bootstrap-typedb-1`
+  esplicito (stessa immagine pinnata) nei 3 workflow, rehearsed
+  localmente su porte alternative prima dell'aggiunta.
+- Tutti e 13 i check verdi al primo push. PR #83 mergiata
+  (`c13a634b94bd1b6f6aed52e54d252746242e050d`), SHA post-merge
+  verificata.
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (45 file),
+  `validate_rccad.py` PASS, `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS, `yaml.safe_load` dei 3 workflow
+  PASS, pytest completo con `OCOR_LIVE_POSTGRES_DSN` locale: `2 failed,
+  654 passed, 0 skipped, 0 errors` (stessi 2 fallimenti noti e
+  preesistenti), `validate_ocor_development_plan.py --authorized-extension`
+  PASS dopo il consueto doppio-run.
+- Evidenza sigillata contro PostgreSQL/TypeDB/Qdrant reali, incluso il
+  fix CI proattivo: `reports/evidence/G2/OCOR-DEV-0025.json` +
+  `reports/evidence/G2/OCOR-DEV-0025.log`, aggiunta a
+  `reports/evidence/G2/MANIFEST.json` (diff puramente additivo, 55
+  righe). `scripts/validate_runtime_evidence.py --task OCOR-DEV-0025
+  --non-skipped` PASS.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0028 (Build retained C1 compiler slice)
+
+- Prossimo task pronto del wave 12 determinato direttamente dal backlog:
+  con `OCOR-DEV-0025` chiuso, gli unici task pronti rimasti del wave 12
+  sono `OCOR-DEV-0028` e `OCOR-DEV-0029`, **entrambi gate `G3`** (non
+  `G2`) — il primo passaggio da spike a componente runtime *retained* di
+  questa sessione. Selezionato `OCOR-DEV-0028` per ordine numerico.
+  Dipende da `OCOR-DEV-0011`, `OCOR-DEV-0016`, entrambi già mergiati.
+- **Componente puro, nessun servizio esterno necessario**: implementata
+  la porzione minima conforme al contratto dei port C1 già sigillati
+  (`OCOR-DEV-0011`, `ocor_runtime.c1.ports`, riutilizzati senza
+  modifiche) in `ocor-runtime/src/ocor_runtime/c1/compiler.py` (nuovo):
+  `RetainedOacParser` (parsing YAML/JSON reale), `RetainedSemanticValidator`
+  (contratto di forma minimo id/fields del DSL), `RetainedCanonicalIrBuilder`
+  (assembla un documento core deterministico più un artefatto di
+  metadati di migrazione). `signature_envelope_ref` è un placeholder non
+  firmato dichiarato onestamente come tale; la firma reale (`IrSigner`)
+  resta un Protocol sigillato non ancora implementato, task futuro
+  separato.
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0028.py` (8 test, puri
+  in-memory, deterministici, nessun servizio esterno): fixture DSL mista
+  YAML/JSON che compila con successo con metadati di migrazione;
+  verifica di digest riproducibile tramite l'oracolo sigillato
+  `verify_deterministic_build`; rifiuto di un import non risolto (già
+  imposto dal costruttore sigillato di `CompilerRequest`); rifiuto di
+  YAML malformato, chiavi richieste mancanti, `fields` non-mapping, e
+  mismatch dell'id dichiarato, ciascuno con il `DiagnosticCode` corretto;
+  prova diretta che nessun percorso di rifiuto restituisce mai un
+  `CanonicalIrRelease` parziale.
+- Creato `reports/evidence/G3/MANIFEST.json` **da zero** — il primo
+  manifest di evidenza gate `G3` sigillato da questa sessione.
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (46 file,
+  `ocor-runtime/src` pienamente in scope per questo gate, a differenza
+  degli spike), `validate_rccad.py` PASS, `validate_language_policy.py`
+  PASS, `validate_ocor_change_scope.py` PASS (8 percorsi), pytest
+  completo con `OCOR_LIVE_POSTGRES_DSN` locale: `2 failed, 662 passed, 0
+  skipped, 0 errors` (stessi 2 fallimenti noti e preesistenti),
+  `validate_ocor_development_plan.py --authorized-extension` PASS dopo
+  il consueto doppio-run di assestamento self-hash.
+- Evidenza sigillata: `reports/evidence/G3/OCOR-DEV-0028.json` +
+  `reports/evidence/G3/OCOR-DEV-0028.log`.
+  `scripts/validate_runtime_evidence.py --task OCOR-DEV-0028 --non-skipped
+  --manifest reports/evidence/G3/MANIFEST.json` PASS.
+- Aggiornamento dei tre file di stato eseguito in un'unica passata,
+  recuperando anche i merge non ancora sincronizzati di `OCOR-DEV-0024`
+  (PR #82) e `OCOR-DEV-0025` (PR #83) dalle iterazioni precedenti, per
+  evitare un nuovo `RCCAD-STATE-HANDOFF-DRIFT`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: push del branch
+  `governed/ocor-dev-0028-c1-compiler-slice`, apertura PR, polling CI,
+  merge a gate verdi, verifica SHA post-merge. Poi proseguire con
+  `OCOR-DEV-0029` (Build retained C3 canonical commit slice, gate `G3`,
+  dipende solo da `OCOR-DEV-0016`, già mergiato).

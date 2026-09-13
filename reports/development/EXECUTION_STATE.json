@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-0024-cross-compartment-non-interference-spike",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0024",
+    "branch": "governed/ocor-dev-0028-c1-compiler-slice",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0028",
     "decision_id": "DEC-211",
-    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0024_PUSHED__AWAITING_CI",
+    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0028_PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "9e97e1c19c7ac82bdfe074e28991493ac798b1c1",
+  "baseline_commit": "c13a634b94bd1b6f6aed52e54d252746242e050d",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -61,19 +61,21 @@
     "OCOR-DEV-0017",
     "OCOR-DEV-0018",
     "OCOR-DEV-0021",
-    "OCOR-DEV-0024"
+    "OCOR-DEV-0024",
+    "OCOR-DEV-0025",
+    "OCOR-DEV-0028"
   ],
-  "current_gate": "G2_WAVE_11_SPIKES_CLOSED__G2_WAVE_12_IN_PROGRESS",
+  "current_gate": "G2_WAVE_12_G2_TASKS_CLOSED__G3_FIRST_RETAINED_SLICE_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "75cb953",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR81_MERGED_9e97e1c19c7ac82bdfe074e28991493ac798b1c1_after_a_container_naming_ci_fix_on_the_second_push",
+    "candidate_commit": "322abee",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR83_MERGED_c13a634b94bd1b6f6aed52e54d252746242e050d_first_push_proactive_typedb_ci_fix_worked",
     "run_ids": [
-      34742500438,
-      34742500440,
-      34742500443,
-      34742500462,
-      34742500475,
-      34742500489
+      34745955505,
+      34745955508,
+      34745955530,
+      34745955534,
+      34745955559,
+      34745955587
     ]
   },
   "mandate_phase_status": {
@@ -134,9 +136,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/ocor-dev-0024-cross-compartment-non-interference-spike, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0024 (SPIKE cross-compartment non-interference) composes three previously sealed spikes -- the Jena marking-safe projection (OCOR-DEV-0018), the identity/policy bounded probe (OCOR-DEV-0021), and the Qdrant vector-partition oracle (OCOR-DEV-0023) -- all reused unmodified, adding only a new paired-fixture observational-equivalence assertion (spikes/non_interference/equivalence.py). Proves that a low-clearance observer's view (content, existence, rank, count, cache and bounded timing) is unaffected by high-compartment population across all three backends, and that pausing one control-plane service does not leak into another's observable timing. This closes OCOR-DEV-0024, one of four wave-12 tasks now ready (0024/0025/0028/0029). Next: OCOR-DEV-0025 (SPIKE distributed deletion saga), the next ready wave-12 task by numeric order, depending on OCOR-DEV-0016/0017/0018/0019/0023 (all merged).",
+  "next_executable_action": "Push branch governed/ocor-dev-0028-c1-compiler-slice, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0028 (Build retained C1 compiler slice) is the first retained (non-spike) G3 runtime component this delivery closes: a real YAML/JSON parser, semantic validator and canonical IR builder implementing the smallest contract-compliant slice of OCOR-DEV-0011's sealed C1 ports, pure and in-memory, no external service needed. Creates reports/evidence/G3/MANIFEST.json fresh, the first G3-gated evidence manifest. Next: OCOR-DEV-0029 (Build retained C3 canonical commit slice, G3, depends only on OCOR-DEV-0016, already merged), the other wave-12 task, then wave 13's two remaining G2 spikes (OCOR-DEV-0026 restore-without-resurrection, OCOR-DEV-0027 deterministic context-assembly replay) whose hard_dependencies are already satisfied too.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T07:20:00Z"
+  "updated_at": "2026-09-13T08:30:00Z"
 }
