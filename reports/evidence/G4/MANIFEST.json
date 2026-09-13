@@ -32,6 +32,16 @@
       "path": "OCOR-DEV-0034.log",
       "sha256": "aeca1a8ff8091b14e51d393edf8d2bbda83529073aa3a4d65106534fecf57af5",
       "task_id": "OCOR-DEV-0034-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0035.json",
+      "sha256": "c411ca9f23e84afc6981749a7f7369bfde4d3740da32db6babc2e77e03a32f05",
+      "task_id": "OCOR-DEV-0035"
+    },
+    {
+      "path": "OCOR-DEV-0035.log",
+      "sha256": "6ed699f89387cfc011cd2fc2f7dce24e1878233b863635f6329e72e57422ed7e",
+      "task_id": "OCOR-DEV-0035-RAW"
     }
   ],
   "requirement_results": [
@@ -358,6 +368,87 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-WATERMARK-PORT-CONFORMS-TO-SEALED-PORT",
+      "command": "the test's TypeDB watermark adapter wrapper satisfies the sealed WatermarkPort Protocol",
+      "evidence_path": "OCOR-DEV-0035.json",
+      "raw_output_path": "OCOR-DEV-0035.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0035"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-BEST-AVAILABLE-RETURNS-PLAN-WITH-REAL-WATERMARK",
+      "command": "a BEST_AVAILABLE request returns a plan with no required commit and the real, observed TypeDB watermark attached",
+      "evidence_path": "OCOR-DEV-0035.json",
+      "raw_output_path": "OCOR-DEV-0035.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0035"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-EXACT-AT-COMMIT-PROCEEDS-WHEN-WATERMARK-MATCHES",
+      "command": "EXACT_AT_COMMIT proceeds with the required commit when the real TypeDB watermark already matches it",
+      "evidence_path": "OCOR-DEV-0035.json",
+      "raw_output_path": "OCOR-DEV-0035.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0035"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-EXACT-AT-COMMIT-PROJECTION-NOT-READY-WITH-REAL-WATERMARK",
+      "command": "EXACT_AT_COMMIT raises PROJECTION_NOT_READY naming the real observed watermark when it has not yet caught up, without ever issuing the real backend data query",
+      "evidence_path": "OCOR-DEV-0035.json",
+      "raw_output_path": "OCOR-DEV-0035.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0035"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-AT-LEAST-COMMIT-PROJECTION-NOT-READY-UNTIL-WATERMARK-CATCHES-UP",
+      "command": "AT_LEAST_COMMIT raises PROJECTION_NOT_READY until the real watermark is advanced, then proceeds once it does",
+      "evidence_path": "OCOR-DEV-0035.json",
+      "raw_output_path": "OCOR-DEV-0035.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0035"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-UNREGISTERED-CONTRACT-NEVER-REACHES-WATERMARK-CHECK",
+      "command": "an unregistered contract is denied by a spy WatermarkPort that raises if ever consulted, proving policy is evaluated strictly before the watermark",
+      "evidence_path": "OCOR-DEV-0035.json",
+      "raw_output_path": "OCOR-DEV-0035.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0035"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-DENIED-POLICY-NEVER-LEAKS-WATERMARK",
+      "command": "a denied policy decision never returns any plan, partial or otherwise",
+      "evidence_path": "OCOR-DEV-0035.json",
+      "raw_output_path": "OCOR-DEV-0035.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0035"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-WATERMARK-BACKEND-FAILURE-FAULT-INJECTION",
+      "command": "a real, lower-blast-radius network fault (a genuine closed local TCP port) inside the watermark port propagates as a real OSError and never silently defaults to BEST_AVAILABLE",
+      "evidence_path": "OCOR-DEV-0035.json",
+      "raw_output_path": "OCOR-DEV-0035.log",
+      "requirement_id": "NFR-068",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0035"
+    },
+    {
+      "case_id": "OCOR-DEV-0035-REGRESSION",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0035.json",
+      "raw_output_path": "OCOR-DEV-0035.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0035"
     }
   ]
 }
