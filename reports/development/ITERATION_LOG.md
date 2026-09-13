@@ -2542,3 +2542,115 @@
   composizione di OCOR-DEV-0031; criterio di accettazione: scrittori
   concorrenti, ACK perso, outbox corrotto e fixture di riavvio
   convergono senza effetti canonici duplicati.
+
+## 2026-09-13 — OCOR-DEV-0036: C3 single-writer recovery e reconciliation
+
+- Nuovo `ocor_runtime.c3.recovery.SingleWriterRecoveryCoordinator`,
+  che compone il `PostgresC3Service` sigillato (OCOR-DEV-0029, invariato)
+  esclusivamente tramite i suoi metodi pubblici sigillati (`reconcile`,
+  `claim_batch`, `acknowledge`). Prima di scrivere qualunque cosa,
+  verificato che `c3/service.py` e `c3/adapters/postgres.py` sono
+  hash-referenziati come deliverable unico e sigillato di
+  OCOR-DEV-0029 già accettato — esclusi entrambi dalla modifica per
+  protocollo standard, aggiungendo invece un NUOVO adapter separato
+  (`ocor_runtime.c3.adapters.recovery_lock.PostgresAdvisoryLock`) per
+  l'unica capability nuova necessaria (un vero lock advisory
+  PostgreSQL a livello di sessione via `pg_advisory_lock`/
+  `pg_advisory_unlock`, la stessa primitiva `hashtextextended` già
+  usata per davvero da `commit_transaction` di OCOR-DEV-0029),
+  mantenendo AFF-002/AFF-006 soddisfatto senza toccare i file
+  sigillati di OCOR-DEV-0029.
+- `run_recovery_pass` avvolge `reconcile()` nel lock reale, così
+  processi concorrenti o riavviati si serializzano sullo stesso lock
+  reale e non corrono mai lo stesso repair (`reconcile()` ripara già
+  ENTRAMBE le direzioni di orfani — riga di idempotency mancante e
+  riga di outbox mancante — quindi la convergenza dell'"outbox
+  corrotto" era già coperta dal contratto sigillato; lo scope di
+  questo task è la serializzazione single-writer e l'health-gate
+  attorno ad essa).
+- `claim_and_deliver` avvolge claim+consegna+acknowledge nella stessa
+  sezione critica, così due worker di relay concorrenti non possono
+  mai reclamare la stessa riga non confermata prima che uno dei due
+  la confermi; un ACK perso (un crash tra consegna e acknowledge)
+  lascia la riga di nuovo reclamabile, ed è l'idempotenza del sink del
+  chiamante (per `event_id`) a prevenire un effetto canonico
+  duplicato alla riconsegna — il consueto contratto at-least-once
+  dell'outbox, mai silenziosamente elevato a exactly-once da questo
+  coordinator.
+- `assert_healthy` usa il conteggio di riparazioni di `reconcile()`
+  stesso come segnale di salute pre-flight, dato che `RecoveryPort`
+  non espone un conteggio senza effetti collaterali nel contratto
+  sigillato: solleva `UNRECONCILED_DURABLE_INTENT` per il passaggio in
+  cui qualcosa necessitava riparazione, e ha successo una volta che
+  non resta nulla.
+- Aggiunti 8 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0036.py`, tutti contro
+  PostgreSQL reale, nessun mock, incluse prove di concorrenza reale
+  con threading: un vero lock advisory che serializza davvero due
+  detentori concorrenti (provato con timestamp monotoni reali, non
+  inferito); due passaggi di recovery concorrenti reali che corrono
+  la stessa corruzione simulata reale convergono a esattamente una
+  riparazione reale; un test di ACK perso che prova che il sink
+  idempotente del chiamante assorbe un vero tentativo di consegna
+  duplicata; due worker di relay concorrenti che corrono lo stesso
+  singolo evento non confermato senza mai reclamarlo entrambi; un
+  coordinator/service nuovo che simula un vero riavvio di processo e
+  converge senza ripetere una riparazione già completata; e un test
+  di fault-injection reale (un DSN PostgreSQL irraggiungibile) che
+  prova che un guasto del backend del lock si propaga e il passaggio
+  di recovery non gira mai senza lock.
+- Tre bug genuini di scrittura del test trovati e corretti prima della
+  sigillatura: (1) `make_command` indovinava inizialmente un campo del
+  costruttore `GovernedCanonicalCommitCommand` inesistente
+  (`command_digest`) invece di riusare il pattern dell'helper
+  `from_mapping` di OCOR-DEV-0029; (2) valori di `idempotency_key`
+  sotto i 16 caratteri violano il vincolo di lunghezza minima
+  sigillato `COMMIT_CONTRACT_INVALID`; (3) il test di fault-injection
+  si aspettava `OSError`, ma `psycopg.OperationalError` non è una
+  sua sottoclasse.
+- Test ripetuti 6 volte per escludere flakiness nei test di
+  concorrenza reale: tutti deterministici.
+- Gate locali tutti verdi: `ruff`, `mypy`, `validate_rccad.py` PASS
+  (l'unico import di `psycopg` vive nel nuovo `c3/adapters/recovery_lock.py`),
+  `validate_language_policy.py` PASS, `validate_ocor_change_scope.py`
+  PASS (8 percorsi), pytest completo via lo script `pytest` nudo con
+  `OCOR_LIVE_POSTGRES_DSN` impostato contro il PostgreSQL reale di
+  ocor-bootstrap: `2 failed, 729 passed` (stessi 2 fallimenti noti)
+  più `29 passed` per le 3 suite `reports/tests/`,
+  `validate_ocor_development_plan.py --base-ref origin/main
+  --authorized-extension` PASS dopo il consueto doppio-run.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0036.json` +
+  `reports/evidence/G4/OCOR-DEV-0036.log`.
+  `reports/evidence/G4/MANIFEST.json` esteso con inserimento
+  chirurgico (2 nuovi artifact, 9 nuovi requirement_results).
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task, non incluso nel commit del
+  task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0036`: tutti e 13 i check verdi al primo push. PR #103
+  mergiata (`ab06c8fc7fd996c40e8728dc5c55c6a4be56967c`), SHA
+  post-merge verificata.
+
+## 2026-09-13 — Sincronizzazione stato: OCOR-DEV-0036 (post-merge)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #103, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0036`).
+- `baseline_commit` aggiornato a
+  `ab06c8fc7fd996c40e8728dc5c55c6a4be56967c` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0036`
+  aggiunto a `completed_evidence_tasks`.
+- Ricalcolata la prontezza dal backlog JSON: nessun nuovo task
+  numericamente più basso è stato sbloccato da `OCOR-DEV-0036`, quindi
+  i 6 task rimanenti del wave 15 (`0037/0038/0040/0042/0046/0048`)
+  restano il fronte di lavoro; selezionato `OCOR-DEV-0037` ("Implement
+  C4 TypeDB projection adapter") per ordine numerico.
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
+- Prossima azione: implementare `ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py`,
+  riusando lo spike `spikes.typedb_exact_commit.adapter` (OCOR-DEV-0017)
+  e `PostgresC3Service` (OCOR-DEV-0029); criterio di accettazione:
+  fatti/relazioni e watermark si committano atomicamente e il
+  comportamento exact-at-commit rispetta il port; criterio negativo:
+  una projection stantia non può mai spacciarsi per esatta.

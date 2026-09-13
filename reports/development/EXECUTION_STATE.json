@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0035",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0035",
+    "branch": "governed/state-sync-ocor-dev-0036",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0036",
     "decision_id": "DEC-211",
-    "phase": "G4_WAVE_15_IN_PROGRESS__WAVE_16_OCOR_DEV_0035_CLOSED",
+    "phase": "G4_WAVE_15_IN_PROGRESS",
     "worktree": null
   },
-  "baseline_commit": "bfd928d2036f37ecf7a09658b45a3b0848afbea5",
+  "baseline_commit": "ab06c8fc7fd996c40e8728dc5c55c6a4be56967c",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -72,19 +72,20 @@
     "OCOR-DEV-0032",
     "OCOR-DEV-0033",
     "OCOR-DEV-0034",
-    "OCOR-DEV-0035"
+    "OCOR-DEV-0035",
+    "OCOR-DEV-0036"
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "68ca474",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR101_MERGED_bfd928d2036f37ecf7a09658b45a3b0848afbea5",
+    "candidate_commit": "f61ab4f",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR103_MERGED_ab06c8fc7fd996c40e8728dc5c55c6a4be56967c",
     "run_ids": [
-      34772480493,
-      34772480463,
-      34772480462,
-      34772480466,
-      34772480508,
-      34772480470
+      34773502699,
+      34773502719,
+      34773502740,
+      34773502766,
+      34773502773,
+      34773502792
     ]
   },
   "mandate_phase_status": {
@@ -145,7 +146,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0035 merged (PR #101, bfd928d2036f37ecf7a09658b45a3b0848afbea5), all 13 checks green on the first push. This implements ocor_runtime.c2.planner (ConsistencyPlanner), proving policy filters before ever consulting the watermark, and returning either the required commit or PROJECTION_NOT_READY with the real observed watermark -- never a silent stale fallback, never a real backend data query to compute the plan. This closes wave 16 (OCOR-DEV-0033/0034/0035) entirely. Recomputed readiness directly from the backlog JSON: no new lower-numbered task was unlocked, so wave 15's remaining 7 ready tasks (0036/0037/0038/0040/0042/0046/0048) are next by numeric order; OCOR-DEV-0036 ('Complete C3 single-writer recovery and reconciliation', depends on OCOR-DEV-0029/0031) is selected next.",
+  "next_executable_action": "OCOR-DEV-0036 merged (PR #103, ab06c8fc7fd996c40e8728dc5c55c6a4be56967c), all 13 checks green on the first push. This implements ocor_runtime.c3.recovery.SingleWriterRecoveryCoordinator, composing the sealed PostgresC3Service (OCOR-DEV-0029, untouched) through its own sealed public methods and a NEW separate adapter (c3/adapters/recovery_lock.py) for the one new capability needed (a real PostgreSQL advisory lock), so OCOR-DEV-0029's own sealed evidence stayed untouched. Recomputed readiness directly from the backlog JSON: no new lower-numbered task was unlocked, so wave 15's remaining 6 ready tasks are 0037/0038/0040/0042/0046/0048; OCOR-DEV-0037 ('Implement C4 TypeDB projection adapter', depends on OCOR-DEV-0017/0029/0031) is selected next by numeric order.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
