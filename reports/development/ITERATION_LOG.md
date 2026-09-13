@@ -1445,3 +1445,77 @@
   PR, polling CI, merge a gate verdi, verifica SHA post-merge. Poi
   proseguire con l'ultimo spike G2 dello stesso wave 11: `OCOR-DEV-0021`
   (SPIKE latenza e semantica di fallimento identity-policy).
+- `OCOR-DEV-0018`: tutti e 13 i check verdi al primo push (il fix CI
+  proattivo per Fuseki ha funzionato senza alcun ciclo di riparazione). PR
+  #79 mergiata (`0b3d855c09f50be583a970868ed19375ef4d0802`), SHA
+  post-merge verificata.
+
+## 2026-09-13 — Disposizione del Product Owner: escalation Fase 3 componente 1
+
+- Iterazione a sé, non backlog: esegue la disposizione esplicita e
+  verbatim del Product Owner su
+  `PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED`
+  (registrata in `reports/development/PHASE3_LANGUAGE_MIGRATION_DECISION.md`
+  §5, in attesa di lui dal completamento della Fase 3).
+- **Decisione**: `RINVIATA`, non respinta. Nessuna decisione di migrazione
+  aperta per il kernel di canonicalizzazione; il candidato e la misura
+  sigillata restano registrati e validi.
+- Aggiunta una nuova §8 in coda a
+  `reports/development/PHASE3_LANGUAGE_MIGRATION_DECISION.md` — le sezioni
+  1–7 (misura sigillata, numeri inclusi) lasciate byte-per-byte intatte,
+  verificato con `git diff --stat` (105 righe, sole inserzioni). La §8
+  riporta: la decisione; la motivazione a 4 punti dettata dal Product
+  Owner, trascritta testualmente come richiesto ("da riportare come
+  tale"), senza editorializzarla; la condizione di riapertura falsificabile
+  a 3 rami (a/b/c); i vincoli osservati; la verifica del record decisionale
+  formale; il nuovo stato dell'escalation.
+- **Verifica del record decisionale formale** (richiesta esplicitamente dal
+  Product Owner, con l'istruzione di non coniare un identificativo se non
+  richiesto): confrontato con `DEC-212` (adozione di una nuova politica,
+  registrata in `OCOR_Decision_Register_v1.6_APPROVED.md`) e con le
+  escalation precedenti di questo mandato già dispositate senza un nuovo
+  `DEC-*` (`PHASE2-4-BACKLOG-GENERATOR-DRIFT`, risolta in PR #67;
+  `GITHUB-BRANCH-PROTECTION-001`, compensata). Questa disposizione non
+  adotta alcuna nuova politica, non cambia alcuna soglia, non autorizza
+  alcuna migrazione: rientra nella seconda categoria. **Nessun nuovo
+  `DEC-*` coniato**; aggiornati solo i documenti esistenti, come richiesto.
+- Aggiornato `reports/development/EXECUTION_STATE.json`:
+  `mandate_phase_status.phase_3_benchmark.escalations` passa da `OPEN` a
+  `DISPOSED_DEFERRED`, con la stessa motivazione e condizione di
+  riapertura.
+- Vincoli tassativi rispettati e verificati: soglie del §3 di
+  `OCOR_LANGUAGE_POLICY.md` non toccate; `OI-024` non chiuso; nessun
+  `ASM-*`/`RSK-*` modificato; nessuna modifica al codice del kernel di
+  canonicalizzazione (`ocor-runtime/src/ocor_runtime/canonical.py`);
+  nessuna promozione di `E1`/`E2`/requisiti a `Verified`, nessun claim di
+  conformità runtime.
+- Nota di trasparenza (non una correzione della disposizione, che resta
+  quella dettata dal Product Owner e riportata testualmente): il punto 2
+  della motivazione cita `OI-024` come l'open item collegato al budget
+  ipotetico di latenza; il §3 dello stesso documento
+  `OCOR_LANGUAGE_POLICY.md` contiene già una nota di correzione secondo cui
+  l'open item che governa effettivamente le soglie numeriche di
+  performance è `OI-008`, mentre `OI-024` governa le soglie di
+  rischio/costo per l'autorità dual-control (`DEC-131`/`FR-136`/`FR-137`).
+  La motivazione è stata trascritta come dettata, per istruzione esplicita
+  ("da riportare come tale"); questa nota segnala la tensione testuale
+  senza alterare la decisione, che è comunque conservativa (nessuna
+  migrazione aperta) e indipendente da quale identificativo `OI-*` sia
+  citato in questo punto.
+- Questa iterazione non tocca codice sorgente né test: gate locali e
+  regressione completa rieseguiti comunque per protocollo standard,
+  confermati invariati.
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (45 file),
+  `validate_rccad.py` PASS, `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS, pytest completo con
+  `OCOR_LIVE_POSTGRES_DSN` locale invariato rispetto alla baseline nota,
+  `validate_ocor_development_plan.py --authorized-extension` PASS.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: push del branch
+  `governed/phase3-component1-escalation-disposition-deferred`, apertura
+  PR, polling CI, merge a gate verdi, verifica SHA post-merge. Il referto
+  finale del mandato dovrà riportare questa disposizione fra gli esiti.
+  Poi riprendere il backlog da dove era: l'ultimo spike G2 del wave 11,
+  `OCOR-DEV-0021` (SPIKE latenza e semantica di fallimento
+  identity-policy).
