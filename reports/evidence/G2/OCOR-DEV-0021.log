@@ -1,0 +1,243 @@
+=== docker compose ps (real 11-service ocor-bootstrap stack, reused unmodified) ===
+NAME                            STATUS
+ocor-bootstrap-fuseki-1         Up 6 minutes (healthy)
+ocor-bootstrap-kafka-1          Up 7 hours (healthy)
+ocor-bootstrap-keycloak-1       Up 4 hours (healthy)
+ocor-bootstrap-opa-1            Up 4 hours (healthy)
+ocor-bootstrap-openbao-1        Up 7 hours (healthy)
+ocor-bootstrap-postgresql-1     Up 7 hours (healthy)
+ocor-bootstrap-qdrant-1         Up 7 hours (healthy)
+ocor-bootstrap-spire-agent-1    Up 7 hours
+ocor-bootstrap-spire-server-1   Up 7 hours (healthy)
+ocor-bootstrap-terminusdb-1     Up 7 hours (healthy)
+ocor-bootstrap-typedb-1         Up 7 hours (healthy)
+
+=== CI provisioning rehearsal (proactive, before opening the PR, per the lesson from OCOR-DEV-0017/0018): OPA, Keycloak and OpenBao are all pre-built pinned images (unlike Fuseki), so a docker run recipe was rehearsed on alternate host ports (8182/8081/8201) before adding it to the 3 CI workflows ===
+docker run openpolicyagent/opa@sha256:39daf... run --server --addr 0.0.0.0:8181 -> became healthy (curl /health -> {}) within seconds
+docker run quay.io/openbao/openbao@sha256:11fd73a... server -dev -dev-listen-address=0.0.0.0:8200 -> became healthy (curl /v1/sys/health -> initialized:true, sealed:false) within seconds
+docker run quay.io/keycloak/keycloak@sha256:9d1f1b2... start-dev --http-port=8080 -> became healthy (curl /realms/master/.well-known/openid-configuration -> real OIDC discovery document) within ~20-30s (the slowest of the three, as expected)
+cleanup: docker rm -f opa-ci-test openbao-ci-test keycloak-ci-test -- the live ocor-bootstrap stack (11 services) was confirmed unaffected before and after
+
+=== RUN 1: pytest tests/tasks/test_ocor_dev_0021.py -v against the real live stack (repeated x4 for stability, run 1 shown verbatim; each run pauses/unpauses opa and openbao for real) ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/luca/projects/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collected 7 items
+
+tests/tasks/test_ocor_dev_0021.py .......                                [100%]
+
+============================== 7 passed in 6.23s ===============================
+
+=== RUN 2..4: repeat runs, summary lines only, to demonstrate determinism ===
+-- run 2 --
+.......                                                                  [100%]
+7 passed in 6.23s
+-- run 3 --
+.......                                                                  [100%]
+7 passed in 6.24s
+-- run 4 --
+.......                                                                  [100%]
+7 passed in 6.21s
+
+=== post-run verification: OPA policy and OpenBao mount survived the pause/unpause fault-injection cycles (pause preserves in-memory state, unlike restart -- see OCOR-DEV-0083's finding about restart wiping OPA/Keycloak state) ===
+NAME                            STATUS
+ocor-bootstrap-fuseki-1         Up 6 minutes (healthy)
+ocor-bootstrap-kafka-1          Up 7 hours (healthy)
+ocor-bootstrap-keycloak-1       Up 4 hours (healthy)
+ocor-bootstrap-opa-1            Up 4 hours (healthy)
+ocor-bootstrap-openbao-1        Up 7 hours (healthy)
+ocor-bootstrap-postgresql-1     Up 7 hours (healthy)
+ocor-bootstrap-qdrant-1         Up 7 hours (healthy)
+ocor-bootstrap-spire-agent-1    Up 7 hours
+ocor-bootstrap-spire-server-1   Up 7 hours (healthy)
+ocor-bootstrap-terminusdb-1     Up 7 hours (healthy)
+ocor-bootstrap-typedb-1         Up 7 hours (healthy)
+OPA policy still loaded:
+{"result":[{"id":"ocor_bootstrap","raw":"package ocor.bootstrap\n\ndefault allow = false\n","ast":{"package":{"path":[{"type":"var","value":"data"},{"type":"string","value":"ocor"},{"type":"string","value":"bootstrap"}]},"rules":[{"default":true,"head":{"name":"allow","ref":[{"type":"var","value":"allow"}],"value":{"type":"boolean","value":false}},"body":[{"index":0,"terms":{"type":"boolean","value":true}}]}]}}]}
+
+OpenBao ocor/ mount still present:
+True
+
+=== ruff check spikes/control_plane_latency/ ocor-runtime/tests/tasks/test_ocor_dev_0021.py ===
+All checks passed!
+
+=== mypy (scope: ocor-runtime/src + scripts; spikes/ and tests/ outside this gate's scope by policy) ===
+Success: no issues found in 45 source files
+
+=== yaml.safe_load validation of the 3 edited workflow files ===
+.github/workflows/ocor-delivery-activation.yml OK
+.github/workflows/ocor-rccad.yml OK
+.github/workflows/ocor-validation-closure.yml OK
+
+=== full local pytest regression, ocor-runtime/tests/ (OCOR_LIVE_POSTGRES_DSN set locally) ===
+........................................................................ [ 11%]
+........................................................................ [ 23%]
+..........F............................................................. [ 35%]
+........................................................................ [ 46%]
+........................................................................ [ 58%]
+........................................................................ [ 70%]
+........................................................................ [ 81%]
+........................................................................ [ 93%]
+......................................F.                                 [100%]
+=================================== FAILURES ===================================
+_____ test_two_clean_environments_resolve_identical_lock_and_image_digests _____
+
+tmp_path = PosixPath('/tmp/pytest-of-luca/pytest-67/test_two_clean_environments_re0')
+
+    def test_two_clean_environments_resolve_identical_lock_and_image_digests(tmp_path):
+        first = materialize_clean_environment(tmp_path / "first")
+        second = materialize_clean_environment(tmp_path / "second")
+        assert fingerprint(first) == fingerprint(second)
+        for environment in (first, second):
+            result = subprocess.run(
+                ["uv", "lock", "--project", str(environment), "--check"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+>           assert result.returncode == 0, result.stdout + result.stderr
+E           AssertionError: error: No interpreter found for Python ==3.12.11 in managed installations or search path
+E             
+E           assert 2 == 0
+E            +  where 2 = CompletedProcess(args=['uv', 'lock', '--project', '/tmp/pytest-of-luca/pytest-67/test_two_clean_environments_re0/first...code=2, stdout='', stderr='error: No interpreter found for Python ==3.12.11 in managed installations or search path\n').returncode
+
+tests/tasks/test_ocor_dev_0002.py:52: AssertionError
+___________________ test_running_interpreter_matches_the_pin ___________________
+
+    def test_running_interpreter_matches_the_pin() -> None:
+        pin = PIN_PATH.read_text(encoding="utf-8").strip()
+        actual = platform.python_version()
+>       assert actual == pin, (
+            f"running interpreter {actual} diverges from the pinned {pin} in "
+            f"{PIN_PATH}; the environment is not the governed one"
+        )
+E       AssertionError: running interpreter 3.12.14 diverges from the pinned 3.12.11 in /home/luca/projects/ocor-detailed-design/ocor-runtime/.python-version; the environment is not the governed one
+E       assert '3.12.14' == '3.12.11'
+E         
+E         - 3.12.11
+E         ?       ^
+E         + 3.12.14
+E         ?       ^
+
+tests/test_interpreter_pin.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED tests/tasks/test_ocor_dev_0002.py::test_two_clean_environments_resolve_identical_lock_and_image_digests
+FAILED tests/test_interpreter_pin.py::test_running_interpreter_matches_the_pin
+2 failed, 614 passed in 45.78s
+
+=== full local pytest regression, 3 reports/tests suites ===
+.............................                                            [100%]
+29 passed in 3.89s
+
+=== sha256sum -c inputs/normative/SHA256SUMS ===
+exit=0
+
+=== scripts/validate_rccad.py --root . ===
+{
+  "checked_artifacts": 22,
+  "dynamic_assurance": "CI_REQUIRED",
+  "findings": [],
+  "fitness_results": {
+    "AFF-001": "PASS_STATIC_PRECHECK",
+    "AFF-002": "PASS_STATIC_PRECHECK",
+    "AFF-003": "PASS_STATIC_PRECHECK",
+    "AFF-004": "PASS_STATIC_PRECHECK",
+    "AFF-005": "PASS_STATIC_PRECHECK",
+    "AFF-006": "PASS_STATIC_PRECHECK",
+    "AFF-007": "PASS_STATIC_PRECHECK",
+    "AFF-008": "PASS_STATIC_PRECHECK",
+    "AFF-009": "PASS_STATIC_PRECHECK",
+    "AFF-010": "PASS_STATIC_PRECHECK"
+  },
+  "methodology_sha256": "231ce3325537de85890b16e97f138bd6a4263fc1e240094ed26499af9aeeb6cd",
+  "status": "PASS_LOCAL_PRECHECK"
+}
+
+=== scripts/validate_language_policy.py ===
+PASS: no tracked file uses a monitored extension outside its authorized area
+
+=== CI feedback (PR #81, first push): 3 jobs failed (delivery-activation, rccad-methodology, validation-closure) ===
+root cause: the CI docker run recipe started the OPA/Keycloak/OpenBao containers with plain names (opa/keycloak/openbao), but the reused, sealed fault_command() from scripts/fault_inject_test_environment.py (OCOR-DEV-0083) constructs the target container name as f'ocor-bootstrap-{service}-1', matching docker compose's naming convention -- 'docker pause ocor-bootstrap-opa-1' failed with 'No such container' in CI, since that name did not exist there.
+fix (root cause, not a workaround): renamed every docker run --name in the CI recipe (fuseki, opa, keycloak, openbao) across all 3 workflows to the ocor-bootstrap-<service>-1 convention, matching what fault_command() expects and what the local ocor-bootstrap Docker Compose stack already produces natively -- no test or adapter code changed, since the naming mismatch was entirely in the CI provisioning step.
+
+=== post-fix re-verification: ruff, mypy, RCCAD, language policy, yaml.safe_load of the 3 workflow files ===
+All checks passed!
+Success: no issues found in 45 source files
+PASS: no tracked file uses a monitored extension outside its authorized area
+.github/workflows/ocor-delivery-activation.yml OK
+.github/workflows/ocor-rccad.yml OK
+.github/workflows/ocor-validation-closure.yml OK
+
+=== post-fix re-run: pytest ocor-runtime/tests/tasks/test_ocor_dev_0021.py -v against the real local stack (unaffected by the CI-only naming fix, since the local ocor-bootstrap stack already used the correct naming) ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/luca/projects/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collected 7 items
+
+tests/tasks/test_ocor_dev_0021.py .......                                [100%]
+
+============================== 7 passed in 6.22s ===============================
+
+=== post-fix final full local pytest regression, ocor-runtime/tests/ ===
+........................................................................ [ 11%]
+........................................................................ [ 23%]
+..........F............................................................. [ 35%]
+........................................................................ [ 46%]
+........................................................................ [ 58%]
+........................................................................ [ 70%]
+........................................................................ [ 81%]
+........................................................................ [ 93%]
+......................................F.                                 [100%]
+=================================== FAILURES ===================================
+_____ test_two_clean_environments_resolve_identical_lock_and_image_digests _____
+
+tmp_path = PosixPath('/tmp/pytest-of-luca/pytest-70/test_two_clean_environments_re0')
+
+    def test_two_clean_environments_resolve_identical_lock_and_image_digests(tmp_path):
+        first = materialize_clean_environment(tmp_path / "first")
+        second = materialize_clean_environment(tmp_path / "second")
+        assert fingerprint(first) == fingerprint(second)
+        for environment in (first, second):
+            result = subprocess.run(
+                ["uv", "lock", "--project", str(environment), "--check"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+>           assert result.returncode == 0, result.stdout + result.stderr
+E           AssertionError: error: No interpreter found for Python ==3.12.11 in managed installations or search path
+E             
+E           assert 2 == 0
+E            +  where 2 = CompletedProcess(args=['uv', 'lock', '--project', '/tmp/pytest-of-luca/pytest-70/test_two_clean_environments_re0/first...code=2, stdout='', stderr='error: No interpreter found for Python ==3.12.11 in managed installations or search path\n').returncode
+
+tests/tasks/test_ocor_dev_0002.py:52: AssertionError
+___________________ test_running_interpreter_matches_the_pin ___________________
+
+    def test_running_interpreter_matches_the_pin() -> None:
+        pin = PIN_PATH.read_text(encoding="utf-8").strip()
+        actual = platform.python_version()
+>       assert actual == pin, (
+            f"running interpreter {actual} diverges from the pinned {pin} in "
+            f"{PIN_PATH}; the environment is not the governed one"
+        )
+E       AssertionError: running interpreter 3.12.14 diverges from the pinned 3.12.11 in /home/luca/projects/ocor-detailed-design/ocor-runtime/.python-version; the environment is not the governed one
+E       assert '3.12.14' == '3.12.11'
+E         
+E         - 3.12.11
+E         ?       ^
+E         + 3.12.14
+E         ?       ^
+
+tests/test_interpreter_pin.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED tests/tasks/test_ocor_dev_0002.py::test_two_clean_environments_resolve_identical_lock_and_image_digests
+FAILED tests/test_interpreter_pin.py::test_running_interpreter_matches_the_pin
+2 failed, 614 passed in 45.03s
+
+=== post-fix final full local pytest regression, 3 reports/tests suites ===
+.............................                                            [100%]
+29 passed in 3.75s
