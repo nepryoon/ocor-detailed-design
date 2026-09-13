@@ -105,6 +105,36 @@ def test_load_terminusdb_creates_when_absent(monkeypatch):
     assert outcome.operation_count == 2
 
 
+def test_load_terminusdb_creates_when_absent_via_a_real_404_status(monkeypatch):
+    # OCOR-DEV-0083 discovered TerminusDB does not always use the "200 with
+    # a Status: 404 text prefix" quirk for a not-found document -- it has
+    # also been observed returning a real HTTP 404 for the identical
+    # condition. Both must be treated as absent.
+    not_found = json.dumps({"api:status": "api:not_found"})
+    created = json.dumps({"name": "ocor-bootstrap-fixture", "value": 42})
+    responses = {
+        (
+            "POST",
+            f"{loader.TERMINUSDB_URL}/api/document/admin/ocor_default?graph_type=schema&author=ocor-bootstrap&message=synthetic-fixture-schema",
+        ): (200, "[]"),
+        (
+            "POST",
+            f"{loader.TERMINUSDB_URL}/api/document/admin/ocor_default?author=ocor-bootstrap&message=synthetic-fixture-data",
+        ): (200, "[]"),
+    }
+    call_state = {"n": 0}
+
+    def sequenced(method, url, **kwargs):
+        if method == "GET" and "id=SyntheticFixture" in url:
+            call_state["n"] += 1
+            return (404, not_found) if call_state["n"] == 1 else (200, created)
+        return _fake_request(responses)(method, url, **kwargs)
+
+    monkeypatch.setattr(loader, "_request", sequenced)
+    outcome = loader.load_terminusdb_fixture(TERMINUSDB_FIXTURE, "irrelevant-password")
+    assert outcome.result is loader.FixtureResult.CREATED
+
+
 def test_load_terminusdb_already_initialized_when_matching(monkeypatch):
     body = json.dumps({"name": "ocor-bootstrap-fixture", "value": 42})
     responses = {
