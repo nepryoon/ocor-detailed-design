@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0016",
+  "commit": "cbf53da9be6d13e77d545679dacebc2398f5af97",
+  "created_at": "2026-09-13T03:10:00Z",
+  "environment": {
+    "orchestrator": "docker compose -p ocor-bootstrap (deploy/bootstrap/compose.yaml), same live stack provisioned by the WS-12 chain (OCOR-DEV-0079..0084)",
+    "backend_under_test": "the selected PostgreSQL backend, reached at 127.0.0.1:55433 via the ocor-bootstrap postgresql service, first time this container has been used locally as OCOR_LIVE_POSTGRES_DSN (previously only exercised in CI's ephemeral service-container Postgres)",
+    "reused_deliverable": "spikes/c3_atomicity/oracle.py's PostgreSQLAtomicCommitOracle (OCOR-DEV-0015, sealed and unmodified) supplies the atomic-commit contract; this task adds only the concurrent-race harness and independent out-of-band probes in spikes/c3_backend/concurrency_oracle.py",
+    "secrets": "session-local, generated for OCOR-DEV-0079, never committed to Git"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "spikes/c3_backend/concurrency_oracle.py": "90c7b2c855d98407aaaec3cc6e466474aeb5ccb1d52955cf0a01acc4c225be59",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0016.py": "b56b4ecc85b1a98e12852b03f4d78ceb049f0b437e7beb41c6a17985c47bc1bc"
+  },
+  "commands": [
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0016.py -v against the real live PostgreSQL backend, repeated 5 times to demonstrate the real-concurrency races are deterministic, not flaky",
+      "result": {"passed": 25, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, ocor-runtime/tests/ (OCOR_LIVE_POSTGRES_DSN set locally for the first time this session, pointed at the ocor-bootstrap postgresql service; this retroactively upgrades OCOR-DEV-0015's 10 previously-erroring live-Postgres tests to real local passes, with zero new failures)",
+      "result": {"passed": 595, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, 3 reports/tests suites",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0016-LOCKING",
+      "requirement_id": "BR-003",
+      "command": "two DISTINCT commands racing the same aggregate/expected_revision on real PostgreSQL connections: exactly one succeeds, the other raises a real revision-conflict error; an independent connection directly observes the real advisory lock held by the other session during the race (not merely inferred from the outcome)",
+      "result": {"passed": 2, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0016-ISOLATION",
+      "requirement_id": "BR-003",
+      "command": "a concurrent reader on an independent connection, sampling continuously throughout a live distinct-writer race, never observes a revision value outside the valid boundary set -- no dirty read of an uncommitted or torn write is ever leaked under READ COMMITTED",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0016-FAILURE-UNDER-CONCURRENCY",
+      "requirement_id": "BR-003",
+      "command": "a real process crash (subprocess, os._exit after inserting but before commit) is deterministically synchronized -- via an independent probe polling the real advisory lock -- to be genuinely in flight when a second, live writer concurrently attempts the same aggregate/expected_revision; the survivor commits successfully once the crashed transaction's lock is released, and the reconciled ledger accepts further correct progress afterward",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0016-RECONCILIATION",
+      "requirement_id": "BR-003",
+      "command": "assert_atomic_visibility() (the sealed reconciliation oracle from OCOR-DEV-0015) reports zero anomalies after every real-concurrency scenario above, and a synthetic phantom_receipt anomaly (an idempotency row whose receipt references a non-existent commit) falsifies it, proving negative_acceptance_criteria: a phantom receipt or unreconciled commit is detected, never silently accepted",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0016-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 624, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This spike's oracles all target the SAME PostgreSQL backend already implemented and sealed by OCOR-DEV-0015; it does not evaluate an alternative backend, consistent with the task's 'selected backend' framing and its migration_and_compatibility_procedure (no architecture substitution).",
+    "The failure-under-concurrency scenario relies on a real advisory-lock contention probe to synchronize the crash with a live concurrent writer deterministically; if that synchronization primitive itself were ever unsound, the test asserts loudly on the contention-observed precondition rather than silently passing on a lucky race, so it cannot regress into a false-positive concurrency proof.",
+    "The isolation oracle empirically samples revision values during a live race under this database's default READ COMMITTED isolation level; it does not attempt to characterize behavior under a different isolation level, since the C3 store does not request one.",
+    "The same pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope; it no longer affects PostgreSQL-backed tests now that OCOR_LIVE_POSTGRES_DSN can be set locally against the ocor-bootstrap stack."
+  ],
+  "rollback_procedure_verified": "Every scenario begins from oracle.reset() (a real TRUNCATE against the live schema) and ends with assert_atomic_visibility() reporting a fully consistent state; the failure-under-concurrency scenario is itself a real rollback drill -- a genuine process crash mid-transaction, followed by a live proof that zero partial state survived and that the ledger continues correctly afterward.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "6ac8a2c017234eda7f6246414c766284cc1711a918a99eaea95b7a1721935816",
+  "result": "PASS"
+}
