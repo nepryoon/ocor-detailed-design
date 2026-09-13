@@ -1,0 +1,31 @@
+{
+  "schema_version": "1.0",
+  "fixtures": [
+    {
+      "target": "terminusdb",
+      "database": "ocor_default",
+      "schema_class": "SyntheticFixture",
+      "schema_document": {
+        "@type": "Class",
+        "@id": "SyntheticFixture",
+        "name": "xsd:string",
+        "value": "xsd:integer"
+      },
+      "instance_id": "SyntheticFixture/ocor-001",
+      "instance_document": {
+        "@type": "SyntheticFixture",
+        "@id": "SyntheticFixture/ocor-001",
+        "name": "ocor-bootstrap-fixture",
+        "value": 42
+      }
+    },
+    {
+      "target": "typedb",
+      "database": "ocor_default",
+      "schema_query": "define attribute fixture-name, value string; attribute fixture-value, value integer; entity synthetic-fixture, owns fixture-name @card(1..1), owns fixture-value @card(1..1);",
+      "data_query": "insert $f isa synthetic-fixture, has fixture-name \"ocor-bootstrap-fixture\", has fixture-value 42;",
+      "verify_query": "match $f isa synthetic-fixture, has fixture-name $n, has fixture-value $v;",
+      "undefine_query": "undefine synthetic-fixture; fixture-name; fixture-value;"
+    }
+  ]
+}

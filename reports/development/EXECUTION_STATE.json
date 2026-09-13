@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-0080-deterministic-service-init",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0080",
+    "branch": "governed/ocor-dev-0081-synthetic-fixtures",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0081",
     "decision_id": "DEC-211",
-    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0080_PUSHED__AWAITING_CI",
+    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0081_PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "751836ef2cb836ee77e7908bbdeba0dd1846678e",
+  "baseline_commit": "79084dd7be841bee0b36b92b939e9abea0e37362",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -52,19 +52,20 @@
     "OCOR-DEV-0077",
     "OCOR-DEV-0078",
     "OCOR-DEV-0079",
-    "OCOR-DEV-0080"
+    "OCOR-DEV-0080",
+    "OCOR-DEV-0081"
   ],
   "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__LANGUAGE_POLICY_ADOPTED__PHASE_2_4_CLOSED__PHASE_3_CLOSED",
   "latest_ci_evidence": {
-    "candidate_commit": "5104e94c0b67d15a605b23acaf68bf0ab5270e8f",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR71_MERGED_751836ef2cb836ee77e7908bbdeba0dd1846678e",
+    "candidate_commit": "ef33cf1f321dcf3dbd26cbbd01d08738f09516a2",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR72_MERGED_79084dd7be841bee0b36b92b939e9abea0e37362",
     "run_ids": [
-      34723594277,
-      34723594281,
-      34723594285,
-      34723594287,
-      34723594304,
-      34723594311
+      34725287657,
+      34725287667,
+      34725287670,
+      34725287676,
+      34725287701,
+      34725287735
     ]
   },
   "mandate_phase_status": {
@@ -125,9 +126,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/ocor-dev-0080-deterministic-service-init, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0080 sealed with real evidence against the same live 11-service Docker stack: idempotent creation, idempotent re-run, and a real drift-detection/rollback drill (external OPA policy mutation detected and rejected, then recovered). Next: OCOR-DEV-0081 (Load deterministic synthetic test fixtures), which depends only on OCOR-DEV-0080.",
+  "next_executable_action": "Push branch governed/ocor-dev-0081-synthetic-fixtures, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0081 sealed with real evidence against the same live 11-service Docker stack: idempotent creation, idempotent re-run, and a real drift-detection/rollback drill (external TerminusDB fixture mutation detected and rejected, then recovered). PostgreSQL/Kafka/Qdrant fixtures explicitly declared out of scope (already provisioned/evidenced by earlier, unrelated tasks 0006/0015/0019/0023). Next: OCOR-DEV-0082 (Implement service reset and teardown), which depends on OCOR-DEV-0080.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-12T23:35:00Z"
+  "updated_at": "2026-09-13T00:05:00Z"
 }
