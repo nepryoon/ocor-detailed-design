@@ -1,0 +1,141 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0040",
+  "commit": "f76f04fbe760849c393f990a7462ffb8e7b03922",
+  "created_at": "2026-09-13T21:25:00Z",
+  "environment": {
+    "orchestrator": "a real, live, self-provisioned single-node KRaft Kafka broker per test run -- no orchestration process of its own",
+    "backend_under_test": "real Kafka (confluentinc/cp-kafka:7.6.0, the same pinned image OCOR-DEV-0019's spike already proved for real), driven via its own vendor CLI (kafka-topics/kafka-console-producer/kafka-console-consumer) through docker exec, never a native Kafka client library",
+    "reused_deliverable": "no sealed production file is composed here (this is the first C5 retained component); the real single-node KRaft broker configuration and CLI produce/consume command shapes are reimplemented from spikes.kafka_delivery.oracle.KafkaCli (OCOR-DEV-0019, spike evidence already sealed, reused as a design reference only) rather than imported, since spikes/ lies outside ocor-runtime's own pythonpath in production"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c5/backbone.py": "eadcf865bf0e891b2210c7f2bb886c0571af7c4ff870cf880172e5a52139c2d2",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0040.py": "32812186ccc1b5e2034e046000e866043335939a6756a9b61f09f1b16c144abc"
+  },
+  "commands": [
+    {
+      "command": "grep -l kafka .github/workflows/*.yml -- confirmed NO CI workflow provisions any shared Kafka service at all (unlike TypeDB/Fuseki, which prior tasks added to 3 workflows); the only Kafka usage anywhere in CI is OCOR-DEV-0031's own mission-thread test, which self-provisions its own isolated broker exactly like spikes.kafka_delivery.oracle.KafkaCli.provision() does",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "genuine mid-implementation design correction: the first draft hardcoded CONTAINER = 'ocor-bootstrap-kafka-1', assuming a shared bootstrap stack would always be running -- this works locally (the ocor-bootstrap stack happens to be up) but would fail in CI, where no such container exists. Redesigned CanonicalEventBackbone to self-provision its own real, isolated, single-node KRaft broker per instance (CanonicalEventBackbone.provision), reimplementing the exact real broker configuration and lifecycle (docker volume create, a one-shot chown container, the detached broker container, a real readiness poll via kafka-broker-api-versions, and a name-prefix-checked destroy) that OCOR-DEV-0019's spike already proved for real, so the backbone works identically in CI and locally without depending on any shared, externally-provisioned service",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "design: CanonicalIngestionEnvelope is LLD v1.1 section 2.5's closed envelope restricted to the fields this task's own acceptance criteria require (partition order via aggregate_ref/sequence, correlation_id/causation_id, classification_marking_ref, source_ref provenance, idempotency_key); publish() keys every Kafka record by aggregate_ref so Kafka's own partitioner preserves per-aggregate order, checks the registered-schema allow-list and the aggregate's own last-published sequence BEFORE ever calling the real producer CLI, and quarantines (never publishes) an unknown schema or an out-of-order sequence; publish_from_mapping() additionally catches a missing/malformed governed-context field at construction time and quarantines it too -- all three of this task's negative-acceptance conditions, made structural and enforced before any real Kafka write",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "ruff check ocor-runtime/src/ocor_runtime/c5/backbone.py ocor-runtime/tests/tasks/test_ocor_dev_0040.py -- one genuine AFF-009 finding self-caught and fixed before sealing: reset()'s original try/except KafkaBackboneError: pass silently swallowed a delete-topic-that-does-not-exist-yet failure, flagged by validate_rccad.py's AFF-009 (silent exception fallback is prohibited); fixed by adding an explicit topic_exists() check (kafka-topics --list) before ever attempting delete, removing the bare except entirely",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python -m mypy src/ocor_runtime/c5/backbone.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0040.py -v via the bare pytest console script (matching CI's uv run --project ocor-runtime --frozen pytest exactly), repeated 4 times for determinism against a fresh, real, self-provisioned Kafka broker per test -- all 7 tests passed on every run, no bugs found in the task's own new envelope/publish/consume logic (the one bug found and fixed was the AFF-009 silent-fallback finding above, caught by static analysis before any test ran)",
+      "result": {"passed": 28, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_rccad.py --root . (re-verified clean after the AFF-009 fix; AFF-002/AFF-006 also confirmed clean since this file uses subprocess/docker exec, never a literal kafka package import)",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_language_policy.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression via the bare pytest console script (matching CI exactly), ocor-runtime/tests/, with OCOR_LIVE_POSTGRES_DSN set against the real ocor-bootstrap PostgreSQL instance -- re-run in full after the self-provisioning redesign, since the first regression attempt ran against the now-superseded bootstrap-container-dependent draft",
+      "result": {"passed": 758, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "the 3 CI-wired reports/tests suites: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/{test_generate_contracts_reference_resolution,test_backlog_generator_reality_parity,test_language_migration_benchmark_harness}.py",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0040-REGISTERED-SCHEMA-EVENT-PUBLISHES-AND-PRESERVES-ALL-FIELDS",
+      "requirement_id": "FR-069",
+      "command": "a registered-schema event publishes and is consumed back from the real broker preserving event_id, correlation_id, causation_id, classification_marking_ref and idempotency_key exactly",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-PARTITION-ORDER-PRESERVED-FOR-ONE-AGGREGATE",
+      "requirement_id": "FR-068",
+      "command": "5 sequential events for the same aggregate all land in the identical real Kafka partition and are delivered back in publish order",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-UNKNOWN-SCHEMA-QUARANTINED",
+      "requirement_id": "FR-084",
+      "command": "an envelope naming an unregistered schema is quarantined and never reaches the real Kafka topic",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-MISSING-GOVERNED-CONTEXT-QUARANTINED",
+      "requirement_id": "FR-070",
+      "command": "an envelope missing a required governed-context field (correlation_id) is quarantined before any real publish is attempted",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-OUT-OF-ORDER-AGGREGATE-EFFECT-QUARANTINED",
+      "requirement_id": "FR-071",
+      "command": "an event whose sequence does not advance past the aggregate's last published sequence is quarantined and never reaches the real topic, verified by consuming and confirming only the correct, in-order event landed",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-IDEMPOTENCY-KEY-REPLAY-IS-SAFE-NO-OP",
+      "requirement_id": "FR-074",
+      "command": "a replayed idempotency key never creates a second real record on the topic",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-KAFKA-UNREACHABILITY-FAILS-CLOSED",
+      "requirement_id": "NFR-012",
+      "command": "a real, nonexistent broker container fails closed with KafkaBackboneError rather than a fabricated success",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 787, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This backbone self-provisions a fresh, disposable broker per instance rather than depending on the shared ocor-bootstrap Kafka; a caller wanting a long-lived production topic across many CanonicalEventBackbone instances would need to reuse the same container name across calls, which this task's own smallest-slice scope does not need to expose.",
+    "publish()'s idempotency check (an in-memory _seen_idempotency_keys set) is scoped to one CanonicalEventBackbone instance's own lifetime; a real production deployment with multiple producer processes would need a durable idempotency store (e.g. keyed in C3's own canonical commit, which already owns idempotency for the canonical effect itself) -- this backbone's own idempotency check is a defense-in-depth safety net for a single producer's own retries, not the sole idempotency boundary of the system.",
+    "The 'partition order' guarantee relies on Kafka's own key-based partitioner routing identical keys (aggregate_ref) to the identical partition, which is the standard, well-established Kafka contract this task deliberately relies on rather than re-implementing a custom partitioner.",
+    "The pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope; it produces the same 2 pre-existing, unrelated regression failures documented in every prior evidence file this session."
+  ],
+  "rollback_procedure_verified": "Every test provisions a fresh, uniquely-named, isolated broker and destroys it (container + volume) in a fixture teardown, verified directly by 4 consecutive full test-suite runs plus the full regression run with no leaked containers or volumes between runs (docker ps confirmed at most one ocor-c5-backbone-* container alive at any time during concurrent local test execution).",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "48847828f8afde80fc51945857bcb2431e2460a3e4f35b9e0276af6186cc8775",
+  "result": "PASS"
+}

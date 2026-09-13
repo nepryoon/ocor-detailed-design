@@ -82,6 +82,16 @@
       "path": "OCOR-DEV-0039.log",
       "sha256": "3396a226a23ceabfbe706c26948fde37283f6c6e62cc181c2a6c8ebb1f3c1f62",
       "task_id": "OCOR-DEV-0039-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0040.json",
+      "sha256": "64634bbb8fe493a6dfac6119f093eb813da85db6e350ad68c08812c46593e3c9",
+      "task_id": "OCOR-DEV-0040"
+    },
+    {
+      "path": "OCOR-DEV-0040.log",
+      "sha256": "48847828f8afde80fc51945857bcb2431e2460a3e4f35b9e0276af6186cc8775",
+      "task_id": "OCOR-DEV-0040-RAW"
     }
   ],
   "requirement_results": [
@@ -795,6 +805,78 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0039"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-REGISTERED-SCHEMA-EVENT-PUBLISHES-AND-PRESERVES-ALL-FIELDS",
+      "command": "a registered-schema event publishes and is consumed back from the real broker preserving correlation, causation, marking and idempotency",
+      "evidence_path": "OCOR-DEV-0040.json",
+      "raw_output_path": "OCOR-DEV-0040.log",
+      "requirement_id": "FR-069",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0040"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-PARTITION-ORDER-PRESERVED-FOR-ONE-AGGREGATE",
+      "command": "5 sequential events for the same aggregate all land in the identical real Kafka partition and are delivered back in publish order",
+      "evidence_path": "OCOR-DEV-0040.json",
+      "raw_output_path": "OCOR-DEV-0040.log",
+      "requirement_id": "FR-068",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0040"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-UNKNOWN-SCHEMA-QUARANTINED",
+      "command": "an envelope naming an unregistered schema is quarantined and never reaches the real Kafka topic",
+      "evidence_path": "OCOR-DEV-0040.json",
+      "raw_output_path": "OCOR-DEV-0040.log",
+      "requirement_id": "FR-084",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0040"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-MISSING-GOVERNED-CONTEXT-QUARANTINED",
+      "command": "an envelope missing a required governed-context field is quarantined before any real publish is attempted",
+      "evidence_path": "OCOR-DEV-0040.json",
+      "raw_output_path": "OCOR-DEV-0040.log",
+      "requirement_id": "FR-070",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0040"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-OUT-OF-ORDER-AGGREGATE-EFFECT-QUARANTINED",
+      "command": "an event whose sequence does not advance past the aggregate's last published sequence is quarantined and never reaches the real topic",
+      "evidence_path": "OCOR-DEV-0040.json",
+      "raw_output_path": "OCOR-DEV-0040.log",
+      "requirement_id": "FR-071",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0040"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-IDEMPOTENCY-KEY-REPLAY-IS-SAFE-NO-OP",
+      "command": "a replayed idempotency key never creates a second real record on the topic",
+      "evidence_path": "OCOR-DEV-0040.json",
+      "raw_output_path": "OCOR-DEV-0040.log",
+      "requirement_id": "FR-074",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0040"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-KAFKA-UNREACHABILITY-FAILS-CLOSED",
+      "command": "a real, nonexistent broker container fails closed with KafkaBackboneError rather than a fabricated success",
+      "evidence_path": "OCOR-DEV-0040.json",
+      "raw_output_path": "OCOR-DEV-0040.log",
+      "requirement_id": "NFR-012",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0040"
+    },
+    {
+      "case_id": "OCOR-DEV-0040-REGRESSION",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0040.json",
+      "raw_output_path": "OCOR-DEV-0040.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0040"
     }
   ]
 }
