@@ -26,9 +26,11 @@ itself.
 from __future__ import annotations
 
 import os
+import sys
 import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -52,15 +54,25 @@ from ocor_runtime.c7_emission import EmissionFence
 from ocor_runtime.c8_agent import AgentDecision, AgentKernel
 from ocor_runtime.kernel.governed_context import GovernedContext
 
-from spikes.causal_reproducibility.oracle import CausalQuery
-from spikes.causal_reproducibility.oracle import canonical_digest as causal_pin_digest
-from spikes.causal_reproducibility.oracle import execute as run_causal_query
-from spikes.causal_reproducibility.oracle import verify_reproduction
-from spikes.context_replay.replay import AssemblyRequest, PinnedItem, assemble_context
-from spikes.jena_marking.adapter import JenaAdapterError, JenaMarkingProjectionAdapter
-from spikes.kafka_delivery.oracle import KafkaCli
-from spikes.typedb_exact_commit.adapter import TypeDBAdapterError, TypeDBExactCommitAdapter
-from spikes.vector_partition.oracle import QdrantHarness
+# The spikes/ package lives at the repository root, a sibling of
+# ocor-runtime/, and is outside ocor-runtime's own pytest pythonpath
+# (["src"]). Explicit insertion here is required and must not depend on
+# collection order: this file sorts alphabetically before
+# ocor-runtime/tests/tasks/, so it cannot rely on another test module's
+# own sys.path.insert side effect running first.
+REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
+
+from spikes.causal_reproducibility.oracle import CausalQuery  # noqa: E402
+from spikes.causal_reproducibility.oracle import canonical_digest as causal_pin_digest  # noqa: E402
+from spikes.causal_reproducibility.oracle import execute as run_causal_query  # noqa: E402
+from spikes.causal_reproducibility.oracle import verify_reproduction  # noqa: E402
+from spikes.context_replay.replay import AssemblyRequest, PinnedItem, assemble_context  # noqa: E402
+from spikes.jena_marking.adapter import JenaAdapterError, JenaMarkingProjectionAdapter  # noqa: E402
+from spikes.kafka_delivery.oracle import KafkaCli  # noqa: E402
+from spikes.typedb_exact_commit.adapter import TypeDBAdapterError, TypeDBExactCommitAdapter  # noqa: E402
+from spikes.vector_partition.oracle import QdrantHarness  # noqa: E402
 
 COMMIT = "0123456789abcdef0123456789abcdef01234567"
 DIGEST_A = "urn:sha256:" + "a" * 64
