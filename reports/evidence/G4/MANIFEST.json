@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.0",
+  "gate": "G4",
+  "created_at": "2026-09-13T15:45:00Z",
+  "artifacts": [
+    {
+      "path": "OCOR-DEV-0032.json",
+      "sha256": "639a38bbe625d924edf245fcb0032611aab54bd472d1b3a2b73f6cb9a763733e",
+      "task_id": "OCOR-DEV-0032"
+    },
+    {
+      "path": "OCOR-DEV-0032.log",
+      "sha256": "eba39a058e64a8d3834dcb5d9720aabc78102afb4f2057dd660687dd6c28287d",
+      "task_id": "OCOR-DEV-0032-RAW"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0032-VALID-CORPUS-COMPILES-DETERMINISTICALLY",
+      "command": "a valid corpus with declared field types and resolved cross-resource references compiles deterministically, verified via the sealed verify_deterministic_build oracle",
+      "evidence_path": "OCOR-DEV-0032.json",
+      "raw_output_path": "OCOR-DEV-0032.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0032"
+    },
+    {
+      "case_id": "OCOR-DEV-0032-MISSING-TYPE-DECLARATIONS-REJECTED",
+      "command": "a resource missing the field_types key, or missing a type declaration for one of its own fields, is rejected with TYPE_ERROR",
+      "evidence_path": "OCOR-DEV-0032.json",
+      "raw_output_path": "OCOR-DEV-0032.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0032"
+    },
+    {
+      "case_id": "OCOR-DEV-0032-UNSUPPORTED-TYPE-REJECTED",
+      "command": "a field declaring a type name outside the closed type grammar is rejected with UNSUPPORTED_CAPABILITY",
+      "evidence_path": "OCOR-DEV-0032.json",
+      "raw_output_path": "OCOR-DEV-0032.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0032"
+    },
+    {
+      "case_id": "OCOR-DEV-0032-TYPE-MISMATCH-REJECTED",
+      "command": "a field value that does not satisfy its own declared type -- including a boolean value against a declared integer type -- is rejected with TYPE_ERROR",
+      "evidence_path": "OCOR-DEV-0032.json",
+      "raw_output_path": "OCOR-DEV-0032.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0032"
+    },
+    {
+      "case_id": "OCOR-DEV-0032-AMBIGUOUS-EXECUTION-OWNERSHIP-REJECTED",
+      "command": "a resource declaring more than one distinct execution owner is rejected with MULTIPLE_EXECUTION_OWNERS; a single owner repeated is accepted as unambiguous",
+      "evidence_path": "OCOR-DEV-0032.json",
+      "raw_output_path": "OCOR-DEV-0032.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0032"
+    },
+    {
+      "case_id": "OCOR-DEV-0032-UNRESOLVED-SEMANTIC-REFERENCE-REJECTED",
+      "command": "a resource referencing another resource not compiled in the same request is rejected with UNRESOLVED_REFERENCE",
+      "evidence_path": "OCOR-DEV-0032.json",
+      "raw_output_path": "OCOR-DEV-0032.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0032"
+    },
+    {
+      "case_id": "OCOR-DEV-0032-CYCLIC-REFERENCE-REJECTED",
+      "command": "direct and longer reference cycles are rejected with CONSTRAINT_ERROR; a legitimate non-cyclic diamond reference graph compiles successfully",
+      "evidence_path": "OCOR-DEV-0032.json",
+      "raw_output_path": "OCOR-DEV-0032.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0032"
+    },
+    {
+      "case_id": "OCOR-DEV-0032-MALFORMED-SYNTAX-REJECTED",
+      "command": "genuinely malformed YAML is rejected with SOURCE_INVALID",
+      "evidence_path": "OCOR-DEV-0032.json",
+      "raw_output_path": "OCOR-DEV-0032.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0032"
+    },
+    {
+      "case_id": "OCOR-DEV-0032-DECLARED-ID-MISMATCH-REJECTED",
+      "command": "a declared id mismatch is rejected with CONSTRAINT_ERROR",
+      "evidence_path": "OCOR-DEV-0032.json",
+      "raw_output_path": "OCOR-DEV-0032.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0032"
+    },
+    {
+      "case_id": "OCOR-DEV-0032-NO-PARTIAL-RELEASE-ON-REJECTION",
+      "command": "a rejected compilation never returns any CanonicalIrRelease object, partial or otherwise",
+      "evidence_path": "OCOR-DEV-0032.json",
+      "raw_output_path": "OCOR-DEV-0032.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0032"
+    },
+    {
+      "case_id": "OCOR-DEV-0032-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0032.json",
+      "raw_output_path": "OCOR-DEV-0032.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0032"
+    }
+  ]
+}

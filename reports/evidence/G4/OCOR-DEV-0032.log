@@ -1,0 +1,46 @@
+=== RUN 1: pytest ocor-runtime/tests/tasks/test_ocor_dev_0032.py -v via the bare pytest console script -- pure in-memory, deterministic, no external backend needed (repeated x4 for stability, run 1 shown verbatim) ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 15 items
+
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_valid_corpus_compiles_deterministically_with_field_types_and_references PASSED [  6%]
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_missing_field_types_key_is_rejected_with_type_error PASSED [ 13%]
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_field_without_a_declared_type_is_rejected_with_type_error PASSED [ 20%]
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_unsupported_declared_type_is_rejected_with_unsupported_capability PASSED [ 26%]
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_field_value_not_matching_its_declared_type_is_rejected_with_type_error PASSED [ 33%]
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_a_boolean_value_never_satisfies_the_integer_type PASSED [ 40%]
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_multiple_distinct_execution_owners_is_rejected_as_ambiguous PASSED [ 46%]
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_a_single_execution_owner_repeated_is_not_ambiguous PASSED [ 53%]
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_an_unresolved_semantic_reference_is_rejected PASSED [ 60%]
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_a_direct_two_resource_reference_cycle_is_rejected PASSED [ 66%]
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_a_longer_three_resource_reference_cycle_is_rejected PASSED [ 73%]
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_a_non_cyclic_diamond_reference_graph_compiles_successfully PASSED [ 80%]
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_malformed_yaml_syntax_is_rejected_with_source_invalid PASSED [ 86%]
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_declared_id_mismatch_is_rejected_with_constraint_error PASSED [ 93%]
+ocor-runtime/tests/tasks/test_ocor_dev_0032.py::test_no_rejection_path_ever_returns_a_partial_release PASSED [100%]
+
+============================== 15 passed in 0.08s ==============================
+
+=== RUN 2..4: repeat runs, summary lines only, to demonstrate determinism ===
+...............                                                          [100%]
+15 passed in 0.07s
+...............                                                          [100%]
+15 passed in 0.07s
+...............                                                          [100%]
+15 passed in 0.07s
+
+=== full local pytest regression via the bare pytest console script (matching CI), ocor-runtime/tests/ ===
+
+ocor-runtime/tests/test_interpreter_pin.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0002.py::test_two_clean_environments_resolve_identical_lock_and_image_digests
+FAILED ocor-runtime/tests/test_interpreter_pin.py::test_running_interpreter_matches_the_pin
+2 failed, 685 passed in 137.46s (0:02:17)
+
+=== full local pytest regression, 3 reports/tests suites ===
+.............................                                            [100%]
+29 passed in 5.27s

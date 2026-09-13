@@ -2202,8 +2202,70 @@
   ordine numerico.
 - Nessun codice sorgente toccato: gate locali rieseguiti comunque per
   protocollo standard e confermati invariati.
-- Prossima azione: leggere per intero la voce di `OCOR-DEV-0032` nel
-  backlog JSON prima di progettare qualunque cosa. Per ogni nuovo file
-  di test che importa `spikes.*`, includere sempre il proprio
-  `sys.path.insert(0, REPOSITORY_ROOT)` esplicito e verificare
-  localmente con lo script `pytest` nudo, non `python -m pytest`.
+- `OCOR-DEV-0031`: `OCOR-DEV-0031` aggiunto a `completed_evidence_tasks`;
+  PR #94 mergiata (`947b2b2586fb89c1d5342199bba2f091b061ef9c`), SHA
+  post-merge verificata.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0032 (Complete C1 parser type-checker and semantic validation)
+
+- Letto per intero `ocor_runtime.c1.ports` (l'intero enum sigillato
+  `DiagnosticCode`) e `ocor_runtime.c1.compiler` (`OCOR-DEV-0028`)
+  prima di progettare qualunque cosa: confermato che `0028` copre già
+  `SOURCE_INVALID`, `UNKNOWN_SYNTAX`, `UNRESOLVED_REFERENCE`/
+  `DUPLICATE_RESOURCE` (solo import esterni via dependency-lock),
+  `TYPE_ERROR`, `CONSTRAINT_ERROR`, `RELEASE_REJECTED`; scoperti come
+  NON coperti: `MULTIPLE_EXECUTION_OWNERS`, `UNSUPPORTED_CAPABILITY`,
+  e qualunque risoluzione/rilevamento di cicli tra riferimenti
+  semantici (non di import) tra risorse.
+- Implementato `ocor-runtime/src/ocor_runtime/c1/frontend.py`: una
+  nuova implementazione parallela e più completa degli stessi
+  Protocol sigillati `OacParser`/`SemanticValidator`/
+  `CanonicalIrBuilder`, che NON modifica il `compiler.py` sigillato di
+  `OCOR-DEV-0028`. Aggiunge: una grammatica di tipi chiusa (string/
+  integer/number/boolean/list) che richiede a ogni campo di
+  dichiarare e soddisfare un tipo; il rifiuto di una risorsa che
+  dichiara più di un `execution_owner` distinto come ambigua; e la
+  risoluzione/rilevamento di cicli su un nuovo campo semantico
+  `references` (distinto dagli import esterni già gestiti da
+  `CompilerRequest`), riusando l'helper sigillato
+  `require_resolved_references` per la risoluzione e un DFS a tre
+  colori per i cicli.
+- **Bug reale trovato e corretto durante la prima esecuzione**:
+  l'helper sigillato `require_resolved_references` (tramite il suo
+  `_unique_strings` interno) rifiuta i duplicati nella lista
+  `referenced` — ma un grafo a diamante (due risorse che condividono
+  lo stesso target referenziato) è legittimo e NON deve essere
+  rifiutato come duplicato. Corretto passando solo l'insieme distinto
+  dei target referenziati, mai una lista piatta con ripetizioni.
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0032.py` (15 test,
+  puro in-memory, nessun backend esterno): compilazione deterministica
+  di un corpus valido; tipi di campo mancanti/non dichiarati; tipo
+  dichiarato non supportato; valore non conforme al tipo dichiarato
+  (incluso un booleano contro un tipo intero dichiarato, dato che
+  `bool` è una sottoclasse di `int` in Python); proprietà d'esecuzione
+  ambigua vs. non ambigua; riferimento non risolto; cicli diretti e
+  più lunghi; un grafo a diamante non ciclico legittimo che compila
+  con successo; sintassi malformata; mismatch dell'id dichiarato;
+  nessun rilascio parziale su rifiuto.
+- Gate locali tutti verdi: `ruff`, `mypy` (51 file, +1), `validate_rccad.py`
+  PASS, `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS (5 percorsi), pytest completo
+  via lo script `pytest` nudo (non `python -m pytest`): `2 failed, 685
+  passed, 0 skipped, 0 errors` (stessi 2 fallimenti noti) più `29
+  passed` per le 3 suite `reports/tests/`,
+  `validate_ocor_development_plan.py --base-ref origin/main
+  --authorized-extension` PASS dopo il consueto doppio-run.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0032.json` +
+  `reports/evidence/G4/OCOR-DEV-0032.log`. **Primo task a sigillare
+  evidenza sotto il gate G4**: `reports/evidence/G4/MANIFEST.json`
+  creato da zero, rispecchiando lo schema del primo manifest G3
+  (`OCOR-DEV-0028`).
+- Aggiornamento dei tre file di stato eseguito in questa stessa
+  iterazione (non rimandato).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: push del branch
+  `governed/ocor-dev-0032-c1-frontend`, apertura PR, polling CI,
+  merge a gate verdi, verifica SHA post-merge. Poi proseguire con uno
+  degli altri 8 task pronti del wave 15 (`OCOR-DEV-0034`/`0036`/
+  `0037`/`0038`/`0040`/`0042`/`0046`/`0048`) per ordine numerico.
