@@ -30,16 +30,6 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 20
-      typedb:
-        image: typedb/typedb@sha256:7555df2fffd5354553143facbfc81a58ce7036e4cc8b3b50bc7139faff4a721f
-        ports:
-          - 1729:1729
-          - 8000:8000
-        options: >-
-          --health-cmd "bash -c 'exec 3<>/dev/tcp/127.0.0.1/1729'"
-          --health-interval 10s
-          --health-timeout 10s
-          --health-retries 30
     env:
       OCOR_LIVE_POSTGRES_DSN: postgresql://ocor:ocor@127.0.0.1:5432/ocor
       PYTHONHASHSEED: "0"
@@ -56,6 +46,13 @@ jobs:
           docker build -t ocor/jena-fuseki:ci infra/fuseki
           docker run -d --name ocor-bootstrap-fuseki-1 -p 3030:3030 ocor/jena-fuseki:ci
           timeout 90 bash -c 'until curl -sf http://127.0.0.1:3030/$/ping >/dev/null; do sleep 2; done'
+
+      - name: Start real TypeDB
+        run: |
+          set -euo pipefail
+          docker run -d --name ocor-bootstrap-typedb-1 -p 1729:1729 -p 8000:8000 \
+            typedb/typedb@sha256:7555df2fffd5354553143facbfc81a58ce7036e4cc8b3b50bc7139faff4a721f
+          timeout 90 bash -c 'until curl -sf http://127.0.0.1:8000/health >/dev/null; do sleep 2; done'
 
       - name: Start real identity/policy control-plane services (OPA, Keycloak, OpenBao)
         run: |
