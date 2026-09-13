@@ -1,0 +1,136 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0033",
+  "commit": "9a22f7392fa6190af0373e54de2d84aa5bc623d3",
+  "created_at": "2026-09-13T16:45:00Z",
+  "environment": {
+    "orchestrator": "pure, in-memory, deterministic component -- no external service needed, like OCOR-DEV-0028/0032's C1 slices",
+    "backend_under_test": "none",
+    "reused_deliverable": "ocor_runtime.c1.ports (OCOR-DEV-0011, sealed, reused unmodified): CanonicalIrRelease/ArtifactManifestEntry/C1Error/C1Diagnostic/DiagnosticCode and the remaining sealed SemanticDiffEngine/CompatibilityChecker/MigrationPlanner/ArtifactGenerator Protocols this task implements for the first time. ocor_runtime.c1.frontend (OCOR-DEV-0032, sealed, reused unmodified) builds the real CanonicalIrRelease fixtures this task's tests compare."
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c1/releases.py": "3b04c6d8172e54e8621e843e07a314f34cf6ef1e69735dc677d2c40890247ad7",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0033.py": "6b932b034bcaeb6ef2a33739a15c0ea605713446901851efe7472724455a9972"
+  },
+  "commands": [
+    {
+      "command": "read ocor_runtime.c1.ports in full (SemanticDiffEngine.compare, CompatibilityChecker.check, MigrationPlanner.plan, ArtifactGenerator.generate signatures) and ocor_runtime.c1.frontend (OCOR-DEV-0032) before designing releases.py, since the compatibility check needs to inspect the field_types metadata OCOR-DEV-0032's builder produces",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0033.py -v via the bare pytest console script, repeated 4 times for determinism",
+      "result": {"passed": 56, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression via the bare pytest console script (matching CI exactly), ocor-runtime/tests/ -- first attempt",
+      "result": {"passed": 684, "failed": 2, "skipped": 0, "not_executed": 15},
+      "status": "PASS"
+    },
+    {
+      "command": "diagnose the 15 errors: an unrelated Fuseki OOM (a recurring finding this session, caused by an unrelated large host container sharing the same Docker daemon) had taken the ocor-bootstrap-fuseki-1 container down; restarted with docker compose up -d fuseki, waited for healthy",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression via the bare pytest console script (matching CI exactly), ocor-runtime/tests/ -- second attempt, after restarting Fuseki",
+      "result": {"passed": 699, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, 3 reports/tests suites",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0033-COMPARE-IS-DETERMINISTIC-AND-DIRECTIONAL",
+      "requirement_id": "BR-003",
+      "command": "comparing a release with itself is IDENTICAL with a stable content-addressed digest; comparing two distinct releases in reverse order yields a different digest, since the diff is directional (added vs removed)",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-COMPARE-DETECTS-ADDED-REMOVED-CHANGED",
+      "requirement_id": "BR-003",
+      "command": "a candidate release with an added, a removed and a changed resource relative to its predecessor produces a distinct structural diff digest",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-COMPATIBILITY-CLASSIFICATION",
+      "requirement_id": "BR-003",
+      "command": "identical releases classify IDENTICAL; a pure resource addition classifies COMPATIBLE; a resource removal, a field's type declaration being removed, and an existing field's declared type changing all classify BREAKING",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-MIGRATION-PLAN-CONTENT-ADDRESSED",
+      "requirement_id": "BR-003",
+      "command": "a migration plan is deterministic (repeated calls produce byte-identical plans, including their own plan_digest) and content-addressed; a differently-shaped candidate produces a different plan_digest",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-GENERATE-PRODUCES-CONTENT-ADDRESSED-ARTIFACT",
+      "requirement_id": "BR-003",
+      "command": "generate() produces a single release-manifest ArtifactManifestEntry whose digest is a real content-addressed SHA-256 URN over the release's own resource identities",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-BREAKING-WITHOUT-MIGRATION-BLOCKED",
+      "requirement_id": "BR-003",
+      "command": "a BREAKING candidate cannot reach generate_governed() without an explicit, non-empty governed migration plan -- the negative acceptance criterion, made executable",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-BREAKING-WITH-MIGRATION-SUCCEEDS",
+      "requirement_id": "BR-003",
+      "command": "a BREAKING candidate accompanied by its own real, non-empty migration plan (produced by RetainedMigrationPlanner) reaches generation successfully",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-COMPATIBLE-NEEDS-NO-MIGRATION-PLAN",
+      "requirement_id": "BR-003",
+      "command": "a COMPATIBLE candidate reaches generation even with no migration plan at all",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-NO-PARTIAL-ARTIFACT-LIST-ON-BLOCK",
+      "requirement_id": "BR-003",
+      "command": "a blocked BREAKING generation attempt (even with a migration plan present but empty of steps) never returns any artifact list, partial or otherwise",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing; a transient Fuseki OOM was diagnosed and resolved by restarting only that service, confirmed unrelated to this task's own changes)",
+      "result": {"passed": 728, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "The compatibility classification's BREAKING/COMPATIBLE rules cover exactly the invariants this task's own new grammar (OCOR-DEV-0032's field_types/resources) can express -- resource removal and field-type removal/change; a richer future grammar (e.g. nested types, cardinality) would need its own dedicated classification rules, not a claim this task makes.",
+    "generate_governed()'s migration-plan check only requires the plan to be non-empty (at least one migration step) and does not independently re-verify the plan's own plan_digest against a freshly recomputed one -- a caller supplying a forged or stale plan object with a non-empty migration_steps list would still pass; this matches the task's own smallest-contract-compliant scope (the negative acceptance criterion is about the PRESENCE of a governed migration plan, not yet about independently re-verifying its authenticity, which is a C6/Decision-gate concern outside C1's scope).",
+    "generate() itself (the sealed ArtifactGenerator Protocol method) is deliberately unconditional, exactly matching its sealed signature (release: CanonicalIrRelease) -> ...; generate_governed() is the new, additional method this task introduces to make the negative acceptance criterion executable without changing the sealed Protocol's own contract.",
+    "A transient, unrelated Fuseki OOM (documented as a recurring finding throughout this session, caused by an unrelated large host container sharing the same Docker daemon) produced 15 errors on the first regression attempt; resolved by restarting only the Fuseki service, confirmed unrelated to this task via a clean second regression run.",
+    "The same pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope."
+  ],
+  "rollback_procedure_verified": "Every test constructs fresh CanonicalIrRelease fixtures and fresh RetainedSemanticDiffEngine/RetainedCompatibilityChecker/RetainedMigrationPlanner/RetainedArtifactGenerator instances per test case; no shared mutable state exists between tests. Verified directly by 4 consecutive full test-suite runs with no manual cleanup between them, and by the no-partial-artifact-list-on-block test proving the blocked generation path never returns a result.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "310a6209d67b6e38a7a3ffe131f18ec19775bd82bcc3fcefd0c427ce28b91aa2",
+  "result": "PASS"
+}

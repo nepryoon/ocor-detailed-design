@@ -1,0 +1,47 @@
+=== RUN 1: pytest ocor-runtime/tests/tasks/test_ocor_dev_0033.py -v via the bare pytest console script -- pure in-memory, deterministic, no external backend needed (repeated x4 for stability, run 1 shown verbatim) ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 14 items
+
+ocor-runtime/tests/tasks/test_ocor_dev_0033.py::test_comparing_a_release_with_itself_is_identical_with_a_stable_digest PASSED [  7%]
+ocor-runtime/tests/tasks/test_ocor_dev_0033.py::test_compare_detects_added_removed_and_changed_resources PASSED [ 14%]
+ocor-runtime/tests/tasks/test_ocor_dev_0033.py::test_check_classifies_identical_releases PASSED [ 21%]
+ocor-runtime/tests/tasks/test_ocor_dev_0033.py::test_check_classifies_a_pure_addition_as_compatible PASSED [ 28%]
+ocor-runtime/tests/tasks/test_ocor_dev_0033.py::test_check_classifies_a_resource_removal_as_breaking PASSED [ 35%]
+ocor-runtime/tests/tasks/test_ocor_dev_0033.py::test_check_classifies_a_field_type_change_as_breaking PASSED [ 42%]
+ocor-runtime/tests/tasks/test_ocor_dev_0033.py::test_check_classifies_a_removed_field_type_declaration_as_breaking PASSED [ 50%]
+ocor-runtime/tests/tasks/test_ocor_dev_0033.py::test_migration_plan_is_deterministic_and_content_addressed PASSED [ 57%]
+ocor-runtime/tests/tasks/test_ocor_dev_0033.py::test_migration_plan_digest_changes_if_the_plan_body_would_differ PASSED [ 64%]
+ocor-runtime/tests/tasks/test_ocor_dev_0033.py::test_generate_produces_a_content_addressed_release_manifest_artifact PASSED [ 71%]
+ocor-runtime/tests/tasks/test_ocor_dev_0033.py::test_a_breaking_change_without_a_governed_migration_plan_is_blocked_from_generation PASSED [ 78%]
+ocor-runtime/tests/tasks/test_ocor_dev_0033.py::test_a_breaking_change_with_a_governed_migration_plan_reaches_generation PASSED [ 85%]
+ocor-runtime/tests/tasks/test_ocor_dev_0033.py::test_a_compatible_change_reaches_generation_without_needing_a_migration_plan PASSED [ 92%]
+ocor-runtime/tests/tasks/test_ocor_dev_0033.py::test_no_partial_artifact_list_is_ever_returned_for_a_blocked_breaking_change PASSED [100%]
+
+============================== 14 passed in 0.09s ==============================
+
+=== RUN 2..4: repeat runs, summary lines only, to demonstrate determinism ===
+..............                                                           [100%]
+14 passed in 0.09s
+..............                                                           [100%]
+14 passed in 0.08s
+..............                                                           [100%]
+14 passed in 0.08s
+
+=== NOTE: an unrelated Fuseki OOM (a recurring finding this session, caused by an unrelated large host container sharing the same Docker daemon) transiently produced 15 errors in test_ocor_dev_0018.py/test_ocor_dev_0024.py during the FIRST full-regression attempt below; Fuseki was restarted (docker compose up -d fuseki) and the regression re-run cleanly, confirming this task introduced no regression ===
+
+=== full local pytest regression via the bare pytest console script (matching CI), ocor-runtime/tests/ ===
+
+ocor-runtime/tests/test_interpreter_pin.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0002.py::test_two_clean_environments_resolve_identical_lock_and_image_digests
+FAILED ocor-runtime/tests/test_interpreter_pin.py::test_running_interpreter_matches_the_pin
+2 failed, 699 passed in 140.76s (0:02:20)
+
+=== full local pytest regression, 3 reports/tests suites ===
+.............................                                            [100%]
+29 passed in 5.34s

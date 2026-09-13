@@ -12,6 +12,16 @@
       "path": "OCOR-DEV-0032.log",
       "sha256": "eba39a058e64a8d3834dcb5d9720aabc78102afb4f2057dd660687dd6c28287d",
       "task_id": "OCOR-DEV-0032-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0033.json",
+      "sha256": "0e5eecd94e0a5b71b108dbbde0d52a79e185e191a2ac731223caf3b57e670d13",
+      "task_id": "OCOR-DEV-0033"
+    },
+    {
+      "path": "OCOR-DEV-0033.log",
+      "sha256": "310a6209d67b6e38a7a3ffe131f18ec19775bd82bcc3fcefd0c427ce28b91aa2",
+      "task_id": "OCOR-DEV-0033-RAW"
     }
   ],
   "requirement_results": [
@@ -113,6 +123,96 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0032"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-COMPARE-IS-DETERMINISTIC-AND-DIRECTIONAL",
+      "command": "comparing a release with itself is IDENTICAL with a stable content-addressed digest; comparing two distinct releases in reverse order yields a different digest, since the diff is directional (added vs removed)",
+      "evidence_path": "OCOR-DEV-0033.json",
+      "raw_output_path": "OCOR-DEV-0033.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0033"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-COMPARE-DETECTS-ADDED-REMOVED-CHANGED",
+      "command": "a candidate release with an added, a removed and a changed resource relative to its predecessor produces a distinct structural diff digest",
+      "evidence_path": "OCOR-DEV-0033.json",
+      "raw_output_path": "OCOR-DEV-0033.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0033"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-COMPATIBILITY-CLASSIFICATION",
+      "command": "identical releases classify IDENTICAL; a pure resource addition classifies COMPATIBLE; a resource removal, a field's type declaration being removed, and an existing field's declared type changing all classify BREAKING",
+      "evidence_path": "OCOR-DEV-0033.json",
+      "raw_output_path": "OCOR-DEV-0033.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0033"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-MIGRATION-PLAN-CONTENT-ADDRESSED",
+      "command": "a migration plan is deterministic (repeated calls produce byte-identical plans, including their own plan_digest) and content-addressed; a differently-shaped candidate produces a different plan_digest",
+      "evidence_path": "OCOR-DEV-0033.json",
+      "raw_output_path": "OCOR-DEV-0033.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0033"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-GENERATE-PRODUCES-CONTENT-ADDRESSED-ARTIFACT",
+      "command": "generate() produces a single release-manifest ArtifactManifestEntry whose digest is a real content-addressed SHA-256 URN over the release's own resource identities",
+      "evidence_path": "OCOR-DEV-0033.json",
+      "raw_output_path": "OCOR-DEV-0033.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0033"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-BREAKING-WITHOUT-MIGRATION-BLOCKED",
+      "command": "a BREAKING candidate cannot reach generate_governed() without an explicit, non-empty governed migration plan -- the negative acceptance criterion, made executable",
+      "evidence_path": "OCOR-DEV-0033.json",
+      "raw_output_path": "OCOR-DEV-0033.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0033"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-BREAKING-WITH-MIGRATION-SUCCEEDS",
+      "command": "a BREAKING candidate accompanied by its own real, non-empty migration plan (produced by RetainedMigrationPlanner) reaches generation successfully",
+      "evidence_path": "OCOR-DEV-0033.json",
+      "raw_output_path": "OCOR-DEV-0033.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0033"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-COMPATIBLE-NEEDS-NO-MIGRATION-PLAN",
+      "command": "a COMPATIBLE candidate reaches generation even with no migration plan at all",
+      "evidence_path": "OCOR-DEV-0033.json",
+      "raw_output_path": "OCOR-DEV-0033.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0033"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-NO-PARTIAL-ARTIFACT-LIST-ON-BLOCK",
+      "command": "a blocked BREAKING generation attempt (even with a migration plan present but empty of steps) never returns any artifact list, partial or otherwise",
+      "evidence_path": "OCOR-DEV-0033.json",
+      "raw_output_path": "OCOR-DEV-0033.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0033"
+    },
+    {
+      "case_id": "OCOR-DEV-0033-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing; a transient Fuseki OOM was diagnosed and resolved by restarting only that service, confirmed unrelated to this task's own changes)",
+      "evidence_path": "OCOR-DEV-0033.json",
+      "raw_output_path": "OCOR-DEV-0033.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0033"
     }
   ]
 }
