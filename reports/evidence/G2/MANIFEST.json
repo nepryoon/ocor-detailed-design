@@ -157,6 +157,16 @@
       "path": "OCOR-DEV-0083.log",
       "sha256": "a7d50699c0aeff4ddf7d80e027581478adf2800a24a87eb9b3b1ba9f3797994d",
       "task_id": "OCOR-DEV-0083-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0084.json",
+      "sha256": "0c71e5b895d6a4eae16fcb98101e89e3f10d84eb3ab6710e3cc160d89ed45226",
+      "task_id": "OCOR-DEV-0084"
+    },
+    {
+      "path": "OCOR-DEV-0084.log",
+      "sha256": "3b2cf6b2c82512f974feb023d88c3b6ca034ee08ba07734bbf5fd96df25146ab",
+      "task_id": "OCOR-DEV-0084-RAW"
     }
   ],
   "created_at": "2026-09-04T14:12:35Z",
@@ -736,6 +746,42 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0083"
+    },
+    {
+      "case_id": "OCOR-DEV-0084-CONTRACT",
+      "command": "unit/negative tests for the typed-health aggregate never silently reporting PASS when any single service is not READY",
+      "evidence_path": "OCOR-DEV-0084.json",
+      "raw_output_path": "OCOR-DEV-0084.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0084"
+    },
+    {
+      "case_id": "OCOR-DEV-0084-REAL-POSITIVE",
+      "command": "real capture against the live, healthy 11-service stack reports environment_status=PASS with per-service typed detail",
+      "evidence_path": "OCOR-DEV-0084.json",
+      "raw_output_path": "OCOR-DEV-0084.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0084"
+    },
+    {
+      "case_id": "OCOR-DEV-0084-REAL-NEGATIVE",
+      "command": "real capture while typedb is paused correctly reports environment_status=DEGRADED and a non-zero exit code",
+      "evidence_path": "OCOR-DEV-0084.json",
+      "raw_output_path": "OCOR-DEV-0084.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0084"
+    },
+    {
+      "case_id": "OCOR-DEV-0084-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0084.json",
+      "raw_output_path": "OCOR-DEV-0084.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0084"
     }
   ],
   "schema_version": "1.0"
