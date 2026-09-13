@@ -339,6 +339,7 @@ def main() -> int:
         "ocor-runtime/tests/tasks/test_ocor_dev_0021.py",
         "ocor-runtime/tests/tasks/test_ocor_dev_0024.py",
         "ocor-runtime/tests/tasks/test_ocor_dev_0025.py",
+        "ocor-runtime/tests/tasks/test_ocor_dev_0026.py",
         "ocor-runtime/tests/tasks/test_ocor_dev_0028.py",
         "ocor-runtime/tests/tasks/test_ocor_dev_0029.py",
         "ocor-runtime/tests/tasks/test_ocor_dev_0079.py",
@@ -373,6 +374,8 @@ def main() -> int:
         "reports/evidence/G2/OCOR-DEV-0024.log",
         "reports/evidence/G2/OCOR-DEV-0025.json",
         "reports/evidence/G2/OCOR-DEV-0025.log",
+        "reports/evidence/G2/OCOR-DEV-0026.json",
+        "reports/evidence/G2/OCOR-DEV-0026.log",
         "reports/evidence/G2/OCOR-DEV-0079.json",
         "reports/evidence/G2/OCOR-DEV-0079.log",
         "reports/evidence/G2/OCOR-DEV-0080.json",
@@ -451,6 +454,8 @@ def main() -> int:
         "spikes/non_interference/equivalence.py",
         "spikes/memory_deletion/__init__.py",
         "spikes/memory_deletion/saga.py",
+        "spikes/restore_no_resurrection/__init__.py",
+        "spikes/restore_no_resurrection/journal.py",
     }
     planning_paths = {
         "docs/development_plan/OCOR_AGENT_CONTEXT_MANIFEST.json",

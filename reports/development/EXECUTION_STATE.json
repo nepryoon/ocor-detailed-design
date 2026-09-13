@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0029",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0029",
+    "branch": "governed/ocor-dev-0026-restore-no-resurrection",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0026",
     "decision_id": "DEC-211",
-    "phase": "WAVE_12_CLOSED__WAVE_13_NEXT",
+    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0026_PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "7e1cf57bfe98c314f2cfb1ae0469249428e0ab8f",
+  "baseline_commit": "ffe28fd9504a65b45645bf08f3df2c1d73a0a1bf",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -66,17 +66,17 @@
     "OCOR-DEV-0028",
     "OCOR-DEV-0029"
   ],
-  "current_gate": "WAVE_12_CLOSED__WAVE_13_G2_SPIKES_NEXT",
+  "current_gate": "G2_WAVE_13_SPIKES_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "6548578",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR85_MERGED_7e1cf57bfe98c314f2cfb1ae0469249428e0ab8f",
+    "candidate_commit": "be8318b",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR86_MERGED_ffe28fd9504a65b45645bf08f3df2c1d73a0a1bf",
     "run_ids": [
-      34749159735,
-      34749159695,
-      34749159658,
-      34749159812,
-      34749159742,
-      34749159688
+      34750240307,
+      34750240281,
+      34750240274,
+      34750240276,
+      34750240280,
+      34750240490
     ]
   },
   "mandate_phase_status": {
@@ -137,9 +137,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0029 merged (PR #85, 7e1cf57bfe98c314f2cfb1ae0469249428e0ab8f), all 13 checks green on the first push. This closes wave 12 entirely (0024/0025/0028/0029 all merged). Next: wave 13's two remaining G2 spikes, OCOR-DEV-0026 (SPIKE restore without resurrection) and OCOR-DEV-0027 (SPIKE deterministic context-assembly replay), both with hard_dependencies already satisfied -- confirm readiness directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks (scripts/ocor_autonomous_delivery.py --status remains stale/unreliable). Before writing any new retained (non-spike) src/ code touching a real backend client, route the client import through an ocor-runtime/src/ocor_runtime/**/adapters/ subtree up front, per AFF-002/AFF-006 (lesson from OCOR-DEV-0029). Before opening the next PR, proactively verify its required real backend is already provisioned in CI (or self-provisions, like Qdrant) and fix any gap before the first push.",
+  "next_executable_action": "Push branch governed/ocor-dev-0026-restore-no-resurrection, open PR, poll CI to green, merge, verify post-merge SHA, sync the three state files immediately. OCOR-DEV-0026 (SPIKE restore without resurrection) proves that restore reconciles a new, durable, real-PostgreSQL-backed tombstone journal BEFORE ever touching a target, composing OCOR-DEV-0025's sealed distributed deletion saga (reused completely unmodified) with a new spikes/restore_no_resurrection/journal.py. Proactively confirmed no new CI provisioning was needed (PostgreSQL/TypeDB/Qdrant already real and provisioned from OCOR-DEV-0016/0017/0025). After this merges, wave 13 has one G2 spike left: OCOR-DEV-0027 (SPIKE deterministic context-assembly replay), plus OCOR-DEV-0030 (Build retained governed-action slice, gate G3) which became ready once OCOR-DEV-0029 merged -- confirm readiness directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks (scripts/ocor_autonomous_delivery.py --status remains stale/unreliable).",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T09:45:00Z"
+  "updated_at": "2026-09-13T10:30:00Z"
 }

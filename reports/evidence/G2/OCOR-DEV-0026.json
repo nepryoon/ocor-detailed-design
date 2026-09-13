@@ -1,0 +1,110 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0026",
+  "commit": "ffe28fd9504a65b45645bf08f3df2c1d73a0a1bf",
+  "created_at": "2026-09-13T10:20:00Z",
+  "environment": {
+    "orchestrator": "docker compose -p ocor-bootstrap (deploy/bootstrap/compose.yaml, PostgreSQL/TypeDB) plus a real, self-provisioned, ephemeral Qdrant container per test run (spikes.vector_partition.oracle.QdrantHarness, OCOR-DEV-0023, sealed and unmodified)",
+    "backends_under_test": "real PostgreSQL (metadata + the new durable tombstone journal), real TypeDB (content), real Qdrant (cache/index)",
+    "reused_deliverable": "spikes.memory_deletion.saga (OCOR-DEV-0025, sealed): DeletionStatus/DeletionTarget/run_deletion_saga plus its concrete PostgresMetadataTarget/TypeDBContentTarget/QdrantCacheTarget, all reused completely unmodified. spikes.vector_partition.oracle.QdrantHarness (OCOR-DEV-0023, sealed) for Qdrant provisioning/teardown, also unmodified.",
+    "ci_provisioning": "no new CI provisioning needed: PostgreSQL, TypeDB and Qdrant are already real, already-provisioned backends in all 3 CI workflows from prior tasks (OCOR-DEV-0016/0017/0025); checked proactively before writing any code, confirmed no gap"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "spikes/restore_no_resurrection/journal.py": "4a6ee7d2c3e0214c3a3e53532bffcccc1aa6fc010a75fea78f330c137d204c77",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0026.py": "2f80038ab489c16f15c5f3de51f7f5e1de26a047ea0bc40182bca3223000337d"
+  },
+  "commands": [
+    {
+      "command": "proactive CI-provisioning check before writing any code: confirmed PostgreSQL/TypeDB/Qdrant are already real, already-provisioned in all 3 CI workflows from OCOR-DEV-0016/0017/0025 -- no new gap, no CI change needed",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0026.py -v against the real live stack, repeated 4 times to demonstrate determinism (each run self-provisions and tears down a fresh Qdrant collection, and exercises one real network-level connection refusal against a genuinely closed local port for the journal-unavailable fault-injection case)",
+      "result": {"passed": 24, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "post-run stack-integrity verification: no leftover self-provisioned Qdrant spike containers, the persistent 11-service ocor-bootstrap stack unaffected",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, ocor-runtime/tests/ (OCOR_LIVE_POSTGRES_DSN set locally, pointed at the ocor-bootstrap postgresql service)",
+      "result": {"passed": 648, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, 3 reports/tests suites",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0026-RESTORE-OF-NEVER-DELETED-ITEM-SUCCEEDS",
+      "requirement_id": "BR-003",
+      "command": "restoring an item with no tombstone in the journal succeeds and is confirmed present on all 3 real backends",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0026-TOMBSTONED-RESTORE-REFUSED-NEVER-REAPPEARS",
+      "requirement_id": "BR-003",
+      "command": "restoring a genuinely, independently-confirmed-deleted item is refused (REFUSED_TOMBSTONED) and the item remains absent from all 3 real backends afterward",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0026-JOURNAL-WRITE-GATED-ON-FULL-SAGA-SUCCESS",
+      "requirement_id": "BR-003",
+      "command": "a deletion saga that reports DELETION_INCOMPLETE (a target lies about tombstone success but the item is still findable) never tombstones the journal, so a later restore of a still-partially-present item is never wrongly refused",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0026-JOURNAL-CHECKED-BEFORE-ANY-TARGET-WRITE",
+      "requirement_id": "BR-003",
+      "command": "restore consults the tombstone journal before ever calling put()/contains()/tombstone() on any target -- proven directly via a call-order spy",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0026-UNREACHABLE-JOURNAL-FAILS-CLOSED",
+      "requirement_id": "BR-003",
+      "command": "a journal that cannot be reached (a real TCP connection refusal from a genuinely closed local port, not a simulated exception) is refused exactly like a tombstoned item (REFUSED_JOURNAL_UNAVAILABLE), never silently treated as safe to restore, and no target is touched",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0026-NO-FALSE-POSITIVE-CROSS-ITEM-BLOCKING",
+      "requirement_id": "BR-003",
+      "command": "restoring a distinct, never-tombstoned item succeeds normally even immediately after an unrelated item's tombstone is recorded in the same journal",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0026-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 677, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "The 'unreachable journal' fault-injection test uses a real OS-level TCP connection refusal (a DSN pointing at a genuinely closed local port) rather than pausing the shared ocor-bootstrap-postgresql-1 container: that container is used concurrently by many other sealed tasks' fixtures, and its CI provisioning is a native GitHub Actions services: block (not the docker run --name ocor-bootstrap-postgresql-1 convention fault_command() expects), so a real pause/unpause drill against it would require a broader, riskier CI refactor out of proportion to this task's specific acceptance criterion (the journal read path failing closed). The refusal exercised here is still a genuine network-layer fault, not a mocked exception.",
+    "record_deletion()/restore_from_backup() are a thin composition over the sealed OCOR-DEV-0025 saga and a new, minimal TombstoneJournal; no new DeletionTarget implementations were added -- PostgresMetadataTarget/TypeDBContentTarget/QdrantCacheTarget are reused byte-for-byte unmodified from spikes.memory_deletion.saga.",
+    "TombstoneJournal.ensure_schema() is deliberately separate from __init__ so that constructing a journal handle against a genuinely unreachable DSN (used by the fault-injection test) never itself raises before the read path under test runs; this is a spike-level convenience, not a claim about a hardened schema-migration story.",
+    "The same pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope."
+  ],
+  "rollback_procedure_verified": "Every test operates on a freshly generated, unique item_id (uuid4) and a fresh, self-provisioned Qdrant collection torn down in a finally block regardless of outcome, so no test leaves residual state another run could collide with. Verified directly by 4 consecutive full test-suite runs with no manual cleanup between them, and by the post-run stack-integrity check confirming all 11 persistent services remained healthy.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "92a4a135499cfa877b4aa69373fcbdddbb71aedd4b0bc410b19c0ac86e252643",
+  "result": "PASS"
+}

@@ -1846,3 +1846,75 @@
   `completed_evidence_tasks`. Candidati noti con dipendenze già
   soddisfatte: `OCOR-DEV-0026` (SPIKE restore without resurrection) e
   `OCOR-DEV-0027` (SPIKE deterministic context-assembly replay).
+
+## 2026-09-13 — Backlog: OCOR-DEV-0026 (SPIKE restore without resurrection)
+
+- Ricalcolata la prontezza del wave 13 dopo il merge di `OCOR-DEV-0029`:
+  ready set = `{OCOR-DEV-0026, OCOR-DEV-0027, OCOR-DEV-0030}` —
+  `OCOR-DEV-0030` è diventato pronto solo ora, dato che la sua
+  dipendenza `OCOR-DEV-0029` è appena stata mergiata. Selezionato
+  `OCOR-DEV-0026` per ordine numerico.
+- Verifica proattiva del provisioning CI prima di scrivere codice:
+  confermato che PostgreSQL, TypeDB e Qdrant sono già backend reali
+  già provisionati nei 3 workflow CI (da `OCOR-DEV-0016`/`0017`/`0025`)
+  — nessun gap, nessuna modifica CI necessaria.
+- Composto lo spike sigillato `OCOR-DEV-0025`
+  (`spikes.memory_deletion.saga`: `DeletionStatus`/`DeletionTarget`/
+  `run_deletion_saga` più i tre target concreti Postgres/TypeDB/Qdrant,
+  tutti riutilizzati senza modifiche) con un nuovo
+  `spikes/restore_no_resurrection/journal.py`: un `TombstoneJournal`
+  durevole, sostenuto da PostgreSQL reale; `record_deletion()`, che
+  tombstona il journal solo quando la saga conferma indipendentemente
+  la cancellazione completa su ogni target; `restore_from_backup()`,
+  che consulta il journal PRIMA di toccare qualunque target — un
+  elemento tombstonato viene rifiutato, e un journal irraggiungibile
+  viene rifiutato allo stesso modo (fail-closed, mai trattato come
+  "sicuro da ripristinare").
+- Decisione progettuale deliberata: per il test di fault-injection
+  "journal irraggiungibile" non è stato scelto un vero pause/unpause
+  del container Postgres condiviso `ocor-bootstrap-postgresql-1` (usato
+  concorrentemente da molti altri task sigillati, e provisionato in CI
+  tramite un blocco nativo `services:` che `fault_command()` non può
+  bersagliare), ma un vero rifiuto di connessione TCP a livello di
+  sistema operativo contro una porta locale genuinamente chiusa — un
+  guasto di rete reale, non un'eccezione simulata, a un raggio
+  d'impatto molto più basso rispetto a un più ampio refactoring CI.
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0026.py` (6 test,
+  tutti contro backend reali, nessun mock): restore di un elemento mai
+  cancellato riesce su tutti e 3 i backend; restore di un elemento
+  tombstonato viene rifiutato e il contenuto non riappare mai;
+  `record_deletion` tombstona il journal solo quando ogni target
+  conferma la cancellazione completa (un target che mente ma resta
+  incompleto non genera mai una scrittura nel journal); il restore
+  consulta il journal prima di toccare qualunque target (dimostrato con
+  una spia sull'ordine delle chiamate); un journal irraggiungibile
+  fallisce in modo chiuso e non risuscita mai nulla; il restore di un
+  elemento diverso, mai tombstonato, non è influenzato dal tombstone di
+  un elemento non correlato.
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (49 file,
+  invariato — `spikes/` e `ocor-runtime/tests/` restano fuori dallo
+  scope di mypy), `validate_rccad.py` PASS, `validate_language_policy.py`
+  PASS, `validate_ocor_change_scope.py` PASS (7 percorsi), pytest
+  completo con `OCOR_LIVE_POSTGRES_DSN` locale: `2 failed, 648 passed,
+  0 skipped, 0 errors` (stessi 2 fallimenti noti e preesistenti) più
+  `29 passed` per le 3 suite `reports/tests/`,
+  `validate_ocor_development_plan.py --base-ref origin/main
+  --authorized-extension` PASS dopo il consueto doppio-run
+  (`FAIL` poi `PASS`), sempre con `--base-ref origin/main` per
+  rispecchiare esattamente la CI (non il `BASE_COMMIT` di default,
+  molto vecchio).
+- Evidenza sigillata: `reports/evidence/G2/OCOR-DEV-0026.json` +
+  `reports/evidence/G2/OCOR-DEV-0026.log`, aggiunta a
+  `reports/evidence/G2/MANIFEST.json` (diff puramente additivo, 73
+  righe, inserimento chirurgico per preservare lo storico esistente).
+- Aggiornamento dei tre file di stato eseguito in questa stessa
+  iterazione (non rimandato).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: push del branch
+  `governed/ocor-dev-0026-restore-no-resurrection`, apertura PR,
+  polling CI, merge a gate verdi, verifica SHA post-merge. Poi
+  proseguire con `OCOR-DEV-0027` (SPIKE deterministic context-assembly
+  replay, wave 13) oppure `OCOR-DEV-0030` (Build retained
+  governed-action slice, gate G3, appena diventato pronto dopo il
+  merge di `OCOR-DEV-0029`).
