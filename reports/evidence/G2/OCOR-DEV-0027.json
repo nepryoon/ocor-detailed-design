@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0027",
+  "commit": "4630340f135fa0cab64c7926c8ae38bd0588cb0f",
+  "created_at": "2026-09-13T11:35:00Z",
+  "environment": {
+    "orchestrator": "docker compose -p ocor-bootstrap (deploy/bootstrap/compose.yaml) plus a real, self-provisioned, ephemeral Qdrant container per test run (spikes.vector_partition.oracle.QdrantHarness, OCOR-DEV-0023, sealed and unmodified)",
+    "backend_under_test": "real Qdrant (127.0.0.1, self-provisioned per test), the real cosine-similarity ranking backend for context-assembly ordering",
+    "reused_deliverable": "spikes.vector_partition.oracle.QdrantHarness (OCOR-DEV-0023, sealed) for Qdrant provisioning/teardown and its generic HTTP request() method; spikes.non_interference.equivalence.assert_observationally_equivalent (OCOR-DEV-0024, sealed) for the replay-equivalence proof; ocor_runtime.kernel.canonical.canonical_digest (sealed RFC 8785 canonicalization) for the receipt digest itself -- all reused completely unmodified",
+    "ci_provisioning": "no new CI provisioning needed: Qdrant self-provisions via a real docker run inside the test process itself, the same mechanism OCOR-DEV-0023/0024/0025 already exercise successfully in all 3 CI workflows"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "spikes/context_replay/replay.py": "cd20d5f93382ad88ae90b0a1e0d310ad18634be239cd8a88f980f4b4275f8816",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0027.py": "e390250f17e38a2b08a4939549d27e2c9d89d6a75920311e2ea0b86a24ffe075"
+  },
+  "commands": [
+    {
+      "command": "proactive CI-provisioning check before writing any code: confirmed Qdrant self-provisions in all 3 CI workflows from OCOR-DEV-0023/0024/0025 -- no gap, no CI change needed",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0027.py -v against a real, self-provisioned, ephemeral Qdrant container, repeated 4 times to demonstrate determinism",
+      "result": {"passed": 32, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "post-run stack-integrity verification: no leftover self-provisioned Qdrant spike containers, the persistent 11-service ocor-bootstrap stack unaffected",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, ocor-runtime/tests/ (OCOR_LIVE_POSTGRES_DSN set locally, pointed at the ocor-bootstrap postgresql service)",
+      "result": {"passed": 656, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, 3 reports/tests suites",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0027-IDENTICAL-PINNED-INPUTS-REPRODUCE-DIGEST",
+      "requirement_id": "BR-003",
+      "command": "assembling context twice from identical pinned item versions, ordering, redaction, truncation and representation reproduces byte-identical receipt digests and ordered item references",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-ITEM-VERSION-CHANGE-CHANGES-DIGEST",
+      "requirement_id": "BR-003",
+      "command": "bumping a single pinned item's version (content unchanged) changes the receipt digest",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-REDACTION-CHANGE-CHANGES-DIGEST",
+      "requirement_id": "BR-003",
+      "command": "changing the redaction field set changes the receipt digest",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-ORDERING-CHANGE-CHANGES-DIGEST",
+      "requirement_id": "BR-003",
+      "command": "a different query vector produces a genuinely different real Qdrant similarity ranking (verified by the first ordered item reference itself) and a different receipt digest",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-TRUNCATION-CHANGE-CHANGES-DIGEST",
+      "requirement_id": "BR-003",
+      "command": "a tighter truncation budget changes the receipt digest and sets the truncated flag, versus an untruncated assembly which does not",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-REPRESENTATION-CHANGE-CHANGES-DIGEST",
+      "requirement_id": "BR-003",
+      "command": "changing only the representation version (identical items, ordering, redaction, truncation) changes the receipt digest even though the ordered item references are unchanged",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-REPLAY-EQUIVALENCE-VIA-SEALED-HELPER",
+      "requirement_id": "BR-003",
+      "command": "two independent assemblies of the identical pinned inputs are observationally equivalent on both the digest and ordering axes, proven via the sealed cross-task equivalence helper",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-UNREACHABLE-RANKING-BACKEND-FAILS-CLOSED",
+      "requirement_id": "BR-003",
+      "command": "a real TCP connection refusal from a genuinely closed local port during ranking raises ContextReplayError rather than returning a silent partial or reordered context",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 685, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "The unreachable-ranking-backend fault-injection test uses a real OS-level TCP connection refusal (a QdrantHarness pointed at a genuinely closed local port) rather than pausing the shared self-provisioned container, consistent with OCOR-DEV-0026's established lower-blast-radius pattern; the refusal is a genuine network-layer fault, not a mocked exception.",
+    "ContextReceipt deliberately never re-exposes assembled content, only item_id@version references and the digest -- redaction and truncation are proven by digest divergence between otherwise-identical runs, not by inspecting the assembled text, since a receipt re-exposing redacted content would itself be a confidentiality leak.",
+    "Ordering is exercised against a real Qdrant similarity search (OCOR-DEV-0023's sealed QdrantHarness), not a synthetic sort -- the ordering-change test verifies a genuine change in the real backend's ranked output, not just a hand-constructed reordering.",
+    "The same pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope."
+  ],
+  "rollback_procedure_verified": "Every test operates on a freshly self-provisioned Qdrant collection (a unique name per test run) torn down in a finally block regardless of outcome, so no test leaves residual state another run could collide with. Verified directly by 4 consecutive full test-suite runs with no manual cleanup between them, and by the post-run stack-integrity check confirming all 11 persistent services remained healthy.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "53dd028e01d5b9af02207870d7f327b6a9294000a36e33f4def69ae1aa234499",
+  "result": "PASS"
+}

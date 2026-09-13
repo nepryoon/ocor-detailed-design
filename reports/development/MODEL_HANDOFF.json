@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "a78d054d22ac85839181c833a0acc8deed8aa9c8",
-  "branch": "governed/state-sync-ocor-dev-0026",
+  "baseline_commit": "4630340f135fa0cab64c7926c8ae38bd0588cb0f",
+  "branch": "governed/ocor-dev-0027-context-replay",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -404,6 +404,30 @@
     {
       "command": "full local pytest regression with OCOR_LIVE_POSTGRES_DSN set (ocor-runtime/tests/ + 3 reports/tests suites)",
       "result": "PASS_2_failed_648_passed_0_skipped_0_errors_plus_29_passed (the 2 failures are the pre-existing, unrelated interpreter-pin gap)"
+    },
+    {
+      "command": "gh pr checks 87; gh pr merge 87 --merge; git fetch origin main",
+      "result": "13/13 checks pass on the first push; PR #87 MERGED_a78d054d22ac85839181c833a0acc8deed8aa9c8; post-merge SHA verified"
+    },
+    {
+      "command": "immediate dedicated state-sync PR (governed/state-sync-ocor-dev-0026), mirroring the OCOR-DEV-0029/PR #86 pattern",
+      "result": "gh pr checks 88; gh pr merge 88 --merge; git fetch origin main -- 13/13 checks pass on the first push; PR #88 MERGED_4630340f135fa0cab64c7926c8ae38bd0588cb0f; post-merge SHA verified"
+    },
+    {
+      "command": "compute the next DAG-ready task set directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks after OCOR-DEV-0026 merged",
+      "result": "wave 13 ready set = {OCOR-DEV-0027, OCOR-DEV-0030}; selected OCOR-DEV-0027 by numeric order"
+    },
+    {
+      "command": "proactive CI-provisioning check before writing any OCOR-DEV-0027 code",
+      "result": "CONFIRMED_no_gap: Qdrant self-provisions via a real docker run inside the test process itself in all 3 CI workflows, the same mechanism OCOR-DEV-0023/0024/0025 already exercise successfully"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0027.py -v against a real, self-provisioned, ephemeral Qdrant container, repeated 4 times",
+      "result": "PASS_32_of_32_every_run_no_flakiness"
+    },
+    {
+      "command": "full local pytest regression with OCOR_LIVE_POSTGRES_DSN set (ocor-runtime/tests/ + 3 reports/tests suites)",
+      "result": "PASS_2_failed_656_passed_0_skipped_0_errors_plus_29_passed (the 2 failures are the pre-existing, unrelated interpreter-pin gap)"
     }
   ],
   "completed_tasks": [
@@ -455,9 +479,12 @@
     "State sync (OCOR-DEV-0029): PR #86 merged (ffe28fd9504a65b45645bf08f3df2c1d73a0a1bf), a dedicated state-sync-only PR opened immediately after OCOR-DEV-0029's merge, per the Product Owner's explicit correction not to defer state-file sync to the next task's own commit. No source code touched; local gate suite re-run and confirmed unaffected. All 13 checks green on the first push.",
     "OCOR-DEV-0026 (pending PR/merge): SPIKE restore without resurrection. Composes OCOR-DEV-0025's sealed distributed deletion saga (spikes.memory_deletion.saga: DeletionStatus/DeletionTarget/run_deletion_saga plus PostgresMetadataTarget/TypeDBContentTarget/QdrantCacheTarget, all reused completely unmodified) with a new spikes/restore_no_resurrection/journal.py: a durable, real-PostgreSQL-backed TombstoneJournal, record_deletion() (tombstones the journal only once the saga independently confirms full deletion across every target), and restore_from_backup() (consults the journal BEFORE ever touching any target; a tombstoned item is refused outright, and a journal that cannot be reached is refused too -- fail closed, never silently treated as safe to restore). Proactively confirmed before writing any code that PostgreSQL/TypeDB/Qdrant are already real and provisioned in all 3 CI workflows from prior tasks, so no CI change was needed; also deliberately avoided designing the 'unreachable journal' fault-injection test around pausing the shared ocor-bootstrap-postgresql-1 container (used concurrently by many other sealed tasks, and CI-provisioned via a native services: block that fault_command() cannot target) in favor of a real OS-level TCP connection refusal against a genuinely closed local port -- a real network fault at lower blast radius than a broader CI provisioning change would justify. Added 6 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0026.py, all against real backends, no mocks: restore of a never-deleted item succeeds across all 3 backends; restore of a tombstoned item is refused and the item never reappears; record_deletion only tombstones the journal when every target confirms full deletion (a lying-but-incomplete target never triggers a tombstone write); restore consults the journal before ever touching a target (proven via a call-order spy); an unreachable journal fails closed and never resurrects; and restoring a distinct, never-tombstoned item is unaffected by an unrelated item's tombstone.",
     "OCOR-DEV-0026: PR #87 merged (a78d054d22ac85839181c833a0acc8deed8aa9c8). All 13 checks green on the first push. Post-merge SHA verified.",
-    "State sync (OCOR-DEV-0026): dedicated state-sync-only PR, mirroring the OCOR-DEV-0029/PR #86 pattern, opened immediately after OCOR-DEV-0026's merge per the Product Owner's standing instruction. No source code touched."
+    "State sync (OCOR-DEV-0026): dedicated state-sync-only PR, mirroring the OCOR-DEV-0029/PR #86 pattern, opened immediately after OCOR-DEV-0026's merge per the Product Owner's standing instruction. No source code touched.",
+    "OCOR-DEV-0026: PR #87 merged (a78d054d22ac85839181c833a0acc8deed8aa9c8). All 13 checks green on the first push. Post-merge SHA verified.",
+    "State sync (OCOR-DEV-0026): PR #88 merged (4630340f135fa0cab64c7926c8ae38bd0588cb0f). All 13 checks green on the first push. No source code touched.",
+    "OCOR-DEV-0027 (pending PR/merge): SPIKE deterministic context-assembly replay. Proves that a context-assembly receipt digest is a pure, deterministic function of exactly five pinned dimensions -- item versions, ordering, redactions, truncation and representation. New spikes/context_replay/replay.py: PinnedItem/AssemblyRequest/ContextReceipt dataclasses and assemble_context(), which orders candidates via a real cosine-similarity search against OCOR-DEV-0023's sealed QdrantHarness (reused unmodified) and computes the receipt digest via ocor_runtime.kernel.canonical.canonical_digest (sealed RFC 8785 canonicalization, also reused unmodified) over a representation that folds in every pinned dimension. Proactively confirmed no CI change was needed: Qdrant self-provisions the same way OCOR-DEV-0023/0024/0025 already do. Added 8 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0027.py, all against a real self-provisioned Qdrant container, no mocks: identical pinned inputs reproduce an identical digest; bumping an item version changes it; changing redaction changes it; changing the query vector changes both the real ranking order and the digest; changing truncation changes it and sets the truncated flag; changing only the representation version changes the digest even with identical ordering; two independent assemblies are proven equivalent via OCOR-DEV-0024's sealed assert_observationally_equivalent helper (reused unmodified); and a real TCP connection refusal against a genuinely closed local port during ranking fails closed (ContextReplayError) rather than returning a silent partial context -- the same lower-blast-radius real-fault pattern established in OCOR-DEV-0026."
   ],
-  "current_task": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0026",
+  "current_task": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0027",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -507,9 +534,11 @@
     "reports/evidence/G3/OCOR-DEV-0029.json",
     "reports/evidence/G3/OCOR-DEV-0029.log",
     "reports/evidence/G2/OCOR-DEV-0026.json",
-    "reports/evidence/G2/OCOR-DEV-0026.log"
+    "reports/evidence/G2/OCOR-DEV-0026.log",
+    "reports/evidence/G2/OCOR-DEV-0027.json",
+    "reports/evidence/G2/OCOR-DEV-0027.log"
   ],
-  "exact_next_action": "State sync for OCOR-DEV-0026's merge is complete (this PR). Wave 13 now has one G2 spike left: OCOR-DEV-0027 (SPIKE deterministic context-assembly replay), plus OCOR-DEV-0030 (Build retained governed-action slice, gate G3), which became newly ready once OCOR-DEV-0029 merged -- confirm readiness and pick the next task directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks, not scripts/ocor_autonomous_delivery.py --status, which remains stale. Before writing any new retained (non-spike) src/ code touching a real backend client, route the client import through an ocor-runtime/src/ocor_runtime/**/adapters/ subtree up front, per AFF-002/AFF-006 (lesson from OCOR-DEV-0029). Before opening the next PR, proactively verify its required real backend is already provisioned in CI (or self-provisions, like Qdrant) and fix any gap before the first push; if the shared backend is used concurrently by many other sealed tasks, prefer a real, lower-blast-radius fault (e.g. a refused connection) over a broader CI refactor. The real 11-service Docker stack remains available locally and should be reused directly if still running (check docker compose -p ocor-bootstrap ps first; fuseki has repeatedly been OOM-killed by an unrelated large host container and simply needs restarting each time, never touch that unrelated container itself). The component-1 migration escalation (DISPOSED_DEFERRED by the Product Owner) does not block this.",
+  "exact_next_action": "Push branch governed/ocor-dev-0027-context-replay, open the PR, poll CI to green (Monitor armed on gh pr checks), merge only on green, verify post-merge SHA, sync all three state files immediately at merge time. After this merges, wave 13's only remaining ready task is OCOR-DEV-0030 (Build retained governed-action slice, gate G3) -- confirm readiness directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks, not scripts/ocor_autonomous_delivery.py --status, which remains stale. Before writing any new retained (non-spike) src/ code touching a real backend client, route the client import through an ocor-runtime/src/ocor_runtime/**/adapters/ subtree up front, per AFF-002/AFF-006 (lesson from OCOR-DEV-0029). Before opening the next PR, proactively verify its required real backend is already provisioned in CI (or self-provisions) and fix any gap before the first push; if the shared backend is used concurrently by many other sealed tasks, prefer a real, lower-blast-radius fault (e.g. a refused connection) over a broader CI refactor. The real 11-service Docker stack remains available locally and should be reused directly if still running (check docker compose -p ocor-bootstrap ps first; fuseki has repeatedly been OOM-killed by an unrelated large host container and simply needs restarting each time, never touch that unrelated container itself). The component-1 migration escalation (DISPOSED_DEFERRED by the Product Owner) does not block this.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"

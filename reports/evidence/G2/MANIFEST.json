@@ -237,6 +237,16 @@
       "path": "OCOR-DEV-0026.log",
       "sha256": "92a4a135499cfa877b4aa69373fcbdddbb71aedd4b0bc410b19c0ac86e252643",
       "task_id": "OCOR-DEV-0026-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0027.json",
+      "sha256": "5d8b41db370efc2d47864d8a44999779e0824ad9e891546477e5d780a846d237",
+      "task_id": "OCOR-DEV-0027"
+    },
+    {
+      "path": "OCOR-DEV-0027.log",
+      "sha256": "53dd028e01d5b9af02207870d7f327b6a9294000a36e33f4def69ae1aa234499",
+      "task_id": "OCOR-DEV-0027-RAW"
     }
   ],
   "created_at": "2026-09-04T14:12:35Z",
@@ -1257,6 +1267,87 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0026"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-IDENTICAL-PINNED-INPUTS-REPRODUCE-DIGEST",
+      "command": "assembling context twice from identical pinned item versions, ordering, redaction, truncation and representation reproduces byte-identical receipt digests and ordered item references",
+      "evidence_path": "OCOR-DEV-0027.json",
+      "raw_output_path": "OCOR-DEV-0027.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0027"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-ITEM-VERSION-CHANGE-CHANGES-DIGEST",
+      "command": "bumping a single pinned item's version (content unchanged) changes the receipt digest",
+      "evidence_path": "OCOR-DEV-0027.json",
+      "raw_output_path": "OCOR-DEV-0027.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0027"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-REDACTION-CHANGE-CHANGES-DIGEST",
+      "command": "changing the redaction field set changes the receipt digest",
+      "evidence_path": "OCOR-DEV-0027.json",
+      "raw_output_path": "OCOR-DEV-0027.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0027"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-ORDERING-CHANGE-CHANGES-DIGEST",
+      "command": "a different query vector produces a genuinely different real Qdrant similarity ranking and a different receipt digest",
+      "evidence_path": "OCOR-DEV-0027.json",
+      "raw_output_path": "OCOR-DEV-0027.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0027"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-TRUNCATION-CHANGE-CHANGES-DIGEST",
+      "command": "a tighter truncation budget changes the receipt digest and sets the truncated flag, versus an untruncated assembly which does not",
+      "evidence_path": "OCOR-DEV-0027.json",
+      "raw_output_path": "OCOR-DEV-0027.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0027"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-REPRESENTATION-CHANGE-CHANGES-DIGEST",
+      "command": "changing only the representation version changes the receipt digest even though the ordered item references are unchanged",
+      "evidence_path": "OCOR-DEV-0027.json",
+      "raw_output_path": "OCOR-DEV-0027.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0027"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-REPLAY-EQUIVALENCE-VIA-SEALED-HELPER",
+      "command": "two independent assemblies of the identical pinned inputs are observationally equivalent on both the digest and ordering axes, proven via the sealed cross-task equivalence helper",
+      "evidence_path": "OCOR-DEV-0027.json",
+      "raw_output_path": "OCOR-DEV-0027.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0027"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-UNREACHABLE-RANKING-BACKEND-FAILS-CLOSED",
+      "command": "a real TCP connection refusal from a genuinely closed local port during ranking raises ContextReplayError rather than returning a silent partial or reordered context",
+      "evidence_path": "OCOR-DEV-0027.json",
+      "raw_output_path": "OCOR-DEV-0027.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0027"
+    },
+    {
+      "case_id": "OCOR-DEV-0027-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0027.json",
+      "raw_output_path": "OCOR-DEV-0027.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0027"
     }
   ],
   "schema_version": "1.0"
