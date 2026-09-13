@@ -1,0 +1,87 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0084",
+  "commit": "e1b4fe1657d7222bc17b41b04feff8658a1cc6d1",
+  "created_at": "2026-09-13T02:10:00Z",
+  "environment": {
+    "orchestrator": "docker compose -p ocor-bootstrap (deploy/bootstrap/compose.yaml), same live stack as OCOR-DEV-0079 through 0083",
+    "final_task_in_ws12_chain": "this closes the WS-12 infrastructure-bootstrap-repair chain (OCOR-DEV-0070..0084); G2 spikes OCOR-DEV-0016/0017/0018/0021 depend on this task and become executable next",
+    "secrets": "session-local, generated for OCOR-DEV-0079, never committed to Git"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "scripts/capture_environment_evidence.py": "8a9d926638fe9da6663550904e8f19b3d67c0a3e32758128d4b2faaacc4e2280"
+  },
+  "commands": [
+    {
+      "command": "RUN 1 (positive): capture real environment evidence while every service is healthy",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "RUN 2 (negative/fault-injection): pause typedb, then capture -- reports environment_status=DEGRADED and exits non-zero, never a silent PASS",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "RUN 3 (recovery): unpause typedb, re-capture until environment_status returns to PASS (a brief health-check settle delay after unpause is expected and correctly reflected, not swallowed)",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0084.py -v (4 unit/negative/contract tests, typed health check faked)",
+      "result": {"passed": 4, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression (ocor-runtime/tests/ + 3 reports/tests suites)",
+      "result": {"passed": 604, "failed": 0, "skipped": 5, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0084-CONTRACT",
+      "requirement_id": "BR-003",
+      "command": "unit/negative tests for the typed-health aggregate never silently reporting PASS when any single service is not READY",
+      "result": {"passed": 4, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0084-REAL-POSITIVE",
+      "requirement_id": "BR-003",
+      "command": "real capture against the live, healthy 11-service stack reports environment_status=PASS with per-service typed detail, not just raw docker compose ps text",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0084-REAL-NEGATIVE",
+      "requirement_id": "BR-003",
+      "command": "real capture while typedb is paused correctly reports environment_status=DEGRADED and a non-zero exit code",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0084-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "result": {"passed": 604, "failed": 0, "skipped": 5, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "The evidence produced by this script (reports/development/environment-evidence.json by default, or reports/development/environment-evidence-dec-211.json as captured here) is a point-in-time snapshot, not a continuously-enforced invariant; it must be re-run to reflect the environment's current state.",
+    "environment_status covers governed-contract health for the 9 typed-checked services only (see scripts/verify_external_services.py); postgresql/kafka/qdrant fall back to the legacy port/container scan already covered by the pre-existing docker compose ps inventory, consistent with their out-of-scope declaration in OCOR-DEV-0081.",
+    "The bundled --env-file argument fixes a real, reproduced defect: the pre-existing auto-discovery path (.ocor/bootstrap.env) never matched this session's actual secrets location, so docker compose ps failed to interpolate and the whole capture reported PARTIAL even when every service was genuinely healthy.",
+    "The same pre-existing local-venv gap noted in prior WS-12 evidence (no psycopg installed) is unchanged and out of this task's scope."
+  ],
+  "rollback_procedure_verified": "RUN 2/RUN 3 constitute a real, executed fault-injection drill: a genuine fault (pause) was introduced, captured evidence correctly reflected it (DEGRADED, non-zero exit), and recovery (unpause) was confirmed by re-capturing until the environment returned to PASS -- not merely asserted.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "3b2cf6b2c82512f974feb023d88c3b6ca034ee08ba07734bbf5fd96df25146ab",
+  "result": "PASS"
+}

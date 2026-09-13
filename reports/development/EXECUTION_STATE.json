@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-0083-bounded-fault-injection",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0083",
+    "branch": "governed/ocor-dev-0084-capture-environment-evidence",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0084",
     "decision_id": "DEC-211",
-    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0083_PUSHED__AWAITING_CI",
+    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0084_PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "6a7d51ef7534f0cbd2f3519d9e92f2441c5f8aa2",
+  "baseline_commit": "e1b4fe1657d7222bc17b41b04feff8658a1cc6d1",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -55,19 +55,20 @@
     "OCOR-DEV-0080",
     "OCOR-DEV-0081",
     "OCOR-DEV-0082",
-    "OCOR-DEV-0083"
+    "OCOR-DEV-0083",
+    "OCOR-DEV-0084"
   ],
-  "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__LANGUAGE_POLICY_ADOPTED__PHASE_2_4_CLOSED__PHASE_3_CLOSED",
+  "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__LANGUAGE_POLICY_ADOPTED__PHASE_2_4_CLOSED__PHASE_3_CLOSED__WS12_CHAIN_CLOSING",
   "latest_ci_evidence": {
-    "candidate_commit": "c7c4d74443bb0542da9c170ea7e4318ad98a82f8",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR74_MERGED_6a7d51ef7534f0cbd2f3519d9e92f2441c5f8aa2",
+    "candidate_commit": "a16ee50",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR75_MERGED_e1b4fe1657d7222bc17b41b04feff8658a1cc6d1",
     "run_ids": [
-      34728658226,
-      34728658231,
-      34728658233,
-      34728658237,
-      34728658264,
-      34728658294
+      34730792011,
+      34730792040,
+      34730792044,
+      34730792053,
+      34730792148,
+      34730792152
     ]
   },
   "mandate_phase_status": {
@@ -128,9 +129,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/ocor-dev-0083-bounded-fault-injection, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0083 sealed with real evidence against the same live 11-service Docker stack: real bounded pause/unpause, disconnect/reconnect (corrected to an HTTP round-trip oracle after discovering bare TCP connects stay open through a disconnected container on this Docker Desktop host), and restart cycles all detected and auto-recovered within bounded windows. Bundled a real bug fix discovered while restoring stack state: OCOR-DEV-0081's load_fixtures.py only tolerated one of two observed TerminusDB not-found response shapes. Next: OCOR-DEV-0084 (Capture reproducible environment evidence), which depends on OCOR-DEV-0081/0082/0083 -- the last task in the WS-12 infrastructure-bootstrap-repair chain, after which G2 spikes OCOR-DEV-0016/0017/0018/0021 become executable.",
+  "next_executable_action": "Push branch governed/ocor-dev-0084-capture-environment-evidence, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0084 sealed with real evidence against the same live 11-service Docker stack: capture_environment_evidence.py extended with a typed environment_status field (folding in verify_external_services.py's typed_health_checks rather than only the raw docker compose ps inventory), proved for real with a positive capture (all healthy -> PASS), a negative fault-injection capture (typedb paused -> DEGRADED, exit 1, never a silent PASS), and a recovery capture (unpaused, polled back to PASS). Also fixed a real env-file auto-discovery defect (the pre-existing .ocor/bootstrap.env default never matched this session's actual secrets path) via a new --env-file argument. This is the LAST task in the WS-12 infrastructure-bootstrap-repair chain (OCOR-DEV-0070..0084): once merged, G2 spikes OCOR-DEV-0016 (C3 backend behaviour), OCOR-DEV-0017 (TypeDB exact-at-commit semantics), OCOR-DEV-0018 (Jena marking-safe projection) and OCOR-DEV-0021 (identity-policy latency/failure semantics) become executable -- check scripts/ocor_autonomous_delivery.py --status to confirm DAG-order selection, or proceed directly to one of them since they are read-only spikes, not provisioning tasks.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T01:30:00Z"
+  "updated_at": "2026-09-13T02:30:00Z"
 }

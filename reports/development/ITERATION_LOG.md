@@ -1140,3 +1140,70 @@
   `OCOR-DEV-0083` — l'ultimo task della catena WS-12 di riparazione
   dell'infrastruttura, dopo il quale gli spike G2
   `OCOR-DEV-0016`/`0017`/`0018`/`0021` diventano eseguibili.
+- `OCOR-DEV-0083`: PR #75 mergiata (`e1b4fe1657d7222bc17b41b04feff8658a1cc6d1`),
+  tutti e 13 i check verdi al primo push, SHA post-merge verificata.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0084 (Capture reproducible environment evidence)
+
+- Ultimo task della catena WS-12 di riparazione dell'infrastruttura
+  (`OCOR-DEV-0070`..`0084`). Dipende da `OCOR-DEV-0081`/`0082`/`0083`,
+  tutti già mergiati.
+- `scripts/capture_environment_evidence.py` esisteva già ma catturava solo
+  l'inventario grezzo `docker compose ps` (container esistente +
+  healthcheck Docker), senza dire nulla sul contratto governato che ogni
+  servizio deve soddisfare. Aggiunto un campo tipizzato
+  `environment_status` che integra `typed_health_checks()` di
+  `scripts/verify_external_services.py` (immagine pinnata, pubblicazione
+  solo loopback, probe di protocollo reale, controlli negativi
+  fail-closed). Mantenuto deliberatamente separato dal campo `status`
+  preesistente (successo del processo di cattura, non salute
+  dell'ambiente), così un servizio degradato resta visibile in evidenza
+  invece di essere assorbito silenziosamente in un generico "captured OK".
+- Aggiunti `ARTIFACT_PATHS` (4 nuovi deliverable WS-12),
+  `_load_typed_health_checks()` (import dinamico dello script di verifica,
+  stesso pattern `sys.modules[SPEC.name] = module` usato in tutta la
+  sessione) e `capture_environment_status()`.
+- Bug reale trovato e corretto durante la cattura positiva: l'auto-discovery
+  preesistente di `--env-file` controllava solo `.ocor/bootstrap.env`, che
+  non corrisponde al percorso reale dei secret di questa sessione
+  (`~/.ocor-bootstrap-secrets/ocor-bootstrap.env`); senza un env-file
+  corrispondente `docker compose ps` falliva l'interpolazione della
+  password Keycloak e l'intera cattura riportava `PARTIAL` anche quando
+  ogni servizio era realmente sano. Corretto aggiungendo un argomento CLI
+  esplicito `--env-file` che sovrascrive l'auto-discovery.
+- Provato per reale contro lo stack live a 11 servizi: RUN 1 (positivo,
+  tutti sani) → `environment_status=PASS`; RUN 2 (negativo, `typedb` in
+  pausa) → `environment_status=DEGRADED`, exit code non zero, mai un PASS
+  silenzioso; RUN 3 (recupero, `typedb` riattivato) → ricatturato fino al
+  ritorno a `PASS` (tentativo 4, ~8s di assestamento dell'health-check,
+  correttamente riflesso e non ingoiato).
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0084.py` (4 test
+  unit/negative/contract, health check tipizzato sostituito con un doppio
+  deterministico, nessuna dipendenza Docker live).
+- `scripts/validate_language_policy.py` verificato PRIMA di aprire la PR:
+  nessuna nuova area necessaria (`scripts/` già autorizzato).
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (45 file),
+  `validate_rccad.py` PASS, `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS (9 percorsi), pytest completo
+  `2 failed, 604 passed, 5 skipped, 10 errors` (stessi gap sandbox noti,
+  +4 rispetto alla fase precedente: i 4 nuovi test),
+  `validate_ocor_development_plan.py --authorized-extension` PASS dopo il
+  consueto doppio-run di assestamento self-hash (aggiunti
+  `ocor-runtime/tests/tasks/test_ocor_dev_0084.py`,
+  `reports/evidence/G2/OCOR-DEV-0084.{json,log}` a `extension_paths`).
+- Evidenza sigillata contro lo stack live reale, incluso il ciclo completo
+  positivo/negativo/recupero:
+  `reports/evidence/G2/OCOR-DEV-0084.json` +
+  `reports/evidence/G2/OCOR-DEV-0084.log`, aggiunta a
+  `reports/evidence/G2/MANIFEST.json` (diff puramente additivo, 46 righe).
+  `scripts/validate_runtime_evidence.py --task OCOR-DEV-0084 --non-skipped`
+  PASS.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: push del branch
+  `governed/ocor-dev-0084-capture-environment-evidence`, apertura PR,
+  polling CI, merge a gate verdi, verifica SHA post-merge. Con questo si
+  chiude l'intera catena WS-12 (`OCOR-DEV-0070`..`0084`); diventano
+  eseguibili gli spike G2 `OCOR-DEV-0016`/`0017`/`0018`/`0021` (le cui
+  `hard_dependencies` sono state estese a includere `OCOR-DEV-0084` dalla
+  correzione del generator-drift di Fase 2.4).

@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "6a7d51ef7534f0cbd2f3519d9e92f2441c5f8aa2",
-  "branch": "governed/ocor-dev-0083-bounded-fault-injection",
+  "baseline_commit": "e1b4fe1657d7222bc17b41b04feff8658a1cc6d1",
+  "branch": "governed/ocor-dev-0084-capture-environment-evidence",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -260,6 +260,18 @@
     {
       "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0081.py ocor-runtime/tests/tasks/test_ocor_dev_0083.py -v (25 tests total)",
       "result": "PASS_25_of_25"
+    },
+    {
+      "command": "gh pr checks 75",
+      "result": "13/13 checks pass on head e1b4fe1; PR #75 merged"
+    },
+    {
+      "command": "real captures against the live stack: RUN1 positive (all healthy -> PASS), RUN2 negative (typedb paused -> DEGRADED, exit 1), RUN3 recovery (unpaused, polled to PASS on attempt 4)",
+      "result": "PASS_all_3_runs_correctly_reflected_environment_status_never_a_silent_PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0084.py -v (4 tests) + full local regression",
+      "result": "PASS_4_of_4__604_passed_5_skipped_2_failed_known_10_errors_known_no_new_failures"
     }
   ],
   "completed_tasks": [
@@ -289,7 +301,9 @@
     "OCOR-DEV-0081: PR #73 merged (48b6d01a). All 13 checks green on the first push. Post-merge SHA verified; live stack confirmed still healthy.",
     "OCOR-DEV-0082 (pending PR/merge): implemented service reset. scripts/reset_test_environment.py already existed but only implemented full teardown (docker compose down --volumes); added a distinct, lighter-weight --reset mode that undoes exactly OCOR-DEV-0080's 4 mutating init steps (Keycloak realm, OPA policy, OpenBao mount, TerminusDB/TypeDB ocor_default databases) without stopping any container -- SPIRE trust is deliberately left untouched since OCOR-DEV-0080 only ever verifies it, never creates it. Proved the full contract for real against the live stack: real reset succeeded for all 4 targets, a second invocation was fully idempotent, and -- the strongest proof -- running OCOR-DEV-0080's real initializer against the freshly-reset stack recreated all 4 targets from scratch, confirming reset is a genuine complete inverse rather than a partial or lossy operation. docker compose ps confirmed every container stayed running throughout. --teardown's actual destructive execution was deliberately never run (would destroy the live stack other in-progress backlog tasks depend on); its command construction and dry-run path were verified instead. Added 10 unit/negative tests (network calls faked via monkeypatch); scripts/validate_language_policy.py needed no new area this time since scripts/ was already authorized.",
     "OCOR-DEV-0082: PR #74 merged (6a7d51ef). All 13 checks green on the first push. Post-merge SHA verified.",
-    "OCOR-DEV-0083 (pending PR/merge): implemented bounded fault injection. scripts/fault_inject_test_environment.py already existed (raw pause/unpause/restart/disconnect/reconnect, dry-run by default) but had no bounded detect+auto-recover cycle. Added --bounded for pause/unpause, disconnect/reconnect and restart: applies the fault, polls for the expected unhealthy/unreachable condition within a timeout, then -- in a finally block, so recovery is attempted even if detection never completed -- applies the recovery action and polls for healthy/reachable again. A first implementation used a bare TCP connect to detect disconnect faults and silently never detected them; diagnosed to a genuine Docker Desktop networking quirk (the port-forwarding proxy completes TCP handshakes independently of a container's network attachment) and fixed by switching to a real HTTP round trip per service. Proved all 3 bounded cycle types for real against the live stack: pause/unpause on typedb, disconnect/reconnect on fuseki, restart on keycloak -- all detected and auto-recovered within their bounded windows. Restoring full stack state afterward (fault-injection testing wiped OPA's and Keycloak's ephemeral in-memory state) surfaced a real bug in OCOR-DEV-0081's load_fixtures.py: it only tolerated one of two response shapes TerminusDB uses for the identical not-found condition; fixed and covered by a new regression test in that task's own test file. Added 12 unit/negative tests for the bounded-cycle logic itself."
+    "OCOR-DEV-0083 (pending PR/merge): implemented bounded fault injection. scripts/fault_inject_test_environment.py already existed (raw pause/unpause/restart/disconnect/reconnect, dry-run by default) but had no bounded detect+auto-recover cycle. Added --bounded for pause/unpause, disconnect/reconnect and restart: applies the fault, polls for the expected unhealthy/unreachable condition within a timeout, then -- in a finally block, so recovery is attempted even if detection never completed -- applies the recovery action and polls for healthy/reachable again. A first implementation used a bare TCP connect to detect disconnect faults and silently never detected them; diagnosed to a genuine Docker Desktop networking quirk (the port-forwarding proxy completes TCP handshakes independently of a container's network attachment) and fixed by switching to a real HTTP round trip per service. Proved all 3 bounded cycle types for real against the live stack: pause/unpause on typedb, disconnect/reconnect on fuseki, restart on keycloak -- all detected and auto-recovered within their bounded windows. Restoring full stack state afterward (fault-injection testing wiped OPA's and Keycloak's ephemeral in-memory state) surfaced a real bug in OCOR-DEV-0081's load_fixtures.py: it only tolerated one of two response shapes TerminusDB uses for the identical not-found condition; fixed and covered by a new regression test in that task's own test file. Added 12 unit/negative tests for the bounded-cycle logic itself.",
+    "OCOR-DEV-0083: PR #75 merged (e1b4fe1657d7222bc17b41b04feff8658a1cc6d1). All 13 checks green on the first push. Post-merge SHA verified.",
+    "OCOR-DEV-0084 (pending PR/merge): implemented reproducible environment evidence capture. scripts/capture_environment_evidence.py already existed but only captured the raw docker compose ps inventory (container-exists + Docker-healthcheck level), saying nothing about the governed contract each service must satisfy. Added a typed environment_status field folding in scripts/verify_external_services.py's typed_health_checks (pinned image, loopback-only publication, real protocol probe, fail-closed negative checks), kept deliberately separate from the pre-existing status field (capture-process success, not environment health) so a degraded service is visible in the evidence rather than silently absorbed into a generic 'captured OK'. Proved for real against the live stack: RUN1 positive (all healthy -> environment_status=PASS), RUN2 negative (typedb paused -> DEGRADED, exit 1, never a silent PASS), RUN3 recovery (unpaused, re-captured until PASS returned, confirming the health-check settle delay is reflected, not swallowed). Also fixed a real, reproduced defect discovered while running the positive capture: the pre-existing --env-file auto-discovery only checked .ocor/bootstrap.env, which never matched this session's actual secrets path, so docker compose ps failed to interpolate Keycloak's password variable and the whole capture silently reported PARTIAL even though every service was genuinely healthy -- fixed with an explicit --env-file CLI argument. This is the LAST task in the WS-12 infrastructure-bootstrap-repair chain (OCOR-DEV-0070..0084); G2 spikes OCOR-DEV-0016/0017/0018/0021 depend on it and become executable next. Added 4 unit/negative/contract tests (typed health check faked, no live Docker dependency)."
   ],
   "current_task": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-EXECUTION-OCOR-DEV-0084",
   "evidence_paths": [
@@ -318,9 +332,11 @@
     "reports/evidence/G2/OCOR-DEV-0082.json",
     "reports/evidence/G2/OCOR-DEV-0082.log",
     "reports/evidence/G2/OCOR-DEV-0083.json",
-    "reports/evidence/G2/OCOR-DEV-0083.log"
+    "reports/evidence/G2/OCOR-DEV-0083.log",
+    "reports/evidence/G2/OCOR-DEV-0084.json",
+    "reports/evidence/G2/OCOR-DEV-0084.log"
   ],
-  "exact_next_action": "Push branch governed/ocor-dev-0083-bounded-fault-injection, open the PR, poll CI to green (Monitor armed on gh pr checks), merge only on green, verify post-merge SHA, sync all three state files. Then continue backlog execution: OCOR-DEV-0084 (Capture reproducible environment evidence) is next, depending on OCOR-DEV-0081/0082/0083 -- the last task in the WS-12 infrastructure-bootstrap-repair chain, after which G2 spikes OCOR-DEV-0016/0017/0018/0021 become executable. The real 11-service Docker stack, now re-initialized and fixture-reloaded after fault-injection testing, can be reused directly if still running -- check docker compose -p ocor-bootstrap ps first, since a service can be OOM-killed by an unrelated large host container (fuseki repeatedly has been, simply restarted each time). The component-1 migration escalation (reserved to the Product Owner) does not block this.",
+  "exact_next_action": "Push branch governed/ocor-dev-0084-capture-environment-evidence, open the PR, poll CI to green (Monitor armed on gh pr checks), merge only on green, verify post-merge SHA, sync all three state files. This closes the entire WS-12 infrastructure-bootstrap-repair chain (OCOR-DEV-0070..0084). Next: G2 spikes OCOR-DEV-0016 (SPIKE selected C3 backend behaviour), OCOR-DEV-0017 (SPIKE TypeDB exact-at-commit semantics), OCOR-DEV-0018 (SPIKE Jena marking-safe projection), OCOR-DEV-0021 (SPIKE identity-policy latency and failure semantics) become executable -- their hard_dependencies were extended to include OCOR-DEV-0084 by the earlier Phase 2.4 generator-drift fix. Check scripts/ocor_autonomous_delivery.py --status first to confirm DAG-order selection among the four, or proceed directly to one since they are read-only spikes, not provisioning tasks -- either is consistent with the mandate. The live 11-service Docker stack, now fully re-initialized and fixture-reloaded, remains available and should be reused directly if still running (check docker compose -p ocor-bootstrap ps first; fuseki has repeatedly been OOM-killed by an unrelated large host container and simply needs restarting each time, never touch that unrelated container itself). The component-1 migration escalation (reserved to the Product Owner) does not block this.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"
