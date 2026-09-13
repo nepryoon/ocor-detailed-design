@@ -22,6 +22,16 @@
       "path": "OCOR-DEV-0033.log",
       "sha256": "310a6209d67b6e38a7a3ffe131f18ec19775bd82bcc3fcefd0c427ce28b91aa2",
       "task_id": "OCOR-DEV-0033-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0034.json",
+      "sha256": "2c779efe1c8b431d979f5553cac40306cc437b83f4c2141910f12967253ea76e",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "path": "OCOR-DEV-0034.log",
+      "sha256": "aeca1a8ff8091b14e51d393edf8d2bbda83529073aa3a4d65106534fecf57af5",
+      "task_id": "OCOR-DEV-0034-RAW"
     }
   ],
   "requirement_results": [
@@ -213,6 +223,141 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0033"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-AUTHORITY-CONFORMS-TO-SEALED-PORT",
+      "command": "IdentityBackedAuthority satisfies the sealed AuthorityResolutionPort Protocol",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-POLICY-CONFORMS-TO-SEALED-PORT",
+      "command": "RegistrationAndMarkingPolicy satisfies the sealed PolicyDecisionPort Protocol",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-GATEWAY-CONFORMS-TO-SEALED-PORT",
+      "command": "NamedQueryGateway satisfies the sealed NamedQueryPort Protocol",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-REGISTERED-QUERY-EXECUTES-FOR-IDENTIFIED-AUTHORIZED-PRINCIPAL",
+      "command": "a registered contract+version, an identified principal, and a resource authorized under the real marking join together reach the real TypeDB projection read and return a served response",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "FR-007",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-UNREGISTERED-CONTRACT-DENIED-WITHOUT-DATA",
+      "command": "an unregistered contract_id is denied (ARBITRARY_QUERY_FORBIDDEN) with no response of any kind ever returned",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "FR-025",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-UNREGISTERED-VERSION-DENIED-WITHOUT-DATA",
+      "command": "a registered contract_id at an unregistered version is denied identically to an unregistered contract, with no response",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "FR-025",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-AMBIGUOUS-IDENTITY-DENIED-WITHOUT-DATA",
+      "command": "a principal never registered in the real IdentityRegistry abstains (IDENTITY_AMBIGUOUS) with no response of any kind ever returned",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "FR-027",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-MARKING-DENIAL-BLOCKS-BEFORE-PROJECTION-READ",
+      "command": "a resource outside the requester's real marking clearance is denied with the SAME reason code as an unregistered contract (ARBITRARY_QUERY_FORBIDDEN) and the real TypeDB projection is never reached",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "NFR-053",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-UNMARKED-RESOURCE-NEVER-DISCLOSED",
+      "command": "a resource deliberately missing its classification triple in the real Fuseki marking join is denied, never disclosed, at any clearance",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "NFR-053",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-UNRESOLVABLE-CLEARANCE-DENIED",
+      "command": "a request whose classification_marking_ref has no registered clearance mapping is denied, never defaulting to permit",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "NFR-053",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-QUERY-WITHOUT-RESOURCE-SKIPS-MARKING-JOIN",
+      "command": "a registered query naming no resource parameter reaches the real TypeDB projection without a marking check",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "FR-030",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-MISSING-PURPOSE-REJECTED",
+      "command": "a missing purpose is rejected by the sealed GovernedContext constructor before any gateway or backend call is ever made",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "NFR-055",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-ARBITRARY-QUERY-SHAPE-REJECTED",
+      "command": "an arbitrary, non-allow-listed contract_id shape is rejected by the sealed NamedQueryRequest constructor before any gateway or backend call is ever made",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "NFR-060",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-MARKING-BACKEND-FAILURE-FAULT-INJECTION",
+      "command": "a real, lower-blast-radius network fault (a genuine closed local TCP port) inside the marking-authorization port propagates as a real OSError and is never silently absorbed into a PERMIT decision",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "NFR-068",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
+    },
+    {
+      "case_id": "OCOR-DEV-0034-REGRESSION",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0034.json",
+      "raw_output_path": "OCOR-DEV-0034.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0034"
     }
   ]
 }
