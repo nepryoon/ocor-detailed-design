@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0024",
+  "commit": "9e97e1c19c7ac82bdfe074e28991493ac798b1c1",
+  "created_at": "2026-09-13T07:00:00Z",
+  "environment": {
+    "orchestrator": "docker compose -p ocor-bootstrap (deploy/bootstrap/compose.yaml, Fuseki/OPA/OpenBao) plus a real, self-provisioned, ephemeral Qdrant container per test run (spikes.vector_partition.oracle.QdrantHarness, OCOR-DEV-0023, sealed and unmodified)",
+    "composed_deliverables": "spikes.jena_marking.adapter.JenaMarkingProjectionAdapter (OCOR-DEV-0018, sealed), spikes.control_plane_latency.probe.bounded_probe (OCOR-DEV-0021, sealed), spikes.vector_partition.oracle.PartitionedVectorIndex/QdrantHarness/TimingEnvelope (OCOR-DEV-0023, sealed), scripts/fault_inject_test_environment.py's fault_command/http_reachable/_poll (OCOR-DEV-0083, sealed) -- all reused completely unmodified; this task adds only a paired-fixture observational-equivalence assertion (spikes/non_interference/equivalence.py) and the cross-backend non-interference test methodology",
+    "ci_provisioning": "no new CI provisioning needed: OPA/OpenBao/Fuseki are already real services from OCOR-DEV-0018/0021, and Qdrant self-provisions via a real docker run inside the test itself, the same mechanism OCOR-DEV-0023 already exercises successfully in the same CI jobs"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "spikes/non_interference/equivalence.py": "09320d3ad1be986d0ebeae1074902371e5409f009eef465bb4785bb3adc47fa1",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0024.py": "1f5224326c2bab9de12151a31314aa825ab19199a4dd28b927de7dcd46046497"
+  },
+  "commands": [
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0024.py -v against the real live stack, repeated 4 times to demonstrate determinism (each run self-provisions and tears down a fresh Qdrant container, and performs a real pause/unpause fault-injection cycle on OpenBao)",
+      "result": {"passed": 28, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "post-run verification: no leftover self-provisioned Qdrant spike containers, the persistent 11-service ocor-bootstrap stack unaffected",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, ocor-runtime/tests/ (OCOR_LIVE_POSTGRES_DSN set locally, pointed at the ocor-bootstrap postgresql service)",
+      "result": {"passed": 621, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, 3 reports/tests suites",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0024-JENA-CONTENT-COUNT-EXISTENCE",
+      "requirement_id": "BR-003",
+      "command": "a low-clearance observer's Jena content list, count and existence checks are byte-identical before and after a TOP_SECRET resource is ingested elsewhere in the same dataset",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-QDRANT-RANK-COUNT",
+      "requirement_id": "BR-003",
+      "command": "a low-partition Qdrant search's ranked result set and count are unaffected by upserting 200 foreign vectors into a high partition afterward",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-QDRANT-TIMING",
+      "requirement_id": "BR-003",
+      "command": "a low-partition search's bounded timing envelope, derived from a real baseline, still admits the observed timing after the high partition is populated",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-QDRANT-EXISTENCE-HIDING",
+      "requirement_id": "BR-003",
+      "command": "access to a real, populated high partition and to a fabricated, nonexistent one are denied with the identical error and reason code",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-CROSS-SERVICE-TIMING",
+      "requirement_id": "BR-003",
+      "command": "OPA's own bounded-probe availability and timing envelope are unaffected by a real pause/unpause fault-injection cycle on the unrelated OpenBao service",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-CACHE-STABILITY",
+      "requirement_id": "BR-003",
+      "command": "repeated low-clearance queries against both Jena and Qdrant return identical results before and after high-compartment population in both backends within the same session",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-EQUIVALENCE-ORACLE-FALSIFIABLE",
+      "requirement_id": "BR-003",
+      "command": "the new assert_observationally_equivalent helper itself raises NonInterferenceViolation on a real, constructed divergence, proving it is not vacuously true",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0024-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 650, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This spike composes three previously sealed spikes at the TEST level rather than building one unified, production-shaped 'governed read' pipeline object; each backend's non-interference proof is real and independent, but nothing here yet demonstrates a single in-process call spanning all three backends in one governed request -- that would be an integration task, not a spike, and is out of this task's scope per its own implementation_procedure ('add the smallest contract-compliant implementation').",
+    "The Jena axis models compartments via classification labels (UNCLASSIFIED/SECRET/TOP_SECRET, the same scheme OCOR-DEV-0018 already used); the Qdrant axis models compartments via named partitions (low/high); these are two different, backend-appropriate compartment representations, not a single cross-backend compartment identifier -- unifying them is a design decision reserved for whichever future task actually builds the integrated pipeline.",
+    "The OPA/OpenBao cross-service timing test proves non-interference for ONE pairing (pausing OpenBao while probing OPA); it does not exhaustively test every pair of the four sealed identity/policy controls, which would multiply real fault-injection cycles without adding a materially different proof technique.",
+    "The same pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope."
+  ],
+  "rollback_procedure_verified": "Every test either resets its backend fixture at the start (Jena) or is scoped to a freshly self-provisioned and torn-down Qdrant container (the qdrant_campaign fixture's finally-block destroy), so a failed assertion never leaves durable cross-test state; the OpenBao pause/unpause cycle recovers in a finally block before its own assertions run, verified directly by the post-run check that no self-provisioned Qdrant containers were left behind and the persistent 11-service stack remained healthy across 4 consecutive full test-suite runs.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "d1997eb871be627393467a27c7acfa2f74bd4d2e967fc690bce09cae55403219",
+  "result": "PASS"
+}

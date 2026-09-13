@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/phase3-component1-escalation-disposition-deferred",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__PHASE3-ESCALATION-DISPOSITION",
-    "decision_id": "DEC-210",
-    "phase": "ESCALATION_DISPOSITION__PHASE3_COMPONENT1_DEFERRED__PUSHED__AWAITING_CI",
+    "branch": "governed/ocor-dev-0024-cross-compartment-non-interference-spike",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0024",
+    "decision_id": "DEC-211",
+    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0024_PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "0b3d855c09f50be583a970868ed19375ef4d0802",
+  "baseline_commit": "9e97e1c19c7ac82bdfe074e28991493ac798b1c1",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -59,19 +59,21 @@
     "OCOR-DEV-0084",
     "OCOR-DEV-0016",
     "OCOR-DEV-0017",
-    "OCOR-DEV-0018"
+    "OCOR-DEV-0018",
+    "OCOR-DEV-0021",
+    "OCOR-DEV-0024"
   ],
-  "current_gate": "G2_WS12_CLOSED__G2_SPIKES_IN_PROGRESS__PHASE3_ESCALATION_DISPOSED_DEFERRED",
+  "current_gate": "G2_WAVE_11_SPIKES_CLOSED__G2_WAVE_12_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "901ff90",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR79_MERGED_0b3d855c09f50be583a970868ed19375ef4d0802_first_push_proactive_fuseki_ci_fix_worked",
+    "candidate_commit": "75cb953",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR81_MERGED_9e97e1c19c7ac82bdfe074e28991493ac798b1c1_after_a_container_naming_ci_fix_on_the_second_push",
     "run_ids": [
-      34738721812,
-      34738721822,
-      34738721830,
-      34738721833,
-      34738721862,
-      34738721884
+      34742500438,
+      34742500440,
+      34742500443,
+      34742500462,
+      34742500475,
+      34742500489
     ]
   },
   "mandate_phase_status": {
@@ -132,9 +134,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/phase3-component1-escalation-disposition-deferred, open PR, poll CI to green, merge, verify post-merge SHA. This iteration executes the Product Owner's explicit written disposition on the PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED escalation: DEFERRED, not opened, not rejected -- the candidate and the sealed measurement stay registered/valid, with a falsifiable reopening condition recorded in PHASE3_LANGUAGE_MIGRATION_DECISION.md \u00a78.3. No migration-threshold values were touched, no OI/ASM/RSK closed, no kernel code changed. After this merges, resume the backlog exactly where it was: the last wave-11 G2 spike, OCOR-DEV-0021 (SPIKE identity-policy latency and failure semantics), which already has its hard_dependencies satisfied -- check whether its required real backend is already provisioned in CI before the first push, per the lesson from OCOR-DEV-0017/0018.",
+  "next_executable_action": "Push branch governed/ocor-dev-0024-cross-compartment-non-interference-spike, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0024 (SPIKE cross-compartment non-interference) composes three previously sealed spikes -- the Jena marking-safe projection (OCOR-DEV-0018), the identity/policy bounded probe (OCOR-DEV-0021), and the Qdrant vector-partition oracle (OCOR-DEV-0023) -- all reused unmodified, adding only a new paired-fixture observational-equivalence assertion (spikes/non_interference/equivalence.py). Proves that a low-clearance observer's view (content, existence, rank, count, cache and bounded timing) is unaffected by high-compartment population across all three backends, and that pausing one control-plane service does not leak into another's observable timing. This closes OCOR-DEV-0024, one of four wave-12 tasks now ready (0024/0025/0028/0029). Next: OCOR-DEV-0025 (SPIKE distributed deletion saga), the next ready wave-12 task by numeric order, depending on OCOR-DEV-0016/0017/0018/0019/0023 (all merged).",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T05:30:00Z"
+  "updated_at": "2026-09-13T07:20:00Z"
 }

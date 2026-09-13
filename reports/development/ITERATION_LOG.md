@@ -1519,3 +1519,131 @@
   Poi riprendere il backlog da dove era: l'ultimo spike G2 del wave 11,
   `OCOR-DEV-0021` (SPIKE latenza e semantica di fallimento
   identity-policy).
+- Disposizione Fase 3: PR #80 mergiata
+  (`59521ae00218ea84e8b74a9cee483b172cdfd8ec`), tutti i check verdi, SHA
+  post-merge verificata.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0021 (SPIKE identity-policy latency and failure semantics)
+
+- Ultimo spike G2 del wave 11. Dipende da `OCOR-DEV-0006`, `OCOR-DEV-0014`,
+  `OCOR-DEV-0084`, tutti già mergiati.
+- Riutilizzati senza modifiche i port di sicurezza sigillati di
+  `OCOR-DEV-0014` (`ocor_runtime.security.ports`:
+  `ControlName`/`ControlStatus`/`SecurityControlError`/
+  `require_available`) e l'harness di fault-injection sigillato di
+  `OCOR-DEV-0083` (`fault_command`/`http_reachable`/`_poll`); aggiunto
+  `spikes/control_plane_latency/probe.py` (nuovo) con `bounded_probe`
+  (round-trip HTTP reale con deadline dichiarata, restituisce sempre uno
+  `ControlStatus` più un `AuditEvent` correlato, sia per successo che per
+  fallimento) e `decide_with_fail_closed_default` (delega interamente a
+  `require_available` — un controllo non disponibile può solo sollevare,
+  mai concedere).
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0021.py` (7 test, tutti
+  contro OPA/Keycloak/OpenBao reali, nessun mock): successo entro la
+  deadline per i tre controlli; `require_available` non concede mai per
+  nessun controllo incluso `WORKLOAD_IDENTITY`; due cicli reali di
+  fault-injection pausa/ripresa (OPA, OpenBao) che provano negazione entro
+  la deadline dichiarata con evidenza di audit correlata, poi recupero;
+  evidenza di audit correlata su entrambi i percorsi successo/fallimento.
+- **Prima iterazione CI (PR #81, primo push)**: 3 check rossi
+  (`delivery-activation`, `rccad-methodology`, `validation-closure`) con
+  `"No such container: ocor-bootstrap-opa-1"` — causa radice: i container
+  CI erano nominati `opa`/`keycloak`/`openbao`, ma `fault_command()`
+  sigillato (`OCOR-DEV-0083`) costruisce il nome atteso come
+  `ocor-bootstrap-<service>-1`, la convenzione di `docker compose`.
+  Corretto rinominando ogni `docker run --name` nei 3 workflow
+  (`fuseki`/`opa`/`keycloak`/`openbao`) alla convenzione attesa — nessuna
+  modifica a test o adapter, il disallineamento era solo nel
+  provisioning CI. Evidenza aggiornata nello stesso commit/PR.
+- **Provisioning CI proattivo**: aggiunti OPA/Keycloak/OpenBao reali ai 3
+  workflow PRIMA di aprire la PR (tutte e 3 immagini pre-costruite e
+  pinnate, a differenza di Fuseki), con ricetta rehearsed localmente su
+  porte alternative (8182/8081/8201) prima dell'aggiunta ai workflow.
+- Secondo push: tutti e 13 i check verdi. PR #81 mergiata
+  (`9e97e1c19c7ac82bdfe074e28991493ac798b1c1`), SHA post-merge verificata.
+  Con questo si chiude l'intero wave 11 degli spike G2
+  (`OCOR-DEV-0016`/`0017`/`0018`/`0021`).
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (45 file),
+  `validate_rccad.py` PASS, `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS, `yaml.safe_load` dei 3 workflow
+  PASS, pytest completo con `OCOR_LIVE_POSTGRES_DSN` locale:
+  `2 failed, 643 passed, 0 skipped, 0 errors` (stessi 2 fallimenti noti e
+  preesistenti del pin dell'interprete), `validate_ocor_development_plan.py
+  --authorized-extension` PASS dopo il consueto doppio-run.
+- Evidenza sigillata contro OPA/Keycloak/OpenBao reali, incluso il fix CI:
+  `reports/evidence/G2/OCOR-DEV-0021.json` +
+  `reports/evidence/G2/OCOR-DEV-0021.log`, aggiunta a
+  `reports/evidence/G2/MANIFEST.json` (diff puramente additivo, 64 righe).
+  `scripts/validate_runtime_evidence.py --task OCOR-DEV-0021 --non-skipped`
+  PASS.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0024 (SPIKE cross-compartment non-interference)
+
+- Prossimo task eseguibile determinato direttamente da
+  `docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json` e
+  `completed_evidence_tasks` (lo stato interno di
+  `scripts/ocor_autonomous_delivery.py --status` resta inaffidabile, mai
+  aggiornato dall'esecuzione manuale di questa sessione). Con la chiusura
+  del wave 11, il wave 12 diventa pronto: `OCOR-DEV-0024`/`0025`/`0028`/
+  `0029`. Selezionato `OCOR-DEV-0024` per ordine numerico. Dipende da
+  `OCOR-DEV-0018`, `OCOR-DEV-0021`, `OCOR-DEV-0023`, tutti già mergiati.
+- **Design**: questo spike compone TRE spike già sigillati invece di
+  costruirne uno nuovo da zero — la proiezione marking-safe di Jena
+  (`OCOR-DEV-0018`), il probe bounded del control-plane identity/policy
+  (`OCOR-DEV-0021`), e l'oracolo di partizionamento vettoriale Qdrant
+  (`OCOR-DEV-0023`, che già includeva un harness Qdrant reale
+  auto-provisionato e test di non-interferenza per singolo backend) —
+  tutti riutilizzati senza modifiche. L'unica astrazione nuova è
+  `spikes/non_interference/equivalence.py`
+  (`assert_observationally_equivalent`), un confronto a coppie con
+  messaggio di fallimento preciso per asse, riutilizzato su ogni asse
+  (content/existence/rank/count) e ogni backend.
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0024.py` (7 test, tutti
+  contro backend reali, nessun mock): vista Jena a bassa clearance
+  invariata (content/count/esistenza) dopo l'ingest di una risorsa
+  `TOP_SECRET`; rank e count di una ricerca Qdrant sulla partizione bassa
+  invariati dopo l'upsert di 200 vettori estranei sulla partizione alta;
+  la finestra di timing bounded di Qdrant ammette ancora il tempo
+  osservato dopo la popolazione della partizione alta; l'accesso a una
+  partizione alta reale e a una fabbricata/inesistente vengono negati con
+  lo stesso errore identico; la disponibilità e il timing del probe OPA
+  non sono influenzati da un ciclo reale di fault-injection
+  pausa/ripresa sull'OpenBao non correlato; query ripetute a bassa
+  clearance su Jena e Qdrant restano identiche dopo la popolazione alta
+  in entrambi i backend; `assert_observationally_equivalent` solleva
+  realmente su una divergenza costruita (non vacuamente vera).
+- Nessun nuovo provisioning CI necessario: OPA/OpenBao/Fuseki sono già
+  servizi reali da `OCOR-DEV-0018`/`0021`; Qdrant si auto-provisiona con
+  un vero `docker run` all'interno del test stesso, lo stesso meccanismo
+  già usato con successo da `OCOR-DEV-0023` negli stessi job CI.
+- Corretto un disallineamento nei file di stato scoperto all'inizio di
+  questa iterazione: `MODEL_HANDOFF.json` non era stato aggiornato al
+  merge di `OCOR-DEV-0021` (PR #81) nell'iterazione precedente —
+  `scripts/validate_rccad.py` ha rilevato `RCCAD-STATE-HANDOFF-DRIFT`
+  (baseline_commit e branch disallineati fra `EXECUTION_STATE.json` e
+  `MODEL_HANDOFF.json`); corretto aggiornando `MODEL_HANDOFF.json` con il
+  completamento di `OCOR-DEV-0021` prima di proseguire.
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (45 file,
+  `spikes/` e `tests/` fuori scope per policy), `validate_rccad.py` PASS
+  (dopo la correzione del drift), `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS (11 percorsi), pytest completo con
+  `OCOR_LIVE_POSTGRES_DSN` locale: `2 failed, 650 passed, 0 skipped, 0
+  errors` (stessi 2 fallimenti noti e preesistenti, +7 rispetto alla fase
+  precedente), `validate_ocor_development_plan.py --authorized-extension`
+  PASS dopo il consueto doppio-run di assestamento self-hash.
+- Evidenza sigillata contro backend reali compositi (Fuseki, Qdrant
+  auto-provisionato, OPA/OpenBao con fault-injection reale):
+  `reports/evidence/G2/OCOR-DEV-0024.json` +
+  `reports/evidence/G2/OCOR-DEV-0024.log`, aggiunta a
+  `reports/evidence/G2/MANIFEST.json` (diff puramente additivo, 82 righe).
+  `scripts/validate_runtime_evidence.py --task OCOR-DEV-0024 --non-skipped`
+  PASS.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: push del branch
+  `governed/ocor-dev-0024-cross-compartment-non-interference-spike`,
+  apertura PR, polling CI, merge a gate verdi, verifica SHA post-merge.
+  Poi determinare il prossimo task pronto del wave 12 in ordine numerico:
+  `OCOR-DEV-0025` (SPIKE distributed deletion saga).
