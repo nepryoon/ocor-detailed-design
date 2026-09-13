@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-0016-c3-backend-concurrency-spike",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0016",
+    "branch": "governed/ocor-dev-0017-typedb-exact-commit-spike",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0017",
     "decision_id": "DEC-211",
-    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0016_PUSHED__AWAITING_CI",
+    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0017_PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "cbf53da9be6d13e77d545679dacebc2398f5af97",
+  "baseline_commit": "a2ea8f467cc47891add109fbcd1b2e8567c49399",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -57,19 +57,20 @@
     "OCOR-DEV-0082",
     "OCOR-DEV-0083",
     "OCOR-DEV-0084",
-    "OCOR-DEV-0016"
+    "OCOR-DEV-0016",
+    "OCOR-DEV-0017"
   ],
   "current_gate": "G2_WS12_CLOSED__G2_SPIKES_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "de75ec6",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR76_MERGED_cbf53da9be6d13e77d545679dacebc2398f5af97",
+    "candidate_commit": "823f0ba",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR77_MERGED_a2ea8f467cc47891add109fbcd1b2e8567c49399",
     "run_ids": [
-      34732524406,
-      34732524448,
-      34732524449,
-      34732524452,
-      34732524457,
-      34732524626
+      34734272245,
+      34734272249,
+      34734272250,
+      34734272251,
+      34734272260,
+      34734272261
     ]
   },
   "mandate_phase_status": {
@@ -130,9 +131,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/ocor-dev-0016-c3-backend-concurrency-spike, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0016 (SPIKE selected C3 backend behaviour) is the first G2 spike executed after the WS-12 chain closed. It reuses OCOR-DEV-0015's sealed PostgreSQLAtomicCommitOracle unmodified and adds a real-concurrency race harness (spikes/c3_backend/concurrency_oracle.py) proving locking, isolation, failure-under-concurrency and reconciliation against the real, live PostgreSQL backend now available locally via the ocor-bootstrap Docker stack (127.0.0.1:55433) -- the first time this session has been able to set OCOR_LIVE_POSTGRES_DSN locally rather than relying on CI's ephemeral service container. This retroactively qualified OCOR-DEV-0015's own 10 previously-erroring live-Postgres tests as real local passes too. Next: one of the remaining wave-11 G2 spikes -- OCOR-DEV-0017 (SPIKE TypeDB exact-at-commit semantics), OCOR-DEV-0018 (SPIKE Jena marking-safe projection), OCOR-DEV-0021 (SPIKE identity-policy latency and failure semantics) -- all have their hard_dependencies already satisfied.",
+  "next_executable_action": "Push branch governed/ocor-dev-0017-typedb-exact-commit-spike, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0017 (SPIKE TypeDB exact-at-commit semantics) reuses OCOR-DEV-0012's sealed C2 named-query/consistency contract (ocor_runtime.c2.ports) unmodified and adds a real TypeDB-backed ProjectionReadPort/WatermarkPort adapter (spikes/typedb_exact_commit/adapter.py) proving that queries at a required commit either return the exact projection or fail closed with an observable watermark -- never an older or newer fact mislabeled as exact -- against the live TypeDB instance in the ocor-bootstrap stack. Next: one of the remaining wave-11 G2 spikes -- OCOR-DEV-0018 (SPIKE Jena marking-safe projection) or OCOR-DEV-0021 (SPIKE identity-policy latency and failure semantics) -- both already have their hard_dependencies satisfied.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T03:30:00Z"
+  "updated_at": "2026-09-13T04:40:00Z"
 }

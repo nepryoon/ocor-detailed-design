@@ -330,6 +330,7 @@ def main() -> int:
         "ocor-runtime/tests/sdk/test_typescript_sdk_conformance.py",
         "ocor-runtime/tests/tasks/test_ocor_dev_0001.py",
         "ocor-runtime/tests/tasks/test_ocor_dev_0016.py",
+        "ocor-runtime/tests/tasks/test_ocor_dev_0017.py",
         "ocor-runtime/tests/tasks/test_ocor_dev_0079.py",
         "ocor-runtime/tests/tasks/test_ocor_dev_0080.py",
         "ocor-runtime/tests/tasks/test_ocor_dev_0081.py",
@@ -352,6 +353,8 @@ def main() -> int:
         "reports/evidence/G2/MANIFEST.json",
         "reports/evidence/G2/OCOR-DEV-0016.json",
         "reports/evidence/G2/OCOR-DEV-0016.log",
+        "reports/evidence/G2/OCOR-DEV-0017.json",
+        "reports/evidence/G2/OCOR-DEV-0017.log",
         "reports/evidence/G2/OCOR-DEV-0079.json",
         "reports/evidence/G2/OCOR-DEV-0079.log",
         "reports/evidence/G2/OCOR-DEV-0080.json",
@@ -414,6 +417,8 @@ def main() -> int:
         "scripts/validate_rccad.py",
         "spikes/c3_backend/__init__.py",
         "spikes/c3_backend/concurrency_oracle.py",
+        "spikes/typedb_exact_commit/__init__.py",
+        "spikes/typedb_exact_commit/adapter.py",
     }
     planning_paths = {
         "docs/development_plan/OCOR_AGENT_CONTEXT_MANIFEST.json",
