@@ -1755,3 +1755,71 @@
   merge a gate verdi, verifica SHA post-merge. Poi proseguire con
   `OCOR-DEV-0029` (Build retained C3 canonical commit slice, gate `G3`,
   dipende solo da `OCOR-DEV-0016`, già mergiato).
+- `OCOR-DEV-0028`: tutti e 13 i check verdi al primo push. PR #84
+  mergiata (`b8170f3c5ca9500d38faf95d2b2d01c7ded41850`), SHA post-merge
+  verificata.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0029 (Build retained C3 canonical commit slice)
+
+- Ultimo task del wave 12. Dipende solo da `OCOR-DEV-0016`, già mergiato
+  (`OCOR-DEV-0013`, che definisce i port C3 sigillati riutilizzati qui,
+  è un task G1 già chiuso in una fase precedente a questa sessione).
+- Implementati tutti e 5 i port C3 sigillati (`ocor_runtime.c3.ports`,
+  riutilizzati senza modifiche) come `PostgresC3Service`:
+  `GovernedCommitPort` (`commit`), `CanonicalReadPort` (`read`),
+  `RevisionPort` (`current_revision`), `OutboxRelayPort`
+  (`claim_batch`/`acknowledge`), `RecoveryPort` (`reconcile`). Backend
+  reale PostgreSQL, generalizzando la tecnica di locking/atomicità a
+  concorrenza reale già provata dagli spike C3 sigillati
+  (`spikes.c3_atomicity.oracle`, `OCOR-DEV-0015`; `spikes.c3_backend`,
+  `OCOR-DEV-0016`) in un'implementazione a forma di produzione che parla
+  direttamente le dataclass sigillate, non dict ad-hoc.
+- **Violazione architetturale reale trovata e corretta prima di
+  sigillare**: la prima versione di `service.py` importava `psycopg`
+  direttamente; `scripts/validate_rccad.py` ha correttamente segnalato
+  `AFF-002`/`AFF-006` ("infrastructure client leaked outside adapters"),
+  la regola di fitness architetturale già sigillata (riga 8 di
+  `OCOR_LANGUAGE_POLICY.md`) mai innescata prima in questa sessione,
+  dato che ogni precedente task su backend reale viveva sotto `spikes/`
+  e non sotto `ocor-runtime/src/`. Corretto estraendo ogni riferimento a
+  `psycopg` in un nuovo `ocor-runtime/src/ocor_runtime/c3/adapters/postgres.py`
+  (`PostgresC3Adapter`), che espone a `service.py` solo tipi Python
+  semplici privi di `psycopg` — il primo sotto-albero `adapters/` che
+  questa consegna abbia mai avuto bisogno di creare.
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0029.py` (9 test,
+  tutti contro PostgreSQL reale, nessun mock): conformità `isinstance` a
+  ogni Protocol sigillato; commit atomico che persiste stato/revisione/
+  outbox insieme; replay idempotente; rifiuto per conflitto di
+  idempotenza e conflitto di revisione; due comandi distinti in race
+  sulla stessa revisione (vince esattamente uno); un vero crash di
+  processo (subprocess) a metà commit — zero visibilità parziale, retry
+  riuscito; una vera corruzione simulata (una riga outbox derivata
+  cancellata direttamente contro il database, riparata da `reconcile()`);
+  claim/acknowledge dell'outbox.
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (49 file),
+  `validate_rccad.py` PASS (dopo la correzione della violazione
+  architetturale), `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS (10 percorsi), pytest completo
+  con `OCOR_LIVE_POSTGRES_DSN` locale: `2 failed, 671 passed, 0 skipped,
+  0 errors` (stessi 2 fallimenti noti e preesistenti),
+  `validate_ocor_development_plan.py --authorized-extension` PASS dopo
+  il consueto doppio-run.
+- Evidenza sigillata: `reports/evidence/G3/OCOR-DEV-0029.json` +
+  `reports/evidence/G3/OCOR-DEV-0029.log`, aggiunta a
+  `reports/evidence/G3/MANIFEST.json` (diff puramente additivo, 100
+  righe). `scripts/validate_runtime_evidence.py --task OCOR-DEV-0029
+  --non-skipped --manifest reports/evidence/G3/MANIFEST.json` PASS.
+- Aggiornamento dei tre file di stato eseguito SUBITO in questa stessa
+  iterazione (non rimandato), recuperando anche il merge di
+  `OCOR-DEV-0028` (PR #84) non ancora sincronizzato, per istruzione
+  esplicita del Product Owner.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: push del branch
+  `governed/ocor-dev-0029-c3-canonical-commit-slice`, apertura PR,
+  polling CI, merge a gate verdi, verifica SHA post-merge. Con questo si
+  chiude l'intero wave 12 (`OCOR-DEV-0024`/`0025`/`0028`/`0029`). Poi
+  proseguire con i due spike G2 rimanenti del wave 13: `OCOR-DEV-0026`
+  (SPIKE restore without resurrection) e `OCOR-DEV-0027` (SPIKE
+  deterministic context-assembly replay), entrambi con dipendenze già
+  soddisfatte.
