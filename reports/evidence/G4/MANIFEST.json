@@ -42,6 +42,16 @@
       "path": "OCOR-DEV-0035.log",
       "sha256": "6ed699f89387cfc011cd2fc2f7dce24e1878233b863635f6329e72e57422ed7e",
       "task_id": "OCOR-DEV-0035-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0036.json",
+      "sha256": "4b6a5d40f5c8b08cd857b1a3b4bbd5c115259d0425e59353f87d7e91abb64fc3",
+      "task_id": "OCOR-DEV-0036"
+    },
+    {
+      "path": "OCOR-DEV-0036.log",
+      "sha256": "d0f1c5edaac1a017f6a7a4c4374afff2eb4819998f8ebd4d8eb42d735734b035",
+      "task_id": "OCOR-DEV-0036-RAW"
     }
   ],
   "requirement_results": [
@@ -449,6 +459,87 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0035"
+    },
+    {
+      "case_id": "OCOR-DEV-0036-RUN-RECOVERY-PASS-REPAIRS-REAL-CORRUPTION-FIXTURE",
+      "command": "a real simulated corruption (an outbox row deleted directly against PostgreSQL after a real commit) is repaired by run_recovery_pass, converging the corrupt-outbox fixture without duplicate canonical effects",
+      "evidence_path": "OCOR-DEV-0036.json",
+      "raw_output_path": "OCOR-DEV-0036.log",
+      "requirement_id": "FR-057",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0036"
+    },
+    {
+      "case_id": "OCOR-DEV-0036-ASSERT-HEALTHY-BLOCKS-ON-UNRECONCILED-INTENT",
+      "command": "assert_healthy raises UNRECONCILED_DURABLE_INTENT for the pass where a real corruption needed repair, and succeeds once nothing remains",
+      "evidence_path": "OCOR-DEV-0036.json",
+      "raw_output_path": "OCOR-DEV-0036.log",
+      "requirement_id": "FR-163",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0036"
+    },
+    {
+      "case_id": "OCOR-DEV-0036-ADVISORY-LOCK-REALLY-SERIALIZES",
+      "command": "a real PostgreSQL advisory lock genuinely serializes two concurrent holders across separate connections",
+      "evidence_path": "OCOR-DEV-0036.json",
+      "raw_output_path": "OCOR-DEV-0036.log",
+      "requirement_id": "NFR-022",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0036"
+    },
+    {
+      "case_id": "OCOR-DEV-0036-CONCURRENT-RECOVERY-PASSES-NEVER-DOUBLE-REPAIR",
+      "command": "two real concurrent recovery passes racing the same real corruption converge to exactly one real repair, never two",
+      "evidence_path": "OCOR-DEV-0036.json",
+      "raw_output_path": "OCOR-DEV-0036.log",
+      "requirement_id": "FR-057",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0036"
+    },
+    {
+      "case_id": "OCOR-DEV-0036-LOST-ACK-REDELIVERY-WITH-IDEMPOTENT-SINK",
+      "command": "a lost ACK leaves the event claimable again; redelivery through the caller's own idempotent sink never registers a second, duplicate canonical effect",
+      "evidence_path": "OCOR-DEV-0036.json",
+      "raw_output_path": "OCOR-DEV-0036.log",
+      "requirement_id": "FR-062",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0036"
+    },
+    {
+      "case_id": "OCOR-DEV-0036-CONCURRENT-RELAY-WORKERS-NEVER-DOUBLE-CLAIM",
+      "command": "two real concurrent relay workers racing the same single unacknowledged event never both claim it",
+      "evidence_path": "OCOR-DEV-0036.json",
+      "raw_output_path": "OCOR-DEV-0036.log",
+      "requirement_id": "NFR-022",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0036"
+    },
+    {
+      "case_id": "OCOR-DEV-0036-RESTART-FIXTURE-CONVERGES-WITHOUT-DUPLICATE-REPAIR",
+      "command": "a fresh coordinator/service instance simulating a real process restart reacquires the identical real lock and converges without repeating an already-completed repair",
+      "evidence_path": "OCOR-DEV-0036.json",
+      "raw_output_path": "OCOR-DEV-0036.log",
+      "requirement_id": "FR-057",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0036"
+    },
+    {
+      "case_id": "OCOR-DEV-0036-LOCK-BACKEND-FAILURE-FAULT-INJECTION",
+      "command": "a real connection failure inside the advisory-lock adapter propagates as a real psycopg.OperationalError, and the recovery pass never runs its repair unlocked",
+      "evidence_path": "OCOR-DEV-0036.json",
+      "raw_output_path": "OCOR-DEV-0036.log",
+      "requirement_id": "NFR-051",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0036"
+    },
+    {
+      "case_id": "OCOR-DEV-0036-REGRESSION",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0036.json",
+      "raw_output_path": "OCOR-DEV-0036.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0036"
     }
   ]
 }
