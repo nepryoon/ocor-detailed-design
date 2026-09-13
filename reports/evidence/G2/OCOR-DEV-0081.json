@@ -1,0 +1,105 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0081",
+  "commit": "79084dd7be841bee0b36b92b939e9abea0e37362",
+  "created_at": "2026-09-12T23:55:00Z",
+  "environment": {
+    "orchestrator": "docker compose -p ocor-bootstrap (deploy/bootstrap/compose.yaml), same live stack as OCOR-DEV-0079/0080",
+    "targets": ["terminusdb (ocor_default)", "typedb (ocor_default)"],
+    "out_of_scope_targets": "postgresql, kafka, qdrant were already provisioned and evidenced by earlier, unrelated tasks (OCOR-DEV-0006/0015/0019/0023), predating this WS-12 infrastructure-bootstrap-repair chain; not part of the newly-provisioned service set this chain repairs",
+    "secrets": "session-local, generated for OCOR-DEV-0079, never committed to Git"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "deploy/bootstrap/fixtures/load_fixtures.py": "2c3614394ecf6479afb640865c22eabb195bd2fcfb94d860833a04f60595f013",
+    "deploy/bootstrap/fixtures/synthetic_fixtures.json": "9cb4b200c3105bcb0eea95ff7294f20784a429a6e4f9dfa47f2489dab00e9f29"
+  },
+  "commands": [
+    {
+      "command": "reset both ocor_default databases to a pristine state (undo prior manual API exploration)",
+      "result": {"passed": 4, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "RUN 1: first real invocation on pristine databases -- both terminusdb and typedb report CREATED, operation_count=2 (schema + data), identical verification_sha256 across both backends for the same semantic content",
+      "result": {"passed": 2, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "RUN 2: idempotent re-invocation -- both report ALREADY_INITIALIZED, operation_count=0, no mutating calls",
+      "result": {"passed": 2, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "RUN 3: externally mutate the live TerminusDB fixture instance via the real API, then re-invoke -- DRIFT_DETECTED, script fails closed (exit 1), does not overwrite",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "RUN 4: restore the correct content, re-invoke -- full recovery to PASS",
+      "result": {"passed": 2, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0081.py -v (12 unit/negative/contract tests, all network calls faked)",
+      "result": {"passed": 12, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression (ocor-runtime/tests/ + 3 reports/tests suites)",
+      "result": {"passed": 577, "failed": 0, "skipped": 5, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0081-CONTRACT",
+      "requirement_id": "BR-003",
+      "command": "unit/negative tests for FixtureResult/FixtureOutcome and each target's create/already-initialized/drift branch, including the live-verified TerminusDB 'Status: 404 prefix' response quirk, no live dependency",
+      "result": {"passed": 12, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0081-REAL-CREATE",
+      "requirement_id": "BR-003",
+      "command": "real first-time load of the synthetic fixture into TerminusDB (schema + document) and TypeDB (schema + entity) against the live stack, with identical post-load verification digests across both backends",
+      "result": {"passed": 2, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0081-REAL-IDEMPOTENCY",
+      "requirement_id": "BR-003",
+      "command": "real re-invocation against the now-loaded fixtures reports ALREADY_INITIALIZED for both targets with zero mutating calls",
+      "result": {"passed": 2, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0081-REAL-DRIFT-FAIL-CLOSED",
+      "requirement_id": "BR-003",
+      "command": "an externally mutated TerminusDB fixture instance is detected as drift and rejected (exit 1), never silently overwritten or accepted",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0081-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "result": {"passed": 577, "failed": 0, "skipped": 5, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "The synthetic fixture is a single, minimal entity/document (one schema type, one instance) sufficient to prove the deterministic, content-addressed, drift-rejecting load contract; it is not a representative dataset for any real BA/FGM/mission-thread campaign, which will define their own qualifying fixtures at G6.",
+    "PostgreSQL/Kafka/Qdrant fixture loading is explicitly out of scope for this task (see environment.out_of_scope_targets); any future need to add deterministic fixtures for those three services is a separate, distinct task.",
+    "The same pre-existing local-venv gap noted in OCOR-DEV-0079/0080's evidence (no psycopg installed) is unchanged and out of this task's scope."
+  ],
+  "rollback_procedure_verified": "RUN 3/RUN 4 above constitute a real, executed rollback drill: an externally introduced drift in the TerminusDB fixture was detected and rejected without mutation (RUN 3), then the correct state was restored and full PASS reconfirmed (RUN 4).",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "3389d16bef7d4b0f66dff5d32650b5165f3b58b223523b67035178cfda445c7b",
+  "result": "PASS"
+}

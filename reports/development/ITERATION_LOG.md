@@ -952,3 +952,63 @@
   `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
 - Prossima azione: `OCOR-DEV-0081` ("Load deterministic synthetic test
   fixtures"), che dipende solo da `OCOR-DEV-0080`.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0081 (fixture sintetiche deterministiche, reali)
+
+- PR #72 mergiata (inizializzazione deterministica): tutti e 13 i check
+  verdi, merge `79084dd7be841bee0b36b92b939e9abea0e37362`, verifica
+  post-merge con `git fetch origin main` conferma `origin/main == 79084dd`.
+  Lo stack Docker a 11 servizi è rimasto in esecuzione, ma `fuseki` era
+  stato terminato (`exit 137`, verosimilmente OOM da un container
+  preesistente non-ocor-bootstrap che occupa molta memoria host) —
+  riavviato con `docker compose up -d fuseki`, tornato sano in pochi
+  secondi; nessun altro servizio toccato.
+- Esplorazione manuale reale delle API TerminusDB (`/api/document`, schema
+  + istanza) e TypeDB (transazioni HTTP v1: `open`/`query`/`commit`/`close`,
+  `define`/`insert`/`match`/`undefine`) prima di scrivere codice, per
+  imparare le forme esatte di richiesta/risposta/conflitto. Trovata una
+  vera stranezza di TerminusDB: una GET su un documento assente risponde
+  con HTTP 200 reale ma un corpo prefissato dal testo letterale
+  `"Status: 404\nContent-type: ...\n\n"` prima del JSON — documentata nel
+  codice e coperta da un test dedicato.
+- Implementato `deploy/bootstrap/fixtures/synthetic_fixtures.json`
+  (manifest versionato) e `deploy/bootstrap/fixtures/load_fixtures.py`:
+  carica la stessa fixture sintetica minima (un'entità/documento) sia in
+  TerminusDB sia in TypeDB, con lo stesso pattern check-prima-di-mutare di
+  `OCOR-DEV-0080` — assente crea, presente e conforme non tocca nulla
+  (`ALREADY_INITIALIZED`), presente ma diverso fallisce chiuso
+  (`DRIFT_DETECTED`). `postgresql`/`kafka`/`qdrant` dichiarati esplicitamente
+  fuori scope: già provisionati ed evidenziati da task precedenti e
+  indipendenti (`OCOR-DEV-0006`/`0015`/`0019`/`0023`), non parte della
+  catena di riparazione WS-12.
+- **Verifica reale contro lo stack live**: RUN 1 (database puliti) →
+  `CREATED` per entrambi i target, digest di verifica post-caricamento
+  identico fra TerminusDB e TypeDB per lo stesso contenuto semantico; RUN 2
+  (ri-esecuzione) → `ALREADY_INITIALIZED` per entrambi, zero chiamate
+  mutanti; RUN 3 (drift reale: istanza TerminusDB mutata esternamente via
+  API) → `DRIFT_DETECTED`, script fallito chiuso (`exit=1`); RUN 4
+  (ripristino) → recupero completo a `PASS`. Un vero drill di
+  drift/rollback eseguito, non solo descritto.
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0081.py` (12 test
+  unit/negative/contract, ogni chiamata di rete sostituita con un doppio
+  deterministico).
+- Corretto `scripts/validate_language_policy.py`: aggiunta
+  `deploy/bootstrap/fixtures` alle aree autorizzate per `.py` (stessa
+  lezione di `OCOR-DEV-0080`, verificata questa volta PRIMA di aprire la
+  PR).
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (45 file),
+  `validate_rccad.py` PASS, `validate_language_policy.py` PASS, pytest
+  completo `2 failed, 577 passed, 5 skipped, 10 errors` (stessi gap
+  sandbox noti, +12 rispetto alla fase precedente),
+  `validate_ocor_development_plan.py --authorized-extension` PASS dopo il
+  consueto doppio-run di assestamento self-hash.
+- Evidenza sigillata contro lo stack live reale, incluso il drill di
+  drift/rollback: `reports/evidence/G2/OCOR-DEV-0081.json` +
+  `reports/evidence/G2/OCOR-DEV-0081.log`, aggiunta a
+  `reports/evidence/G2/MANIFEST.json` (diff puramente additivo).
+  `scripts/validate_runtime_evidence.py --task OCOR-DEV-0081 --non-skipped`
+  PASS.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: `OCOR-DEV-0082` ("Implement service reset and
+  teardown"), che dipende da `OCOR-DEV-0080`.

@@ -51,6 +51,7 @@ AUTHORIZATIONS: dict[str, tuple[Callable[[str], bool], ...]] = {
         lambda p: under(p, "reports/tests"),
         lambda p: under(p, "deploy/bootstrap/services"),
         lambda p: under(p, "deploy/bootstrap/init"),
+        lambda p: under(p, "deploy/bootstrap/fixtures"),
         lambda p: under(p, "spikes"),
     ),
     ".ts": (lambda p: under(p, "ocor-runtime/sdk/typescript"),),

@@ -127,6 +127,16 @@
       "path": "OCOR-DEV-0080.log",
       "sha256": "cfd404927908c5007fcc5d3378d5ccf92e88d29fd264a4277ec1b20c7eb7e2a4",
       "task_id": "OCOR-DEV-0080-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0081.json",
+      "sha256": "0df1830e3081244397b3ca044d0b6a0377fd136acf585e079f5ee10db7adc715",
+      "task_id": "OCOR-DEV-0081"
+    },
+    {
+      "path": "OCOR-DEV-0081.log",
+      "sha256": "3389d16bef7d4b0f66dff5d32650b5165f3b58b223523b67035178cfda445c7b",
+      "task_id": "OCOR-DEV-0081-RAW"
     }
   ],
   "created_at": "2026-09-04T14:12:35Z",
@@ -571,6 +581,51 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0080"
+    },
+    {
+      "case_id": "OCOR-DEV-0081-CONTRACT",
+      "command": "unit/negative tests for FixtureResult/FixtureOutcome and each target's create/already-initialized/drift branch, including the live-verified TerminusDB response quirk, no live dependency",
+      "evidence_path": "OCOR-DEV-0081.json",
+      "raw_output_path": "OCOR-DEV-0081.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0081"
+    },
+    {
+      "case_id": "OCOR-DEV-0081-REAL-CREATE",
+      "command": "real first-time load of the synthetic fixture into TerminusDB and TypeDB against the live stack, with identical post-load verification digests across both backends",
+      "evidence_path": "OCOR-DEV-0081.json",
+      "raw_output_path": "OCOR-DEV-0081.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0081"
+    },
+    {
+      "case_id": "OCOR-DEV-0081-REAL-IDEMPOTENCY",
+      "command": "real re-invocation against the now-loaded fixtures reports ALREADY_INITIALIZED for both targets with zero mutating calls",
+      "evidence_path": "OCOR-DEV-0081.json",
+      "raw_output_path": "OCOR-DEV-0081.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0081"
+    },
+    {
+      "case_id": "OCOR-DEV-0081-REAL-DRIFT-FAIL-CLOSED",
+      "command": "an externally mutated TerminusDB fixture instance is detected as drift and rejected (exit 1), never silently overwritten or accepted",
+      "evidence_path": "OCOR-DEV-0081.json",
+      "raw_output_path": "OCOR-DEV-0081.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0081"
+    },
+    {
+      "case_id": "OCOR-DEV-0081-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0081.json",
+      "raw_output_path": "OCOR-DEV-0081.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0081"
     }
   ],
   "schema_version": "1.0"
