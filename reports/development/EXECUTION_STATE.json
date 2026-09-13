@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-0029-c3-canonical-commit-slice",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0029",
+    "branch": "governed/state-sync-ocor-dev-0029",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0029",
     "decision_id": "DEC-211",
-    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0029_PUSHED__AWAITING_CI",
+    "phase": "WAVE_12_CLOSED__WAVE_13_NEXT",
     "worktree": null
   },
-  "baseline_commit": "b8170f3c5ca9500d38faf95d2b2d01c7ded41850",
+  "baseline_commit": "7e1cf57bfe98c314f2cfb1ae0469249428e0ab8f",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -66,17 +66,17 @@
     "OCOR-DEV-0028",
     "OCOR-DEV-0029"
   ],
-  "current_gate": "G3_C1_AND_C3_RETAINED_SLICES_IN_PROGRESS",
+  "current_gate": "WAVE_12_CLOSED__WAVE_13_G2_SPIKES_NEXT",
   "latest_ci_evidence": {
-    "candidate_commit": "458d5af",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR84_MERGED_b8170f3c5ca9500d38faf95d2b2d01c7ded41850",
+    "candidate_commit": "6548578",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR85_MERGED_7e1cf57bfe98c314f2cfb1ae0469249428e0ab8f",
     "run_ids": [
-      34747552232,
-      34747552235,
-      34747552239,
-      34747552246,
-      34747552248,
-      34747552263
+      34749159735,
+      34749159695,
+      34749159658,
+      34749159812,
+      34749159742,
+      34749159688
     ]
   },
   "mandate_phase_status": {
@@ -137,9 +137,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/ocor-dev-0029-c3-canonical-commit-slice, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0029 (Build retained C3 canonical commit slice) implements all 5 sealed C3 ports (OCOR-DEV-0013) as PostgresC3Service, backed by real PostgreSQL and generalizing the real-concurrency properties already proven by the sealed C3 spikes (OCOR-DEV-0015/0016). A genuine architectural fitness violation (AFF-002/AFF-006: a direct psycopg import outside an adapters/ subtree) was found via scripts/validate_rccad.py before ever committing, and fixed by moving the client into a new ocor-runtime/src/ocor_runtime/c3/adapters/postgres.py -- the first such adapters/ subtree this delivery has needed. This closes wave 12 entirely (0024/0025/0028/0029 all merged). Next: wave 13's two remaining G2 spikes, OCOR-DEV-0026 (SPIKE restore without resurrection) and OCOR-DEV-0027 (SPIKE deterministic context-assembly replay), both with satisfied hard_dependencies -- determine readiness directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks.",
+  "next_executable_action": "OCOR-DEV-0029 merged (PR #85, 7e1cf57bfe98c314f2cfb1ae0469249428e0ab8f), all 13 checks green on the first push. This closes wave 12 entirely (0024/0025/0028/0029 all merged). Next: wave 13's two remaining G2 spikes, OCOR-DEV-0026 (SPIKE restore without resurrection) and OCOR-DEV-0027 (SPIKE deterministic context-assembly replay), both with hard_dependencies already satisfied -- confirm readiness directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks (scripts/ocor_autonomous_delivery.py --status remains stale/unreliable). Before writing any new retained (non-spike) src/ code touching a real backend client, route the client import through an ocor-runtime/src/ocor_runtime/**/adapters/ subtree up front, per AFF-002/AFF-006 (lesson from OCOR-DEV-0029). Before opening the next PR, proactively verify its required real backend is already provisioned in CI (or self-provisions, like Qdrant) and fix any gap before the first push.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T09:30:00Z"
+  "updated_at": "2026-09-13T09:45:00Z"
 }
