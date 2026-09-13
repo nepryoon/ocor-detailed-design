@@ -134,3 +134,97 @@ exit=0
 
 === scripts/validate_language_policy.py ===
 PASS: no tracked file uses a monitored extension outside its authorized area
+
+=== CI feedback (PR #78, first push, commit e5fd460): 3 jobs failed (delivery-activation, rccad-methodology, validation-closure) ===
+root cause: these jobs run the full 'ocor-runtime/tests/' sweep against a real, ephemeral PostgreSQL service container, but provisioned no TypeDB service; test_ocor_dev_0017.py's typedb_reachable fixture correctly failed closed (pytest.fail, not a skip) rather than silently passing without a real backend -- exactly the mandate's non-negotiable behavior, but it exposed that TypeDB was never wired into CI the way PostgreSQL already is.
+fix (root cause, not a workaround): added a real, ephemeral TypeDB service container (same pinned image digest as deploy/bootstrap/compose.yaml) to the 3 affected workflows (.github/workflows/ocor-delivery-activation.yml, ocor-rccad.yml, ocor-validation-closure.yml), mirroring the existing postgres service pattern exactly. Also hardened spikes/typedb_exact_commit/adapter.py's initialize() to create the ocor_default database if absent (check-before-mutate, same pattern as deploy/bootstrap/init/initialize_services.py's step_graph_databases) -- the ocor-bootstrap stack's persistent database already existed locally, but a fresh CI-provisioned TypeDB instance has none.
+
+=== verification of the database check-before-create logic against a real, throwaway scratch database (never touching the shared ocor_default database) ===
+GET /v1/databases before: scratch-probe-db absent
+POST /v1/databases/scratch-probe-db: HTTP 200 (created)
+GET /v1/databases after create: scratch-probe-db present
+DELETE /v1/databases/scratch-probe-db: HTTP 200
+GET /v1/databases after delete: scratch-probe-db absent, ocor_default still present (untouched)
+
+=== re-run: pytest ocor-runtime/tests/tasks/test_ocor_dev_0017.py -v against the existing ocor_default database (already-exists code path), confirming the fix is backward compatible ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/luca/projects/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collected 6 items
+
+tests/tasks/test_ocor_dev_0017.py ......                                 [100%]
+
+============================== 6 passed in 3.35s ===============================
+
+=== ruff check spikes/typedb_exact_commit/ (post-fix) ===
+All checks passed!
+
+=== mypy (post-fix) ===
+Success: no issues found in 45 source files
+
+=== yaml.safe_load validation of the 3 edited workflow files ===
+.github/workflows/ocor-delivery-activation.yml OK
+.github/workflows/ocor-rccad.yml OK
+.github/workflows/ocor-validation-closure.yml OK
+
+=== final full local pytest regression, ocor-runtime/tests/ (post-fix) ===
+........................................................................ [ 11%]
+........................................................................ [ 23%]
+..........F............................................................. [ 35%]
+........................................................................ [ 47%]
+........................................................................ [ 59%]
+........................................................................ [ 71%]
+........................................................................ [ 83%]
+........................................................................ [ 95%]
+.........................F.                                              [100%]
+=================================== FAILURES ===================================
+_____ test_two_clean_environments_resolve_identical_lock_and_image_digests _____
+
+tmp_path = PosixPath('/tmp/pytest-of-luca/pytest-55/test_two_clean_environments_re0')
+
+    def test_two_clean_environments_resolve_identical_lock_and_image_digests(tmp_path):
+        first = materialize_clean_environment(tmp_path / "first")
+        second = materialize_clean_environment(tmp_path / "second")
+        assert fingerprint(first) == fingerprint(second)
+        for environment in (first, second):
+            result = subprocess.run(
+                ["uv", "lock", "--project", str(environment), "--check"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+>           assert result.returncode == 0, result.stdout + result.stderr
+E           AssertionError: error: No interpreter found for Python ==3.12.11 in managed installations or search path
+E             
+E           assert 2 == 0
+E            +  where 2 = CompletedProcess(args=['uv', 'lock', '--project', '/tmp/pytest-of-luca/pytest-55/test_two_clean_environments_re0/first...code=2, stdout='', stderr='error: No interpreter found for Python ==3.12.11 in managed installations or search path\n').returncode
+
+tests/tasks/test_ocor_dev_0002.py:52: AssertionError
+___________________ test_running_interpreter_matches_the_pin ___________________
+
+    def test_running_interpreter_matches_the_pin() -> None:
+        pin = PIN_PATH.read_text(encoding="utf-8").strip()
+        actual = platform.python_version()
+>       assert actual == pin, (
+            f"running interpreter {actual} diverges from the pinned {pin} in "
+            f"{PIN_PATH}; the environment is not the governed one"
+        )
+E       AssertionError: running interpreter 3.12.14 diverges from the pinned 3.12.11 in /home/luca/projects/ocor-detailed-design/ocor-runtime/.python-version; the environment is not the governed one
+E       assert '3.12.14' == '3.12.11'
+E         
+E         - 3.12.11
+E         ?       ^
+E         + 3.12.14
+E         ?       ^
+
+tests/test_interpreter_pin.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED tests/tasks/test_ocor_dev_0002.py::test_two_clean_environments_resolve_identical_lock_and_image_digests
+FAILED tests/test_interpreter_pin.py::test_running_interpreter_matches_the_pin
+2 failed, 601 passed in 39.93s
+
+=== final full local pytest regression, 3 reports/tests suites (post-fix) ===
+.............................                                            [100%]
+29 passed in 3.79s

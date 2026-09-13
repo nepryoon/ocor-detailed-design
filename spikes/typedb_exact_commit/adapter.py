@@ -147,14 +147,40 @@ def _read(query: str) -> list[dict[str, Any]]:
     return list(answers)
 
 
+def _ensure_database() -> None:
+    # Check-before-mutate, matching deploy/bootstrap/init/initialize_services.py's
+    # OCOR-DEV-0080 pattern: the ocor-bootstrap stack already has DATABASE
+    # provisioned, but a fresh TypeDB instance (e.g. a CI-provisioned
+    # ephemeral service container) does not, so this must create it rather
+    # than assume it exists.
+    token = _token()
+    status, body = _request(
+        "GET", f"{TYPEDB_URL}/v1/databases", headers={"Authorization": f"Bearer {token}"}
+    )
+    if status != 200:
+        raise TypeDBAdapterError(f"cannot list TypeDB databases: {status} {body}")
+    existing = {entry["name"] for entry in json.loads(body).get("databases", [])}
+    if DATABASE in existing:
+        return
+    status, body = _request(
+        "POST", f"{TYPEDB_URL}/v1/databases/{DATABASE}", headers={"Authorization": f"Bearer {token}"}
+    )
+    if status != 200:
+        raise TypeDBAdapterError(f"failed to create TypeDB database {DATABASE!r}: {status} {body}")
+
+
 class TypeDBExactCommitAdapter:
     """Reads spike-fact rows through the sealed C2 exact-at-commit contract
     against a real TypeDB projection whose watermark advances independently
-    of fact ingestion (TypeDB's ``define`` is idempotent on this instance,
-    verified empirically: redefining an identical schema is a no-op, not an
-    error, so ``initialize`` needs no check-before-mutate probe)."""
+    of fact ingestion. ``initialize`` ensures the target database exists
+    (check-before-mutate, since a fresh instance -- e.g. a CI-provisioned
+    ephemeral service container -- has none yet) then defines the schema;
+    TypeDB's ``define`` was verified empirically to be idempotent on this
+    version (redefining an identical schema is a no-op, not an error), so
+    the schema step itself needs no check-before-mutate probe."""
 
     def initialize(self) -> None:
+        _ensure_database()
         _schema_write(SCHEMA_QUERY)
 
     def reset(self) -> None:
