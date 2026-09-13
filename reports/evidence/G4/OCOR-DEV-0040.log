@@ -1,0 +1,115 @@
+=== ruff check (backbone.py + test file) ===
+All checks passed!
+
+=== mypy (backbone.py) ===
+Success: no issues found in 1 source file
+
+=== pytest tests/tasks/test_ocor_dev_0040.py -v (run 1, real self-provisioned Kafka) ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 7 items
+
+tests/tasks/test_ocor_dev_0040.py::test_a_registered_schema_event_publishes_and_is_consumed_preserving_all_fields PASSED [ 14%]
+tests/tasks/test_ocor_dev_0040.py::test_partition_order_is_preserved_for_a_single_aggregate PASSED [ 28%]
+tests/tasks/test_ocor_dev_0040.py::test_an_unknown_schema_is_quarantined_and_never_published PASSED [ 42%]
+tests/tasks/test_ocor_dev_0040.py::test_missing_governed_context_is_quarantined_before_publication PASSED [ 57%]
+tests/tasks/test_ocor_dev_0040.py::test_an_out_of_order_aggregate_effect_is_quarantined_and_never_published PASSED [ 71%]
+tests/tasks/test_ocor_dev_0040.py::test_a_replayed_idempotency_key_is_a_safe_no_op_not_a_duplicate_publish PASSED [ 85%]
+tests/tasks/test_ocor_dev_0040.py::test_a_real_kafka_unreachability_fails_closed PASSED [100%]
+
+========================= 7 passed in 70.15s (0:01:10) =========================
+
+=== determinism repeats 2-4 (background, already captured) ===
+7 passed in 94.82s (0:01:34)
+7 passed in 87.33s (0:01:27)
+7 passed in 90.08s (0:01:30)
+
+=== scripts/validate_rccad.py --root . ===
+{
+  "checked_artifacts": 22,
+  "dynamic_assurance": "CI_REQUIRED",
+  "findings": [],
+  "fitness_results": {
+    "AFF-001": "PASS_STATIC_PRECHECK",
+    "AFF-002": "PASS_STATIC_PRECHECK",
+    "AFF-003": "PASS_STATIC_PRECHECK",
+    "AFF-004": "PASS_STATIC_PRECHECK",
+    "AFF-005": "PASS_STATIC_PRECHECK",
+    "AFF-006": "PASS_STATIC_PRECHECK",
+    "AFF-007": "PASS_STATIC_PRECHECK",
+    "AFF-008": "PASS_STATIC_PRECHECK",
+    "AFF-009": "PASS_STATIC_PRECHECK",
+    "AFF-010": "PASS_STATIC_PRECHECK"
+  },
+  "methodology_sha256": "231ce3325537de85890b16e97f138bd6a4263fc1e240094ed26499af9aeeb6cd",
+  "status": "PASS_LOCAL_PRECHECK"
+}
+
+=== scripts/validate_language_policy.py ===
+PASS: no tracked file uses a monitored extension outside its authorized area
+
+=== full local pytest regression: ocor-runtime/.venv/bin/pytest tests/ -q (bare console script) ===
+........................................................................ [  9%]
+........................................................................ [ 18%]
+...............F........................................................ [ 28%]
+........................................................................ [ 37%]
+........................................................................ [ 47%]
+........................................................................ [ 56%]
+........................................................................ [ 66%]
+........................................................................ [ 75%]
+........................................................................ [ 85%]
+........................................................................ [ 94%]
+......................................F.                                 [100%]
+=================================== FAILURES ===================================
+_____ test_two_clean_environments_resolve_identical_lock_and_image_digests _____
+
+tmp_path = PosixPath('/tmp/pytest-of-luca/pytest-141/test_two_clean_environments_re0')
+
+    def test_two_clean_environments_resolve_identical_lock_and_image_digests(tmp_path):
+        first = materialize_clean_environment(tmp_path / "first")
+        second = materialize_clean_environment(tmp_path / "second")
+        assert fingerprint(first) == fingerprint(second)
+        for environment in (first, second):
+            result = subprocess.run(
+                ["uv", "lock", "--project", str(environment), "--check"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+>           assert result.returncode == 0, result.stdout + result.stderr
+E           AssertionError: error: No interpreter found for Python ==3.12.11 in managed installations or search path
+E             
+E           assert 2 == 0
+E            +  where 2 = CompletedProcess(args=['uv', 'lock', '--project', '/tmp/pytest-of-luca/pytest-141/test_two_clean_environments_re0/firs...code=2, stdout='', stderr='error: No interpreter found for Python ==3.12.11 in managed installations or search path\n').returncode
+
+tests/tasks/test_ocor_dev_0002.py:52: AssertionError
+___________________ test_running_interpreter_matches_the_pin ___________________
+
+    def test_running_interpreter_matches_the_pin() -> None:
+        pin = PIN_PATH.read_text(encoding="utf-8").strip()
+        actual = platform.python_version()
+>       assert actual == pin, (
+            f"running interpreter {actual} diverges from the pinned {pin} in "
+            f"{PIN_PATH}; the environment is not the governed one"
+        )
+E       AssertionError: running interpreter 3.12.14 diverges from the pinned 3.12.11 in /home/luca/projects/ocor-detailed-design/ocor-runtime/.python-version; the environment is not the governed one
+E       assert '3.12.14' == '3.12.11'
+E         
+E         - 3.12.11
+E         ?       ^
+E         + 3.12.14
+E         ?       ^
+
+tests/test_interpreter_pin.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED tests/tasks/test_ocor_dev_0002.py::test_two_clean_environments_resolve_identical_lock_and_image_digests
+FAILED tests/test_interpreter_pin.py::test_running_interpreter_matches_the_pin
+2 failed, 758 passed in 275.83s (0:04:35)
+
+=== 3 CI-wired reports/tests suites ===
+.............................                                            [100%]
+29 passed in 4.26s
