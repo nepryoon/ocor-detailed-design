@@ -380,6 +380,7 @@ def main() -> int:
         "reports/evidence/local-gates/phase2-4-fr047-traceability-20260912.json",
         "reports/evidence/local-gates/phase2-4-backlog-generator-drift-20260912.json",
         "reports/evidence/local-gates/phase3-language-migration-benchmark-20260912.json",
+        "reports/evidence/local-gates/phase3-escalation-disposition-20260913.json",
         "reports/development/environment-evidence-dec-211.json",
         "reports/development/PHASE3_LANGUAGE_MIGRATION_DECISION.md",
         "reports/benchmarks/fixtures/phase3_canonical_corpus.json",

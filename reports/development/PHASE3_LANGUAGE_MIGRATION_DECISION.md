@@ -133,3 +133,108 @@ che resta sospesa in attesa di:
 `NOT_ESTABLISHED`, `PoC` e `Production` `NO-GO`. Nessuna voce di questo
 documento promuove un requisito, chiude un `OI-*`/`ASM-*`/`RSK-*`, attiva
 una capability differita, o approva una migrazione.
+
+## 8. Disposizione del Product Owner sull'escalation (2026-09-13)
+
+Il Product Owner ha letto questo documento e registra qui la propria
+decisione su `PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED`
+(§5), che il paragrafo restava in attesa di lui. Questa sezione è un'aggiunta
+in coda: nessun numero delle sezioni 1–7 è stato riscritto.
+
+### 8.1 Decisione
+
+**Non si apre una decisione di migrazione per il kernel di canonicalizzazione.**
+La disposizione è **RINVIATA**, non respinta: il candidato di §4 resta
+registrato e la misura di §2 resta valida.
+
+### 8.2 Motivazione
+
+1. Il 4,24× è un rapporto relativo. La seconda condizione della stessa
+   clausola, il p95 assoluto, non è stata superata: 1,77 ms per documento da
+   10 KB contro una soglia di 2 ms.
+2. Il budget di 50 ms da cui l'intera scala delle soglie è derivata è
+   un'ipotesi di lavoro, non un requisito approvato. NFR-076 classifica i
+   workload in L0, L1 e L2 e non fissa alcun budget di latenza, e OI-024 è
+   aperto.
+3. NFR-080 richiede che ogni SLO sia definito per classe di servizio,
+   percentile, finestra, workload, ambiente e comportamento al superamento.
+   Nessuno SLO pre-registrato in questa forma esiste oggi per il fast path
+   L0.
+4. Migrare ora sostituirebbe architettura approvata, AFF-001 e le righe 1 e 2
+   della tabella normativa di `OCOR_LANGUAGE_POLICY.md`, per un guadagno che
+   nessun requisito approvato richiede.
+
+### 8.3 Condizione di riapertura (falsificabile)
+
+La disposizione si riapre automaticamente al verificarsi di una qualsiasi di
+queste:
+
+a. viene registrato uno SLO reale per il fast path L0 nella forma richiesta
+   da `NFR-080`, che superseda o chiuda `OI-024` per via governata, e la
+   misura sigillata lo viola;
+b. il p95 assoluto sul corpus sigillato supera i 2 ms in una run
+   riproducibile;
+c. i componenti 2, 3 o 4 diventano misurabili e superano le rispettive
+   soglie.
+
+### 8.4 Vincoli osservati da questa disposizione
+
+- Le soglie del §3 di `OCOR_LANGUAGE_POLICY.md` non sono state toccate: sono
+  state fissate prima della misura, e la loro immutabilità è ciò che rende il
+  risultato credibile. Questa disposizione cambia l'esito applicato al
+  candidato, non il metro con cui è stato misurato.
+- `OI-024` non è chiuso da questa disposizione. Nessun `ASM-*`/`RSK-*` è
+  modificato.
+- Nessuna modifica al codice del kernel di canonicalizzazione
+  (`ocor-runtime/src/ocor_runtime/canonical.py`), che resta quello sigillato
+  e misurato in §2.
+- Nessuna promozione di `E1`, `E2` o requisiti a `Verified`, nessun claim di
+  conformità runtime deriva da questa disposizione.
+
+### 8.5 Verifica del record decisionale formale
+
+Il Product Owner ha chiesto di verificare se la metodologia del repository
+richiede un record decisionale formale (un nuovo identificativo `DEC-*`, un
+ARA Decision Record, una voce nel Decision Register) per una disposizione di
+questo tipo, e di allocare il prossimo identificativo effettivamente libero
+solo se richiesto.
+
+**Verificato: non è richiesto.** Il repository distingue due categorie
+distinte:
+
+- L'**adozione di una nuova decisione di governance** (es. `DEC-210`,
+  `DEC-211`, `DEC-212`) riceve un identificativo `DEC-*`, un ARA Decision
+  Record e una voce nel Decision Register — così è stato per `DEC-212`
+  (`OCOR_Decision_Register_v1.6_APPROVED.md`, riga `DEC-212`), che ha
+  adottato una nuova politica normativa vincolante.
+- La **disposizione di un'escalation** sollevata durante l'esecuzione
+  autonoma non riceve un identificativo `DEC-*`: le escalation precedenti di
+  questo stesso mandato (`PHASE2-4-BACKLOG-GENERATOR-DRIFT`, risolta in
+  PR #67; `GITHUB-BRANCH-PROTECTION-001`, tracciata come compensata) sono
+  state chiuse o dispositate aggiornando i documenti e i file di stato
+  esistenti, senza mai coniare un nuovo `DEC-*`.
+
+Questa disposizione rientra nella seconda categoria: non adotta alcuna nuova
+politica, non modifica alcuna soglia, non autorizza alcuna migrazione — resta
+lo status quo, con la sola differenza che l'escalation è ora dispositata
+anziché aperta. Per costruzione (§8.4) non c'è nulla da registrare come nuova
+decisione di governance. Coerentemente con l'istruzione del Product Owner,
+non è stato coniato alcun identificativo: sono stati aggiornati
+esclusivamente i documenti esistenti (questa sezione,
+`reports/development/EXECUTION_STATE.json`,
+`reports/development/MODEL_HANDOFF.json`).
+
+### 8.6 Stato dell'escalation
+
+`PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED`:
+`OPEN` → **`DISPOSED_DEFERRED`**. Non bloccante per l'esecuzione del backlog,
+come già era; resta riservata al Product Owner l'eventuale riapertura secondo
+la condizione falsificabile di §8.3.
+
+### 8.7 Evidence fence (invariato)
+
+`E1=0`, `E2=0`, zero requisiti globali `Verified`, `runtime_conformance`
+`NOT_ESTABLISHED`, `PoC` e `Production` `NO-GO`. Questa sezione non promuove
+alcun requisito, non chiude `OI-024` né alcun `ASM-*`/`RSK-*`, non attiva
+alcuna capability differita, non approva alcuna migrazione, non modifica il
+codice del kernel sigillato.

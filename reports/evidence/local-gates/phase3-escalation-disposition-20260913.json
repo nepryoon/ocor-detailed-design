@@ -1,0 +1,45 @@
+{
+  "branch": "governed/phase3-component1-escalation-disposition-deferred",
+  "decision_id": "DEC-210",
+  "phase": "PHASE_3_ESCALATION_DISPOSITION",
+  "baseline_commit": "0b3d855c09f50be583a970868ed19375ef4d0802",
+  "gates": [
+    {"command": "sha256sum -c inputs/normative/SHA256SUMS", "result": "PASS_8_OF_8"},
+    {"command": "append a new section 8 to reports/development/PHASE3_LANGUAGE_MIGRATION_DECISION.md recording the Product Owner's explicit, verbatim-dictated disposition; sections 1-7 (the sealed measurement and its numbers) left byte-for-byte untouched", "result": "DONE; git diff --stat shows 105 insertions, 0 deletions"},
+    {"command": "check whether the repository methodology requires a new formal DEC-* decision record for an escalation disposition of this type (deferral, not a new policy adoption)", "result": "DETERMINED_NOT_REQUIRED; contrasted with DEC-212 (a genuine new policy adoption, registered in ocor-runtime/docs/governance_dossier/registers/OCOR_Decision_Register_v1.6_APPROVED.md) and with prior escalations this mandate dispositioned without minting a new DEC-* (PHASE2-4-BACKLOG-GENERATOR-DRIFT resolved in PR #67, GITHUB-BRANCH-PROTECTION-001 compensated); this disposition adopts no new policy, changes no threshold, authorizes nothing -- no identifier was coined; only existing documents were updated, per the Product Owner's own conditional instruction"},
+    {"command": "update reports/development/EXECUTION_STATE.json's mandate_phase_status.phase_3_benchmark.escalations entry from OPEN to DISPOSED_DEFERRED with the same rationale and falsifiable reopening condition", "result": "DONE"},
+    {"command": "ruff check .", "result": "PASS_all_checks"},
+    {"command": "ocor-runtime/.venv/bin/python -m mypy", "result": "PASS_45_source_files"},
+    {"command": "ocor-runtime/.venv/bin/python scripts/validate_rccad.py --root .", "result": "FAIL_on_first_run (AFF-008: MODEL_HANDOFF.json's new evidence_paths entry used a document-section fragment 'PHASE3_LANGUAGE_MIGRATION_DECISION.md#section-8', which is not a real filesystem path) -> fixed to the plain file path -> PASS_LOCAL_PRECHECK_0_findings on rerun"},
+    {"command": "ocor-runtime/.venv/bin/python scripts/validate_language_policy.py", "result": "PASS"},
+    {"command": "ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base origin/main --branch governed/phase3-component1-escalation-disposition-deferred", "result": "PASS_4_changed_paths_immutable_surfaces_untouched"},
+    {"command": "ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests/ (OCOR_LIVE_POSTGRES_DSN set locally) + reports/tests/test_generate_contracts_reference_resolution.py reports/tests/test_backlog_generator_reality_parity.py reports/tests/test_language_migration_benchmark_harness.py", "result": "2_failed_636_passed_0_skipped_0_errors -- identical, unaffected sandbox-only interpreter-pin gap; this is a documents-only change, no source or test files touched, and the regression confirms it"},
+    {"command": "scripts/validate_ocor_development_plan.py --authorized-extension", "result": "PASS_37_PASS_2_NOT_EXECUTED_0_FAIL; no self-hash settle needed since validate_ocor_development_plan.py itself was not edited this iteration"}
+  ],
+  "escalation_status": {
+    "id": "PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED",
+    "status": "DISPOSED_DEFERRED",
+    "disposed_by": "Product Owner, explicit written instruction, 2026-09-13",
+    "decision": "DEFERRED, not opened, not rejected -- no migration decision is opened for the canonicalization kernel; the candidate (OCOR_LANGUAGE_POLICY.md §4) and the sealed measurement (this file's sibling phase3-language-migration-benchmark-20260912.json, and PHASE3_LANGUAGE_MIGRATION_DECISION.md §2) stay registered and valid.",
+    "rationale_verbatim_from_product_owner": [
+      "Il 4,24x e' un rapporto relativo. La seconda condizione della stessa clausola, il p95 assoluto, non e' stata superata: 1,77 ms per documento da 10 KB contro una soglia di 2 ms.",
+      "Il budget di 50 ms da cui l'intera scala delle soglie e' derivata e' un'ipotesi di lavoro, non un requisito approvato. NFR-076 classifica i workload in L0, L1 e L2 e non fissa alcun budget di latenza, e OI-024 e' aperto.",
+      "NFR-080 richiede che ogni SLO sia definito per classe di servizio, percentile, finestra, workload, ambiente e comportamento al superamento. Nessuno SLO pre-registrato in questa forma esiste oggi per il fast path L0.",
+      "Migrare ora sostituirebbe architettura approvata, AFF-001 e le righe 1 e 2 della tabella normativa di OCOR_LANGUAGE_POLICY.md, per un guadagno che nessun requisito approvato richiede."
+    ],
+    "transparency_note": "The rationale above is transcribed verbatim as the Product Owner explicitly instructed ('da riportare come tale'), without editorializing. Point 2 cites OI-024 as the open item tied to the hypothetical latency budget; OCOR_LANGUAGE_POLICY.md's own §3 already contains a correction noting that the open item actually governing numeric performance thresholds is OI-008, while OI-024 governs risk/cost thresholds for dual-control authority (DEC-131/FR-136/FR-137). This note flags the textual tension without altering the disposition, which is conservative (no migration opened) regardless of which OI-* identifier is cited at this point.",
+    "reopening_condition_falsifiable": [
+      "a real SLO for the L0 fast path is registered in the form NFR-080 requires, superseding or closing OI-024 through governed process, and the sealed measurement violates it",
+      "the absolute p95 on the sealed corpus exceeds 2ms in a reproducible run",
+      "components 2, 3 or 4 become measurable and exceed their respective thresholds"
+    ],
+    "constraints_observed": [
+      "OCOR_LANGUAGE_POLICY.md §3 thresholds untouched",
+      "OI-024 not closed",
+      "no ASM-*/RSK-* modified",
+      "no change to the sealed canonicalization kernel code (ocor-runtime/src/ocor_runtime/canonical.py)",
+      "no promotion of E1/E2 or any requirement to Verified, no runtime-conformance claim"
+    ]
+  },
+  "note": "Executes the Product Owner's explicit written disposition on the PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED escalation raised by the prior Phase 3 iteration (reports/evidence/local-gates/phase3-language-migration-benchmark-20260912.json). This is a documents-only iteration: no source code, no tests, no threshold values changed. E1=0, E2=0, runtime conformance NOT_ESTABLISHED, PoC/Production NO-GO unchanged. Next executable, non-reserved action: resume backlog execution at the last wave-11 G2 spike, OCOR-DEV-0021."
+}

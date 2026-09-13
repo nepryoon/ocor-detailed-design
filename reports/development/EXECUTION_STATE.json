@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-0018-jena-marking-safe-projection-spike",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0018",
-    "decision_id": "DEC-211",
-    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0018_PUSHED__AWAITING_CI",
+    "branch": "governed/phase3-component1-escalation-disposition-deferred",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__PHASE3-ESCALATION-DISPOSITION",
+    "decision_id": "DEC-210",
+    "phase": "ESCALATION_DISPOSITION__PHASE3_COMPONENT1_DEFERRED__PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "d573b7e119b195837cc9a7f122369c06ace1523d",
+  "baseline_commit": "0b3d855c09f50be583a970868ed19375ef4d0802",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -61,17 +61,17 @@
     "OCOR-DEV-0017",
     "OCOR-DEV-0018"
   ],
-  "current_gate": "G2_WS12_CLOSED__G2_SPIKES_IN_PROGRESS",
+  "current_gate": "G2_WS12_CLOSED__G2_SPIKES_IN_PROGRESS__PHASE3_ESCALATION_DISPOSED_DEFERRED",
   "latest_ci_evidence": {
-    "candidate_commit": "08c223e",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR78_MERGED_d573b7e119b195837cc9a7f122369c06ace1523d_after_a_TypeDB_CI_service_fix_on_the_second_push",
+    "candidate_commit": "901ff90",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR79_MERGED_0b3d855c09f50be583a970868ed19375ef4d0802_first_push_proactive_fuseki_ci_fix_worked",
     "run_ids": [
-      34737205916,
-      34737205918,
-      34737205929,
-      34737205931,
-      34737205942,
-      34737205945
+      34738721812,
+      34738721822,
+      34738721830,
+      34738721833,
+      34738721862,
+      34738721884
     ]
   },
   "mandate_phase_status": {
@@ -125,16 +125,16 @@
     "phase_3_benchmark": {
       "detail": "Reproducible, content-addressed benchmark harness (scripts/run_language_migration_benchmark.py) built and run. Component 1 (RFC 8785 canonicalization kernel) MEASURED: median ratio Python/Node 4.24x-4.77x across 3 runs (threshold >3x) -> MIGRATION_THRESHOLD_EXCEEDED. Escalation PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED registered and reserved to the Product Owner (opening a migration decision is authorized by policy; performing the migration is not, since it would substitute approved architecture). Components 2-4 (C3 commit path, C5 event backbone, C4 projection) honestly reported NOT_YET_MEASURABLE: no live PostgreSQL backend (component 2) and no real C4/C5 implementation exists yet (components 3-4), per docs/planning/OCOR_CURRENT_STATE_BASELINE.json. Full detail: reports/development/PHASE3_LANGUAGE_MIGRATION_DECISION.md.",
       "escalations": [
-        "PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED (OPEN, reserved to Product Owner, non-blocking for backlog execution)"
+        "PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED (DISPOSED_DEFERRED 2026-09-13 by explicit Product Owner instruction: no migration decision opened, the candidate and the measurement stay registered/valid; reopens automatically per the falsifiable condition in PHASE3_LANGUAGE_MIGRATION_DECISION.md \u00a78.3 -- a real NFR-080-form SLO for the L0 fast path that the sealed measurement violates, an absolute p95 above 2ms on the sealed corpus, or components 2/3/4 becoming measurable and exceeding their thresholds. No new DEC-* record: this disposition adopts no new policy, changes no threshold, and authorizes nothing, unlike DEC-212's actual policy adoption -- see PHASE3_LANGUAGE_MIGRATION_DECISION.md \u00a78.5 for the methodology check. OI-024 not closed, no ASM-*/RSK-* touched, no kernel code changed, no E1/E2/Verified/runtime-conformance promotion.)"
       ],
       "merge_commit": "4532dded147f77f025f65fd45d53b6a8043671e9",
       "pr": 69,
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/ocor-dev-0018-jena-marking-safe-projection-spike, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0018 (SPIKE Jena marking-safe projection) reuses ocor_runtime.c4_marking's sealed MarkingEngine/MarkingSchemeDefinition/MarkingSet unmodified and adds a real Fuseki-backed marking-safe projection adapter (spikes/jena_marking/adapter.py), proving that a resource is never disclosed without its marking joined in the same SPARQL query, and that count/existence operations are structurally derived from the same filtered list so they can never diverge or leak. Learning from OCOR-DEV-0017's CI failure, this iteration proactively added a real, ephemeral Fuseki service (build+run, since its image is built from source) to the same 3 CI workflows already carrying TypeDB, before ever opening the PR. Next: the last wave-11 G2 spike, OCOR-DEV-0021 (SPIKE identity-policy latency and failure semantics), which already has its hard_dependencies satisfied.",
+  "next_executable_action": "Push branch governed/phase3-component1-escalation-disposition-deferred, open PR, poll CI to green, merge, verify post-merge SHA. This iteration executes the Product Owner's explicit written disposition on the PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED escalation: DEFERRED, not opened, not rejected -- the candidate and the sealed measurement stay registered/valid, with a falsifiable reopening condition recorded in PHASE3_LANGUAGE_MIGRATION_DECISION.md \u00a78.3. No migration-threshold values were touched, no OI/ASM/RSK closed, no kernel code changed. After this merges, resume the backlog exactly where it was: the last wave-11 G2 spike, OCOR-DEV-0021 (SPIKE identity-policy latency and failure semantics), which already has its hard_dependencies satisfied -- check whether its required real backend is already provisioned in CI before the first push, per the lesson from OCOR-DEV-0017/0018.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T05:10:00Z"
+  "updated_at": "2026-09-13T05:30:00Z"
 }
