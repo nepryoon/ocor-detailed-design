@@ -100,7 +100,12 @@ def load_terminusdb_fixture(fixture: dict[str, Any], password: str) -> FixtureOu
     status, body = _request(
         "GET", f"{TERMINUSDB_URL}/api/document/admin/{database}?id={fixture['instance_id']}", headers=headers
     )
-    if status != 200:
+    # TerminusDB has been observed to report "document not found" two
+    # different ways for the identical condition: a real HTTP 404, or an
+    # HTTP 200 whose body is prefixed with a literal "Status: 404\n..."
+    # text header (see _parse_terminusdb_body). Both must be treated as
+    # absent; only a status that is neither is a genuine query failure.
+    if status not in (200, 404):
         raise FixtureError(f"cannot query TerminusDB document: {status} {body}")
     parsed = _parse_terminusdb_body(body)
     if parsed.get("api:status") != "api:not_found":

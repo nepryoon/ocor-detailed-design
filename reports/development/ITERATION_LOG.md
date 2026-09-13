@@ -1066,3 +1066,77 @@
   `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
 - Prossima azione: `OCOR-DEV-0083` ("Implement bounded fault injection"),
   che dipende da `OCOR-DEV-0079`.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0083 (fault injection bounded, reale)
+
+- PR #74 mergiata (reset e teardown): tutti e 13 i check verdi, merge
+  `6a7d51ef7534f0cbd2f3519d9e92f2441c5f8aa2`, verifica post-merge con
+  `git fetch origin main` conferma `origin/main == 6a7d51e`. `fuseki`
+  nuovamente terminato per OOM da un container host non correlato
+  (pattern ricorrente, host sotto pressione di memoria per un container
+  preesistente da ~7 GiB) — riavviato senza toccare altro.
+- Trovato che `scripts/fault_inject_test_environment.py` esisteva già
+  (pause/unpause/restart/disconnect/reconnect grezzi, dry-run di default)
+  ma senza alcuna nozione di "bounded" — nessun rilevamento del guasto né
+  recupero automatico garantito. Aggiunta una modalità `--bounded`: applica
+  il guasto, attende (con timeout) la condizione di rottura attesa, poi —
+  in un blocco `finally`, quindi il recupero viene tentato anche se il
+  rilevamento non si completa mai — applica l'azione di recupero
+  corrispondente e attende (con un secondo timeout) il ritorno alla
+  normalità. File già referenziato come input sigillato in
+  `reports/evidence/G2/OCOR-DEV-0073.json`/`OCOR-DEV-0075.json`, ma solo
+  come record storico descrittivo (nessun validatore ne applica l'hash
+  come invariante continuo) — modifica diretta sicura, verificato.
+- **Scoperta tecnica reale e corretta durante l'iterazione**: il primo
+  tentativo di rilevare `disconnect` tramite una semplice connessione TCP
+  al servizio pubblicato (`socket.create_connection`) risultava sempre
+  "raggiungibile" anche a container scollegato — su questo host Docker
+  Desktop il proxy di port-forwarding completa l'handshake TCP
+  indipendentemente dall'attacco di rete del container. Verificato con una
+  prova diretta (connessione TCP grezza riuscita vs richiesta HTTP reale
+  fallita durante lo stesso disconnect). Corretto sostituendo l'oracolo con
+  un vero round-trip HTTP per servizio (`HEALTH_URLS`), che rileva
+  correttamente sia il guasto sia il recupero. `--bounded disconnect`
+  resta non supportato per `spire-server`/`spire-agent` (nessuna porta
+  pubblicata da verificare dall'host).
+- **Verifica reale contro lo stack live**: RUN 1 (`pause`/`unpause` reale
+  su typedb) → rilevato e recuperato entro la finestra limitata; RUN 2
+  (`disconnect`/`reconnect` reale su fuseki, oracolo HTTP corretto) →
+  rilevato e recuperato; RUN 3 (`restart` reale su keycloak) →
+  autorecupero confermato; RUN 4 (negativi) → `--bounded` rifiuta
+  `reconnect`/`unpause` come guasto primario e rifiuta `disconnect` per
+  `spire-server` senza endpoint pubblicato.
+- **Bug reale trovato e corretto ripristinando lo stato dello stack**:
+  `deploy/bootstrap/fixtures/load_fixtures.py` (da `OCOR-DEV-0081`)
+  tollerava solo la stranezza "TerminusDB risponde 200 con prefisso
+  testuale Status: 404" per il caso "documento assente", ma TerminusDB è
+  stato osservato restituire anche un vero HTTP 404 per la stessa identica
+  condizione in invocazioni diverse — corretto per accettare entrambe le
+  forme; aggiunto un test di regressione dedicato al file di test già
+  esistente di `OCOR-DEV-0081` (`ocor-runtime/tests/tasks/test_ocor_dev_0081.py`).
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0083.py` (12 test
+  unit/negative/contract, ogni chiamata subprocess/HTTP sostituita con un
+  doppio deterministico).
+- `scripts/validate_language_policy.py` verificato PRIMA di aprire la PR:
+  nessuna nuova area necessaria.
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (45 file),
+  `validate_rccad.py` PASS, `validate_language_policy.py` PASS, pytest
+  completo `2 failed, 600 passed, 5 skipped, 10 errors` (stessi gap
+  sandbox noti, +13 rispetto alla fase precedente: 12 nuovi test più 1 di
+  regressione per il bug TerminusDB),
+  `validate_ocor_development_plan.py --authorized-extension` PASS dopo il
+  consueto doppio-run di assestamento self-hash.
+- Evidenza sigillata contro lo stack live reale, inclusi tutti e 3 i cicli
+  bounded reali e la scoperta tecnica TCP-vs-HTTP:
+  `reports/evidence/G2/OCOR-DEV-0083.json` +
+  `reports/evidence/G2/OCOR-DEV-0083.log`, aggiunta a
+  `reports/evidence/G2/MANIFEST.json` (diff puramente additivo).
+  `scripts/validate_runtime_evidence.py --task OCOR-DEV-0083 --non-skipped`
+  PASS.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: `OCOR-DEV-0084` ("Capture reproducible environment
+  evidence"), che dipende da `OCOR-DEV-0081`, `OCOR-DEV-0082` e
+  `OCOR-DEV-0083` — l'ultimo task della catena WS-12 di riparazione
+  dell'infrastruttura, dopo il quale gli spike G2
+  `OCOR-DEV-0016`/`0017`/`0018`/`0021` diventano eseguibili.

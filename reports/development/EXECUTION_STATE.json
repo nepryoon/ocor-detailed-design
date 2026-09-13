@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-0082-reset-teardown",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0082",
+    "branch": "governed/ocor-dev-0083-bounded-fault-injection",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0083",
     "decision_id": "DEC-211",
-    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0082_PUSHED__AWAITING_CI",
+    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0083_PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "48b6d01a254d0ceb78fb9ad4ec96088e1835c5fb",
+  "baseline_commit": "6a7d51ef7534f0cbd2f3519d9e92f2441c5f8aa2",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -54,19 +54,20 @@
     "OCOR-DEV-0079",
     "OCOR-DEV-0080",
     "OCOR-DEV-0081",
-    "OCOR-DEV-0082"
+    "OCOR-DEV-0082",
+    "OCOR-DEV-0083"
   ],
   "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__LANGUAGE_POLICY_ADOPTED__PHASE_2_4_CLOSED__PHASE_3_CLOSED",
   "latest_ci_evidence": {
-    "candidate_commit": "8d768290657933fcd83ca8720b4a3035c7733304",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR73_MERGED_48b6d01a254d0ceb78fb9ad4ec96088e1835c5fb",
+    "candidate_commit": "c7c4d74443bb0542da9c170ea7e4318ad98a82f8",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR74_MERGED_6a7d51ef7534f0cbd2f3519d9e92f2441c5f8aa2",
     "run_ids": [
-      34727080749,
-      34727080752,
-      34727080775,
-      34727080803,
-      34727080804,
-      34727080817
+      34728658226,
+      34728658231,
+      34728658233,
+      34728658237,
+      34728658264,
+      34728658294
     ]
   },
   "mandate_phase_status": {
@@ -127,9 +128,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/ocor-dev-0082-reset-teardown, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0082 sealed with real evidence against the same live 11-service Docker stack: a --reset mode was added alongside the pre-existing --teardown, undoing OCOR-DEV-0080's 4 mutating init steps without stopping containers; real reset, idempotent re-reset, and a real reset->re-init round-trip (proving reset is a genuine complete inverse) were all executed. Next: OCOR-DEV-0083 (Implement bounded fault injection), which depends on OCOR-DEV-0079.",
+  "next_executable_action": "Push branch governed/ocor-dev-0083-bounded-fault-injection, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0083 sealed with real evidence against the same live 11-service Docker stack: real bounded pause/unpause, disconnect/reconnect (corrected to an HTTP round-trip oracle after discovering bare TCP connects stay open through a disconnected container on this Docker Desktop host), and restart cycles all detected and auto-recovered within bounded windows. Bundled a real bug fix discovered while restoring stack state: OCOR-DEV-0081's load_fixtures.py only tolerated one of two observed TerminusDB not-found response shapes. Next: OCOR-DEV-0084 (Capture reproducible environment evidence), which depends on OCOR-DEV-0081/0082/0083 -- the last task in the WS-12 infrastructure-bootstrap-repair chain, after which G2 spikes OCOR-DEV-0016/0017/0018/0021 become executable.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T00:45:00Z"
+  "updated_at": "2026-09-13T01:30:00Z"
 }
