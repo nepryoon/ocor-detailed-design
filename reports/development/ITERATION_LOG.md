@@ -1911,10 +1911,25 @@
   iterazione (non rimandato).
 - Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
   `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
-- Prossima azione: push del branch
-  `governed/ocor-dev-0026-restore-no-resurrection`, apertura PR,
-  polling CI, merge a gate verdi, verifica SHA post-merge. Poi
-  proseguire con `OCOR-DEV-0027` (SPIKE deterministic context-assembly
-  replay, wave 13) oppure `OCOR-DEV-0030` (Build retained
-  governed-action slice, gate G3, appena diventato pronto dopo il
-  merge di `OCOR-DEV-0029`).
+- `OCOR-DEV-0026`: tutti e 13 i check verdi al primo push. PR #87
+  mergiata (`a78d054d22ac85839181c833a0acc8deed8aa9c8`), SHA
+  post-merge verificata.
+
+## 2026-09-13 — Sincronizzazione stato: OCOR-DEV-0026 (post-merge)
+
+- Per istruzione esplicita del Product Owner, sincronizzazione
+  immediata dei tre file di stato subito dopo il merge della PR #87,
+  su un branch dedicato (`governed/state-sync-ocor-dev-0026`),
+  rispecchiando lo stesso schema già usato per `OCOR-DEV-0029`/PR #86.
+- `baseline_commit` aggiornato a
+  `a78d054d22ac85839181c833a0acc8deed8aa9c8` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `branch` allineato al
+  branch di questa iterazione di sincronizzazione. Verificata l'assenza
+  di `RCCAD-STATE-HANDOFF-DRIFT`.
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
+- Prossima azione: determinare il prossimo task del wave 13
+  direttamente dal backlog JSON. Candidati noti: `OCOR-DEV-0027`
+  (SPIKE deterministic context-assembly replay) e `OCOR-DEV-0030`
+  (Build retained governed-action slice, gate G3, diventato pronto dopo
+  il merge di `OCOR-DEV-0029`).
