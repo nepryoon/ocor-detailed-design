@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "c9ac9ca4615337193202846d06a4b5f6e38afcbc",
-  "branch": "governed/state-sync-ocor-dev-0030",
+  "baseline_commit": "c452a38680058b66d47588ea1dccee433d183487",
+  "branch": "governed/ocor-dev-0031-mission-thread",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -460,6 +460,30 @@
     {
       "command": "compute the next DAG-ready task set directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks (including OCOR-DEV-0030) after OCOR-DEV-0030 merged, checking parallel_wave on the result",
       "result": "ready set = {OCOR-DEV-0031} -- parallel_wave=14, title 'Integrate first real C1-C8 synthetic mission thread', gate G3, depending on OCOR-DEV-0017/0018/0019/0022/0024/0027/0028/0029/0030 (all merged); a significantly larger integration task than recent single-component slices"
+    },
+    {
+      "command": "gh pr checks 92; gh pr merge 92 --merge; git fetch origin main",
+      "result": "13/13 checks pass on the first push; PR #92 MERGED_c452a38680058b66d47588ea1dccee433d183487; post-merge SHA verified"
+    },
+    {
+      "command": "read docs/OCOR_LLD_v1.1.md sections 2.1-2.9/3/4 and the full source of every C1-C8 hard-dependency component (ocor_runtime.c1.compiler, ocor_runtime.c2.ports, ocor_runtime.c2_identity, ocor_runtime.c3.service, ocor_runtime.c4_marking, ocor_runtime.c6.engine, ocor_runtime.c6_capabilities, ocor_runtime.c7_emission, ocor_runtime.c8_agent, spikes.typedb_exact_commit.adapter, spikes.jena_marking.adapter, spikes.kafka_delivery.oracle, spikes.causal_reproducibility.oracle, spikes.context_replay.replay) before designing the mission thread",
+      "result": "CONFIRMED_every_needed_C1-C8_component_already_exists_as_sealed_retained_code_or_a_sealed_spike; also discovered ocor_runtime.c5_actions.py ('the complete ACT-T01...ACT-T31b action state machine') is the pre-existing OBSOLETE generic 32-state FSM already documented elsewhere in this session, unrelated to the approved LLD's real ACT-T semantics -- confirmed OCOR-DEV-0030's work is not duplicative and must not reuse this module"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/mission_thread/test_first_governed_slice.py -v against the real live stack, first attempt",
+      "result": "2_of_5_failed: Jena list_authorized row key is 'resource' not 'resource_id'; a plain-function EventSink fallback is called as sink(event) with no idempotency_key, so a keyword-only idempotency_key parameter on a plain function crashes -- fixed by using a class implementing the EventSink Protocol's emit() method, matching OCOR-DEV-0030's own RecordingSink pattern"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/mission_thread/test_first_governed_slice.py -v, second attempt after fixing the Jena row key and the sink shape",
+      "result": "1_of_5_failed: MODEL_PIN_MISMATCH -- the causal pin digests were computed with ocor_runtime.kernel.canonical.canonical_digest (RFC 8785 JCS, urn:sha256: prefix) but spikes.causal_reproducibility.oracle.execute() recomputes and compares using its own local canonical_digest (plain json.dumps sort_keys, raw hex, no prefix); fixed by importing and using the spike's own canonical_digest for the three causal pins"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/mission_thread/test_first_governed_slice.py -v, third attempt; then repeated 2 more times (3 total) for determinism",
+      "result": "PASS_15_of_15_every_run_no_flakiness"
+    },
+    {
+      "command": "full local pytest regression with OCOR_LIVE_POSTGRES_DSN set (ocor-runtime/tests/ + 3 reports/tests suites)",
+      "result": "PASS_2_failed_670_passed_0_skipped_0_errors_plus_29_passed (the 2 failures are the pre-existing, unrelated interpreter-pin gap)"
     }
   ],
   "completed_tasks": [
@@ -518,9 +542,11 @@
     "OCOR-DEV-0027: PR #89 merged (53ad2e5bb76f7b59a5ffae9863b685338027edbe). All 13 checks green on the first push. Post-merge SHA verified. OCOR-DEV-0030 (gate G3) is also part of wave 13 (parallel_wave=13), so wave 13 is not yet fully closed; it remains as the one final wave-13 task.",
     "State sync (OCOR-DEV-0027): PR #90 merged (c783d7c2b8b3e6824176764cbda0a683dd44c105) after a self-caught wave-numbering correction (OCOR-DEV-0030 has parallel_wave=13, not a new wave 14) pushed as a second commit on the same branch before any merge. All 13 checks green on the corrected commit. No source code touched.",
     "OCOR-DEV-0030 (pending PR/merge): Build retained governed-action slice. Smallest contract-compliant slice of LLD v1.1 section 3's normative 44-transition C6 workflow (ACT-T01..T31b): a risk-bearing action must cross, in strict order, Authority (G-AUTHORITY), Human Gate (G-APPROVAL), Decision (G-DECISION) and EMISSION-FENCE before any simulated effect. New ocor-runtime/src/ocor_runtime/c6/engine.py: GovernedActionEngine, ActionProposal, Approval, Decision, ActionOutcome, GovernedActionError. Discovered before writing anything that ocor_runtime.c6_capabilities.CapabilityAuthority (Authority) and ocor_runtime.c7_emission.EmissionFence (EMISSION-FENCE) already exist as sealed, unmodified retained code from an earlier delivery phase -- reused directly; Approval and Decision are the only genuinely new record types, since no Human Gate or Decision record existed anywhere before. Pure, in-memory, deterministic component, no external backend needed (like OCOR-DEV-0028's C1 compiler slice) -- no AFF-002/AFF-006 concern since zero direct backend clients are imported. Added 9 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0030.py: the full happy path crossing all four gates to a simulated effect; denial at Authority (a lease granting the wrong capability); denial at Human Gate (missing or explicitly rejected approval) for a risk-bearing action; a non-risk-bearing action skipping Human Gate entirely (ACT-T07's NOT_REQUIRED); denial at Decision (missing or rejected, with rationale preserved); a failing sink leaving the canonical commit durable but unreleased, with a safe retry against the same fence; and a fidelity test tracing the engine's four gate names back to OCOR-DEV-0020's sealed, LLD-digest-verified 44-transition table, proving the gate names were not invented independently.",
-    "OCOR-DEV-0030: PR #91 merged (c9ac9ca4615337193202846d06a4b5f6e38afcbc). All 13 checks green on the first push. Post-merge SHA verified. This closes wave 13 entirely (OCOR-DEV-0026/0027/0030)."
+    "OCOR-DEV-0030: PR #91 merged (c9ac9ca4615337193202846d06a4b5f6e38afcbc). All 13 checks green on the first push. Post-merge SHA verified. This closes wave 13 entirely (OCOR-DEV-0026/0027/0030).",
+    "State sync (OCOR-DEV-0030): PR #92 merged (c452a38680058b66d47588ea1dccee433d183487). All 13 checks green on the first push. No source code touched.",
+    "OCOR-DEV-0031 (pending PR/merge): Integrate first real C1-C8 synthetic mission thread. A single content-addressed fixture, identified by one correlation_id, crosses real PostgreSQL (C3 canonical commit via PostgresC3Service, OCOR-DEV-0029), real TypeDB (C4 exact-at-commit projection, OCOR-DEV-0017), real Fuseki (C4 marking-safe projection, OCOR-DEV-0018), a real self-provisioned Qdrant-ranked context assembly (C4/C2, OCOR-DEV-0027), a real self-provisioned Kafka event (C5, OCOR-DEV-0019), C6's governed-action engine (OCOR-DEV-0030), and the sealed causal-reproducibility oracle (C7, OCOR-DEV-0022) -- with C2/C8 identity resolution (ocor_runtime.c2_identity/ocor_runtime.c8_agent, retained, predating this session) shared throughout. The C6 action's own emission event id becomes the C7 causal query's causation_id, making the thread a genuine causal chain rather than a shared correlation label. Discovered before writing any code that every needed C1-C8 component already existed as sealed retained code or a sealed spike -- this task adds zero new production code, only the integration test itself, matching the backlog's single expected_file_areas entry exactly. Also confirmed ocor_runtime.c5_actions.py's 'complete ACT-T01...ACT-T31b action state machine' is the pre-existing obsolete generic FSM (already documented elsewhere in this session), unrelated to OCOR-DEV-0030's real LLD-aligned work. Added 5 new tests in ocor-runtime/tests/mission_thread/test_first_governed_slice.py, all against real backends, no mocks: the full happy-path thread producing all six correlated receipt kinds; causal-receipt reproducibility with identical pins; an Authority denial halting the thread before any canonical/projection/event/causal step; a real TypeDB EXACT_AT_COMMIT consistency enforcement against a genuine C3 commit; and a real Kafka broker restart (on the self-provisioned, per-test-run isolated broker) preserving durable ordered delivery. Two real bugs found and fixed while first running the suite: a Jena row-key mismatch ('resource' not 'resource_id') and a plain-function EventSink fallback missing its required idempotency_key parameter (fixed by using a class implementing the sealed EventSink Protocol, matching OCOR-DEV-0030's own pattern), plus a causal-pin digest mismatch (the spike's own local canonical_digest must be used for pins, not the kernel's RFC 8785 one)."
   ],
-  "current_task": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0030",
+  "current_task": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0031",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -574,9 +600,11 @@
     "reports/evidence/G2/OCOR-DEV-0027.json",
     "reports/evidence/G2/OCOR-DEV-0027.log",
     "reports/evidence/G3/OCOR-DEV-0030.json",
-    "reports/evidence/G3/OCOR-DEV-0030.log"
+    "reports/evidence/G3/OCOR-DEV-0030.log",
+    "reports/evidence/G3/OCOR-DEV-0031.json",
+    "reports/evidence/G3/OCOR-DEV-0031.log"
   ],
-  "exact_next_action": "State sync for OCOR-DEV-0030's merge is complete (this PR). Wave 13 is fully closed (OCOR-DEV-0026/0027/0030 all merged). Next (wave 14): OCOR-DEV-0031 (Integrate first real C1-C8 synthetic mission thread, gate G3), the sole ready task, depending on OCOR-DEV-0017/0018/0019/0022/0024/0027/0028/0029/0030 (all merged) -- a significantly larger integration task spanning many components rather than a single-component slice; read its full backlog entry (expected_file_areas, acceptance criteria, required real backends) before designing anything. Before opening the next PR, proactively verify any required real backend is already provisioned in CI (or self-provisions) and fix any gap before the first push; if the shared backend is used concurrently by many other sealed tasks, prefer a real, lower-blast-radius fault (e.g. a refused connection) over a broader CI refactor for any fault-injection test. If it touches a real backend client, route it through an ocor-runtime/src/ocor_runtime/**/adapters/ subtree up front, per AFF-002/AFF-006. The real 11-service Docker stack remains available locally and should be reused directly if still running (check docker compose -p ocor-bootstrap ps first; fuseki has repeatedly been OOM-killed by an unrelated large host container and simply needs restarting each time, never touch that unrelated container itself). The component-1 migration escalation (DISPOSED_DEFERRED by the Product Owner) does not block this.",
+  "exact_next_action": "Push branch governed/ocor-dev-0031-mission-thread, open the PR, poll CI to green (Monitor armed on gh pr checks), merge only on green, verify post-merge SHA, sync all three state files immediately at merge time. This closes wave 14's only task. Next: determine the next DAG-ready task set directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks (checking parallel_wave), not scripts/ocor_autonomous_delivery.py --status, which remains stale. Before opening the next PR, proactively verify any required real backend is already provisioned in CI (or self-provisions) and fix any gap before the first push; if the shared backend is used concurrently by many other sealed tasks, prefer a real, lower-blast-radius fault (e.g. a refused connection or a self-provisioned isolated container restart) over a broader CI refactor for any fault-injection test. If it touches a real backend client, route it through an ocor-runtime/src/ocor_runtime/**/adapters/ subtree up front, per AFF-002/AFF-006. Before reusing an existing module named after a component (e.g. c5_actions.py), verify it is not legacy/obsolete by checking prior MODEL_HANDOFF.json entries and reading its docstring/state names against the approved LLD's real terminology, per the lesson from this iteration. The real 11-service Docker stack remains available locally and should be reused directly if still running (check docker compose -p ocor-bootstrap ps first; fuseki has repeatedly been OOM-killed by an unrelated large host container and simply needs restarting each time, never touch that unrelated container itself). The component-1 migration escalation (DISPOSED_DEFERRED by the Product Owner) does not block this.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"

@@ -2089,3 +2089,80 @@
   backlog JSON (expected_file_areas, acceptance criteria, backend
   reali richiesti) prima di progettare qualunque cosa, dato che è un
   task di integrazione multi-componente, non una slice singola.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0031 (Integrate first real C1-C8 synthetic mission thread)
+
+- Letta per intero la voce del backlog: un unico file atteso
+  (`ocor-runtime/tests/mission_thread/test_first_governed_slice.py`),
+  nessun nuovo codice di produzione — un vero indizio che il task è
+  puramente un test di integrazione.
+- Letto per intero `docs/OCOR_LLD_v1.1.md` §§2.1-2.9/3/4 e il codice
+  sorgente completo di ogni componente C1-C8 nominato come dipendenza
+  dura, prima di progettare qualunque cosa. Confermato che ogni
+  componente necessario esiste già come codice retained sigillato o
+  spike sigillato: C1 → `ocor_runtime.c1.compiler` (`0028`); C2/C8 →
+  `ocor_runtime.c2_identity`/`ocor_runtime.c8_agent` (retained,
+  preesistenti a questa sessione); C3 →
+  `ocor_runtime.c3.service.PostgresC3Service` (`0029`); C4 → TypeDB
+  reale (`spikes.typedb_exact_commit.adapter`, `0017`), Fuseki reale
+  (`spikes.jena_marking.adapter`, `0018`), context assembly su Qdrant
+  reale (`spikes.context_replay.replay`, `0027`); C5 → Kafka reale
+  autoprovisionato (`spikes.kafka_delivery.oracle`, `0019`); C6 →
+  `ocor_runtime.c6.engine.GovernedActionEngine` (`0030`); C7 →
+  `spikes.causal_reproducibility.oracle` (`0022`).
+- **Scoperta rilevante**: `ocor_runtime.c5_actions.py` ("the complete
+  ACT-T01…ACT-T31b action state machine") è la FSM generica OBSOLETA a
+  32 stati (`DRAFT`/`PROPOSED`/`VALIDATED`, non gli stati reali
+  `PROPOSAL_RECORDED`/`CONTROL_CHECK`/ecc. della LLD approvata) già
+  documentata come tale altrove in questa sessione — confermato che
+  non va riusata e che il lavoro appena fatto in `OCOR-DEV-0030` non è
+  duplicativo.
+- Implementato `ocor-runtime/tests/mission_thread/test_first_governed_slice.py`
+  (5 test, tutti contro backend reali, nessun mock): un unico fixture
+  content-addressed, identificato da un `correlation_id`, attraversa
+  PostgreSQL/TypeDB/Fuseki/Qdrant/Kafka reali e produce ricevute
+  correlate canonical/projection/event/causal/agent/action; il
+  `causation_id` della query causale (C7) È l'`event_id` reale
+  dell'azione governata (C6) — una vera catena causale, non
+  un'etichetta condivisa. Test aggiuntivi: riproducibilità del
+  ricevuta causale con gli stessi pin; un diniego all'Authority che
+  blocca l'intero thread prima di qualunque effetto; l'applicazione
+  reale della consistenza `EXACT_AT_COMMIT` su TypeDB contro un vero
+  commit C3; un vero riavvio del broker Kafka autoprovisionato
+  (isolato per-test, mai il container condiviso) che preserva la
+  consegna durevole e ordinata.
+- Due bug reali trovati e corretti durante la prima esecuzione: (1)
+  la chiave di riga di Jena è `resource`, non `resource_id`; (2) un
+  `EventSink` come funzione semplice viene chiamato come `sink(event)`
+  senza `idempotency_key` nel percorso di fallback — corretto usando
+  una classe che implementa il Protocol `emit()` sigillato, come nel
+  pattern già stabilito da `OCOR-DEV-0030`. Un terzo bug: i digest dei
+  pin causali devono usare la funzione `canonical_digest` LOCALE dello
+  spike causale (hex grezzo, no prefisso), non quella RFC 8785 del
+  kernel — altrimenti `MODEL_PIN_MISMATCH`.
+- Verifica proattiva del provisioning CI: confermato che PostgreSQL/
+  TypeDB/Fuseki sono già reali e provisionati nei 3 workflow CI;
+  Kafka e Qdrant si autoprovisionano — nessun gap, nessuna modifica
+  CI necessaria.
+- Gate locali tutti verdi: `ruff`, `mypy` (50 file, invariato — il
+  file mission-thread è fuori dallo scope di mypy), `validate_rccad.py`
+  PASS, `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS (6 percorsi), pytest completo
+  con `OCOR_LIVE_POSTGRES_DSN` locale: `2 failed, 670 passed, 0
+  skipped, 0 errors` (stessi 2 fallimenti noti) più `29 passed` per le
+  3 suite `reports/tests/`, `validate_ocor_development_plan.py
+  --base-ref origin/main --authorized-extension` PASS dopo il
+  consueto doppio-run.
+- Evidenza sigillata: `reports/evidence/G3/OCOR-DEV-0031.json` +
+  `reports/evidence/G3/OCOR-DEV-0031.log`, aggiunta a
+  `reports/evidence/G3/MANIFEST.json` (diff puramente additivo, 64
+  righe, inserimento chirurgico).
+- Aggiornamento dei tre file di stato eseguito in questa stessa
+  iterazione (non rimandato).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: push del branch
+  `governed/ocor-dev-0031-mission-thread`, apertura PR, polling CI,
+  merge a gate verdi, verifica SHA post-merge. Poi determinare il
+  prossimo task pronto direttamente dal backlog JSON, verificando
+  sempre `parallel_wave`.

@@ -1,0 +1,60 @@
+=== docker compose ps (real 11-service ocor-bootstrap stack, plus self-provisioned ephemeral Kafka and Qdrant per test run) ===
+ocor-bootstrap-fuseki-1: Up 10 minutes (healthy)
+ocor-bootstrap-kafka-1: Up 15 hours (healthy)
+ocor-bootstrap-keycloak-1: Up 13 hours (healthy)
+ocor-bootstrap-opa-1: Up 13 hours (healthy)
+ocor-bootstrap-openbao-1: Up 15 hours (healthy)
+ocor-bootstrap-postgresql-1: Up 15 hours (healthy)
+ocor-bootstrap-qdrant-1: Up 15 hours (healthy)
+ocor-bootstrap-spire-agent-1: Up 15 hours
+ocor-bootstrap-spire-server-1: Up 15 hours (healthy)
+ocor-bootstrap-terminusdb-1: Up 15 hours (healthy)
+ocor-bootstrap-typedb-1: Up 15 hours (healthy)
+
+=== RUN 1: pytest ocor-runtime/tests/mission_thread/test_first_governed_slice.py -v (repeated x3 for stability, run 1 shown verbatim) ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 5 items
+
+ocor-runtime/tests/mission_thread/test_first_governed_slice.py::test_mission_thread_produces_correlated_receipts_across_all_governed_components PASSED [ 20%]
+ocor-runtime/tests/mission_thread/test_first_governed_slice.py::test_causal_receipt_reproduces_identically_with_the_same_pinned_inputs PASSED [ 40%]
+ocor-runtime/tests/mission_thread/test_first_governed_slice.py::test_action_denied_at_authority_halts_the_thread_before_any_effect PASSED [ 60%]
+ocor-runtime/tests/mission_thread/test_first_governed_slice.py::test_typedb_projection_read_enforces_exact_at_commit_consistency_with_the_real_canonical_commit PASSED [ 80%]
+ocor-runtime/tests/mission_thread/test_first_governed_slice.py::test_a_real_kafka_broker_restart_during_the_event_step_is_detected_and_recovers PASSED [100%]
+
+============================== 5 passed in 51.99s ==============================
+
+=== RUN 2..3: repeat runs, summary lines only, to demonstrate determinism ===
+.....                                                                    [100%]
+5 passed in 53.40s
+.....                                                                    [100%]
+5 passed in 59.09s
+
+=== full local pytest regression, ocor-runtime/tests/ ===
+
+ocor-runtime/tests/test_interpreter_pin.py:26: AssertionError
+=========================== short test summary info ============================
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0002.py::test_two_clean_environments_resolve_identical_lock_and_image_digests
+FAILED ocor-runtime/tests/test_interpreter_pin.py::test_running_interpreter_matches_the_pin
+2 failed, 670 passed in 150.34s (0:02:30)
+
+=== full local pytest regression, 3 reports/tests suites ===
+.............................                                            [100%]
+29 passed in 4.43s
+
+=== post-run stack-integrity verification ===
+ocor-bootstrap-fuseki-1: Up 16 minutes (healthy)
+ocor-bootstrap-kafka-1: Up 16 hours (healthy)
+ocor-bootstrap-keycloak-1: Up 13 hours (healthy)
+ocor-bootstrap-opa-1: Up 13 hours (healthy)
+ocor-bootstrap-openbao-1: Up 16 hours (healthy)
+ocor-bootstrap-postgresql-1: Up 16 hours (healthy)
+ocor-bootstrap-qdrant-1: Up 16 hours (healthy)
+ocor-bootstrap-spire-agent-1: Up 15 hours
+ocor-bootstrap-spire-server-1: Up 15 hours (healthy)
+ocor-bootstrap-terminusdb-1: Up 16 hours (healthy)
+ocor-bootstrap-typedb-1: Up 16 hours (healthy)

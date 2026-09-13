@@ -32,6 +32,16 @@
       "path": "OCOR-DEV-0030.log",
       "sha256": "41b397de5233b1730057115029a43d3068a69281d606a91bf9bd38b59c495c21",
       "task_id": "OCOR-DEV-0030-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0031.json",
+      "sha256": "d0eff2c58eb6381dc3dbff4b8d381f61d11b6be52e8a2a439bd3270c015e638d",
+      "task_id": "OCOR-DEV-0031"
+    },
+    {
+      "path": "OCOR-DEV-0031.log",
+      "sha256": "296b90a77e4404e8a7000b41e4fab481e66221bcfbffaf37d95750956c5c9a0a",
+      "task_id": "OCOR-DEV-0031-RAW"
     }
   ],
   "requirement_results": [
@@ -277,6 +287,60 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0030"
+    },
+    {
+      "case_id": "OCOR-DEV-0031-FULL-THREAD-PRODUCES-CORRELATED-RECEIPTS",
+      "command": "a single content-addressed mission fixture crosses real PostgreSQL, TypeDB, Fuseki, Qdrant, Kafka, C6's governed-action engine and the causal-reproducibility oracle, all correlated by one correlation_id with a genuine causal chain via causation_id",
+      "evidence_path": "OCOR-DEV-0031.json",
+      "raw_output_path": "OCOR-DEV-0031.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0031"
+    },
+    {
+      "case_id": "OCOR-DEV-0031-CAUSAL-RECEIPT-REPRODUCES",
+      "command": "re-running the C7 causal step with identical pinned inputs reproduces a byte-identical outcome, verified via the sealed verify_reproduction oracle",
+      "evidence_path": "OCOR-DEV-0031.json",
+      "raw_output_path": "OCOR-DEV-0031.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0031"
+    },
+    {
+      "case_id": "OCOR-DEV-0031-AUTHORITY-DENIAL-HALTS-THE-THREAD",
+      "command": "an action denied at Authority never reaches the canonical commit, projection, event or causal steps -- the thread halts with zero durable state and zero sink calls",
+      "evidence_path": "OCOR-DEV-0031.json",
+      "raw_output_path": "OCOR-DEV-0031.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0031"
+    },
+    {
+      "case_id": "OCOR-DEV-0031-PROJECTION-EXACT-AT-COMMIT-ENFORCED",
+      "command": "a real TypeDB projection read demanding EXACT_AT_COMMIT consistency against a genuine C3 commit fails closed when the watermark has not advanced to that commit",
+      "evidence_path": "OCOR-DEV-0031.json",
+      "raw_output_path": "OCOR-DEV-0031.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0031"
+    },
+    {
+      "case_id": "OCOR-DEV-0031-KAFKA-BROKER-RESTART-DETECTED-AND-RECOVERS",
+      "command": "a real Kafka broker restart mid-thread (on the self-provisioned, per-test-run isolated broker) preserves durable, ordered delivery across the restart",
+      "evidence_path": "OCOR-DEV-0031.json",
+      "raw_output_path": "OCOR-DEV-0031.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0031"
+    },
+    {
+      "case_id": "OCOR-DEV-0031-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0031.json",
+      "raw_output_path": "OCOR-DEV-0031.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0031"
     }
   ]
 }
