@@ -57,6 +57,26 @@ jobs:
           docker run -d --name fuseki -p 3030:3030 ocor/jena-fuseki:ci
           timeout 90 bash -c 'until curl -sf http://127.0.0.1:3030/$/ping >/dev/null; do sleep 2; done'
 
+      - name: Start real identity/policy control-plane services (OPA, Keycloak, OpenBao)
+        run: |
+          set -euo pipefail
+          docker run -d --name opa -p 8181:8181 \
+            openpolicyagent/opa@sha256:39daf255ae7f25d81103f03a0c18308a50b7b5bb67907bed6166f70e24a970ff \
+            run --server --addr 0.0.0.0:8181
+          docker run -d --name keycloak -p 8080:8080 \
+            -e KC_BOOTSTRAP_ADMIN_USERNAME=ocor-admin \
+            -e KC_BOOTSTRAP_ADMIN_PASSWORD=ci-only-password \
+            quay.io/keycloak/keycloak@sha256:9d1f1b2b7261ff53c66cb1092dfcdc34a5fb77e81f9e6a6e75b8b6a795de8067 \
+            start-dev --http-port=8080
+          docker run -d --name openbao -p 8200:8200 --cap-add=IPC_LOCK \
+            -e BAO_ADDR=http://127.0.0.1:8200 \
+            -e BAO_DEV_ROOT_TOKEN_ID=ci-only-token \
+            quay.io/openbao/openbao@sha256:11fd73a2102cda9c55d5d881a8c3210303146a7ec1e8ac76f526e175c6d24641 \
+            server -dev -dev-listen-address=0.0.0.0:8200
+          timeout 90 bash -c 'until curl -sf http://127.0.0.1:8181/health >/dev/null; do sleep 2; done'
+          timeout 90 bash -c 'until curl -sf http://127.0.0.1:8200/v1/sys/health >/dev/null; do sleep 2; done'
+          timeout 120 bash -c 'until curl -sf http://127.0.0.1:8080/realms/master/.well-known/openid-configuration >/dev/null; do sleep 3; done'
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:

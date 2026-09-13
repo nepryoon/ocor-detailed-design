@@ -197,6 +197,16 @@
       "path": "OCOR-DEV-0018.log",
       "sha256": "cef441c109021a5d9d51970dbc117709baa3eb6d16bfcef461e60c4812d42cdf",
       "task_id": "OCOR-DEV-0018-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0021.json",
+      "sha256": "135a0a2008ea454315ff397ad0132480a27f53ce301f877a60410476009ce5dc",
+      "task_id": "OCOR-DEV-0021"
+    },
+    {
+      "path": "OCOR-DEV-0021.log",
+      "sha256": "a4538218230b16d89ae7af74ded6061c70efa2437ebe058fa3cb800da61ba79a",
+      "task_id": "OCOR-DEV-0021-RAW"
     }
   ],
   "created_at": "2026-09-04T14:12:35Z",
@@ -983,6 +993,60 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0018"
+    },
+    {
+      "case_id": "OCOR-DEV-0021-BOUNDED-SUCCESS",
+      "command": "a bounded probe against each of OPA, Keycloak and OpenBao while healthy succeeds within its declared timeout and produces an AVAILABLE audit event carrying the exact correlation/causation identifiers passed in",
+      "evidence_path": "OCOR-DEV-0021.json",
+      "raw_output_path": "OCOR-DEV-0021.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0021"
+    },
+    {
+      "case_id": "OCOR-DEV-0021-FAIL-CLOSED-BY-CONSTRUCTION",
+      "command": "ControlStatus.require_available always raises a stable {CONTROL}_UNAVAILABLE reason code for an unavailable status, for every control including WORKLOAD_IDENTITY",
+      "evidence_path": "OCOR-DEV-0021.json",
+      "raw_output_path": "OCOR-DEV-0021.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0021"
+    },
+    {
+      "case_id": "OCOR-DEV-0021-REAL-PAUSE-OPA",
+      "command": "a real bounded pause/unpause fault-injection cycle on OPA: denied within the declared bounded timeout with a CONTROL_TIMEOUT audit event, recovers once unpaused",
+      "evidence_path": "OCOR-DEV-0021.json",
+      "raw_output_path": "OCOR-DEV-0021.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0021"
+    },
+    {
+      "case_id": "OCOR-DEV-0021-REAL-PAUSE-OPENBAO",
+      "command": "the same real bounded pause/unpause fault-injection cycle on OpenBao",
+      "evidence_path": "OCOR-DEV-0021.json",
+      "raw_output_path": "OCOR-DEV-0021.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0021"
+    },
+    {
+      "case_id": "OCOR-DEV-0021-CORRELATED-AUDIT-BOTH-PATHS",
+      "command": "a success probe and a failure probe with the identical correlation_id/causation_id both emit an audit event carrying those same identifiers and the same field shape",
+      "evidence_path": "OCOR-DEV-0021.json",
+      "raw_output_path": "OCOR-DEV-0021.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0021"
+    },
+    {
+      "case_id": "OCOR-DEV-0021-REGRESSION",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0021.json",
+      "raw_output_path": "OCOR-DEV-0021.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0021"
     }
   ],
   "schema_version": "1.0"

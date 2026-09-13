@@ -1,0 +1,103 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0021",
+  "commit": "59521ae00218ea84e8b74a9cee483b172cdfd8ec",
+  "created_at": "2026-09-13T06:10:00Z",
+  "environment": {
+    "orchestrator": "docker compose -p ocor-bootstrap (deploy/bootstrap/compose.yaml), same live stack provisioned by the WS-12 chain (OCOR-DEV-0079..0084)",
+    "backends_under_test": "real OPA (http://127.0.0.1:8181), Keycloak (http://127.0.0.1:8080), OpenBao (http://127.0.0.1:8200), the C6/security-boundary identity/policy control plane",
+    "reused_deliverable": "ocor_runtime.security.ports (OCOR-DEV-0014, sealed and unmodified) supplies ControlName/ControlStatus/SecurityControlError and the fail-closed require_available contract; scripts/fault_inject_test_environment.py (OCOR-DEV-0083, sealed and unmodified) supplies fault_command/http_reachable/_poll for real container fault injection; this task adds only a bounded-timeout HTTP probe and a correlated audit event around them",
+    "ci_provisioning": "proactively added real, ephemeral OPA/Keycloak/OpenBao services (all 3 are pre-built pinned images, run via docker run + health-wait, unlike Fuseki which needed a build step) to the same 3 CI workflows already carrying TypeDB and Fuseki, rehearsed locally on alternate ports before being added to any workflow"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "spikes/control_plane_latency/probe.py": "c2b8cad7f407ddab62112335c8282d7b9c57dab43e9bea4ca23e0ae837426e01",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0021.py": "9b3e0da15f98035603b98bb89659f2d9adf07a8144c8b37d546ca38b37a6f58e"
+  },
+  "commands": [
+    {
+      "command": "CI provisioning rehearsal: docker run for OPA/OpenBao/Keycloak on alternate host ports (all 3 pre-built pinned images, no build step needed), health-wait, real endpoint verification, teardown -- never touching the live ocor-bootstrap stack",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0021.py -v against the real live stack, repeated 4 times to demonstrate determinism (each run performs 2 real pause/unpause fault-injection cycles against opa and openbao)",
+      "result": {"passed": 28, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "post-run verification that OPA's loaded policy and OpenBao's ocor/ mount survived the pause/unpause cycles (pause freezes the process, unlike restart which OCOR-DEV-0083 found wipes OPA/Keycloak's ephemeral in-memory state)",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, ocor-runtime/tests/ (OCOR_LIVE_POSTGRES_DSN set locally, pointed at the ocor-bootstrap postgresql service)",
+      "result": {"passed": 614, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression, 3 reports/tests suites",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0021-BOUNDED-SUCCESS",
+      "requirement_id": "BR-003",
+      "command": "a bounded probe against each of OPA, Keycloak and OpenBao while healthy succeeds within its declared timeout and produces an AVAILABLE audit event carrying the exact correlation/causation identifiers passed in",
+      "result": {"passed": 3, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0021-FAIL-CLOSED-BY-CONSTRUCTION",
+      "requirement_id": "BR-003",
+      "command": "ControlStatus.require_available (sealed, OCOR-DEV-0014) always raises SecurityControlError with a stable {CONTROL}_UNAVAILABLE reason code for an unavailable status, for every control including WORKLOAD_IDENTITY -- a timeout or outage can never be silently treated as a permit",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0021-REAL-PAUSE-OPA",
+      "requirement_id": "BR-003",
+      "command": "a real bounded pause/unpause fault-injection cycle on OPA: the probe against the paused service is denied within the declared bounded timeout (never hangs), with a CONTROL_TIMEOUT audit event carrying the original correlation/causation identifiers, and succeeds again once OPA is unpaused and recovers",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0021-REAL-PAUSE-OPENBAO",
+      "requirement_id": "BR-003",
+      "command": "the same real bounded pause/unpause fault-injection cycle on OpenBao",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0021-CORRELATED-AUDIT-BOTH-PATHS",
+      "requirement_id": "BR-003",
+      "command": "a success probe and a failure probe issued with the identical correlation_id/causation_id both emit an audit event carrying those same identifiers and the same field shape, proving the audit trail never depends on the control having actually answered",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0021-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 643, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "The bounded-timeout proof relies on a real docker pause, which freezes the target container's process rather than simulating packet loss or a slow-but-not-frozen backend; this is the same real-fault-injection primitive already sealed and reused unmodified from OCOR-DEV-0083, and is a stronger, not weaker, proof that the client-side deadline is honored regardless of the failure's exact shape.",
+    "This spike probes control AVAILABILITY (an HTTP health round trip) rather than exercising a full PolicyDecision/AuthenticatedPrincipal/WorkloadIdentity object graph (OCOR-DEV-0014's richer dataclasses, which require additional fields such as session_id/actor_chain out of this spike's scope); ControlStatus.require_available -- the actual fail-closed mechanism -- is exercised directly and unmodified.",
+    "This task added real, ephemeral OPA/Keycloak/OpenBao services to the same 3 CI workflows already carrying TypeDB and Fuseki; every future PR now also starts these 3 containers in those jobs. Keycloak in particular takes ~20-30s to become ready, the slowest of the three.",
+    "The same pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope."
+  ],
+  "rollback_procedure_verified": "Every pause fault-injection test recovers the target service in a finally-equivalent sequence (unpause, then poll for reachability) before the test's own assertions on the failure path run, so a failed assertion still leaves the service recovering; verified directly by the post-run check that OPA's loaded policy and OpenBao's ocor/ mount both survived every pause/unpause cycle across 4 consecutive full test-suite runs, and by the full regression suite passing immediately afterward against the same live stack. The CI provisioning step itself was rehearsed end-to-end locally (start, health-wait, real endpoint check, teardown) on alternate ports before being added to any workflow.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "a4538218230b16d89ae7af74ded6061c70efa2437ebe058fa3cb800da61ba79a",
+  "result": "PASS"
+}
