@@ -2815,3 +2815,92 @@
   digest/watermark e la deriva viene messa in quarantena; criterio
   negativo: servire una projection divergente dopo una riconciliazione
   fallita è vietato.
+
+## 2026-09-13 — OCOR-DEV-0039: C4 rebuild e drift reconciliation
+
+- Nuovo `ocor_runtime.c4.rebuild.ProjectionDriftDetector`, implementa
+  direttamente il `ProjectionDriftDetector` nominato in LLD v1.1 §2.4.
+  Verificato che `c3/service.py` e `c4/typedb_adapter.py` sono
+  hash-referenziati come deliverable sigillati di task già accettati
+  (OCOR-DEV-0029, OCOR-DEV-0037) — composti ENTRAMBI esclusivamente
+  tramite i loro metodi pubblici sigillati esistenti
+  (`PostgresC3Service.read`, `TypeDBProjectionAdapter.apply_commit`/
+  `read`), senza mai toccare nessuno dei due file sigillati.
+- `rebuild()` legge lo snapshot canonico da C3 (autoritativo),
+  "sbircia" il digest della projection attualmente servita tramite il
+  `ProjectionReadPort.read()` sigillato dell'adapter (una richiesta di
+  sistema sintetica e deterministica in `BEST_AVAILABLE`) PRIMA di
+  sovrascriverla mai, e confronta. Una discrepanza è vera deriva:
+  l'aggregato viene aggiunto a un insieme di quarantena in-memory e la
+  projection divergente reale viene lasciata intatta invece di essere
+  riparata silenziosamente; una corrispondenza (o prima projection in
+  assoluto) applica il fatto ricostruito e rimuove qualunque quarantena
+  residua. `read_if_healthy()` rende eseguibile il criterio di
+  accettazione negativo: solleva `PROJECTION_QUARANTINED` prima di
+  delegare mai alla lettura della projection per un aggregato in
+  quarantena.
+- Una prima bozza di design "sbirciava" la projection servita tramite
+  il metodo privato con underscore `_lookup_fact` dell'adapter —
+  individuato e respinto prima della sigillatura come un vero difetto
+  di design (accedere agli interni di un altro modulo sigillato invece
+  del suo contratto pubblico) e sostituito con il percorso `read()`
+  sigillato.
+- Aggiunti 6 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0039.py`, tutti contro
+  PostgreSQL e TypeDB reali, nessun mock — tutti e 6 passati al primo
+  tentativo, nessun bug nel nuovo codice di questo task. Un singolo
+  blip ambientale transitorio è stato osservato durante l'iterazione
+  esplorativa locale (tutti e 6 i test hanno dato errore in
+  un'esecuzione) ma non si è più riprodotto in 7 ripetizioni
+  consecutive successive; documentato come un problema ambientale non
+  bloccante sotto carico locale concorrente (coerente con altri
+  ritrovamenti transitori di questa sessione, es. l'OOM ricorrente di
+  Fuseki), non un difetto reale.
+- Gate locali tutti verdi: `ruff`, `mypy`, `validate_rccad.py` PASS
+  (nessun import diretto di client backend — `rebuild.py` compone due
+  adapter già sigillati esclusivamente tramite i loro metodi
+  pubblici), `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS (7 percorsi), pytest completo
+  via lo script `pytest` nudo con `OCOR_LIVE_POSTGRES_DSN` impostato
+  contro il PostgreSQL reale di ocor-bootstrap: `2 failed, 751 passed`
+  (stessi 2 fallimenti noti) più `29 passed` per le 3 suite
+  `reports/tests/`, `validate_ocor_development_plan.py --base-ref
+  origin/main --authorized-extension` PASS dopo il consueto
+  doppio-run.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0039.json` +
+  `reports/evidence/G4/OCOR-DEV-0039.log`.
+  `reports/evidence/G4/MANIFEST.json` esteso con inserimento
+  chirurgico (2 nuovi artifact, 7 nuovi requirement_results).
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task, non incluso nel commit del
+  task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0039`: tutti e 13 i check verdi al primo push. PR #109
+  mergiata (`02859b0e3dd36824975414b19ee213af2bf2043d`), SHA
+  post-merge verificata. Chiude interamente il wave 16
+  (`OCOR-DEV-0033/0034/0035/0039`).
+
+## 2026-09-13 — Sincronizzazione stato: OCOR-DEV-0039 (post-merge, wave 16 chiuso)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #109, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0039`).
+- `baseline_commit` aggiornato a
+  `02859b0e3dd36824975414b19ee213af2bf2043d` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0039`
+  aggiunto a `completed_evidence_tasks`.
+- Ricalcolata la prontezza dal backlog JSON: nessun nuovo task
+  numericamente più basso è stato sbloccato da `OCOR-DEV-0039`, quindi
+  i 4 task rimanenti del wave 15 (`0040/0042/0046/0048`) tornano ad
+  essere il fronte di lavoro; selezionato `OCOR-DEV-0040` ("Implement
+  C5 canonical event backbone") per ordine numerico.
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
+- Prossima azione: implementare `ocor-runtime/src/ocor_runtime/c5/backbone.py`,
+  riusando lo spike `spikes.kafka_delivery.oracle` (OCOR-DEV-0019) e
+  `PostgresC3Service` (OCOR-DEV-0029); criterio di accettazione: eventi
+  vincolati a schema preservano ordine di partizione, correlation,
+  causation, marking e idempotency su Kafka; criterio negativo: schema
+  sconosciuto, contesto mancante o effetto fuori ordine su un aggregato
+  vanno in quarantena.
