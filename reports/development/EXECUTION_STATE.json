@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-0081-synthetic-fixtures",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0081",
+    "branch": "governed/ocor-dev-0082-reset-teardown",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-OCOR-DEV-0082",
     "decision_id": "DEC-211",
-    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0081_PUSHED__AWAITING_CI",
+    "phase": "BACKLOG_EXECUTION__OCOR_DEV_0082_PUSHED__AWAITING_CI",
     "worktree": null
   },
-  "baseline_commit": "79084dd7be841bee0b36b92b939e9abea0e37362",
+  "baseline_commit": "48b6d01a254d0ceb78fb9ad4ec96088e1835c5fb",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -53,19 +53,20 @@
     "OCOR-DEV-0078",
     "OCOR-DEV-0079",
     "OCOR-DEV-0080",
-    "OCOR-DEV-0081"
+    "OCOR-DEV-0081",
+    "OCOR-DEV-0082"
   ],
   "current_gate": "G2_INFRASTRUCTURE_QUALIFIED__LANGUAGE_POLICY_ADOPTED__PHASE_2_4_CLOSED__PHASE_3_CLOSED",
   "latest_ci_evidence": {
-    "candidate_commit": "ef33cf1f321dcf3dbd26cbbd01d08738f09516a2",
-    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR72_MERGED_79084dd7be841bee0b36b92b939e9abea0e37362",
+    "candidate_commit": "8d768290657933fcd83ca8720b4a3035c7733304",
+    "conclusion": "PASS_ALL_GREEN_EXACT_HEAD_PR73_MERGED_48b6d01a254d0ceb78fb9ad4ec96088e1835c5fb",
     "run_ids": [
-      34725287657,
-      34725287667,
-      34725287670,
-      34725287676,
-      34725287701,
-      34725287735
+      34727080749,
+      34727080752,
+      34727080775,
+      34727080803,
+      34727080804,
+      34727080817
     ]
   },
   "mandate_phase_status": {
@@ -126,9 +127,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Push branch governed/ocor-dev-0081-synthetic-fixtures, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0081 sealed with real evidence against the same live 11-service Docker stack: idempotent creation, idempotent re-run, and a real drift-detection/rollback drill (external TerminusDB fixture mutation detected and rejected, then recovered). PostgreSQL/Kafka/Qdrant fixtures explicitly declared out of scope (already provisioned/evidenced by earlier, unrelated tasks 0006/0015/0019/0023). Next: OCOR-DEV-0082 (Implement service reset and teardown), which depends on OCOR-DEV-0080.",
+  "next_executable_action": "Push branch governed/ocor-dev-0082-reset-teardown, open PR, poll CI to green, merge, verify post-merge SHA. OCOR-DEV-0082 sealed with real evidence against the same live 11-service Docker stack: a --reset mode was added alongside the pre-existing --teardown, undoing OCOR-DEV-0080's 4 mutating init steps without stopping containers; real reset, idempotent re-reset, and a real reset->re-init round-trip (proving reset is a genuine complete inverse) were all executed. Next: OCOR-DEV-0083 (Implement bounded fault injection), which depends on OCOR-DEV-0079.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T00:05:00Z"
+  "updated_at": "2026-09-13T00:45:00Z"
 }

@@ -1012,3 +1012,57 @@
   `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
 - Prossima azione: `OCOR-DEV-0082` ("Implement service reset and
   teardown"), che dipende da `OCOR-DEV-0080`.
+
+## 2026-09-13 — Backlog: OCOR-DEV-0082 (reset e teardown, reale)
+
+- PR #73 mergiata (fixture sintetiche): tutti e 13 i check verdi, merge
+  `48b6d01a254d0ceb78fb9ad4ec96088e1835c5fb`, verifica post-merge con
+  `git fetch origin main` conferma `origin/main == 48b6d01`. Stack Docker
+  ancora attivo e sano (11/11 container), riusato senza nuovo bootstrap.
+- Trovato che `scripts/reset_test_environment.py` esisteva già ma
+  implementava solo il "teardown" completo (`docker compose down
+  --volumes --remove-orphans`), non il "reset" più leggero richiesto dal
+  titolo del task. Aggiunta una modalità `--reset` distinta: annulla
+  esattamente i 4 passi mutanti di `OCOR-DEV-0080`
+  (`initialize_services.py`) — realm Keycloak, policy OPA, mount OpenBao,
+  database `ocor_default` su TerminusDB e TypeDB — senza fermare alcun
+  container. Il trust SPIRE resta intoccato: `OCOR-DEV-0080` lo verifica
+  soltanto, non lo crea, quindi non c'è nulla da annullare senza rompere
+  l'identità di ogni servizio. `--teardown` (comportamento preesistente)
+  resta invariato.
+- **Verifica reale contro lo stack live**: confermato lo stato
+  inizializzato prima del reset (typed health check `PASS`); RUN 1
+  (`--reset --execute` reale) → `RESET` per tutti e 4 i target; RUN 2
+  (ri-esecuzione) → `ALREADY_RESET` per tutti, zero chiamate mutanti;
+  `docker compose ps` subito dopo conferma tutti gli 11 container ancora
+  `Up`/`healthy` — il reset non tocca mai i container; RUN 3
+  (**round-trip reset → re-init reale**) → l'inizializzatore di
+  `OCOR-DEV-0080` ricrea da zero tutti e 4 i target (`CREATED`),
+  dimostrando che il reset è un vero inverso completo, non parziale o
+  con perdita di stato. Fixture sintetiche di `OCOR-DEV-0081` ricaricate
+  al termine per lasciare lo stack nello stato atteso dai prossimi task.
+  `--teardown` verificato solo in dry-run: eseguirlo per davvero
+  avrebbe distrutto lo stack live da cui dipendono gli altri task WS-12
+  in corso.
+- Aggiunto `ocor-runtime/tests/tasks/test_ocor_dev_0082.py` (10 test
+  unit/negative/contract, ogni chiamata di rete sostituita con un doppio
+  deterministico).
+- `scripts/validate_language_policy.py` verificato PRIMA di aprire la PR
+  (lezione da `OCOR-DEV-0080`/`0081`): nessuna nuova area necessaria,
+  `scripts/` era già autorizzato per `.py`.
+- Gate locali tutti verdi: `sha256sum` 8/8, `ruff`, `mypy` (45 file),
+  `validate_rccad.py` PASS, `validate_language_policy.py` PASS, pytest
+  completo `2 failed, 587 passed, 5 skipped, 10 errors` (stessi gap
+  sandbox noti, +10 rispetto alla fase precedente),
+  `validate_ocor_development_plan.py --authorized-extension` PASS dopo il
+  consueto doppio-run di assestamento self-hash.
+- Evidenza sigillata contro lo stack live reale, incluso il round-trip
+  reset→re-init: `reports/evidence/G2/OCOR-DEV-0082.json` +
+  `reports/evidence/G2/OCOR-DEV-0082.log`, aggiunta a
+  `reports/evidence/G2/MANIFEST.json` (diff puramente additivo).
+  `scripts/validate_runtime_evidence.py --task OCOR-DEV-0082 --non-skipped`
+  PASS.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- Prossima azione: `OCOR-DEV-0083` ("Implement bounded fault injection"),
+  che dipende da `OCOR-DEV-0079`.

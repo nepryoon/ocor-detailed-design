@@ -1,0 +1,416 @@
+=== docker compose ps (live 11-service stack, reused from OCOR-DEV-0079/0080/0081) ===
+ocor-bootstrap-fuseki-1 Up 45 minutes (healthy)
+ocor-bootstrap-kafka-1 Up 2 hours (healthy)
+ocor-bootstrap-keycloak-1 Up 2 hours (healthy)
+ocor-bootstrap-opa-1 Up 2 hours (healthy)
+ocor-bootstrap-openbao-1 Up 2 hours (healthy)
+ocor-bootstrap-postgresql-1 Up 2 hours (healthy)
+ocor-bootstrap-qdrant-1 Up 2 hours (healthy)
+ocor-bootstrap-spire-agent-1 Up 2 hours
+ocor-bootstrap-spire-server-1 Up 2 hours (healthy)
+ocor-bootstrap-terminusdb-1 Up 2 hours (healthy)
+ocor-bootstrap-typedb-1 Up 2 hours (healthy)
+
+=== confirm currently initialized (state left by prior tasks / manual round-trip verification) ===
+typed status: PASS
+
+=== --reset dry-run (default, no mutation) ===
+{
+  "mode": "DRY_RUN",
+  "operation": "reset",
+  "status": "PASS"
+}
+
+=== --teardown dry-run (default, no mutation) ===
+{
+  "status": "PASS",
+  "mode": "DRY_RUN",
+  "command": [
+    "docker",
+    "compose",
+    "-p",
+    "ocor-bootstrap",
+    "-f",
+    "deploy/bootstrap/compose.yaml",
+    "down",
+    "--volumes",
+    "--remove-orphans"
+  ]
+}
+
+=== RUN 1: real --reset --execute against the initialized stack (expect RESET for all 4 targets) ===
+{
+  "status": "PASS",
+  "steps": [
+    {
+      "result": "RESET",
+      "step": "keycloak_realm"
+    },
+    {
+      "result": "RESET",
+      "step": "opa_policy"
+    },
+    {
+      "result": "RESET",
+      "step": "openbao_paths"
+    },
+    {
+      "detail": {
+        "terminusdb": "RESET",
+        "typedb": "RESET"
+      },
+      "result": "RESET",
+      "step": "graph_databases"
+    }
+  ]
+}
+exit=0
+
+=== RUN 2: idempotent re-invocation (expect ALREADY_RESET for all 4 targets) ===
+{
+  "status": "PASS",
+  "steps": [
+    {
+      "result": "ALREADY_RESET",
+      "step": "keycloak_realm"
+    },
+    {
+      "result": "ALREADY_RESET",
+      "step": "opa_policy"
+    },
+    {
+      "result": "ALREADY_RESET",
+      "step": "openbao_paths"
+    },
+    {
+      "detail": {
+        "terminusdb": "ALREADY_RESET",
+        "typedb": "ALREADY_RESET"
+      },
+      "result": "ALREADY_RESET",
+      "step": "graph_databases"
+    }
+  ]
+}
+exit=0
+
+=== docker compose ps after reset -- confirm all 11 containers are still running (reset never stops containers) ===
+ocor-bootstrap-fuseki-1 Up 45 minutes (healthy)
+ocor-bootstrap-kafka-1 Up 2 hours (healthy)
+ocor-bootstrap-keycloak-1 Up 2 hours (healthy)
+ocor-bootstrap-opa-1 Up 2 hours (healthy)
+ocor-bootstrap-openbao-1 Up 2 hours (healthy)
+ocor-bootstrap-postgresql-1 Up 2 hours (healthy)
+ocor-bootstrap-qdrant-1 Up 2 hours (healthy)
+ocor-bootstrap-spire-agent-1 Up 2 hours
+ocor-bootstrap-spire-server-1 Up 2 hours (healthy)
+ocor-bootstrap-terminusdb-1 Up 2 hours (healthy)
+ocor-bootstrap-typedb-1 Up 2 hours (healthy)
+
+=== RUN 3: reset -> re-init round-trip -- proves reset genuinely returns to the OCOR-DEV-0079 baseline OCOR-DEV-0080's initializer can rebuild from ===
+{
+  "status": "PASS",
+  "steps": [
+    {
+      "detail": {
+        "key_count": 2
+      },
+      "result": "ALREADY_INITIALIZED",
+      "step": "spire_trust"
+    },
+    {
+      "detail": {
+        "realm": "ocor"
+      },
+      "result": "CREATED",
+      "step": "keycloak_realm"
+    },
+    {
+      "detail": {
+        "policy_id": "ocor_bootstrap"
+      },
+      "result": "CREATED",
+      "step": "opa_policy"
+    },
+    {
+      "detail": {
+        "mount": "ocor"
+      },
+      "result": "CREATED",
+      "step": "openbao_paths"
+    },
+    {
+      "detail": {
+        "terminusdb": "CREATED",
+        "typedb": "CREATED"
+      },
+      "result": "CREATED",
+      "step": "graph_databases"
+    }
+  ]
+}
+exit=0
+
+=== re-load OCOR-DEV-0081's fixtures too, to leave the stack in the same state other backlog tasks expect ===
+{"error": "cannot query TerminusDB document: 404 {\"@type\":\"api:GetDocumentErrorResponse\",\"api:error\": {\"@type\":\"api:DocumentNotFound\",\"api:document_id\":\"SyntheticFixture/ocor-001\"},\"api:message\":\"Document not found: 'SyntheticFixture/ocor-001'\",\"api:request_id\":\"3e91aa5a-af0b-11f1-8aab-63454b2f321e\",\"api:status\":\"api:not_found\"}", "status": "FAIL"}
+exit=1
+
+=== --teardown dry-run again, to document the exact destructive command without ever invoking it for real (would break every other in-progress backlog task's live stack) ===
+{
+  "status": "PASS",
+  "mode": "DRY_RUN",
+  "command": [
+    "docker",
+    "compose",
+    "-p",
+    "ocor-bootstrap",
+    "-f",
+    "deploy/bootstrap/compose.yaml",
+    "down",
+    "--volumes",
+    "--remove-orphans"
+  ]
+}
+
+=== pytest ocor-runtime/tests/tasks/test_ocor_dev_0082.py -v ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 10 items
+
+ocor-runtime/tests/tasks/test_ocor_dev_0082.py::test_teardown_command_targets_only_the_ocor_bootstrap_project PASSED [ 10%]
+ocor-runtime/tests/tasks/test_ocor_dev_0082.py::test_reset_keycloak_realm_deletes_when_present PASSED [ 20%]
+ocor-runtime/tests/tasks/test_ocor_dev_0082.py::test_reset_keycloak_realm_already_reset_when_absent PASSED [ 30%]
+ocor-runtime/tests/tasks/test_ocor_dev_0082.py::test_reset_opa_policy_deletes_when_present PASSED [ 40%]
+ocor-runtime/tests/tasks/test_ocor_dev_0082.py::test_reset_opa_policy_already_reset_when_absent PASSED [ 50%]
+ocor-runtime/tests/tasks/test_ocor_dev_0082.py::test_reset_openbao_paths_deletes_when_present PASSED [ 60%]
+ocor-runtime/tests/tasks/test_ocor_dev_0082.py::test_reset_openbao_paths_already_reset_when_absent PASSED [ 70%]
+ocor-runtime/tests/tasks/test_ocor_dev_0082.py::test_reset_graph_databases_deletes_both_when_present PASSED [ 80%]
+ocor-runtime/tests/tasks/test_ocor_dev_0082.py::test_reset_graph_databases_already_reset_when_absent PASSED [ 90%]
+ocor-runtime/tests/tasks/test_ocor_dev_0082.py::test_reset_requires_env_file_argument PASSED [100%]
+
+============================== 10 passed in 0.02s ==============================
+
+=== full local pytest regression ===
+........................................................................ [ 11%]
+..sssss................................................................. [ 23%]
+..........F............................................................. [ 35%]
+........................................................................ [ 47%]
+........................................................................ [ 59%]
+........................................................................ [ 71%]
+...................................EEEEEEEEEE........................... [ 83%]
+.....................................................................F.. [ 95%]
+............................                                             [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_real_postgresql_precommit_process_crash_has_zero_partial_visibility[before-transaction] _
+
+    @pytest.fixture(scope="session")
+    def postgres_dsn() -> str:
+        dsn = os.environ.get("OCOR_LIVE_POSTGRES_DSN")
+        if not dsn:
+>           pytest.fail("OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence")
+E           Failed: OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence
+
+ocor-runtime/tests/tasks/test_ocor_dev_0015.py:37: Failed
+_ ERROR at setup of test_real_postgresql_precommit_process_crash_has_zero_partial_visibility[after-transaction-begin] _
+
+    @pytest.fixture(scope="session")
+    def postgres_dsn() -> str:
+        dsn = os.environ.get("OCOR_LIVE_POSTGRES_DSN")
+        if not dsn:
+>           pytest.fail("OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence")
+E           Failed: OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence
+
+ocor-runtime/tests/tasks/test_ocor_dev_0015.py:37: Failed
+_ ERROR at setup of test_real_postgresql_precommit_process_crash_has_zero_partial_visibility[after-aggregate-stage] _
+
+    @pytest.fixture(scope="session")
+    def postgres_dsn() -> str:
+        dsn = os.environ.get("OCOR_LIVE_POSTGRES_DSN")
+        if not dsn:
+>           pytest.fail("OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence")
+E           Failed: OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence
+
+ocor-runtime/tests/tasks/test_ocor_dev_0015.py:37: Failed
+_ ERROR at setup of test_real_postgresql_precommit_process_crash_has_zero_partial_visibility[after-outbox-stage] _
+
+    @pytest.fixture(scope="session")
+    def postgres_dsn() -> str:
+        dsn = os.environ.get("OCOR_LIVE_POSTGRES_DSN")
+        if not dsn:
+>           pytest.fail("OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence")
+E           Failed: OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence
+
+ocor-runtime/tests/tasks/test_ocor_dev_0015.py:37: Failed
+_ ERROR at setup of test_real_postgresql_postcommit_preack_crash_has_complete_exact_retry _
+
+    @pytest.fixture(scope="session")
+    def postgres_dsn() -> str:
+        dsn = os.environ.get("OCOR_LIVE_POSTGRES_DSN")
+        if not dsn:
+>           pytest.fail("OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence")
+E           Failed: OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence
+
+ocor-runtime/tests/tasks/test_ocor_dev_0015.py:37: Failed
+_ ERROR at setup of test_two_concurrent_identical_retries_return_one_identical_receipt _
+
+    @pytest.fixture(scope="session")
+    def postgres_dsn() -> str:
+        dsn = os.environ.get("OCOR_LIVE_POSTGRES_DSN")
+        if not dsn:
+>           pytest.fail("OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence")
+E           Failed: OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence
+
+ocor-runtime/tests/tasks/test_ocor_dev_0015.py:37: Failed
+_ ERROR at setup of test_key_reuse_with_changed_content_is_rejected_without_partial_write _
+
+    @pytest.fixture(scope="session")
+    def postgres_dsn() -> str:
+        dsn = os.environ.get("OCOR_LIVE_POSTGRES_DSN")
+        if not dsn:
+>           pytest.fail("OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence")
+E           Failed: OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence
+
+ocor-runtime/tests/tasks/test_ocor_dev_0015.py:37: Failed
+_ ERROR at setup of test_atomic_oracle_accepts_multiple_revisions_without_global_count_equality _
+
+    @pytest.fixture(scope="session")
+    def postgres_dsn() -> str:
+        dsn = os.environ.get("OCOR_LIVE_POSTGRES_DSN")
+        if not dsn:
+>           pytest.fail("OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence")
+E           Failed: OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence
+
+ocor-runtime/tests/tasks/test_ocor_dev_0015.py:37: Failed
+_ ERROR at setup of test_partial_visibility_falsifies_oracle_instead_of_passing _
+
+    @pytest.fixture(scope="session")
+    def postgres_dsn() -> str:
+        dsn = os.environ.get("OCOR_LIVE_POSTGRES_DSN")
+        if not dsn:
+>           pytest.fail("OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence")
+E           Failed: OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence
+
+ocor-runtime/tests/tasks/test_ocor_dev_0015.py:37: Failed
+____ ERROR at setup of test_scenario_branch_cannot_create_relayable_outbox _____
+
+    @pytest.fixture(scope="session")
+    def postgres_dsn() -> str:
+        dsn = os.environ.get("OCOR_LIVE_POSTGRES_DSN")
+        if not dsn:
+>           pytest.fail("OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence")
+E           Failed: OCOR_LIVE_POSTGRES_DSN is mandatory qualifying evidence
+
+ocor-runtime/tests/tasks/test_ocor_dev_0015.py:37: Failed
+=================================== FAILURES ===================================
+_____ test_two_clean_environments_resolve_identical_lock_and_image_digests _____
+
+tmp_path = PosixPath('/tmp/pytest-of-luca/pytest-26/test_two_clean_environments_re0')
+
+    def test_two_clean_environments_resolve_identical_lock_and_image_digests(tmp_path):
+        first = materialize_clean_environment(tmp_path / "first")
+        second = materialize_clean_environment(tmp_path / "second")
+        assert fingerprint(first) == fingerprint(second)
+        for environment in (first, second):
+            result = subprocess.run(
+                ["uv", "lock", "--project", str(environment), "--check"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+>           assert result.returncode == 0, result.stdout + result.stderr
+E           AssertionError: error: No interpreter found for Python ==3.12.11 in managed installations or search path
+E             
+E           assert 2 == 0
+E            +  where 2 = CompletedProcess(args=['uv', 'lock', '--project', '/tmp/pytest-of-luca/pytest-26/test_two_clean_environments_re0/first...code=2, stdout='', stderr='error: No interpreter found for Python ==3.12.11 in managed installations or search path\n').returncode
+
+ocor-runtime/tests/tasks/test_ocor_dev_0002.py:52: AssertionError
+___________________ test_running_interpreter_matches_the_pin ___________________
+
+    def test_running_interpreter_matches_the_pin() -> None:
+        pin = PIN_PATH.read_text(encoding="utf-8").strip()
+        actual = platform.python_version()
+>       assert actual == pin, (
+            f"running interpreter {actual} diverges from the pinned {pin} in "
+            f"{PIN_PATH}; the environment is not the governed one"
+        )
+E       AssertionError: running interpreter 3.12.14 diverges from the pinned 3.12.11 in /home/luca/projects/ocor-detailed-design/ocor-runtime/.python-version; the environment is not the governed one
+E       assert '3.12.14' == '3.12.11'
+E         
+E         - 3.12.11
+E         ?       ^
+E         + 3.12.14
+E         ?       ^
+
+ocor-runtime/tests/test_interpreter_pin.py:26: AssertionError
+=============================== warnings summary ===============================
+ocor-runtime/tests/acceptance_ev/test_ev_001_010_semantics_identity.py:21
+  /home/luca/projects/ocor-detailed-design/ocor-runtime/tests/acceptance_ev/test_ev_001_010_semantics_identity.py:21: PytestUnknownMarkWarning: Unknown pytest.mark.acceptance - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.acceptance
+
+ocor-runtime/tests/acceptance_ev/test_ev_011_019_store_marking.py:16
+  /home/luca/projects/ocor-detailed-design/ocor-runtime/tests/acceptance_ev/test_ev_011_019_store_marking.py:16: PytestUnknownMarkWarning: Unknown pytest.mark.acceptance - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.acceptance
+
+ocor-runtime/tests/acceptance_ev/test_ev_020_028_actions_capabilities.py:23
+  /home/luca/projects/ocor-detailed-design/ocor-runtime/tests/acceptance_ev/test_ev_020_028_actions_capabilities.py:23: PytestUnknownMarkWarning: Unknown pytest.mark.acceptance - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.acceptance
+
+ocor-runtime/tests/acceptance_ev/test_ev_029_035_fence_agent_e2e.py:26
+  /home/luca/projects/ocor-detailed-design/ocor-runtime/tests/acceptance_ev/test_ev_029_035_fence_agent_e2e.py:26: PytestUnknownMarkWarning: Unknown pytest.mark.acceptance - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.acceptance
+
+ocor-runtime/tests/backend_assumptions/test_ba01_atomic_outbox.py:14
+  /home/luca/projects/ocor-detailed-design/ocor-runtime/tests/backend_assumptions/test_ba01_atomic_outbox.py:14: PytestUnknownMarkWarning: Unknown pytest.mark.backend_assumption - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.backend_assumption
+
+ocor-runtime/tests/backend_assumptions/test_ba01_postgres_fallback.py:14
+  /home/luca/projects/ocor-detailed-design/ocor-runtime/tests/backend_assumptions/test_ba01_postgres_fallback.py:14: PytestUnknownMarkWarning: Unknown pytest.mark.backend_assumption - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.backend_assumption
+
+ocor-runtime/tests/backend_assumptions/test_ba02_idempotency.py:8
+  /home/luca/projects/ocor-detailed-design/ocor-runtime/tests/backend_assumptions/test_ba02_idempotency.py:8: PytestUnknownMarkWarning: Unknown pytest.mark.backend_assumption - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.backend_assumption
+
+ocor-runtime/tests/backend_assumptions/test_ba03_single_writer.py:10
+  /home/luca/projects/ocor-detailed-design/ocor-runtime/tests/backend_assumptions/test_ba03_single_writer.py:10: PytestUnknownMarkWarning: Unknown pytest.mark.backend_assumption - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.backend_assumption
+
+ocor-runtime/tests/backend_assumptions/test_ba04_canonicalization.py:9
+  /home/luca/projects/ocor-detailed-design/ocor-runtime/tests/backend_assumptions/test_ba04_canonicalization.py:9: PytestUnknownMarkWarning: Unknown pytest.mark.backend_assumption - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.backend_assumption
+
+ocor-runtime/tests/backend_assumptions/test_ba05_temporal_guards.py:10
+  /home/luca/projects/ocor-detailed-design/ocor-runtime/tests/backend_assumptions/test_ba05_temporal_guards.py:10: PytestUnknownMarkWarning: Unknown pytest.mark.backend_assumption - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.backend_assumption
+
+ocor-runtime/tests/backend_assumptions/test_ba06_marking_lattice.py:12
+  /home/luca/projects/ocor-detailed-design/ocor-runtime/tests/backend_assumptions/test_ba06_marking_lattice.py:12: PytestUnknownMarkWarning: Unknown pytest.mark.backend_assumption - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.backend_assumption
+
+ocor-runtime/tests/backend_assumptions/test_ba07_emission_fence.py:11
+  /home/luca/projects/ocor-detailed-design/ocor-runtime/tests/backend_assumptions/test_ba07_emission_fence.py:11: PytestUnknownMarkWarning: Unknown pytest.mark.backend_assumption - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.backend_assumption
+
+ocor-runtime/tests/backend_assumptions/test_ba08_capability_expiration.py:10
+  /home/luca/projects/ocor-detailed-design/ocor-runtime/tests/backend_assumptions/test_ba08_capability_expiration.py:10: PytestUnknownMarkWarning: Unknown pytest.mark.backend_assumption - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    pytestmark = pytest.mark.backend_assumption
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0002.py::test_two_clean_environments_resolve_identical_lock_and_image_digests
+FAILED ocor-runtime/tests/test_interpreter_pin.py::test_running_interpreter_matches_the_pin
+ERROR ocor-runtime/tests/tasks/test_ocor_dev_0015.py::test_real_postgresql_precommit_process_crash_has_zero_partial_visibility[before-transaction]
+ERROR ocor-runtime/tests/tasks/test_ocor_dev_0015.py::test_real_postgresql_precommit_process_crash_has_zero_partial_visibility[after-transaction-begin]
+ERROR ocor-runtime/tests/tasks/test_ocor_dev_0015.py::test_real_postgresql_precommit_process_crash_has_zero_partial_visibility[after-aggregate-stage]
+ERROR ocor-runtime/tests/tasks/test_ocor_dev_0015.py::test_real_postgresql_precommit_process_crash_has_zero_partial_visibility[after-outbox-stage]
+ERROR ocor-runtime/tests/tasks/test_ocor_dev_0015.py::test_real_postgresql_postcommit_preack_crash_has_complete_exact_retry
+ERROR ocor-runtime/tests/tasks/test_ocor_dev_0015.py::test_two_concurrent_identical_retries_return_one_identical_receipt
+ERROR ocor-runtime/tests/tasks/test_ocor_dev_0015.py::test_key_reuse_with_changed_content_is_rejected_without_partial_write
+ERROR ocor-runtime/tests/tasks/test_ocor_dev_0015.py::test_atomic_oracle_accepts_multiple_revisions_without_global_count_equality
+ERROR ocor-runtime/tests/tasks/test_ocor_dev_0015.py::test_partial_visibility_falsifies_oracle_instead_of_passing
+ERROR ocor-runtime/tests/tasks/test_ocor_dev_0015.py::test_scenario_branch_cannot_create_relayable_outbox
+2 failed, 587 passed, 5 skipped, 13 warnings, 10 errors in 33.92s

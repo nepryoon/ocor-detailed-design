@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "79084dd7be841bee0b36b92b939e9abea0e37362",
-  "branch": "governed/ocor-dev-0081-synthetic-fixtures",
+  "baseline_commit": "48b6d01a254d0ceb78fb9ad4ec96088e1835c5fb",
+  "branch": "governed/ocor-dev-0082-reset-teardown",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -212,6 +212,26 @@
     {
       "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0081.py -v (12 unit/negative/contract tests, all network calls faked via monkeypatch, including a dedicated test for the TerminusDB response-body quirk)",
       "result": "PASS_12_of_12"
+    },
+    {
+      "command": "gh pr merge 73 --merge",
+      "result": "MERGED_48b6d01a254d0ceb78fb9ad4ec96088e1835c5fb_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_8d76829; post-merge git fetch confirms origin/main == mergeCommit.oid; docker compose ps confirmed all 11 containers still healthy"
+    },
+    {
+      "command": "read the pre-existing scripts/reset_test_environment.py before writing anything -- discovered it already implements full teardown (docker compose down --volumes) but has no lighter-weight 'reset' distinct from that, despite the task title naming both",
+      "result": "DESIGNED_reset_as_the_exact_inverse_of_OCOR-DEV-0080's_4_mutating_init_steps_leaving_containers_running_teardown_kept_unchanged"
+    },
+    {
+      "command": "real --reset --execute against the live, initialized stack; re-invoke for idempotency; then run OCOR-DEV-0080's real initializer against the reset stack to prove a full round-trip",
+      "result": "PASS_RUN_1_RESET_for_all_4_targets_RUN_2_ALREADY_RESET_docker_compose_ps_confirmed_containers_untouched_RUN_3_re-init_recreated_all_4_from_scratch_proving_reset_is_a_genuine_complete_inverse"
+    },
+    {
+      "command": "reload OCOR-DEV-0081's synthetic fixtures after the round-trip, restoring the exact state other in-progress backlog tasks expect",
+      "result": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0082.py -v (10 unit/negative/contract tests, all network calls faked via monkeypatch)",
+      "result": "PASS_10_of_10"
     }
   ],
   "completed_tasks": [
@@ -237,9 +257,11 @@
     "OCOR-DEV-0079: PR #71 merged (751836ef). All 13 checks green on the first push. Post-merge SHA verified. The live 11-service Docker stack was left running and confirmed still healthy, then reused directly for OCOR-DEV-0080 without a fresh bootstrap.",
     "OCOR-DEV-0080 (pending PR/merge): implemented deterministic, idempotent service initialization per deploy/bootstrap/init/README.md's 5 ordered steps (SPIRE trust verify, Keycloak realm, OPA policy, OpenBao paths, graph databases). Manually explored every real API first (TerminusDB/TypeDB database create, Keycloak realm create, OPA policy PUT, OpenBao mount enable) to learn exact request/response/conflict shapes, then cleaned all manual artifacts back to a pristine baseline before writing deploy/bootstrap/init/initialize_services.py. Each step checks existing state before mutating: absent -> CREATED, present-and-matching -> ALREADY_INITIALIZED (no mutation), present-but-different -> DRIFT_DETECTED (fails closed, never overwrites). Deliberately does not author real OPA/Keycloak security-policy content (WS-11 scope, not this WS-12 task) -- only a fail-closed default-deny placeholder policy and an empty realm/database shell. Proved the full contract for real against the live stack: RUN1 created everything, RUN2 (re-invoke) was fully idempotent, RUN3 (externally mutated OPA policy) was detected as drift and rejected (exit 1, a real executed rollback drill, not simulated), RUN4 confirmed full recovery after restoring the correct content. Added 16 unit/negative tests (all network/subprocess calls faked via monkeypatch, no live dependency) and fixed a real gap found along the way: scripts/validate_language_policy.py had no authorized area for deploy/bootstrap/init's .py/.rego files.",
     "OCOR-DEV-0080: PR #72 merged (79084dd7). All 13 checks green on the first push. Post-merge SHA verified. Found fuseki had exited (137, likely OOM from a large unrelated host container sharing the same Docker daemon); restarted it cleanly without touching any other service, all 11 healthy again within seconds.",
-    "OCOR-DEV-0081 (pending PR/merge): implemented deterministic synthetic fixture loading for the 2 databases OCOR-DEV-0080 shelled out (TerminusDB, TypeDB `ocor_default`). Manually explored both real APIs first (TerminusDB document schema+instance CRUD; TypeDB's transaction-based HTTP v1 API -- open/query/commit/close, define/insert/match/undefine) before writing code, and discovered two real quirks along the way: TerminusDB's not-found single-document GET returns real HTTP 200 with a body literally prefixed by 'Status: 404\\nContent-type: ...\\n\\n' before the JSON payload (now documented in code and covered by a dedicated unit test); TypeDB allows only one open schema/write transaction at a time, and a forgotten open transaction blocks new ones and even database deletion (resolved during exploration by always closing/committing). Wrote deploy/bootstrap/fixtures/synthetic_fixtures.json (one minimal versioned entity/document) and load_fixtures.py with the same CREATED/ALREADY_INITIALIZED/DRIFT_DETECTED check-before-mutate contract as OCOR-DEV-0080. PostgreSQL/Kafka/Qdrant fixtures explicitly declared out of scope: those 3 services were already provisioned and evidenced by earlier, unrelated tasks (OCOR-DEV-0006/0015/0019/0023) predating this WS-12 chain, not part of its newly-provisioned service set. Proved the full contract for real: RUN1 created both fixtures with identical post-load verification digests across both backends for the same semantic content; RUN2 was fully idempotent; RUN3 (externally mutated TerminusDB fixture) was detected as drift and rejected (exit 1, real executed rollback drill); RUN4 confirmed full recovery. Added 12 unit/negative tests (all network calls faked via monkeypatch) and fixed scripts/validate_language_policy.py again for the new deploy/bootstrap/fixtures area -- checked BEFORE opening the PR this time, per the lesson from OCOR-DEV-0080."
+    "OCOR-DEV-0081 (pending PR/merge): implemented deterministic synthetic fixture loading for the 2 databases OCOR-DEV-0080 shelled out (TerminusDB, TypeDB `ocor_default`). Manually explored both real APIs first (TerminusDB document schema+instance CRUD; TypeDB's transaction-based HTTP v1 API -- open/query/commit/close, define/insert/match/undefine) before writing code, and discovered two real quirks along the way: TerminusDB's not-found single-document GET returns real HTTP 200 with a body literally prefixed by 'Status: 404\\nContent-type: ...\\n\\n' before the JSON payload (now documented in code and covered by a dedicated unit test); TypeDB allows only one open schema/write transaction at a time, and a forgotten open transaction blocks new ones and even database deletion (resolved during exploration by always closing/committing). Wrote deploy/bootstrap/fixtures/synthetic_fixtures.json (one minimal versioned entity/document) and load_fixtures.py with the same CREATED/ALREADY_INITIALIZED/DRIFT_DETECTED check-before-mutate contract as OCOR-DEV-0080. PostgreSQL/Kafka/Qdrant fixtures explicitly declared out of scope: those 3 services were already provisioned and evidenced by earlier, unrelated tasks (OCOR-DEV-0006/0015/0019/0023) predating this WS-12 chain, not part of its newly-provisioned service set. Proved the full contract for real: RUN1 created both fixtures with identical post-load verification digests across both backends for the same semantic content; RUN2 was fully idempotent; RUN3 (externally mutated TerminusDB fixture) was detected as drift and rejected (exit 1, real executed rollback drill); RUN4 confirmed full recovery. Added 12 unit/negative tests (all network calls faked via monkeypatch) and fixed scripts/validate_language_policy.py again for the new deploy/bootstrap/fixtures area -- checked BEFORE opening the PR this time, per the lesson from OCOR-DEV-0080.",
+    "OCOR-DEV-0081: PR #73 merged (48b6d01a). All 13 checks green on the first push. Post-merge SHA verified; live stack confirmed still healthy.",
+    "OCOR-DEV-0082 (pending PR/merge): implemented service reset. scripts/reset_test_environment.py already existed but only implemented full teardown (docker compose down --volumes); added a distinct, lighter-weight --reset mode that undoes exactly OCOR-DEV-0080's 4 mutating init steps (Keycloak realm, OPA policy, OpenBao mount, TerminusDB/TypeDB ocor_default databases) without stopping any container -- SPIRE trust is deliberately left untouched since OCOR-DEV-0080 only ever verifies it, never creates it. Proved the full contract for real against the live stack: real reset succeeded for all 4 targets, a second invocation was fully idempotent, and -- the strongest proof -- running OCOR-DEV-0080's real initializer against the freshly-reset stack recreated all 4 targets from scratch, confirming reset is a genuine complete inverse rather than a partial or lossy operation. docker compose ps confirmed every container stayed running throughout. --teardown's actual destructive execution was deliberately never run (would destroy the live stack other in-progress backlog tasks depend on); its command construction and dry-run path were verified instead. Added 10 unit/negative tests (network calls faked via monkeypatch); scripts/validate_language_policy.py needed no new area this time since scripts/ was already authorized."
   ],
-  "current_task": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-EXECUTION-OCOR-DEV-0082",
+  "current_task": "CC-OCOR-DELIVERY-COMPLETION__BACKLOG-EXECUTION-OCOR-DEV-0083",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -262,9 +284,11 @@
     "reports/evidence/G2/OCOR-DEV-0080.json",
     "reports/evidence/G2/OCOR-DEV-0080.log",
     "reports/evidence/G2/OCOR-DEV-0081.json",
-    "reports/evidence/G2/OCOR-DEV-0081.log"
+    "reports/evidence/G2/OCOR-DEV-0081.log",
+    "reports/evidence/G2/OCOR-DEV-0082.json",
+    "reports/evidence/G2/OCOR-DEV-0082.log"
   ],
-  "exact_next_action": "Push branch governed/ocor-dev-0081-synthetic-fixtures, open the PR, poll CI to green (Monitor armed on gh pr checks), merge only on green, verify post-merge SHA, sync all three state files. Then continue backlog execution: OCOR-DEV-0082 (Implement service reset and teardown) is next, depending on OCOR-DEV-0080. The real 11-service Docker stack, now initialized and fixture-loaded (ocor_default TerminusDB/TypeDB each hold the synthetic fixture), can be reused directly if still running -- check docker compose -p ocor-bootstrap ps first, since a service can be OOM-killed by an unrelated large host container (fuseki was, and was simply restarted); otherwise repeat OCOR-DEV-0079's bootstrap then OCOR-DEV-0080's initialization. The component-1 migration escalation (reserved to the Product Owner) does not block this.",
+  "exact_next_action": "Push branch governed/ocor-dev-0082-reset-teardown, open the PR, poll CI to green (Monitor armed on gh pr checks), merge only on green, verify post-merge SHA, sync all three state files. Then continue backlog execution: OCOR-DEV-0083 (Implement bounded fault injection) is next, depending on OCOR-DEV-0079. The real 11-service Docker stack, now re-initialized and fixture-reloaded after OCOR-DEV-0082's round-trip drill, can be reused directly if still running -- check docker compose -p ocor-bootstrap ps first, since a service can be OOM-killed by an unrelated large host container (fuseki was once, simply restarted). The component-1 migration escalation (reserved to the Product Owner) does not block this.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "GITHUB-BRANCH-PROTECTION-001__COMPENSATED_NON_BLOCKING"
