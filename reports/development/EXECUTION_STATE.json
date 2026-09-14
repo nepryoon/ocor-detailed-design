@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0045",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0045",
+    "branch": "governed/state-sync-ocor-dev-0046",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0046",
     "decision_id": "DEC-211",
-    "phase": "G4_WAVE_15_IN_PROGRESS__OCOR_DEV_0046_READY",
+    "phase": "G4_WAVE_15_IN_PROGRESS__OCOR_DEV_0047_READY",
     "worktree": null
   },
-  "baseline_commit": "c6406feeddbad4ca6f778fdaeca9f89110856738",
+  "baseline_commit": "fc9f75bbd8326c22b46573abd0ac3ce11b4591a8",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -82,19 +82,20 @@
     "OCOR-DEV-0042",
     "OCOR-DEV-0043",
     "OCOR-DEV-0044",
-    "OCOR-DEV-0045"
+    "OCOR-DEV-0045",
+    "OCOR-DEV-0046"
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "d78bbfd",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR121_MERGED_c6406feeddbad4ca6f778fdaeca9f89110856738",
+    "candidate_commit": "92e692f",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR123_MERGED_fc9f75bbd8326c22b46573abd0ac3ce11b4591a8",
     "run_ids": [
-      34809851803,
-      34809851823,
-      34809851827,
-      34809851832,
-      34809851843,
-      34809851866
+      34811935820,
+      34811935841,
+      34811935857,
+      34811935861,
+      34811935867,
+      34811935879
     ]
   },
   "mandate_phase_status": {
@@ -155,7 +156,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0045 merged (PR #121, c6406feeddbad4ca6f778fdaeca9f89110856738), all 13 checks green on the first push. This implements ocor_runtime.c7.runtime: a reimplementation of OCOR-DEV-0022's sealed identify-or-abstain fail-closed gate (pin/branch/release/confounding/positivity checks, shared by all four operations) plus three new sealed operations the spike never computed (estimate_counterfactual, estimate_uncertainty via deterministic bootstrap, estimate_sensitivity via additive confounding shift) alongside the reimplemented estimate_intervention -- all new, c7_emission.py (a different, sealed C7 concern) left completely untouched. Recomputed readiness directly from the backlog JSON: ready set is {OCOR-DEV-0046 (wave 15), OCOR-DEV-0048 (wave 15)}; OCOR-DEV-0046 is next by numeric order -- 'Implement C8 AgentRun Task Assignment Commitment Handoff and Dissent' (ocor-runtime/src/ocor_runtime/c8/orchestrator.py, depends on OCOR-DEV-0009/0027/0031). Acceptance: agent/team state transitions preserve authority, commitments, handoffs and dissent as explicit records; negative: an agent cannot self-grant capability, suppress dissent or mutate canonical state. Before designing, read ocor_runtime.c8_agent.py (the existing, predating-this-session, retained AgentKernel already reused unmodified by OCOR-DEV-0031's mission thread) and ocor_runtime.c2_identity/c6_capabilities in full -- this task's orchestrator.py is very likely a NEW, adjacent module built around the existing sealed AgentKernel/CapabilityAuthority rather than a rewrite of either; check every ocor-runtime/src/ocor_runtime/c8*.py file's own sealed-evidence hash before touching any of them, and read OCOR-DEV-0027's sealed deliverable (spikes/context_replay/replay.py, deterministic context-assembly replay) to understand why it's a hard dependency here.",
+  "next_executable_action": "OCOR-DEV-0046 merged (PR #123, fc9f75bbd8326c22b46573abd0ac3ce11b4591a8), all 13 checks green on the first push. This implements ocor_runtime.c8.orchestrator.AgentRunOrchestrator: assign/commit/handoff/register_dissent all require a real capability lease authorized by the sealed CapabilityAuthority and write through the sealed AtomicOutboxStore's single-writer commit path, with the orchestrator as the store's sole authoritative writer -- structurally realizing 'agent cannot self-grant capability / mutate canonical state / suppress dissent'. c8_agent.py (AgentKernel, predating this session) left completely untouched. Recomputed readiness directly from the backlog JSON: ready set is {OCOR-DEV-0047 (wave 18, newly ready), OCOR-DEV-0048 (wave 15)}; OCOR-DEV-0047 is next by numeric order -- 'Implement C8 tool boundary sandbox budgets and kill switch' (ocor-runtime/src/ocor_runtime/c8/tool_runtime.py, depends on OCOR-DEV-0021/0044/0046). Acceptance: every model/tool call is capability-, purpose-, marking-, budget- and stop-bound with receipts; negative: escape syntax, over-budget work or revoked capability produces no tool effect. This is very likely the retained integration layer wiring together ocor_runtime.c8_agent.StrictSandbox/TokenBudget (predating this session, reused unmodified), the sealed CapabilityAuthority, ocor_runtime.c4_marking (for the 'marking-bound' criterion), and OCOR-DEV-0044's sealed EmergencyStopController (for the 'stop-bound' criterion, guard_dispatch's epoch-fencing) -- read c8_agent.py's StrictSandbox.execute()/AgentKernel.execute_sandboxed() again in full (already read this iteration) plus ocor_runtime.c4_marking.py and ocor_runtime.c6.safety.EmergencyStopController before designing; check every ocor-runtime/src/ocor_runtime/c8*.py file's own sealed-evidence hash before touching any of them (c8_agent.py sealed hash 7b6a060f83d3614a2463f3ccdcc62d52b3ebfc1c727cc99369b1e3b81dcb76d4, orchestrator.py sealed hash 90841d93437ae5d12f8a9b837063b554b2829f48467c3d4f5cfeb3d9f6bce35e -- both must remain byte-identical). 'Escape syntax' likely refers to StrictSandbox's own AST-whitelist violations (SandboxViolation) -- verify no tool effect occurs when one is raised, i.e. the effect must happen strictly after the sandbox call succeeds, never speculatively before.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
