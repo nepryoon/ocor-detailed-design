@@ -112,6 +112,16 @@
       "path": "OCOR-DEV-0042.log",
       "sha256": "713062748c0881a88f59961c10073a150fdae10512050e343dd3588a4b42ea9d",
       "task_id": "OCOR-DEV-0042-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0043.json",
+      "sha256": "06ec87839f98eac533173e5f760295ba6c9e54062b90562504661883bc660fa0",
+      "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "path": "OCOR-DEV-0043.log",
+      "sha256": "d90e061512cccb41fa3bbfaccbde75bd955e50f4baf1c84a6c54600234fa2cf5",
+      "task_id": "OCOR-DEV-0043-RAW"
     }
   ],
   "requirement_results": [
@@ -1095,6 +1105,132 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0042"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-QUORUM-COVERING-ALL-REQUIRED-ROLES-RESOLVES-APPROVED",
+      "command": "a quorum covering both required roles by two distinct, registered humans within TTL and correct scope resolves an approved Approval",
+      "evidence_path": "OCOR-DEV-0043.json",
+      "raw_output_path": "OCOR-DEV-0043.log",
+      "requirement_id": "FR-002",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-INSUFFICIENT-DISTINCT-SIGNATORIES-FAILS-QUORUM",
+      "command": "fewer distinct valid signatories than the policy's minimum_signatories fails closed with QUORUM_NOT_MET",
+      "evidence_path": "OCOR-DEV-0043.json",
+      "raw_output_path": "OCOR-DEV-0043.log",
+      "requirement_id": "FR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-SAME-HUMAN-DUAL-ROLE-NOT-COUNTED-TWICE",
+      "command": "the identical real human signing for two distinct required roles is never counted as satisfying both -- separation of duties enforced structurally",
+      "evidence_path": "OCOR-DEV-0043.json",
+      "raw_output_path": "OCOR-DEV-0043.log",
+      "requirement_id": "FR-008",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-EXTRA-SIGNATORY-DOES-NOT-RESCUE-MISSING-ROLE-COVERAGE",
+      "command": "a third distinct signatory duplicating an already-covered role does not substitute for coverage of a still-uncovered required role",
+      "evidence_path": "OCOR-DEV-0043.json",
+      "raw_output_path": "OCOR-DEV-0043.log",
+      "requirement_id": "FR-008",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-EXPIRED-SIGNATURE-DENIES",
+      "command": "a signature outside the policy's TTL as of the evaluation time is excluded and denies the gate even though it was valid when first granted",
+      "evidence_path": "OCOR-DEV-0043.json",
+      "raw_output_path": "OCOR-DEV-0043.log",
+      "requirement_id": "FR-011",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-SCOPE-MISMATCHED-SIGNATURE-DENIES",
+      "command": "a signature scoped to a different resource than the action being decided is excluded and denies the gate",
+      "evidence_path": "OCOR-DEV-0043.json",
+      "raw_output_path": "OCOR-DEV-0043.log",
+      "requirement_id": "FR-012",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-PROPOSER-SELF-SIGNATURE-EXCLUDED",
+      "command": "the action's own proposer can never satisfy any required role, even with an otherwise fully valid signature",
+      "evidence_path": "OCOR-DEV-0043.json",
+      "raw_output_path": "OCOR-DEV-0043.log",
+      "requirement_id": "FR-031",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-UNRESOLVED-SIGNATORY-EXCLUDED",
+      "command": "a signature from a principal_id never registered in the sealed IdentityRegistry is never counted",
+      "evidence_path": "OCOR-DEV-0043.json",
+      "raw_output_path": "OCOR-DEV-0043.log",
+      "requirement_id": "FR-033",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-DUAL-CONTROL-RESOLUTION-VALID-DISPATCH-DENIED",
+      "command": "the identical, unmodified validation re-run at a later dispatch-time timestamp denies an approval that was genuinely valid at resolution time, once TTL has elapsed in between",
+      "evidence_path": "OCOR-DEV-0043.json",
+      "raw_output_path": "OCOR-DEV-0043.log",
+      "requirement_id": "FR-037",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-FAILING-CONTROL-CHECK-BLOCKS-APPROVAL",
+      "command": "an injected control-plane check that raises blocks the Approval even though quorum and role coverage would otherwise succeed",
+      "evidence_path": "OCOR-DEV-0043.json",
+      "raw_output_path": "OCOR-DEV-0043.log",
+      "requirement_id": "NFR-013",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-REAL-BOUNDED-PROBE-AGAINST-UNREACHABLE-CONTROL-FAILS-CLOSED",
+      "command": "a real bounded HTTP probe against a genuinely closed local port, driven through OCOR-DEV-0021's sealed fail-closed helpers, blocks the Approval rather than silently defaulting to permit",
+      "evidence_path": "OCOR-DEV-0043.json",
+      "raw_output_path": "OCOR-DEV-0043.log",
+      "requirement_id": "NFR-013",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-INTEGRITY-DIGEST-DETERMINISTIC",
+      "command": "a GateSignature's content-addressed integrity_digest is deterministic for identical semantic fields and changes when any one of them changes",
+      "evidence_path": "OCOR-DEV-0043.json",
+      "raw_output_path": "OCOR-DEV-0043.log",
+      "requirement_id": "NFR-054",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-APPROVAL-WIRES-DIRECTLY-INTO-GOVERNED-ACTION-ENGINE",
+      "command": "HumanGateCoordinator's own resolved Approval is the identical sealed OCOR-DEV-0030 type GovernedActionEngine.execute already accepts, driving a real end-to-end governed action to a simulated effect",
+      "evidence_path": "OCOR-DEV-0043.json",
+      "raw_output_path": "OCOR-DEV-0043.log",
+      "requirement_id": "FR-054",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-REGRESSION",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0043.json",
+      "raw_output_path": "OCOR-DEV-0043.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0043"
     }
   ]
 }
