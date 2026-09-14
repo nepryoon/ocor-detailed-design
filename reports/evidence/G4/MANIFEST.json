@@ -122,6 +122,16 @@
       "path": "OCOR-DEV-0043.log",
       "sha256": "d90e061512cccb41fa3bbfaccbde75bd955e50f4baf1c84a6c54600234fa2cf5",
       "task_id": "OCOR-DEV-0043-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0044.json",
+      "sha256": "48834ccf4cca1cf53d7d363d2a4eea72ef3b143ad964fa304abcf4382ad38f34",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "path": "OCOR-DEV-0044.log",
+      "sha256": "94560df34fd8496d132f015a8f3053001b9eadf2788e70b0c10e5c5822d902ad",
+      "task_id": "OCOR-DEV-0044-RAW"
     }
   ],
   "requirement_results": [
@@ -1231,6 +1241,159 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0043"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-STOP-RESET-CYCLE-ISSUES-NEW-EPOCH-INVALIDATING-OLD-ONE",
+      "command": "the full activate/drain/reset cycle issues a new stop_epoch that permanently invalidates any command fenced to the pre-stop epoch",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "FR-032",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-DISPATCH-BLOCKED-WHILE-NOT-NORMAL",
+      "command": "dispatch is refused whenever the system is not NORMAL, even at the otherwise-current epoch",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "FR-080",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-RESET-REQUIRES-DUAL-CONTROL",
+      "command": "an emergency-stop reset is refused without exactly two distinct, resolved human approvers",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "FR-083",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-STOP-RACE-CANNOT-EMIT-AFTER-STOP-EPOCH",
+      "command": "a real, multi-threaded race between dispatch attempts and a concurrent stop activation never lets a stale-epoch dispatch succeed",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "NFR-081",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-BREAK-GLASS-VALID-GRANT-AUTHORIZES-WITH-MANDATORY-REVIEW",
+      "command": "a valid, bounded, dual-human-approved break-glass grant authorizes an allowed capability only together with a mandatory review reference",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "FR-108",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-BREAK-GLASS-REQUIRES-TWO-DISTINCT-RESOLVED-HUMANS",
+      "command": "a break-glass grant is refused without exactly two distinct, resolved human approvers",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "FR-108",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-BREAK-GLASS-TTL-BOUNDED",
+      "command": "a break-glass grant whose TTL exceeds the approved 15-minute maximum is refused at construction",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "FR-134",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-BREAK-GLASS-EXPIRED-OR-REVOKED-GRANT-DENIES",
+      "command": "an expired or explicitly revoked break-glass grant denies even though it was valid the first time it was used",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "FR-134",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-BREAK-GLASS-FORBIDDEN-CAPABILITIES-NEVER-AUTHORIZED",
+      "command": "break-glass never authorizes any of the LLD-named forbidden capabilities, regardless of grant validity",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "FR-139",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-BREAK-GLASS-CANNOT-OVERRIDE-ACTIVE-EMERGENCY-STOP",
+      "command": "break-glass authorization is refused whenever an emergency stop is active, even with an otherwise fully valid grant",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "FR-146",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-BREAK-GLASS-REVIEW-MANDATORY",
+      "command": "a break-glass use without a review reference is refused, making mandatory review structural",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "FR-146",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-AMBIGUOUS-NON-IDEMPOTENT-EFFECT-CANNOT-AUTO-RETRY",
+      "command": "an ambiguous outcome whose effect is not proven idempotent can never be auto-retried",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "NFR-081",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-AMBIGUOUS-IDEMPOTENT-PROVEN-EFFECT-MAY-RETRY",
+      "command": "an ambiguous outcome whose effect IS proven idempotent may auto-retry",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "FR-158",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-EVIDENCE-RESOLVES-AMBIGUOUS-EXECUTION-AND-COMPENSATION",
+      "command": "real Evidence resolves an ambiguous execution to confirmed/failed and an ambiguous compensation to compensated/compensation-failed",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "FR-158",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-NO-EVIDENCE-BEFORE-DEADLINE-MAKES-NO-INFERENCE",
+      "command": "with no Evidence before the reconciliation deadline, the outcome remains unknown -- no inference is ever made",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "FR-158",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-MISSED-DEADLINE-ESCALATES-TO-INDETERMINATE",
+      "command": "a missed reconciliation deadline escalates to INDETERMINATE, opening adjudication and preserving the auto-retry block",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "FR-158",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0044-REGRESSION",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0044.json",
+      "raw_output_path": "OCOR-DEV-0044.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0044"
     }
   ]
 }
