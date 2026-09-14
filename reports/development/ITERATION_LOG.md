@@ -3428,3 +3428,84 @@
   sopprimere il dissent o mutare lo stato canonico).
 - Nessun codice sorgente toccato: gate locali rieseguiti comunque per
   protocollo standard e confermati invariati.
+
+## 2026-09-14 — OCOR-DEV-0046: C8 AgentRun assignment, commitment, handoff, dissent
+
+- Implementato `ocor-runtime/src/ocor_runtime/c8/orchestrator.py`
+  (nuova directory pacchetto `c8/`), costruito attorno al sigillato
+  `ocor_runtime.c8_agent.AgentKernel` (preesistente a questa sessione,
+  lasciato completamente intatto) e a `CapabilityAuthority`/
+  `AtomicOutboxStore` (sigillati, riusati invariati, composti solo
+  tramite i loro metodi pubblici `issue()`/`authorize()`/`write()`/
+  `get()`). `assign()`/`commit()`/`handoff()`/`register_dissent()`
+  richiedono ciascuno una vera capability lease autorizzata
+  dall'authority sigillata prima di qualsiasi altra cosa, e scrivono
+  il record risultante attraverso il commit a scrittore singolo dello
+  store sigillato, con l'orchestrator come unico `writer_id`
+  autoritativo dello store — rendendo strutturali, non solo testate,
+  le tre claim negative del task: un agent non può auto-concedersi
+  una capability (`authorize()` accetta solo una lease già emessa
+  dall'authority stessa); un agent non può mutare direttamente lo
+  stato canonico (il vincolo di scrittore singolo dello store
+  sigillato, `SingleWriterViolation`, rifiuta qualunque `writer_id`
+  diverso da quello dell'orchestrator); un dissent non può mai essere
+  soppresso (`Dissent` è un dataclass frozen, `dissents` è una tupla
+  di sola lettura e append-only, nessun metodo di rimozione esiste).
+- Aggiunti 12 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0046.py`, inclusa una vera
+  prova di fault-injection del vincolo di scrittore singolo e un
+  intero ciclo di vita handoff-poi-recommit.
+- Un genuino bug di design trovato e corretto prima della
+  sigillatura: la idempotency key di `commit()` necessitava di un
+  vero contatore di tentativi per-aggregate (derivato dalla versione
+  del documento nello store tramite `store.get()`) per distinguere
+  correttamente un recommit legittimo da parte di un nuovo agent
+  (dopo un handoff reale) da una replay idempotente dello stesso
+  commit — lo store sigillato ha correttamente sollevato
+  `ConcurrencyConflict` sul design originale a chiave fissa, un bug
+  genuino nel nuovo codice, non nello store sigillato; corretto con
+  un versionamento a concorrenza ottimistica appropriato, applicato
+  sia ad `assign()` sia a `commit()`.
+- Gate locali tutti verdi: `ruff`, `mypy` PASS, `validate_rccad.py`
+  PASS, `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py --base origin/main` PASS (7
+  percorsi), `validate_ocor_development_plan.py --base-ref origin/main
+  --authorized-extension` PASS dopo il consueto doppio-run, pytest
+  completo via lo script `pytest` nudo con `OCOR_LIVE_POSTGRES_DSN`
+  impostato contro il PostgreSQL reale di ocor-bootstrap: `2 failed,
+  862 passed` (stessi 2 fallimenti noti) più `29 passed` per le 3
+  suite `reports/tests/`.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0046.json` +
+  `reports/evidence/G4/OCOR-DEV-0046.log`.
+  `reports/evidence/G4/MANIFEST.json` esteso con inserimento
+  chirurgico (2 nuovi artifact, 9 nuovi requirement_results).
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task, non incluso nel commit del
+  task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0046`: tutti e 13 i check verdi al primo push. PR #123
+  mergiata (`fc9f75bbd8326c22b46573abd0ac3ce11b4591a8`), SHA
+  post-merge verificata anche per `c8_agent.py` (invariato
+  byte-per-byte rispetto al proprio hash sigillato).
+
+## 2026-09-14 — Sincronizzazione stato: OCOR-DEV-0046 (post-merge, OCOR-DEV-0047 pronto)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #123, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0046`).
+- `baseline_commit` aggiornato a
+  `fc9f75bbd8326c22b46573abd0ac3ce11b4591a8` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0046`
+  aggiunto a `completed_evidence_tasks`.
+- Ricalcolata la prontezza dal backlog JSON: insieme pronto =
+  {`OCOR-DEV-0047` (wave 18, appena pronto), `OCOR-DEV-0048` (wave
+  15)}; `OCOR-DEV-0047` selezionato per ordine numerico sull'intero
+  insieme pronto — "Implement C8 tool boundary sandbox budgets and
+  kill switch" (ogni chiamata a model/tool è vincolata da capability,
+  purpose, marking, budget e stop, con receipt; negativo: sintassi di
+  escape, lavoro fuori budget o capability revocata non producono
+  alcun effetto sul tool). 23 dei 84 task totali restano non ancora
+  completati.
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
