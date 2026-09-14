@@ -1,0 +1,99 @@
+=== ruff check (runtime.py + test file) ===
+Found 1 error before fix: F401 dataclasses.field imported but unused -- genuine, fixed by removing the unused import (immutability is achieved via __post_init__ + object.__setattr__, no field() needed)
+All checks passed! (after fix)
+
+=== mypy (runtime.py) ===
+Found 2 errors before fix:
+  runtime.py:137: Argument "effect" to "CausalOutcome" has incompatible type "dict[str, Any] | tuple[str, ...] | dict[str, str] | str | None"; expected "str | None" -- fixed by computing formatted_effect as its own str | None local before building the mixed-type body dict, instead of indexing body["effect"]
+  runtime.py:208: Incompatible types in assignment (expression has type "Decimal", variable has type "int") -- fixed by renaming the population-ATE loop's Decimal accumulator variables (control_mean/treated_mean) so they no longer shadow the earlier per-row int `treated` variable in the same function scope
+Success: no issues found in 1 source file (after fix)
+
+=== pytest tests/tasks/test_ocor_dev_0045.py -v (run 1, pure in-memory, no external backend) ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.14, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 27 items
+
+tests/tasks/test_ocor_dev_0045.py::test_reimplemented_intervention_reproduces_the_sealed_spikes_oracle_bit_for_bit PASSED [  3%]
+tests/tasks/test_ocor_dev_0045.py::test_same_pinned_inputs_reproduce_identical_sealed_identified_result PASSED [  7%]
+tests/tasks/test_ocor_dev_0045.py::test_intervention_abstains_with_disjoint_reason_codes[scenario_branch-main-MAIN_CONTAMINATED] PASSED [ 11%]
+tests/tasks/test_ocor_dev_0045.py::test_intervention_abstains_with_disjoint_reason_codes[scenario_branch-feature/not-a-scenario-MAIN_CONTAMINATED] PASSED [ 14%]
+tests/tasks/test_ocor_dev_0045.py::test_intervention_abstains_with_disjoint_reason_codes[contaminated_main-True-MAIN_CONTAMINATED] PASSED [ 18%]
+tests/tasks/test_ocor_dev_0045.py::test_intervention_abstains_with_disjoint_reason_codes[expected_release_digest-sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb-RELEASE_MISMATCH] PASSED [ 22%]
+tests/tasks/test_ocor_dev_0045.py::test_intervention_abstains_with_disjoint_reason_codes[unresolved_confounding-True-UNRESOLVED_CONFOUNDING] PASSED [ 25%]
+tests/tasks/test_ocor_dev_0045.py::test_missing_factual_set_abstains_without_estimate PASSED [ 29%]
+tests/tasks/test_ocor_dev_0045.py::test_positivity_failure_abstains_without_estimate PASSED [ 33%]
+tests/tasks/test_ocor_dev_0045.py::test_out_of_domain_intervention_abstains_without_estimate PASSED [ 37%]
+tests/tasks/test_ocor_dev_0045.py::test_pin_mismatch_fails_loudly[model_digest] PASSED [ 40%]
+tests/tasks/test_ocor_dev_0045.py::test_pin_mismatch_fails_loudly[data_digest] PASSED [ 44%]
+tests/tasks/test_ocor_dev_0045.py::test_pin_mismatch_fails_loudly[intervention_digest] PASSED [ 48%]
+tests/tasks/test_ocor_dev_0045.py::test_unexplained_result_drift_fails_reproducibility_check PASSED [ 51%]
+tests/tasks/test_ocor_dev_0045.py::test_seed_is_part_of_the_reproducibility_seal PASSED [ 55%]
+tests/tasks/test_ocor_dev_0045.py::test_counterfactual_imputes_a_specific_units_outcome_under_the_opposite_treatment PASSED [ 59%]
+tests/tasks/test_ocor_dev_0045.py::test_counterfactual_abstains_identically_to_intervention_on_main PASSED [ 62%]
+tests/tasks/test_ocor_dev_0045.py::test_counterfactual_rejects_an_out_of_range_unit_index PASSED [ 66%]
+tests/tasks/test_ocor_dev_0045.py::test_counterfactual_is_reproducible_for_identical_pinned_inputs PASSED [ 70%]
+tests/tasks/test_ocor_dev_0045.py::test_uncertainty_produces_a_deterministic_bootstrap_interval_around_the_ate PASSED [ 74%]
+tests/tasks/test_ocor_dev_0045.py::test_uncertainty_differs_deterministically_with_a_different_seed PASSED [ 77%]
+tests/tasks/test_ocor_dev_0045.py::test_uncertainty_abstains_identically_to_intervention_on_main PASSED [ 81%]
+tests/tasks/test_ocor_dev_0045.py::test_sensitivity_reports_the_shifted_effect_and_whether_the_sign_flips PASSED [ 85%]
+tests/tasks/test_ocor_dev_0045.py::test_a_large_enough_confounding_shift_flips_the_effects_sign PASSED [ 88%]
+tests/tasks/test_ocor_dev_0045.py::test_sensitivity_abstains_identically_to_intervention_on_main PASSED [ 92%]
+tests/tasks/test_ocor_dev_0045.py::test_sensitivity_is_reproducible_for_identical_pinned_inputs PASSED [ 96%]
+tests/tasks/test_ocor_dev_0045.py::test_outcome_details_and_lineage_are_immutable PASSED [100%]
+
+============================== 27 passed in 0.06s ==============================
+
+=== determinism repeats 2-4 (after both fixes) ===
+27 passed in 0.06s
+27 passed in 0.06s
+27 passed in 0.05s
+
+=== scripts/validate_rccad.py ===
+{
+  "checked_artifacts": 22,
+  "dynamic_assurance": "CI_REQUIRED",
+  "findings": [],
+  "fitness_results": {
+    "AFF-001": "PASS_STATIC_PRECHECK",
+    "AFF-002": "PASS_STATIC_PRECHECK",
+    "AFF-003": "PASS_STATIC_PRECHECK",
+    "AFF-004": "PASS_STATIC_PRECHECK",
+    "AFF-005": "PASS_STATIC_PRECHECK",
+    "AFF-006": "PASS_STATIC_PRECHECK",
+    "AFF-007": "PASS_STATIC_PRECHECK",
+    "AFF-008": "PASS_STATIC_PRECHECK",
+    "AFF-009": "PASS_STATIC_PRECHECK",
+    "AFF-010": "PASS_STATIC_PRECHECK"
+  },
+  "methodology_sha256": "231ce3325537de85890b16e97f138bd6a4263fc1e240094ed26499af9aeeb6cd",
+  "status": "PASS_LOCAL_PRECHECK"
+}
+
+=== scripts/validate_language_policy.py ===
+PASS: no tracked file uses a monitored extension outside its authorized area
+
+=== scripts/validate_ocor_change_scope.py --base origin/main ===
+PASS: 4 changed path(s); immutable surfaces untouched; task ledger stable
+
+=== scripts/validate_ocor_development_plan.py --base-ref origin/main --authorized-extension (run 1, settles self-hash) ===
+{"verdict": "FAIL", "counts": {"PASS": 36, "NOT_EXECUTED": 2, "FAIL": 1}, "tasks": 84, "requirements": 285, "waves": 29, "critical_days": 161}
+
+=== scripts/validate_ocor_development_plan.py --base-ref origin/main --authorized-extension (run 2, settled) ===
+{"verdict": "PASS", "counts": {"PASS": 37, "NOT_EXECUTED": 2}, "tasks": 84, "requirements": 285, "waves": 29, "critical_days": 161}
+
+=== scripts/validate_ocor_development_plan.py --base-ref origin/main --authorized-extension (run 3, confirms stable) ===
+{"verdict": "PASS", "counts": {"PASS": 37, "NOT_EXECUTED": 2}, "tasks": 84, "requirements": 285, "waves": 29, "critical_days": 161}
+
+=== full local pytest regression: ocor-runtime/.venv/bin/pytest tests/ -q (bare console script) ===
+2 failed, 850 passed in 290.08s (0:04:50)
+FAILED tests/tasks/test_ocor_dev_0002.py::test_two_clean_environments_resolve_identical_lock_and_image_digests
+FAILED tests/test_interpreter_pin.py::test_running_interpreter_matches_the_pin
+(both pre-existing, unrelated interpreter-pin gap, documented in every prior evidence file this session)
+
+=== 3 CI-wired reports/tests suites ===
+.............................                                            [100%]
+29 passed in 3.90s

@@ -132,6 +132,16 @@
       "path": "OCOR-DEV-0044.log",
       "sha256": "94560df34fd8496d132f015a8f3053001b9eadf2788e70b0c10e5c5822d902ad",
       "task_id": "OCOR-DEV-0044-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0045.json",
+      "sha256": "31d6fa965f5ee51efaaf4918983e5900ec3ce810a3b9725727add97dba346525",
+      "task_id": "OCOR-DEV-0045"
+    },
+    {
+      "path": "OCOR-DEV-0045.log",
+      "sha256": "0f20f98154b36c9a7473e642c6d65f2d6b65aa72fd379126fb6de409c2cbc5b8",
+      "task_id": "OCOR-DEV-0045-RAW"
     }
   ],
   "requirement_results": [
@@ -1394,6 +1404,105 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0044"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-INTERVENTION-REPRODUCES-SEALED-ORACLE-BIT-FOR-BIT",
+      "command": "the reimplemented intervention path reproduces OCOR-DEV-0022's sealed spikes.causal_reproducibility.oracle bit-for-bit on identical fixture data",
+      "evidence_path": "OCOR-DEV-0045.json",
+      "raw_output_path": "OCOR-DEV-0045.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0045"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-BRANCHES-CANNOT-WRITE-MAIN-FOR-EVERY-OPERATION",
+      "command": "a query against main or any non-scenario/ branch abstains with MAIN_CONTAMINATED for all four operations, never producing an authoritative causal claim",
+      "evidence_path": "OCOR-DEV-0045.json",
+      "raw_output_path": "OCOR-DEV-0045.log",
+      "requirement_id": "FR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0045"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-UNSUPPORTED-IDENTIFICATION-ABSTAINS-NO-CLAIM",
+      "command": "release mismatch, unresolved confounding, missing factual set, out-of-domain intervention and positivity failure all abstain with a disjoint reason code and effect=None",
+      "evidence_path": "OCOR-DEV-0045.json",
+      "raw_output_path": "OCOR-DEV-0045.log",
+      "requirement_id": "FR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0045"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-PIN-MISMATCH-FAILS-LOUDLY-NOT-SILENTLY",
+      "command": "a caller-declared pin that does not match the real recomputed digest raises CausalRuntimeError rather than abstaining or silently proceeding",
+      "evidence_path": "OCOR-DEV-0045.json",
+      "raw_output_path": "OCOR-DEV-0045.log",
+      "requirement_id": "FR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0045"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-INTERVENTION-SEALED-REPRODUCIBLE",
+      "command": "identical pinned inputs to estimate_intervention reproduce an identical sealed reproducibility_digest across runs",
+      "evidence_path": "OCOR-DEV-0045.json",
+      "raw_output_path": "OCOR-DEV-0045.log",
+      "requirement_id": "FR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0045"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-COUNTERFACTUAL-IMPUTES-UNIT-LEVEL-OUTCOME-AND-IS-REPRODUCIBLE",
+      "command": "estimate_counterfactual imputes a specific unit's outcome under the opposite treatment, rejects an out-of-range unit_index, and reproduces identically for identical pinned inputs",
+      "evidence_path": "OCOR-DEV-0045.json",
+      "raw_output_path": "OCOR-DEV-0045.log",
+      "requirement_id": "FR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0045"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-UNCERTAINTY-BOOTSTRAP-CI-DETERMINISTIC-AND-SEED-SENSITIVE",
+      "command": "estimate_uncertainty produces a deterministic bootstrap confidence interval, identical across repeated runs with the same seed and different when the seed changes",
+      "evidence_path": "OCOR-DEV-0045.json",
+      "raw_output_path": "OCOR-DEV-0045.log",
+      "requirement_id": "FR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0045"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-SENSITIVITY-REPORTS-SIGN-FLIP-AND-IS-REPRODUCIBLE",
+      "command": "estimate_sensitivity reports the shifted effect under an additive confounding shift, correctly flags a sign flip when the shift is large enough, and reproduces identically for identical pinned inputs",
+      "evidence_path": "OCOR-DEV-0045.json",
+      "raw_output_path": "OCOR-DEV-0045.log",
+      "requirement_id": "FR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0045"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-OUTCOME-DETAILS-AND-LINEAGE-IMMUTABLE",
+      "command": "a CausalOutcome's details and lineage mappings reject direct item assignment after construction",
+      "evidence_path": "OCOR-DEV-0045.json",
+      "raw_output_path": "OCOR-DEV-0045.log",
+      "requirement_id": "NFR-047",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0045"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-UNEXPLAINED-DRIFT-FAILS-REPRODUCIBILITY-CHECK",
+      "command": "verify_reproduction rejects two outcomes that differ in any sealed field, even a single altered effect string",
+      "evidence_path": "OCOR-DEV-0045.json",
+      "raw_output_path": "OCOR-DEV-0045.log",
+      "requirement_id": "NFR-047",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0045"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-REGRESSION",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0045.json",
+      "raw_output_path": "OCOR-DEV-0045.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0045"
     }
   ]
 }
