@@ -3155,3 +3155,94 @@
   scope e TTL rivalidati sia alla risoluzione sia al dispatch).
 - Nessun codice sorgente toccato: gate locali rieseguiti comunque per
   protocollo standard e confermati invariati.
+
+## 2026-09-14 — OCOR-DEV-0043: Human Gate decision approval e dual control
+
+- Implementato `ocor-runtime/src/ocor_runtime/c6/human_gate.py`:
+  `HumanGateCoordinator` fornisce la logica reale di quorum,
+  separation-of-duties, firma, scope e TTL che le transizioni Human
+  Gate della tabella sigillata di OCOR-DEV-0042
+  (`ACT-T06`/`T07`/`T08`/`T09a`/`T09b`) richiedono davvero.
+  `validate()` filtra l'insieme di `GateSignature` presentate solo a
+  quelle non escluse, risolte tramite l'`IdentityRegistry` sigillato
+  (riusato invariato), con lo scope corretto ed entro il TTL della
+  policy al momento della chiamata; la separation of duties è
+  applicata non permettendo mai a un singolo `principal_id` di
+  soddisfare due `required_roles` distinti. Poiché `validate()` è una
+  funzione pura di (firme, scope, istante), chiamarla una volta alla
+  risoluzione e di nuovo, invariata, subito prima del dispatch è ciò
+  che dà al dual control il suo significato reale — una firma ancora
+  entro il TTL alla risoluzione può essere scaduta al momento del
+  dispatch, e il controllo identico nega allora esattamente come farebbe
+  per una valutazione nuova, senza mai fidarsi di una risoluzione
+  ormai stantia. In caso di successo restituisce l'identico
+  `Approval` sigillato di OCOR-DEV-0030 che
+  `GovernedActionEngine.execute` già accetta, tramite il suo
+  costruttore pubblico — `engine.py` verificato invariato
+  byte-per-byte sia prima sia dopo questo task.
+- `validate()` accetta anche un `control_check` opzionale, così un
+  chiamante può collegare una sonda reale e live del control plane
+  (il pattern fail-closed sigillato di OCOR-DEV-0021/0014,
+  `ControlStatus`/`SecurityControlError`) senza che questo modulo
+  dipenda da alcun backend concreto specifico.
+- Aggiunti 13 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0043.py`: scenari di
+  quorum/copertura-ruoli/SoD/TTL/scope/esclusione/identità-non-risolta,
+  un test di dual control che dimostra che la stessa approvazione
+  nega di nuovo a un istante di dispatch successivo una volta scaduto
+  il TTL, un vero test di fault-injection contro una porta locale
+  genuinamente irraggiungibile tramite il `bounded_probe` sigillato di
+  OCOR-DEV-0021 (importato solo in questo file di test), e un test di
+  integrazione che collega l'output di `HumanGateCoordinator`
+  direttamente nel vero `GovernedActionEngine` end-to-end.
+- Due bug genuini di scrittura dei test trovati e corretti prima
+  della sigillatura: due test lasciavano solo 1 firmatario valido
+  distinto dopo aver escluso il proponente/l'identità non risolta,
+  quindi `QUORUM_NOT_MET` scattava prima che `MISSING_REQUIRED_ROLE`
+  potesse mai essere raggiunto — corretto aggiungendo un terzo
+  firmatario valido e distinto per isolare specificamente il
+  comportamento di copertura-ruoli previsto.
+- Gate locali tutti verdi: `ruff`, `mypy` PASS, `validate_rccad.py`
+  PASS, `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py --base origin/main` PASS (7
+  percorsi), `validate_ocor_development_plan.py --base-ref origin/main
+  --authorized-extension` PASS dopo il consueto doppio-run, pytest
+  completo via lo script `pytest` nudo con `OCOR_LIVE_POSTGRES_DSN`
+  impostato contro il PostgreSQL reale di ocor-bootstrap: `2 failed,
+  794 passed` (stessi 2 fallimenti noti) più `29 passed` per le 3
+  suite `reports/tests/`.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0043.json` +
+  `reports/evidence/G4/OCOR-DEV-0043.log`.
+  `reports/evidence/G4/MANIFEST.json` esteso con inserimento
+  chirurgico (2 nuovi artifact, 14 nuovi requirement_results).
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task, non incluso nel commit del
+  task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0043`: tutti e 13 i check verdi al primo push. PR #117
+  mergiata (`3c89c90c1c870159564c8573ff7c5793da86061a`), SHA
+  post-merge verificata anche per `engine.py` e `fsm.py` (invariati
+  byte-per-byte rispetto ai rispettivi hash sigillati).
+
+## 2026-09-14 — Sincronizzazione stato: OCOR-DEV-0043 (post-merge, OCOR-DEV-0044 pronto)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #117, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0043`).
+- `baseline_commit` aggiornato a
+  `3c89c90c1c870159564c8573ff7c5793da86061a` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0043`
+  aggiunto a `completed_evidence_tasks`.
+- Ricalcolata la prontezza dal backlog JSON: insieme pronto =
+  {`OCOR-DEV-0044` (wave 17, appena pronto, dipende da OCOR-DEV-0042 e
+  OCOR-DEV-0043), `OCOR-DEV-0045` (wave 16), `OCOR-DEV-0046` (wave
+  15), `OCOR-DEV-0048` (wave 15)}; `OCOR-DEV-0044` selezionato per
+  ordine numerico sull'intero insieme pronto — "Implement compensation
+  reconciliation break-glass and emergency stop" (esiti sconosciuti,
+  compensazione, precedenza dello stop e break-glass producono
+  evidenza immutabile e stato fail-safe; negativo: una race sullo
+  stop non può emettere dopo il proprio stop epoch, un effetto
+  ambiguo non idempotente non può essere ritentato automaticamente).
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
