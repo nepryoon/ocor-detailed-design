@@ -2988,3 +2988,89 @@
   replay e di eventi poison sono bounded, osservabili e non bypassano
   mai i controlli di compatibilità; criterio negativo: un replay dalla
   DLQ con schema incompatibile o marking perso viene bloccato.
+
+## 2026-09-14 — OCOR-DEV-0041: C5 replay backpressure DLQ e quarantine
+
+- Implementato `ocor-runtime/src/ocor_runtime/c5/operations.py`:
+  `EventOperationsCoordinator` avvolge il `CanonicalEventBackbone`
+  sigillato (OCOR-DEV-0040), riusato immutato e composto
+  esclusivamente tramite il suo metodo pubblico `publish()`. Quota di
+  ammissione bounded per tenant (`publish_with_backpressure`), record
+  `DeadLetter` immutabile per ogni fallimento reale di publish,
+  classificazione `POISON` dopo 3 fallimenti dello stesso evento,
+  quarantena dietro un gate esplicito
+  (`release_for_operator_replay`), e `replay()` che ricostruisce
+  sempre l'envelope e richiama il `publish()` reale del backbone — uno
+  schema incompatibile o un marking perso vengono bloccati in replay
+  esattamente come in un publish nuovo, mai bypassati; una chiave di
+  idempotenza già durevole è un no-op sicuro grazie alla gestione di
+  idempotenza propria del backbone.
+- **Incidente ambientale genuino diagnosticato e risolto prima di
+  fidarsi della regressione**: la regressione completa mostrava
+  cluster di errori crescenti; `df -h /` ha rivelato il disco host al
+  99% di capacità (2.9GB liberi su 234GB), dominato da immagini Docker
+  di grandi dimensioni preesistenti e non correlate ad altri progetti
+  sulla stessa macchina condivisa (non causato da questa sessione); i
+  due comandi di pulizia sicuri (`docker builder prune -f`, `docker
+  image prune -f`) hanno liberato 0B. La causa reale dei 33 errori
+  era invece `ocor-bootstrap-fuseki-1` e `ocor-bootstrap-spire-agent-1`
+  uccisi per OOM (exit 137) ore prima, non correlato al codice di
+  questo task — riavviati entrambi (`docker start`), manutenzione di
+  routine reversibile sullo stack bootstrap del progetto (mai toccato
+  `eci-dev-control-plane` o `open-webui`); la regressione completa è
+  poi passata pulita.
+- Presa una decisione tecnica poi corretta: era stato avviato un
+  redesign in-flight di `backbone.py` sigillato (Kafka data directory
+  da volume Docker a `tmpfs`, per ridurre l'impronta su disco), ma
+  riconosciuto a metà modifica che sia `backbone.py` sia
+  `test_ocor_dev_0040.py` sono deliverable sigillati di OCOR-DEV-0040
+  già mergiato — annullata la modifica (`git checkout --`) prima di
+  procedere, secondo la regola propria di questa sessione di escludere
+  i deliverable già sigillati dalla modifica anziché emendarli. La
+  causa reale (ambientale) non richiedeva comunque alcuna modifica al
+  sorgente sigillato.
+- Aggiunti 8 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0041.py`, tutti contro un
+  broker reale auto-provisionato per test tramite il backbone
+  sigillato, nessun mock — tutti e 8 passati, ripetuti 3 volte per
+  determinismo.
+- Gate locali tutti verdi: `ruff`, `mypy` PASS, `validate_rccad.py`
+  PASS, `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py --base origin/main` PASS (7
+  percorsi), `validate_ocor_development_plan.py --base-ref origin/main
+  --authorized-extension` PASS dopo il consueto doppio-run, pytest
+  completo via lo script `pytest` nudo con `OCOR_LIVE_POSTGRES_DSN`
+  impostato contro il PostgreSQL reale di ocor-bootstrap (dopo il
+  riavvio di fuseki/spire-agent): `2 failed, 766 passed` (stessi 2
+  fallimenti noti) più `29 passed` per le 3 suite `reports/tests/`.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0041.json` +
+  `reports/evidence/G4/OCOR-DEV-0041.log`.
+  `reports/evidence/G4/MANIFEST.json` esteso con inserimento
+  chirurgico (2 nuovi artifact, 9 nuovi requirement_results).
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task, non incluso nel commit del
+  task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0041`: tutti e 13 i check verdi al primo push. PR #113
+  mergiata (`600b1aa1e95123e0194af13d973637d9d0999231`), SHA
+  post-merge verificata anche per `backbone.py` e
+  `test_ocor_dev_0040.py` (invariati byte-per-byte rispetto al hash
+  sigillato di OCOR-DEV-0040).
+
+## 2026-09-14 — Sincronizzazione stato: OCOR-DEV-0041 (post-merge, OCOR-DEV-0042 pronto)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #113, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0041`).
+- `baseline_commit` aggiornato a
+  `600b1aa1e95123e0194af13d973637d9d0999231` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0041`
+  aggiunto a `completed_evidence_tasks`.
+- Ricalcolata la prontezza dal backlog JSON: insieme pronto =
+  {`OCOR-DEV-0042` (wave 15), `OCOR-DEV-0045` (wave 16),
+  `OCOR-DEV-0046` (wave 15), `OCOR-DEV-0048` (wave 15)};
+  `OCOR-DEV-0042` selezionato per ordine numerico sull'intero insieme
+  pronto — "Implement exact approved 44-transition C6 FSM".
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
