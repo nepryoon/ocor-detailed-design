@@ -1,0 +1,188 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0043",
+  "commit": "5f43d8047a41bb01679497316951c2bb92769324",
+  "created_at": "2026-09-14T00:00:00Z",
+  "environment": {
+    "orchestrator": "none for the majority of tests -- pure, in-memory, deterministic component, like OCOR-DEV-0028/0030/0042's own C1/C6 slices; one real fault-injection test performs a genuine bounded HTTP round trip against a closed local TCP port",
+    "backend_under_test": "a genuinely unreachable local port (127.0.0.1:1) standing in for an unavailable real policy control, driven by OCOR-DEV-0021's sealed spikes.control_plane_latency.probe.bounded_probe/decide_with_fail_closed_default (reused unmodified, imported only in this task's own test file)",
+    "reused_deliverable": "ocor_runtime.c6.engine.py's sealed Approval dataclass (OCOR-DEV-0030) is composed exclusively through its own public constructor, never modified -- verified byte-identical to its sealed hash both before and after this task. ocor_runtime.c6.fsm.py (OCOR-DEV-0042, sealed) and ocor_runtime.c2_identity.IdentityRegistry are reused unmodified. ocor_runtime.security.ports.SecurityControlError/ControlName (OCOR-DEV-0014, sealed) and OCOR-DEV-0021's sealed bounded-probe fail-closed pattern are reused unmodified, the latter only in this task's own test file."
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c6/human_gate.py": "831f247e0a8b62c72b01432ec5e4163f90c3eb03e7a7a683b97437e9e3325640",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0043.py": "80cebc59a4d3e209d832407cb9e640de75243ba98ed1ed459114931d064124e8"
+  },
+  "commands": [
+    {
+      "command": "design: HumanGateCoordinator.validate() filters the presented GateSignature set down to only those that are unexcluded, resolved via the sealed IdentityRegistry, scope-matched, and within the policy's TTL as of the call's own 'at' timestamp; separation of duties is enforced by never letting one principal_id satisfy two distinct required_roles (a principal already credited toward one required role cannot also cover another). Because validate() is a pure function of (signatures, scope, at), calling it once at Human Gate resolution and again, completely unmodified, immediately before dispatch is what gives dual control its real meaning: a signature within TTL at resolution can have expired by dispatch time, and the identical check denies then exactly as it would for a fresh evaluation -- never trusting a stale resolution.",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "two genuine test-writing bugs found and fixed before sealing: test_the_proposer_own_signature_is_never_counted_even_if_otherwise_valid and test_an_unresolved_signatory_is_never_counted originally used only 2 signatures each, so excluding the proposer/unresolved one left only 1 distinct valid signatory when 2 are required -- QUORUM_NOT_MET correctly fires before MISSING_REQUIRED_ROLE is ever reached, a fact the tests' own expectations had not accounted for; fixed by adding a third, genuinely distinct and valid signatory so quorum stays independently satisfiable, isolating the intended proposer-exclusion/unresolved-identity behavior as a role-coverage failure specifically",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "ruff check ocor-runtime/src/ocor_runtime/c6/human_gate.py ocor-runtime/tests/tasks/test_ocor_dev_0043.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python -m mypy src/ocor_runtime/c6/human_gate.py --config-file pyproject.toml",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest tests/tasks/test_ocor_dev_0043.py -v via the bare pytest console script (matching CI's uv run --project ocor-runtime --frozen pytest exactly), repeated 4 times for determinism -- all 13 tests passed on every run after the two test fixes above, including a real bounded-probe fault-injection test against a genuinely closed local port and an integration test wiring HumanGateCoordinator's own Approval output directly into the real, sealed GovernedActionEngine.execute with no adapter needed",
+      "result": {"passed": 52, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_rccad.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_language_policy.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_ocor_change_scope.py --base origin/main",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_ocor_development_plan.py --base-ref origin/main --authorized-extension, run 3 times in sequence after the extension_paths edit to settle the script's own self-hash -- run 1 FAIL (unsettled self-hash, expected), runs 2-3 PASS and stable",
+      "result": {"passed": 2, "failed": 1, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression via the bare pytest console script (matching CI exactly), ocor-runtime/tests/, with OCOR_LIVE_POSTGRES_DSN set against the real ocor-bootstrap PostgreSQL instance",
+      "result": {"passed": 794, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "the 3 CI-wired reports/tests suites: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/{test_generate_contracts_reference_resolution,test_backlog_generator_reality_parity,test_language_migration_benchmark_harness}.py",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0043-QUORUM-COVERING-ALL-REQUIRED-ROLES-RESOLVES-APPROVED",
+      "requirement_id": "FR-002",
+      "command": "a quorum covering both required roles by two distinct, registered humans within TTL and correct scope resolves an approved Approval",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-INSUFFICIENT-DISTINCT-SIGNATORIES-FAILS-QUORUM",
+      "requirement_id": "FR-003",
+      "command": "fewer distinct valid signatories than the policy's minimum_signatories fails closed with QUORUM_NOT_MET",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-SAME-HUMAN-DUAL-ROLE-NOT-COUNTED-TWICE",
+      "requirement_id": "FR-008",
+      "command": "the identical real human signing for two distinct required roles is never counted as satisfying both -- separation of duties enforced structurally, not merely checked",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-EXTRA-SIGNATORY-DOES-NOT-RESCUE-MISSING-ROLE-COVERAGE",
+      "requirement_id": "FR-008",
+      "command": "a third distinct signatory duplicating an already-covered role does not substitute for coverage of a still-uncovered required role",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-EXPIRED-SIGNATURE-DENIES",
+      "requirement_id": "FR-011",
+      "command": "a signature outside the policy's TTL as of the evaluation time is excluded and denies the gate even though it was valid when first granted",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-SCOPE-MISMATCHED-SIGNATURE-DENIES",
+      "requirement_id": "FR-012",
+      "command": "a signature scoped to a different resource than the action being decided is excluded and denies the gate",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-PROPOSER-SELF-SIGNATURE-EXCLUDED",
+      "requirement_id": "FR-031",
+      "command": "the action's own proposer can never satisfy any required role, even with an otherwise fully valid signature",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-UNRESOLVED-SIGNATORY-EXCLUDED",
+      "requirement_id": "FR-033",
+      "command": "a signature from a principal_id never registered in the sealed IdentityRegistry is never counted",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-DUAL-CONTROL-RESOLUTION-VALID-DISPATCH-DENIED",
+      "requirement_id": "FR-037",
+      "command": "the identical, unmodified validation re-run at a later dispatch-time timestamp denies an approval that was genuinely valid at resolution time, once TTL has elapsed in between -- proving real revalidation, not a cached or trusted-forever decision",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-FAILING-CONTROL-CHECK-BLOCKS-APPROVAL",
+      "requirement_id": "NFR-013",
+      "command": "an injected control-plane check that raises blocks the Approval even though quorum and role coverage would otherwise succeed, propagating the real error unwrapped",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-REAL-BOUNDED-PROBE-AGAINST-UNREACHABLE-CONTROL-FAILS-CLOSED",
+      "requirement_id": "NFR-013",
+      "command": "a real bounded HTTP probe against a genuinely closed local port, driven through OCOR-DEV-0021's sealed fail-closed helpers, blocks the Approval rather than silently defaulting to permit",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-INTEGRITY-DIGEST-DETERMINISTIC",
+      "requirement_id": "NFR-054",
+      "command": "a GateSignature's content-addressed integrity_digest is deterministic for identical semantic fields and changes when any one of them changes",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-APPROVAL-WIRES-DIRECTLY-INTO-GOVERNED-ACTION-ENGINE",
+      "requirement_id": "FR-054",
+      "command": "HumanGateCoordinator's own resolved Approval is the identical sealed OCOR-DEV-0030 type GovernedActionEngine.execute already accepts, driving a real end-to-end governed action to a simulated effect with no adapter needed",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0043-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 823, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This task's dual-control revalidation relies entirely on the caller invoking HumanGateCoordinator.validate() a second time immediately before dispatch with the then-current timestamp; it does not itself intercept or schedule the dispatch call -- a future integration task wiring this into a real dispatch pipeline must actually make that second call, not merely construct the coordinator once.",
+    "GateSignature's integrity_digest is a content-addressed, tamper-evident binding via the shared RFC 8785 kernel canonicalizer, not a real asymmetric cryptographic signature -- no PKI/signing infrastructure exists in this delivery's scope, the same honesty already established by OCOR-DEV-0028's unsigned signature_envelope_ref placeholder.",
+    "The optional control_check hook lets a caller wire a real live control-plane probe (as this task's own fault-injection test does against a genuinely unreachable port via OCOR-DEV-0021's sealed helpers), but human_gate.py itself performs no live network call by default -- a production caller must supply one for the fail-closed control-plane property to actually apply at runtime.",
+    "The pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope; it produces the same 2 pre-existing, unrelated regression failures documented in every prior evidence file this session."
+  ],
+  "rollback_procedure_verified": "human_gate.py is additive only (a new file, no existing sealed file modified); reverting is a plain file deletion plus removal of its extension_paths/evidence entries, with zero change to OCOR-DEV-0030's sealed engine.py, OCOR-DEV-0042's sealed fsm.py, or c2_identity.py.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "d90e061512cccb41fa3bbfaccbde75bd955e50f4baf1c84a6c54600234fa2cf5",
+  "result": "PASS"
+}
