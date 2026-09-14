@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0044",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0044",
+    "branch": "governed/state-sync-ocor-dev-0045",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0045",
     "decision_id": "DEC-211",
-    "phase": "G4_WAVE_15_IN_PROGRESS__OCOR_DEV_0045_READY",
+    "phase": "G4_WAVE_15_IN_PROGRESS__OCOR_DEV_0046_READY",
     "worktree": null
   },
-  "baseline_commit": "cd8ad4ffbc942d10aabd9bbb40332427795316cf",
+  "baseline_commit": "c6406feeddbad4ca6f778fdaeca9f89110856738",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -81,19 +81,20 @@
     "OCOR-DEV-0041",
     "OCOR-DEV-0042",
     "OCOR-DEV-0043",
-    "OCOR-DEV-0044"
+    "OCOR-DEV-0044",
+    "OCOR-DEV-0045"
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "21db524",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR119_MERGED_cd8ad4ffbc942d10aabd9bbb40332427795316cf",
+    "candidate_commit": "d78bbfd",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR121_MERGED_c6406feeddbad4ca6f778fdaeca9f89110856738",
     "run_ids": [
-      34807849478,
-      34807849481,
-      34807849487,
-      34807849497,
-      34807849515,
-      34807849562
+      34809851803,
+      34809851823,
+      34809851827,
+      34809851832,
+      34809851843,
+      34809851866
     ]
   },
   "mandate_phase_status": {
@@ -154,7 +155,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0044 merged (PR #119, cd8ad4ffbc942d10aabd9bbb40332427795316cf), all 13 checks green on the first push. This implements ocor_runtime.c6.safety.py: EmergencyStopController (the approved NORMAL/STOPPING/STOPPED/RESET_PENDING machine under a real lock, epoch-fenced dispatch guard, dual-control reset), BreakGlassController (bounded dual-human grant, TTL-capped, forbidden-capability denylist, mandatory review), and OutcomeReconciler (ambiguous-outcome/compensation reconciliation, auto-retry blocked for non-idempotent-proven ambiguous effects) -- all new, composing but never touching the sealed engine.py/fsm.py/human_gate.py. Recomputed readiness directly from the backlog JSON: ready set is {OCOR-DEV-0045 (wave 16), OCOR-DEV-0046 (wave 15), OCOR-DEV-0048 (wave 15)}; OCOR-DEV-0045 is next by numeric order -- 'Implement C7 scenario and causal runtime' (ocor-runtime/src/ocor_runtime/c7/runtime.py, depends on OCOR-DEV-0022/0031/0040). Acceptance: branches cannot write main; interventions, counterfactuals, uncertainty and sensitivity produce sealed reproducible results; negative: unsupported identification returns abstain and no authoritative causal claim. Before designing, read the sealed OCOR-DEV-0022 causal-reproducibility oracle (spikes.causal_reproducibility.oracle, reused by OCOR-DEV-0031's mission thread) in full -- this task's own runtime.py is very likely the retained, non-spike counterpart, the same 'spike proves the real backend/algorithm; retained runtime.py reimplements it as production code' pattern already established for c4/typedb_adapter.py (OCOR-DEV-0037) and c5/backbone.py (OCOR-DEV-0040) -- confirm before assuming, and check every ocor-runtime/src/ocor_runtime/c7*.py file's own sealed-evidence hash before touching any of them.",
+  "next_executable_action": "OCOR-DEV-0045 merged (PR #121, c6406feeddbad4ca6f778fdaeca9f89110856738), all 13 checks green on the first push. This implements ocor_runtime.c7.runtime: a reimplementation of OCOR-DEV-0022's sealed identify-or-abstain fail-closed gate (pin/branch/release/confounding/positivity checks, shared by all four operations) plus three new sealed operations the spike never computed (estimate_counterfactual, estimate_uncertainty via deterministic bootstrap, estimate_sensitivity via additive confounding shift) alongside the reimplemented estimate_intervention -- all new, c7_emission.py (a different, sealed C7 concern) left completely untouched. Recomputed readiness directly from the backlog JSON: ready set is {OCOR-DEV-0046 (wave 15), OCOR-DEV-0048 (wave 15)}; OCOR-DEV-0046 is next by numeric order -- 'Implement C8 AgentRun Task Assignment Commitment Handoff and Dissent' (ocor-runtime/src/ocor_runtime/c8/orchestrator.py, depends on OCOR-DEV-0009/0027/0031). Acceptance: agent/team state transitions preserve authority, commitments, handoffs and dissent as explicit records; negative: an agent cannot self-grant capability, suppress dissent or mutate canonical state. Before designing, read ocor_runtime.c8_agent.py (the existing, predating-this-session, retained AgentKernel already reused unmodified by OCOR-DEV-0031's mission thread) and ocor_runtime.c2_identity/c6_capabilities in full -- this task's orchestrator.py is very likely a NEW, adjacent module built around the existing sealed AgentKernel/CapabilityAuthority rather than a rewrite of either; check every ocor-runtime/src/ocor_runtime/c8*.py file's own sealed-evidence hash before touching any of them, and read OCOR-DEV-0027's sealed deliverable (spikes/context_replay/replay.py, deterministic context-assembly replay) to understand why it's a hard dependency here.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",

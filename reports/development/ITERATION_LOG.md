@@ -3340,3 +3340,91 @@
   autorevole).
 - Nessun codice sorgente toccato: gate locali rieseguiti comunque per
   protocollo standard e confermati invariati.
+
+## 2026-09-14 — OCOR-DEV-0045: C7 scenario e causal runtime
+
+- Implementato `ocor-runtime/src/ocor_runtime/c7/runtime.py` (nuova
+  directory pacchetto `c7/`), completamente separato e mai a contatto
+  con il sigillato `ocor_runtime.c7_emission.py` (un concern C7
+  diverso — emissione durevole e ordinata degli effetti). Ri-implementa
+  il gate di identificazione fail-closed identify-or-abstain dello
+  spike sigillato di OCOR-DEV-0022
+  (`spikes.causal_reproducibility.oracle`, già riusato invariato dal
+  mission thread di OCOR-DEV-0031) come codice di produzione
+  (verifica dei pin dichiarati dal chiamante su model/data/
+  intervention; requisito di branch `scenario/` con `main` sempre in
+  abstain `MAIN_CONTAMINATED`; corrispondenza del digest di release;
+  set fattuale non vuoto; nessun confounding non risolto; valore di
+  intervento in dominio; positività) — condiviso da tutte e quattro
+  le operazioni pubbliche, così ognuna va in abstain esattamente
+  nelle stesse condizioni del sigillato stimatore ATE dello spike.
+  `estimate_intervention` ri-implementa lo stesso
+  `STRATIFIED_BACKDOOR_ATE` già dimostrato dallo spike. Tre nuove
+  operazioni che lo spike stesso non calcolava mai:
+  `estimate_counterfactual` imputa l'esito di una specifica unità
+  sotto il trattamento opposto tramite la differenza di media
+  entro-strato; `estimate_uncertainty` calcola un intervallo di
+  confidenza bootstrap deterministico, seminato dal `query.seed`
+  sigillato, così input pinnati identici riproducono sempre gli
+  stessi bound; `estimate_sensitivity` ricalcola l'ATE dopo uno shift
+  additivo di confounding su ogni osservazione del braccio di
+  controllo, riportando se il segno dell'effetto sopravvive — una
+  tecnica di sensitivity "tipping point" reale, standard e
+  onestamente etichettata, non inventata.
+- Aggiunti 27 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0045.py`, puri in-memory,
+  nessun backend esterno — incluso un cross-check diretto che il
+  percorso di intervention ri-implementato riproduce l'oracle
+  sigillato di OCOR-DEV-0022 bit-per-bit sugli stessi dati di
+  fixture (effect=-4, method=STRATIFIED_BACKDOOR_ATE). Tutti e 27
+  passati al primo tentativo, ripetuti 4 volte per determinismo.
+- Due genuini finding di `mypy` e uno di `ruff` auto-rilevati e
+  corretti prima della sigillatura: import `dataclasses.field` non
+  usato; l'argomento `effect` di `CausalOutcome` che inferiva un
+  tipo union indicizzando un dict `body` a valori misti (corretto
+  calcolando prima un locale dedicato `formatted_effect`); una
+  variabile Decimal che ombreggiava un'altra variabile intera
+  `treated` nello stesso scope di funzione (corretto rinominando in
+  `control_mean`/`treated_mean`).
+- Gate locali tutti verdi: `ruff`, `mypy` PASS (dopo le correzioni),
+  `validate_rccad.py` PASS, `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py --base origin/main` PASS (7
+  percorsi), `validate_ocor_development_plan.py --base-ref origin/main
+  --authorized-extension` PASS dopo il consueto doppio-run, pytest
+  completo via lo script `pytest` nudo con `OCOR_LIVE_POSTGRES_DSN`
+  impostato contro il PostgreSQL reale di ocor-bootstrap: `2 failed,
+  850 passed` (stessi 2 fallimenti noti) più `29 passed` per le 3
+  suite `reports/tests/`.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0045.json` +
+  `reports/evidence/G4/OCOR-DEV-0045.log`.
+  `reports/evidence/G4/MANIFEST.json` esteso con inserimento
+  chirurgico (2 nuovi artifact, 11 nuovi requirement_results).
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task, non incluso nel commit del
+  task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0045`: tutti e 13 i check verdi al primo push. PR #121
+  mergiata (`c6406feeddbad4ca6f778fdaeca9f89110856738`), SHA
+  post-merge verificata anche per `c7_emission.py` (invariato
+  byte-per-byte rispetto al proprio hash sigillato).
+
+## 2026-09-14 — Sincronizzazione stato: OCOR-DEV-0045 (post-merge, OCOR-DEV-0046 pronto)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #121, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0045`).
+- `baseline_commit` aggiornato a
+  `c6406feeddbad4ca6f778fdaeca9f89110856738` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0045`
+  aggiunto a `completed_evidence_tasks`.
+- Ricalcolata la prontezza dal backlog JSON: insieme pronto =
+  {`OCOR-DEV-0046` (wave 15), `OCOR-DEV-0048` (wave 15)};
+  `OCOR-DEV-0046` selezionato per ordine numerico sull'intero insieme
+  pronto — "Implement C8 AgentRun Task Assignment Commitment Handoff
+  and Dissent" (le transizioni di stato di agent/team preservano
+  authority, commitment, handoff e dissent come record espliciti;
+  negativo: un agent non può auto-concedersi una capability,
+  sopprimere il dissent o mutare lo stato canonico).
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
