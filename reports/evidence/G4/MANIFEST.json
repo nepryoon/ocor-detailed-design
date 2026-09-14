@@ -92,6 +92,16 @@
       "path": "OCOR-DEV-0040.log",
       "sha256": "48847828f8afde80fc51945857bcb2431e2460a3e4f35b9e0276af6186cc8775",
       "task_id": "OCOR-DEV-0040-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0041.json",
+      "sha256": "d5ab92377260d4d5c9a373b109940092e99854399b505db587d90e367b456e58",
+      "task_id": "OCOR-DEV-0041"
+    },
+    {
+      "path": "OCOR-DEV-0041.log",
+      "sha256": "a5e621b1faa348ca0c182278495aa3b7ae702b8f060f0782049c11ea38865554",
+      "task_id": "OCOR-DEV-0041-RAW"
     }
   ],
   "requirement_results": [
@@ -877,6 +887,87 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0040"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-VALID-EVENT-PUBLISHES-THROUGH-BACKPRESSURE",
+      "command": "a valid event publishes through the bounded per-tenant admission quota and is delivered by the real backbone with no dead letter recorded",
+      "evidence_path": "OCOR-DEV-0041.json",
+      "raw_output_path": "OCOR-DEV-0041.log",
+      "requirement_id": "FR-064",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0041"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-BACKPRESSURE-REFUSES-ADMISSION-AT-QUOTA",
+      "command": "a tenant already at its bounded in-flight quota is refused admission before ever touching the real backbone",
+      "evidence_path": "OCOR-DEV-0041.json",
+      "raw_output_path": "OCOR-DEV-0041.log",
+      "requirement_id": "NFR-028",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0041"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-FAILED-PUBLISH-RECORDED-AS-IMMUTABLE-PERMANENT-DEAD-LETTER",
+      "command": "a real publish failure against the live backbone is recorded as an immutable PERMANENT dead letter with the real failure's own reason_code",
+      "evidence_path": "OCOR-DEV-0041.json",
+      "raw_output_path": "OCOR-DEV-0041.log",
+      "requirement_id": "FR-065",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0041"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-REPEATED-FAILURES-CLASSIFIED-POISON",
+      "command": "the same event failing 3 times against the real backbone is classified POISON and quarantined",
+      "evidence_path": "OCOR-DEV-0041.json",
+      "raw_output_path": "OCOR-DEV-0041.log",
+      "requirement_id": "FR-065",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0041"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-POISON-BLOCKED-WITHOUT-OPERATOR-RELEASE",
+      "command": "a POISON-classified dead letter cannot be replayed without an explicit, separate operator release",
+      "evidence_path": "OCOR-DEV-0041.json",
+      "raw_output_path": "OCOR-DEV-0041.log",
+      "requirement_id": "FR-072",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0041"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-OPERATOR-RELEASE-STILL-BLOCKED-BY-INCOMPATIBLE-SCHEMA",
+      "command": "operator release of a POISON event does not bypass the real backbone's own schema compatibility check on replay",
+      "evidence_path": "OCOR-DEV-0041.json",
+      "raw_output_path": "OCOR-DEV-0041.log",
+      "requirement_id": "FR-072",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0041"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-REPLAY-BLOCKED-BY-LOST-MARKING-LIKE-A-FRESH-PUBLISH",
+      "command": "a replay whose reconstructed envelope has lost its classification marking is blocked exactly like a fresh publish would be, never bypassed",
+      "evidence_path": "OCOR-DEV-0041.json",
+      "raw_output_path": "OCOR-DEV-0041.log",
+      "requirement_id": "FR-072",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0041"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-VALID-REPLAY-PRESERVES-EVENT-ID-NO-DOUBLE-PUBLISH",
+      "command": "replaying a dead letter for an already-durable idempotency key preserves the original event_id and never creates a second real record on the live topic",
+      "evidence_path": "OCOR-DEV-0041.json",
+      "raw_output_path": "OCOR-DEV-0041.log",
+      "requirement_id": "NFR-079",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0041"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-REGRESSION",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0041.json",
+      "raw_output_path": "OCOR-DEV-0041.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0041"
     }
   ]
 }

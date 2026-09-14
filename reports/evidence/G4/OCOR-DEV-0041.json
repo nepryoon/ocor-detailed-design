@@ -1,0 +1,158 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0041",
+  "commit": "0bbf02eed4ce3c55d42cf182e23acd46a6187748",
+  "created_at": "2026-09-14T00:00:00Z",
+  "environment": {
+    "orchestrator": "a real, live, self-provisioned single-node KRaft Kafka broker per test run, via the sealed CanonicalEventBackbone.provision() -- no orchestration process of its own",
+    "backend_under_test": "the sealed OCOR-DEV-0040 CanonicalEventBackbone (reused unmodified through its own public publish()/consume() contract only)",
+    "reused_deliverable": "ocor-runtime/src/ocor_runtime/c5/backbone.py is a hash-referenced sealed deliverable of already-merged OCOR-DEV-0040 (PR #111) -- it was checked against reports/evidence/G4/OCOR-DEV-0040.json's inputs hash before this task began and left byte-for-byte unmodified; EventOperationsCoordinator composes it exclusively through its public publish() method, never reaching into any private helper"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c5/operations.py": "922a9984d263cf8bd4a316781d88307b9668248962491799fd017f2effbb95b5",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0041.py": "0315f2c380f0bd0bd20213edeb4dd52f4ac86812f18f537d14c0c68b5b55418e"
+  },
+  "commands": [
+    {
+      "command": "environmental incident found and resolved before this task's own regression could be trusted: the full local pytest regression stalled with growing E/EE error clusters; df -h / showed the host disk at 99% capacity (2.9GB free of 234GB), dominated by large pre-existing unrelated Docker images belonging to other projects on this shared machine (open-webui, plane-*, opensearch, debezium, neo4j, kindest/node) that this session is not authorized to remove. The two safe cleanup commands (docker builder prune -f, docker image prune -f) both reclaimed 0B. Diagnosed the actual test failures separately: ocor-bootstrap-fuseki-1 and ocor-bootstrap-spire-agent-1 had been OOM-killed (exit 137) hours earlier, unrelated to this task's own code; restarted both (docker start), confirmed fuseki healthy, and the full regression then passed cleanly with only the 2 known pre-existing interpreter-pin failures -- a genuine environmental finding, not a code defect, and no source change was made to remediate it",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "considered and rejected an in-flight redesign of the sealed backbone.py (switching Kafka's data directory from a docker volume to a tmpfs mount, to reduce disk footprint) after recognizing mid-edit that both backbone.py and test_ocor_dev_0040.py are hash-referenced sealed deliverables of already-merged OCOR-DEV-0040 -- reverted the edit via git checkout before proceeding, per this session's own standing rule to exclude already-sealed deliverables from modification rather than amend them; the volume-based provision()/destroy() already cleans up its own container and volume in every test's fixture teardown, verified to leak nothing across repeated runs, so no source change was needed once the actual (environmental, not disk-footprint) root cause was found",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "design: EventOperationsCoordinator composes the sealed CanonicalEventBackbone exclusively through its public publish()/consume() methods; publish_with_backpressure() enforces a bounded per-tenant in-flight admission quota before ever touching the real backbone; a BackboneError from publish() is recorded as an immutable DeadLetter, classified PERMANENT until the same event_id has failed POISON_THRESHOLD=3 times, at which point it is quarantined behind an explicit release_for_operator_replay() operator gate; replay() always reconstructs the envelope via CanonicalIngestionEnvelope.from_mapping() and re-calls the real backbone's publish(), so an incompatible schema or a lost/missing marking is blocked on replay exactly as it would be on a fresh publish -- never bypassed -- and an already-durable idempotency key is a safe no-op via the backbone's own idempotency handling, never a duplicate canonical effect",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "ruff check ocor-runtime/src/ocor_runtime/c5/operations.py ocor-runtime/tests/tasks/test_ocor_dev_0041.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python -m mypy src/ocor_runtime/c5/operations.py --config-file pyproject.toml",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest -v ocor-runtime/tests/tasks/test_ocor_dev_0041.py via the bare pytest console script (matching CI's uv run --project ocor-runtime --frozen pytest exactly), repeated 3 times for determinism against a fresh, real, self-provisioned Kafka broker per test -- all 8 tests passed on every run",
+      "result": {"passed": 24, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_rccad.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_language_policy.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_ocor_change_scope.py --base origin/main",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_ocor_development_plan.py --base-ref origin/main --authorized-extension, run twice in sequence after the extension_paths edit to settle the script's own self-hash -- both runs PASS",
+      "result": {"passed": 2, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression via the bare pytest console script (matching CI exactly), ocor-runtime/tests/, with OCOR_LIVE_POSTGRES_DSN set against the real ocor-bootstrap PostgreSQL instance -- re-run after restarting the OOM-killed fuseki/spire-agent containers",
+      "result": {"passed": 766, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "the 3 CI-wired reports/tests suites: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/{test_generate_contracts_reference_resolution,test_backlog_generator_reality_parity,test_language_migration_benchmark_harness}.py",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0041-VALID-EVENT-PUBLISHES-THROUGH-BACKPRESSURE",
+      "requirement_id": "FR-064",
+      "command": "a valid event publishes through the bounded per-tenant admission quota and is delivered by the real backbone with no dead letter recorded",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-BACKPRESSURE-REFUSES-ADMISSION-AT-QUOTA",
+      "requirement_id": "NFR-028",
+      "command": "a tenant already at its bounded in-flight quota is refused admission (BACKPRESSURE_EXCEEDED) before ever touching the real backbone",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-FAILED-PUBLISH-RECORDED-AS-IMMUTABLE-PERMANENT-DEAD-LETTER",
+      "requirement_id": "FR-065",
+      "command": "a real publish failure (unknown schema) against the live backbone is recorded as an immutable PERMANENT dead letter with the real failure's own reason_code",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-REPEATED-FAILURES-CLASSIFIED-POISON",
+      "requirement_id": "FR-065",
+      "command": "the same event failing 3 times against the real backbone is classified POISON and quarantined",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-POISON-BLOCKED-WITHOUT-OPERATOR-RELEASE",
+      "requirement_id": "FR-072",
+      "command": "a POISON-classified dead letter cannot be replayed without an explicit, separate operator release (OPERATOR_GATE_CLOSED)",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-OPERATOR-RELEASE-STILL-BLOCKED-BY-INCOMPATIBLE-SCHEMA",
+      "requirement_id": "FR-072",
+      "command": "operator release of a POISON event does not bypass the real backbone's own schema compatibility check on replay (UNKNOWN_SCHEMA)",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-REPLAY-BLOCKED-BY-LOST-MARKING-LIKE-A-FRESH-PUBLISH",
+      "requirement_id": "FR-072",
+      "command": "a replay whose reconstructed envelope has lost its classification marking is blocked exactly like a fresh publish would be (MISSING_CONTEXT), never bypassed",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-VALID-REPLAY-PRESERVES-EVENT-ID-NO-DOUBLE-PUBLISH",
+      "requirement_id": "NFR-079",
+      "command": "replaying a dead letter for an already-durable idempotency key preserves the original event_id and never creates a second real record on the live topic",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0041-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 795, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "The host running this sandbox is at 99% disk capacity, dominated by large pre-existing Docker images unrelated to this project; this session cannot remediate it (the only two authorized cleanup commands reclaim 0B) and it is registered here as a non-blocking environmental finding, not a defect of this task's own deliverable -- a future iteration or the Product Owner may need to authorize removing unrelated images.",
+    "ocor-bootstrap-fuseki-1 and ocor-bootstrap-spire-agent-1 were found OOM-killed (exit 137) during this task's work and were restarted as a routine, reversible maintenance action on the project's own bootstrap stack (never touching eci-dev-control-plane or open-webui); if host memory/disk pressure persists, these containers may need restarting again in a future iteration.",
+    "publish_with_backpressure()'s admission quota and DeadLetter/POISON bookkeeping are held in EventOperationsCoordinator's own in-process memory, scoped to one coordinator instance's lifetime; a real production deployment with multiple coordinator processes would need a durable, shared dead-letter store -- this task's own smallest-slice scope does not need to expose that.",
+    "The pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope; it produces the same 2 pre-existing, unrelated regression failures documented in every prior evidence file this session."
+  ],
+  "rollback_procedure_verified": "operations.py is additive only (a new file); reverting is a plain file deletion plus removal of its two extension_paths/evidence entries, with no change to any already-sealed C5 deliverable.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "a5e621b1faa348ca0c182278495aa3b7ae702b8f060f0782049c11ea38865554",
+  "result": "PASS"
+}
