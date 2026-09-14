@@ -3074,3 +3074,84 @@
   pronto — "Implement exact approved 44-transition C6 FSM".
 - Nessun codice sorgente toccato: gate locali rieseguiti comunque per
   protocollo standard e confermati invariati.
+
+## 2026-09-14 — OCOR-DEV-0042: FSM completa a 44 transizioni approvate
+
+- Implementato `ocor-runtime/src/ocor_runtime/c6/fsm.py`:
+  `GovernedActionFSM` copre tutte e 44 le transizioni approvate della
+  LLD v1.1 sezione 3.2, in complemento (non duplicazione) della slice
+  eseguibile del percorso rappresentativo di OCOR-DEV-0030
+  (`engine.py`, lasciato completamente intatto, verificato
+  byte-per-byte invariato rispetto al proprio hash sigillato sia
+  prima sia dopo questo task). La tabella runtime è ri-analizzata
+  (non importata) dallo stesso formato a cinque colonne chiuso della
+  LLD che lo spike sigillato di OCOR-DEV-0020
+  (`spikes.c6_fsm_fidelity.generator`) ha già dimostrato fedele —
+  precedente di ri-implementazione anziché importazione già stabilito
+  da OCOR-DEV-0028/0037/0040, dato che `spikes/` è fuori dal pythonpath
+  di produzione di `ocor-runtime`. `TRANSITIONS` è calcolata
+  eagerly all'import del modulo: qualsiasi transizione mancante, in
+  eccesso, duplicata o alterata semanticamente (source/evento-guardia/
+  effetto durevole/destinazione) solleva `FSMTableIntegrityError`
+  prima ancora che il modulo finisca di essere importato, facendo
+  fallire sia l'avvio locale sia la CI — il criterio di accettazione
+  negativo reso strutturale anziché solo testato.
+- `GovernedActionFSM.apply()` persiste durevolmente un record
+  immutabile (`PersistedEffect`) dell'effetto dichiarato di qualunque
+  transizione venga applicata, tramite un sink iniettato (un oggetto
+  Protocol o una semplice funzione, rispecchiando il parametro `sink`
+  flessibile già usato da `GovernedActionEngine.execute`) — dimostra
+  che ognuno dei 44 effetti dichiarati è persistibile, non solo i
+  quattro gate che il percorso rappresentativo di OCOR-DEV-0030 già
+  esercita end-to-end. Un fallimento del sink si propaga anziché
+  essere silenziosamente inghiottito; un nuovo tentativo sulla stessa
+  istanza dell'FSM recupera correttamente.
+- Aggiunti 15 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0042.py`, puri in-memory,
+  nessun backend esterno — incluso un cross-check diretto che il
+  parser ri-implementato da questo task riproduce l'output dello
+  spike sigillato di OCOR-DEV-0020 bit-per-bit sullo stesso documento
+  LLD approvato (lo spike è importato solo in questo file di test,
+  mai nel codice runtime sigillato). Tutti e 15 passati al primo
+  tentativo, ripetuti 4 volte per determinismo, nessun bug trovato.
+- Gate locali tutti verdi: `ruff`, `mypy` PASS, `validate_rccad.py`
+  PASS, `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py --base origin/main` PASS (7
+  percorsi), `validate_ocor_development_plan.py --base-ref origin/main
+  --authorized-extension` PASS dopo il consueto doppio-run, pytest
+  completo via lo script `pytest` nudo con `OCOR_LIVE_POSTGRES_DSN`
+  impostato contro il PostgreSQL reale di ocor-bootstrap: `2 failed,
+  781 passed` (stessi 2 fallimenti noti) più `29 passed` per le 3
+  suite `reports/tests/`.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0042.json` +
+  `reports/evidence/G4/OCOR-DEV-0042.log`.
+  `reports/evidence/G4/MANIFEST.json` esteso con inserimento
+  chirurgico (2 nuovi artifact, 13 nuovi requirement_results).
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task, non incluso nel commit del
+  task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0042`: tutti e 13 i check verdi al primo push. PR #115
+  mergiata (`6e60235e89fb3eb7f88cf6f82d432f61a4b97007`), SHA
+  post-merge verificata anche per `engine.py` (invariato
+  byte-per-byte rispetto al hash sigillato di OCOR-DEV-0030).
+
+## 2026-09-14 — Sincronizzazione stato: OCOR-DEV-0042 (post-merge, OCOR-DEV-0043 pronto)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #115, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0042`).
+- `baseline_commit` aggiornato a
+  `6e60235e89fb3eb7f88cf6f82d432f61a4b97007` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0042`
+  aggiunto a `completed_evidence_tasks`.
+- Ricalcolata la prontezza dal backlog JSON: insieme pronto =
+  {`OCOR-DEV-0043` (wave 16, appena pronto, dipende solo da
+  OCOR-DEV-0042), `OCOR-DEV-0045` (wave 16), `OCOR-DEV-0046` (wave 15),
+  `OCOR-DEV-0048` (wave 15)}; `OCOR-DEV-0043` selezionato per ordine
+  numerico sull'intero insieme pronto — "Implement Human Gate Decision
+  Approval and dual control" (quorum, separation-of-duties, firme,
+  scope e TTL rivalidati sia alla risoluzione sia al dispatch).
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
