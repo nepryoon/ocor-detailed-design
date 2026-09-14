@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0040",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0040",
+    "branch": "governed/state-sync-ocor-dev-0041",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0041",
     "decision_id": "DEC-211",
-    "phase": "G4_WAVE_15_IN_PROGRESS__WAVE_16_OCOR_DEV_0041_READY",
+    "phase": "G4_WAVE_15_IN_PROGRESS__OCOR_DEV_0042_READY",
     "worktree": null
   },
-  "baseline_commit": "916446c03c22317dd928d8bc89bed87f34e6a83d",
+  "baseline_commit": "600b1aa1e95123e0194af13d973637d9d0999231",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -77,19 +77,20 @@
     "OCOR-DEV-0037",
     "OCOR-DEV-0038",
     "OCOR-DEV-0039",
-    "OCOR-DEV-0040"
+    "OCOR-DEV-0040",
+    "OCOR-DEV-0041"
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "efbe8af",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR111_MERGED_916446c03c22317dd928d8bc89bed87f34e6a83d",
+    "candidate_commit": "9ab64c7",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR113_MERGED_600b1aa1e95123e0194af13d973637d9d0999231",
     "run_ids": [
-      34777513400,
-      34777513407,
-      34777513412,
-      34777513422,
-      34777513432,
-      34777513481
+      34802002425,
+      34802002443,
+      34802002450,
+      34802002457,
+      34802002460,
+      34802002476
     ]
   },
   "mandate_phase_status": {
@@ -150,9 +151,9 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0040 merged (PR #111, 916446c03c22317dd928d8bc89bed87f34e6a83d), all 13 checks green on the first push, confirming the self-provisioned Kafka broker design works correctly across all 3 full-sweep CI jobs. This implements ocor_runtime.c5.backbone.CanonicalEventBackbone, the first retained C5 component. Recomputed readiness directly from the backlog JSON: OCOR-DEV-0041 (wave 16) just became ready, lower-numbered than wave 15's remaining 3 tasks (0042/0046/0048), so selected next by the established numeric-order-across-the-whole-ready-set convention; OCOR-DEV-0041 is 'Implement C5 registry replay backpressure DLQ and quarantine' (depends only on OCOR-DEV-0040).",
+  "next_executable_action": "OCOR-DEV-0041 merged (PR #113, 600b1aa1e95123e0194af13d973637d9d0999231), all 13 checks green on the first push. This implements ocor_runtime.c5.operations.EventOperationsCoordinator (bounded per-tenant backpressure, immutable dead-letter record, POISON quarantine behind an explicit operator gate, and replay that never bypasses compatibility checks), composing the sealed OCOR-DEV-0040 CanonicalEventBackbone exclusively through its public publish() method -- backbone.py and test_ocor_dev_0040.py were verified byte-identical to their sealed hashes both before and after this task. A genuine environmental incident (host disk at 99% capacity from unrelated pre-existing images; ocor-bootstrap-fuseki-1/spire-agent-1 OOM-killed) was diagnosed and resolved by restarting the two bootstrap containers -- no source change was needed once the real root cause was found; an in-flight tmpfs redesign of the sealed backbone.py was considered and reverted for exactly this reason. Recomputed readiness directly from the backlog JSON: ready set is {OCOR-DEV-0042 (wave 15), OCOR-DEV-0045 (wave 16), OCOR-DEV-0046 (wave 15), OCOR-DEV-0048 (wave 15)}; OCOR-DEV-0042 is next by numeric order -- 'Implement exact approved 44-transition C6 FSM' (depends only on already-completed tasks).",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-09-13T16:20:00Z"
+  "updated_at": "2026-09-14T00:00:00Z"
 }
