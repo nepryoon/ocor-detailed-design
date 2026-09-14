@@ -3509,3 +3509,77 @@
   completati.
 - Nessun codice sorgente toccato: gate locali rieseguiti comunque per
   protocollo standard e confermati invariati.
+
+## 2026-09-14 — OCOR-DEV-0047: C8 tool boundary sandbox, budget, kill switch
+
+- Implementato `ocor-runtime/src/ocor_runtime/c8/tool_runtime.py`:
+  `ToolCallRuntime` collega cinque vincoli reali fail-closed intorno
+  a ogni chiamata a un tool, tutti applicati prima di qualsiasi
+  effetto: capability (`CapabilityAuthority.authorize`, mai
+  auto-concessa), purpose (il sigillato `GovernedContext`, già
+  fail-closed su un purpose mancante alla propria costruzione),
+  marking (`MarkingEngine.require_authorized` contro la clearance
+  reale del chiamante), stop (il `guard_dispatch` sigillato di
+  `EmergencyStopController` da OCOR-DEV-0044), e budget
+  (`TokenBudget.consume`, addebitato prima che il tool venga mai
+  tentato, mai rimborsato dopo). Solo una volta che tutti e cinque
+  sono superati l'espressione reale raggiunge il sigillato
+  `StrictSandbox` per l'esecuzione con whitelist AST — un tentativo
+  di sintassi di escape viene rifiutato lì, prima che la funzione
+  tool registrata venga mai chiamata. Tutti i componenti sigillati
+  riusati (`c8_agent.py`, `c8/orchestrator.py`, `c6_capabilities.py`,
+  `c4_marking.py`, `c6/safety.py`, `kernel/governed_context.py`) sono
+  verificati invariati byte-per-byte sia prima sia dopo questo task.
+- Aggiunti 11 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0047.py`, inclusa una prova
+  di integrazione che esegue in sequenza una chiamata legittima e
+  quattro distinti scenari di diniego (capability revocata, clearance
+  insufficiente, sintassi di escape, fuori budget) contro una lista
+  condivisa di effetti, dimostrando che esattamente un solo effetto
+  reale viene mai prodotto, indipendentemente da quanti modi diversi
+  si tenti e si neghi una chiamata. Tutti e 11 passati al primo
+  tentativo, ripetuti 4 volte per determinismo, nessun bug trovato.
+- Gate locali tutti verdi: `ruff`, `mypy` PASS, `validate_rccad.py`
+  PASS, `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py --base origin/main` PASS (7
+  percorsi), `validate_ocor_development_plan.py --base-ref origin/main
+  --authorized-extension` PASS dopo il consueto doppio-run, pytest
+  completo via lo script `pytest` nudo con `OCOR_LIVE_POSTGRES_DSN`
+  impostato contro il PostgreSQL reale di ocor-bootstrap: `2 failed,
+  873 passed` (stessi 2 fallimenti noti) più `29 passed` per le 3
+  suite `reports/tests/`.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0047.json` +
+  `reports/evidence/G4/OCOR-DEV-0047.log`.
+  `reports/evidence/G4/MANIFEST.json` esteso con inserimento
+  chirurgico (2 nuovi artifact, 8 nuovi requirement_results).
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task, non incluso nel commit del
+  task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0047`: tutti e 13 i check verdi al primo push. PR #125
+  mergiata (`355ff68cc65053f55b26812843b4a7cb19e9b177`), SHA
+  post-merge verificata per tutti i file sigillati riusati.
+
+## 2026-09-14 — Sincronizzazione stato: OCOR-DEV-0047 (post-merge, OCOR-DEV-0048 pronto)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #125, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0047`).
+- `baseline_commit` aggiornato a
+  `355ff68cc65053f55b26812843b4a7cb19e9b177` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0047`
+  aggiunto a `completed_evidence_tasks`.
+- Ricalcolata la prontezza dal backlog JSON: insieme pronto =
+  {`OCOR-DEV-0048` (wave 15)} — l'UNICO task pronto rimasto dalla
+  frontiera visibile attuale (22 degli 84 task totali non ancora
+  completati). "Integrate OPA Keycloak SPIFFE OpenBao and mTLS" —
+  a differenza degli ultimi sette task (0041-0047, tutti slice C6/C7/
+  C8 puramente in-memory), questo è un task a backend reale: servizi
+  reali (OPA, Keycloak, SPIFFE, OpenBao, mTLS) devono applicare least
+  privilege, workload identity, policy bundle, delegation e
+  isolamento dei secret; negativo: un'interruzione del control plane
+  o un bundle di policy stantio devono fallire in modo chiuso con
+  diagnostica correlata.
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
