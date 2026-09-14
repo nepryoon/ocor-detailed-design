@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0043",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0043",
+    "branch": "governed/state-sync-ocor-dev-0044",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0044",
     "decision_id": "DEC-211",
-    "phase": "G4_WAVE_15_IN_PROGRESS__OCOR_DEV_0044_READY",
+    "phase": "G4_WAVE_15_IN_PROGRESS__OCOR_DEV_0045_READY",
     "worktree": null
   },
-  "baseline_commit": "3c89c90c1c870159564c8573ff7c5793da86061a",
+  "baseline_commit": "cd8ad4ffbc942d10aabd9bbb40332427795316cf",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -80,19 +80,20 @@
     "OCOR-DEV-0040",
     "OCOR-DEV-0041",
     "OCOR-DEV-0042",
-    "OCOR-DEV-0043"
+    "OCOR-DEV-0043",
+    "OCOR-DEV-0044"
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "fe3d8e4",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR117_MERGED_3c89c90c1c870159564c8573ff7c5793da86061a",
+    "candidate_commit": "21db524",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR119_MERGED_cd8ad4ffbc942d10aabd9bbb40332427795316cf",
     "run_ids": [
-      34805879611,
-      34805879616,
-      34805879618,
-      34805879621,
-      34805879624,
-      34805879706
+      34807849478,
+      34807849481,
+      34807849487,
+      34807849497,
+      34807849515,
+      34807849562
     ]
   },
   "mandate_phase_status": {
@@ -153,7 +154,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0043 merged (PR #117, 3c89c90c1c870159564c8573ff7c5793da86061a), all 13 checks green on the first push. This implements ocor_runtime.c6.human_gate.HumanGateCoordinator: real quorum/separation-of-duties/signature/scope/TTL logic producing the sealed OCOR-DEV-0030 Approval record unmodified; dual control comes from calling the same validate() once at resolution and again before dispatch. Recomputed readiness directly from the backlog JSON: ready set is {OCOR-DEV-0044 (wave 17, newly ready, depends on OCOR-DEV-0042+0043), OCOR-DEV-0045 (wave 16), OCOR-DEV-0046 (wave 15), OCOR-DEV-0048 (wave 15)}; OCOR-DEV-0044 is next by numeric order -- 'Implement compensation reconciliation break-glass and emergency stop' (ocor-runtime/src/ocor_runtime/c6/safety.py). Acceptance: unknown outcomes, compensation, stop precedence and break-glass produce immutable evidence and fail-safe state; negative: a stop race cannot emit after the stop epoch, and an ambiguous non-idempotent effect cannot auto-retry. Before designing, read LLD v1.1's stop-epoch/break-glass sections and check whether c6/engine.py, c6/fsm.py or c6/human_gate.py already expose anything reusable (e.g. fsm.py's TRANSITIONS likely names the relevant ACT-T2x/T3x stop/compensation transitions) -- compose through public methods only, add new files for new capability, per the standing sealed-deliverable protocol.",
+  "next_executable_action": "OCOR-DEV-0044 merged (PR #119, cd8ad4ffbc942d10aabd9bbb40332427795316cf), all 13 checks green on the first push. This implements ocor_runtime.c6.safety.py: EmergencyStopController (the approved NORMAL/STOPPING/STOPPED/RESET_PENDING machine under a real lock, epoch-fenced dispatch guard, dual-control reset), BreakGlassController (bounded dual-human grant, TTL-capped, forbidden-capability denylist, mandatory review), and OutcomeReconciler (ambiguous-outcome/compensation reconciliation, auto-retry blocked for non-idempotent-proven ambiguous effects) -- all new, composing but never touching the sealed engine.py/fsm.py/human_gate.py. Recomputed readiness directly from the backlog JSON: ready set is {OCOR-DEV-0045 (wave 16), OCOR-DEV-0046 (wave 15), OCOR-DEV-0048 (wave 15)}; OCOR-DEV-0045 is next by numeric order -- 'Implement C7 scenario and causal runtime' (ocor-runtime/src/ocor_runtime/c7/runtime.py, depends on OCOR-DEV-0022/0031/0040). Acceptance: branches cannot write main; interventions, counterfactuals, uncertainty and sensitivity produce sealed reproducible results; negative: unsupported identification returns abstain and no authoritative causal claim. Before designing, read the sealed OCOR-DEV-0022 causal-reproducibility oracle (spikes.causal_reproducibility.oracle, reused by OCOR-DEV-0031's mission thread) in full -- this task's own runtime.py is very likely the retained, non-spike counterpart, the same 'spike proves the real backend/algorithm; retained runtime.py reimplements it as production code' pattern already established for c4/typedb_adapter.py (OCOR-DEV-0037) and c5/backbone.py (OCOR-DEV-0040) -- confirm before assuming, and check every ocor-runtime/src/ocor_runtime/c7*.py file's own sealed-evidence hash before touching any of them.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
