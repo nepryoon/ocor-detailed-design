@@ -3246,3 +3246,97 @@
   ambiguo non idempotente non può essere ritentato automaticamente).
 - Nessun codice sorgente toccato: gate locali rieseguiti comunque per
   protocollo standard e confermati invariati.
+
+## 2026-09-14 — OCOR-DEV-0044: compensation reconciliation, break-glass, emergency stop
+
+- Implementato `ocor-runtime/src/ocor_runtime/c6/safety.py` con tre
+  meccanismi di sicurezza reali, tutti nuovi file, che compongono ma
+  non toccano mai i file sigillati `engine.py` (OCOR-DEV-0030),
+  `fsm.py` (OCOR-DEV-0042) e `human_gate.py` (OCOR-DEV-0043) —
+  verificati invariati byte-per-byte sia prima sia dopo il task.
+  `EmergencyStopController` implementa la macchina approvata
+  `NORMAL -> STOPPING -> STOPPED -> RESET_PENDING -> NORMAL` (LLD
+  4.3) sotto un vero `threading.RLock`; `guard_dispatch` nega a meno
+  che il sistema sia `NORMAL` E l'epoch di fencing presentato sia
+  esattamente quello corrente, e `confirm_reset` emette sempre un
+  epoch nuovo di zecca, così un reset non riabilita mai un lease o un
+  command fenced all'epoch pre-stop; il reset stesso richiede due
+  approvatori umani distinti e risolti (tramite l'`IdentityRegistry`
+  sigillato, riusato invariato). `BreakGlassController` implementa la
+  concessione eccezionale limitata e dual-human di LLD 4.2 (TTL
+  massimo 15 minuti per ADD 5.5); `authorize()` è una funzione pura di
+  (grant, capability, istante) rieseguita a ogni uso — scaduta,
+  revocata, capability proibita (denylist fissa: creare una Decision,
+  ridurre il marking, disabilitare provenance/audit, ignorare
+  l'emergency stop, cambiare il release pin, autorizzare R3 senza
+  quorum, accedere fuori compartment) o stop attivo negano sempre,
+  mai solo al momento della concessione; ogni uso richiede un
+  riferimento di review obbligatorio. `OutcomeReconciler` implementa
+  il percorso di riconciliazione degli esiti ambigui e della
+  compensazione `ACT-T18a`/`T18b`/`T20a-c`/`T21`-`T21e`/`T24`/`T25`:
+  un timeout ambiguo sospende il retry e apre la riconciliazione;
+  un'Evidence reale la risolve; nessuna Evidence prima della
+  deadline non fa alcuna inferenza ed esegue l'escalation a
+  `INDETERMINATE` con adjudication aperta solo una volta che la
+  deadline è realmente trascorsa; `require_may_auto_retry` è la
+  claim negativa centrale del task resa eseguibile — un esito
+  ambiguo o indeterminato il cui effetto non è provato idempotente
+  non può mai essere ritentato automaticamente.
+- Aggiunti 29 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0044.py`, inclusi un vero
+  test di fault-injection multi-thread (thread OS reali che
+  competono su 8 tentativi di dispatch contro un'attivazione
+  concorrente dello stop, a dimostrare che il lock reale rende
+  atomica la cattura-e-verifica dell'epoch) ripetuto 5 volte
+  aggiuntive da solo più l'intera suite altre 3 volte per ulteriore
+  fiducia nel determinismo, e un test di integrazione che combina la
+  precedenza dello stop con la riconciliazione end-to-end.
+- Un genuino finding di `mypy` auto-rilevato e corretto prima della
+  sigillatura: `tuple(sorted(distinct))` ha tipo inferito
+  `tuple[str, ...]`, non il `tuple[str, str]` dichiarato dal campo
+  `BreakGlassGrant.approvers` — corretto scomponendo esplicitamente
+  il set ordinato di 2 elementi in una coppia `(first, second)`.
+- Gate locali tutti verdi: `ruff`, `mypy` PASS (dopo la correzione),
+  `validate_rccad.py` PASS, `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py --base origin/main` PASS (7
+  percorsi), `validate_ocor_development_plan.py --base-ref origin/main
+  --authorized-extension` PASS dopo il consueto doppio-run, pytest
+  completo via lo script `pytest` nudo con `OCOR_LIVE_POSTGRES_DSN`
+  impostato contro il PostgreSQL reale di ocor-bootstrap: `2 failed,
+  823 passed` (stessi 2 fallimenti noti) più `29 passed` per le 3
+  suite `reports/tests/`.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0044.json` +
+  `reports/evidence/G4/OCOR-DEV-0044.log`.
+  `reports/evidence/G4/MANIFEST.json` esteso con inserimento
+  chirurgico (2 nuovi artifact, 16 nuovi requirement_results).
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task, non incluso nel commit del
+  task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0044`: tutti e 13 i check verdi al primo push. PR #119
+  mergiata (`cd8ad4ffbc942d10aabd9bbb40332427795316cf`), SHA
+  post-merge verificata anche per `engine.py`, `fsm.py` e
+  `human_gate.py` (tutti invariati byte-per-byte rispetto ai
+  rispettivi hash sigillati).
+
+## 2026-09-14 — Sincronizzazione stato: OCOR-DEV-0044 (post-merge, OCOR-DEV-0045 pronto)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #119, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0044`).
+- `baseline_commit` aggiornato a
+  `cd8ad4ffbc942d10aabd9bbb40332427795316cf` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0044`
+  aggiunto a `completed_evidence_tasks`.
+- Ricalcolata la prontezza dal backlog JSON: insieme pronto =
+  {`OCOR-DEV-0045` (wave 16), `OCOR-DEV-0046` (wave 15),
+  `OCOR-DEV-0048` (wave 15)}; `OCOR-DEV-0045` selezionato per ordine
+  numerico sull'intero insieme pronto — "Implement C7 scenario and
+  causal runtime" (branch non possono scrivere main; interventi,
+  controfattuali, incertezza e sensitivity producono risultati
+  sigillati e riproducibili; negativo: un'identificazione non
+  supportata restituisce abstain e nessuna claim causale
+  autorevole).
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
