@@ -142,6 +142,16 @@
       "path": "OCOR-DEV-0045.log",
       "sha256": "0f20f98154b36c9a7473e642c6d65f2d6b65aa72fd379126fb6de409c2cbc5b8",
       "task_id": "OCOR-DEV-0045-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0046.json",
+      "sha256": "a4332ed7ce23ffe70baf287ae3bb54877304a696896fa0fd664b39eff70773d4",
+      "task_id": "OCOR-DEV-0046"
+    },
+    {
+      "path": "OCOR-DEV-0046.log",
+      "sha256": "37d6d1508f809ab23a7e99a6cc2807789f417c2b5daf11ad32156f99094bbb12",
+      "task_id": "OCOR-DEV-0046-RAW"
     }
   ],
   "requirement_results": [
@@ -1503,6 +1513,87 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0045"
+    },
+    {
+      "case_id": "OCOR-DEV-0046-FULL-LIFECYCLE-WRITES-REAL-CANONICAL-STATE",
+      "command": "assign, commit and dissent all write real, retrievable canonical documents through the sealed AtomicOutboxStore",
+      "evidence_path": "OCOR-DEV-0046.json",
+      "raw_output_path": "OCOR-DEV-0046.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0046"
+    },
+    {
+      "case_id": "OCOR-DEV-0046-HANDOFF-TRANSFERS-COMMITMENT-TO-NEW-AGENT",
+      "command": "a handoff correctly reassigns both the assignment and the commitment to the new agent, and the new agent can recommit using its own real lease",
+      "evidence_path": "OCOR-DEV-0046.json",
+      "raw_output_path": "OCOR-DEV-0046.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0046"
+    },
+    {
+      "case_id": "OCOR-DEV-0046-HANDOFF-REQUIRES-AN-EXPLICIT-REASON",
+      "command": "a handoff without a reason is refused",
+      "evidence_path": "OCOR-DEV-0046.json",
+      "raw_output_path": "OCOR-DEV-0046.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0046"
+    },
+    {
+      "case_id": "OCOR-DEV-0046-UNASSIGNED-OR-UNCOMMITTED-TASK-REFUSES-FURTHER-TRANSITIONS",
+      "command": "committing an unassigned task, or handing off an uncommitted one, is refused with UNKNOWN_TASK",
+      "evidence_path": "OCOR-DEV-0046.json",
+      "raw_output_path": "OCOR-DEV-0046.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0046"
+    },
+    {
+      "case_id": "OCOR-DEV-0046-AGENT-CANNOT-SELF-GRANT-A-CAPABILITY",
+      "command": "a fabricated lease id, a wrong-capability lease, a wrong-resource lease, and a revoked lease are all refused identically",
+      "evidence_path": "OCOR-DEV-0046.json",
+      "raw_output_path": "OCOR-DEV-0046.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0046"
+    },
+    {
+      "case_id": "OCOR-DEV-0046-AGENT-CANNOT-MUTATE-CANONICAL-STATE-DIRECTLY",
+      "command": "a real, direct store.write() call using an agent's own id as writer_id is refused by the sealed store's single-writer boundary",
+      "evidence_path": "OCOR-DEV-0046.json",
+      "raw_output_path": "OCOR-DEV-0046.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0046"
+    },
+    {
+      "case_id": "OCOR-DEV-0046-DISSENT-CANNOT-BE-SUPPRESSED",
+      "command": "registered dissents remain append-only with no removal/retraction/update method exposed, and a Dissent record itself is frozen",
+      "evidence_path": "OCOR-DEV-0046.json",
+      "raw_output_path": "OCOR-DEV-0046.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0046"
+    },
+    {
+      "case_id": "OCOR-DEV-0046-DISSENT-REQUIRES-AN-EXPLICIT-REASON",
+      "command": "a dissent without a reason is refused",
+      "evidence_path": "OCOR-DEV-0046.json",
+      "raw_output_path": "OCOR-DEV-0046.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0046"
+    },
+    {
+      "case_id": "OCOR-DEV-0046-REGRESSION",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0046.json",
+      "raw_output_path": "OCOR-DEV-0046.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0046"
     }
   ]
 }
