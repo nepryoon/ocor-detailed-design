@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0042",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0042",
+    "branch": "governed/state-sync-ocor-dev-0043",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-0043",
     "decision_id": "DEC-211",
-    "phase": "G4_WAVE_15_IN_PROGRESS__OCOR_DEV_0043_READY",
+    "phase": "G4_WAVE_15_IN_PROGRESS__OCOR_DEV_0044_READY",
     "worktree": null
   },
-  "baseline_commit": "6e60235e89fb3eb7f88cf6f82d432f61a4b97007",
+  "baseline_commit": "3c89c90c1c870159564c8573ff7c5793da86061a",
   "blockers": [
     {
       "compensating_control": "PR-only integration, exact-head CI, evidence seal, no force push and post-merge SHA verification",
@@ -79,19 +79,20 @@
     "OCOR-DEV-0039",
     "OCOR-DEV-0040",
     "OCOR-DEV-0041",
-    "OCOR-DEV-0042"
+    "OCOR-DEV-0042",
+    "OCOR-DEV-0043"
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "9cc2b32",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR115_MERGED_6e60235e89fb3eb7f88cf6f82d432f61a4b97007",
+    "candidate_commit": "fe3d8e4",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR117_MERGED_3c89c90c1c870159564c8573ff7c5793da86061a",
     "run_ids": [
-      34803911397,
-      34803911416,
-      34803911419,
-      34803911458,
-      34803911536,
-      34803911573
+      34805879611,
+      34805879616,
+      34805879618,
+      34805879621,
+      34805879624,
+      34805879706
     ]
   },
   "mandate_phase_status": {
@@ -152,7 +153,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0042 merged (PR #115, 6e60235e89fb3eb7f88cf6f82d432f61a4b97007), all 13 checks green on the first push. This implements ocor_runtime.c6.fsm.GovernedActionFSM: the complete, approved 44-transition C6 table (parsed from the LLD and validated against OCOR-DEV-0020's sealed digest at import time -- any missing/extra/altered transition fails startup and CI) plus a generic effect-persistence mechanism, complementing OCOR-DEV-0030's untouched representative-path slice rather than duplicating it. Recomputed readiness directly from the backlog JSON: ready set is {OCOR-DEV-0043 (wave 16, newly ready, depends only on OCOR-DEV-0042), OCOR-DEV-0045 (wave 16), OCOR-DEV-0046 (wave 15), OCOR-DEV-0048 (wave 15)}; OCOR-DEV-0043 is next by numeric order -- 'Implement Human Gate Decision Approval and dual control'.",
+  "next_executable_action": "OCOR-DEV-0043 merged (PR #117, 3c89c90c1c870159564c8573ff7c5793da86061a), all 13 checks green on the first push. This implements ocor_runtime.c6.human_gate.HumanGateCoordinator: real quorum/separation-of-duties/signature/scope/TTL logic producing the sealed OCOR-DEV-0030 Approval record unmodified; dual control comes from calling the same validate() once at resolution and again before dispatch. Recomputed readiness directly from the backlog JSON: ready set is {OCOR-DEV-0044 (wave 17, newly ready, depends on OCOR-DEV-0042+0043), OCOR-DEV-0045 (wave 16), OCOR-DEV-0046 (wave 15), OCOR-DEV-0048 (wave 15)}; OCOR-DEV-0044 is next by numeric order -- 'Implement compensation reconciliation break-glass and emergency stop' (ocor-runtime/src/ocor_runtime/c6/safety.py). Acceptance: unknown outcomes, compensation, stop precedence and break-glass produce immutable evidence and fail-safe state; negative: a stop race cannot emit after the stop epoch, and an ambiguous non-idempotent effect cannot auto-retry. Before designing, read LLD v1.1's stop-epoch/break-glass sections and check whether c6/engine.py, c6/fsm.py or c6/human_gate.py already expose anything reusable (e.g. fsm.py's TRANSITIONS likely names the relevant ACT-T2x/T3x stop/compensation transitions) -- compose through public methods only, add new files for new capability, per the standing sealed-deliverable protocol.",
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
