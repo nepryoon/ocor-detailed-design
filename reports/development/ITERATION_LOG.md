@@ -2904,3 +2904,87 @@
   causation, marking e idempotency su Kafka; criterio negativo: schema
   sconosciuto, contesto mancante o effetto fuori ordine su un aggregato
   vanno in quarantena.
+
+## 2026-09-13 — OCOR-DEV-0040: C5 canonical event backbone
+
+- Nuovo `ocor_runtime.c5.backbone.CanonicalEventBackbone`, primo
+  componente C5 retained: un `CanonicalIngestionEnvelope` chiuso (LLD
+  v1.1 §2.5) pubblicato su un broker Kafka reale, con chiave
+  `aggregate_ref` così che il partitioner nativo di Kafka preserva
+  l'ordine per aggregato.
+- Correzione di design genuina scoperta a metà implementazione:
+  `grep -l kafka .github/workflows/*.yml` ha confermato che NESSUN
+  workflow CI fornisce un servizio Kafka condiviso (a differenza di
+  TypeDB/Fuseki, aggiunti a 3 workflow da task precedenti); l'unico
+  uso di Kafka in tutta la CI è il test mission-thread di
+  OCOR-DEV-0031, che auto-provisiona il proprio broker isolato.
+  Ridisegnato `CanonicalEventBackbone` per auto-provisionare un vero
+  broker KRaft single-node isolato per istanza
+  (`provision()`/`destroy()`), reimplementando la stessa reale
+  configurazione e ciclo di vita del broker già provati per davvero da
+  `spikes.kafka_delivery.oracle.KafkaCli` (OCOR-DEV-0019), invece di
+  importare lo spike, dato che `spikes/` è fuori dal pythonpath di
+  ocor-runtime in produzione.
+- `publish()` controlla l'allow-list degli schemi registrati e
+  l'ultima sequenza pubblicata dell'aggregato PRIMA di chiamare mai il
+  vero CLI produttore, mettendo in quarantena (mai pubblicando) uno
+  schema sconosciuto o una sequenza fuori ordine; `publish_from_mapping()`
+  cattura anche un campo di governed-context mancante o malformato al
+  momento della costruzione e lo mette in quarantena a sua volta.
+- Aggiunti 7 nuovi test in
+  `ocor-runtime/tests/tasks/test_ocor_dev_0040.py`, tutti contro un
+  broker reale auto-provisionato per test, nessun mock — tutti e 7
+  passati, nessun bug nella nuova logica di envelope/publish/consume.
+- Un finding AFF-009 genuino auto-rilevato e corretto prima della
+  sigillatura: il `try/except KafkaBackboneError: pass` originario di
+  `reset()` inghiottiva silenziosamente il fallimento di cancellare un
+  topic non ancora esistente — corretto aggiungendo un controllo
+  esplicito `topic_exists()` prima di tentare mai la cancellazione,
+  rimuovendo del tutto l'except vuoto.
+- Gate locali tutti verdi: `ruff`, `mypy`, `validate_rccad.py` PASS
+  (dopo la correzione AFF-009), `validate_language_policy.py` PASS,
+  `validate_ocor_change_scope.py` PASS (7 percorsi), pytest completo
+  via lo script `pytest` nudo con `OCOR_LIVE_POSTGRES_DSN` impostato
+  contro il PostgreSQL reale di ocor-bootstrap: `2 failed, 758 passed`
+  (stessi 2 fallimenti noti) più `29 passed` per le 3 suite
+  `reports/tests/`, `validate_ocor_development_plan.py --base-ref
+  origin/main --authorized-extension` PASS dopo il consueto
+  doppio-run.
+- Evidenza sigillata: `reports/evidence/G4/OCOR-DEV-0040.json` +
+  `reports/evidence/G4/OCOR-DEV-0040.log`.
+  `reports/evidence/G4/MANIFEST.json` esteso con inserimento
+  chirurgico (2 nuovi artifact, 8 nuovi requirement_results).
+- Aggiornamento dei tre file di stato eseguito come PR dedicata
+  immediatamente dopo il merge del task, non incluso nel commit del
+  task.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+- `OCOR-DEV-0040`: tutti e 13 i check verdi al primo push, incluse le
+  3 job lunghe dell'intera suite che per prime hanno esercitato
+  l'auto-provisioning Kafka in CI. PR #111 mergiata
+  (`916446c03c22317dd928d8bc89bed87f34e6a83d`), SHA post-merge
+  verificata.
+
+## 2026-09-13 — Sincronizzazione stato: OCOR-DEV-0040 (post-merge, wave 16 OCOR-DEV-0041 pronto)
+
+- Sincronizzazione immediata dei tre file di stato subito dopo il
+  merge della PR #111, su un branch dedicato
+  (`governed/state-sync-ocor-dev-0040`).
+- `baseline_commit` aggiornato a
+  `916446c03c22317dd928d8bc89bed87f34e6a83d` in entrambi
+  `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`; `OCOR-DEV-0040`
+  aggiunto a `completed_evidence_tasks`.
+- Ricalcolata la prontezza dal backlog JSON: `OCOR-DEV-0041` ("Implement
+  C5 registry replay backpressure DLQ and quarantine", wave 16) è
+  appena diventato pronto, dipendente solo da `OCOR-DEV-0040` (appena
+  mergiato) — numericamente più basso dei 3 task rimanenti del wave 15
+  (`0042/0046/0048`), quindi selezionato per ordine numerico
+  sull'intero insieme pronto.
+- Nessun codice sorgente toccato: gate locali rieseguiti comunque per
+  protocollo standard e confermati invariati.
+- Prossima azione: implementare `ocor-runtime/src/ocor_runtime/c5/operations.py`,
+  riusando `CanonicalEventBackbone` (OCOR-DEV-0040) esclusivamente
+  tramite i suoi metodi pubblici; criterio di accettazione: fixture di
+  replay e di eventi poison sono bounded, osservabili e non bypassano
+  mai i controlli di compatibilità; criterio negativo: un replay dalla
+  DLQ con schema incompatibile o marking perso viene bloccato.
