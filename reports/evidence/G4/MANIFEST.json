@@ -102,6 +102,16 @@
       "path": "OCOR-DEV-0041.log",
       "sha256": "a5e621b1faa348ca0c182278495aa3b7ae702b8f060f0782049c11ea38865554",
       "task_id": "OCOR-DEV-0041-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0042.json",
+      "sha256": "cfde712b78fcf93911525c26177f19eab966806b55d43231d43b51c5efc53b83",
+      "task_id": "OCOR-DEV-0042"
+    },
+    {
+      "path": "OCOR-DEV-0042.log",
+      "sha256": "713062748c0881a88f59961c10073a150fdae10512050e343dd3588a4b42ea9d",
+      "task_id": "OCOR-DEV-0042-RAW"
     }
   ],
   "requirement_results": [
@@ -968,6 +978,123 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0041"
+    },
+    {
+      "case_id": "OCOR-DEV-0042-RUNTIME-TABLE-HAS-ALL-44-UNIQUE-TRANSITIONS",
+      "command": "the runtime table has exactly 44 unique transition ids, in the LLD's own order from ACT-T01 to ACT-T31b",
+      "evidence_path": "OCOR-DEV-0042.json",
+      "raw_output_path": "OCOR-DEV-0042.log",
+      "requirement_id": "FR-028",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0042"
+    },
+    {
+      "case_id": "OCOR-DEV-0042-RUNTIME-TABLE-DIGEST-MATCHES-SEALED-BASELINE",
+      "command": "the runtime table's semantic digest matches OCOR-DEV-0020's sealed transition-table digest exactly",
+      "evidence_path": "OCOR-DEV-0042.json",
+      "raw_output_path": "OCOR-DEV-0042.log",
+      "requirement_id": "FR-043",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0042"
+    },
+    {
+      "case_id": "OCOR-DEV-0042-REIMPLEMENTED-PARSER-MATCHES-SEALED-GENERATOR",
+      "command": "this task's own reimplemented LLD parser reproduces OCOR-DEV-0020's sealed spikes.c6_fsm_fidelity.generator's output bit-for-bit on the identical approved document",
+      "evidence_path": "OCOR-DEV-0042.json",
+      "raw_output_path": "OCOR-DEV-0042.log",
+      "requirement_id": "FR-043",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0042"
+    },
+    {
+      "case_id": "OCOR-DEV-0042-MISSING-EXTRA-OR-DUPLICATE-TRANSITION-FAILS-CLOSED",
+      "command": "a candidate table missing a transition, carrying an extra one, or a duplicate id all fail closed with FSMTableIntegrityError",
+      "evidence_path": "OCOR-DEV-0042.json",
+      "raw_output_path": "OCOR-DEV-0042.log",
+      "requirement_id": "NFR-078",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0042"
+    },
+    {
+      "case_id": "OCOR-DEV-0042-ALTERED-DURABLE-EFFECT-FAILS-SEMANTIC-EQUALITY",
+      "command": "a transition with an altered durable_effect text fails the semantic digest comparison, never silently accepted",
+      "evidence_path": "OCOR-DEV-0042.json",
+      "raw_output_path": "OCOR-DEV-0042.log",
+      "requirement_id": "NFR-078",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0042"
+    },
+    {
+      "case_id": "OCOR-DEV-0042-UNSEALED-LLD-REJECTED-BEFORE-PARSING",
+      "command": "a modified copy of the approved LLD document is rejected by its own digest check before any transition row is ever parsed",
+      "evidence_path": "OCOR-DEV-0042.json",
+      "raw_output_path": "OCOR-DEV-0042.log",
+      "requirement_id": "NFR-084",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0042"
+    },
+    {
+      "case_id": "OCOR-DEV-0042-APPLYING-A-TRANSITION-PERSISTS-ITS-DECLARED-EFFECT",
+      "command": "applying a known transition durably persists an immutable record of its declared effect via the injected sink",
+      "evidence_path": "OCOR-DEV-0042.json",
+      "raw_output_path": "OCOR-DEV-0042.log",
+      "requirement_id": "FR-059",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0042"
+    },
+    {
+      "case_id": "OCOR-DEV-0042-ALL-44-TRANSITIONS-EACH-PERSIST-EXACTLY-ONE-EFFECT",
+      "command": "applying every one of the 44 transitions in turn persists exactly one effect record each, none silently dropped",
+      "evidence_path": "OCOR-DEV-0042.json",
+      "raw_output_path": "OCOR-DEV-0042.log",
+      "requirement_id": "FR-061",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0042"
+    },
+    {
+      "case_id": "OCOR-DEV-0042-UNKNOWN-TRANSITION-REFUSED-BEFORE-ANY-SINK-CALL",
+      "command": "an unknown transition id is refused with a stable reason code before the sink is ever invoked",
+      "evidence_path": "OCOR-DEV-0042.json",
+      "raw_output_path": "OCOR-DEV-0042.log",
+      "requirement_id": "FR-095",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0042"
+    },
+    {
+      "case_id": "OCOR-DEV-0042-NAIVE-TIMESTAMP-REFUSED-BEFORE-ANY-SINK-CALL",
+      "command": "a naive (non-timezone-aware) timestamp is refused before the sink is ever invoked, reusing the shared require_aware guard",
+      "evidence_path": "OCOR-DEV-0042.json",
+      "raw_output_path": "OCOR-DEV-0042.log",
+      "requirement_id": "NFR-032",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0042"
+    },
+    {
+      "case_id": "OCOR-DEV-0042-FAILING-SINK-PROPAGATES-AND-RETRY-RECOVERS",
+      "command": "a sink failure (simulated downstream persistence outage) propagates rather than being silently swallowed, and a retry against the same FSM instance succeeds cleanly with no partial state left behind",
+      "evidence_path": "OCOR-DEV-0042.json",
+      "raw_output_path": "OCOR-DEV-0042.log",
+      "requirement_id": "FR-102",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0042"
+    },
+    {
+      "case_id": "OCOR-DEV-0042-PERSISTED-CONTEXT-IS-IMMUTABLE",
+      "command": "a persisted effect's context is captured at persist time and is immutable afterward, unaffected by later mutation of the caller's own dict and rejecting direct assignment",
+      "evidence_path": "OCOR-DEV-0042.json",
+      "raw_output_path": "OCOR-DEV-0042.log",
+      "requirement_id": "NFR-066",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0042"
+    },
+    {
+      "case_id": "OCOR-DEV-0042-REGRESSION",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
+      "evidence_path": "OCOR-DEV-0042.json",
+      "raw_output_path": "OCOR-DEV-0042.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0042"
     }
   ]
 }
