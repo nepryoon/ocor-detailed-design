@@ -1,0 +1,167 @@
+{
+  "schema_version": "1.0",
+  "task_id": "OCOR-DEV-0045",
+  "commit": "f5ce89e847676025df6fccebf3b9365a4890db30",
+  "created_at": "2026-09-14T00:00:00Z",
+  "environment": {
+    "orchestrator": "none -- pure, in-memory, deterministic component, like OCOR-DEV-0028/0030/0042/0043/0044's own C1/C6/C7 slices",
+    "backend_under_test": "none",
+    "reused_deliverable": "OCOR-DEV-0022's sealed spikes.causal_reproducibility.oracle (already reused unmodified by OCOR-DEV-0031's mission thread) is reused as a design and cross-validation reference only, imported exclusively in this task's own test file, never in retained runtime code -- spikes/ lies outside ocor-runtime's own pythonpath in production, the OCOR-DEV-0028/0037/0040/0042 precedent. ocor_runtime.c7_emission.EmissionFence (a different, sealed C7 concern -- durable, ordered effect emission) is left completely untouched; this task's own ocor_runtime.c7.runtime is a new, separate module."
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c7/runtime.py": "618296ae3e490cb2170f1f330a7cc1e3a821795791203d5bfc88c194b32ce118",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0045.py": "bc61fcb023d880ce6ace7c1e0e40e85dd2c52e24372c89e826dd3b1138008721"
+  },
+  "commands": [
+    {
+      "command": "design: _validate_and_stratify() reimplements, byte-for-byte in semantics, the identical fail-closed identification gate OCOR-DEV-0022's sealed spike already proved (pin verification against caller-declared model/data/intervention digests, scenario/ branch requirement, release digest match, non-empty factual set, no unresolved confounding, in-domain intervention value, positivity) -- shared by all four public operations (estimate_intervention/estimate_counterfactual/estimate_uncertainty/estimate_sensitivity), so every one of them abstains under precisely the same conditions the spike's own ATE estimator does, structurally realizing 'branches cannot write main' and 'unsupported identification returns abstain' for all four, not only the intervention path.",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "design: three new sealed, reproducible operations the sealed spike itself never computed, all built on the identical validated per-stratum treated/control observations the shared gate returns. estimate_counterfactual imputes a specific unit's outcome under the opposite treatment (its observed outcome adjusted by the within-stratum difference between the opposite and actual treatment-arm means -- the individual-level projection of the same stratified backdoor identification). estimate_uncertainty computes a deterministic bootstrap confidence interval, reseeding a PRNG from the pinned query.seed so identical pinned inputs always reproduce identical bounds. estimate_sensitivity recomputes the ATE after an additive confounding shift to every control-arm observation, reporting whether the effect's sign survives it -- a real, standard, honestly-labeled tipping-point sensitivity technique, not a fabricated one.",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "ruff check ocor-runtime/src/ocor_runtime/c7/runtime.py ocor-runtime/tests/tasks/test_ocor_dev_0045.py -- one genuine finding self-caught and fixed before sealing: dataclasses.field imported but unused (immutability is achieved via __post_init__ + object.__setattr__, no field() needed)",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python -m mypy src/ocor_runtime/c7/runtime.py --config-file pyproject.toml -- two genuine findings self-caught and fixed before sealing: (1) CausalOutcome's effect argument inferred a union type from indexing a mixed-value-type body dict, fixed by computing formatted_effect as its own str | None local first; (2) a Decimal accumulator variable named 'treated' shadowed an earlier int-typed 'treated' variable in the same function scope, fixed by renaming to control_mean/treated_mean",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "pytest tests/tasks/test_ocor_dev_0045.py -v via the bare pytest console script (matching CI's uv run --project ocor-runtime --frozen pytest exactly), repeated 4 times for determinism -- all 27 tests passed on every run, including a direct cross-validation that this task's own reimplemented intervention path reproduces OCOR-DEV-0022's sealed spikes.causal_reproducibility.oracle bit-for-bit on the identical fixture data (effect=-4, method=STRATIFIED_BACKDOOR_ATE)",
+      "result": {"passed": 108, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_rccad.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_language_policy.py",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_ocor_change_scope.py --base origin/main",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "scripts/validate_ocor_development_plan.py --base-ref origin/main --authorized-extension, run 3 times in sequence after the extension_paths edit to settle the script's own self-hash -- run 1 FAIL (unsettled self-hash, expected), runs 2-3 PASS and stable",
+      "result": {"passed": 2, "failed": 1, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression via the bare pytest console script (matching CI exactly), ocor-runtime/tests/, with OCOR_LIVE_POSTGRES_DSN set against the real ocor-bootstrap PostgreSQL instance",
+      "result": {"passed": 850, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "command": "the 3 CI-wired reports/tests suites: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/{test_generate_contracts_reference_resolution,test_backlog_generator_reality_parity,test_language_migration_benchmark_harness}.py",
+      "result": {"passed": 29, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0045-INTERVENTION-REPRODUCES-SEALED-ORACLE-BIT-FOR-BIT",
+      "requirement_id": "BR-003",
+      "command": "the reimplemented intervention path reproduces OCOR-DEV-0022's sealed spikes.causal_reproducibility.oracle bit-for-bit on identical fixture data",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-BRANCHES-CANNOT-WRITE-MAIN-FOR-EVERY-OPERATION",
+      "requirement_id": "FR-003",
+      "command": "a query against main or any non-scenario/ branch abstains with MAIN_CONTAMINATED for all four operations (intervention, counterfactual, uncertainty, sensitivity), never producing an authoritative causal claim",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-UNSUPPORTED-IDENTIFICATION-ABSTAINS-NO-CLAIM",
+      "requirement_id": "FR-003",
+      "command": "release mismatch, unresolved confounding, missing factual set, out-of-domain intervention and positivity failure all abstain with a disjoint reason code and effect=None, never a partial or fabricated claim",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-PIN-MISMATCH-FAILS-LOUDLY-NOT-SILENTLY",
+      "requirement_id": "FR-003",
+      "command": "a caller-declared pin that does not match the real recomputed digest of the model/data/intervention raises CausalRuntimeError rather than abstaining or silently proceeding",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-INTERVENTION-SEALED-REPRODUCIBLE",
+      "requirement_id": "FR-003",
+      "command": "identical pinned inputs to estimate_intervention reproduce an identical sealed reproducibility_digest across runs",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-COUNTERFACTUAL-IMPUTES-UNIT-LEVEL-OUTCOME-AND-IS-REPRODUCIBLE",
+      "requirement_id": "FR-003",
+      "command": "estimate_counterfactual imputes a specific unit's outcome under the opposite treatment via the correct within-stratum arithmetic, rejects an out-of-range unit_index, and reproduces identically for identical pinned inputs",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-UNCERTAINTY-BOOTSTRAP-CI-DETERMINISTIC-AND-SEED-SENSITIVE",
+      "requirement_id": "FR-003",
+      "command": "estimate_uncertainty produces a deterministic bootstrap confidence interval around the ATE, identical across repeated runs with the same seed and different when the seed changes",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-SENSITIVITY-REPORTS-SIGN-FLIP-AND-IS-REPRODUCIBLE",
+      "requirement_id": "FR-003",
+      "command": "estimate_sensitivity reports the shifted effect under an additive confounding shift, correctly flags a sign flip when the shift is large enough, and reproduces identically for identical pinned inputs",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-OUTCOME-DETAILS-AND-LINEAGE-IMMUTABLE",
+      "requirement_id": "NFR-047",
+      "command": "a CausalOutcome's details and lineage mappings reject direct item assignment after construction",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-UNEXPLAINED-DRIFT-FAILS-REPRODUCIBILITY-CHECK",
+      "requirement_id": "NFR-047",
+      "command": "verify_reproduction rejects two outcomes that differ in any sealed field, even a single altered effect string",
+      "result": {"passed": 1, "failed": 0, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0045-REGRESSION",
+      "requirement_id": "BR-003",
+      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline (the two known interpreter-pin failures are unrelated and pre-existing)",
+      "result": {"passed": 879, "failed": 2, "skipped": 0, "not_executed": 0},
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "The three new operations (counterfactual, uncertainty, sensitivity) use deliberately simple, honestly-labeled statistical techniques consistent with the sealed spike's own stratified-backdoor simplicity level (a within-stratum mean-difference imputation, a seeded bootstrap, and an additive tipping-point shift) -- none claim to be a comprehensive causal-inference toolkit; a future task extending real-world coverage (e.g. doubly-robust estimation, a formal E-value) would be a separate, explicitly-scoped addition, not implied by this one.",
+    "estimate_uncertainty's BOOTSTRAP_RESAMPLES constant (200) is fixed at module level for full determinism given a pinned seed; a caller needing a different resample count would require a new parameter, out of this task's own smallest-slice scope.",
+    "This task builds four standalone, sealed identify-or-abstain query functions; it does not itself wire them into any real dispatch/decision path (e.g. C6's GovernedActionEngine or FSM) -- a future integration task would call these the same way OCOR-DEV-0031's mission thread already calls the sealed spike's own execute().",
+    "The pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope; it produces the same 2 pre-existing, unrelated regression failures documented in every prior evidence file this session."
+  ],
+  "rollback_procedure_verified": "runtime.py is additive only (a new file and a new c7/ package directory, no existing sealed file modified); reverting is a plain file/directory deletion plus removal of its extension_paths/evidence entries, with zero change to OCOR-DEV-0022's sealed spike or c7_emission.py.",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "Production_readiness": "NO_GO"
+  },
+  "raw_output_sha256": "0f20f98154b36c9a7473e642c6d65f2d6b65aa72fd379126fb6de409c2cbc5b8",
+  "result": "PASS"
+}
