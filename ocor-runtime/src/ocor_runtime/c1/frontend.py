@@ -200,7 +200,23 @@ class FrontendTypeAndSemanticValidator:
 
             owners = document.get("execution_owner")
             if owners is not None:
-                owner_set = {owners} if isinstance(owners, str) else set(owners)
+                if isinstance(owners, str):
+                    owner_set = {owners}
+                elif (
+                    isinstance(owners, Sequence)
+                    and not isinstance(owners, (str, bytes))
+                    and all(isinstance(owner, str) for owner in owners)
+                ):
+                    owner_set = set(owners)
+                else:
+                    diagnostics.append(
+                        C1Diagnostic(
+                            DiagnosticCode.TYPE_ERROR,
+                            source.source_path,
+                            "execution_owner must be a string or a list of strings",
+                        )
+                    )
+                    continue
                 if len(owner_set) > 1:
                     diagnostics.append(
                         C1Diagnostic(
