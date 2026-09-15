@@ -1,0 +1,36 @@
+name: OCOR auto-merge on green
+
+# Enables GitHub native auto-merge for a pull request that carries the
+# "auto-merge" label. The merge is performed by GitHub only once every
+# required status check configured on the base branch is green, so this
+# never merges a red PR: it delegates the go/no-go entirely to the branch
+# ruleset. Label-gated by design, so the label is the operator kill-switch.
+
+on:
+  pull_request:
+    types: [labeled, opened, reopened, ready_for_review, synchronize]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  enable-auto-merge:
+    if: >-
+      github.event.pull_request.base.ref == 'main' &&
+      github.event.pull_request.draft == false &&
+      contains(github.event.pull_request.labels.*.name, 'auto-merge')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable native auto-merge (squash) — GitHub merges only when required checks are green
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh pr merge --auto --squash --repo "${REPO}" "${PR_NUMBER}"
