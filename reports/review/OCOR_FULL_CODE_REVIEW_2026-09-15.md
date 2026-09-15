@@ -146,3 +146,33 @@ CI con backend reali, ri-sigillo evidenza):
 
 Nessuno di questi item è bloccante per la ripresa dello sviluppo su `OCOR-DEV-0048`; sono
 irrobustimenti/chiarimenti latenti, non regressioni.
+
+## 7. Addendum — remediation implementate (2026-09-15)
+
+Su mandato esplicito del Product Owner ("procedi autonomamente come consigliato"), i tre
+finding correggibili in autonomia sono stati implementati come change set di remediation
+governati (TDD RED→GREEN, gate locali verdi, `inputs/` invariato, fence probatorio
+invariato). Sono **candidati** — non sigillati: il seal e il merge restano subordinati a
+verifica indipendente e CI verde sull'HEAD esatto.
+
+| Change set | Finding | File | TDD (RED→GREEN) | Assurance |
+|---|---|---|---|---|
+| `OCOR-DEV-REM-0010` | RVW-01/-02 | `c4/typedb_adapter.py`, `c4/jena_adapter.py` | `a12857a`→`bd1c00e` | `reports/assurance/OCOR-DEV-REM-0010-RCCAD/` |
+| `OCOR-DEV-REM-0011` | RVW-04 | `c1/frontend.py` | `75e1ffd`→`a252096` | `reports/assurance/OCOR-DEV-REM-0011-RCCAD/` |
+| `OCOR-DEV-REM-0012` | RVW-05 | `scripts/validate_rccad.py` | `da482c5`→`64db341` | `reports/assurance/OCOR-DEV-REM-0012-RCCAD/` |
+
+Gate locali al tip: `verify.py` 14/0, `ruff`, `mypy --strict`, language-policy,
+change-scope, `validate_rccad` `PASS_LOCAL_PRECHECK`; suite runtime **778 passed** (era
+765; +13 test REM) con i soli residui dipendenti da Docker (`NOT EXECUTED` in locale,
+validati in CI). I fix `RVW-01/-02` sono no-op per gli input URN/digest dei chiamanti
+sigillati, quindi non alterano le suite reali C4.
+
+**Non** implementati (restano riservati, richiedono chiarimento normativo prima di
+qualunque intervento): `RVW-03` (semantica break-glass C6), `INFO-A` (idempotenza C5),
+`INFO-C` (thread-safety delle classi di riferimento).
+
+Nota d'integrazione: il check CI `ocor-delivery-activation` che invoca
+`validate_ocor_change_scope --branch` fallisce unicamente perché il nome branch
+`cursor/…` non corrisponde al pattern governato (`task/`/`governed/`); i gate sostanziali
+(rccad, poc-ci, regressione runtime, language policy) validano il contenuto. Il merge
+avviene via branch `governed/`, come per la PR #126.
