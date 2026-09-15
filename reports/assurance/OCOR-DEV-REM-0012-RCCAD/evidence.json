@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "OCOR-DEV-REM-0012-RCCAD-20260915",
+  "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION_CI_AND_INTEGRATION",
+  "source_task_id": "OCOR-DEV-0006",
+  "change_set": "OCOR-DEV-REM-0012-RCCAD",
+  "review_finding": "RVW-05 (reports/review/OCOR_FULL_CODE_REVIEW_2026-09-15.md)",
+  "baseline_commit": "b1eefb3cc2b67383596a6b2a6801d2c3b6ba424d",
+  "summary": "scripts/validate_rccad.py computed the changed-path set only from working-tree diffs (and, with a base ref, base..HEAD), so a staged-but-uncommitted change under inputs/ could bypass the local RCCAD-IMMUTABLE-INPUT precheck. git_changed() now also runs 'git diff --cached --name-only'. Defence-in-depth: CI already re-checks immutability with 'git diff --exit-code <base> -- inputs/'.",
+  "tdd": {
+    "red": {
+      "local_commit": "da482c5",
+      "result": "EXPECTED_FAILURE",
+      "fingerprint": "2 hermetic temp-repo tests fail: a staged-only modification and a staged new file under inputs/ are not returned by git_changed()"
+    },
+    "green": {
+      "local_commit": "64db341",
+      "result": "PASS",
+      "fingerprint": "2 passed; validate_rccad.py still PASS_LOCAL_PRECHECK on this repo; ruff clean; mypy --strict clean"
+    }
+  },
+  "changed_file_sha256": {
+    "scripts/validate_rccad.py": "20784b80bed3eb071ccf74a005e2b0145428bd7f256e122f28f153cb427abaa3",
+    "ocor-runtime/tests/tasks/test_ocor_dev_rem_0012.py": "1fa1796820d097da91f90e0071c09309a19f96f847117998a922e13d6dafe05d"
+  },
+  "local_gates": {
+    "verify.py": "PASS 14 FAIL 0 NOT_EXECUTED 0",
+    "ruff check .": "PASS",
+    "mypy --strict": "PASS (67 files)",
+    "validate_rccad.py --base-ref origin/main": "PASS_LOCAL_PRECHECK",
+    "pytest test_ocor_dev_rem_0012.py": "2 passed"
+  },
+  "local_not_executed": [],
+  "independent_verifier": {
+    "identity": "NOT_PERFORMED_SINGLE_AGENT",
+    "verdict": "PENDING",
+    "note": "Requires an independent verifier and green CI on the exact sealed HEAD before evidence seal; this record is a qualified candidate, not a seal."
+  },
+  "rollback": {
+    "procedure": "Revert the two REM-0012 commits (RED da482c5, GREEN 64db341); pure validator change, no migration."
+  },
+  "immutable_inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "global_verified_requirements": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "poc": "NO_GO",
+    "production": "NO_GO"
+  }
+}
