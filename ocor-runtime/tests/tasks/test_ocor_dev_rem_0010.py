@@ -44,11 +44,10 @@ def test_typedb_apply_commit_escapes_injection(monkeypatch: pytest.MonkeyPatch) 
     )
 
     insert = next(query for query in captured if "insert" in query and "c4-payload" in query)
-    # the injected quote must be escaped, never left able to close the literal
-    assert '\\"' in insert
-    assert 'delete $g; #"' in insert  # the payload stays inside one literal
-    # the raw, unescaped injection must not appear as free TypeQL
-    assert '"; match $g isa c4-fact; delete $g; #"' not in insert
+    # the whole payload stays inside one literal with its quote escaped (\"),
+    # so it can never terminate the literal and inject free TypeQL
+    assert f"has c4-payload {typedb_adapter._literal(_INJECTION)};" in insert
+    assert 'has c4-payload "x\\"; match $g isa c4-fact; delete $g; #";' in insert
 
 
 def test_jena_require_iri_accepts_urn_and_rejects_forbidden_chars() -> None:

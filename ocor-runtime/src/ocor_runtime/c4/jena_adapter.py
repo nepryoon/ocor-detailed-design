@@ -109,6 +109,23 @@ def _literal(value: str) -> str:
     return f'"{escaped}"'
 
 
+# Characters an IRI reference can never contain inside SPARQL ``<...>``
+# (SPARQL 1.1 IRIREF production): control chars plus < > " { } | ^ ` \ and
+# space. Since C4 resource identifiers are URNs they always pass; a malformed
+# identifier is rejected fail-closed before any triple is read or written,
+# so it can never break out of the IRI and inject SPARQL.
+_IRI_FORBIDDEN = frozenset('<>"{}|^`\\ ')
+
+
+def _require_iri(resource_id: str) -> str:
+    if not resource_id or any(char in _IRI_FORBIDDEN or ord(char) <= 0x20 for char in resource_id):
+        raise JenaAdapterError(
+            "RESOURCE_ID_INVALID",
+            "resource_id must be a well-formed IRI with no SPARQL-breaking characters",
+        )
+    return resource_id
+
+
 class JenaSHACLProjectionAdapter:
     """Retained C4 projection: a real Fuseki-backed publish/read path
     enforcing a closed predicate shape, mandatory non-lossy provenance,
@@ -124,6 +141,7 @@ class JenaSHACLProjectionAdapter:
         """Validates the closed shape and non-lossy provenance BEFORE
         writing anything; a rejected resource never becomes partially
         visible."""
+        _require_iri(resource_id)
         unauthorized = sorted(set(properties) - ALLOWED_PREDICATES)
         if unauthorized:
             raise JenaAdapterError(
@@ -172,6 +190,7 @@ class JenaSHACLProjectionAdapter:
         via rdflib -- never for a resource the clearance does not
         authorize, structurally identical to the marking-safe read
         path (``exists_authorized`` is the same filtered source)."""
+        _require_iri(resource_id)
         if not self.exists_authorized(resource_id, clearance):
             raise JenaAdapterError("MARKING_DENIED", "resource is not authorized for the requester's clearance")
         turtle = _construct(f"{PREFIX} CONSTRUCT {{ <{resource_id}> ?p ?o }} WHERE {{ <{resource_id}> ?p ?o }}")

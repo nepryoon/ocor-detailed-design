@@ -59,6 +59,15 @@ class TypeDBAdapterError(RuntimeError):
     pass
 
 
+def _literal(value: str) -> str:
+    """Renders ``value`` as a TypeQL string literal, escaping ``\\`` and ``"``
+    so an identifier or payload can never terminate the literal and inject
+    further TypeQL. A canonical URN/digest (no ``\\`` or ``"``) is quoted
+    exactly as before, keeping generated queries byte-identical."""
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
 def _request(
     method: str, url: str, *, headers: dict[str, str] | None = None, body: bytes | None = None, timeout: float = 10.0
 ) -> tuple[int, str]:
@@ -192,10 +201,10 @@ class TypeDBProjectionAdapter:
         existing_fact = self._lookup_fact(fact_id)
         statements: list[str] = []
         if existing_fact is not None:
-            statements.append(f'match $f isa c4-fact, has c4-fact-id "{fact_id}"; delete $f;')
+            statements.append(f"match $f isa c4-fact, has c4-fact-id {_literal(fact_id)}; delete $f;")
         statements.append(
-            f'insert $f isa c4-fact, has c4-fact-id "{fact_id}", '
-            f'has c4-commit-id "{commit_id}", has c4-payload "{payload}";'
+            f"insert $f isa c4-fact, has c4-fact-id {_literal(fact_id)}, "
+            f"has c4-commit-id {_literal(commit_id)}, has c4-payload {_literal(payload)};"
         )
         if self.current_watermark() is not None:
             statements.append("match $w isa c4-watermark; delete $w;")
@@ -210,8 +219,8 @@ class TypeDBProjectionAdapter:
 
     def _lookup_fact(self, fact_id: str) -> tuple[str, str] | None:
         rows = _read(
-            f'match $f isa c4-fact, has c4-fact-id "{fact_id}", '
-            f'has c4-commit-id $c, has c4-payload $p;'
+            f"match $f isa c4-fact, has c4-fact-id {_literal(fact_id)}, "
+            f"has c4-commit-id $c, has c4-payload $p;"
         )
         if not rows:
             return None
