@@ -54,7 +54,10 @@ def canonical(path: Path, value: dict[str, Any]) -> bool:
 
 
 def git_changed(root: Path, base_ref: str | None) -> list[str]:
-    commands = [["git", "diff", "--name-only"]]
+    commands = [
+        ["git", "diff", "--name-only"],
+        ["git", "diff", "--cached", "--name-only"],
+    ]
     if base_ref:
         commands.append(["git", "diff", "--name-only", base_ref, "HEAD"])
     changed: set[str] = set()
