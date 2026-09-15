@@ -272,6 +272,7 @@ def main() -> int:
     changed = subprocess.run(["git", "diff", "--name-only", args.base_ref, "--"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.splitlines()
     untracked = subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.splitlines()
     extension_paths = {
+        ".github/workflows/ocor-auto-merge.yml",
         ".github/workflows/ocor-delivery-activation.yml",
         ".github/workflows/ocor-poc-ci.yml",
         ".github/workflows/ocor-rccad.yml",
