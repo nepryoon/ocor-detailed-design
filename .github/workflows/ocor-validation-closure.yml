@@ -47,6 +47,26 @@ jobs:
           docker run -d --name ocor-bootstrap-fuseki-1 -p 3030:3030 ocor/jena-fuseki:ci
           timeout 90 bash -c 'until curl -sf http://127.0.0.1:3030/$/ping >/dev/null; do sleep 2; done'
 
+      - name: Pre-pull pinned service images (bounded retry)
+        run: |
+          set -euo pipefail
+          pull_with_retry() {
+            ref="$1"; attempt=1; max=5
+            until docker pull "$ref"; do
+              if [ "$attempt" -ge "$max" ]; then
+                echo "docker pull failed after ${max} attempts: ${ref}" >&2
+                return 1
+              fi
+              echo "docker pull attempt ${attempt} failed for ${ref}; retrying in $((attempt * attempt))s" >&2
+              sleep "$((attempt * attempt))"
+              attempt="$((attempt + 1))"
+            done
+          }
+          pull_with_retry typedb/typedb@sha256:7555df2fffd5354553143facbfc81a58ce7036e4cc8b3b50bc7139faff4a721f
+          pull_with_retry openpolicyagent/opa@sha256:39daf255ae7f25d81103f03a0c18308a50b7b5bb67907bed6166f70e24a970ff
+          pull_with_retry quay.io/keycloak/keycloak@sha256:9d1f1b2b7261ff53c66cb1092dfcdc34a5fb77e81f9e6a6e75b8b6a795de8067
+          pull_with_retry quay.io/openbao/openbao@sha256:11fd73a2102cda9c55d5d881a8c3210303146a7ec1e8ac76f526e175c6d24641
+
       - name: Start real TypeDB
         run: |
           set -euo pipefail
