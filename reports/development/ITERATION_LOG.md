@@ -3583,3 +3583,35 @@
   diagnostica correlata.
 - Nessun codice sorgente toccato: gate locali rieseguiti comunque per
   protocollo standard e confermati invariati.
+
+## 2026-09-15 — Remediation governate della revisione codice (REM-0010/0011/0012)
+
+- Su mandato esplicito del Product Owner ("procedi autonomamente come
+  consigliato"), implementati come change set di remediation i finding
+  della revisione `reports/review/OCOR_FULL_CODE_REVIEW_2026-09-15.md`,
+  in modalità implementazione DEC-210, branch `cursor/code-review-remediation-1935`,
+  baseline `b1eefb3cc2b67383596a6b2a6801d2c3b6ba424d`.
+- `OCOR-DEV-REM-0010` (RVW-01/-02): escape dei literal TypeQL in
+  `c4/typedb_adapter.py` e validazione fail-closed degli IRI in
+  `c4/jena_adapter.py`. TDD RED `a12857a` → GREEN `bd1c00e`.
+- `OCOR-DEV-REM-0011` (RVW-04): `c1/frontend.py` rigetta un
+  `execution_owner` malformato con diagnostica `TYPE_ERROR` invece di
+  crashare. TDD RED `75e1ffd` → GREEN `a252096`.
+- `OCOR-DEV-REM-0012` (RVW-05): `scripts/validate_rccad.py` include le
+  modifiche staged nel precheck di immutabilità. TDD RED `da482c5` →
+  GREEN `64db341`.
+- Gate locali verdi al tip: `verify.py` 14/0, `ruff`, `mypy --strict`,
+  language-policy, change-scope, `validate_rccad` `PASS_LOCAL_PRECHECK`;
+  suite runtime 778 passed (era 765; +13 test REM) con gli stessi
+  residui dipendenti da Docker (TypeDB/Fuseki/Kafka/OpenBao), che sono
+  `NOT_EXECUTED` in locale e validati in CI.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`.
+  `inputs/` invariato. Record di assurance:
+  `reports/assurance/OCOR-DEV-REM-001{0,1,2}-RCCAD/`.
+- Prossima azione: verifica indipendente + CI verde sull'HEAD esatto
+  prima di seal/merge governato; poi ripresa dello sviluppo su
+  `OCOR-DEV-0048`. Nota: il check `ocor-delivery-activation`
+  `validate_ocor_change_scope --branch` fallisce solo per il prefisso
+  `cursor/` del branch (accetta `task/`/`governed/`); l'integrazione
+  avviene via branch `governed/` come per la PR #126.

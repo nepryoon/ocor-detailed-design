@@ -1,0 +1,51 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "OCOR-DEV-REM-0011-RCCAD-20260915",
+  "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION_CI_AND_INTEGRATION",
+  "source_task_id": "OCOR-DEV-0032",
+  "change_set": "OCOR-DEV-REM-0011-RCCAD",
+  "review_finding": "RVW-04 (reports/review/OCOR_FULL_CODE_REVIEW_2026-09-15.md)",
+  "baseline_commit": "b1eefb3cc2b67383596a6b2a6801d2c3b6ba424d",
+  "summary": "The C1 FrontendTypeAndSemanticValidator crashed with TypeError on a non-string, non-list execution_owner (e.g. 42) and silently accepted a list of non-string owners. The compiler contract is fail-closed: malformed models must be rejected with a bounded, coded C1 diagnostic and never crash or reach generation. The owner value is now validated as str or list-of-str, otherwise a TYPE_ERROR C1Diagnostic is emitted.",
+  "tdd": {
+    "red": {
+      "local_commit": "75e1ffd",
+      "result": "EXPECTED_FAILURE",
+      "fingerprint": "6 malformed owners (42, 3.14, True, mapping, [123], [str,int]) crash with TypeError or are silently accepted instead of a TYPE_ERROR diagnostic; valid str/list-of-str regression guard passes"
+    },
+    "green": {
+      "local_commit": "a252096",
+      "result": "PASS",
+      "fingerprint": "7 passed; existing C1 frontend suite test_ocor_dev_0032.py 15 passed (no regression); ruff clean; mypy --strict clean"
+    }
+  },
+  "changed_file_sha256": {
+    "ocor-runtime/src/ocor_runtime/c1/frontend.py": "8fadf970c12a2c5a5c56cb23235e23e345bee9ef74e6bff0c8db94da44684238",
+    "ocor-runtime/tests/tasks/test_ocor_dev_rem_0011.py": "71965ae668885a8ab0058d3e0d5e24c77f1f023d4b68c3fd3029cebbdc1329ec"
+  },
+  "local_gates": {
+    "verify.py": "PASS 14 FAIL 0 NOT_EXECUTED 0",
+    "ruff check .": "PASS",
+    "mypy --strict": "PASS (67 files)",
+    "pytest test_ocor_dev_rem_0011.py": "7 passed",
+    "pytest test_ocor_dev_0032.py": "15 passed (no regression)"
+  },
+  "local_not_executed": [],
+  "independent_verifier": {
+    "identity": "NOT_PERFORMED_SINGLE_AGENT",
+    "verdict": "PENDING",
+    "note": "Requires an independent verifier and green CI on the exact sealed HEAD before evidence seal; this record is a qualified candidate, not a seal."
+  },
+  "rollback": {
+    "procedure": "Revert the two REM-0011 commits (RED 75e1ffd, GREEN a252096); pure in-memory validator change, no migration."
+  },
+  "immutable_inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "global_verified_requirements": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "poc": "NO_GO",
+    "production": "NO_GO"
+  }
+}

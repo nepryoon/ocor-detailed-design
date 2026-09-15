@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "evidence_id": "OCOR-DEV-REM-0010-RCCAD-20260915",
+  "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION_CI_AND_INTEGRATION",
+  "source_task_id": "OCOR-DEV-0037",
+  "related_tasks": ["OCOR-DEV-0018", "OCOR-DEV-0038"],
+  "change_set": "OCOR-DEV-REM-0010-RCCAD",
+  "review_finding": "RVW-01/RVW-02 (reports/review/OCOR_FULL_CODE_REVIEW_2026-09-15.md)",
+  "baseline_commit": "b1eefb3cc2b67383596a6b2a6801d2c3b6ba424d",
+  "summary": "Escape TypeQL string literals in the real TypeDB C4 projection adapter and reject SPARQL-breaking resource identifiers in the real Jena/Fuseki C4 adapter, before any query reaches the backend. For canonical URN/digest inputs (the only values the sealed callers pass, e.g. rebuild.py: payload=state_digest) the generated queries are byte-identical, so the real-backend acceptance suites are unaffected.",
+  "tdd": {
+    "red": {
+      "local_commit": "a12857a",
+      "result": "EXPECTED_FAILURE",
+      "fingerprint": "4 backend-free tests fail: typedb_adapter._literal and jena_adapter._require_iri absent; publish/apply_commit do not escape/validate"
+    },
+    "green": {
+      "local_commit": "bd1c00e",
+      "result": "PASS",
+      "fingerprint": "4 passed; ruff clean; mypy --strict clean; existing C4 tests show only the pre-existing backend-connection errors (no regression)"
+    }
+  },
+  "changed_file_sha256": {
+    "ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py": "aa2f2da0e9e1fe163e50965f8d43dccae4fb7c4ad6870ac440b6f7b9993ada28",
+    "ocor-runtime/src/ocor_runtime/c4/jena_adapter.py": "3d41fe11d329ef2bf2fb28d6f1b37c38fc02291d794a60695ae993a3d42512c2",
+    "ocor-runtime/tests/tasks/test_ocor_dev_rem_0010.py": "9c32f975fe4512af109a8b945cdc30515da706488b957a39e28cc1da7b41ee50"
+  },
+  "local_gates": {
+    "verify.py": "PASS 14 FAIL 0 NOT_EXECUTED 0",
+    "ruff check .": "PASS",
+    "mypy --strict": "PASS (67 files)",
+    "validate_language_policy.py": "PASS",
+    "validate_ocor_change_scope.py": "PASS (immutable surfaces untouched)",
+    "validate_rccad.py --base-ref origin/main": "PASS_LOCAL_PRECHECK",
+    "pytest test_ocor_dev_rem_0010.py": "4 passed"
+  },
+  "local_not_executed": [
+    "Real TypeDB acceptance suite (test_ocor_dev_0037/0038/0039): docker/TypeDB unavailable in this VM; validated in CI (ocor-rccad, ocor-poc-ci, ocor-delivery-activation) against the pinned real backend",
+    "Real Jena/Fuseki acceptance suite (test_ocor_dev_0024/0034/0037): docker/Fuseki unavailable; validated in CI against the pinned real backend"
+  ],
+  "independent_verifier": {
+    "identity": "NOT_PERFORMED_SINGLE_AGENT",
+    "verdict": "PENDING",
+    "note": "Requires an independent verifier and green CI on the exact sealed HEAD before evidence seal; this record is a qualified candidate, not a seal."
+  },
+  "rollback": {
+    "procedure": "Revert the two REM-0010 commits (RED a12857a, GREEN bd1c00e); no data or schema migration is involved."
+  },
+  "immutable_inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "global_verified_requirements": 0,
+    "runtime_conformance": "NOT_ESTABLISHED",
+    "poc": "NO_GO",
+    "production": "NO_GO"
+  }
+}
