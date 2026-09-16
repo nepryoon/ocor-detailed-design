@@ -3615,3 +3615,33 @@
   `validate_ocor_change_scope --branch` fallisce solo per il prefisso
   `cursor/` del branch (accetta `task/`/`governed/`); l'integrazione
   avviene via branch `governed/` come per la PR #126.
+
+## 2026-09-16 — OCOR-DEV-0048 BLOCKED (ambiente, non normativo)
+
+- Ripresa autonoma (heartbeat orario) al baseline `1aaef13885ed142646d0ed35c995078c30d9f174`
+  (== `origin/main` dopo il merge di #128/#129/#130). Ricalcolato il ready set
+  direttamente dal backlog JSON: `{OCOR-DEV-0048}` (wave 15) è l'UNICO task pronto
+  (22 di 84 non completati).
+- `OCOR-DEV-0048` (WS-11, G4) è un task a **backend reale**: richiede che
+  OPA/Keycloak/SPIFFE/OpenBao/mTLS applichino davvero i controlli, con evidenza
+  qualificante **content-addressed e NON-SKIPPED** (`validate_runtime_evidence.py --non-skipped`).
+- Verifica dell'ambiente: **nessun Docker** e **nessun backend raggiungibile**
+  (porte 8181/8080/8200/1729/6363 tutte chiuse); la venv di review non ha `cryptography`
+  (solo la CLI `openssl`). La CI (`ocor-delivery-activation`/`ocor-rccad`/`ocor-validation-closure`)
+  provisiona **solo** OPA/Keycloak/OpenBao — niente SPIRE, niente mTLS — e **non**
+  committa file di evidenza content-addressed. Il precedente a backend reale
+  `OCOR-DEV-0021`/`0043` ha sigillato l'evidenza da un run **locale** sullo stack
+  `docker compose -p ocor-bootstrap`, qui impossibile.
+- Decisione fail-closed conforme al mandato PO ("nessuna attestazione falsa"):
+  il task è **HELD BLOCKED**, non marcato completo; nessuna evidenza fabbricata.
+  Registrato il blocker `OCOR-DEV-0048-LIVE-BACKEND-UNAVAILABLE-IN-ENV` in
+  `EXECUTION_STATE.json`/`MODEL_HANDOFF.json` con l'azione successiva esatta.
+  Poiché è l'unico task pronto, il fronte del backlog non può avanzare in questo
+  ambiente senza un runner con Docker e lo stack `ocor-bootstrap` completo.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione (su runner con Docker): `deploy/bootstrap/compose.yaml` +
+  `deploy/bootstrap/init/initialize_services.py`, poi implementare `control_plane.py`
+  e `test_ocor_dev_0048.py` su branch `task/OCOR-DEV-0048-<slug>`, eseguire la suite
+  sullo stack live e sigillare `reports/evidence/G4/OCOR-DEV-0048.{json,log}`+`MANIFEST`
+  con il `raw_output_sha256` reale.
