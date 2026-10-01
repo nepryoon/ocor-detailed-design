@@ -3637,3 +3637,59 @@
 - Nuovo identificativo: `output_sha256 = a1eb484a7d056a897c7bc832fb735b06136fc876aa90da3055d9882bc1b8d9e3`.
 - Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
   `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`; `inputs/` invariato.
+
+## 2026-09-16 — OCOR-DEV-0048 BLOCKED (ambiente, non normativo)
+
+- Ripresa autonoma (heartbeat orario) al baseline `1aaef13885ed142646d0ed35c995078c30d9f174`
+  (== `origin/main` dopo il merge di #128/#129/#130). Ricalcolato il ready set
+  direttamente dal backlog JSON: `{OCOR-DEV-0048}` (wave 15) è l'UNICO task pronto
+  (22 di 84 non completati).
+- `OCOR-DEV-0048` (WS-11, G4) è un task a **backend reale**: richiede che
+  OPA/Keycloak/SPIFFE/OpenBao/mTLS applichino davvero i controlli, con evidenza
+  qualificante **content-addressed e NON-SKIPPED** (`validate_runtime_evidence.py --non-skipped`).
+- Verifica dell'ambiente: **nessun Docker** e **nessun backend raggiungibile**
+  (porte 8181/8080/8200/1729/6363 tutte chiuse); la venv di review non ha `cryptography`
+  (solo la CLI `openssl`). La CI (`ocor-delivery-activation`/`ocor-rccad`/`ocor-validation-closure`)
+  provisiona **solo** OPA/Keycloak/OpenBao — niente SPIRE, niente mTLS — e **non**
+  committa file di evidenza content-addressed. Il precedente a backend reale
+  `OCOR-DEV-0021`/`0043` ha sigillato l'evidenza da un run **locale** sullo stack
+  `docker compose -p ocor-bootstrap`, qui impossibile.
+- Decisione fail-closed conforme al mandato PO ("nessuna attestazione falsa"):
+  il task è **HELD BLOCKED**, non marcato completo; nessuna evidenza fabbricata.
+  Registrato il blocker `OCOR-DEV-0048-LIVE-BACKEND-UNAVAILABLE-IN-ENV` in
+  `EXECUTION_STATE.json`/`MODEL_HANDOFF.json` con l'azione successiva esatta.
+  Poiché è l'unico task pronto, il fronte del backlog non può avanzare in questo
+  ambiente senza un runner con Docker e lo stack `ocor-bootstrap` completo.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione (su runner con Docker): `deploy/bootstrap/compose.yaml` +
+  `deploy/bootstrap/init/initialize_services.py`, poi implementare `control_plane.py`
+  e `test_ocor_dev_0048.py` su branch `task/OCOR-DEV-0048-<slug>`, eseguire la suite
+  sullo stack live e sigillare `reports/evidence/G4/OCOR-DEV-0048.{json,log}`+`MANIFEST`
+  con il `raw_output_sha256` reale.
+
+## 2026-10-01 — Remediation R1: riallineamento dello stato
+
+- Change set `governed/` di state sync; la PR #131 (draft
+  `governed/ocor-dev-0048-control-plane-1935`) è stata chiusa come **superseded**:
+  falliva `rccad-methodology` e `tooling-policy` per `RCCAD-NONCANONICAL-JSON` su
+  `EXECUTION_STATE.json` (JSON non canonico). La sua voce di `ITERATION_LOG.md`
+  (evento storico reale del 2026-09-16) è riportata integralmente qui sopra.
+- `baseline_commit` portato all'HEAD di `main` = `276fc6510cb2340a41335f4b12cac864a7299573`,
+  allineato in `EXECUTION_STATE.json` e `MODEL_HANDOFF.json`.
+- Registrati i merge di #128 (REM-0010/0011/0012), #129 (bounded retry sui pull delle
+  immagini di servizio), #130 (auto-merge-on-green label-gated) e #132 (identità
+  immagine Fuseki, cambio macchina di sviluppo).
+- `GITHUB-BRANCH-PROTECTION-001` aggiornato come **risolto lato server** dal ruleset
+  `23412233` ("Require status checks to pass before merging"), attivo dal 2026-09-15:
+  `enforcement=active`, 13 check di stato obbligatori, nessun attore di bypass.
+  Evidenza: `gh api repos/nepryoon/ocor-detailed-design/rulesets/23412233`.
+- Il blocco di `OCOR-DEV-0048` registrato dalla PR #131 era specifico dell'ambiente
+  cloud senza Docker. Preflight locale su questa macchina: tutti gli 11 servizi
+  `ocor-bootstrap` READY (`scripts/verify_external_services.py --execute --typed`
+  → `PASS`), SPIRE incluso. Il task resta pronto e non è bloccato.
+- Ready set ricalcolato dal backlog JSON: {`OCOR-DEV-0048` (wave 15)} — unico task
+  pronto (22 di 84 non completati).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: R2 — verifica indipendente mancante di REM-0010/0011/0012.
