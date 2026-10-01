@@ -52,6 +52,7 @@
   "local_not_executed": [
     "Full suite pytest ocor-runtime/tests/ (complete qualifying run): not green locally in this focused governed/ change set. A local attempt yielded 810 passed / 8 failed / 82 errors / 5 skipped, where the 8 failures are the Node ECMAScript number-boundary tests in test_ocor_dev_0007.py (local node is v24.21.0, the toolchain lock pins 20.20.2) and the 82 errors are live-backend tests (TypeDB/PostgreSQL/Kafka unavailable: TypeDB and spire-agent down, OCOR_LIVE_POSTGRES_DSN unset). Neither class touches scripts/validate_rccad.py, reports/tests/test_rccad_methodology.py or test_ocor_dev_rem_0012.py. The qualifying complete run is delegated to CI against the pinned Node 20.20.2 and the real bootstrap stack."
   ],
+  "pull_request": 149,
   "review_finding": "VF-002 (from independent verification REMEDIATION of OCOR-DEV-REM-0010/0011/0012, request_id OCOR-DEV-REM-0010-0011-0012-1aaef13885ed-0, 2026-10-01)",
   "rollback": {
     "procedure": "Revert the governed REM-0015 change set (scripts/validate_rccad.py and reports/tests/test_rccad_methodology.py); pure validator/test change, no migration. The pre-fix baseline is directly re-exposed and the VF-002 regression fails again (intentionally non-green)."
