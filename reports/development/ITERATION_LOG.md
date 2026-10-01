@@ -3901,3 +3901,30 @@
   sigillati in deriva (rieseguire i test sullo stack reale, nuovi raw log/hash, inserimento
   chirurgico in `MANIFEST.json` con `supersedes`); `OCOR-DEV-REM-0015`/`REM-0016` restano
   `BLOCKED` su `TOOLCHAIN-LOCK-RESIDUAL` (`git` 2.55.0).
+
+## 2026-10-01 — Governed: merge R3 step (b) part 1 requalification (PR #143) + state sync
+
+- Change set `governed/state-sync-r3b-requalification` (docs/state), basato sull'HEAD di
+  `main` = `362e1a598ce3438d44207b05b9b35dbcd08273af` (merge commit di PR #143).
+- Merge di **PR #143** (`governed/remediation-r3-evidence-requalification`) con
+  `--match-head-commit f0c8483…`: 13 check verdi sull'HEAD esatto; post-merge verificato
+  `origin/main` == merge commit.
+- R3 step (b) part 1 chiuso: 12 task G0/G1 in deriva riqualificati all'HEAD
+  (`OCOR-DEV-0002..0006`, `0008..0014`) con record content-addressed nuovi
+  (`*.requalified.json` + `*.requalified.log`), ognuno con campo `supersedes` esplicito al
+  record originale; inserimento chirurgico nei `MANIFEST.json` di G0 e G1; i record sigillati
+  originali non sono stati modificati.
+- Deriva residua post-merge (validator `scripts/validate_evidence_input_drift.py`):
+  `checked_inputs=165`, `checked_tasks=62`, `drifted_inputs=29`, `drifted_tasks=20`
+  (da 51/165 e 32/62 al RED dello step (a)).
+- `EXECUTION_STATE.json`: `remediation_status.R3_evidence_input_drift` →
+  `STEP_B_IN_PROGRESS` con `requalification_part1` (12 requalificati / 20 residui);
+  `baseline_commit` → `362e1a5…`; `latest_ci_evidence` aggiornato con i 6 run ID della CI di
+  PR #143; `next_executable_action` → R3 step (b) part 2. `MODEL_HANDOFF.json` riallineato
+  (branch, worktree, `current_task`, `exact_next_action`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: R3 step (b) part 2 — record di riqualifica per i 20 task residui
+  (`OCOR-DEV-0007`, `0015`, `0019`, `0020`, `0022`, `0023`, `0032`, `0037`, `0038`,
+  `0070..0079`, `0081`); poi R3 step (c) — cablare il validator come step CI bloccante.
+  `OCOR-DEV-REM-0015`/`REM-0016` restano `BLOCKED` su `TOOLCHAIN-LOCK-RESIDUAL` (`git` 2.55.0).
