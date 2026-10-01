@@ -1,0 +1,142 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "TDD RED: pytest reports/tests/test_rccad_methodology.py::RccadAdoptionTests::test_git_changed_returns_unquoted_paths_for_special_filenames against the pre-fix git_changed() (baseline dbf0649) -- git diff --name-only quotes the non-ASCII add/rename target ('\"inputs/ren-\\303\\251.txt\"'), escapes the tab name ('\"inputs/mod-tab\\tname.txt\"') and drops the newline name entirely, so the expected raw-path set does not match",
+      "result": {
+        "failed": 1,
+        "not_executed": 0,
+        "passed": 0,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "TDD GREEN: same regression against the fixed git_changed() -- NUL-delimited ('git diff --name-only -z --no-renames') plus os.fsdecode per name recovers all four raw paths (Unicode, tab, newline) exactly",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "pytest reports/tests/test_rccad_methodology.py (full RCCAD adoption suite)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 6,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_rem_0012.py (git_changed() consumers, staged-only detection)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 2,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ruff check . (ruff 0.13.1)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python -m mypy (strict, DEC-212 Phase 2.1)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 67,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "sha256sum -c inputs/normative/SHA256SUMS",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 8,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/verify.py --json",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 14,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/validate_language_policy.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base origin/main --head HEAD",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/validate_rccad.py --base-ref origin/main",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "6d1ace58182a6ce2eaf560c79517a91ac7e59581",
+  "created_at": "2026-10-01T14:43:48Z",
+  "environment": {
+    "backend_under_test": "none -- this REM hardens a pure git(1)-driven static validator (scripts/validate_rccad.py git_changed()); the qualifying tests are hermetic (temporary git repositories created in tmp_path), no live backend service is involved",
+    "orchestrator": "single-agent development worktree; every qualifying run below executes against real git(1) output, never a mock or a skip",
+    "reused_deliverable": "scripts/validate_rccad.py git_changed() (the RCCAD-IMMUTABLE-INPUT precheck source of truth) exercised through its own public interface; the consumer test test_ocor_dev_rem_0012.py is re-run to prove no regression in the callers"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "reports/tests/test_rccad_methodology.py": "60594740dd46df4edf07e740f9fc07726be339972fc9e0c5b20df2850f73aae8",
+    "scripts/validate_rccad.py": "e3b83df0a730b35c25e49a148fd0a02344970a03f9582c34bf8dd44389fc36d8"
+  },
+  "raw_output_sha256": "e280fefc6c40baf4af6d8d870b1a9047ac758977d42611e8545bbdcf130eaa24",
+  "residual_risks": [
+    "This REM does not change the RCCAD methodology or the validate_rccad.py verdict semantics: the changed-path set is now NUL-delimited and os.fsdecode-decoded, but the startswith('inputs/') immutable-input predicate and every other check are byte-identical, so the other validate_rccad.py consumers are unaffected.",
+    "The full ocor-runtime suite is not part of this focused governed/ change set: a local attempt yielded 810 passed / 8 failed (Node ECMAScript number-boundary tests in test_ocor_dev_0007.py, local node v24.21.0 vs pinned 20.20.2) / 82 errors (live-backend tests, TypeDB/PostgreSQL/Kafka unavailable locally). Neither class touches scripts/validate_rccad.py, reports/tests/test_rccad_methodology.py or test_ocor_dev_rem_0012.py. The qualifying complete run is delegated to CI against the pinned Node 20.20.2 and the real bootstrap stack."
+  ],
+  "result": "PASS",
+  "rollback_procedure_verified": "Reverting the REM-0015 change set (scripts/validate_rccad.py and reports/tests/test_rccad_methodology.py) re-exposes VF-002: the regression test_git_changed_returns_unquoted_paths_for_special_filenames fails again with the quoted/escaped/dropped path set (demonstrated as EXPECTED_FAILURE on baseline dbf0649). Pure validator/test change, no data or schema migration.",
+  "schema_version": "1.0",
+  "supersedes": "OCOR-DEV-REM-0015-RCCAD-20261001",
+  "task_id": "OCOR-DEV-REM-0015"
+}
