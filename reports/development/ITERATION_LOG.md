@@ -3828,3 +3828,24 @@
   HEAD che include questo change set (§6), e riallineare la toolchain locale (installare
   `node` 20.20.2, `uv` 0.12.5, `gh` 2.99.0, `docker` 29.7.2 in ambiente isolato secondo
   DEC-211).
+
+## 2026-10-01 — Governed: ri-acquisizione toolchain lock (merge PR #138, state sync)
+
+- Change set `governed/state-sync-toolchain-lock` (docs/state), basato sull'HEAD di
+  `main` = `749a88f7fb4b96aa00fc83fd1097fb12274a70f7` (merge commit di PR #138).
+- La ri-acquisizione governata di `infra/toolchain.lock.json` (decisione PO
+  `TOOLCHAIN-LOCK-UPDATE`) è **mergiata** con PR #138: 13 check verdi sull'HEAD esatto
+  `39e8153…`; `node`/`gh`/`docker`/`uv` ri-acquisiti a **versione invariata** con digest
+  verificati contro checksum ufficiali.
+- Blocker `TOOLCHAIN-LOCK-UPDATE` → `RESOLVED` in `EXECUTION_STATE.json` (con
+  `resolution`); `blocked_tasks` svuotato. Registrato il nuovo blocker
+  **`TOOLCHAIN-LOCK-RESIDUAL`** (`OPEN_PO_DECISION_REQUIRED`) per `git` 2.55.0 e
+  `typescript` 7.0.2 (non ri-acquisibili: git distribuisce solo sorgenti, tsc dipende da
+  `node`), con decision request in `reports/development/decision_requests/`.
+- `baseline_commit` → `749a88f…`; `latest_ci_evidence` aggiornato con i 6 run ID della
+  CI di PR #138 (13 check). `active_iteration.branch` e `MODEL_HANDOFF.branch` →
+  `governed/state-sync-toolchain-lock`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: ri-richiedere la verifica indipendente di `OCOR-DEV-REM-0015` su un
+  HEAD che include la ri-acquisizione del toolchain lock (§6), poi R3 e `OCOR-DEV-0048`.
