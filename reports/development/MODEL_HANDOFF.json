@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "168665f8fc5942086f6390896c8ab3e76a927772",
-  "branch": "governed/state-sync-r3b-part2-requalification",
+  "baseline_commit": "e74afa6f1cbd714d9fc5c8e45272cfc7773d869c",
+  "branch": "governed/state-sync-toolchain-lock-residual-git",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -700,7 +700,7 @@
     "OCOR-DEV-REM-0014: PR #135 merged (a8c5e5d92513b1a333593bbc56c411b61773f29b). All 13 checks green on the exact head 0820fec. TypeDB commit_id/watermark safe literal rendering + identifier contract; 17 live positive/negative cases on the real TypeDB backend; sealed content-addressed evidence record (record 04f60e45d9b79be0045ea2e3ab34f930335c386b9ed0ecf2eb652321565bf6cb, raw log 8733c7c227041ad92e5a7545b8033ae1917cb06b4ba26155d053b43566ceb9f9).",
     "R3 step (b) part 2: PR #145 merged (168665f). 20 remaining G1/G2/G4 drifted evidence records requalified at HEAD with content-addressed *.requalified.json/.log records carrying explicit 'supersedes' links; surgical MANIFEST.json insertion; original sealed records never modified; planning self-hash re-aligned. Post-merge drift validator GREEN (0/165 inputs, 0/62 tasks)."
   ],
-  "current_task": "R3 step (b) part 2 merged (PR #145, 168665f): 20 remaining G1/G2/G4 drifted evidence tasks requalified at HEAD (OCOR-DEV-0007, 0015, 0019, 0020, 0022, 0023, 0032, 0037, 0038, 0070..0079, 0081) with content-addressed *.requalified records + supersedes links. Drift validator GREEN: 0/165 inputs, 0/62 tasks. Next: R3 step (c) (wire validator as blocking CI + preflight).",
+  "current_task": "State sync after git toolchain-lock resolution (PR #147, e74afa6): git entry of infra/toolchain.lock.json updated to installed Ubuntu 2.53.0 per PO decision TOOLCHAIN-LOCK-RESIDUAL. REM-0015/REM-0016 verification now unblocked. Residual tsc/node host alignment moved to decision request TOOLCHAIN-LOCK-TYPESCRIPT (non-blocking).",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -790,10 +790,10 @@
     "reports/evidence/G4/OCOR-DEV-0047.json",
     "reports/evidence/G4/OCOR-DEV-0047.log"
   ],
-  "exact_next_action": "R3 step (c): wire scripts/validate_evidence_input_drift.py as a blocking CI step + preflight (fail-closed). Post-requalification the validator is GREEN (0/165 inputs, 0/62 tasks drifted). Update plan-validator allowlists only for the new requalified files and re-align the planning self-hash if required. OCOR-DEV-REM-0015/REM-0016 remain BLOCKED on TOOLCHAIN-LOCK-RESIDUAL (git 2.55.0).",
+  "exact_next_action": "Re-request independent verification for OCOR-DEV-REM-0015 on a HEAD including the git toolchain-lock fix (PR #147); then implement OCOR-DEV-REM-0016 (content-addressed evidence records). R3 step (c): wire validate_evidence_input_drift.py as blocking CI + preflight. TOOLCHAIN-LOCK-TYPESCRIPT (tsc/node) pending PO decision (non-blocking).",
   "schema_version": "1.0",
   "unresolved_blockers": [
-    "TOOLCHAIN-LOCK-RESIDUAL"
+    "TOOLCHAIN-LOCK-TYPESCRIPT"
   ],
-  "worktree": ".ocor/worktrees/state-sync-r3b-part2-requalification"
+  "worktree": ".ocor/worktrees/state-sync-toolchain-lock-residual-git"
 }

@@ -1,8 +1,21 @@
-# Decision request — TOOLCHAIN-LOCK-RESIDUAL (git 2.55.0 e typescript 7.0.2)
+# Decision request — TOOLCHAIN-LOCK-RESIDUAL (git risolto; typescript 7.0.2 → TOOLCHAIN-LOCK-TYPESCRIPT)
 
-- **Status**: `OPEN_PO_DECISION_REQUIRED`
+- **Status**: `RESOLVED` (parte `git`); parte `typescript`/`node` trasferita a
+  `TOOLCHAIN-LOCK-TYPESCRIPT` (`OPEN_PO_DECISION_REQUIRED`)
 - **Fonte**: change set `governed/toolchain-lock-update` (ri-acquisizione governata di
   `infra/toolchain.lock.json` autorizzata dal Product Owner il 2026-10-01)
+
+## Risoluzione (2026-10-01)
+
+La parte `git` è stata risolta con PR #147 (`e74afa6…`): la voce `git` di
+`infra/toolchain.lock.json` è passata da `2.55.0` (digest `c1bc685b…` della macchina precedente)
+a `2.53.0` (pacchetto Ubuntu ufficiale, oggetto misurato = binario installato `/usr/bin/git`,
+digest `5516c9f3…`), con provenienza verificata (`apt-cache policy git` → archive.ubuntu.com
+resolute/main; `dpkg -s git` → `1:2.53.0-1ubuntu1`, Ubuntu Developers), valore precedente,
+host e data registrati. I controlli di verifica del lock restano invariati.
+
+La parte `typescript`/`node` resta aperta ed è trasferita alla decision request
+`TOOLCHAIN-LOCK-TYPESCRIPT`.
 
 ## Contesto
 

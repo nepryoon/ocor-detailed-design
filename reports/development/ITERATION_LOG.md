@@ -3956,3 +3956,30 @@
 - Prossima azione: R3 step (c) — cablare `scripts/validate_evidence_input_drift.py` come
   step CI bloccante e nel preflight (fail-closed). `OCOR-DEV-REM-0015`/`REM-0016` restano
   `BLOCKED` su `TOOLCHAIN-LOCK-RESIDUAL` (`git` 2.55.0).
+
+## 2026-10-01 — Governed: state sync after git toolchain-lock resolution (PR #147)
+
+- Change set `governed/state-sync-toolchain-lock-residual-git` (docs/state), basato sull'HEAD di
+  `main` = `e74afa6f1cbd714d9fc5c8e45272cfc7773d869c` (merge commit di PR #147).
+- La parte `git` di `TOOLCHAIN-LOCK-RESIDUAL` è **risolta**: PR #147
+  (`governed/toolchain-lock-residual-git`) ha aggiornato la voce `git` di
+  `infra/toolchain.lock.json` da `2.55.0` (digest `c1bc685b…`) a `2.53.0` (pacchetto Ubuntu
+  ufficiale, binario installato `/usr/bin/git`, digest `5516c9f3…`), con provenienza verificata
+  (`apt-cache policy git`, `dpkg -s git`) e controlli di verifica del lock invariati. I task
+  `OCOR-DEV-0070/0071/0072` (unici la cui evidenza riferisce quel lock) riqualificati con record
+  `*.requalified2.*` e `supersedes` espliciti; validator di deriva GREEN.
+- `TOOLCHAIN-LOCK-RESIDUAL` in `EXECUTION_STATE.json` → `RESOLVED` (parte git); la parte
+  `typescript`/`node` resta aperta e viene trasferita alla nuova decision request
+  `TOOLCHAIN-LOCK-TYPESCRIPT` (`OPEN_PO_DECISION_REQUIRED`, **non bloccante**: il verifier
+  acquisisce `node` 20.20.2 e `tsc` 7.0.2 in isolamento).
+- `baseline_commit` → `e74afa6…`; `latest_ci_evidence` aggiornato con i 6 run ID della CI di
+  PR #147 (13 check verdi sull'HEAD esatto `5f7ea44…`); `next_executable_action` → ri-verifica
+  indipendente di `OCOR-DEV-REM-0015` su un HEAD con il fix git, poi implementazione
+  `OCOR-DEV-REM-0016`, poi R3 step (c).
+- `MODEL_HANDOFF.json` riallineato (branch, worktree, `current_task`, `exact_next_action`,
+  `unresolved_blockers` = [`TOOLCHAIN-LOCK-TYPESCRIPT`]).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: ri-richiedere la verifica indipendente di `OCOR-DEV-REM-0015` su un HEAD che
+  include il fix git (PR #147); poi implementare `OCOR-DEV-REM-0016` (record content-addressed);
+  poi R3 step (c) — cablare `scripts/validate_evidence_input_drift.py` come step CI bloccante.
