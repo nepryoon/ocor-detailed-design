@@ -3748,3 +3748,104 @@
 - Prossima azione: implementare `OCOR-DEV-REM-0015` (validate_rccad NUL-delimited path
   handling), poi `OCOR-DEV-REM-0016` (record content-addressed), poi ri-richiedere la
   verifica indipendente su un HEAD che include l'aggiornamento Fuseki autorizzato e i fix.
+
+## 2026-10-01 — Remediation R2: escalation OCOR-DEV-REM-0015 (VF-001 toolchain lock)
+
+- Change set `governed/state-sync-ocor-dev-rem-0015-escalation` (docs/state), basato
+  sull'HEAD di `main` = `dbf06498bb1222674eed72e0794dc673bc473c3f`.
+- `OCOR-DEV-REM-0015` (validate_rccad NUL-delimited path handling) ha esaurito **2 cicli
+  di riparazione**. Il verdetto indipendente del repair cycle 1
+  (`request_id` `OCOR-DEV-REM-0015-92e194e2965f-1`, `head_sha` `92e194e2965f…`) è
+  **`NO_GO`** con un solo finding bloccante: `VF-001` (severity medium).
+- `VF-001` non è una regressione del codice: il fix `git_changed()` è corretto (il
+  verifier dichiara "nessuna correzione funzionale richiesta"). È una **identità della
+  toolchain non riproducibile**: `infra/toolchain.lock.json` registra versioni/digest
+  (`docker` 29.7.2, `git` 2.55.0, `gh` 2.99.0, `node` 20.20.2, `uv` 0.12.5) acquisiti
+  sulla macchina precedente; sulla macchina attuale la toolchain host differisce e il
+  binario ufficiale di `node` 20.20.2 ha digest `62954886…` diverso dal lock `4446eb8e…`
+  (non riproducibile dalle sorgenti ufficiali). La suite completa passa (905/905, zero
+  skip) ma non attesta la riproduzione con la toolchain approvata.
+- **Riservato al PO**: il verifier richiede o la toolchain conforme al lock o un
+  aggiornamento governato del toolchain lock con autorità esplicita. L'autorizzazione
+  Fuseki del 2026-10-01 copre solo `infra/services.lock.json` e non si estende al
+  toolchain. Registrata **decision request `TOOLCHAIN-LOCK-UPDATE`** (bloccante) in
+  `reports/development/decision_requests/`.
+- **Escalation** (§8, 2 cicli esauriti): `remediation_status.R2_independent_verification`
+  → `rem_0015_escalation` (`BLOCKED`), blocker `TOOLCHAIN-LOCK-UPDATE` in
+  `EXECUTION_STATE.json` (`OPEN_PO_DECISION_REQUIRED`), `blocked_tasks` =
+  [`OCOR-DEV-REM-0015`, `OCOR-DEV-REM-0016`]. L'evidenza resta
+  `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` e **non** è sigillata.
+- `baseline_commit` → `dbf06498…` (HEAD di `main` alla base di questo change set).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: R3 (validator fail-closed `scripts/validate_evidence_input_drift.py`,
+  TDD RED-first) come change set `governed/` con gate locali + CI (nessuna verifica
+  indipendente), poi fase di implementazione di `OCOR-DEV-0048`.
+
+## 2026-10-01 — Governed: ri-acquisizione toolchain lock (decisione PO TOOLCHAIN-LOCK-UPDATE)
+
+- Change set `governed/toolchain-lock-update` basato sull'HEAD di `main`
+  (`84d7706…`). Esegue la decisione del Product Owner del 2026-10-01
+  (`TOOLCHAIN-LOCK-UPDATE`): ri-acquisisce sulla macchina attuale le voci di
+  `infra/toolchain.lock.json` che non corrispondono, a versione invariata e digest
+  verificato contro i checksum ufficiali. **Nessuna modifica** a validator, schema o
+  codice di verifica (`scripts/ocor_bootstrap_lib.py`, `scripts/preflight_environment.py`,
+  `infra/toolchain.lock.schema.json` invariati).
+- **Oggetto misurato dichiarato**: `integrity` = SHA-256 del **binario installato**
+  (risolto via `PATH` per i tool `host`, via `ocor-runtime/.venv/bin` per `repository`),
+  derivato dall'artefatto ufficiale verificato. Motivazione: cambio della macchina di
+  sviluppo; host `nepryoon`; acquisizione del 2026-10-01.
+- Voci aggiornate (valore precedente → nuovo, tutti a **versione invariata**):
+  - `node` 20.20.2: `4446eb8e…` → `62954886…` — binario ufficiale
+    `node-v20.20.2-linux-x64` (archivio `df770b2a…` verificato contro `SHASUMS256.txt`
+    e firma GPG valida, chiave `CC68F5A3106FF448322E48ED27F5E38D5B0A215F`
+    "marco-ippolito"); il valore precedente non era riproducibile dalle sorgenti ufficiali.
+  - `gh` (github-cli) 2.99.0: `be795719…` → `d0a90152…` — binario ufficiale
+    `gh_2.99.0_linux_amd64` (archivio `ed496022…` verificato contro
+    `gh_2.99.0_checksums.txt`).
+  - `docker` 29.7.2: `d62dfea0…` → `e4538110…` — binario statico ufficiale
+    `docker-29.7.2.tgz` da `download.docker.com` (Docker non pubblica un file checksum
+    per il tarball statico: registrata la fonte ufficiale e il metodo di verifica
+    SHA-256 del binario statico ufficiale).
+- `uv` 0.12.5: **invariato** — l'`integrity` `b65f23a4…` corrisponde già al binario
+  ufficiale `uv-x86_64-unknown-linux-gnu` (archivio `68a509da…` verificato contro il file
+  `.sha256` ufficiale); la divergenza è solo la versione installata sulla macchina
+  (0.12.21), non il lock.
+- `git` 2.55.0 e `typescript` (tsc) 7.0.2: **non aggiornati** — nessun binario ufficiale
+  verificabile (git) / indisponibile e dipendente da `node` (tsc). Registrata decision
+  request **`TOOLCHAIN-LOCK-RESIDUAL`** (`OPEN_PO_DECISION_REQUIRED`) in
+  `reports/development/decision_requests/`, secondo la clausola fail-closed della
+  decisione.
+- Allowlist del validator di piano estesa (non un indebolimento): aggiunto
+  `reports/development/decision_requests/TOOLCHAIN-LOCK-RESIDUAL.md` a `extension_paths`
+  in `scripts/validate_ocor_development_plan.py` per il nuovo file di decision request;
+  il codice di verifica del lock resta invariato. Self-hash di
+  `reports/planning/OCOR_PLAN_RUN_STATE.json` riallineato.
+- `acquired_at` → `2026-10-01T16:38:05Z`; `architecture` invariata `x86_64`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: ri-richiedere la verifica indipendente di `OCOR-DEV-REM-0015` su un
+  HEAD che include questo change set (§6), e riallineare la toolchain locale (installare
+  `node` 20.20.2, `uv` 0.12.5, `gh` 2.99.0, `docker` 29.7.2 in ambiente isolato secondo
+  DEC-211).
+
+## 2026-10-01 — Governed: ri-acquisizione toolchain lock (merge PR #138, state sync)
+
+- Change set `governed/state-sync-toolchain-lock` (docs/state), basato sull'HEAD di
+  `main` = `749a88f7fb4b96aa00fc83fd1097fb12274a70f7` (merge commit di PR #138).
+- La ri-acquisizione governata di `infra/toolchain.lock.json` (decisione PO
+  `TOOLCHAIN-LOCK-UPDATE`) è **mergiata** con PR #138: 13 check verdi sull'HEAD esatto
+  `39e8153…`; `node`/`gh`/`docker`/`uv` ri-acquisiti a **versione invariata** con digest
+  verificati contro checksum ufficiali.
+- Blocker `TOOLCHAIN-LOCK-UPDATE` → `RESOLVED` in `EXECUTION_STATE.json` (con
+  `resolution`); `blocked_tasks` svuotato. Registrato il nuovo blocker
+  **`TOOLCHAIN-LOCK-RESIDUAL`** (`OPEN_PO_DECISION_REQUIRED`) per `git` 2.55.0 e
+  `typescript` 7.0.2 (non ri-acquisibili: git distribuisce solo sorgenti, tsc dipende da
+  `node`), con decision request in `reports/development/decision_requests/`.
+- `baseline_commit` → `749a88f…`; `latest_ci_evidence` aggiornato con i 6 run ID della
+  CI di PR #138 (13 check). `active_iteration.branch` e `MODEL_HANDOFF.branch` →
+  `governed/state-sync-toolchain-lock`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: ri-richiedere la verifica indipendente di `OCOR-DEV-REM-0015` su un
+  HEAD che include la ri-acquisizione del toolchain lock (§6), poi R3 e `OCOR-DEV-0048`.

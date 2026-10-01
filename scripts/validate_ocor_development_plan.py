@@ -406,6 +406,8 @@ def main() -> int:
         "reports/development/decision_requests/RVW-03.md",
         "reports/development/decision_requests/INFO-A.md",
         "reports/development/decision_requests/INFO-C.md",
+        "reports/development/decision_requests/TOOLCHAIN-LOCK-UPDATE.md",
+        "reports/development/decision_requests/TOOLCHAIN-LOCK-RESIDUAL.md",
         "reports/assurance/OCOR-DEV-REM-0014-RCCAD/README.md",
         "reports/assurance/OCOR-DEV-REM-0014-RCCAD/evidence.json",
         "reports/assurance/OCOR-DEV-REM-0014-RCCAD/OCOR-DEV-REM-0014.json",

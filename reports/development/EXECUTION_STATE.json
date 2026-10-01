@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-rem-0014",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-REM-0014",
+    "branch": "governed/state-sync-toolchain-lock",
+    "change_set": "TOOLCHAIN-LOCK-UPDATE__STATE_SYNC",
     "decision_id": "DEC-211",
-    "phase": "REMEDIATION_R2_INDEPENDENT_VERIFICATION",
+    "phase": "TOOLCHAIN_LOCK_REACQUISITION_MERGED_STATE_SYNC",
     "worktree": null
   },
-  "baseline_commit": "a8c5e5d92513b1a333593bbc56c411b61773f29b",
+  "baseline_commit": "749a88f7fb4b96aa00fc83fd1097fb12274a70f7",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -36,6 +36,26 @@
       "id": "INFO-C",
       "non_blocking": true,
       "scope": "Clarify whether the in-memory reference classes require a thread-safety guarantee.",
+      "status": "OPEN_PO_DECISION_REQUIRED"
+    },
+    {
+      "blocked_tasks": [],
+      "decision_request": "reports/development/decision_requests/TOOLCHAIN-LOCK-UPDATE.md",
+      "id": "TOOLCHAIN-LOCK-UPDATE",
+      "non_blocking": false,
+      "resolution": "Governed toolchain-lock re-acquisition executed and merged as PR #138 (749a88f): node/gh/docker/uv re-acquired at unchanged versions with digests verified against official checksums. git 2.55.0 and typescript 7.0.2 could not be re-acquired (no official binary / tsc depends on node) -> decision request TOOLCHAIN-LOCK-RESIDUAL (OPEN_PO_DECISION_REQUIRED).",
+      "scope": "infra/toolchain.lock.json pins (docker 29.7.2/git 2.55.0/gh 2.99.0/node 20.20.2/uv 0.12.5) registered on the previous dev machine are not reproducible on this machine; official Node 20.20.2 binary digest differs from the lock. Blocks independent verification (evidence sealing) of the listed REMs and of all remaining backlog tasks (OCOR-DEV-0048..0069) at their integration phase. Requires governed toolchain-lock re-acquisition (analogous to Fuseki services.lock.json, which does NOT extend to toolchain scope).",
+      "status": "RESOLVED"
+    },
+    {
+      "blocked_tasks": [
+        "OCOR-DEV-REM-0015",
+        "OCOR-DEV-REM-0016"
+      ],
+      "decision_request": "reports/development/decision_requests/TOOLCHAIN-LOCK-RESIDUAL.md",
+      "id": "TOOLCHAIN-LOCK-RESIDUAL",
+      "non_blocking": false,
+      "scope": "git 2.55.0 and typescript (tsc) 7.0.2 could not be re-acquired under the PO decision TOOLCHAIN-LOCK-UPDATE conditions (version unchanged + digest verified against official checksum): git distributes only sources (no official Linux binary), tsc unavailable and depends on node. Residual toolchain-lock identity mismatch for these two tools remains; blocks independent verification only if the verifier requires the full conformant toolchain.",
       "status": "OPEN_PO_DECISION_REQUIRED"
     }
   ],
@@ -112,15 +132,15 @@
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "0820fec09ac303410c161205b96971c83d91d5c0",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR135_MERGED_a8c5e5d92513b1a333593bbc56c411b61773f29b",
+    "candidate_commit": "39e8153a1625d9a60a80a4fda287fc88d43c80ab",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR138_MERGED_749a88f7fb4b96aa00fc83fd1097fb12274a70f7",
     "run_ids": [
-      36868916897,
-      36868916938,
-      36868916960,
-      36868917074,
-      36868917083,
-      36868917156
+      36894813327,
+      36894813365,
+      36894813312,
+      36894813357,
+      36894813308,
+      36894813461
     ]
   },
   "mandate_phase_status": {
@@ -181,7 +201,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-REM-0014 merged (PR #135, merge commit a8c5e5d92513b1a333593bbc56c411b61773f29b), all 13 checks green on exact head 0820fec09ac303410c161205b96971c83d91d5c0; sealed evidence hashes verified intact post-merge. Next unit of work: implement OCOR-DEV-REM-0015 (validate_rccad.py: NUL-delimited git diff --name-only -z for working tree/index/base..HEAD; regressions for staged/Unicode/tab/newline paths), then OCOR-DEV-REM-0016 (content-addressed evidence records for REM-0010/0011/0012), then re-request independent verification on a HEAD including the authorized Fuseki update and the fixes.",
+  "next_executable_action": "Re-request independent verification of OCOR-DEV-REM-0015 on a HEAD including the toolchain-lock re-acquisition (PR #138 merged 749a88f): per PO decision TOOLCHAIN-LOCK-UPDATE, resume OCOR-DEV-REM-0015 with a new independent verification request (section 6). R3 (evidence integrity drift validator) and OCOR-DEV-0048 implementation phase remain executable in the meantime.",
   "remediation_status": {
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -200,7 +220,8 @@
       "decision_requests_queued": [
         "RVW-03",
         "INFO-A",
-        "INFO-C"
+        "INFO-C",
+        "TOOLCHAIN-LOCK-UPDATE"
       ],
       "erratum": {
         "canonical_alias": "OCOR-DEV-REM-0013",
@@ -215,15 +236,42 @@
       ],
       "head_sha": "1aaef13885ed142646d0ed35c995078c30d9f174",
       "next_actions": [
-        "Implement OCOR-DEV-REM-0015 (validate_rccad NUL-delimited path handling) with regression tests",
-        "Implement OCOR-DEV-REM-0016 (content-addressed evidence records for REM-0010/0011/0012)",
-        "Re-request independent verification on a HEAD including the authorized Fuseki update and the fixes"
+        "Re-request independent verification of OCOR-DEV-REM-0015 on a HEAD including the toolchain-lock re-acquisition (PR #138)",
+        "Proceed with R3 (evidence integrity drift validator) and OCOR-DEV-0048 implementation phase"
       ],
       "notes": [
         "Verdict appended to the three assurance records in append, without rewriting historical fields.",
         "Records remain CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed).",
-        "OCOR-DEV-REM-0014 (TypeDB commit_id/watermark) implemented with TDD on the real TypeDB backend, verified GO_FOR_EVIDENCE_SEAL, sealed content-addressed, merged as PR #135 (a8c5e5d)."
+        "OCOR-DEV-REM-0014 (TypeDB commit_id/watermark) implemented with TDD on the real TypeDB backend, verified GO_FOR_EVIDENCE_SEAL, sealed content-addressed, merged as PR #135 (a8c5e5d).",
+        "OCOR-DEV-REM-0015 escalated after 2 repair cycles: cycle-1 verdict NO_GO (VF-001, toolchain-lock identity mismatch: docker/git/gh/node/uv versions and digests differ from infra/toolchain.lock.json; official Node 20.20.2 digest != lock). git_changed() fix is functionally correct (verifier: no functional correction required). Requires PO decision TOOLCHAIN-LOCK-UPDATE; evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION, not sealed.",
+        "TOOLCHAIN-LOCK-UPDATE resolved: governed toolchain-lock re-acquisition merged as PR #138 (749a88f) \u2014 node/gh/docker/uv re-acquired at unchanged versions with digests verified against official checksums; git 2.55.0 and typescript 7.0.2 deferred to decision request TOOLCHAIN-LOCK-RESIDUAL (OPEN_PO_DECISION_REQUIRED)."
       ],
+      "rem_0015_escalation": {
+        "cycles_exhausted": 2,
+        "final_finding": "VF-001",
+        "finding_severity": "medium",
+        "minimal_unblock_action": "Product Owner authorizes governed re-acquisition of infra/toolchain.lock.json on the new dev machine (analogous to the Fuseki services.lock.json decision of 2026-10-01, which does NOT extend to toolchain scope), or provides the exact pinned toolchain.",
+        "status": "BLOCKED",
+        "verdicts": [
+          {
+            "findings": [
+              "VF-001 (evidence completeness)",
+              "VF-002 (missing end-to-end regressions)"
+            ],
+            "repair_cycle": 0,
+            "request_id": "OCOR-DEV-REM-0015-8b04c61a5893-0",
+            "verdict": "NO_GO"
+          },
+          {
+            "findings": [
+              "VF-001 (toolchain-lock identity mismatch)"
+            ],
+            "repair_cycle": 1,
+            "request_id": "OCOR-DEV-REM-0015-92e194e2965f-1",
+            "verdict": "NO_GO"
+          }
+        ]
+      },
       "rems_completed": [
         "OCOR-DEV-REM-0014"
       ],
@@ -240,5 +288,5 @@
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-10-01T13:51:58Z"
+  "updated_at": "2026-10-01T17:07:59Z"
 }
