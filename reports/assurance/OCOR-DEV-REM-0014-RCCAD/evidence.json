@@ -48,6 +48,7 @@
   "schema_version": "1.0",
   "source_task_id": "OCOR-DEV-0037",
   "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION_CI_AND_INTEGRATION",
+  "superseded_by": "OCOR-DEV-REM-0014 (content-addressed runtime evidence record, reports/assurance/OCOR-DEV-REM-0014-RCCAD/OCOR-DEV-REM-0014.json)",
   "summary": "Apply the safe TypeQL literal rendering (_literal) also to the watermark insert in apply_commit so a commit_id carrying a quote or backslash is stored verbatim as one literal and can never terminate the literal to inject a second insert. Validate the identifier contract (_require_value) for fact_id, commit_id and payload before building queries, rejecting empty/non-string values fail-closed with C2Error. For canonical URN/digest inputs (the only values the sealed callers pass) the generated queries are byte-identical, so the real-backend acceptance suites are unaffected. Adds 17 live positive/negative cases on the real TypeDB backend: injection absence, watermark identity, pre-existing fact/watermark, atomicity and round-trip of special characters.",
   "tdd": {
     "green": {

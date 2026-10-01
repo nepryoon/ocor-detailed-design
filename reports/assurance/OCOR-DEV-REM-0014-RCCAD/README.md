@@ -50,3 +50,23 @@ Eseguita con TDD RED→GREEN su backend reale TypeDB (stack `ocor-bootstrap`):
 Il record di evidenza `evidence.json` è prodotto con stato
 `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION_CI_AND_INTEGRATION`; verifica indipendente
 e CI verde sull'HEAD esatto sono prerequisiti per il sigillo.
+
+## Record content-addressed (VF-001 remediation)
+
+In risposta al finding `VF-001` (i candidati devono essere content-addressed), questa
+directory contiene ora un **record runtime content-addressed** qualificante:
+
+- `OCOR-DEV-REM-0014.json` — record di evidenza runtime nel formato di
+  `validate_runtime_evidence.py --non-skipped` (`task_id` `OCOR-DEV-REM-0014`,
+  `commit` `32dd5af2cb9ef41c56bf062120645fbcd0be8af1`, `raw_output_sha256` reale,
+  `result` `PASS`, `supersedes` `OCOR-DEV-REM-0014-RCCAD-20261001`).
+- `OCOR-DEV-REM-0014.log` — raw log combinato (RED 15/2, GREEN 17, regressione 35,
+  suite completa 905, gate locali).
+- `MANIFEST.json` — manifest dedicato con gli hash SHA-256 dei due artefatti.
+
+Il record include per la prima volta la **suite completa locale** (`pytest
+ocor-runtime/tests/`, 905 passed, `OCOR_LIVE_POSTGRES_DSN` sullo stack reale), che il
+candidato RCCAD precedente aveva delegato alla CI. Il record `OCOR-DEV-REM-0014.json`
+è validato da `scripts/validate_runtime_evidence.py --task OCOR-DEV-REM-0014
+--manifest reports/assurance/OCOR-DEV-REM-0014-RCCAD/MANIFEST.json --non-skipped`
+con `PASS`.
