@@ -3781,3 +3781,50 @@
 - Prossima azione: R3 (validator fail-closed `scripts/validate_evidence_input_drift.py`,
   TDD RED-first) come change set `governed/` con gate locali + CI (nessuna verifica
   indipendente), poi fase di implementazione di `OCOR-DEV-0048`.
+
+## 2026-10-01 — Governed: ri-acquisizione toolchain lock (decisione PO TOOLCHAIN-LOCK-UPDATE)
+
+- Change set `governed/toolchain-lock-update` basato sull'HEAD di `main`
+  (`84d7706…`). Esegue la decisione del Product Owner del 2026-10-01
+  (`TOOLCHAIN-LOCK-UPDATE`): ri-acquisisce sulla macchina attuale le voci di
+  `infra/toolchain.lock.json` che non corrispondono, a versione invariata e digest
+  verificato contro i checksum ufficiali. **Nessuna modifica** a validator, schema o
+  codice di verifica (`scripts/ocor_bootstrap_lib.py`, `scripts/preflight_environment.py`,
+  `infra/toolchain.lock.schema.json` invariati).
+- **Oggetto misurato dichiarato**: `integrity` = SHA-256 del **binario installato**
+  (risolto via `PATH` per i tool `host`, via `ocor-runtime/.venv/bin` per `repository`),
+  derivato dall'artefatto ufficiale verificato. Motivazione: cambio della macchina di
+  sviluppo; host `nepryoon`; acquisizione del 2026-10-01.
+- Voci aggiornate (valore precedente → nuovo, tutti a **versione invariata**):
+  - `node` 20.20.2: `4446eb8e…` → `62954886…` — binario ufficiale
+    `node-v20.20.2-linux-x64` (archivio `df770b2a…` verificato contro `SHASUMS256.txt`
+    e firma GPG valida, chiave `CC68F5A3106FF448322E48ED27F5E38D5B0A215F`
+    "marco-ippolito"); il valore precedente non era riproducibile dalle sorgenti ufficiali.
+  - `gh` (github-cli) 2.99.0: `be795719…` → `d0a90152…` — binario ufficiale
+    `gh_2.99.0_linux_amd64` (archivio `ed496022…` verificato contro
+    `gh_2.99.0_checksums.txt`).
+  - `docker` 29.7.2: `d62dfea0…` → `e4538110…` — binario statico ufficiale
+    `docker-29.7.2.tgz` da `download.docker.com` (Docker non pubblica un file checksum
+    per il tarball statico: registrata la fonte ufficiale e il metodo di verifica
+    SHA-256 del binario statico ufficiale).
+- `uv` 0.12.5: **invariato** — l'`integrity` `b65f23a4…` corrisponde già al binario
+  ufficiale `uv-x86_64-unknown-linux-gnu` (archivio `68a509da…` verificato contro il file
+  `.sha256` ufficiale); la divergenza è solo la versione installata sulla macchina
+  (0.12.21), non il lock.
+- `git` 2.55.0 e `typescript` (tsc) 7.0.2: **non aggiornati** — nessun binario ufficiale
+  verificabile (git) / indisponibile e dipendente da `node` (tsc). Registrata decision
+  request **`TOOLCHAIN-LOCK-RESIDUAL`** (`OPEN_PO_DECISION_REQUIRED`) in
+  `reports/development/decision_requests/`, secondo la clausola fail-closed della
+  decisione.
+- Allowlist del validator di piano estesa (non un indebolimento): aggiunto
+  `reports/development/decision_requests/TOOLCHAIN-LOCK-RESIDUAL.md` a `extension_paths`
+  in `scripts/validate_ocor_development_plan.py` per il nuovo file di decision request;
+  il codice di verifica del lock resta invariato. Self-hash di
+  `reports/planning/OCOR_PLAN_RUN_STATE.json` riallineato.
+- `acquired_at` → `2026-10-01T16:38:05Z`; `architecture` invariata `x86_64`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: ri-richiedere la verifica indipendente di `OCOR-DEV-REM-0015` su un
+  HEAD che include questo change set (§6), e riallineare la toolchain locale (installare
+  `node` 20.20.2, `uv` 0.12.5, `gh` 2.99.0, `docker` 29.7.2 in ambiente isolato secondo
+  DEC-211).
