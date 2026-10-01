@@ -1,0 +1,72 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0022.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 13,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "b920411a8aa5a1b7e2e1ba0286b67af77af32657",
+  "created_at": "2026-10-01T20:17:40.152278Z",
+  "environment": {
+    "host": "nepryoon",
+    "node": "v24.21.0",
+    "python": "Python 3.12.11",
+    "re_ran_at": "2026-10-01T20:17:40.152278Z",
+    "uv": "uv 0.12.21 (x86_64-unknown-linux-gnu)"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0022.py": "ef64317ae134f2c36d68841f0da917fa67e1d467d01bdf2cdd81a39758e9a715",
+    "ocor-runtime/uv.lock": "21dfa5dce0be7756356306cd22df7fd8c90ee5b30646d5ddac5b0c93aefe5608",
+    "spikes/causal_reproducibility/oracle.py": "a9a34d1e6f48fc5a540c4c658ddd8853904fef1ba6fb791c602a747ac90306e9"
+  },
+  "raw_output_sha256": "89e850eba122fef55881fd11b456f2eaf45390e14f6b2ad74c07bedc3c3a46e3",
+  "record_id": "OCOR-DEV-0022-requalified-b920411a8aa5",
+  "requalification": {
+    "previous_inputs": {
+      "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+      "ocor-runtime/tests/tasks/test_ocor_dev_0022.py": "ef64317ae134f2c36d68841f0da917fa67e1d467d01bdf2cdd81a39758e9a715",
+      "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537",
+      "spikes/causal_reproducibility/oracle.py": "a9a34d1e6f48fc5a540c4c658ddd8853904fef1ba6fb791c602a747ac90306e9"
+    },
+    "re_ran_command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0022.py",
+    "reason": "R3 step (b): evidence input drift remediation (input hashes no longer matched HEAD)",
+    "supersedes_commit": "aea1ef7c5ec7277fda416c6e4cbf7f1f94a974bd"
+  },
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0022-CAUSAL-REPRODUCIBILITY",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0022.py",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 13,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This G2 spike qualifies deterministic identify-or-abstain semantics on a sealed synthetic fixture; it is not BA-06 backend or runtime-conformance evidence.",
+    "The spike uses a bounded stratified estimator and does not claim general causal identification capability.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and compensating controls are not equivalent."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated spike commits; no runtime state, model registry, migration, or approved baseline is changed.",
+  "schema_version": 1.0,
+  "supersedes": "aea1ef7c5ec7277fda416c6e4cbf7f1f94a974bd",
+  "task_id": "OCOR-DEV-0022"
+}

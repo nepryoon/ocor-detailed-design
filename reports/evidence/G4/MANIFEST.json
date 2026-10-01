@@ -1,16 +1,13 @@
 {
-  "schema_version": "1.0",
-  "gate": "G4",
-  "created_at": "2026-09-13T15:45:00Z",
   "artifacts": [
     {
-      "path": "OCOR-DEV-0032.json",
-      "sha256": "639a38bbe625d924edf245fcb0032611aab54bd472d1b3a2b73f6cb9a763733e",
+      "path": "OCOR-DEV-0032.requalified.json",
+      "sha256": "e13edf73c57dfbd22fe471ebfe3e1e61c0710f28e8d81515a8e9d032ee54abeb",
       "task_id": "OCOR-DEV-0032"
     },
     {
-      "path": "OCOR-DEV-0032.log",
-      "sha256": "eba39a058e64a8d3834dcb5d9720aabc78102afb4f2057dd660687dd6c28287d",
+      "path": "OCOR-DEV-0032.requalified.log",
+      "sha256": "1bcc44011bf78a58bc505eb612ef283786f7b4e7ea8747b915963e5b06958e4c",
       "task_id": "OCOR-DEV-0032-RAW"
     },
     {
@@ -54,23 +51,23 @@
       "task_id": "OCOR-DEV-0036-RAW"
     },
     {
-      "path": "OCOR-DEV-0037.json",
-      "sha256": "f4dd317d8d0f4f575ca45e7ccc56ee523311bde592fd93c1ecbd46bd3ef2a472",
+      "path": "OCOR-DEV-0037.requalified.json",
+      "sha256": "904a48effb1317e5d9b24f645f113719f67c812de85476855ae7bfed83874d44",
       "task_id": "OCOR-DEV-0037"
     },
     {
-      "path": "OCOR-DEV-0037.log",
-      "sha256": "32a46c4c3f113cebdda896b2a821be27e789fcab8fbc6c030da7ed27407629ec",
+      "path": "OCOR-DEV-0037.requalified.log",
+      "sha256": "a7c0d91f4653badedeec70ce7bc1ef8c3da8652e218da7c72d8e998852c64767",
       "task_id": "OCOR-DEV-0037-RAW"
     },
     {
-      "path": "OCOR-DEV-0038.json",
-      "sha256": "69b6fa81003c66ac10948cdc5013cbf58669861cc1244346f7f345233d8f9c9f",
+      "path": "OCOR-DEV-0038.requalified.json",
+      "sha256": "0ec00a6c4fa8a5c6809f03ed066459d0435032eba3819ddb6860a4584490aa20",
       "task_id": "OCOR-DEV-0038"
     },
     {
-      "path": "OCOR-DEV-0038.log",
-      "sha256": "1b04b1144d5ac9024ed46ba570c9e6a4516be30278e904ad35ebfd8bc7dcf046",
+      "path": "OCOR-DEV-0038.requalified.log",
+      "sha256": "3e581f92c5a63354a9091ee51e37e73e779045ac4069a73a069db9dd6f0cfef2",
       "task_id": "OCOR-DEV-0038-RAW"
     },
     {
@@ -164,106 +161,9 @@
       "task_id": "OCOR-DEV-0047-RAW"
     }
   ],
+  "created_at": "2026-09-13T15:45:00Z",
+  "gate": "G4",
   "requirement_results": [
-    {
-      "case_id": "OCOR-DEV-0032-VALID-CORPUS-COMPILES-DETERMINISTICALLY",
-      "command": "a valid corpus with declared field types and resolved cross-resource references compiles deterministically, verified via the sealed verify_deterministic_build oracle",
-      "evidence_path": "OCOR-DEV-0032.json",
-      "raw_output_path": "OCOR-DEV-0032.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0032"
-    },
-    {
-      "case_id": "OCOR-DEV-0032-MISSING-TYPE-DECLARATIONS-REJECTED",
-      "command": "a resource missing the field_types key, or missing a type declaration for one of its own fields, is rejected with TYPE_ERROR",
-      "evidence_path": "OCOR-DEV-0032.json",
-      "raw_output_path": "OCOR-DEV-0032.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0032"
-    },
-    {
-      "case_id": "OCOR-DEV-0032-UNSUPPORTED-TYPE-REJECTED",
-      "command": "a field declaring a type name outside the closed type grammar is rejected with UNSUPPORTED_CAPABILITY",
-      "evidence_path": "OCOR-DEV-0032.json",
-      "raw_output_path": "OCOR-DEV-0032.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0032"
-    },
-    {
-      "case_id": "OCOR-DEV-0032-TYPE-MISMATCH-REJECTED",
-      "command": "a field value that does not satisfy its own declared type -- including a boolean value against a declared integer type -- is rejected with TYPE_ERROR",
-      "evidence_path": "OCOR-DEV-0032.json",
-      "raw_output_path": "OCOR-DEV-0032.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0032"
-    },
-    {
-      "case_id": "OCOR-DEV-0032-AMBIGUOUS-EXECUTION-OWNERSHIP-REJECTED",
-      "command": "a resource declaring more than one distinct execution owner is rejected with MULTIPLE_EXECUTION_OWNERS; a single owner repeated is accepted as unambiguous",
-      "evidence_path": "OCOR-DEV-0032.json",
-      "raw_output_path": "OCOR-DEV-0032.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0032"
-    },
-    {
-      "case_id": "OCOR-DEV-0032-UNRESOLVED-SEMANTIC-REFERENCE-REJECTED",
-      "command": "a resource referencing another resource not compiled in the same request is rejected with UNRESOLVED_REFERENCE",
-      "evidence_path": "OCOR-DEV-0032.json",
-      "raw_output_path": "OCOR-DEV-0032.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0032"
-    },
-    {
-      "case_id": "OCOR-DEV-0032-CYCLIC-REFERENCE-REJECTED",
-      "command": "direct and longer reference cycles are rejected with CONSTRAINT_ERROR; a legitimate non-cyclic diamond reference graph compiles successfully",
-      "evidence_path": "OCOR-DEV-0032.json",
-      "raw_output_path": "OCOR-DEV-0032.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0032"
-    },
-    {
-      "case_id": "OCOR-DEV-0032-MALFORMED-SYNTAX-REJECTED",
-      "command": "genuinely malformed YAML is rejected with SOURCE_INVALID",
-      "evidence_path": "OCOR-DEV-0032.json",
-      "raw_output_path": "OCOR-DEV-0032.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0032"
-    },
-    {
-      "case_id": "OCOR-DEV-0032-DECLARED-ID-MISMATCH-REJECTED",
-      "command": "a declared id mismatch is rejected with CONSTRAINT_ERROR",
-      "evidence_path": "OCOR-DEV-0032.json",
-      "raw_output_path": "OCOR-DEV-0032.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0032"
-    },
-    {
-      "case_id": "OCOR-DEV-0032-NO-PARTIAL-RELEASE-ON-REJECTION",
-      "command": "a rejected compilation never returns any CanonicalIrRelease object, partial or otherwise",
-      "evidence_path": "OCOR-DEV-0032.json",
-      "raw_output_path": "OCOR-DEV-0032.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0032"
-    },
-    {
-      "case_id": "OCOR-DEV-0032-REGRESSION",
-      "command": "full local pytest regression, no new failures versus the pre-existing sandbox baseline",
-      "evidence_path": "OCOR-DEV-0032.json",
-      "raw_output_path": "OCOR-DEV-0032.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0032"
-    },
     {
       "case_id": "OCOR-DEV-0033-COMPARE-IS-DETERMINISTIC-AND-DIRECTIONAL",
       "command": "comparing a release with itself is IDENTICAL with a stable content-addressed digest; comparing two distinct releases in reverse order yields a different digest, since the diff is directional (added vs removed)",
@@ -650,168 +550,6 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0036"
-    },
-    {
-      "case_id": "OCOR-DEV-0037-ADAPTER-CONFORMS-TO-SEALED-PORTS",
-      "command": "TypeDBProjectionAdapter satisfies both the sealed ProjectionReadPort and WatermarkPort Protocols",
-      "evidence_path": "OCOR-DEV-0037.json",
-      "raw_output_path": "OCOR-DEV-0037.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0037"
-    },
-    {
-      "case_id": "OCOR-DEV-0037-APPLY-COMMIT-ADVANCES-FACT-AND-WATERMARK-TOGETHER",
-      "command": "apply_commit ingests a fact and advances the watermark to the same commit atomically, in one real TypeDB transaction",
-      "evidence_path": "OCOR-DEV-0037.json",
-      "raw_output_path": "OCOR-DEV-0037.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0037"
-    },
-    {
-      "case_id": "OCOR-DEV-0037-APPLY-COMMIT-REPLACES-PRIOR-FACT-ATOMICALLY",
-      "command": "a second apply_commit for the same fact_id replaces both the fact content and the watermark together",
-      "evidence_path": "OCOR-DEV-0037.json",
-      "raw_output_path": "OCOR-DEV-0037.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0037"
-    },
-    {
-      "case_id": "OCOR-DEV-0037-EXACT-AT-COMMIT-NEVER-MASQUERADES-STALE-AS-EXACT",
-      "command": "a request pinned to a commit newer than what has actually landed fails closed with CONSISTENCY_DOWNGRADE rather than serving the stale row as exact",
-      "evidence_path": "OCOR-DEV-0037.json",
-      "raw_output_path": "OCOR-DEV-0037.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0037"
-    },
-    {
-      "case_id": "OCOR-DEV-0037-AT-LEAST-COMMIT-PROJECTION-NOT-READY-BEFORE-LANDING",
-      "command": "AT_LEAST_COMMIT reports PROJECTION_NOT_READY before the required commit lands, then serves it correctly once it lands for real",
-      "evidence_path": "OCOR-DEV-0037.json",
-      "raw_output_path": "OCOR-DEV-0037.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0037"
-    },
-    {
-      "case_id": "OCOR-DEV-0037-BEST-AVAILABLE-SERVES-CURRENT-WATERMARK",
-      "command": "BEST_AVAILABLE serves whatever the real, current watermark is with zero staleness reported for a freshly-applied commit",
-      "evidence_path": "OCOR-DEV-0037.json",
-      "raw_output_path": "OCOR-DEV-0037.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0037"
-    },
-    {
-      "case_id": "OCOR-DEV-0037-RESULT-NOT-FOUND-ONLY-AFTER-CONSISTENCY-CONFIRMED",
-      "command": "a never-ingested fact at an otherwise-satisfied consistency requirement raises RESULT_NOT_FOUND only after the consistency check itself passes",
-      "evidence_path": "OCOR-DEV-0037.json",
-      "raw_output_path": "OCOR-DEV-0037.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0037"
-    },
-    {
-      "case_id": "OCOR-DEV-0037-TYPEDB-UNREACHABILITY-FAILS-CLOSED",
-      "command": "a real TypeDB unreachability propagates as a real urllib.error.URLError and never serves a fabricated response",
-      "evidence_path": "OCOR-DEV-0037.json",
-      "raw_output_path": "OCOR-DEV-0037.log",
-      "requirement_id": "NFR-051",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0037"
-    },
-    {
-      "case_id": "OCOR-DEV-0037-REGRESSION",
-      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
-      "evidence_path": "OCOR-DEV-0037.json",
-      "raw_output_path": "OCOR-DEV-0037.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0037"
-    },
-    {
-      "case_id": "OCOR-DEV-0038-VALID-PUBLICATION-READABLE-AND-JSON-LD",
-      "command": "a publication satisfying the closed shape and non-lossy provenance is readable and serializes to real, well-formed JSON-LD via rdflib",
-      "evidence_path": "OCOR-DEV-0038.json",
-      "raw_output_path": "OCOR-DEV-0038.log",
-      "requirement_id": "FR-168",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0038"
-    },
-    {
-      "case_id": "OCOR-DEV-0038-UNAUTHORIZED-PREDICATE-BLOCKS-PUBLICATION",
-      "command": "a predicate outside the closed vocabulary blocks publication entirely, no triple is ever written",
-      "evidence_path": "OCOR-DEV-0038.json",
-      "raw_output_path": "OCOR-DEV-0038.log",
-      "requirement_id": "FR-168",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0038"
-    },
-    {
-      "case_id": "OCOR-DEV-0038-MISSING-REQUIRED-PROPERTY-BLOCKS-PUBLICATION",
-      "command": "a missing required property blocks publication entirely",
-      "evidence_path": "OCOR-DEV-0038.json",
-      "raw_output_path": "OCOR-DEV-0038.log",
-      "requirement_id": "FR-168",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0038"
-    },
-    {
-      "case_id": "OCOR-DEV-0038-LOSSY-PROVENANCE-BLOCKS-PUBLICATION",
-      "command": "an empty or fabricated provenanceRef blocks publication entirely",
-      "evidence_path": "OCOR-DEV-0038.json",
-      "raw_output_path": "OCOR-DEV-0038.log",
-      "requirement_id": "FR-168",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0038"
-    },
-    {
-      "case_id": "OCOR-DEV-0038-LIST-AUTHORIZED-FILTERS-BY-REAL-MARKING-JOIN",
-      "command": "list_authorized returns only resources at or below the requester's real clearance",
-      "evidence_path": "OCOR-DEV-0038.json",
-      "raw_output_path": "OCOR-DEV-0038.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0038"
-    },
-    {
-      "case_id": "OCOR-DEV-0038-COUNT-NEVER-DIVERGES-RAW-COUNT-WOULD-LEAK",
-      "command": "the authorized count never diverges from the authorized list length; the raw count would leak but is never exposed",
-      "evidence_path": "OCOR-DEV-0038.json",
-      "raw_output_path": "OCOR-DEV-0038.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0038"
-    },
-    {
-      "case_id": "OCOR-DEV-0038-JSON-LD-DENIED-FOR-UNAUTHORIZED-CLEARANCE",
-      "command": "to_json_ld is denied for a clearance that does not authorize the resource",
-      "evidence_path": "OCOR-DEV-0038.json",
-      "raw_output_path": "OCOR-DEV-0038.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0038"
-    },
-    {
-      "case_id": "OCOR-DEV-0038-FUSEKI-UNREACHABILITY-FAILS-CLOSED",
-      "command": "a real Fuseki unreachability propagates before any triple is written, never a partial publication",
-      "evidence_path": "OCOR-DEV-0038.json",
-      "raw_output_path": "OCOR-DEV-0038.log",
-      "requirement_id": "NFR-051",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0038"
-    },
-    {
-      "case_id": "OCOR-DEV-0038-REGRESSION",
-      "command": "full local pytest regression with a real live PostgreSQL DSN set, no new failures versus the pre-existing sandbox baseline",
-      "evidence_path": "OCOR-DEV-0038.json",
-      "raw_output_path": "OCOR-DEV-0038.log",
-      "requirement_id": "BR-003",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0038"
     },
     {
       "case_id": "OCOR-DEV-0039-REBUILD-REPRODUCES-CANONICAL-DIGEST-AND-WATERMARK",
@@ -1685,6 +1423,34 @@
       "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0047"
+    },
+    {
+      "case_id": "OCOR-DEV-0032-VALID-CORPUS-COMPILES-DETERMINISTICALLY",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0032.py",
+      "evidence_path": "OCOR-DEV-0032.requalified.json",
+      "raw_output_path": "OCOR-DEV-0032.requalified.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0032"
+    },
+    {
+      "case_id": "OCOR-DEV-0037-ADAPTER-CONFORMS-TO-SEALED-PORTS",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0037.py",
+      "evidence_path": "OCOR-DEV-0037.requalified.json",
+      "raw_output_path": "OCOR-DEV-0037.requalified.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0037"
+    },
+    {
+      "case_id": "OCOR-DEV-0038-VALID-PUBLICATION-READABLE-AND-JSON-LD",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0038.py",
+      "evidence_path": "OCOR-DEV-0038.requalified.json",
+      "raw_output_path": "OCOR-DEV-0038.requalified.log",
+      "requirement_id": "FR-168",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0038"
     }
-  ]
+  ],
+  "schema_version": "1.0"
 }

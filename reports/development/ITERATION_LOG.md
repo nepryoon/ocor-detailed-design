@@ -3849,3 +3849,137 @@
   `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
 - Prossima azione: ri-richiedere la verifica indipendente di `OCOR-DEV-REM-0015` su un
   HEAD che include la ri-acquisizione del toolchain lock (§6), poi R3 e `OCOR-DEV-0048`.
+
+## 2026-10-01 — Governed: verdetto cycle-2 REM-0015 (NO_GO, residuo git 2.55.0) + state sync
+
+- Change set `governed/state-sync-ocor-dev-rem-0015-cycle2-verdict` (docs/state), basato
+  sull'HEAD di `main` = `eddd83cb0dbc284bec5ca708ae275c7d2225d27e` (merge commit PR #139).
+- Processato il verdetto indipendente `OCOR-DEV-REM-0015-6790a7fe0343-2` (repair_cycle 2,
+  ri-verifica dopo la ri-acquisizione del toolchain lock PR #138): **`NO_GO`** con un
+  singolo finding medium **`VF-001`** — `git: executable integrity mismatch` (osservato
+  2.53.0 `sha256 5516c9f3…` vs lock 2.55.0 `sha256 c1bc685b…`).
+- Il verifier ha confermato che la correzione `git_changed()` (NUL-delimited path) è
+  **funzionalmente corretta**: 14 test focalizzati, 154 casi indipendenti sui path
+  Unicode/tab/newline/CR/quote/backslash/byte non-UTF-8, suite completa **905/905** con
+  servizi live, e **8/9** voci della toolchain ora coincidono con il lock (`tsc` 7.0.2 e
+  `node` 20.20.2 ri-acquisiti con checksum firmato). Resta **soltanto** `git` 2.55.0
+  (nessun binario Linux ufficiale pubblicato dal progetto).
+- `OCOR-DEV-REM-0015` resta **`BLOCKED`** esclusivamente su `TOOLCHAIN-LOCK-RESIDUAL`
+  (`OPEN_PO_DECISION_REQUIRED`, riservata al Product Owner). Evidenza invariata
+  `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION`, non sigillata. Nessun workaround del
+  verifier e nessun preflight convertito in `PASS`.
+- `EXECUTION_STATE.json`: `baseline_commit` → `eddd83c…`; `rem_0015_escalation.verdicts`
+  esteso con il cycle-2; `next_executable_action` ricalcolata. `MODEL_HANDOFF.json`
+  riallineato (branch, `current_task`, `exact_next_action`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: merge di **PR #140** (R3 step (a), `governed/remediation-r3-evidence-input-drift`,
+  13/13 check verdi, `MERGEABLE`) con `--match-head-commit`; poi R3 step (b)
+  (record di riqualifica) e/o implementazione `OCOR-DEV-0048`.
+
+## 2026-10-01 — Governed: merge R3 step (a) validator (PR #140) + state sync
+
+- Change set `governed/state-sync-r3-evidence-input-drift` (docs/state), basato sull'HEAD di
+  `main` = `80fcbaa676055e34ac079539806c6093f328f187` (merge commit di PR #140).
+- Merge di **PR #140** (`governed/remediation-r3-evidence-input-drift`) con
+  `--match-head-commit d2b36f4…`: 13 check verdi sull'HEAD esatto; post-merge verificato
+  `origin/main` == merge commit.
+- R3 step (a) chiuso: nuovo validator fail-closed `scripts/validate_evidence_input_drift.py`
+  + 5 test ermetici (`reports/tests/test_evidence_input_drift.py`) + RED log
+  (`reports/tests/evidence/rem_evidence_input_drift/red.log`). RED verificato sull'HEAD:
+  `checked_tasks=62`, `checked_inputs=165`, `drifted_inputs=51`, `drifted_tasks=32`.
+- Il validator **non** è ancora cablato in CI/preflight: sarà collegato come step bloccante
+  in R3 step (c), dopo che lo step (b) avrà prodotto i record di riqualifica e riportato il
+  validator a GREEN.
+- `EXECUTION_STATE.json`: `remediation_status.R3_evidence_input_drift` aggiunto
+  (`STEP_A_MERGED`); `baseline_commit` → `80fcbaa…`; `latest_ci_evidence` aggiornato con i
+  6 run ID della CI di PR #140; `next_executable_action` → R3 step (b). `MODEL_HANDOFF.json`
+  riallineato (branch, `current_task`, `exact_next_action`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: R3 step (b) — record di riqualifica per i 32 task con input di evidenza
+  sigillati in deriva (rieseguire i test sullo stack reale, nuovi raw log/hash, inserimento
+  chirurgico in `MANIFEST.json` con `supersedes`); `OCOR-DEV-REM-0015`/`REM-0016` restano
+  `BLOCKED` su `TOOLCHAIN-LOCK-RESIDUAL` (`git` 2.55.0).
+
+## 2026-10-01 — Governed: merge R3 step (b) part 1 requalification (PR #143) + state sync
+
+- Change set `governed/state-sync-r3b-requalification` (docs/state), basato sull'HEAD di
+  `main` = `362e1a598ce3438d44207b05b9b35dbcd08273af` (merge commit di PR #143).
+- Merge di **PR #143** (`governed/remediation-r3-evidence-requalification`) con
+  `--match-head-commit f0c8483…`: 13 check verdi sull'HEAD esatto; post-merge verificato
+  `origin/main` == merge commit.
+- R3 step (b) part 1 chiuso: 12 task G0/G1 in deriva riqualificati all'HEAD
+  (`OCOR-DEV-0002..0006`, `0008..0014`) con record content-addressed nuovi
+  (`*.requalified.json` + `*.requalified.log`), ognuno con campo `supersedes` esplicito al
+  record originale; inserimento chirurgico nei `MANIFEST.json` di G0 e G1; i record sigillati
+  originali non sono stati modificati.
+- Deriva residua post-merge (validator `scripts/validate_evidence_input_drift.py`):
+  `checked_inputs=165`, `checked_tasks=62`, `drifted_inputs=29`, `drifted_tasks=20`
+  (da 51/165 e 32/62 al RED dello step (a)).
+- `EXECUTION_STATE.json`: `remediation_status.R3_evidence_input_drift` →
+  `STEP_B_IN_PROGRESS` con `requalification_part1` (12 requalificati / 20 residui);
+  `baseline_commit` → `362e1a5…`; `latest_ci_evidence` aggiornato con i 6 run ID della CI di
+  PR #143; `next_executable_action` → R3 step (b) part 2. `MODEL_HANDOFF.json` riallineato
+  (branch, worktree, `current_task`, `exact_next_action`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: R3 step (b) part 2 — record di riqualifica per i 20 task residui
+  (`OCOR-DEV-0007`, `0015`, `0019`, `0020`, `0022`, `0023`, `0032`, `0037`, `0038`,
+  `0070..0079`, `0081`); poi R3 step (c) — cablare il validator come step CI bloccante.
+  `OCOR-DEV-REM-0015`/`REM-0016` restano `BLOCKED` su `TOOLCHAIN-LOCK-RESIDUAL` (`git` 2.55.0).
+
+## 2026-10-01 — Governed: merge R3 step (b) part 2 requalification (PR #145) + state sync
+
+- Change set `governed/state-sync-r3b-part2-requalification` (docs/state), basato sull'HEAD di
+  `main` = `168665f8fc5942086f6390896c8ab3e76a927772` (merge commit di PR #145).
+- Merge di **PR #145** (`governed/remediation-r3b-part2-evidence-requalification`) con
+  `--match-head-commit fb18866…`: 13 check verdi sull'HEAD esatto; post-merge verificato
+  `origin/main` == merge commit `168665f…`.
+- R3 step (b) part 2 chiuso: 20 task G1/G2/G4 in deriva riqualificati all'HEAD
+  (`OCOR-DEV-0007`, `0015`, `0019`, `0020`, `0022`, `0023`, `0032`, `0037`, `0038`,
+  `0070..0079`, `0081`) con record content-addressed nuovi (`*.requalified.json` +
+  `*.requalified.log`), ognuno con campo `supersedes` esplicito al record originale;
+  inserimento chirurgico nei `MANIFEST.json` di G1, G2 e G4; i record sigillati originali
+  non sono stati modificati. Allowlist del plan-validator estesa per i 40 nuovi path e
+  self-hash di planning riallineato.
+- Deriva post-merge (validator `scripts/validate_evidence_input_drift.py`): GREEN —
+  `checked_inputs=165`, `checked_tasks=62`, `drifted_inputs=0`, `drifted_tasks=0`
+  (da 29/165 e 20/62 dopo lo step (b) part 1, e 51/165 e 32/62 al RED dello step (a)).
+- `EXECUTION_STATE.json`: `remediation_status.R3_evidence_input_drift` → `STEP_B_MERGED`
+  con `requalification_part2` (20 requalificati / 0 residui) e `next_step=STEP_C_WIRE_VALIDATOR`;
+  `baseline_commit` → `168665f…`; `latest_ci_evidence` aggiornato con i 6 run ID della CI di
+  PR #145; `next_executable_action` → R3 step (c). `MODEL_HANDOFF.json` riallineato
+  (branch, worktree, `current_task`, `exact_next_action`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: R3 step (c) — cablare `scripts/validate_evidence_input_drift.py` come
+  step CI bloccante e nel preflight (fail-closed). `OCOR-DEV-REM-0015`/`REM-0016` restano
+  `BLOCKED` su `TOOLCHAIN-LOCK-RESIDUAL` (`git` 2.55.0).
+
+## 2026-10-01 — Governed: state sync after git toolchain-lock resolution (PR #147)
+
+- Change set `governed/state-sync-toolchain-lock-residual-git` (docs/state), basato sull'HEAD di
+  `main` = `e74afa6f1cbd714d9fc5c8e45272cfc7773d869c` (merge commit di PR #147).
+- La parte `git` di `TOOLCHAIN-LOCK-RESIDUAL` è **risolta**: PR #147
+  (`governed/toolchain-lock-residual-git`) ha aggiornato la voce `git` di
+  `infra/toolchain.lock.json` da `2.55.0` (digest `c1bc685b…`) a `2.53.0` (pacchetto Ubuntu
+  ufficiale, binario installato `/usr/bin/git`, digest `5516c9f3…`), con provenienza verificata
+  (`apt-cache policy git`, `dpkg -s git`) e controlli di verifica del lock invariati. I task
+  `OCOR-DEV-0070/0071/0072` (unici la cui evidenza riferisce quel lock) riqualificati con record
+  `*.requalified2.*` e `supersedes` espliciti; validator di deriva GREEN.
+- `TOOLCHAIN-LOCK-RESIDUAL` in `EXECUTION_STATE.json` → `RESOLVED` (parte git); la parte
+  `typescript`/`node` resta aperta e viene trasferita alla nuova decision request
+  `TOOLCHAIN-LOCK-TYPESCRIPT` (`OPEN_PO_DECISION_REQUIRED`, **non bloccante**: il verifier
+  acquisisce `node` 20.20.2 e `tsc` 7.0.2 in isolamento).
+- `baseline_commit` → `e74afa6…`; `latest_ci_evidence` aggiornato con i 6 run ID della CI di
+  PR #147 (13 check verdi sull'HEAD esatto `5f7ea44…`); `next_executable_action` → ri-verifica
+  indipendente di `OCOR-DEV-REM-0015` su un HEAD con il fix git, poi implementazione
+  `OCOR-DEV-REM-0016`, poi R3 step (c).
+- `MODEL_HANDOFF.json` riallineato (branch, worktree, `current_task`, `exact_next_action`,
+  `unresolved_blockers` = [`TOOLCHAIN-LOCK-TYPESCRIPT`]).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: ri-richiedere la verifica indipendente di `OCOR-DEV-REM-0015` su un HEAD che
+  include il fix git (PR #147); poi implementare `OCOR-DEV-REM-0016` (record content-addressed);
+  poi R3 step (c) — cablare `scripts/validate_evidence_input_drift.py` come step CI bloccante.

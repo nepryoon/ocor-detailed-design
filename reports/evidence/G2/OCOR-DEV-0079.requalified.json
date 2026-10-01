@@ -1,0 +1,74 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "python3 scripts/verify_external_services.py --manifest-only",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "b920411a8aa5a1b7e2e1ba0286b67af77af32657",
+  "created_at": "2026-10-01T20:17:40.152278Z",
+  "environment": {
+    "host": "nepryoon",
+    "node": "v24.21.0",
+    "python": "Python 3.12.11",
+    "re_ran_at": "2026-10-01T20:17:40.152278Z",
+    "uv": "uv 0.12.21 (x86_64-unknown-linux-gnu)"
+  },
+  "inputs": {
+    "deploy/bootstrap/compose.yaml": "9d9141e55b5b06d52d6a49ca1245bcbc54dfff058669fa92cae56f76b4994d83",
+    "infra/services.lock.json": "890eb12d4c6e1bdd50df12a1ed11eebc859b4dff47ff3b4ecdbceae3c66978e8",
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "scripts/ocor_bootstrap_lib.py": "a29870e67cac33d3d574b923293a558dd9490e1598ee87e743c9f34cd0bcda48",
+    "scripts/verify_external_services.py": "4e46a764c8a1588413cc0800797752177c11c5ab2da3afbaea47752847281c97"
+  },
+  "raw_output_sha256": "33b250e31b579c4b9fddb4378505961b804c72593f022dfe693cff06763a5bf4",
+  "record_id": "OCOR-DEV-0079-requalified-b920411a8aa5",
+  "requalification": {
+    "previous_inputs": {
+      "deploy/bootstrap/compose.yaml": "9d9141e55b5b06d52d6a49ca1245bcbc54dfff058669fa92cae56f76b4994d83",
+      "infra/services.lock.json": "1909ffe18d6ba546953eaf0b64fe6c7be8a58eefac3441ddd46f60a0a64bd879",
+      "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+      "scripts/ocor_bootstrap_lib.py": "a29870e67cac33d3d574b923293a558dd9490e1598ee87e743c9f34cd0bcda48",
+      "scripts/verify_external_services.py": "4e46a764c8a1588413cc0800797752177c11c5ab2da3afbaea47752847281c97"
+    },
+    "re_ran_command": "python3 scripts/verify_external_services.py --manifest-only",
+    "reason": "R3 step (b): evidence input drift remediation (input hashes no longer matched HEAD)",
+    "supersedes_commit": "1dc3a0824b08b446ffb07598dded9f526b02d008"
+  },
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0079-TYPED-STATUS-CONTRACT",
+      "command": "python3 scripts/verify_external_services.py --manifest-only",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "The 5 skipped/erroring cases (interpreter-pin exactness and 5 live-PostgreSQL tests requiring the psycopg driver) are a pre-existing, already-documented local-venv gap unrelated to this task; a real PostgreSQL 16 IS live and reachable in this run (verified directly via pg_isready and a real wrong-password rejection over the compose network), but ocor-runtime/.venv has no psycopg installed, so ocor-runtime/tests/tasks/test_ocor_dev_0015.py's own live suite still cannot exercise it. Installing psycopg to close that specific gap is out of scope for this task and is noted as a distinct future opportunity now that real Docker infrastructure is confirmed available in this environment.",
+    "SPIRE bootstrap in this run used a freshly generated, disposable, non-committed self-signed CA and join token; this is a from-scratch bootstrap procedure that was not previously documented step-by-step anywhere in the repository (only the steady-state rotation flow in deploy/bootstrap/services/spire/qualify.py was), so a future rerun must reconstruct the same two-phase sequence (server up -> generate real join token -> agent up) rather than assume a persisted environment file.",
+    "This provisioning/health-check evidence does not qualify OCOR-DEV-0016/0017/0018 (the C3/C4-backend concurrency, exact-at-commit and marking-safe projection spikes), which remain separate, not-yet-run tasks."
+  ],
+  "result": "PASS",
+  "rollback": null,
+  "schema_version": 1.0,
+  "supersedes": "1dc3a0824b08b446ffb07598dded9f526b02d008",
+  "task_id": "OCOR-DEV-0079"
+}
