@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -100,6 +101,58 @@ class RccadAdoptionTests(unittest.TestCase):
         self.assertNotEqual(0, result.returncode)
         payload = json.loads(result.stdout)
         self.assertIn("RCCAD-IMMUTABLE-INPUT", {item["rule_id"] for item in payload["findings"]})
+
+    def test_git_changed_returns_unquoted_paths_for_special_filenames(self) -> None:
+        """VF-002 / OCOR-DEV-REM-0015 regression.
+
+        ``git diff --name-only`` (without ``-z``) quotes paths containing non-ASCII,
+        tab or newline characters (e.g. ``"inputs/\\303\\251-vil.txt"``), so the
+        ``relative.startswith("inputs/")`` predicate in ``validate_rccad.py`` misses
+        them and ``RCCAD-IMMUTABLE-INPUT`` is never raised. ``git_changed`` must
+        return the raw, unquoted paths for staged add/modify/delete/rename.
+        """
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import validate_rccad  # noqa: E402,F401  (stdlib, imported after sys.path)
+
+        added = "inputs/add-\u00e9.txt"              # non-ASCII add
+        modified = "inputs/mod-tab\tname.txt"        # tab modify
+        deleted = "inputs/del-line\nname.txt"        # newline delete
+        renamed_old = "inputs/ren-old.txt"
+        renamed_new = "inputs/ren-\u00e9.txt"        # non-ASCII rename target
+        expected = {added, modified, deleted, renamed_old, renamed_new}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+
+            def git(*args: str) -> None:
+                subprocess.run(["git", *args], cwd=repo, check=True)
+
+            git("init", "-q")
+            git("config", "user.email", "t@t.t")
+            git("config", "user.name", "t")
+
+            # Baseline: tracked files that will later be modified / deleted / renamed.
+            for rel in (modified, deleted, renamed_old):
+                path = repo / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("baseline\n", encoding="utf-8")
+            git("add", "-A")
+            git("commit", "-q", "-m", "baseline")
+
+            # Staged add / modify / delete / rename.
+            add_path = repo / added
+            add_path.parent.mkdir(parents=True, exist_ok=True)
+            add_path.write_text("added\n", encoding="utf-8")
+            (repo / modified).write_text("modified\n", encoding="utf-8")
+            (repo / deleted).unlink()
+            git("mv", renamed_old, renamed_new)
+            git("add", "-A")
+
+            changed = validate_rccad.git_changed(repo, None)
+
+        self.assertEqual(expected, set(changed))
+        for rel in changed:
+            self.assertTrue(rel.startswith("inputs/"), rel)
 
 
 if __name__ == "__main__":

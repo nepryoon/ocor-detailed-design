@@ -1,0 +1,62 @@
+===== OCOR-DEV-REM-0015 TDD RED (pre-fix) =====
+test_git_changed_returns_unquoted_paths_for_special_filenames (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_git_changed_returns_unquoted_paths_for_special_filenames)
+VF-002 / OCOR-DEV-REM-0015 regression. ... FAIL
+
+======================================================================
+FAIL: test_git_changed_returns_unquoted_paths_for_special_filenames (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_git_changed_returns_unquoted_paths_for_special_filenames)
+VF-002 / OCOR-DEV-REM-0015 regression.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/rem0015/reports/tests/test_rccad_methodology.py", line 153, in test_git_changed_returns_unquoted_paths_for_special_filenames
+    self.assertEqual(expected, set(changed))
+AssertionError: Items in the first set but not the second:
+'inputs/ren-é.txt'
+'inputs/del-line\nname.txt'
+'inputs/add-é.txt'
+'inputs/mod-tab\tname.txt'
+Items in the second set but not the first:
+'"inputs/ren-\\303\\251.txt"'
+'"inputs/add-\\303\\251.txt"'
+'"inputs/mod-tab\\tname.txt"'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.017s
+
+FAILED (failures=1)
+
+===== OCOR-DEV-REM-0015 TDD GREEN (post-fix) =====
+test_git_changed_returns_unquoted_paths_for_special_filenames (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_git_changed_returns_unquoted_paths_for_special_filenames)
+VF-002 / OCOR-DEV-REM-0015 regression. ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.017s
+
+OK
+
+===== OCOR-DEV-REM-0015 full test_rccad_methodology =====
+test_git_changed_returns_unquoted_paths_for_special_filenames (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_git_changed_returns_unquoted_paths_for_special_filenames)
+VF-002 / OCOR-DEV-REM-0015 regression. ... ok
+test_manifest_is_valid_and_canonical (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_manifest_is_valid_and_canonical) ... ok
+test_required_artifacts_exist (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_required_artifacts_exist) ... ok
+test_validator_accepts_repository_state (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_validator_accepts_repository_state) ... ok
+test_validator_fails_closed_on_missing_required_artifact (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_validator_fails_closed_on_missing_required_artifact) ... ok
+test_validator_rejects_input_changes (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_validator_rejects_input_changes) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.380s
+
+OK
+
+===== OCOR-DEV-REM-0015 test_ocor_dev_rem_0012 (git_changed consumers) =====
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/.ocor/worktrees/rem0015/ocor-runtime/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/.ocor/worktrees/rem0015/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 2 items
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0012.py::test_git_changed_detects_a_staged_only_input_change PASSED [ 50%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0012.py::test_git_changed_detects_a_staged_new_file PASSED [100%]
+
+============================== 2 passed in 0.04s ===============================
