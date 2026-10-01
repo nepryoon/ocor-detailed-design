@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/remediation-r2-verdict-processing",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__R2-INDEPENDENT-VERIFICATION",
+    "branch": "governed/state-sync-ocor-dev-rem-0014",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-REM-0014",
     "decision_id": "DEC-211",
     "phase": "REMEDIATION_R2_INDEPENDENT_VERIFICATION",
-    "worktree": ".ocor/worktrees/remediation-r2-verdict-processing"
+    "worktree": null
   },
-  "baseline_commit": "8f4d2aa168018e950ad3b85f1a6a78af81fb2fb6",
+  "baseline_commit": "a8c5e5d92513b1a333593bbc56c411b61773f29b",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -112,15 +112,15 @@
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "4f75247",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR125_MERGED_355ff68cc65053f55b26812843b4a7cb19e9b177",
+    "candidate_commit": "0820fec09ac303410c161205b96971c83d91d5c0",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR135_MERGED_a8c5e5d92513b1a333593bbc56c411b61773f29b",
     "run_ids": [
-      34814245037,
-      34814245082,
-      34814245093,
-      34814245106,
-      34814245112,
-      34814245198
+      36868916897,
+      36868916938,
+      36868916960,
+      36868917074,
+      36868917083,
+      36868917156
     ]
   },
   "mandate_phase_status": {
@@ -181,7 +181,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "R2 verdict processed: NO_GO appended in append to the OCOR-DEV-REM-0010/0011/0012 records (not sealed); erratum registered (C4-adapter hardening aliased canonically to OCOR-DEV-REM-0013); decision requests RVW-03/INFO-A/INFO-C queued (OPEN_PO_DECISION_REQUIRED, non-blocking); REMs opened: REM-0014 (TypeDB commit_id/watermark injection), REM-0015 (validate_rccad NUL-delimited paths), REM-0016 (content-addressed evidence records). Next unit of work: implement OCOR-DEV-REM-0014 with TDD on the real TypeDB backend, then REM-0015 and REM-0016, then re-request independent verification on a HEAD including the authorized Fuseki update.",
+  "next_executable_action": "OCOR-DEV-REM-0014 merged (PR #135, merge commit a8c5e5d92513b1a333593bbc56c411b61773f29b), all 13 checks green on exact head 0820fec09ac303410c161205b96971c83d91d5c0; sealed evidence hashes verified intact post-merge. Next unit of work: implement OCOR-DEV-REM-0015 (validate_rccad.py: NUL-delimited git diff --name-only -z for working tree/index/base..HEAD; regressions for staged/Unicode/tab/newline paths), then OCOR-DEV-REM-0016 (content-addressed evidence records for REM-0010/0011/0012), then re-request independent verification on a HEAD including the authorized Fuseki update and the fixes.",
   "remediation_status": {
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -215,14 +215,17 @@
       ],
       "head_sha": "1aaef13885ed142646d0ed35c995078c30d9f174",
       "next_actions": [
-        "Implement OCOR-DEV-REM-0014 (TypeDB commit_id/watermark safe literal rendering + identifier contract) with TDD on the real TypeDB backend",
         "Implement OCOR-DEV-REM-0015 (validate_rccad NUL-delimited path handling) with regression tests",
         "Implement OCOR-DEV-REM-0016 (content-addressed evidence records for REM-0010/0011/0012)",
         "Re-request independent verification on a HEAD including the authorized Fuseki update and the fixes"
       ],
       "notes": [
         "Verdict appended to the three assurance records in append, without rewriting historical fields.",
-        "Records remain CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed)."
+        "Records remain CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed).",
+        "OCOR-DEV-REM-0014 (TypeDB commit_id/watermark) implemented with TDD on the real TypeDB backend, verified GO_FOR_EVIDENCE_SEAL, sealed content-addressed, merged as PR #135 (a8c5e5d)."
+      ],
+      "rems_completed": [
+        "OCOR-DEV-REM-0014"
       ],
       "rems_opened": [
         "OCOR-DEV-REM-0014",
@@ -237,5 +240,5 @@
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-10-01T08:38:00Z"
+  "updated_at": "2026-10-01T13:51:58Z"
 }

@@ -3726,3 +3726,25 @@
 - Prossima azione: implementare `OCOR-DEV-REM-0014` (TDD su TypeDB reale), poi
   `OCOR-DEV-REM-0015` e `OCOR-DEV-REM-0016`, poi ri-richiedere la verifica indipendente
   su un HEAD che include l'aggiornamento Fuseki autorizzato e i fix.
+
+## 2026-10-01 — Remediation R2: merge OCOR-DEV-REM-0014 (state sync)
+
+- Change set `governed/state-sync-ocor-dev-rem-0014` (docs/state), basato sull'HEAD di
+  `main` = `a8c5e5d92513b1a333593bbc56c411b61773f29b` (merge commit di PR #135).
+- `OCOR-DEV-REM-0014` (TypeDB commit_id/watermark safe literal rendering + identifier
+  contract) **mergiata** con PR #135: 13 check verdi sull'HEAD esatto `0820fec…`,
+  verdetto indipendente `GO_FOR_EVIDENCE_SEAL` (repair cycle 1), zero finding.
+- Evidenza content-addressed sigillata in
+  `reports/assurance/OCOR-DEV-REM-0014-RCCAD/`: record `04f60e45…`, raw log `8733c7c2…`;
+  hash verificati invariati post-merge (nessuna riscrittura dei record sigillati).
+- `baseline_commit` → `a8c5e5d…`; `latest_ci_evidence` aggiornato con i 6 run ID della
+  CI di PR #135 (13 check: unit, contract, integration-postgresql, evidence, supply-chain,
+  rccad-methodology, tooling-policy, type-and-lint-gate, validation-closure,
+  backend-compatibility, fgm-contract-readiness, mandatory-gates, delivery-activation).
+- `remediation_status.R2_independent_verification`: `rems_completed += [OCOR-DEV-REM-0014]`;
+  `next_actions` ridotto a REM-0015, REM-0016 e ri-verifica indipendente.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: implementare `OCOR-DEV-REM-0015` (validate_rccad NUL-delimited path
+  handling), poi `OCOR-DEV-REM-0016` (record content-addressed), poi ri-richiedere la
+  verifica indipendente su un HEAD che include l'aggiornamento Fuseki autorizzato e i fix.

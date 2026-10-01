@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "8f4d2aa168018e950ad3b85f1a6a78af81fb2fb6",
-  "branch": "governed/remediation-r2-verdict-processing",
+  "baseline_commit": "a8c5e5d92513b1a333593bbc56c411b61773f29b",
+  "branch": "governed/state-sync-ocor-dev-rem-0014",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -560,6 +560,10 @@
     {
       "command": "extended validate_ocor_development_plan.py extension_paths allowlist for the 6 new files + settled self-hash",
       "result": "PASS: artifact_hashes[scripts/validate_ocor_development_plan.py] updated in OCOR_PLAN_RUN_STATE.json"
+    },
+    {
+      "command": "gh pr merge 135 --merge --match-head-commit 0820fec09ac303410c161205b96971c83d91d5c0",
+      "result": "MERGED_a8c5e5d92513b1a333593bbc56c411b61773f29b_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_0820fec; post-merge fetch confirms origin/main == merge commit; sealed evidence hashes intact (record 04f60e45d9b79be0045ea2e3ab34f930335c386b9ed0ecf2eb652321565bf6cb, raw log 8733c7c227041ad92e5a7545b8033ae1917cb06b4ba26155d053b43566ceb9f9)"
     }
   ],
   "completed_tasks": [
@@ -670,9 +674,10 @@
     "State sync (OCOR-DEV-0046): PR #124 merged (b70dcb24cfb916d3611f2c7d869f75d890d37819). All 13 checks green on the first push. No source code touched.",
     "OCOR-DEV-0047 (pending PR/merge): Implement C8 tool boundary sandbox budgets and kill switch. New ocor_runtime.c8.tool_runtime.ToolCallRuntime, wiring five real fail-closed bindings around every tool call, all enforced before any tool effect: capability (CapabilityAuthority.authorize, never self-granted), purpose (the sealed GovernedContext, already fail-closed on a missing purpose at construction), marking (MarkingEngine.require_authorized against the caller's real clearance), stop (OCOR-DEV-0044's sealed EmergencyStopController.guard_dispatch), and budget (TokenBudget.consume, charged before the tool is ever attempted, never refunded after). Only once all five pass does the real expression reach the sealed StrictSandbox for AST-whitelisted execution -- an escape-syntax attempt is refused there, before the registered tool function itself is ever called. All reused sealed components (c8_agent.py, c8/orchestrator.py, c6_capabilities.py, c4_marking.py, c6/safety.py, kernel/governed_context.py) verified byte-identical to their sealed hashes both before and after this task -- this task's own tool_runtime.py is a new, separate file. Added 11 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0047.py, including an integration test running one legitimate call and four distinct denial scenarios (revoked capability, insufficient clearance, escape syntax, over-budget) in sequence against a shared effects list, proving exactly one real effect ever lands no matter how many ways a call is attempted and refused. All 11 passed on the first attempt, repeated 4 times for determinism, no bugs found.",
     "OCOR-DEV-0047: PR #125 merged (355ff68cc65053f55b26812843b4a7cb19e9b177). All 13 checks green on the first push. Post-merge SHA verified for all reused sealed files.",
-    "R1 state realignment: closed PR #131 as superseded; baseline_commit -> 276fc65 (HEAD of main); registered merges #128/#129/#130/#132; GITHUB-BRANCH-PROTECTION-001 resolved server-side by ruleset 23412233; OCOR-DEV-0048 unblocked (local preflight all 11 services READY, SPIRE included); historical ITERATION_LOG entry of PR #131 carried verbatim."
+    "R1 state realignment: closed PR #131 as superseded; baseline_commit -> 276fc65 (HEAD of main); registered merges #128/#129/#130/#132; GITHUB-BRANCH-PROTECTION-001 resolved server-side by ruleset 23412233; OCOR-DEV-0048 unblocked (local preflight all 11 services READY, SPIRE included); historical ITERATION_LOG entry of PR #131 carried verbatim.",
+    "OCOR-DEV-REM-0014: PR #135 merged (a8c5e5d92513b1a333593bbc56c411b61773f29b). All 13 checks green on the exact head 0820fec. TypeDB commit_id/watermark safe literal rendering + identifier contract; 17 live positive/negative cases on the real TypeDB backend; sealed content-addressed evidence record (record 04f60e45d9b79be0045ea2e3ab34f930335c386b9ed0ecf2eb652321565bf6cb, raw log 8733c7c227041ad92e5a7545b8033ae1917cb06b4ba26155d053b43566ceb9f9)."
   ],
-  "current_task": "R2 (remediation): independent-verification verdict processing for REM-0010/0011/0012",
+  "current_task": "R2 (remediation): REM-0014 merged; implementing OCOR-DEV-REM-0015 next",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -762,8 +767,8 @@
     "reports/evidence/G4/OCOR-DEV-0047.json",
     "reports/evidence/G4/OCOR-DEV-0047.log"
   ],
-  "exact_next_action": "Implement the three REMs opened by the R2 NO_GO verdict, in order: (1) OCOR-DEV-REM-0014 (TypeDB commit_id/watermark: apply safe literal rendering also to the watermark insert and validate the identifier contract before queries; live positive/negative tests for fact_id/payload/commit_id on the real TypeDB backend) -> (2) OCOR-DEV-REM-0015 (validate_rccad.py: NUL-delimited git diff --name-only -z for working tree/index/base..HEAD; regressions for staged/Unicode/tab/newline paths) -> (3) OCOR-DEV-REM-0016 (content-addressed candidate records for REM-0010/0011/0012 with commit/environment/commands/raw_output_sha256/created_at/raw log + manifest accepted by validate_runtime_evidence.py --non-skipped). Each as a governed/ change set with TDD RED->GREEN, gate verdi and evidence. Then re-request independent verification (review_type=REMEDIATION) on a HEAD that includes the authorized Fuseki update (a1eb484a...) and the fixes, per finding VF-004. RVW-03/INFO-A/INFO-C remain reserved to the Product Owner (non-blocking). OCOR-DEV-0048 (wave 15, real backend) resumes after R2/R3.",
+  "exact_next_action": "Implement OCOR-DEV-REM-0015 (validate_rccad.py: NUL-delimited git diff --name-only -z for working tree/index/base..HEAD; regressions for staged/Unicode/tab/newline paths) as a governed/ change set with TDD RED->GREEN, gate verdi and evidence. Then OCOR-DEV-REM-0016 (content-addressed evidence records for REM-0010/0011/0012), then re-request independent verification (review_type=REMEDIATION) on a HEAD including the authorized Fuseki update (a1eb484a...) and the fixes, per finding VF-004. RVW-03/INFO-A/INFO-C remain reserved to the Product Owner (non-blocking).",
   "schema_version": "1.0",
   "unresolved_blockers": [],
-  "worktree": ".ocor/worktrees/remediation-r2-verdict-processing"
+  "worktree": null
 }
