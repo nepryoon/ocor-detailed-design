@@ -1,0 +1,74 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0020.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 8,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "b920411a8aa5a1b7e2e1ba0286b67af77af32657",
+  "created_at": "2026-10-01T20:17:40.152278Z",
+  "environment": {
+    "host": "nepryoon",
+    "node": "v24.21.0",
+    "python": "Python 3.12.11",
+    "re_ran_at": "2026-10-01T20:17:40.152278Z",
+    "uv": "uv 0.12.21 (x86_64-unknown-linux-gnu)"
+  },
+  "inputs": {
+    "docs/OCOR_LLD_v1.1.md": "bd464bfef50dc5a5e1b7ffac389fdf12be57a3b545225a92cf1564dc6a01d219",
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0020.py": "5e1fd457d379dfffe779f0dde5ddcdc5cb114ab6bcf5511fc436c6aa1a2d6d74",
+    "ocor-runtime/uv.lock": "21dfa5dce0be7756356306cd22df7fd8c90ee5b30646d5ddac5b0c93aefe5608",
+    "spikes/c6_fsm_fidelity/generator.py": "894fa3b346583421820c520037499f4435f64d92bb99b874d410266c5635a1d7"
+  },
+  "raw_output_sha256": "ad42a2ab3afa6fc6ecbb7c0942cf2d35150abbe8069bddd5d9cf3e35e8f08d9f",
+  "record_id": "OCOR-DEV-0020-requalified-b920411a8aa5",
+  "requalification": {
+    "previous_inputs": {
+      "docs/OCOR_LLD_v1.1.md": "bd464bfef50dc5a5e1b7ffac389fdf12be57a3b545225a92cf1564dc6a01d219",
+      "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+      "ocor-runtime/tests/tasks/test_ocor_dev_0020.py": "5e1fd457d379dfffe779f0dde5ddcdc5cb114ab6bcf5511fc436c6aa1a2d6d74",
+      "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537",
+      "spikes/c6_fsm_fidelity/generator.py": "894fa3b346583421820c520037499f4435f64d92bb99b874d410266c5635a1d7"
+    },
+    "re_ran_command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0020.py",
+    "reason": "R3 step (b): evidence input drift remediation (input hashes no longer matched HEAD)",
+    "supersedes_commit": "b122b250348bfba65ee58b0589103cf9bc57ce3f"
+  },
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0020-44-TRANSITION-FIDELITY",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0020.py",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 8,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This G2 spike proves exact table generation and mutation detection; it is not BA-05 execution evidence against the selected workflow backend.",
+    "The existing compatibility ActionFSM remains distinct from the approved 44-transition C6 table until its later implementation task.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and compensating controls are not equivalent."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated spike commits; no runtime state, migration, or approved baseline is changed.",
+  "schema_version": 1.0,
+  "supersedes": "b122b250348bfba65ee58b0589103cf9bc57ce3f",
+  "task_id": "OCOR-DEV-0020"
+}

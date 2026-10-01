@@ -1,0 +1,70 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0038.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 8,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "b920411a8aa5a1b7e2e1ba0286b67af77af32657",
+  "created_at": "2026-10-01T20:17:40.152278Z",
+  "environment": {
+    "host": "nepryoon",
+    "node": "v24.21.0",
+    "python": "Python 3.12.11",
+    "re_ran_at": "2026-10-01T20:17:40.152278Z",
+    "uv": "uv 0.12.21 (x86_64-unknown-linux-gnu)"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c4/jena_adapter.py": "3d41fe11d329ef2bf2fb28d6f1b37c38fc02291d794a60695ae993a3d42512c2",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0038.py": "02e67020bc53c397e81553a8e3f054be5119f35a98bd929bce5a9221a2028898"
+  },
+  "raw_output_sha256": "3e581f92c5a63354a9091ee51e37e73e779045ac4069a73a069db9dd6f0cfef2",
+  "record_id": "OCOR-DEV-0038-requalified-b920411a8aa5",
+  "requalification": {
+    "previous_inputs": {
+      "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+      "ocor-runtime/src/ocor_runtime/c4/jena_adapter.py": "cd7a4006c380c9c6f72ce7d68d8194242642c9ed5a1fc178abc883c95420f716",
+      "ocor-runtime/tests/tasks/test_ocor_dev_0038.py": "02e67020bc53c397e81553a8e3f054be5119f35a98bd929bce5a9221a2028898"
+    },
+    "re_ran_command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0038.py",
+    "reason": "R3 step (b): evidence input drift remediation (input hashes no longer matched HEAD)",
+    "supersedes_commit": "80047f8ee8673ccd3d5f99802c5cbffca72bb69e"
+  },
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0038-VALID-PUBLICATION-READABLE-AND-JSON-LD",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0038.py",
+      "requirement_id": "FR-168",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 8,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This adapter's SHACL-equivalent is an explicit, closed required-property/closed-predicate check rather than a general SHACL processor (no pyshacl dependency exists in this project); a future task adopting a richer, arbitrary SHACL shape vocabulary would need to add that dependency deliberately, which is a policy/dependency decision outside this task's own smallest-slice scope.",
+    "publish's atomicity is a single SPARQL INSERT DATA statement covering exactly one resource's triples; a caller publishing many resources from one C3 commit would need one publish call per resource, matching the closed-shape validation's own per-resource scope.",
+    "The pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope; it produces the same 2 pre-existing, unrelated regression failures documented in every prior evidence file this session."
+  ],
+  "result": "PASS",
+  "rollback": null,
+  "schema_version": 1.0,
+  "supersedes": "80047f8ee8673ccd3d5f99802c5cbffca72bb69e",
+  "task_id": "OCOR-DEV-0038"
+}

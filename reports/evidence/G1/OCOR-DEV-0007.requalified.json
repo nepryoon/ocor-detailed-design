@@ -1,0 +1,71 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0007.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 51,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "b920411a8aa5a1b7e2e1ba0286b67af77af32657",
+  "created_at": "2026-10-01T20:17:40.152278Z",
+  "environment": {
+    "host": "nepryoon",
+    "node": "v20.20.2",
+    "python": "Python 3.12.11",
+    "re_ran_at": "2026-10-01T20:17:40.152278Z",
+    "uv": "uv 0.12.21 (x86_64-unknown-linux-gnu)"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/kernel/canonical.py": "fd26f64749707f5da8e8b796b7d279ff2e21985d5f6af4d919fa3a42e1dcc7b9",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0007.py": "f70008082cb2e50420979c32e3defc5961ef17f887edcb93e9c83e0038d446b8",
+    "ocor-runtime/uv.lock": "21dfa5dce0be7756356306cd22df7fd8c90ee5b30646d5ddac5b0c93aefe5608"
+  },
+  "raw_output_sha256": "821604713a4a53cdfe425f701dcb796cb1fe00ebb02b0d9e59ef11dc7f754c85",
+  "record_id": "OCOR-DEV-0007-requalified-b920411a8aa5",
+  "requalification": {
+    "previous_inputs": {
+      "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+      "ocor-runtime/src/ocor_runtime/kernel/canonical.py": "816a31493454da2785bf52c40bd247eae462c72a9cb40e70ac6aacc85038d8a7",
+      "ocor-runtime/tests/tasks/test_ocor_dev_0007.py": "58614fed736ccd4bc83d2565c76ab4c5ad489a3a27363955835c7aea27103a12",
+      "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537"
+    },
+    "re_ran_command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0007.py",
+    "reason": "R3 step (b): evidence input drift remediation (input hashes no longer matched HEAD)",
+    "supersedes_commit": "714d045b2fcea63ccae4a6b7196d8b6ac7b39142"
+  },
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0007-CANONICAL-KERNEL",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0007.py",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 51,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This G1 task validates canonical contract primitives only; cross-language generated-boundary evidence belongs to subsequent G1 tasks.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and is not represented as equivalent to compensating controls."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated task commits, retain the existing ocor_runtime.canonical compatibility surface, and revalidate the prior G0 manifest.",
+  "schema_version": 1.0,
+  "supersedes": "714d045b2fcea63ccae4a6b7196d8b6ac7b39142",
+  "task_id": "OCOR-DEV-0007"
+}
