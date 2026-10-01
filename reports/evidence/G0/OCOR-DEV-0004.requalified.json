@@ -1,0 +1,67 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0004.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 10,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "583cef668320cca30ad14b4c642c9c5c8fd6689c",
+  "created_at": "2026-10-01T19:14:02.997088Z",
+  "environment": {
+    "host": "nepryoon",
+    "node": "v24.21.0",
+    "python": "Python 3.12.11",
+    "re_ran_at": "2026-10-01T19:14:02.997103Z",
+    "uv": "uv 0.12.21 (x86_64-unknown-linux-gnu)"
+  },
+  "inputs": {
+    "ocor-runtime/pyproject.toml": "cc619669df64870b7a3ab645605aba56a87c2e99f9c6013d2831dc0d6891341d",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0004.py": "948a268713025bb58cda0e31a33d756925bb20306f0626347f4bae87904aedb2",
+    "ocor-runtime/tools/evidence_manifest.py": "73d8dd9f3fb30b153a95a2edc3b9751d464ea684e909a92dcade4b94335214fc",
+    "ocor-runtime/uv.lock": "21dfa5dce0be7756356306cd22df7fd8c90ee5b30646d5ddac5b0c93aefe5608"
+  },
+  "raw_output_sha256": "4c78d91fecebd9ff2601366b209fedef5a34c74b72f29aadd727b0d4e4957970",
+  "record_id": "OCOR-DEV-0004-requalified-583cef668320",
+  "requalification": {
+    "previous_inputs": {
+      "ocor-runtime/pyproject.toml": "690b0f074434e95da728725e02cfc35b45ccf08aec430fc9bed1be1057383bb1",
+      "ocor-runtime/tests/tasks/test_ocor_dev_0004.py": "948a268713025bb58cda0e31a33d756925bb20306f0626347f4bae87904aedb2",
+      "ocor-runtime/tools/evidence_manifest.py": "73d8dd9f3fb30b153a95a2edc3b9751d464ea684e909a92dcade4b94335214fc",
+      "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537"
+    },
+    "re_ran_command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0004.py",
+    "reason": "R3 step (b): evidence input drift remediation (input hashes no longer matched HEAD)",
+    "supersedes_commit": "a1a123e2c0cf9462a54b582f625f1d87a5a8dc5d"
+  },
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0004-POSITIVE",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0004.py",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 10,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated task commits and revalidate the prior G0 manifest; no persisted data migration exists.",
+  "schema_version": "1.0",
+  "supersedes": "a1a123e2c0cf9462a54b582f625f1d87a5a8dc5d",
+  "task_id": "OCOR-DEV-0004"
+}
