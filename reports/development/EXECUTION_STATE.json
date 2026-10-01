@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-toolchain-lock-residual-git",
-    "change_set": "TOOLCHAIN-LOCK-RESIDUAL-GIT__STATE_SYNC",
+    "branch": "governed/state-sync-ocor-dev-rem-0015",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-REM-0015",
     "decision_id": "DEC-211",
-    "phase": "TOOLCHAIN_LOCK_RESIDUAL_GIT_RESOLVED",
-    "worktree": ".ocor/worktrees/state-sync-toolchain-lock-residual-git"
+    "phase": "REMEDIATION_R2_INDEPENDENT_VERIFICATION",
+    "worktree": null
   },
-  "baseline_commit": "e74afa6f1cbd714d9fc5c8e45272cfc7773d869c",
+  "baseline_commit": "54ec7d13d7e954b4264efdb2d4965b6f8957b2a7",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -138,15 +138,15 @@
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "5f7ea44eb182735192034d355eea054dff29286d",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR147_MERGED_e74afa6f1cbd714d9fc5c8e45272cfc7773d869c",
+    "candidate_commit": "0f98a5d0f29801e0a2c7aabe1f0dbbe999d5447d",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR149_MERGED_54ec7d13d7e954b4264efdb2d4965b6f8957b2a7",
     "run_ids": [
-      36928344163,
-      36928344229,
-      36928344231,
-      36928344239,
-      36928344273,
-      36928344276
+      36936358677,
+      36936358690,
+      36936358671,
+      36936358702,
+      36936358678,
+      36936358716
     ]
   },
   "mandate_phase_status": {
@@ -207,7 +207,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Re-request independent verification for OCOR-DEV-REM-0015 on a HEAD including the git toolchain-lock fix (PR #147); then implement OCOR-DEV-REM-0016 (content-addressed evidence records) and re-request verification. R3 step (c): wire scripts/validate_evidence_input_drift.py as a blocking CI step + preflight (fail-closed). TOOLCHAIN-LOCK-TYPESCRIPT (tsc/node host alignment) is non-blocking and pending PO decision.",
+  "next_executable_action": "OCOR-DEV-REM-0015 merged (PR #149, merge commit 54ec7d13d7e954b4264efdb2d4965b6f8957b2a7), all 13 checks green on exact head 0f98a5d0f29801e0a2c7aabe1f0dbbe999d5447d; sealed evidence hashes verified intact post-merge. Next unit of work: implement OCOR-DEV-REM-0016 (content-addressed evidence records for REM-0010/0011/0012), then R3 step (c) (wire validate_evidence_input_drift.py as blocking CI + preflight), then OCOR-DEV-0048 implementation phase.",
   "remediation_status": {
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -242,7 +242,6 @@
       ],
       "head_sha": "1aaef13885ed142646d0ed35c995078c30d9f174",
       "next_actions": [
-        "Re-request independent verification of OCOR-DEV-REM-0015 on a HEAD including the git toolchain-lock fix (PR #147)",
         "Implement OCOR-DEV-REM-0016 (content-addressed evidence records) then re-request verification",
         "Proceed with R3 step (c) (wire validate_evidence_input_drift.py as blocking CI + preflight) and OCOR-DEV-0048 implementation phase"
       ],
@@ -253,14 +252,15 @@
         "OCOR-DEV-REM-0015 escalated after 2 repair cycles: cycle-1 verdict NO_GO (VF-001, toolchain-lock identity mismatch: docker/git/gh/node/uv versions and digests differ from infra/toolchain.lock.json; official Node 20.20.2 digest != lock). git_changed() fix is functionally correct (verifier: no functional correction required). Requires PO decision TOOLCHAIN-LOCK-UPDATE; evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION, not sealed.",
         "TOOLCHAIN-LOCK-UPDATE resolved: governed toolchain-lock re-acquisition merged as PR #138 (749a88f) \u2014 node/gh/docker/uv re-acquired at unchanged versions with digests verified against official checksums; git 2.55.0 and typescript 7.0.2 deferred to decision request TOOLCHAIN-LOCK-RESIDUAL (OPEN_PO_DECISION_REQUIRED).",
         "REM-0015 cycle-2 re-verification (after TOOLCHAIN-LOCK-UPDATE resolution, PR #138) returned NO_GO with a single medium finding VF-001 (git executable integrity mismatch). The verifier confirmed the fix is functionally correct and that 8/9 toolchain entries now match the lock (tsc 7.0.2 and Node 20.20.2 re-acquired with signed checksum); only git 2.55.0 remains (no official Linux binary). REM-0015 remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION, not sealed, blocked solely on TOOLCHAIN-LOCK-RESIDUAL.",
-        "TOOLCHAIN-LOCK-RESIDUAL git portion resolved (PR #147, e74afa6): git entry of infra/toolchain.lock.json updated to installed Ubuntu 2.53.0 (integrity 5516c9f3...). REM-0015/REM-0016 independent verification is now unblocked; re-request verification on a HEAD including the git lock fix. typescript (tsc 7.0.2) and node (host v24.21.0 vs lock 20.20.2) residual -> decision request TOOLCHAIN-LOCK-TYPESCRIPT (non-blocking: verifier provisions both in isolation)."
+        "TOOLCHAIN-LOCK-RESIDUAL git portion resolved (PR #147, e74afa6): git entry of infra/toolchain.lock.json updated to installed Ubuntu 2.53.0 (integrity 5516c9f3...). REM-0015/REM-0016 independent verification is now unblocked; re-request verification on a HEAD including the git lock fix. typescript (tsc 7.0.2) and node (host v24.21.0 vs lock 20.20.2) residual -> decision request TOOLCHAIN-LOCK-TYPESCRIPT (non-blocking: verifier provisions both in isolation).",
+        "OCOR-DEV-REM-0015 (validate_rccad NUL-delimited git diff path handling, finding VF-002) implemented with TDD, re-verified GO_FOR_EVIDENCE_SEAL on cycle-3 after the git toolchain-lock fix (PR #147), sealed content-addressed, merged as PR #149 (54ec7d13d7e954b4264efdb2d4965b6f8957b2a7)."
       ],
       "rem_0015_escalation": {
         "cycles_exhausted": 2,
         "final_finding": "VF-001 (git 2.55.0 executable integrity mismatch \u2014 sole remaining toolchain residual after TOOLCHAIN-LOCK-UPDATE)",
         "finding_severity": "medium",
         "minimal_unblock_action": "Product Owner disposes TOOLCHAIN-LOCK-RESIDUAL: authorize a governed re-acquisition of the git pin (source-tarball digest as measured object, or explicit version-only pin), or provide the exact pinned git 2.55.0 binary. No verifier-side workaround is permitted (do not convert the failed preflight to PASS).",
-        "status": "UNBLOCKED_READY_FOR_REVERIFICATION",
+        "status": "RESOLVED_SEALED_AND_MERGED",
         "verdicts": [
           {
             "findings": [
@@ -286,11 +286,18 @@
             "repair_cycle": 2,
             "request_id": "OCOR-DEV-REM-0015-6790a7fe0343-2",
             "verdict": "NO_GO"
+          },
+          {
+            "findings": [],
+            "repair_cycle": 3,
+            "request_id": "OCOR-DEV-REM-0015-16fa3f423dae-3",
+            "verdict": "GO_FOR_EVIDENCE_SEAL"
           }
         ]
       },
       "rems_completed": [
-        "OCOR-DEV-REM-0014"
+        "OCOR-DEV-REM-0014",
+        "OCOR-DEV-REM-0015"
       ],
       "rems_opened": [
         "OCOR-DEV-REM-0014",
@@ -396,5 +403,5 @@
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-10-01T21:39:55.741639Z"
+  "updated_at": "2026-10-01T22:53:18.628272Z"
 }
