@@ -3615,3 +3615,25 @@
   `validate_ocor_change_scope --branch` fallisce solo per il prefisso
   `cursor/` del branch (accetta `task/`/`governed/`); l'integrazione
   avviene via branch `governed/` come per la PR #126.
+
+## 2026-10-01 — Governed change set: identità immagine Fuseki (cambio macchina di sviluppo)
+
+- Mandato esplicito del Product Owner (2026-10-01): aggiornare in un change set
+  `governed/` dedicato soltanto `build.output_sha256` dell'entry `fuseki` in
+  `infra/services.lock.json`, con l'identificativo dell'immagine
+  `ocor/jena-fuseki:6.2.0` ricostruita su questa macchina.
+- Host: `nepryoon`. Motivazione: cambio della macchina di sviluppo; l'identificativo
+  dell'immagine registrato sulla macchina precedente non è riproducibile qui.
+- Condizioni di autorizzazione tutte verificate e registrate:
+  - `infra/fuseki/Dockerfile` invariato rispetto a `origin/main` (`git diff` vuoto);
+  - `build.base_image` invariato (`eclipse-temurin@sha256:db168953…`) e la build ha
+    usato davvero quella base: i 5 layer dell'immagine base sono prefisso dei layer
+    dell'immagine Fuseki locale;
+  - checksum SHA-512 del pacchetto sorgente scaricato indipendentemente da
+    `archive.apache.org` = `build.source_sha512` = `ba65f586…` (MATCH);
+  - il controllo di identità in `scripts/bootstrap_development_environment.py` resta
+    invariato (nessuna modifica al codice di verifica).
+- Valore precedente: `output_sha256 = 7a55d816b0031cae6f2e2c5262f0bd1bcd247ccbe8cf8c027347083227c574b7`.
+- Nuovo identificativo: `output_sha256 = a1eb484a7d056a897c7bc832fb735b06136fc876aa90da3055d9882bc1b8d9e3`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`; `inputs/` invariato.
