@@ -3748,3 +3748,36 @@
 - Prossima azione: implementare `OCOR-DEV-REM-0015` (validate_rccad NUL-delimited path
   handling), poi `OCOR-DEV-REM-0016` (record content-addressed), poi ri-richiedere la
   verifica indipendente su un HEAD che include l'aggiornamento Fuseki autorizzato e i fix.
+
+## 2026-10-01 — Remediation R2: escalation OCOR-DEV-REM-0015 (VF-001 toolchain lock)
+
+- Change set `governed/state-sync-ocor-dev-rem-0015-escalation` (docs/state), basato
+  sull'HEAD di `main` = `dbf06498bb1222674eed72e0794dc673bc473c3f`.
+- `OCOR-DEV-REM-0015` (validate_rccad NUL-delimited path handling) ha esaurito **2 cicli
+  di riparazione**. Il verdetto indipendente del repair cycle 1
+  (`request_id` `OCOR-DEV-REM-0015-92e194e2965f-1`, `head_sha` `92e194e2965f…`) è
+  **`NO_GO`** con un solo finding bloccante: `VF-001` (severity medium).
+- `VF-001` non è una regressione del codice: il fix `git_changed()` è corretto (il
+  verifier dichiara "nessuna correzione funzionale richiesta"). È una **identità della
+  toolchain non riproducibile**: `infra/toolchain.lock.json` registra versioni/digest
+  (`docker` 29.7.2, `git` 2.55.0, `gh` 2.99.0, `node` 20.20.2, `uv` 0.12.5) acquisiti
+  sulla macchina precedente; sulla macchina attuale la toolchain host differisce e il
+  binario ufficiale di `node` 20.20.2 ha digest `62954886…` diverso dal lock `4446eb8e…`
+  (non riproducibile dalle sorgenti ufficiali). La suite completa passa (905/905, zero
+  skip) ma non attesta la riproduzione con la toolchain approvata.
+- **Riservato al PO**: il verifier richiede o la toolchain conforme al lock o un
+  aggiornamento governato del toolchain lock con autorità esplicita. L'autorizzazione
+  Fuseki del 2026-10-01 copre solo `infra/services.lock.json` e non si estende al
+  toolchain. Registrata **decision request `TOOLCHAIN-LOCK-UPDATE`** (bloccante) in
+  `reports/development/decision_requests/`.
+- **Escalation** (§8, 2 cicli esauriti): `remediation_status.R2_independent_verification`
+  → `rem_0015_escalation` (`BLOCKED`), blocker `TOOLCHAIN-LOCK-UPDATE` in
+  `EXECUTION_STATE.json` (`OPEN_PO_DECISION_REQUIRED`), `blocked_tasks` =
+  [`OCOR-DEV-REM-0015`, `OCOR-DEV-REM-0016`]. L'evidenza resta
+  `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` e **non** è sigillata.
+- `baseline_commit` → `dbf06498…` (HEAD di `main` alla base di questo change set).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: R3 (validator fail-closed `scripts/validate_evidence_input_drift.py`,
+  TDD RED-first) come change set `governed/` con gate locali + CI (nessuna verifica
+  indipendente), poi fase di implementazione di `OCOR-DEV-0048`.
