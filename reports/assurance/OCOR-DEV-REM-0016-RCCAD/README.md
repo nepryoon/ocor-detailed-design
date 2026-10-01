@@ -22,8 +22,16 @@ reale con nuovi raw log e hash.
 `E1=0`, `E2=0`, nessun requisito `Verified`, runtime conformance/PoC/Production non
 promossi. Nessuna modifica a `inputs/`, ADD o LLD.
 
-## Implementazione
+## Implementazione (2026-10-01)
 
-Da eseguire con TDD RED→GREEN→REFACTOR, gate verdi e verifica indipendente prima del
-sigillo. Il record di evidenza `evidence.json` sarà prodotto al momento
-dell'implementazione.
+Prodotti i record candidati content-addressed per ciascuna remediation,
+riqualificati all'HEAD `3135517`:
+
+- `reports/assurance/OCOR-DEV-REM-0010-RCCAD/OCOR-DEV-REM-0010.json` + `.log` + `MANIFEST.json`
+- `reports/assurance/OCOR-DEV-REM-0011-RCCAD/OCOR-DEV-REM-0011.json` + `.log` + `MANIFEST.json`
+- `reports/assurance/OCOR-DEV-REM-0012-RCCAD/OCOR-DEV-REM-0012.json` + `.log` + `MANIFEST.json`
+
+Ogni record è accettato da `validate_runtime_evidence.py --non-skipped` e supersede il
+record storico `evidence.json` (immutabile) tramite il campo `supersedes`. Il record di
+evidenza RCCAD di questo task è `evidence.json` in questa directory. Verifica
+indipendente e CI verde sull'HEAD esatto restano prerequisiti del sigillo.

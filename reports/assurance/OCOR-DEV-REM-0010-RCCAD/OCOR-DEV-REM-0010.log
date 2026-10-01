@@ -1,0 +1,109 @@
+========================================================================
+ OCOR-DEV-REM-0010 — raw evidence log (content-addressed)
+ C4 projection adapter identifier/literal hardening — requalification at HEAD
+ commit: 313551781d9015aad1b57c4eddabb83fe41588da
+ generated_at: 2026-10-01T23:17:48Z
+
+========================================================================
+
+----- pytest -q ocor-runtime/tests/tasks/test_ocor_dev_rem_0010.py -----
+....                                                                     [100%]
+4 passed in 0.06s
+
+----- pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0037.py (real TypeDB) -----
+........                                                                 [100%]
+8 passed in 2.07s
+
+----- pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0038.py (real Fuseki/Jena) -----
+........                                                                 [100%]
+8 passed in 0.16s
+
+----- pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0039.py (real TypeDB + PostgreSQL, OCOR_LIVE_POSTGRES_DSN) -----
+......                                                                   [100%]
+6 passed in 2.76s
+
+----- GATE: /home/luca/.local/bin/ruff check . -----
+All checks passed!
+
+----- GATE: ocor-runtime/.venv/bin/python -m mypy (strict) -----
+Success: no issues found in 68 source files
+
+----- GATE: sha256sum -c inputs/normative/SHA256SUMS -----
+inputs/normative/OCOR_Architectural_Design_Document_v1.1.md: OK
+inputs/normative/OCOR_CAP_ELM_Requirement_Crosswalk_v0.9.md: OK
+inputs/normative/OCOR_DEC_197_plus_Draft_v0.1.md: OK
+inputs/normative/OCOR_Decision_Register_v1.0.md: OK
+inputs/normative/OCOR_Decision_Traceability_Index_v1.0.md: OK
+inputs/normative/OCOR_Registers_v0.9.md: OK
+inputs/normative/OCOR_Requirement_Register_v0.9.md: OK
+inputs/normative/OCOR_Requirement_Traceability_Index_v0.9.md: OK
+
+----- GATE: ocor-runtime/.venv/bin/python scripts/verify.py --json -----
+==============================================================================
+OCOR ADD — harness di verifica tool-backed
+oggetto: inputs/normative/OCOR_Architectural_Design_Document_v1.1.md
+sha256:  3e7532c7101e80c74b511cedc56a0563ca0938a3fe259911a91245cb19dedc7f
+==============================================================================
+[PASS] Integrità sorgenti
+       8 file, tutti i digest coincidono
+[PASS] JSON Schema — parsing e meta-validazione
+       5 schemi Draft 2020-12 validi: urn:ocor:schema:action-type-contract:1.0, urn:ocor:schema:canonical-ingestion-envelope:1.1, urn:ocor:schema:event-subscription-contract:1.0, urn:ocor:schema:mcp-tool-contract:1.1, urn:ocor:schema:signed-canonical-ir:1.0
+[PASS] OpenAPI — risoluzione $ref
+       OpenAPI 3.1.0 v1.1.0; 6 path, 25 schemi, 26 $ref; tutti i $ref risolti; schemi mai referenziati: nessuno
+[PASS] OpenAPI — validazione semantica con validator ufficiale
+       openapi-spec-validator==0.9.0; wheel SHA-256 222fecffc7714f6d0a6ad62c0e4b66cc2b7dbfafb7b93acfc6c308abbdb51af8; documento OpenAPI 3.1.0 valido
+[PASS] Protobuf — compilazione
+       protoc compila senza errori
+[PASS] Turtle/RDF — parsing
+       17 triple
+[PASS] Rami condizionali insoddisfacibili (classe RV-01)
+       nessun campo richiesto da un condizionale risulta non dichiarato
+[INFO] Rami condizionali da coprire con casi POSITIVI
+       il §7.1 del prompt richiede almeno un caso positivo per ramo — signed-canonical-ir=0; canonical-ingestion-envelope=4; mcp-tool-contract=11; action-type-contract=9; event-subscription-contract=0
+[PASS] FSM — bijezione diagramma/tabella
+       29 stati in corrispondenza
+[PASS] FSM — famiglia ACT-T
+       ACT-T01–T31 contigui, più le varianti a/b/c
+[INFO] FSM — stati terminali
+       stati senza archi uscenti non attesi: nessuno; stati di indeterminatezza privi di uscita: nessuno
+[PASS] Tracciabilità — allocazione in §7
+       DEC 181/196; BR 18/18; FR 174/174; NFR 93/93; ARC 23/23; CAP 25/26; ELM 103/103; RSK 60/60
+[PASS] Universo normativo
+       693 = 693 atteso
+[PASS] Rimandi di sezione
+       44 rimandi distinti, 59 sezioni; non risolti: nessuno
+[PASS] Evidence fence
+       'E1=0' ricorre 16 volte; claim probatori non supportati: nessuno
+[PASS] Nessun DEC-197 assegnato
+       3 occorrenze, tutte in forma negativa o come nome di file
+==============================================================================
+PASS 14  FAIL 0  NOT_EXECUTED 0
+==============================================================================
+referto JSON: reports/verify_report.json
+
+----- GATE: ocor-runtime/.venv/bin/python scripts/validate_language_policy.py -----
+PASS: no tracked file uses a monitored extension outside its authorized area
+
+----- GATE: ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base origin/main --head HEAD -----
+PASS: 9 changed path(s); immutable surfaces untouched; task ledger stable
+
+----- GATE: ocor-runtime/.venv/bin/python scripts/validate_rccad.py --base-ref origin/main -----
+{
+  "checked_artifacts": 22,
+  "dynamic_assurance": "CI_REQUIRED",
+  "findings": [],
+  "fitness_results": {
+    "AFF-001": "PASS_STATIC_PRECHECK",
+    "AFF-002": "PASS_STATIC_PRECHECK",
+    "AFF-003": "PASS_STATIC_PRECHECK",
+    "AFF-004": "PASS_STATIC_PRECHECK",
+    "AFF-005": "PASS_STATIC_PRECHECK",
+    "AFF-006": "PASS_STATIC_PRECHECK",
+    "AFF-007": "PASS_STATIC_PRECHECK",
+    "AFF-008": "PASS_STATIC_PRECHECK",
+    "AFF-009": "PASS_STATIC_PRECHECK",
+    "AFF-010": "PASS_STATIC_PRECHECK"
+  },
+  "methodology_sha256": "231ce3325537de85890b16e97f138bd6a4263fc1e240094ed26499af9aeeb6cd",
+  "status": "PASS_LOCAL_PRECHECK"
+}

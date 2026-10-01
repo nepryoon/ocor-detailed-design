@@ -1,0 +1,155 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_rem_0010.py",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 4,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0037.py (real TypeDB)",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 8,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0038.py (real Fuseki/Jena)",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 8,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0039.py (real TypeDB + PostgreSQL, OCOR_LIVE_POSTGRES_DSN)",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 6,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "/home/luca/.local/bin/ruff check .",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python -m mypy (strict)",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 68,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "sha256sum -c inputs/normative/SHA256SUMS",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 8,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/verify.py --json",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 14,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/validate_language_policy.py",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base origin/main --head HEAD",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/validate_rccad.py --base-ref origin/main",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "313551781d9015aad1b57c4eddabb83fe41588da",
+  "created_at": "2026-10-01T23:17:48Z",
+  "environment": {
+    "backend_under_test": "real, live TypeDB (typedb:1729) and Fuseki/Jena (fuseki:3030) and PostgreSQL (postgres:5432) running on the local ocor-bootstrap stack; the C4 projection adapters are exercised through their acceptance suites against the pinned real backends, never mocks or skips",
+    "orchestrator": "single-agent development worktree at origin/main HEAD; every qualifying run below executes the real backend path with the real OCOR_LIVE_POSTGRES_DSN",
+    "reused_deliverable": "ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py and jena_adapter.py (the RVW-01/RVW-02 remediation delivered in PR #128 and hardened by REM-0014), re-run at HEAD against the real backends",
+    "toolchain": "Python 3.12.11 (uv-managed ocor-runtime/.venv), pytest 9.1.1, ruff 0.13.1, mypy 2.3.1"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c4/jena_adapter.py": "3d41fe11d329ef2bf2fb28d6f1b37c38fc02291d794a60695ae993a3d42512c2",
+    "ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py": "cfc64cc9489d14d7e33f0348d4e74e664236c552e1325bf21d54e4b7ac00a04f",
+    "ocor-runtime/tests/tasks/test_ocor_dev_rem_0010.py": "9c32f975fe4512af109a8b945cdc30515da706488b957a39e28cc1da7b41ee50"
+  },
+  "raw_output_sha256": "4c219d9cbd3bd2e21c6a0a0f21444659410a01162a04d41241c7e4309a4dd1ca",
+  "residual_risks": [
+    "This record is a content-addressed requalification at HEAD (no new code change): typedb_adapter.py carries the cumulative REM-0014 watermark hardening (its hash differs from the 2026-09-15 candidate), so the record reflects the current adapter state, not the historical PR #128 state.",
+    "The live TypeDB/Fuseki/PostgreSQL acceptance suites are the only qualifying evidence: no mock or skip is qualifying; the curl-based smoke probes are not part of this record (they fail on a packaged OpenSSL/libcurl mismatch, unrelated to the adapters under test, which are exercised through the Python drivers)."
+  ],
+  "result": "PASS",
+  "rollback_procedure_verified": "No code change is introduced by this REM: reverting it removes only the evidence records. The underlying remediation code is reverted by the REM-0010/REM-0014 rollback procedures, not here.",
+  "schema_version": "1.0",
+  "supersedes": "OCOR-DEV-REM-0010-RCCAD-20260915",
+  "task_id": "OCOR-DEV-REM-0010"
+}

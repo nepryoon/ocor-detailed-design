@@ -1,0 +1,69 @@
+{
+  "baseline_commit": "313551781d9015aad1b57c4eddabb83fe41588da",
+  "change_set": "OCOR-DEV-REM-0016-RCCAD",
+  "changed_file_sha256": {
+    "reports/assurance/OCOR-DEV-REM-0010-RCCAD/MANIFEST.json": "cc162004a734edf69c4554a5e38fae4f5888334d36300a6ce4ff63d92869fce4",
+    "reports/assurance/OCOR-DEV-REM-0010-RCCAD/OCOR-DEV-REM-0010.json": "c32d87e827bc32965ee547d815a56a678f546cf1cae24d752a5ab9e029ecad7e",
+    "reports/assurance/OCOR-DEV-REM-0010-RCCAD/OCOR-DEV-REM-0010.log": "4c219d9cbd3bd2e21c6a0a0f21444659410a01162a04d41241c7e4309a4dd1ca",
+    "reports/assurance/OCOR-DEV-REM-0011-RCCAD/MANIFEST.json": "03cfb7af21b414dfcd31b881eac1d77aebe40f8020abc4b9c439790c8a3c65b4",
+    "reports/assurance/OCOR-DEV-REM-0011-RCCAD/OCOR-DEV-REM-0011.json": "873bb14dfe53e72d23d82fd9d94c0df78fe34d30a93970047f48e1ba92fdb648",
+    "reports/assurance/OCOR-DEV-REM-0011-RCCAD/OCOR-DEV-REM-0011.log": "8dfd2d3314a7213e4f6644b1f9e2268ca381b0c184be2e21269a36e4c711b677",
+    "reports/assurance/OCOR-DEV-REM-0012-RCCAD/MANIFEST.json": "86accbbb71fb706db659b2dd6cca3ac190cb3dc9ebdb85ea7c39f21b4a6f7c75",
+    "reports/assurance/OCOR-DEV-REM-0012-RCCAD/OCOR-DEV-REM-0012.json": "07ab819b29ee1f7b6786be8a15817747ca76df204d78f84c450e96bcbe69b559",
+    "reports/assurance/OCOR-DEV-REM-0012-RCCAD/OCOR-DEV-REM-0012.log": "77cde81722c3be28cb61438e67236962ffa5ebe3944a20725fff8358ae751b68",
+    "reports/assurance/OCOR-DEV-REM-0016-RCCAD/MANIFEST.json": "d5f671a9061837405918a8ec6cf5519c91ed521c6ee544ad2c1fe6a9381ce0c0",
+    "reports/assurance/OCOR-DEV-REM-0016-RCCAD/OCOR-DEV-REM-0016.json": "835b264bf6cdc3807dac46d6593202750723d9f030c0a612f9246c122dd1bc40",
+    "reports/assurance/OCOR-DEV-REM-0016-RCCAD/OCOR-DEV-REM-0016.log": "a7c60b212f66b61acc53561456b65d7b09a23c47490c8287165126c51ee845e5"
+  },
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "global_verified_requirements": 0,
+    "poc": "NO_GO",
+    "production": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "evidence_id": "OCOR-DEV-REM-0016-RCCAD-20261001",
+  "immutable_inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+  "independent_verifier": {
+    "identity": "NOT_PERFORMED_SINGLE_AGENT",
+    "note": "Requires an independent verifier and green CI on the exact sealed HEAD before evidence seal; this record is a qualified candidate, not a seal.",
+    "verdict": "PENDING"
+  },
+  "local_gates": {
+    "mypy --strict": "PASS (68 files)",
+    "ruff check .": "PASS",
+    "sha256sum -c inputs/normative/SHA256SUMS": "PASS 8/8",
+    "validate_language_policy.py": "PASS",
+    "validate_ocor_change_scope.py": "PASS",
+    "validate_rccad.py --base-ref origin/main": "PASS_LOCAL_PRECHECK",
+    "validate_runtime_evidence.py --non-skipped (REM-0010)": "PASS",
+    "validate_runtime_evidence.py --non-skipped (REM-0011)": "PASS",
+    "validate_runtime_evidence.py --non-skipped (REM-0012)": "PASS",
+    "verify.py --json": "PASS 14 FAIL 0 NOT_EXECUTED 0"
+  },
+  "local_not_executed": [],
+  "related_tasks": [
+    "OCOR-DEV-REM-0011",
+    "OCOR-DEV-REM-0012"
+  ],
+  "review_finding": "VF-003 (from independent verification REMEDIATION of OCOR-DEV-REM-0010/0011/0012, request_id OCOR-DEV-REM-0010-0011-0012-1aaef13885ed-0, 2026-10-01)",
+  "rollback": {
+    "procedure": "Revert this REM-0016 change set (the produced evidence records only); no code, schema or data change. The historical 2026-09-15 candidate records remain immutable."
+  },
+  "schema_version": "1.0",
+  "source_task_id": "OCOR-DEV-REM-0010",
+  "status": "QUALIFIED_CANDIDATE_PENDING_SEAL_CI_AND_INTEGRATION",
+  "summary": "The three 2026-09-15 remediation candidates (REM-0010 C4 adapter hardening, REM-0011 C1 execution_owner fail-closed, REM-0012 RCCAD staged-input precheck) carried RCCAD evidence.json records that were not content-addressed: no commit, environment, commands with exit/status, raw_output_sha256, created_at, raw log or manifest accepted by validate_runtime_evidence.py --non-skipped (VF-003). This REM produces, for each remediation, a new content-addressed candidate record (OCOR-DEV-REM-00NN.json) with its raw log and MANIFEST.json, requalified at HEAD against the real stack, superseding the historical records (preserved immutable) via the supersedes field, and each accepted by validate_runtime_evidence.py --non-skipped.",
+  "superseded_by": "OCOR-DEV-REM-0016 (content-addressed runtime evidence record, reports/assurance/OCOR-DEV-REM-0016-RCCAD/OCOR-DEV-REM-0016.json)",
+  "tdd": {
+    "green": {
+      "fingerprint": "Each produced content-addressed record is accepted: validate_runtime_evidence.py --task OCOR-DEV-REM-00NN --manifest reports/assurance/OCOR-DEV-REM-00NN-RCCAD/MANIFEST.json --non-skipped -> PASS for 0010, 0011 and 0012; full gates green.",
+      "result": "PASS"
+    },
+    "red": {
+      "fingerprint": "The three 2026-09-15 candidates carry only RCCAD evidence.json records: validate_runtime_evidence.py --non-skipped fails for each with 'manifest has no evidence entry' / missing content-addressed record (no MANIFEST.json, no OCOR-DEV-REM-00NN.json). This is exactly the VF-003 defect.",
+      "result": "EXPECTED_FAILURE"
+    }
+  }
+}

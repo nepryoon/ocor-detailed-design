@@ -1,0 +1,132 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_rem_0011.py",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 7,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0032.py (C1 frontend suite)",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 15,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "/home/luca/.local/bin/ruff check .",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python -m mypy (strict)",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 68,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "sha256sum -c inputs/normative/SHA256SUMS",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 8,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/verify.py --json",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 14,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/validate_language_policy.py",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base origin/main --head HEAD",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/validate_rccad.py --base-ref origin/main",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "313551781d9015aad1b57c4eddabb83fe41588da",
+  "created_at": "2026-10-01T23:17:48Z",
+  "environment": {
+    "backend_under_test": "none -- this REM hardens the in-memory C1 FrontendTypeAndSemanticValidator (execution_owner fail-closed validation); the qualifying suite is the C1 frontend acceptance suite, no live backend service is involved",
+    "orchestrator": "single-agent development worktree at origin/main HEAD",
+    "reused_deliverable": "ocor-runtime/src/ocor_runtime/c1/frontend.py (the RVW-04 remediation delivered in PR #128), re-run at HEAD",
+    "toolchain": "Python 3.12.11 (uv-managed ocor-runtime/.venv), pytest 9.1.1, ruff 0.13.1, mypy 2.3.1"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c1/frontend.py": "8fadf970c12a2c5a5c56cb23235e23e345bee9ef74e6bff0c8db94da44684238",
+    "ocor-runtime/tests/tasks/test_ocor_dev_rem_0011.py": "71965ae668885a8ab0058d3e0d5e24c77f1f023d4b68c3fd3029cebbdc1329ec"
+  },
+  "raw_output_sha256": "8dfd2d3314a7213e4f6644b1f9e2268ca381b0c184be2e21269a36e4c711b677",
+  "residual_risks": [
+    "This record is a content-addressed requalification at HEAD (no new code change).",
+    "The C1 frontend validator is pure in-memory: no backend is required, and the full test_ocor_dev_0032.py suite (15 tests) is re-run to prove no regression."
+  ],
+  "result": "PASS",
+  "rollback_procedure_verified": "No code change is introduced by this REM: reverting it removes only the evidence records. The underlying remediation code is reverted by the REM-0011 rollback procedure, not here.",
+  "schema_version": "1.0",
+  "supersedes": "OCOR-DEV-REM-0011-RCCAD-20260915",
+  "task_id": "OCOR-DEV-REM-0011"
+}
