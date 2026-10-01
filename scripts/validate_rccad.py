@@ -7,6 +7,7 @@ import argparse
 import ast
 import hashlib
 import json
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -55,17 +56,17 @@ def canonical(path: Path, value: dict[str, Any]) -> bool:
 
 def git_changed(root: Path, base_ref: str | None) -> list[str]:
     commands = [
-        ["git", "diff", "--name-only"],
-        ["git", "diff", "--cached", "--name-only"],
+        ["git", "diff", "--name-only", "-z", "--no-renames"],
+        ["git", "diff", "--cached", "--name-only", "-z", "--no-renames"],
     ]
     if base_ref:
-        commands.append(["git", "diff", "--name-only", base_ref, "HEAD"])
+        commands.append(["git", "diff", "--name-only", "-z", "--no-renames", base_ref, "HEAD"])
     changed: set[str] = set()
     for command in commands:
-        result = subprocess.run(command, cwd=root, capture_output=True, text=True, check=False)
+        result = subprocess.run(command, cwd=root, capture_output=True, check=False)
         if result.returncode:
-            raise RuntimeError(result.stderr.strip() or "git diff failed")
-        changed.update(line for line in result.stdout.splitlines() if line)
+            raise RuntimeError(result.stderr.decode("utf-8", "replace").strip() or "git diff failed")
+        changed.update(os.fsdecode(name) for name in result.stdout.split(b"\0") if name)
     return sorted(changed)
 
 
