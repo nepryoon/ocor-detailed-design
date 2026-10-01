@@ -1,0 +1,72 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0013.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 34,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "583cef668320cca30ad14b4c642c9c5c8fd6689c",
+  "created_at": "2026-10-01T19:14:07.066624Z",
+  "environment": {
+    "host": "nepryoon",
+    "node": "v24.21.0",
+    "python": "Python 3.12.11",
+    "re_ran_at": "2026-10-01T19:14:07.066637Z",
+    "uv": "uv 0.12.21 (x86_64-unknown-linux-gnu)"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c3/ports.py": "3d028c2fd24c7b7b5824e7a5120d3cf866e85402c4f54bfe5276930a4d13b3c0",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0013.py": "5408186579aef9cdff1a074c11f2dcaaebb4c463f762b9cbde21eef804a96f89",
+    "ocor-runtime/uv.lock": "21dfa5dce0be7756356306cd22df7fd8c90ee5b30646d5ddac5b0c93aefe5608"
+  },
+  "raw_output_sha256": "3a2dc5b6ebd1855b7a929d27021d2670ce5796c886d77cd1cbaa0dc3b56396ea",
+  "record_id": "OCOR-DEV-0013-requalified-583cef668320",
+  "requalification": {
+    "previous_inputs": {
+      "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+      "ocor-runtime/src/ocor_runtime/c3/ports.py": "3d028c2fd24c7b7b5824e7a5120d3cf866e85402c4f54bfe5276930a4d13b3c0",
+      "ocor-runtime/tests/tasks/test_ocor_dev_0013.py": "5408186579aef9cdff1a074c11f2dcaaebb4c463f762b9cbde21eef804a96f89",
+      "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537"
+    },
+    "re_ran_command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0013.py",
+    "reason": "R3 step (b): evidence input drift remediation (input hashes no longer matched HEAD)",
+    "supersedes_commit": "c49c0b607f1962c283d0191daf386036467ba7c1"
+  },
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0013-C3-PORTS",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0013.py",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 34,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "These are C3 boundary contracts; transactional persistence, relay and recovery implementations are assigned to subsequent C3 tasks.",
+    "Real PostgreSQL regression evidence covers the existing transactional-outbox fallback but does not establish conformance of a not-yet-implemented governed C3 adapter.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and compensating controls are not equivalent."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated task commits and revalidate the prior cumulative G1 manifest.",
+  "schema_version": "1.0",
+  "supersedes": "c49c0b607f1962c283d0191daf386036467ba7c1",
+  "task_id": "OCOR-DEV-0013"
+}
