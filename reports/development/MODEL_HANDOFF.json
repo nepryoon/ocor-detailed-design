@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "80fcbaa676055e34ac079539806c6093f328f187",
-  "branch": "governed/state-sync-r3-evidence-input-drift",
+  "baseline_commit": "362e1a598ce3438d44207b05b9b35dbcd08273af",
+  "branch": "governed/state-sync-r3b-requalification",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -578,7 +578,11 @@
       "command": "Merge R3 step (a) PR #140 (governed/remediation-r3-evidence-input-drift) via gh pr merge --merge --match-head-commit d2b36f46342693ad05d68993f360621791902b18",
       "result": "MERGED_80fcbaa676055e34ac079539806c6093f328f187_13_CHECKS_GREEN_ON_EXACT_HEAD_d2b36f4; post-merge origin/main == mergeCommit.oid"
     },
-    "R3 step (a) state sync: recorded merge of PR #140 and validator RED (checked_tasks=62, checked_inputs=165, drifted_inputs=51, drifted_tasks=32) in EXECUTION_STATE remediation_status.R3_evidence_input_drift; next_executable_action -> R3 step (b) requalification records."
+    "R3 step (a) state sync: recorded merge of PR #140 and validator RED (checked_tasks=62, checked_inputs=165, drifted_inputs=51, drifted_tasks=32) in EXECUTION_STATE remediation_status.R3_evidence_input_drift; next_executable_action -> R3 step (b) requalification records.",
+    {
+      "command": "R3 step (b) part 1: requalify 12 drifted G0/G1 evidence records at HEAD, open PR #143, wait 13/13 green on exact head f0c8483, merge --match-head-commit",
+      "result": "PASS_MERGE_362e1a598ce3438d44207b05b9b35dbcd08273af_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_f0c84834e811; post-merge drift validator 29/165 inputs + 20/62 tasks (was 51/165 + 32/62 at step (a) RED)"
+    }
   ],
   "completed_tasks": [
     "Phase 0: reconciled EXECUTION_STATE/MODEL_HANDOFF/ITERATION_LOG to real evidence (28 sealed tasks, not 19); superseded TERMINAL_BLOCKED_REPORT.json and G2/blockers/MANIFEST.json",
@@ -691,7 +695,7 @@
     "R1 state realignment: closed PR #131 as superseded; baseline_commit -> 276fc65 (HEAD of main); registered merges #128/#129/#130/#132; GITHUB-BRANCH-PROTECTION-001 resolved server-side by ruleset 23412233; OCOR-DEV-0048 unblocked (local preflight all 11 services READY, SPIRE included); historical ITERATION_LOG entry of PR #131 carried verbatim.",
     "OCOR-DEV-REM-0014: PR #135 merged (a8c5e5d92513b1a333593bbc56c411b61773f29b). All 13 checks green on the exact head 0820fec. TypeDB commit_id/watermark safe literal rendering + identifier contract; 17 live positive/negative cases on the real TypeDB backend; sealed content-addressed evidence record (record 04f60e45d9b79be0045ea2e3ab34f930335c386b9ed0ecf2eb652321565bf6cb, raw log 8733c7c227041ad92e5a7545b8033ae1917cb06b4ba26155d053b43566ceb9f9)."
   ],
-  "current_task": "R3 step (a) merged: fail-closed evidence-input-drift validator (scripts/validate_evidence_input_drift.py) + hermetic TDD tests (PR #140). RED confirmed: 51/165 inputs, 32/62 tasks drifted. Next: R3 step (b) requalification records.",
+  "current_task": "R3 step (b) part 1 merged (PR #143, 362e1a5): 12 G0/G1 drifted evidence tasks requalified at HEAD (OCOR-DEV-0002..0006, 0008..0014) with content-addressed *.requalified records + supersedes links. Drift validator post-merge: 29/165 inputs, 20/62 tasks. Next: R3 step (b) part 2 (20 remaining tasks), then R3 step (c) (wire validator as blocking CI + preflight).",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -781,10 +785,10 @@
     "reports/evidence/G4/OCOR-DEV-0047.json",
     "reports/evidence/G4/OCOR-DEV-0047.log"
   ],
-  "exact_next_action": "R3 step (b): for each of the 32 drifted tasks (see validate_evidence_input_drift.py findings) produce a requalification evidence record at HEAD -- re-run its tests on the real stack, new raw logs + hashes, surgical MANIFEST.json insertion with explicit 'supersedes' link. Never modify a sealed record. Then R3 step (c): wire the validator as a blocking CI step + preflight. OCOR-DEV-REM-0015/REM-0016 remain BLOCKED on TOOLCHAIN-LOCK-RESIDUAL (git 2.55.0).",
+  "exact_next_action": "R3 step (b) part 2: for each of the 20 remaining drifted tasks (see validate_evidence_input_drift.py findings: OCOR-DEV-0007, 0015, 0019, 0020, 0022, 0023, 0032, 0037, 0038, 0070..0079, 0081) produce a requalification evidence record at HEAD -- re-run its tests on the real stack, new raw logs + hashes, surgical MANIFEST.json insertion with explicit 'supersedes' link. Never modify a sealed record. Then R3 step (c): wire scripts/validate_evidence_input_drift.py as a blocking CI step + preflight. OCOR-DEV-REM-0015/REM-0016 remain BLOCKED on TOOLCHAIN-LOCK-RESIDUAL (git 2.55.0).",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "TOOLCHAIN-LOCK-RESIDUAL"
   ],
-  "worktree": ".ocor/worktrees/state-sync-r3-evidence-input-drift"
+  "worktree": ".ocor/worktrees/state-sync-r3b-requalification"
 }

@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-r3-evidence-input-drift",
-    "change_set": "R3-STEP-A__STATE_SYNC",
+    "branch": "governed/state-sync-r3b-requalification",
+    "change_set": "R3-STEP-B-PART1__STATE_SYNC",
     "decision_id": "DEC-211",
-    "phase": "R3_STEP_A_MERGED",
-    "worktree": ".ocor/worktrees/state-sync-r3-evidence-input-drift"
+    "phase": "R3_STEP_B_PART1_MERGED",
+    "worktree": ".ocor/worktrees/state-sync-r3b-requalification"
   },
-  "baseline_commit": "80fcbaa676055e34ac079539806c6093f328f187",
+  "baseline_commit": "362e1a598ce3438d44207b05b9b35dbcd08273af",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -132,15 +132,15 @@
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "d2b36f46342693ad05d68993f360621791902b18",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR140_MERGED_80fcbaa676055e34ac079539806c6093f328f187",
+    "candidate_commit": "f0c84834e81101fba9e678309658d42f5d98d9ed",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR143_MERGED_362e1a598ce3438d44207b05b9b35dbcd08273af",
     "run_ids": [
-      36905610586,
-      36905610820,
-      36905610706,
-      36905610824,
-      36905610713,
-      36905610569
+      36914019794,
+      36914019978,
+      36914019910,
+      36914019955,
+      36914019726,
+      36914019706
     ]
   },
   "mandate_phase_status": {
@@ -201,7 +201,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "R3 step (b): produce requalification evidence records at HEAD for the 32 tasks whose sealed evidence inputs have drifted (validate_evidence_input_drift.py: checked_tasks=62, checked_inputs=165, drifted_inputs=51, drifted_tasks=32). Re-run each drifted task's tests on the real stack with new raw logs/hashes, insert surgically into MANIFEST.json with an explicit 'supersedes' link to the original record; never modify a sealed record. Then R3 step (c): wire the validator as a blocking CI step + preflight. OCOR-DEV-REM-0015/REM-0016 remain BLOCKED on TOOLCHAIN-LOCK-RESIDUAL (git 2.55.0).",
+  "next_executable_action": "R3 step (b) part 2: produce requalification evidence records at HEAD for the 20 remaining drifted tasks (OCOR-DEV-0007, 0015, 0019, 0020, 0022, 0023, 0032, 0037, 0038, 0070..0079, 0081) via validate_evidence_input_drift.py. Re-run each drifted task's tests on the real stack with new raw logs/hashes, insert surgically into MANIFEST.json with an explicit 'supersedes' link; never modify a sealed record. Then R3 step (c): wire the validator as a blocking CI step + preflight. OCOR-DEV-REM-0015/REM-0016 remain BLOCKED on TOOLCHAIN-LOCK-RESIDUAL (git 2.55.0).",
   "remediation_status": {
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -295,12 +295,15 @@
     },
     "R3_evidence_input_drift": {
       "merge_commit_step_a": "80fcbaa676055e34ac079539806c6093f328f187",
-      "next_step": "STEP_B_REQUALIFICATION_RECORDS",
+      "merge_commit_step_b_part1": "362e1a598ce3438d44207b05b9b35dbcd08273af",
+      "next_step": "STEP_B_REQUALIFICATION_RECORDS_CONTINUED",
       "notes": [
         "Fail-closed validator merged as PR #140; RED demonstrated (51/165 inputs and 32/62 tasks drifted vs sealed evidence records at HEAD).",
-        "Validator is NOT yet wired into CI/preflight: deferred to R3 step (c) after step (b) requalification brings it back to GREEN."
+        "Validator is NOT yet wired into CI/preflight: deferred to R3 step (c) after step (b) requalification brings it back to GREEN.",
+        "R3 step (b) part 1 merged as PR #143 (362e1a5): 12 G0/G1 drifted tasks requalified at HEAD (OCOR-DEV-0002..0006, 0008..0014) with new content-addressed records (*.requalified.json/.log) carrying explicit 'supersedes' links; surgical MANIFEST.json insertion; original sealed records never modified. Post-merge drift validator: 29/165 inputs, 20/62 tasks remain drifted."
       ],
       "pr_step_a": 140,
+      "pr_step_b_part1": 143,
       "red_evidence": {
         "checked_inputs": 165,
         "checked_tasks": 62,
@@ -308,7 +311,47 @@
         "drifted_tasks": 32,
         "head": "80fcbaa676055e34ac079539806c6093f328f187"
       },
-      "status": "STEP_A_MERGED",
+      "requalification_part1": {
+        "drifted_inputs_after": 29,
+        "drifted_tasks_after": 20,
+        "remaining_tasks": [
+          "OCOR-DEV-0007",
+          "OCOR-DEV-0015",
+          "OCOR-DEV-0019",
+          "OCOR-DEV-0020",
+          "OCOR-DEV-0022",
+          "OCOR-DEV-0023",
+          "OCOR-DEV-0032",
+          "OCOR-DEV-0037",
+          "OCOR-DEV-0038",
+          "OCOR-DEV-0070",
+          "OCOR-DEV-0071",
+          "OCOR-DEV-0072",
+          "OCOR-DEV-0073",
+          "OCOR-DEV-0074",
+          "OCOR-DEV-0075",
+          "OCOR-DEV-0076",
+          "OCOR-DEV-0077",
+          "OCOR-DEV-0078",
+          "OCOR-DEV-0079",
+          "OCOR-DEV-0081"
+        ],
+        "requalified_tasks": [
+          "OCOR-DEV-0002",
+          "OCOR-DEV-0003",
+          "OCOR-DEV-0004",
+          "OCOR-DEV-0005",
+          "OCOR-DEV-0006",
+          "OCOR-DEV-0008",
+          "OCOR-DEV-0009",
+          "OCOR-DEV-0010",
+          "OCOR-DEV-0011",
+          "OCOR-DEV-0012",
+          "OCOR-DEV-0013",
+          "OCOR-DEV-0014"
+        ]
+      },
+      "status": "STEP_B_IN_PROGRESS",
       "validator": "scripts/validate_evidence_input_drift.py"
     }
   },
