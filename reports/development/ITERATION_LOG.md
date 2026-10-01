@@ -3928,3 +3928,31 @@
   (`OCOR-DEV-0007`, `0015`, `0019`, `0020`, `0022`, `0023`, `0032`, `0037`, `0038`,
   `0070..0079`, `0081`); poi R3 step (c) — cablare il validator come step CI bloccante.
   `OCOR-DEV-REM-0015`/`REM-0016` restano `BLOCKED` su `TOOLCHAIN-LOCK-RESIDUAL` (`git` 2.55.0).
+
+## 2026-10-01 — Governed: merge R3 step (b) part 2 requalification (PR #145) + state sync
+
+- Change set `governed/state-sync-r3b-part2-requalification` (docs/state), basato sull'HEAD di
+  `main` = `168665f8fc5942086f6390896c8ab3e76a927772` (merge commit di PR #145).
+- Merge di **PR #145** (`governed/remediation-r3b-part2-evidence-requalification`) con
+  `--match-head-commit fb18866…`: 13 check verdi sull'HEAD esatto; post-merge verificato
+  `origin/main` == merge commit `168665f…`.
+- R3 step (b) part 2 chiuso: 20 task G1/G2/G4 in deriva riqualificati all'HEAD
+  (`OCOR-DEV-0007`, `0015`, `0019`, `0020`, `0022`, `0023`, `0032`, `0037`, `0038`,
+  `0070..0079`, `0081`) con record content-addressed nuovi (`*.requalified.json` +
+  `*.requalified.log`), ognuno con campo `supersedes` esplicito al record originale;
+  inserimento chirurgico nei `MANIFEST.json` di G1, G2 e G4; i record sigillati originali
+  non sono stati modificati. Allowlist del plan-validator estesa per i 40 nuovi path e
+  self-hash di planning riallineato.
+- Deriva post-merge (validator `scripts/validate_evidence_input_drift.py`): GREEN —
+  `checked_inputs=165`, `checked_tasks=62`, `drifted_inputs=0`, `drifted_tasks=0`
+  (da 29/165 e 20/62 dopo lo step (b) part 1, e 51/165 e 32/62 al RED dello step (a)).
+- `EXECUTION_STATE.json`: `remediation_status.R3_evidence_input_drift` → `STEP_B_MERGED`
+  con `requalification_part2` (20 requalificati / 0 residui) e `next_step=STEP_C_WIRE_VALIDATOR`;
+  `baseline_commit` → `168665f…`; `latest_ci_evidence` aggiornato con i 6 run ID della CI di
+  PR #145; `next_executable_action` → R3 step (c). `MODEL_HANDOFF.json` riallineato
+  (branch, worktree, `current_task`, `exact_next_action`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: R3 step (c) — cablare `scripts/validate_evidence_input_drift.py` come
+  step CI bloccante e nel preflight (fail-closed). `OCOR-DEV-REM-0015`/`REM-0016` restano
+  `BLOCKED` su `TOOLCHAIN-LOCK-RESIDUAL` (`git` 2.55.0).
