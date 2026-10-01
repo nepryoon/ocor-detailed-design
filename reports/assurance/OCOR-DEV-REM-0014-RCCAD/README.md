@@ -1,8 +1,9 @@
 # OCOR-DEV-REM-0014-RCCAD — TypeDB commit_id/watermark injection
 
-- **Status**: `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION_CI_AND_INTEGRATION`
-  (implementata con TDD RED→GREEN il 2026-10-01; in attesa di verifica indipendente,
-  CI verde e integrazione prima del sigillo)
+- **Status**: `QUALIFIED_CANDIDATE_PENDING_SEAL_CI_AND_INTEGRATION`
+  (implementata con TDD RED→GREEN il 2026-10-01; verifica indipendente
+  `GO_FOR_EVIDENCE_SEAL` ricevuta il 2026-10-01; in attesa di CI verde sull'HEAD
+  esatto e integrazione per il sigillo)
 - **Fonte**: verifica indipendente `REMEDIATION`
   (`request_id` `OCOR-DEV-REM-0010-0011-0012-1aaef13885ed-0`, finding `VF-001`)
 - **Supersede/relaziona**: hardening degli adapter C4 (alias canonico `OCOR-DEV-REM-0013`,
@@ -70,3 +71,22 @@ candidato RCCAD precedente aveva delegato alla CI. Il record `OCOR-DEV-REM-0014.
 è validato da `scripts/validate_runtime_evidence.py --task OCOR-DEV-REM-0014
 --manifest reports/assurance/OCOR-DEV-REM-0014-RCCAD/MANIFEST.json --non-skipped`
 con `PASS`.
+
+## Verifica indipendente (GO_FOR_EVIDENCE_SEAL)
+
+Verdetto ricevuto il 2026-10-01 per `request_id`
+`OCOR-DEV-REM-0014-a2de149d57c9-1` (`review_type` `REMEDIATION`, repair cycle 1):
+
+- **Verdict**: `GO_FOR_EVIDENCE_SEAL` — nessun finding (`blocker=0`, `high=0`,
+  `medium=0`, `low=0`). Il record content-addressed, il manifest e la tracciabilità
+  `supersedes` sono coerenti con l'HEAD verificato `a2de149d57c99953c6f5d0bb679e6ee54545675f`.
+- **Verifier**: processo `codex exec --ephemeral` a contesto pulito su un clone
+  separato, modello non esposto dal runtime (`NOT_EXPOSED_BY_RUNTIME`), limite di
+  indipendenza dichiarato: processo e contesto separati, stesso fornitore di modello
+  dell'implementatore.
+- **Sigillo**: identità/configurazione del verifier e verdetto registrati in
+  `evidence.json` (`independent_verifier` + `independent_verification_result`) e nel
+  record content-addressed `OCOR-DEV-REM-0014.json` (campo `verification`); hash del
+  record riallineato in `MANIFEST.json`. Il raw log `OCOR-DEV-REM-0014.log` e il suo
+  `raw_output_sha256` restano invariati. Il sigillo si completa con la CI verde
+  sull'HEAD esatto e il merge.
