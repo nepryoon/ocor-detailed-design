@@ -3849,3 +3849,30 @@
   `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
 - Prossima azione: ri-richiedere la verifica indipendente di `OCOR-DEV-REM-0015` su un
   HEAD che include la ri-acquisizione del toolchain lock (§6), poi R3 e `OCOR-DEV-0048`.
+
+## 2026-10-01 — Governed: verdetto cycle-2 REM-0015 (NO_GO, residuo git 2.55.0) + state sync
+
+- Change set `governed/state-sync-ocor-dev-rem-0015-cycle2-verdict` (docs/state), basato
+  sull'HEAD di `main` = `eddd83cb0dbc284bec5ca708ae275c7d2225d27e` (merge commit PR #139).
+- Processato il verdetto indipendente `OCOR-DEV-REM-0015-6790a7fe0343-2` (repair_cycle 2,
+  ri-verifica dopo la ri-acquisizione del toolchain lock PR #138): **`NO_GO`** con un
+  singolo finding medium **`VF-001`** — `git: executable integrity mismatch` (osservato
+  2.53.0 `sha256 5516c9f3…` vs lock 2.55.0 `sha256 c1bc685b…`).
+- Il verifier ha confermato che la correzione `git_changed()` (NUL-delimited path) è
+  **funzionalmente corretta**: 14 test focalizzati, 154 casi indipendenti sui path
+  Unicode/tab/newline/CR/quote/backslash/byte non-UTF-8, suite completa **905/905** con
+  servizi live, e **8/9** voci della toolchain ora coincidono con il lock (`tsc` 7.0.2 e
+  `node` 20.20.2 ri-acquisiti con checksum firmato). Resta **soltanto** `git` 2.55.0
+  (nessun binario Linux ufficiale pubblicato dal progetto).
+- `OCOR-DEV-REM-0015` resta **`BLOCKED`** esclusivamente su `TOOLCHAIN-LOCK-RESIDUAL`
+  (`OPEN_PO_DECISION_REQUIRED`, riservata al Product Owner). Evidenza invariata
+  `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION`, non sigillata. Nessun workaround del
+  verifier e nessun preflight convertito in `PASS`.
+- `EXECUTION_STATE.json`: `baseline_commit` → `eddd83c…`; `rem_0015_escalation.verdicts`
+  esteso con il cycle-2; `next_executable_action` ricalcolata. `MODEL_HANDOFF.json`
+  riallineato (branch, `current_task`, `exact_next_action`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: merge di **PR #140** (R3 step (a), `governed/remediation-r3-evidence-input-drift`,
+  13/13 check verdi, `MERGEABLE`) con `--match-head-commit`; poi R3 step (b)
+  (record di riqualifica) e/o implementazione `OCOR-DEV-0048`.

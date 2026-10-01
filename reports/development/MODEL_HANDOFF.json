@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "749a88f7fb4b96aa00fc83fd1097fb12274a70f7",
-  "branch": "governed/state-sync-toolchain-lock",
+  "baseline_commit": "eddd83cb0dbc284bec5ca708ae275c7d2225d27e",
+  "branch": "governed/state-sync-ocor-dev-rem-0015-cycle2-verdict",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -569,7 +569,11 @@
       "command": "Process NO_GO verdict OCOR-DEV-REM-0015-92e194e2965f-1 (repair cycle 1)",
       "result": "VF-001 (toolchain-lock identity mismatch: docker/git/gh/node/uv versions+digests differ from infra/toolchain.lock.json; official Node 20.20.2 digest != lock). git_changed() fix functionally correct. Escalated (2 repair cycles exhausted); decision request TOOLCHAIN-LOCK-UPDATE + blocker registered; evidence remains unsealed."
     },
-    "TOOLCHAIN-LOCK-UPDATE governed re-acquisition: PR #138 merged (749a88f7fb4b96aa00fc83fd1097fb12274a70f7). All 13 checks green on the exact head 39e8153. node/gh/docker/uv re-acquired at unchanged versions with digests verified against official checksums (node 4446eb8e->62954886 verified against SHASUMS256.txt + GPG; gh be795719->d0a90152 against gh_2.99.0_checksums.txt; docker d62dfea0->e4538110 official static binary; uv unchanged). git 2.55.0/typescript 7.0.2 deferred to decision request TOOLCHAIN-LOCK-RESIDUAL. Lock verification code unchanged."
+    "TOOLCHAIN-LOCK-UPDATE governed re-acquisition: PR #138 merged (749a88f7fb4b96aa00fc83fd1097fb12274a70f7). All 13 checks green on the exact head 39e8153. node/gh/docker/uv re-acquired at unchanged versions with digests verified against official checksums (node 4446eb8e->62954886 verified against SHASUMS256.txt + GPG; gh be795719->d0a90152 against gh_2.99.0_checksums.txt; docker d62dfea0->e4538110 official static binary; uv unchanged). git 2.55.0/typescript 7.0.2 deferred to decision request TOOLCHAIN-LOCK-RESIDUAL. Lock verification code unchanged.",
+    {
+      "command": "Process REM-0015 cycle-2 NO_GO verdict (OCOR-DEV-REM-0015-6790a7fe0343-2) into governed state sync",
+      "result": "RECORDED_VF-001_git_2.55.0_sole_residual_REM-0015_BLOCKED_ON_TOOLCHAIN-LOCK-RESIDUAL_verifier_confirmed_fix_functionally_correct"
+    }
   ],
   "completed_tasks": [
     "Phase 0: reconciled EXECUTION_STATE/MODEL_HANDOFF/ITERATION_LOG to real evidence (28 sealed tasks, not 19); superseded TERMINAL_BLOCKED_REPORT.json and G2/blockers/MANIFEST.json",
@@ -682,7 +686,7 @@
     "R1 state realignment: closed PR #131 as superseded; baseline_commit -> 276fc65 (HEAD of main); registered merges #128/#129/#130/#132; GITHUB-BRANCH-PROTECTION-001 resolved server-side by ruleset 23412233; OCOR-DEV-0048 unblocked (local preflight all 11 services READY, SPIRE included); historical ITERATION_LOG entry of PR #131 carried verbatim.",
     "OCOR-DEV-REM-0014: PR #135 merged (a8c5e5d92513b1a333593bbc56c411b61773f29b). All 13 checks green on the exact head 0820fec. TypeDB commit_id/watermark safe literal rendering + identifier contract; 17 live positive/negative cases on the real TypeDB backend; sealed content-addressed evidence record (record 04f60e45d9b79be0045ea2e3ab34f930335c386b9ed0ecf2eb652321565bf6cb, raw log 8733c7c227041ad92e5a7545b8033ae1917cb06b4ba26155d053b43566ceb9f9)."
   ],
-  "current_task": "TOOLCHAIN-LOCK-UPDATE resolved (PR #138 merged 749a88f): governed toolchain-lock re-acquisition of node/gh/docker/uv at unchanged versions with digests verified against official checksums; git 2.55.0 and typescript 7.0.2 -> decision request TOOLCHAIN-LOCK-RESIDUAL (OPEN_PO_DECISION_REQUIRED). Next: re-request independent verification of OCOR-DEV-REM-0015.",
+  "current_task": "REM-0015 cycle-2 re-verification returned NO_GO (VF-001 git 2.55.0 executable integrity mismatch, sole residual). Recorded and REM-0015 left BLOCKED on TOOLCHAIN-LOCK-RESIDUAL. Next: merge R3 PR #140 (13/13 green, MERGEABLE) and continue R3 step (b) + OCOR-DEV-0048 implementation.",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -772,7 +776,7 @@
     "reports/evidence/G4/OCOR-DEV-0047.json",
     "reports/evidence/G4/OCOR-DEV-0047.log"
   ],
-  "exact_next_action": "Re-request independent verification of OCOR-DEV-REM-0015 (section 6) on a HEAD including the toolchain-lock re-acquisition (PR #138 merged 749a88f): write ~/.ocor-codex/verify_request.json with review_type TASK_EVIDENCE (remediation evidence), then wait for the independent verdict.",
+  "exact_next_action": "Merge R3 PR #140 (governed/remediation-r3-evidence-input-drift, head d2b36f46342693ad05d68993f360621791902b18, 13/13 checks green, MERGEABLE) via gh pr merge --merge --match-head-commit; then continue R3 step (b) (requalification records for drifted tasks) and/or OCOR-DEV-0048 implementation phase. REM-0015/REM-0016 remain blocked on TOOLCHAIN-LOCK-RESIDUAL (git 2.55.0).",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "TOOLCHAIN-LOCK-RESIDUAL"
