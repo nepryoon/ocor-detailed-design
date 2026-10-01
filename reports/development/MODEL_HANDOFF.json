@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "e74afa6f1cbd714d9fc5c8e45272cfc7773d869c",
-  "branch": "governed/state-sync-toolchain-lock-residual-git",
+  "baseline_commit": "54ec7d13d7e954b4264efdb2d4965b6f8957b2a7",
+  "branch": "governed/state-sync-ocor-dev-rem-0015",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -586,6 +586,10 @@
     {
       "command": "R3 step (b) part 2: requalify 20 remaining drifted G1/G2/G4 evidence records at HEAD, open PR #145, wait 13/13 green on exact head fb18866, merge --match-head-commit",
       "result": "PASS_MERGE_168665f8fc5942086f6390896c8ab3e76a927772_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_fb18866ef113bb59b3f97e10b97f117f45112d4b; post-merge drift validator GREEN 0/165 inputs + 0/62 tasks (was 29/165 + 20/62 after part 1)"
+    },
+    {
+      "command": "gh pr merge 149 --merge --match-head-commit 0f98a5d0f29801e0a2c7aabe1f0dbbe999d5447d",
+      "result": "MERGED_54ec7d13d7e954b4264efdb2d4965b6f8957b2a7_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_0f98a5d; post-merge fetch confirms origin/main == merge commit; sealed evidence hashes intact (record f165975a8327f4c13cf9f66c6f6001b697c0032c8f4f2ac5f9a53c03cc90619f, raw log 3d59fbee761dc6d68b900e09e6b1032277b30eb63c4679f4f053cc1a65dd49cf)"
     }
   ],
   "completed_tasks": [
@@ -698,9 +702,10 @@
     "OCOR-DEV-0047: PR #125 merged (355ff68cc65053f55b26812843b4a7cb19e9b177). All 13 checks green on the first push. Post-merge SHA verified for all reused sealed files.",
     "R1 state realignment: closed PR #131 as superseded; baseline_commit -> 276fc65 (HEAD of main); registered merges #128/#129/#130/#132; GITHUB-BRANCH-PROTECTION-001 resolved server-side by ruleset 23412233; OCOR-DEV-0048 unblocked (local preflight all 11 services READY, SPIRE included); historical ITERATION_LOG entry of PR #131 carried verbatim.",
     "OCOR-DEV-REM-0014: PR #135 merged (a8c5e5d92513b1a333593bbc56c411b61773f29b). All 13 checks green on the exact head 0820fec. TypeDB commit_id/watermark safe literal rendering + identifier contract; 17 live positive/negative cases on the real TypeDB backend; sealed content-addressed evidence record (record 04f60e45d9b79be0045ea2e3ab34f930335c386b9ed0ecf2eb652321565bf6cb, raw log 8733c7c227041ad92e5a7545b8033ae1917cb06b4ba26155d053b43566ceb9f9).",
-    "R3 step (b) part 2: PR #145 merged (168665f). 20 remaining G1/G2/G4 drifted evidence records requalified at HEAD with content-addressed *.requalified.json/.log records carrying explicit 'supersedes' links; surgical MANIFEST.json insertion; original sealed records never modified; planning self-hash re-aligned. Post-merge drift validator GREEN (0/165 inputs, 0/62 tasks)."
+    "R3 step (b) part 2: PR #145 merged (168665f). 20 remaining G1/G2/G4 drifted evidence records requalified at HEAD with content-addressed *.requalified.json/.log records carrying explicit 'supersedes' links; surgical MANIFEST.json insertion; original sealed records never modified; planning self-hash re-aligned. Post-merge drift validator GREEN (0/165 inputs, 0/62 tasks).",
+    "OCOR-DEV-REM-0015: PR #149 merged (54ec7d13d7e954b4264efdb2d4965b6f8957b2a7). All 13 checks green on the exact head 0f98a5d0f29801e0a2c7aabe1f0dbbe999d5447d. validate_rccad.py NUL-delimited git diff path handling (finding VF-002); sealed content-addressed evidence record."
   ],
-  "current_task": "State sync after git toolchain-lock resolution (PR #147, e74afa6): git entry of infra/toolchain.lock.json updated to installed Ubuntu 2.53.0 per PO decision TOOLCHAIN-LOCK-RESIDUAL. REM-0015/REM-0016 verification now unblocked. Residual tsc/node host alignment moved to decision request TOOLCHAIN-LOCK-TYPESCRIPT (non-blocking).",
+  "current_task": "R2 (remediation): OCOR-DEV-REM-0015 merged (PR #149); next OCOR-DEV-REM-0016, then R3 step (c), then OCOR-DEV-0048",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -790,10 +795,10 @@
     "reports/evidence/G4/OCOR-DEV-0047.json",
     "reports/evidence/G4/OCOR-DEV-0047.log"
   ],
-  "exact_next_action": "Re-request independent verification for OCOR-DEV-REM-0015 on a HEAD including the git toolchain-lock fix (PR #147); then implement OCOR-DEV-REM-0016 (content-addressed evidence records). R3 step (c): wire validate_evidence_input_drift.py as blocking CI + preflight. TOOLCHAIN-LOCK-TYPESCRIPT (tsc/node) pending PO decision (non-blocking).",
+  "exact_next_action": "Implement OCOR-DEV-REM-0016 (content-addressed evidence records for REM-0010/0011/0012) as a governed/ change set with TDD RED->GREEN, gates verdi and evidence; then R3 step (c) (wire validate_evidence_input_drift.py as blocking CI + preflight); then OCOR-DEV-0048 implementation phase. RVW-03/INFO-A/INFO-C and TOOLCHAIN-LOCK-TYPESCRIPT remain reserved to the Product Owner (non-blocking).",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "TOOLCHAIN-LOCK-TYPESCRIPT"
   ],
-  "worktree": ".ocor/worktrees/state-sync-toolchain-lock-residual-git"
+  "worktree": null
 }

@@ -3983,3 +3983,25 @@
 - Prossima azione: ri-richiedere la verifica indipendente di `OCOR-DEV-REM-0015` su un HEAD che
   include il fix git (PR #147); poi implementare `OCOR-DEV-REM-0016` (record content-addressed);
   poi R3 step (c) — cablare `scripts/validate_evidence_input_drift.py` come step CI bloccante.
+
+## 2026-10-01 — Governed: OCOR-DEV-REM-0015 merged (PR #149) + state sync
+
+- Change set `governed/state-sync-ocor-dev-rem-0015` (docs/state), basato sull'HEAD di `main` =
+  `54ec7d13d7e954b4264efdb2d4965b6f8957b2a7` (merge commit di PR #149).
+- Merge di **PR #149** (`governed/remediation-rem0015-rccad-nul-paths`) con `--match-head-commit
+  0f98a5d0f29801e0a2c7aabe1f0dbbe999d5447d`: 13 check verdi sull'HEAD esatto; post-merge verificato
+  `origin/main` == merge commit `54ec7d13…`.
+- `OCOR-DEV-REM-0015` (finding VF-002, `scripts/validate_rccad.py` gestione path NUL-delimited di
+  `git diff`) implementato con TDD, ri-verificato `GO_FOR_EVIDENCE_SEAL` al ciclo 3 (dopo il fix git
+  del lock, PR #147), sigillato content-addressed e mergiato: record `f165975a…`, raw log `3d59fbee…`.
+- `EXECUTION_STATE.json`: `remediation_status.R2_independent_verification.rems_completed` include
+  `OCOR-DEV-REM-0015`; `rem_0015_escalation.status` → `RESOLVED_SEALED_AND_MERGED` con verdetto
+  ciclo-3 `GO_FOR_EVIDENCE_SEAL`; `baseline_commit` → `54ec7d13…`; `latest_ci_evidence` aggiornato
+  con i 6 run ID della CI di PR #149; `next_executable_action` → implementazione `OCOR-DEV-REM-0016`.
+- `MODEL_HANDOFF.json` riallineato (branch, worktree, `current_task`, `exact_next_action`;
+  `completed_tasks` e `commands_run` aggiornati; `unresolved_blockers` = [`TOOLCHAIN-LOCK-TYPESCRIPT`]).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: implementare `OCOR-DEV-REM-0016` (record content-addressed per
+  REM-0010/0011/0012); poi R3 step (c) — cablare `scripts/validate_evidence_input_drift.py` come
+  step CI bloccante; poi `OCOR-DEV-0048` (fase di implementazione).
