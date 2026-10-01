@@ -1,18 +1,42 @@
 {
   "active_iteration": {
-    "branch": "governed/remediation-r1-state-realignment",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__R1-STATE-REALIGNMENT",
+    "branch": "governed/remediation-r2-verdict-processing",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__R2-INDEPENDENT-VERIFICATION",
     "decision_id": "DEC-211",
-    "phase": "REMEDIATION_R1_STATE_REALIGNMENT",
-    "worktree": null
+    "phase": "REMEDIATION_R2_INDEPENDENT_VERIFICATION",
+    "worktree": ".ocor/worktrees/remediation-r2-verdict-processing"
   },
-  "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
+  "baseline_commit": "8f4d2aa168018e950ad3b85f1a6a78af81fb2fb6",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
       "resolution": "Ruleset 23412233 'Require status checks to pass before merging' active since 2026-09-15, enforcement=active, 13 mandatory required status checks, no bypass actors. Evidence: gh api repos/nepryoon/ocor-detailed-design/rulesets/23412233",
       "status": "RESOLVED_SERVER_SIDE",
       "test_disposition": "RESOLVED"
+    },
+    {
+      "blocked_tasks": [],
+      "decision_request": "reports/development/decision_requests/RVW-03.md",
+      "id": "RVW-03",
+      "non_blocking": true,
+      "scope": "Clarify whether BreakGlassController.authorize must re-validate approvers against IdentityRegistry (defence-in-depth) or whether grant() is the sole authorized artifact.",
+      "status": "OPEN_PO_DECISION_REQUIRED"
+    },
+    {
+      "blocked_tasks": [],
+      "decision_request": "reports/development/decision_requests/INFO-A.md",
+      "id": "INFO-A",
+      "non_blocking": true,
+      "scope": "Clarify whether C5 must detect same-key/different-payload conflicts (stronger idempotency invariant) or the key-only short-circuit is sufficient.",
+      "status": "OPEN_PO_DECISION_REQUIRED"
+    },
+    {
+      "blocked_tasks": [],
+      "decision_request": "reports/development/decision_requests/INFO-C.md",
+      "id": "INFO-C",
+      "non_blocking": true,
+      "scope": "Clarify whether the in-memory reference classes require a thread-safety guarantee.",
+      "status": "OPEN_PO_DECISION_REQUIRED"
     }
   ],
   "claims": {
@@ -157,21 +181,61 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "R1 state realignment merged: baseline_commit -> 276fc6510cb2340a41335f4b12cac864a7299573 (HEAD of main), registered merges #128/#129/#130/#132, closed PR #131 as superseded, GITHUB-BRANCH-PROTECTION-001 resolved server-side by ruleset 23412233 (13 mandatory checks, no bypass, active since 2026-09-15), OCOR-DEV-0048 unblocked (local preflight: all 11 ocor-bootstrap services READY, SPIRE included). Next unit of work: R2 (remediation) -- request independent verification of REM-0010/0011/0012 that entered main via PR #128 (squash 1aaef13, parent 6f8b8e6) with assurance NOT_PERFORMED_SINGLE_AGENT/PENDING, per section 6. The backlog remains {OCOR-DEV-0048 (wave 15)} as the only ready task (22 of 84 not completed); its real-backend implementation resumes after R2/R3.",
+  "next_executable_action": "R2 verdict processed: NO_GO appended in append to the OCOR-DEV-REM-0010/0011/0012 records (not sealed); erratum registered (C4-adapter hardening aliased canonically to OCOR-DEV-REM-0013); decision requests RVW-03/INFO-A/INFO-C queued (OPEN_PO_DECISION_REQUIRED, non-blocking); REMs opened: REM-0014 (TypeDB commit_id/watermark injection), REM-0015 (validate_rccad NUL-delimited paths), REM-0016 (content-addressed evidence records). Next unit of work: implement OCOR-DEV-REM-0014 with TDD on the real TypeDB backend, then REM-0015 and REM-0016, then re-request independent verification on a HEAD including the authorized Fuseki update.",
   "remediation_status": {
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
+      "merge_commit": "8f4d2aa168018e950ad3b85f1a6a78af81fb2fb6",
       "notes": [
         "PR #131 (draft governed/ocor-dev-0048-control-plane-1935) closed as superseded (cloud-environment state sync failing rccad-methodology/tooling-policy for RCCAD-NONCANONICAL-JSON on EXECUTION_STATE.json)",
         "registered merges on main: #128 (REM-0010/0011/0012), #129 (bounded registry pull retry), #130 (label-gated auto-merge-on-green), #132 (Fuseki image identity sync)",
         "GITHUB-BRANCH-PROTECTION-001 resolved server-side by ruleset 23412233 (13 mandatory status checks, no bypass)",
         "OCOR-DEV-0048 unblocked: local preflight shows all 11 ocor-bootstrap services READY (OPA, Keycloak, SPIFFE/SPIRE, OpenBao, mTLS included)"
       ],
-      "status": "IN_PROGRESS"
+      "pr": 133,
+      "status": "MERGED"
+    },
+    "R2_independent_verification": {
+      "base_sha": "6f8b8e6673f4ffe16370934a94ed6be9695fc6d7",
+      "decision_requests_queued": [
+        "RVW-03",
+        "INFO-A",
+        "INFO-C"
+      ],
+      "erratum": {
+        "canonical_alias": "OCOR-DEV-REM-0013",
+        "collision": "OCOR-DEV-REM-0010 double-booked: $ref generator correction (2026-09-12, PR #63) and C4 adapter hardening (2026-09-15, PR #128)",
+        "history_not_renamed": true
+      },
+      "findings": [
+        "VF-001",
+        "VF-002",
+        "VF-003",
+        "VF-004"
+      ],
+      "head_sha": "1aaef13885ed142646d0ed35c995078c30d9f174",
+      "next_actions": [
+        "Implement OCOR-DEV-REM-0014 (TypeDB commit_id/watermark safe literal rendering + identifier contract) with TDD on the real TypeDB backend",
+        "Implement OCOR-DEV-REM-0015 (validate_rccad NUL-delimited path handling) with regression tests",
+        "Implement OCOR-DEV-REM-0016 (content-addressed evidence records for REM-0010/0011/0012)",
+        "Re-request independent verification on a HEAD including the authorized Fuseki update and the fixes"
+      ],
+      "notes": [
+        "Verdict appended to the three assurance records in append, without rewriting historical fields.",
+        "Records remain CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed)."
+      ],
+      "rems_opened": [
+        "OCOR-DEV-REM-0014",
+        "OCOR-DEV-REM-0015",
+        "OCOR-DEV-REM-0016"
+      ],
+      "request_id": "OCOR-DEV-REM-0010-0011-0012-1aaef13885ed-0",
+      "status": "VERDICT_PROCESSED",
+      "verdict": "NO_GO"
     }
   },
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-10-01T07:40:12Z"
+  "updated_at": "2026-10-01T08:38:00Z"
 }
