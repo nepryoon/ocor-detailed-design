@@ -1,0 +1,611 @@
+========================================================================
+ OCOR-DEV-REM-0014 — raw evidence log (content-addressed)              
+ task: harden C4 TypeDB adapter against TypeQL literal injection        
+ VF-001 remediation — supersedes OCOR-DEV-REM-0014-RCCAD-20261001      
+========================================================================
+
+----- SECTION 1: TDD RED (pre-fix adapter at bb893ef) -----
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/.ocor/worktrees/remediation-rem0014-typedb-injection/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/.ocor/worktrees/remediation-rem0014-typedb-injection/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 17 items
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_watermark_insert_escapes_commit_id_so_injection_cannot_add_a_fact FAILED [  5%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_round_trips_quote_and_backslash FAILED [ 11%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_fact_id_round_trips_special_characters PASSED [ 17%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_payload_round_trips_special_characters PASSED [ 23%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_injection_with_pre_existing_fact_and_watermark_is_contained FAILED [ 29%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_fact_id_identifier_contract_rejects_malformed_values[None] FAILED [ 35%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_fact_id_identifier_contract_rejects_malformed_values[] FAILED [ 41%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_fact_id_identifier_contract_rejects_malformed_values[42] FAILED [ 47%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_fact_id_identifier_contract_rejects_malformed_values[bad3] FAILED [ 52%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_identifier_contract_rejects_malformed_values[None] FAILED [ 58%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_identifier_contract_rejects_malformed_values[] FAILED [ 64%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_identifier_contract_rejects_malformed_values[42] FAILED [ 70%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_identifier_contract_rejects_malformed_values[bad3] FAILED [ 76%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_payload_contract_rejects_malformed_values[None] FAILED [ 82%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_payload_contract_rejects_malformed_values[] FAILED [ 88%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_payload_contract_rejects_malformed_values[42] FAILED [ 94%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_payload_contract_rejects_malformed_values[bad3] FAILED [100%]
+
+=================================== FAILURES ===================================
+____ test_watermark_insert_escapes_commit_id_so_injection_cannot_add_a_fact ____
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b67fe30>
+
+    def test_watermark_insert_escapes_commit_id_so_injection_cannot_add_a_fact(
+        adapter: TypeDBProjectionAdapter,
+    ) -> None:
+        adapter.apply_commit(fact_id="fact-1", commit_id=_INJECTION, payload="V1")
+    
+        # watermark identity: the malicious commit_id is stored verbatim as a
+        # single literal, never split into a watermark "x" plus an injected fact.
+>       assert adapter.current_watermark() == _INJECTION
+E       assert 'x' == 'x"; $evil is...ayload "owned'
+E         
+E         - x"; $evil isa c4-fact, has c4-fact-id "injected-fact", has c4-commit-id "x", has c4-payload "owned
+E         + x
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:57: AssertionError
+________________ test_commit_id_round_trips_quote_and_backslash ________________
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b67eab0>
+
+    def test_commit_id_round_trips_quote_and_backslash(adapter: TypeDBProjectionAdapter) -> None:
+        commit_id = 'a"b\\c'
+>       adapter.apply_commit(fact_id="fact-1", commit_id=commit_id, payload="V1")
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:64: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:212: in apply_commit
+    _write(*statements)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+queries = ('insert $f isa c4-fact, has c4-fact-id "fact-1", has c4-commit-id "a\\"b\\\\c", has c4-payload "V1";', 'insert $w isa c4-watermark, has c4-commit-id "a"b\\c";')
+
+    def _write(*queries: str) -> None:
+        """Runs every query inside ONE real TypeDB write transaction,
+        committed together or not at all -- the primitive ``apply_commit``
+        relies on to make fact-ingest and watermark-advance atomic."""
+        token = _token()
+        transaction_id = _transaction("write", token)
+        for query in queries:
+            status, result = _query(transaction_id, query, token)
+            if status != 200:
+                _close(transaction_id, token)
+>               raise TypeDBAdapterError(f"write failed: {status} {result}")
+E               ocor_runtime.c4.typedb_adapter.TypeDBAdapterError: write failed: 400 {'code': 'TQL0', 'message': '[TQL0] [TQL03] TypeQL Error: There is a syntax error\nparsing error: expected PLUS, MINUS, TIMES, DIVIDE, POWER, or MODULO\nNear 1:48:\n--> insert $w isa c4-watermark, has c4-commit-id "a"b\\c";\n                                                    ^\nCaused: Error in usage of TypeQL.\n[QEX1] Failed to parse TypeQL query.\n[TSV11] Query failed.\n[HSR16] Transaction error.'}
+
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:143: TypeDBAdapterError
+_______ test_injection_with_pre_existing_fact_and_watermark_is_contained _______
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b6b1640>
+
+    def test_injection_with_pre_existing_fact_and_watermark_is_contained(
+        adapter: TypeDBProjectionAdapter,
+    ) -> None:
+        adapter.apply_commit(fact_id="fact-1", commit_id="commit-1", payload="V1")
+        adapter.apply_commit(fact_id="fact-2", commit_id=_INJECTION, payload="V2")
+    
+        # the pre-existing fact is untouched and the second fact advanced its
+        # watermark to the (escaped) malicious literal; no injected fact exists.
+        assert adapter._lookup_fact("fact-1") == ("commit-1", "V1")
+        assert adapter._lookup_fact("fact-2") == (_INJECTION, "V2")
+>       assert adapter._lookup_fact("injected-fact") is None
+E       AssertionError: assert ('x', 'owned') is None
+E        +  where ('x', 'owned') = _lookup_fact('injected-fact')
+E        +    where _lookup_fact = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b6b1640>._lookup_fact
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:90: AssertionError
+_______ test_fact_id_identifier_contract_rejects_malformed_values[None] ________
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b6b36b0>
+bad = None
+
+    @pytest.mark.parametrize("bad", [None, "", 42, []])
+    def test_fact_id_identifier_contract_rejects_malformed_values(
+        adapter: TypeDBProjectionAdapter, bad: object
+    ) -> None:
+        with pytest.raises(C2Error) as excinfo:
+>           adapter.apply_commit(fact_id=bad, commit_id="commit-1", payload="V1")  # type: ignore[arg-type]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:99: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:201: in apply_commit
+    existing_fact = self._lookup_fact(fact_id)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:222: in _lookup_fact
+    f"match $f isa c4-fact, has c4-fact-id {_literal(fact_id)}, "
+                                            ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = None
+
+    def _literal(value: str) -> str:
+        """Renders ``value`` as a TypeQL string literal, escaping ``\\`` and ``"``
+        so an identifier or payload can never terminate the literal and inject
+        further TypeQL. A canonical URN/digest (no ``\\`` or ``"``) is quoted
+        exactly as before, keeping generated queries byte-identical."""
+>       escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+                  ^^^^^^^^^^^^^
+E       AttributeError: 'NoneType' object has no attribute 'replace'
+
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:67: AttributeError
+_________ test_fact_id_identifier_contract_rejects_malformed_values[] __________
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b67eab0>
+bad = ''
+
+    @pytest.mark.parametrize("bad", [None, "", 42, []])
+    def test_fact_id_identifier_contract_rejects_malformed_values(
+        adapter: TypeDBProjectionAdapter, bad: object
+    ) -> None:
+>       with pytest.raises(C2Error) as excinfo:
+             ^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE C2Error
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:98: Failed
+________ test_fact_id_identifier_contract_rejects_malformed_values[42] _________
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b6b0410>
+bad = 42
+
+    @pytest.mark.parametrize("bad", [None, "", 42, []])
+    def test_fact_id_identifier_contract_rejects_malformed_values(
+        adapter: TypeDBProjectionAdapter, bad: object
+    ) -> None:
+        with pytest.raises(C2Error) as excinfo:
+>           adapter.apply_commit(fact_id=bad, commit_id="commit-1", payload="V1")  # type: ignore[arg-type]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:99: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:201: in apply_commit
+    existing_fact = self._lookup_fact(fact_id)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:222: in _lookup_fact
+    f"match $f isa c4-fact, has c4-fact-id {_literal(fact_id)}, "
+                                            ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = 42
+
+    def _literal(value: str) -> str:
+        """Renders ``value`` as a TypeQL string literal, escaping ``\\`` and ``"``
+        so an identifier or payload can never terminate the literal and inject
+        further TypeQL. A canonical URN/digest (no ``\\`` or ``"``) is quoted
+        exactly as before, keeping generated queries byte-identical."""
+>       escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+                  ^^^^^^^^^^^^^
+E       AttributeError: 'int' object has no attribute 'replace'
+
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:67: AttributeError
+_______ test_fact_id_identifier_contract_rejects_malformed_values[bad3] ________
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b6b3710>
+bad = []
+
+    @pytest.mark.parametrize("bad", [None, "", 42, []])
+    def test_fact_id_identifier_contract_rejects_malformed_values(
+        adapter: TypeDBProjectionAdapter, bad: object
+    ) -> None:
+        with pytest.raises(C2Error) as excinfo:
+>           adapter.apply_commit(fact_id=bad, commit_id="commit-1", payload="V1")  # type: ignore[arg-type]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:99: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:201: in apply_commit
+    existing_fact = self._lookup_fact(fact_id)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:222: in _lookup_fact
+    f"match $f isa c4-fact, has c4-fact-id {_literal(fact_id)}, "
+                                            ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = []
+
+    def _literal(value: str) -> str:
+        """Renders ``value`` as a TypeQL string literal, escaping ``\\`` and ``"``
+        so an identifier or payload can never terminate the literal and inject
+        further TypeQL. A canonical URN/digest (no ``\\`` or ``"``) is quoted
+        exactly as before, keeping generated queries byte-identical."""
+>       escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+                  ^^^^^^^^^^^^^
+E       AttributeError: 'list' object has no attribute 'replace'
+
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:67: AttributeError
+______ test_commit_id_identifier_contract_rejects_malformed_values[None] _______
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b73e2a0>
+bad = None
+
+    @pytest.mark.parametrize("bad", [None, "", 42, []])
+    def test_commit_id_identifier_contract_rejects_malformed_values(
+        adapter: TypeDBProjectionAdapter, bad: object
+    ) -> None:
+        with pytest.raises(C2Error) as excinfo:
+>           adapter.apply_commit(fact_id="fact-1", commit_id=bad, payload="V1")  # type: ignore[arg-type]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:207: in apply_commit
+    f"has c4-commit-id {_literal(commit_id)}, has c4-payload {_literal(payload)};"
+                        ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = None
+
+    def _literal(value: str) -> str:
+        """Renders ``value`` as a TypeQL string literal, escaping ``\\`` and ``"``
+        so an identifier or payload can never terminate the literal and inject
+        further TypeQL. A canonical URN/digest (no ``\\`` or ``"``) is quoted
+        exactly as before, keeping generated queries byte-identical."""
+>       escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+                  ^^^^^^^^^^^^^
+E       AttributeError: 'NoneType' object has no attribute 'replace'
+
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:67: AttributeError
+________ test_commit_id_identifier_contract_rejects_malformed_values[] _________
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b73eae0>
+bad = ''
+
+    @pytest.mark.parametrize("bad", [None, "", 42, []])
+    def test_commit_id_identifier_contract_rejects_malformed_values(
+        adapter: TypeDBProjectionAdapter, bad: object
+    ) -> None:
+>       with pytest.raises(C2Error) as excinfo:
+             ^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE C2Error
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:107: Failed
+_______ test_commit_id_identifier_contract_rejects_malformed_values[42] ________
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b73ecf0>
+bad = 42
+
+    @pytest.mark.parametrize("bad", [None, "", 42, []])
+    def test_commit_id_identifier_contract_rejects_malformed_values(
+        adapter: TypeDBProjectionAdapter, bad: object
+    ) -> None:
+        with pytest.raises(C2Error) as excinfo:
+>           adapter.apply_commit(fact_id="fact-1", commit_id=bad, payload="V1")  # type: ignore[arg-type]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:207: in apply_commit
+    f"has c4-commit-id {_literal(commit_id)}, has c4-payload {_literal(payload)};"
+                        ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = 42
+
+    def _literal(value: str) -> str:
+        """Renders ``value`` as a TypeQL string literal, escaping ``\\`` and ``"``
+        so an identifier or payload can never terminate the literal and inject
+        further TypeQL. A canonical URN/digest (no ``\\`` or ``"``) is quoted
+        exactly as before, keeping generated queries byte-identical."""
+>       escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+                  ^^^^^^^^^^^^^
+E       AttributeError: 'int' object has no attribute 'replace'
+
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:67: AttributeError
+______ test_commit_id_identifier_contract_rejects_malformed_values[bad3] _______
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b73e030>
+bad = []
+
+    @pytest.mark.parametrize("bad", [None, "", 42, []])
+    def test_commit_id_identifier_contract_rejects_malformed_values(
+        adapter: TypeDBProjectionAdapter, bad: object
+    ) -> None:
+        with pytest.raises(C2Error) as excinfo:
+>           adapter.apply_commit(fact_id="fact-1", commit_id=bad, payload="V1")  # type: ignore[arg-type]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:207: in apply_commit
+    f"has c4-commit-id {_literal(commit_id)}, has c4-payload {_literal(payload)};"
+                        ^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = []
+
+    def _literal(value: str) -> str:
+        """Renders ``value`` as a TypeQL string literal, escaping ``\\`` and ``"``
+        so an identifier or payload can never terminate the literal and inject
+        further TypeQL. A canonical URN/digest (no ``\\`` or ``"``) is quoted
+        exactly as before, keeping generated queries byte-identical."""
+>       escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+                  ^^^^^^^^^^^^^
+E       AttributeError: 'list' object has no attribute 'replace'
+
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:67: AttributeError
+_____________ test_payload_contract_rejects_malformed_values[None] _____________
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b67f350>
+bad = None
+
+    @pytest.mark.parametrize("bad", [None, "", 42, []])
+    def test_payload_contract_rejects_malformed_values(
+        adapter: TypeDBProjectionAdapter, bad: object
+    ) -> None:
+        with pytest.raises(C2Error) as excinfo:
+>           adapter.apply_commit(fact_id="fact-1", commit_id="commit-1", payload=bad)  # type: ignore[arg-type]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:207: in apply_commit
+    f"has c4-commit-id {_literal(commit_id)}, has c4-payload {_literal(payload)};"
+                                                              ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = None
+
+    def _literal(value: str) -> str:
+        """Renders ``value`` as a TypeQL string literal, escaping ``\\`` and ``"``
+        so an identifier or payload can never terminate the literal and inject
+        further TypeQL. A canonical URN/digest (no ``\\`` or ``"``) is quoted
+        exactly as before, keeping generated queries byte-identical."""
+>       escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+                  ^^^^^^^^^^^^^
+E       AttributeError: 'NoneType' object has no attribute 'replace'
+
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:67: AttributeError
+_______________ test_payload_contract_rejects_malformed_values[] _______________
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b6b0b60>
+bad = ''
+
+    @pytest.mark.parametrize("bad", [None, "", 42, []])
+    def test_payload_contract_rejects_malformed_values(
+        adapter: TypeDBProjectionAdapter, bad: object
+    ) -> None:
+>       with pytest.raises(C2Error) as excinfo:
+             ^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE C2Error
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:116: Failed
+______________ test_payload_contract_rejects_malformed_values[42] ______________
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b73e570>
+bad = 42
+
+    @pytest.mark.parametrize("bad", [None, "", 42, []])
+    def test_payload_contract_rejects_malformed_values(
+        adapter: TypeDBProjectionAdapter, bad: object
+    ) -> None:
+        with pytest.raises(C2Error) as excinfo:
+>           adapter.apply_commit(fact_id="fact-1", commit_id="commit-1", payload=bad)  # type: ignore[arg-type]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:207: in apply_commit
+    f"has c4-commit-id {_literal(commit_id)}, has c4-payload {_literal(payload)};"
+                                                              ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = 42
+
+    def _literal(value: str) -> str:
+        """Renders ``value`` as a TypeQL string literal, escaping ``\\`` and ``"``
+        so an identifier or payload can never terminate the literal and inject
+        further TypeQL. A canonical URN/digest (no ``\\`` or ``"``) is quoted
+        exactly as before, keeping generated queries byte-identical."""
+>       escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+                  ^^^^^^^^^^^^^
+E       AttributeError: 'int' object has no attribute 'replace'
+
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:67: AttributeError
+_____________ test_payload_contract_rejects_malformed_values[bad3] _____________
+
+adapter = <ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter object at 0x70663b73e780>
+bad = []
+
+    @pytest.mark.parametrize("bad", [None, "", 42, []])
+    def test_payload_contract_rejects_malformed_values(
+        adapter: TypeDBProjectionAdapter, bad: object
+    ) -> None:
+        with pytest.raises(C2Error) as excinfo:
+>           adapter.apply_commit(fact_id="fact-1", commit_id="commit-1", payload=bad)  # type: ignore[arg-type]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py:117: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:207: in apply_commit
+    f"has c4-commit-id {_literal(commit_id)}, has c4-payload {_literal(payload)};"
+                                                              ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = []
+
+    def _literal(value: str) -> str:
+        """Renders ``value`` as a TypeQL string literal, escaping ``\\`` and ``"``
+        so an identifier or payload can never terminate the literal and inject
+        further TypeQL. A canonical URN/digest (no ``\\`` or ``"``) is quoted
+        exactly as before, keeping generated queries byte-identical."""
+>       escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+                  ^^^^^^^^^^^^^
+E       AttributeError: 'list' object has no attribute 'replace'
+
+ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:67: AttributeError
+=========================== short test summary info ============================
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_watermark_insert_escapes_commit_id_so_injection_cannot_add_a_fact
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_round_trips_quote_and_backslash
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_injection_with_pre_existing_fact_and_watermark_is_contained
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_fact_id_identifier_contract_rejects_malformed_values[None]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_fact_id_identifier_contract_rejects_malformed_values[]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_fact_id_identifier_contract_rejects_malformed_values[42]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_fact_id_identifier_contract_rejects_malformed_values[bad3]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_identifier_contract_rejects_malformed_values[None]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_identifier_contract_rejects_malformed_values[]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_identifier_contract_rejects_malformed_values[42]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_identifier_contract_rejects_malformed_values[bad3]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_payload_contract_rejects_malformed_values[None]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_payload_contract_rejects_malformed_values[]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_payload_contract_rejects_malformed_values[42]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_payload_contract_rejects_malformed_values[bad3]
+========================= 15 failed, 2 passed in 2.80s =========================
+
+----- SECTION 2: TDD GREEN (fixed adapter at 5b6b027) -----
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/.ocor/worktrees/remediation-rem0014-typedb-injection/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/.ocor/worktrees/remediation-rem0014-typedb-injection/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 17 items
+
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_watermark_insert_escapes_commit_id_so_injection_cannot_add_a_fact PASSED [  5%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_round_trips_quote_and_backslash PASSED [ 11%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_fact_id_round_trips_special_characters PASSED [ 17%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_payload_round_trips_special_characters PASSED [ 23%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_injection_with_pre_existing_fact_and_watermark_is_contained PASSED [ 29%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_fact_id_identifier_contract_rejects_malformed_values[None] PASSED [ 35%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_fact_id_identifier_contract_rejects_malformed_values[] PASSED [ 41%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_fact_id_identifier_contract_rejects_malformed_values[42] PASSED [ 47%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_fact_id_identifier_contract_rejects_malformed_values[bad3] PASSED [ 52%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_identifier_contract_rejects_malformed_values[None] PASSED [ 58%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_identifier_contract_rejects_malformed_values[] PASSED [ 64%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_identifier_contract_rejects_malformed_values[42] PASSED [ 70%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_commit_id_identifier_contract_rejects_malformed_values[bad3] PASSED [ 76%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_payload_contract_rejects_malformed_values[None] PASSED [ 82%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_payload_contract_rejects_malformed_values[] PASSED [ 88%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_payload_contract_rejects_malformed_values[42] PASSED [ 94%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py::test_payload_contract_rejects_malformed_values[bad3] PASSED [100%]
+
+============================== 17 passed in 2.15s ==============================
+
+----- SECTION 3: REGRESSION (0037/0038/0039 + rem_0010/0011/0012) -----
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/.ocor/worktrees/remediation-rem0014-typedb-injection/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/.ocor/worktrees/remediation-rem0014-typedb-injection/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 35 items
+
+ocor-runtime/tests/tasks/test_ocor_dev_0037.py::test_adapter_conforms_to_the_sealed_ports PASSED [  2%]
+ocor-runtime/tests/tasks/test_ocor_dev_0037.py::test_apply_commit_advances_fact_and_watermark_together PASSED [  5%]
+ocor-runtime/tests/tasks/test_ocor_dev_0037.py::test_apply_commit_replaces_a_prior_fact_and_watermark_atomically PASSED [  8%]
+ocor-runtime/tests/tasks/test_ocor_dev_0037.py::test_exact_at_commit_never_masquerades_a_stale_projection_as_exact PASSED [ 11%]
+ocor-runtime/tests/tasks/test_ocor_dev_0037.py::test_at_least_commit_reports_projection_not_ready_before_the_commit_lands PASSED [ 14%]
+ocor-runtime/tests/tasks/test_ocor_dev_0037.py::test_best_available_serves_whatever_watermark_is_currently_true PASSED [ 17%]
+ocor-runtime/tests/tasks/test_ocor_dev_0037.py::test_result_not_found_is_reached_only_after_consistency_is_confirmed PASSED [ 20%]
+ocor-runtime/tests/tasks/test_ocor_dev_0037.py::test_a_real_typedb_unreachability_fails_closed_never_serving_a_fabricated_response PASSED [ 22%]
+ocor-runtime/tests/tasks/test_ocor_dev_0038.py::test_a_valid_publication_is_readable_and_serializes_to_real_json_ld PASSED [ 25%]
+ocor-runtime/tests/tasks/test_ocor_dev_0038.py::test_an_unauthorized_predicate_blocks_publication_entirely PASSED [ 28%]
+ocor-runtime/tests/tasks/test_ocor_dev_0038.py::test_a_missing_required_property_blocks_publication_entirely PASSED [ 31%]
+ocor-runtime/tests/tasks/test_ocor_dev_0038.py::test_lossy_or_empty_provenance_blocks_publication_entirely PASSED [ 34%]
+ocor-runtime/tests/tasks/test_ocor_dev_0038.py::test_list_authorized_filters_by_the_real_marking_join PASSED [ 37%]
+ocor-runtime/tests/tasks/test_ocor_dev_0038.py::test_count_never_diverges_from_the_authorized_list_and_raw_count_would_leak PASSED [ 40%]
+ocor-runtime/tests/tasks/test_ocor_dev_0038.py::test_json_ld_serialization_is_denied_for_an_unauthorized_clearance PASSED [ 42%]
+ocor-runtime/tests/tasks/test_ocor_dev_0038.py::test_a_real_fuseki_unreachability_fails_closed_never_writing_a_partial_publication PASSED [ 45%]
+ocor-runtime/tests/tasks/test_ocor_dev_0039.py::test_rebuild_reproduces_the_canonical_digest_and_watermark PASSED [ 48%]
+ocor-runtime/tests/tasks/test_ocor_dev_0039.py::test_rebuild_of_a_never_committed_aggregate_reports_canonical_not_found PASSED [ 51%]
+ocor-runtime/tests/tasks/test_ocor_dev_0039.py::test_real_out_of_band_drift_is_quarantined_not_repaired PASSED [ 54%]
+ocor-runtime/tests/tasks/test_ocor_dev_0039.py::test_serving_a_quarantined_projection_is_prohibited PASSED [ 57%]
+ocor-runtime/tests/tasks/test_ocor_dev_0039.py::test_a_successful_rebuild_after_correcting_the_tamper_clears_quarantine PASSED [ 60%]
+ocor-runtime/tests/tasks/test_ocor_dev_0039.py::test_a_real_typedb_unreachability_during_peek_fails_closed_as_a_drift_error PASSED [ 62%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0010.py::test_typedb_literal_escapes_quote_and_backslash PASSED [ 65%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0010.py::test_typedb_apply_commit_escapes_injection PASSED [ 68%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0010.py::test_jena_require_iri_accepts_urn_and_rejects_forbidden_chars PASSED [ 71%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0010.py::test_jena_publish_rejects_malformed_resource_id_before_backend PASSED [ 74%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0011.py::test_malformed_execution_owner_is_a_coded_diagnostic_not_a_crash[42] PASSED [ 77%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0011.py::test_malformed_execution_owner_is_a_coded_diagnostic_not_a_crash[3.14] PASSED [ 80%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0011.py::test_malformed_execution_owner_is_a_coded_diagnostic_not_a_crash[True] PASSED [ 82%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0011.py::test_malformed_execution_owner_is_a_coded_diagnostic_not_a_crash[owner3] PASSED [ 85%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0011.py::test_malformed_execution_owner_is_a_coded_diagnostic_not_a_crash[owner4] PASSED [ 88%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0011.py::test_malformed_execution_owner_is_a_coded_diagnostic_not_a_crash[owner5] PASSED [ 91%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0011.py::test_valid_string_and_list_owners_still_behave PASSED [ 94%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0012.py::test_git_changed_detects_a_staged_only_input_change PASSED [ 97%]
+ocor-runtime/tests/tasks/test_ocor_dev_rem_0012.py::test_git_changed_detects_a_staged_new_file PASSED [100%]
+
+============================== 35 passed in 5.05s ==============================
+
+----- SECTION 4: FULL SUITE (ocor-runtime/tests/) -----
+........................................................................ [  7%]
+........................................................................ [ 15%]
+........................................................................ [ 23%]
+........................................................................ [ 31%]
+........................................................................ [ 39%]
+........................................................................ [ 47%]
+........................................................................ [ 55%]
+........................................................................ [ 63%]
+........................................................................ [ 71%]
+........................................................................ [ 79%]
+........................................................................ [ 87%]
+........................................................................ [ 95%]
+.........................................                                [100%]
+905 passed in 227.10s (0:03:47)
+
+----- SECTION 5: LOCAL GATES -----
+===== GATE: sha256sum -c inputs/normative/SHA256SUMS =====
+inputs/normative/OCOR_Architectural_Design_Document_v1.1.md: OK
+inputs/normative/OCOR_CAP_ELM_Requirement_Crosswalk_v0.9.md: OK
+inputs/normative/OCOR_DEC_197_plus_Draft_v0.1.md: OK
+inputs/normative/OCOR_Decision_Register_v1.0.md: OK
+inputs/normative/OCOR_Decision_Traceability_Index_v1.0.md: OK
+inputs/normative/OCOR_Registers_v0.9.md: OK
+inputs/normative/OCOR_Requirement_Register_v0.9.md: OK
+inputs/normative/OCOR_Requirement_Traceability_Index_v0.9.md: OK
+===== GATE: verify.py --json =====
+==============================================================================
+OCOR ADD — harness di verifica tool-backed
+oggetto: inputs/normative/OCOR_Architectural_Design_Document_v1.1.md
+sha256:  3e7532c7101e80c74b511cedc56a0563ca0938a3fe259911a91245cb19dedc7f
+==============================================================================
+[PASS] Integrità sorgenti
+       8 file, tutti i digest coincidono
+[PASS] JSON Schema — parsing e meta-validazione
+       5 schemi Draft 2020-12 validi: urn:ocor:schema:action-type-contract:1.0, urn:ocor:schema:canonical-ingestion-envelope:1.1, urn:ocor:schema:event-subscription-contract:1.0, urn:ocor:schema:mcp-tool-contract:1.1, urn:ocor:schema:signed-canonical-ir:1.0
+[PASS] OpenAPI — risoluzione $ref
+       OpenAPI 3.1.0 v1.1.0; 6 path, 25 schemi, 26 $ref; tutti i $ref risolti; schemi mai referenziati: nessuno
+[PASS] OpenAPI — validazione semantica con validator ufficiale
+       openapi-spec-validator==0.9.0; wheel SHA-256 222fecffc7714f6d0a6ad62c0e4b66cc2b7dbfafb7b93acfc6c308abbdb51af8; documento OpenAPI 3.1.0 valido
+[PASS] Protobuf — compilazione
+       protoc compila senza errori
+[PASS] Turtle/RDF — parsing
+       17 triple
+[PASS] Rami condizionali insoddisfacibili (classe RV-01)
+       nessun campo richiesto da un condizionale risulta non dichiarato
+[INFO] Rami condizionali da coprire con casi POSITIVI
+===== GATE: ruff check . =====
+All checks passed!
+===== GATE: mypy --strict =====
+Success: no issues found in 67 source files
+===== GATE: validate_language_policy.py =====
+PASS: no tracked file uses a monitored extension outside its authorized area
+===== GATE: validate_ocor_change_scope.py =====
+PASS: 7 changed path(s); immutable surfaces untouched; task ledger stable
+===== GATE: validate_rccad.py =====
+{
+  "checked_artifacts": 22,
+  "dynamic_assurance": "CI_REQUIRED",
+  "findings": [],
+  "fitness_results": {
+    "AFF-001": "PASS_STATIC_PRECHECK",
+    "AFF-002": "PASS_STATIC_PRECHECK",
+    "AFF-003": "PASS_STATIC_PRECHECK",
+    "AFF-004": "PASS_STATIC_PRECHECK",
+    "AFF-005": "PASS_STATIC_PRECHECK",
+    "AFF-006": "PASS_STATIC_PRECHECK",
+    "AFF-007": "PASS_STATIC_PRECHECK",
+    "AFF-008": "PASS_STATIC_PRECHECK",
+    "AFF-009": "PASS_STATIC_PRECHECK",
+    "AFF-010": "PASS_STATIC_PRECHECK"
+  },
+  "methodology_sha256": "231ce3325537de85890b16e97f138bd6a4263fc1e240094ed26499af9aeeb6cd",
+  "status": "PASS_LOCAL_PRECHECK"
+}
+

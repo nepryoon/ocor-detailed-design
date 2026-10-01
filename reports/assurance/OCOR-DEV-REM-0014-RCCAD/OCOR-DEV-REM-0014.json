@@ -1,0 +1,153 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "TDD RED: run test_ocor_dev_rem_0014.py against the pre-fix adapter (bb893ef) to prove the VF-001 defect is observable \u2014 a commit_id carrying a quote/backslash splits the watermark literal and injects a second insert; malformed fact_id/commit_id/payload (None/''/int/list) raise AttributeError instead of the fail-closed C2Error",
+      "result": {
+        "failed": 15,
+        "not_executed": 0,
+        "passed": 2,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "TDD GREEN: run test_ocor_dev_rem_0014.py against the fixed adapter (5b6b027) \u2014 17 live positive/negative cases on the real TypeDB backend: injection absence, watermark identity, pre-existing fact/watermark, atomicity and round-trip of special characters",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 17,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "focused regression: pytest test_ocor_dev_0037.py test_ocor_dev_0038.py test_ocor_dev_0039.py test_ocor_dev_rem_0010.py test_ocor_dev_rem_0011.py test_ocor_dev_rem_0012.py (OCOR_LIVE_POSTGRES_DSN on the real bootstrap stack for 0039)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 35,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "full local pytest regression across ocor-runtime/tests/ with OCOR_LIVE_POSTGRES_DSN set against the real ocor-bootstrap PostgreSQL instance (matching CI's uv run --project ocor-runtime --frozen pytest exactly)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 905,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ruff check .",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python -m mypy (strict)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 67,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "sha256sum -c inputs/normative/SHA256SUMS",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 8,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/verify.py --json",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 14,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/validate_language_policy.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python scripts/validate_rccad.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "32dd5af2cb9ef41c56bf062120645fbcd0be8af1",
+  "created_at": "2026-10-01T12:34:47Z",
+  "environment": {
+    "backend_under_test": "real, live TypeDB (the canonical projection backend exercised through the real, pinned TypeDBProjectionAdapter) and real, live PostgreSQL for the reused sealed C3 adapters that drive the regression suites",
+    "orchestrator": "single-agent development worktree, no orchestration process of its own; every qualifying run below executes on the real ocor-bootstrap stack, never a mock or a skip",
+    "reused_deliverable": "ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter (OCOR-DEV-0037, the sealed file this REM hardens) exercised through its own sealed public apply_commit()/read() methods"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py": "cfc64cc9489d14d7e33f0348d4e74e664236c552e1325bf21d54e4b7ac00a04f",
+    "ocor-runtime/tests/tasks/test_ocor_dev_rem_0014.py": "b813147980bea4d1ffa34bc2faf611a088fab4c1c7cbbfd11d13db577e028fac"
+  },
+  "raw_output_sha256": "8733c7c227041ad92e5a7545b8033ae1917cb06b4ba26155d053b43566ceb9f9",
+  "residual_risks": [
+    "This REM does not re-open the sealed C4 adapter's broader contract: for canonical URN/digest inputs (the only values the sealed callers pass) the generated TypeQL queries are byte-identical to the pre-fix output, so the real-backend acceptance suites of OCOR-DEV-0037/0038/0039 are unaffected and remain sealed.",
+    "The full local suite (905 passed) is recorded here for the first time in this REM's own evidence; the prior RCCAD candidate (OCOR-DEV-REM-0014-RCCAD-20261001) had delegated the complete run to CI. This record supersedes that candidate with the complete local run."
+  ],
+  "result": "PASS",
+  "rollback_procedure_verified": "Reverting the two REM-0014 commits (RED bb893ef, GREEN 5b6b027) re-exposes the injection (watermark split + injected fact) and the RED tests fail again; no data or schema migration is involved. The pre-fix baseline (cf86666cba1ab267347dc9a188461412c918db8b) was directly demonstrated to fail the 15 negative cases as EXPECTED_FAILURE.",
+  "schema_version": "1.0",
+  "supersedes": "OCOR-DEV-REM-0014-RCCAD-20261001",
+  "task_id": "OCOR-DEV-REM-0014",
+  "verification": {
+    "head_sha": "a2de149d57c99953c6f5d0bb679e6ee54545675f",
+    "request_id": "OCOR-DEV-REM-0014-a2de149d57c9-1",
+    "review_type": "REMEDIATION",
+    "verdict": "GO_FOR_EVIDENCE_SEAL",
+    "verifier": {
+      "independence_limits": "separate process and context; same model vendor as the implementer",
+      "model": "NOT_EXPOSED_BY_RUNTIME",
+      "process": "codex exec --ephemeral, clean context"
+    }
+  }
+}

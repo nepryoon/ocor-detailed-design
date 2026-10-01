@@ -68,6 +68,14 @@ def _literal(value: str) -> str:
     return f'"{escaped}"'
 
 
+def _require_value(field: str, value: object) -> str:
+    """Rejects a missing/empty/non-string value before any query is built, so a
+    malformed identifier or payload can never reach TypeDB (fail-closed)."""
+    if not isinstance(value, str) or not value:
+        raise C2Error("QUERY_CONTRACT_INVALID", f"{field} is required")
+    return value
+
+
 def _request(
     method: str, url: str, *, headers: dict[str, str] | None = None, body: bytes | None = None, timeout: float = 10.0
 ) -> tuple[int, str]:
@@ -198,6 +206,9 @@ class TypeDBProjectionAdapter:
         transaction, or neither does. A prior fact with the same
         ``fact_id`` (a fact update) is replaced; a prior watermark is
         replaced with the new commit."""
+        fact_id = _require_value("fact_id", fact_id)
+        commit_id = _require_value("commit_id", commit_id)
+        payload = _require_value("payload", payload)
         existing_fact = self._lookup_fact(fact_id)
         statements: list[str] = []
         if existing_fact is not None:
@@ -208,7 +219,7 @@ class TypeDBProjectionAdapter:
         )
         if self.current_watermark() is not None:
             statements.append("match $w isa c4-watermark; delete $w;")
-        statements.append(f'insert $w isa c4-watermark, has c4-commit-id "{commit_id}";')
+        statements.append(f"insert $w isa c4-watermark, has c4-commit-id {_literal(commit_id)};")
         _write(*statements)
 
     def current_watermark(self) -> str | None:
