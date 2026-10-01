@@ -1,0 +1,73 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "PYTHONPATH=\"$PWD:$PWD/ocor-runtime/src\" uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0023.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 8,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "b920411a8aa5a1b7e2e1ba0286b67af77af32657",
+  "created_at": "2026-10-01T20:17:40.152278Z",
+  "environment": {
+    "host": "nepryoon",
+    "node": "v24.21.0",
+    "python": "Python 3.12.11",
+    "re_ran_at": "2026-10-01T20:17:40.152278Z",
+    "uv": "uv 0.12.21 (x86_64-unknown-linux-gnu)"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0023.py": "f39482ba746db11df8b3dadb5501b456e24c44d929f13e05959b6840408b849b",
+    "ocor-runtime/uv.lock": "21dfa5dce0be7756356306cd22df7fd8c90ee5b30646d5ddac5b0c93aefe5608",
+    "spikes/vector_partition/oracle.py": "8cd8aa1cb3a912c9f679e47dbba55d8e3cd5326d741c87131a0c38865f1768ad"
+  },
+  "raw_output_sha256": "6380fc32fe89eea9e50bacec431e3811f0db002943299df19da449870657b814",
+  "record_id": "OCOR-DEV-0023-requalified-b920411a8aa5",
+  "requalification": {
+    "previous_inputs": {
+      "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+      "ocor-runtime/tests/tasks/test_ocor_dev_0023.py": "f39482ba746db11df8b3dadb5501b456e24c44d929f13e05959b6840408b849b",
+      "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537",
+      "spikes/vector_partition/oracle.py": "8cd8aa1cb3a912c9f679e47dbba55d8e3cd5326d741c87131a0c38865f1768ad"
+    },
+    "re_ran_command": "PYTHONPATH=\"$PWD:$PWD/ocor-runtime/src\" uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0023.py",
+    "reason": "R3 step (b): evidence input drift remediation (input hashes no longer matched HEAD)",
+    "supersedes_commit": "dedd13ed0eb8b43778c9c7eaf95337a65102c6ea"
+  },
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0023-VECTOR-PARTITION",
+      "command": "PYTHONPATH=\"$PWD:$PWD/ocor-runtime/src\" uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0023.py",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 8,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This G2 spike qualifies physical vector partition routing on real Qdrant; it is not FGM-16 or final runtime-conformance evidence.",
+    "The timing assertion is a bounded local envelope, not a Production SLO or formal side-channel proof.",
+    "Full Governed Agent Memory lifecycle and deletion semantics remain for their downstream tasks and FGM campaign.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and compensating controls are not equivalent."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated spike commits; the campaign removes its exact generated Qdrant container and changes no runtime data or approved backend selection.",
+  "schema_version": 1.0,
+  "supersedes": "dedd13ed0eb8b43778c9c7eaf95337a65102c6ea",
+  "task_id": "OCOR-DEV-0023"
+}

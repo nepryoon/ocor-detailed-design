@@ -1,0 +1,73 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0032.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 15,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "b920411a8aa5a1b7e2e1ba0286b67af77af32657",
+  "created_at": "2026-10-01T20:17:40.152278Z",
+  "environment": {
+    "host": "nepryoon",
+    "node": "v24.21.0",
+    "python": "Python 3.12.11",
+    "re_ran_at": "2026-10-01T20:17:40.152278Z",
+    "uv": "uv 0.12.21 (x86_64-unknown-linux-gnu)"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/c1/frontend.py": "8fadf970c12a2c5a5c56cb23235e23e345bee9ef74e6bff0c8db94da44684238",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0032.py": "f115fbd41b596aa4c129c1871161c7f55fbd7687c7b6087316a1d0b6360e8cc5"
+  },
+  "raw_output_sha256": "1bcc44011bf78a58bc505eb612ef283786f7b4e7ea8747b915963e5b06958e4c",
+  "record_id": "OCOR-DEV-0032-requalified-b920411a8aa5",
+  "requalification": {
+    "previous_inputs": {
+      "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+      "ocor-runtime/src/ocor_runtime/c1/frontend.py": "29ea946e8063f1b9d614fb9e445ef3cb791b7a4459ae07c26b09a725c1d9c039",
+      "ocor-runtime/tests/tasks/test_ocor_dev_0032.py": "f115fbd41b596aa4c129c1871161c7f55fbd7687c7b6087316a1d0b6360e8cc5"
+    },
+    "re_ran_command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0032.py",
+    "reason": "R3 step (b): evidence input drift remediation (input hashes no longer matched HEAD)",
+    "supersedes_commit": "947b2b2586fb89c1d5342199bba2f091b061ef9c"
+  },
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0032-VALID-CORPUS-COMPILES-DETERMINISTICALLY",
+      "command": "uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0032.py",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 15,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This is the first task to seal evidence under gate G4 -- reports/evidence/G4/MANIFEST.json is created fresh by this task, mirroring the schema OCOR-DEV-0028 established for the first G3 manifest.",
+    "The closed type grammar (string, integer, number, boolean, list) is deliberately minimal, matching 'the smallest contract-compliant implementation'; it is not a claim of covering every type the eventual full OAC grammar will need, only enough to prove the type-checking discipline itself (declare, satisfy, or be rejected).",
+    "The 'references' field and cycle/resolution checking are new semantic constructs this task introduces, distinct from CompilerRequest's own sealed external dependency-lock import resolution (which OCOR-DEV-0028 already exercises); both are exercised here without modifying CompilerRequest itself.",
+    "A genuine design bug was found and fixed before this evidence was sealed: require_resolved_references' sealed uniqueness check on 'referenced' would have wrongly rejected any legitimate diamond reference graph (two resources sharing one common referenced target) as a duplicate-resource error -- see the commands log above.",
+    "DiagnosticCode values NON_DETERMINISTIC_OUTPUT, ARTIFACT_DRIFT, SIGNATURE_INVALID and RELEASE_REJECTED remain out of this task's scope: NON_DETERMINISTIC_OUTPUT and RELEASE_REJECTED are already exercised structurally by the sealed verify_deterministic_build/CanonicalIrRelease.create() helpers this task reuses; ARTIFACT_DRIFT and SIGNATURE_INVALID belong to the not-yet-implemented IrSigner/ArtifactGenerator/CompatibilityChecker protocols, which remain unimplemented sealed Protocols, same as OCOR-DEV-0028 left them.",
+    "The same pre-existing local-venv gap noted in prior evidence (uv cannot resolve the exact 3.12.11 interpreter in this sandbox) is unchanged and out of this task's scope."
+  ],
+  "result": "PASS",
+  "rollback": null,
+  "schema_version": 1.0,
+  "supersedes": "947b2b2586fb89c1d5342199bba2f091b061ef9c",
+  "task_id": "OCOR-DEV-0032"
+}

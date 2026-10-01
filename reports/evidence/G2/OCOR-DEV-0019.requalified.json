@@ -1,0 +1,73 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "PYTHONPATH=\"$PWD:$PWD/ocor-runtime/src\" uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0019.py",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 8,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "b920411a8aa5a1b7e2e1ba0286b67af77af32657",
+  "created_at": "2026-10-01T20:17:40.152278Z",
+  "environment": {
+    "host": "nepryoon",
+    "node": "v24.21.0",
+    "python": "Python 3.12.11",
+    "re_ran_at": "2026-10-01T20:17:40.152278Z",
+    "uv": "uv 0.12.21 (x86_64-unknown-linux-gnu)"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0019.py": "6e6248780207ff1548291faf7344c9023bbedd48f5ded5dcebd16abda5c2919e",
+    "ocor-runtime/uv.lock": "21dfa5dce0be7756356306cd22df7fd8c90ee5b30646d5ddac5b0c93aefe5608",
+    "spikes/kafka_delivery/oracle.py": "b0d162567e55a6976ec606c5c575748638a91c74b35b87b0cef33323ca8306ba"
+  },
+  "raw_output_sha256": "7fbf928095fe45a565d1ed9635094fb5bed76208589de00c83f0ee0b81424277",
+  "record_id": "OCOR-DEV-0019-requalified-b920411a8aa5",
+  "requalification": {
+    "previous_inputs": {
+      "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+      "ocor-runtime/tests/tasks/test_ocor_dev_0019.py": "6e6248780207ff1548291faf7344c9023bbedd48f5ded5dcebd16abda5c2919e",
+      "ocor-runtime/uv.lock": "0ce5cc56a54dd4bb35de68bb74b71e3608a555e841e13a4c95926fcc74924537",
+      "spikes/kafka_delivery/oracle.py": "b0d162567e55a6976ec606c5c575748638a91c74b35b87b0cef33323ca8306ba"
+    },
+    "re_ran_command": "PYTHONPATH=\"$PWD:$PWD/ocor-runtime/src\" uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0019.py",
+    "reason": "R3 step (b): evidence input drift remediation (input hashes no longer matched HEAD)",
+    "supersedes_commit": "651f52ace00b07f11cd2f6231a16f2b676fcecfa"
+  },
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0019-KAFKA-FAULT-CAMPAIGN",
+      "command": "PYTHONPATH=\"$PWD:$PWD/ocor-runtime/src\" uv run --project ocor-runtime --frozen pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0019.py",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 8,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This G2 spike qualifies the selected Kafka delivery mechanism but is not BA or final runtime-conformance evidence.",
+    "The foundation compose stack intentionally uses tmpfs and cannot itself provide restart durability; qualifying evidence used an isolated persistent volume with the identical pinned Kafka image.",
+    "Exactly-once visible effects depend on the governed consumer retaining the demonstrated event-id deduplication contract.",
+    "Server-side main protection remains EXTERNAL_CONTROL_PENDING and compensating controls are not equivalent."
+  ],
+  "result": "PASS",
+  "rollback": "Revert the isolated spike commits; the campaign removes its exact generated container, topic, and named volume and changes no runtime migration or approved component selection.",
+  "schema_version": 1.0,
+  "supersedes": "651f52ace00b07f11cd2f6231a16f2b676fcecfa",
+  "task_id": "OCOR-DEV-0019"
+}
