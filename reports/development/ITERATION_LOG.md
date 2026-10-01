@@ -3876,3 +3876,28 @@
 - Prossima azione: merge di **PR #140** (R3 step (a), `governed/remediation-r3-evidence-input-drift`,
   13/13 check verdi, `MERGEABLE`) con `--match-head-commit`; poi R3 step (b)
   (record di riqualifica) e/o implementazione `OCOR-DEV-0048`.
+
+## 2026-10-01 — Governed: merge R3 step (a) validator (PR #140) + state sync
+
+- Change set `governed/state-sync-r3-evidence-input-drift` (docs/state), basato sull'HEAD di
+  `main` = `80fcbaa676055e34ac079539806c6093f328f187` (merge commit di PR #140).
+- Merge di **PR #140** (`governed/remediation-r3-evidence-input-drift`) con
+  `--match-head-commit d2b36f4…`: 13 check verdi sull'HEAD esatto; post-merge verificato
+  `origin/main` == merge commit.
+- R3 step (a) chiuso: nuovo validator fail-closed `scripts/validate_evidence_input_drift.py`
+  + 5 test ermetici (`reports/tests/test_evidence_input_drift.py`) + RED log
+  (`reports/tests/evidence/rem_evidence_input_drift/red.log`). RED verificato sull'HEAD:
+  `checked_tasks=62`, `checked_inputs=165`, `drifted_inputs=51`, `drifted_tasks=32`.
+- Il validator **non** è ancora cablato in CI/preflight: sarà collegato come step bloccante
+  in R3 step (c), dopo che lo step (b) avrà prodotto i record di riqualifica e riportato il
+  validator a GREEN.
+- `EXECUTION_STATE.json`: `remediation_status.R3_evidence_input_drift` aggiunto
+  (`STEP_A_MERGED`); `baseline_commit` → `80fcbaa…`; `latest_ci_evidence` aggiornato con i
+  6 run ID della CI di PR #140; `next_executable_action` → R3 step (b). `MODEL_HANDOFF.json`
+  riallineato (branch, `current_task`, `exact_next_action`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: R3 step (b) — record di riqualifica per i 32 task con input di evidenza
+  sigillati in deriva (rieseguire i test sullo stack reale, nuovi raw log/hash, inserimento
+  chirurgico in `MANIFEST.json` con `supersedes`); `OCOR-DEV-REM-0015`/`REM-0016` restano
+  `BLOCKED` su `TOOLCHAIN-LOCK-RESIDUAL` (`git` 2.55.0).
