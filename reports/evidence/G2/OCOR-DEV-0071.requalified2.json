@@ -1,0 +1,71 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "python3 scripts/verify_external_services.py --manifest-only",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "8b44a595418f87aa9cf4b793d8568bf21fa57f8c",
+  "created_at": "2026-10-01T21:07:17.088127Z",
+  "environment": {
+    "host": "nepryoon",
+    "node": "v24.21.0",
+    "python": "Python 3.12.11",
+    "re_ran_at": "2026-10-01T21:07:17.088127Z",
+    "uv": "uv 0.12.21 (x86_64-unknown-linux-gnu)"
+  },
+  "inputs": {
+    "infra/toolchain.lock.json": "452f08187674b3c1dfcd8b6f3410bc1f152f32abd58f520d3f4ccd09c3ef2931",
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/pyproject.toml": "cc619669df64870b7a3ab645605aba56a87c2e99f9c6013d2831dc0d6891341d",
+    "ocor-runtime/uv.lock": "21dfa5dce0be7756356306cd22df7fd8c90ee5b30646d5ddac5b0c93aefe5608"
+  },
+  "raw_output_sha256": "33b250e31b579c4b9fddb4378505961b804c72593f022dfe693cff06763a5bf4",
+  "record_id": "OCOR-DEV-0071-requalified2-8b44a595418f",
+  "requalification": {
+    "previous_inputs": {
+      "infra/toolchain.lock.json": "993453f1335d5f1499ffdd9c48a372b17fa5e9eb810afe9c3d08c41e89442faf",
+      "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+      "ocor-runtime/pyproject.toml": "cc619669df64870b7a3ab645605aba56a87c2e99f9c6013d2831dc0d6891341d",
+      "ocor-runtime/uv.lock": "21dfa5dce0be7756356306cd22df7fd8c90ee5b30646d5ddac5b0c93aefe5608"
+    },
+    "re_ran_command": "python3 scripts/verify_external_services.py --manifest-only",
+    "reason": "R3: toolchain lock git re-acquisition (TOOLCHAIN-LOCK-RESIDUAL, git 2.55.0 -> 2.53.0) drifted evidence input hash",
+    "supersedes_commit": "OCOR-DEV-0071-requalified-b920411a8aa5"
+  },
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0071-FROZEN-RESTORE",
+      "command": "python3 scripts/verify_external_services.py --manifest-only",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    }
+  ],
+  "residual_risks": [
+    "This evidence qualifies only the frozen development Python environment; it does not establish backend or runtime conformance.",
+    "GitHub native branch protection remains unavailable; exact-head PR CI and evidence-seal controls remain mandatory."
+  ],
+  "result": "PASS",
+  "rollback": "Executed on the worktree-local disposable environment: uv venv --clear followed by frozen sync and pip compatibility verification completed successfully.",
+  "schema_version": 1.0,
+  "supersedes": "OCOR-DEV-0071-requalified-b920411a8aa5",
+  "task_id": "OCOR-DEV-0071"
+}
