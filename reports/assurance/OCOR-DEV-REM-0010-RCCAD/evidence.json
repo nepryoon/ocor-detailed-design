@@ -54,5 +54,49 @@
     "runtime_conformance": "NOT_ESTABLISHED",
     "poc": "NO_GO",
     "production": "NO_GO"
+  },
+  "independent_verification_result": {
+    "appended_at": "2026-10-01T08:34:54Z",
+    "base_sha": "6f8b8e6673f4ffe16370934a94ed6be9695fc6d7",
+    "head_sha": "1aaef13885ed142646d0ed35c995078c30d9f174",
+    "request_id": "OCOR-DEV-REM-0010-0011-0012-1aaef13885ed-0",
+    "review_type": "REMEDIATION",
+    "verdict": "NO_GO",
+    "verifier": {
+      "model": "NOT_EXPOSED_BY_RUNTIME",
+      "process": "codex exec --ephemeral, clean context",
+      "independence_limits": "separate process and context; same model vendor as the implementer"
+    },
+    "findings": [
+      {
+        "id": "VF-001",
+        "severity": "high",
+        "path": "ocor-runtime/src/ocor_runtime/c4/typedb_adapter.py:211",
+        "required_fix": "Apply safe literal rendering also to the watermark insert (commit_id) and validate the identifier contract before queries. Add live positive/negative tests for fact_id, payload and commit_id, including pre-existing fact/watermark, injection absence, watermark identity and atomicity."
+      },
+      {
+        "id": "VF-002",
+        "severity": "medium",
+        "path": "scripts/validate_rccad.py:68",
+        "required_fix": "Use NUL-delimited git diff --name-only -z for working tree, index and base..HEAD, and split on NUL without losing names or escapes. Add regressions for staged modify/add/delete/rename, Unicode, tab and newline paths asserting RCCAD-IMMUTABLE-INPUT."
+      },
+      {
+        "id": "VF-003",
+        "severity": "high",
+        "path": "reports/assurance/OCOR-DEV-REM-0010-RCCAD/evidence.json:28",
+        "required_fix": "Produce new content-addressed candidate records for each remediation with commit, environment, commands with exit/status, raw_output_sha256, created_at, raw log and a manifest accepted by validate_runtime_evidence.py --non-skipped. Preserve the historical records immutable."
+      },
+      {
+        "id": "VF-004",
+        "severity": "medium",
+        "path": "infra/services.lock.json:11",
+        "required_fix": "Re-verify on a HEAD that includes the authorized Fuseki update (a1eb484a...) and the remediation fixes, with all input/evidence hashes matching that HEAD. Keep the exact identity comparison in the script unchanged."
+      }
+    ],
+    "note": "Appended to the candidate record without rewriting the historical fields above. The record remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION and is not sealed."
+  },
+  "id_alias": {
+    "canonical_alias": "OCOR-DEV-REM-0013",
+    "reason": "OCOR-DEV-REM-0010 is double-booked: it names both the $ref generator correction (2026-09-12, PR #63) and this C4 adapter hardening (2026-09-15, PR #128). The latter is canonically aliased to OCOR-DEV-REM-0013 without renaming history."
   }
 }

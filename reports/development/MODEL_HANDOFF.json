@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
-  "branch": "governed/remediation-r1-state-realignment",
+  "baseline_commit": "8f4d2aa168018e950ad3b85f1a6a78af81fb2fb6",
+  "branch": "governed/remediation-r2-verdict-processing",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -544,6 +544,22 @@
     {
       "command": "gh pr close 131 --comment superseded",
       "result": "CLOSED draft governed/ocor-dev-0048-control-plane-1935 (superseded by R1 state realignment)"
+    },
+    {
+      "command": "processed independent-verification verdict for REM-0010/0011/0012 (request_id OCOR-DEV-REM-0010-0011-0012-1aaef13885ed-0, head_sha 1aaef13885ed...)",
+      "result": "NO_GO: appended independent_verification_result to the 3 evidence.json in append without rewrite (findings VF-001..VF-004); records remain CANDIDATE_PENDING_INDEPENDENT_VERIFICATION, not sealed"
+    },
+    {
+      "command": "registered ID-collision erratum (grep-verified first free OCOR-DEV-REM-*)",
+      "result": "OCOR-DEV-REM-0010 C4-adapter hardening (PR #128) aliased canonically to OCOR-DEV-REM-0013 without renaming history; id_alias field appended to evidence.json"
+    },
+    {
+      "command": "opened the necessary REMs + queued reserved decisions",
+      "result": "REM-0014 (TypeDB commit_id/watermark injection), REM-0015 (validate_rccad NUL-delimited paths), REM-0016 (content-addressed evidence records) registered as README-only open records; decision_requests/RVW-03, INFO-A, INFO-C queued as OPEN_PO_DECISION_REQUIRED non-blocking blockers"
+    },
+    {
+      "command": "extended validate_ocor_development_plan.py extension_paths allowlist for the 6 new files + settled self-hash",
+      "result": "PASS: artifact_hashes[scripts/validate_ocor_development_plan.py] updated in OCOR_PLAN_RUN_STATE.json"
     }
   ],
   "completed_tasks": [
@@ -656,7 +672,7 @@
     "OCOR-DEV-0047: PR #125 merged (355ff68cc65053f55b26812843b4a7cb19e9b177). All 13 checks green on the first push. Post-merge SHA verified for all reused sealed files.",
     "R1 state realignment: closed PR #131 as superseded; baseline_commit -> 276fc65 (HEAD of main); registered merges #128/#129/#130/#132; GITHUB-BRANCH-PROTECTION-001 resolved server-side by ruleset 23412233; OCOR-DEV-0048 unblocked (local preflight all 11 services READY, SPIRE included); historical ITERATION_LOG entry of PR #131 carried verbatim."
   ],
-  "current_task": "CC-OCOR-DELIVERY-COMPLETION__R1-STATE-REALIGNMENT",
+  "current_task": "R2 (remediation): independent-verification verdict processing for REM-0010/0011/0012",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -746,8 +762,8 @@
     "reports/evidence/G4/OCOR-DEV-0047.json",
     "reports/evidence/G4/OCOR-DEV-0047.log"
   ],
-  "exact_next_action": "R2 (next): request independent verification of REM-0010/0011/0012 that entered main via PR #128 (squash 1aaef13, parent 6f8b8e6) with assurance NOT_PERFORMED_SINGLE_AGENT/PENDING. Write ~/.ocor-codex/verify_request.json with review_type=REMEDIATION, base_sha=6f8b8e6..., head_sha=1aaef13..., evidence_paths=the three records under reports/assurance/OCOR-DEV-REM-001{0,1,2}-RCCAD/. On verdict: append result to the records (no rewrite); GO_FOR_EVIDENCE_SEAL -> sealed, else open the necessary REMs. Register the ID-collision erratum (OCOR-DEV-REM-0010 = $ref generator fix #63 AND C4 adapter hardening #128; assign first free OCOR-DEV-REM-* verified via grep, today 0013, as canonical alias without renaming history). Queue RVW-03/INFO-A/INFO-C as decision requests (section 7), non-blocking.\n\n---\nPreserved for the OCOR-DEV-0048 implementation phase (resume after R2/R3):\nState sync for OCOR-DEV-0047's merge is in progress (this PR). Recomputed readiness directly from the backlog JSON after OCOR-DEV-0047 merged: ready set = {OCOR-DEV-0048 (wave 15)} -- the ONLY remaining ready task from the current frontier (22 of 84 tasks not yet completed). Its expected_file_areas is ocor-runtime/src/ocor_runtime/security/control_plane.py + its test file; hard_dependencies are OCOR-DEV-0014 (sealed ocor_runtime.security.ports -- ControlName/ControlStatus/SecurityControlError/IdentityRequest/AuthenticatedPrincipal/PolicyRequest, already reused by OCOR-DEV-0021/0043), OCOR-DEV-0021 (SPIKE identity-policy latency and failure semantics, spikes/control_plane_latency/probe.py, sealed) and OCOR-DEV-0031 (mission thread). Acceptance: real services (OPA, Keycloak, SPIFFE, OpenBao, mTLS) enforce least privilege, workload identity, policy bundles, delegation and secret isolation; negative: control-plane outage or a stale policy bundle fails closed with correlated diagnostics. This is a REAL-BACKEND task (unlike 0041-0047's pure in-memory C6/C7/C8 slices) -- the ocor-bootstrap Docker stack (OPA:8181, Keycloak:8080, OpenBao:8200, SPIFFE/SPIRE) must be running; check docker compose -p ocor-bootstrap ps first and restart any OOM-killed service via docker start (fuseki/spire-agent have both needed this before, never touch eci-dev-control-plane/open-webui). Read ocor_runtime.security.ports.py and spikes/control_plane_latency/probe.py in full before designing -- this task's own control_plane.py is very likely the retained, non-spike counterpart of the OCOR-DEV-0021 spike (the 'spike proves the real backend; retained runtime.py reimplements it as production code' pattern already established for c4/typedb_adapter.py, c5/backbone.py and c7/runtime.py), extended to cover Keycloak/OpenBao/mTLS/delegation the spike itself did not. Before depending on any shared Docker service in a new task, grep -l <service> .github/workflows/*.yml first to confirm CI actually provisions it; if not, self-provision an isolated instance per test (the pattern OCOR-DEV-0019/0031/0040 all now establish for Kafka). AFF-009 (validate_rccad.py) prohibits any single-statement except-pass; use an explicit pre-condition check instead. Set OCOR_LIVE_POSTGRES_DSN explicitly in any new shell before running ocor-runtime/tests/ (postgresql://ocor:<password from ~/.ocor-bootstrap-secrets/ocor-bootstrap.env>@127.0.0.1:55433/ocor). The 3 CI-wired reports/tests suites must be run as ocor-runtime/.venv/bin/python -m pytest -q reports/tests/{test_generate_contracts_reference_resolution,test_backlog_generator_reality_parity,test_language_migration_benchmark_harness}.py. This sandbox's gh CLI (2.46.0) does not support --json on gh pr checks -- parse its plain tab-separated output instead. psycopg.OperationalError and urllib.error.URLError do NOT subclass OSError -- match the real exception type actually raised. AFF-002/AFF-006's DIRECT_CLIENTS regex only matches literal psycopg/kafka/qdrant_client/terminusdb_client/typedb package imports, never urllib or subprocess/docker exec. Any new test file importing spikes.* should include its own explicit sys.path.insert(0, REPOSITORY_ROOT) for robustness against collection order, and must be verified locally with the bare ocor-runtime/.venv/bin/pytest console script (matching CI's uv run --project ocor-runtime --frozen pytest exactly), not python -m pytest. Before reusing an existing module named after a component, verify it is not legacy/obsolete (ocor_runtime.c5_actions.py remains the known-obsolete generic 32-state FSM, unrelated to the real LLD-aligned C6 work). If the host disk is near capacity, the only session-authorized cleanup is docker builder prune -f / docker image prune -f (non -a); do not remove other projects' images without explicit human authorization, and never redesign an already-sealed deliverable's disk footprint to work around it -- diagnose the real cause first. scripts/validate_ocor_development_plan.py must always be invoked with --base-ref origin/main explicitly, and with --authorized-extension whenever expected_file_areas requires editing its own extension_paths; settle its self-hash with a double-run afterward (or a triple-run if the first settle-run itself reports FAIL, which is expected and not a defect). ALWAYS compute a commit SHA via git rev-parse rather than hand-constructing or padding one. The component-1 migration escalation (DISPOSED_DEFERRED by the Product Owner) does not block this. After OCOR-DEV-0048 merges, recompute the ready set fresh from the backlog JSON directly (never trust --status) -- closing the last visible ready task may unlock several new waves at once, given only 22 tasks remain.",
+  "exact_next_action": "Implement the three REMs opened by the R2 NO_GO verdict, in order: (1) OCOR-DEV-REM-0014 (TypeDB commit_id/watermark: apply safe literal rendering also to the watermark insert and validate the identifier contract before queries; live positive/negative tests for fact_id/payload/commit_id on the real TypeDB backend) -> (2) OCOR-DEV-REM-0015 (validate_rccad.py: NUL-delimited git diff --name-only -z for working tree/index/base..HEAD; regressions for staged/Unicode/tab/newline paths) -> (3) OCOR-DEV-REM-0016 (content-addressed candidate records for REM-0010/0011/0012 with commit/environment/commands/raw_output_sha256/created_at/raw log + manifest accepted by validate_runtime_evidence.py --non-skipped). Each as a governed/ change set with TDD RED->GREEN, gate verdi and evidence. Then re-request independent verification (review_type=REMEDIATION) on a HEAD that includes the authorized Fuseki update (a1eb484a...) and the fixes, per finding VF-004. RVW-03/INFO-A/INFO-C remain reserved to the Product Owner (non-blocking). OCOR-DEV-0048 (wave 15, real backend) resumes after R2/R3.",
   "schema_version": "1.0",
   "unresolved_blockers": [],
-  "worktree": null
+  "worktree": ".ocor/worktrees/remediation-r2-verdict-processing"
 }

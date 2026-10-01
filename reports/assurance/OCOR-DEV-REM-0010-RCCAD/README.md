@@ -34,3 +34,21 @@ Candidato qualificato con TDD RED→GREEN e gate locali verdi. **Non** è un sig
 richiede verifica indipendente e CI verde sull'HEAD esatto prima del seal e del
 merge governato. Nessuna modifica a `inputs/`, ADD o LLD; `E1=0`, `E2=0`, nessun
 requisito `Verified`, runtime conformance/PoC/Production non promossi.
+
+## Erratum — collisione di ID (2026-10-01)
+
+`OCOR-DEV-REM-0010` è doppiamente assegnato: indica sia la correzione `$ref` del
+generatore di contratti (2026-09-12, PR #63) sia l'hardening degli adapter C4
+registrato in questa directory (2026-09-15, PR #128). Al secondo è assegnato il
+primo `OCOR-DEV-REM-*` libero — `OCOR-DEV-REM-0013` — come **alias canonico**,
+senza rinominare la storia (la directory resta `OCOR-DEV-REM-0010-RCCAD/`). Il
+record `evidence.json` espone il campo `id_alias`.
+
+## Verifica indipendente (2026-10-01)
+
+La verifica indipendente richiesta da R2 (`request_id`
+`OCOR-DEV-REM-0010-0011-0012-1aaef13885ed-0`, `head_sha`
+`1aaef13885ed142646d0ed35c995078c30d9f174`) ha restituito **`NO_GO`** con quattro
+finding bloccanti (`VF-001`…`VF-004`). Il risultato completo è appeso in append al
+record `evidence.json` (campo `independent_verification_result`) senza riscrivere i
+campi storici. Questo candidato resta **non sigillato**.

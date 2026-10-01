@@ -3693,3 +3693,36 @@
 - Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
   `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
 - Prossima azione: R2 — verifica indipendente mancante di REM-0010/0011/0012.
+
+## 2026-10-01 — Remediation R2: processazione del verdetto indipendente (REM-0010/0011/0012)
+
+- Change set `governed/` (branch `governed/remediation-r2-verdict-processing`, basato su
+  `8f4d2aa168018e950ad3b85f1a6a78af81fb2fb6` = HEAD di `main` post-R1).
+- Il verdetto indipendente richiesto da R2 (`request_id`
+  `OCOR-DEV-REM-0010-0011-0012-1aaef13885ed-0`, `review_type=REMEDIATION`,
+  `base_sha=6f8b8e6673f4ffe16370934a94ed6be9695fc6d7`,
+  `head_sha=1aaef13885ed142646d0ed35c995078c30d9f174`) è **`NO_GO`** con quattro finding
+  bloccanti: `VF-001` (high, TypeDB commit_id/watermark senza safe literal rendering),
+  `VF-002` (medium, validate_rccad `line.split("\n")` sui path), `VF-003` (high, record
+  di evidenza non content-addressed), `VF-004` (medium, re-verifica su HEAD post-Fuseki).
+- Il risultato è stato **appeso in append** (senza riscrivere i campi storici) ai tre
+  record `reports/assurance/OCOR-DEV-REM-001{0,1,2}-RCCAD/evidence.json` nel campo
+  `independent_verification_result`. I record restano
+  `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` e **non** sono sigillati.
+- **Erratum di collisione ID**: `OCOR-DEV-REM-0010` è doppiamente assegnato (correzione
+  `$ref` del generatore, PR #63 2026-09-12; hardening adapter C4, PR #128 2026-09-15).
+  Al secondo è assegnato il primo `OCOR-DEV-REM-*` libero — `OCOR-DEV-REM-0013` — come
+  **alias canonico**, senza rinominare la storia (campo `id_alias` nel record).
+- **REM aperte**: `OCOR-DEV-REM-0014` (TypeDB commit_id/watermark), `OCOR-DEV-REM-0015`
+  (validate_rccad path NUL-delimited), `OCOR-DEV-REM-0016` (record content-addressed),
+  registrate come record README-only `REGISTERED_OPEN_FOR_IMPLEMENTATION`.
+- **Richieste di decisione** (riservate al PO, non bloccanti): `RVW-03`, `INFO-A`,
+  `INFO-C` in `reports/development/decision_requests/` con blocker
+  `OPEN_PO_DECISION_REQUIRED` in `EXECUTION_STATE.json`.
+- Allowlist `extension_paths` di `scripts/validate_ocor_development_plan.py` estesa per i
+  6 nuovi file; self-hash riallineato in `reports/planning/OCOR_PLAN_RUN_STATE.json`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: implementare `OCOR-DEV-REM-0014` (TDD su TypeDB reale), poi
+  `OCOR-DEV-REM-0015` e `OCOR-DEV-REM-0016`, poi ri-richiedere la verifica indipendente
+  su un HEAD che include l'aggiornamento Fuseki autorizzato e i fix.
