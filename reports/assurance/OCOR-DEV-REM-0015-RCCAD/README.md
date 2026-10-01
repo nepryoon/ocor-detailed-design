@@ -26,12 +26,16 @@ promossi. Nessuna modifica a `inputs/`, ADD o LLD.
 
 `git_changed()` ora usa `git diff --name-only -z --no-renames` per working tree e index,
 e `git diff --name-only -z --no-renames <base> HEAD`, separando su NUL con `os.fsdecode`
-per nome. Regressione hermetic in `reports/tests/test_rccad_methodology.py`
-(`test_git_changed_returns_unquoted_paths_for_special_filenames`) per staged
-add/modify/delete/rename con Unicode, tab e newline, che asserisce path raw non quotati
-e `RCCAD-IMMUTABLE-INPUT`.
+per nome. Regressioni hermetic in `reports/tests/test_rccad_methodology.py`:
+`test_git_changed_returns_unquoted_paths_for_special_filenames` (unit) più quattro
+regressioni end-to-end che attraversano l'intero validatore e asseriscono `exit != 0` /
+`status = FAIL` / il path esatto `RCCAD-IMMUTABLE-INPUT` per add/modify/delete/rename
+sulle superfici working tree, index e `base..HEAD`, su entrambi i lati di un rename che
+attraversa il confine `inputs/`, con controlli positivi.
 
-TDD RED→GREEN registrato in `evidence.json` (candidato) e nel record content-addressed
-`OCOR-DEV-REM-0015.json` + `.log` + `MANIFEST.json` (validabile con
-`validate_runtime_evidence.py --non-skipped`). Verifica indipendente richiesta prima del
-sigillo. Nessuna modifica a `inputs/`, ADD o LLD.
+TDD RED→GREEN (repair cycle 1, VF-001/VF-002) registrato in `evidence.json` (candidato)
+e nel record content-addressed `OCOR-DEV-REM-0015.json` + `.log` + `MANIFEST.json`
+(validabile con `validate_runtime_evidence.py --non-skipped`). Il log raw registra 10
+comandi con `exit_code`, incluso il RED `EXPECTED_FAILURE` (5 failed / 7 passed).
+Verifica indipendente richiesta prima del sigillo. Nessuna modifica a `inputs/`, ADD o
+LLD.

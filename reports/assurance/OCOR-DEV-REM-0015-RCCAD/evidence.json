@@ -2,7 +2,7 @@
   "baseline_commit": "dbf06498bb1222674eed72e0794dc673bc473c3f",
   "change_set": "OCOR-DEV-REM-0015-RCCAD",
   "changed_file_sha256": {
-    "reports/tests/test_rccad_methodology.py": "60594740dd46df4edf07e740f9fc07726be339972fc9e0c5b20df2850f73aae8",
+    "reports/tests/test_rccad_methodology.py": "eb80fa989931f447249a1d8880b1abe667aa1ecf144ac6739e62c33f6416fd4c",
     "scripts/validate_rccad.py": "e3b83df0a730b35c25e49a148fd0a02344970a03f9582c34bf8dd44389fc36d8"
   },
   "claims": {
@@ -23,7 +23,7 @@
   "local_gates": {
     "mypy --strict": "PASS (67 files)",
     "pytest ocor-runtime/tests/tasks/test_ocor_dev_rem_0012.py": "2 passed",
-    "pytest reports/tests/test_rccad_methodology.py": "6 passed",
+    "pytest reports/tests/test_rccad_methodology.py": "12 passed",
     "ruff check .": "PASS",
     "sha256sum -c inputs/normative/SHA256SUMS": "PASS 8/8",
     "validate_language_policy.py": "PASS",
@@ -40,16 +40,16 @@
   "schema_version": "1.0",
   "source_task_id": "OCOR-DEV-0006",
   "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION_CI_AND_INTEGRATION",
-  "summary": "scripts/validate_rccad.py read the changed-path set with 'git diff --name-only' (newline-split), so a path under inputs/ whose name contains a tab, newline or non-ASCII byte was either lost (newline/tab) or returned quoted/escaped (core.quotePath), and the startswith('inputs/') predicate in the RCCAD-IMMUTABLE-INPUT precheck missed it. git_changed() now runs 'git diff --name-only -z --no-renames' for the working tree, 'git diff --cached --name-only -z --no-renames' for the index, and 'git diff --name-only -z --no-renames <base> HEAD', splitting on NUL with os.fsdecode per name so no path is lost or escaped. Adds a hermetic regression asserting unquoted staged add/modify/delete/rename paths for Unicode, tab and newline filenames.",
+  "summary": "scripts/validate_rccad.py read the changed-path set with 'git diff --name-only' (newline-split), so a path under inputs/ whose name contains a tab, newline or non-ASCII byte was either lost (newline/tab) or returned quoted/escaped (core.quotePath), and the startswith('inputs/') predicate in the RCCAD-IMMUTABLE-INPUT precheck missed it. git_changed() now runs 'git diff --name-only -z --no-renames' for the working tree, 'git diff --cached --name-only -z --no-renames' for the index, and 'git diff --name-only -z --no-renames <base> HEAD', splitting on NUL with os.fsdecode per name so no path is lost or escaped. Adds hermetic end-to-end regressions that traverse the full validator and assert exit!=0 / status=FAIL / exact RCCAD-IMMUTABLE-INPUT path for add/modify/delete/rename across the working tree, index and base..HEAD surfaces, both sides of a rename across the inputs/ boundary, plus positive controls.",
   "superseded_by": "OCOR-DEV-REM-0015 (content-addressed runtime evidence record, reports/assurance/OCOR-DEV-REM-0015-RCCAD/OCOR-DEV-REM-0015.json)",
   "tdd": {
     "green": {
-      "fingerprint": "test_git_changed_returns_unquoted_paths_for_special_filenames passes; full test_rccad_methodology.py 6/6; test_ocor_dev_rem_0012.py 2/2; validate_rccad.py still PASS_LOCAL_PRECHECK; ruff clean; mypy --strict clean.",
-      "local_commit": "(fixed working tree; committed as the governed REM-0015 change set)",
+      "fingerprint": "Full test_rccad_methodology.py 12/12 PASS with the fixed git_changed() ('git diff --name-only -z --no-renames' + 'git diff --cached --name-only -z --no-renames' + 'git diff --name-only -z --no-renames <base> HEAD', split on NUL with os.fsdecode per name); test_ocor_dev_rem_0012.py 2/2; validate_rccad.py still PASS_STATIC_PRECHECK; ruff clean; mypy --strict clean (67 files).",
+      "local_commit": "33ab38b (fixed working tree; committed as the governed REM-0015 repair)",
       "result": "PASS"
     },
     "red": {
-      "fingerprint": "test_git_changed_returns_unquoted_paths_for_special_filenames FAILS on the pre-fix git_changed(): git diff --name-only quotes the non-ASCII add and rename target ('\"inputs/ren-\\303\\251.txt\"'), escapes the tab name ('\"inputs/mod-tab\\tname.txt\"'), and drops the newline name entirely, so the expected raw-path set does not match.",
+      "fingerprint": "test_git_changed_returns_unquoted_paths_for_special_filenames and the four end-to-end RCCAD-IMMUTABLE-INPUT regressions (unstaged modify, staged add/modify/delete/rename, committed base..HEAD, rename across the inputs/ boundary) FAIL on the pre-fix git_changed(): 'git diff --name-only' quotes the non-ASCII add/rename target ('\"inputs/ren-\\303\\251.txt\"'), escapes the tab name ('\"inputs/mod-tab\\tname.txt\"') and drops the newline name entirely, so the exact raw-path assertion and the startswith('inputs/') predicate both miss the special paths. Suite result: 5 failed / 7 passed (EXPECTED_FAILURE).",
       "local_commit": "dbf0649",
       "result": "EXPECTED_FAILURE"
     }

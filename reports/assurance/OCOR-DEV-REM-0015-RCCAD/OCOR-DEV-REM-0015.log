@@ -1,62 +1,319 @@
-===== OCOR-DEV-REM-0015 TDD RED (pre-fix) =====
-test_git_changed_returns_unquoted_paths_for_special_filenames (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_git_changed_returns_unquoted_paths_for_special_filenames)
-VF-002 / OCOR-DEV-REM-0015 regression. ... FAIL
+========================================================================
+ OCOR-DEV-REM-0015 — raw evidence log (content-addressed)
+ task: NUL-delimited git diff path handling in scripts/validate_rccad.py
+ repair cycle 1 (VF-001 / VF-002 remediation)
+ generated: 2026-10-01T15:32:03+00:00
+========================================================================
 
-======================================================================
-FAIL: test_git_changed_returns_unquoted_paths_for_special_filenames (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_git_changed_returns_unquoted_paths_for_special_filenames)
-VF-002 / OCOR-DEV-REM-0015 regression.
-----------------------------------------------------------------------
-Traceback (most recent call last):
-  File "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/rem0015/reports/tests/test_rccad_methodology.py", line 153, in test_git_changed_returns_unquoted_paths_for_special_filenames
-    self.assertEqual(expected, set(changed))
-AssertionError: Items in the first set but not the second:
-'inputs/ren-é.txt'
-'inputs/del-line\nname.txt'
-'inputs/add-é.txt'
-'inputs/mod-tab\tname.txt'
-Items in the second set but not the first:
-'"inputs/ren-\\303\\251.txt"'
-'"inputs/add-\\303\\251.txt"'
-'"inputs/mod-tab\\tname.txt"'
+----- COMMAND 1/10: TDD RED (pre-fix git_changed) -----
+command: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_rccad_methodology.py
+EXIT CODE: 1
+EXPECTED_FAILURE: yes (defect must be observable pre-fix)
+F....FFFF...                                                             [100%]
+=================================== FAILURES ===================================
+_ RccadAdoptionTests.test_git_changed_returns_unquoted_paths_for_special_filenames _
 
-----------------------------------------------------------------------
-Ran 1 test in 0.017s
+self = <test_rccad_methodology.RccadAdoptionTests testMethod=test_git_changed_returns_unquoted_paths_for_special_filenames>
 
-FAILED (failures=1)
+    def test_git_changed_returns_unquoted_paths_for_special_filenames(self) -> None:
+        """VF-002 / OCOR-DEV-REM-0015 regression.
+    
+        ``git diff --name-only`` (without ``-z``) quotes paths containing non-ASCII,
+        tab or newline characters (e.g. ``"inputs/\\303\\251-vil.txt"``), so the
+        ``relative.startswith("inputs/")`` predicate in ``validate_rccad.py`` misses
+        them and ``RCCAD-IMMUTABLE-INPUT`` is never raised. ``git_changed`` must
+        return the raw, unquoted paths for staged add/modify/delete/rename.
+        """
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import validate_rccad  # noqa: E402,F401  (stdlib, imported after sys.path)
+    
+        added = "inputs/add-\u00e9.txt"              # non-ASCII add
+        modified = "inputs/mod-tab\tname.txt"        # tab modify
+        deleted = "inputs/del-line\nname.txt"        # newline delete
+        renamed_old = "inputs/ren-old.txt"
+        renamed_new = "inputs/ren-\u00e9.txt"        # non-ASCII rename target
+        expected = {added, modified, deleted, renamed_old, renamed_new}
+    
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+    
+            def git(*args: str) -> None:
+                subprocess.run(["git", *args], cwd=repo, check=True)
+    
+            git("init", "-q")
+            git("config", "user.email", "t@t.t")
+            git("config", "user.name", "t")
+    
+            # Baseline: tracked files that will later be modified / deleted / renamed.
+            for rel in (modified, deleted, renamed_old):
+                path = repo / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("baseline\n", encoding="utf-8")
+            git("add", "-A")
+            git("commit", "-q", "-m", "baseline")
+    
+            # Staged add / modify / delete / rename.
+            add_path = repo / added
+            add_path.parent.mkdir(parents=True, exist_ok=True)
+            add_path.write_text("added\n", encoding="utf-8")
+            (repo / modified).write_text("modified\n", encoding="utf-8")
+            (repo / deleted).unlink()
+            git("mv", renamed_old, renamed_new)
+            git("add", "-A")
+    
+            changed = validate_rccad.git_changed(repo, None)
+    
+>       self.assertEqual(expected, set(changed))
+E       AssertionError: Items in the first set but not the second:
+E       'inputs/mod-tab\tname.txt'
+E       'inputs/ren-é.txt'
+E       'inputs/add-é.txt'
+E       'inputs/del-line\nname.txt'
+E       Items in the second set but not the first:
+E       '"inputs/mod-tab\\tname.txt"'
+E       '"inputs/ren-\\303\\251.txt"'
+E       '"inputs/add-\\303\\251.txt"'
 
-===== OCOR-DEV-REM-0015 TDD GREEN (post-fix) =====
-test_git_changed_returns_unquoted_paths_for_special_filenames (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_git_changed_returns_unquoted_paths_for_special_filenames)
-VF-002 / OCOR-DEV-REM-0015 regression. ... ok
+reports/tests/test_rccad_methodology.py:192: AssertionError
+___ RccadAdoptionTests.test_validator_detects_committed_special_path_change ____
 
-----------------------------------------------------------------------
-Ran 1 test in 0.017s
+self = <test_rccad_methodology.RccadAdoptionTests testMethod=test_validator_detects_committed_special_path_change>
 
-OK
+    def test_validator_detects_committed_special_path_change(self) -> None:
+        """base..HEAD surface: a committed inputs/ change with a Unicode name
+        must raise RCCAD-IMMUTABLE-INPUT via --base-ref."""
+        changed = "inputs/committed-\u00e9.txt"
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            _init_repo(repo)
+            _commit_baseline(repo)
+            path = repo / changed
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("added\n", encoding="utf-8")
+            _git(repo, "add", "-A")
+            _git(repo, "commit", "-q", "-m", "change inputs")
+            result = _run_validator(repo, base_ref="HEAD~1")
+        self.assertNotEqual(0, result.returncode)
+        payload = json.loads(result.stdout)
+        self.assertEqual("FAIL", payload["status"])
+>       self.assertIn(changed, _immutable_paths(payload))
+E       AssertionError: 'inputs/committed-é.txt' not found in set()
 
-===== OCOR-DEV-REM-0015 full test_rccad_methodology =====
-test_git_changed_returns_unquoted_paths_for_special_filenames (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_git_changed_returns_unquoted_paths_for_special_filenames)
-VF-002 / OCOR-DEV-REM-0015 regression. ... ok
-test_manifest_is_valid_and_canonical (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_manifest_is_valid_and_canonical) ... ok
-test_required_artifacts_exist (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_required_artifacts_exist) ... ok
-test_validator_accepts_repository_state (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_validator_accepts_repository_state) ... ok
-test_validator_fails_closed_on_missing_required_artifact (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_validator_fails_closed_on_missing_required_artifact) ... ok
-test_validator_rejects_input_changes (reports.tests.test_rccad_methodology.RccadAdoptionTests.test_validator_rejects_input_changes) ... ok
+reports/tests/test_rccad_methodology.py:264: AssertionError
+___ RccadAdoptionTests.test_validator_detects_rename_across_inputs_boundary ____
 
-----------------------------------------------------------------------
-Ran 6 tests in 0.380s
+self = <test_rccad_methodology.RccadAdoptionTests testMethod=test_validator_detects_rename_across_inputs_boundary>
 
-OK
+    def test_validator_detects_rename_across_inputs_boundary(self) -> None:
+        """Both sides of a rename across the inputs/ boundary: the inputs/ path
+        that is renamed away must be caught, and the inputs/ path that is
+        renamed into must be caught."""
+        out_old = "inputs/leave-\u00e9.txt"       # rename out of inputs -> old side
+        out_new = "docs/leave-\u00e9.txt"
+        in_old = "docs/enter-\u00e9.txt"
+        in_new = "inputs/enter-\u00e9.txt"        # rename into inputs -> new side
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            _init_repo(repo)
+            for rel in (out_old, in_old):
+                path = repo / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("baseline\n", encoding="utf-8")
+            _commit_baseline(repo)
+            (repo / out_old).rename(repo / out_new)
+            (repo / in_old).rename(repo / in_new)
+            _git(repo, "add", "-A")
+            result = _run_validator(repo)
+        self.assertNotEqual(0, result.returncode)
+        payload = json.loads(result.stdout)
+        self.assertEqual("FAIL", payload["status"])
+        paths = _immutable_paths(payload)
+>       self.assertIn(out_old, paths)   # the input side renamed away
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: 'inputs/leave-é.txt' not found in set()
 
-===== OCOR-DEV-REM-0015 test_ocor_dev_rem_0012 (git_changed consumers) =====
-============================= test session starts ==============================
-platform linux -- Python 3.12.11, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/.ocor/worktrees/rem0015/ocor-runtime/.venv/bin/python3
-cachedir: .pytest_cache
-rootdir: /home/luca/projects/ocor-detailed-design/.ocor/worktrees/rem0015/ocor-runtime
-configfile: pyproject.toml
-plugins: cov-7.1.0
-collecting ... collected 2 items
+reports/tests/test_rccad_methodology.py:290: AssertionError
+____ RccadAdoptionTests.test_validator_detects_staged_special_path_changes _____
 
-ocor-runtime/tests/tasks/test_ocor_dev_rem_0012.py::test_git_changed_detects_a_staged_only_input_change PASSED [ 50%]
-ocor-runtime/tests/tasks/test_ocor_dev_rem_0012.py::test_git_changed_detects_a_staged_new_file PASSED [100%]
+self = <test_rccad_methodology.RccadAdoptionTests testMethod=test_validator_detects_staged_special_path_changes>
 
-============================== 2 passed in 0.04s ===============================
+    def test_validator_detects_staged_special_path_changes(self) -> None:
+        """Index surface: staged add/modify/delete/rename with Unicode, tab and
+        newline names must each raise RCCAD-IMMUTABLE-INPUT through the full
+        validator with the exact raw path."""
+        added = "inputs/add-\u00e9.txt"          # non-ASCII add
+        modified = "inputs/mod-tab\tname.txt"    # tab in modify
+        deleted = "inputs/del-line\nname.txt"    # newline in delete
+        renamed_old = "inputs/ren-old.txt"
+        renamed_new = "inputs/ren-\u00e9.txt"    # non-ASCII rename target
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            _init_repo(repo)
+            for rel in (modified, deleted, renamed_old):
+                path = repo / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("baseline\n", encoding="utf-8")
+            _commit_baseline(repo)
+            add_path = repo / added
+            add_path.parent.mkdir(parents=True, exist_ok=True)
+            add_path.write_text("added\n", encoding="utf-8")
+            (repo / modified).write_text("modified\n", encoding="utf-8")
+            (repo / deleted).unlink()
+            (repo / renamed_old).rename(repo / renamed_new)
+            _git(repo, "add", "-A")
+            result = _run_validator(repo)
+        self.assertNotEqual(0, result.returncode)
+        payload = json.loads(result.stdout)
+        self.assertEqual("FAIL", payload["status"])
+        paths = _immutable_paths(payload)
+        for rel in (added, modified, deleted, renamed_old, renamed_new):
+>           self.assertIn(rel, paths)
+E           AssertionError: 'inputs/add-é.txt' not found in {'inputs/ren-old.txt'}
+
+reports/tests/test_rccad_methodology.py:245: AssertionError
+____ RccadAdoptionTests.test_validator_detects_unstaged_special_path_change ____
+
+self = <test_rccad_methodology.RccadAdoptionTests testMethod=test_validator_detects_unstaged_special_path_change>
+
+    def test_validator_detects_unstaged_special_path_change(self) -> None:
+        """Working-tree surface: an unstaged modification to a tracked inputs/
+        file whose name carries Unicode must still raise RCCAD-IMMUTABLE-INPUT
+        through the full validator (not just the git_changed() unit)."""
+        modified = "inputs/mod-\u00e9.txt"
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            _init_repo(repo)
+            path = repo / modified
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("baseline\n", encoding="utf-8")
+            _commit_baseline(repo)
+            path.write_text("changed\n", encoding="utf-8")  # unstaged modify
+            result = _run_validator(repo)
+        self.assertNotEqual(0, result.returncode)
+        payload = json.loads(result.stdout)
+        self.assertEqual("FAIL", payload["status"])
+>       self.assertIn(modified, _immutable_paths(payload))
+E       AssertionError: 'inputs/mod-é.txt' not found in set()
+
+reports/tests/test_rccad_methodology.py:213: AssertionError
+=========================== short test summary info ============================
+FAILED reports/tests/test_rccad_methodology.py::RccadAdoptionTests::test_git_changed_returns_unquoted_paths_for_special_filenames
+FAILED reports/tests/test_rccad_methodology.py::RccadAdoptionTests::test_validator_detects_committed_special_path_change
+FAILED reports/tests/test_rccad_methodology.py::RccadAdoptionTests::test_validator_detects_rename_across_inputs_boundary
+FAILED reports/tests/test_rccad_methodology.py::RccadAdoptionTests::test_validator_detects_staged_special_path_changes
+FAILED reports/tests/test_rccad_methodology.py::RccadAdoptionTests::test_validator_detects_unstaged_special_path_change
+5 failed, 7 passed in 0.71s
+
+----- COMMAND 2/10: TDD GREEN (fixed git_changed) -----
+command: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_rccad_methodology.py
+EXIT CODE: 0
+............                                                             [100%]
+12 passed in 0.73s
+
+----- COMMAND 3/10: consumer regression (REM-0012 generator $ref) -----
+command: ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests/tasks/test_ocor_dev_rem_0012.py
+EXIT CODE: 0
+..                                                                       [100%]
+2 passed in 0.04s
+
+----- COMMAND 4/10: ruff check . -----
+command: ruff check .
+EXIT CODE: 0
+All checks passed!
+
+----- COMMAND 5/10: mypy --strict -----
+command: ocor-runtime/.venv/bin/python -m mypy
+EXIT CODE: 0
+Success: no issues found in 67 source files
+
+----- COMMAND 6/10: normative input integrity -----
+command: sha256sum -c inputs/normative/SHA256SUMS
+EXIT CODE: 0
+inputs/normative/OCOR_Architectural_Design_Document_v1.1.md: OK
+inputs/normative/OCOR_CAP_ELM_Requirement_Crosswalk_v0.9.md: OK
+inputs/normative/OCOR_DEC_197_plus_Draft_v0.1.md: OK
+inputs/normative/OCOR_Decision_Register_v1.0.md: OK
+inputs/normative/OCOR_Decision_Traceability_Index_v1.0.md: OK
+inputs/normative/OCOR_Registers_v0.9.md: OK
+inputs/normative/OCOR_Requirement_Register_v0.9.md: OK
+inputs/normative/OCOR_Requirement_Traceability_Index_v0.9.md: OK
+
+----- COMMAND 7/10: ADD harness (tool-backed) -----
+command: ocor-runtime/.venv/bin/python scripts/verify.py --json
+EXIT CODE: 0
+==============================================================================
+OCOR ADD — harness di verifica tool-backed
+oggetto: inputs/normative/OCOR_Architectural_Design_Document_v1.1.md
+sha256:  3e7532c7101e80c74b511cedc56a0563ca0938a3fe259911a91245cb19dedc7f
+==============================================================================
+[PASS] Integrità sorgenti
+       8 file, tutti i digest coincidono
+[PASS] JSON Schema — parsing e meta-validazione
+       5 schemi Draft 2020-12 validi: urn:ocor:schema:action-type-contract:1.0, urn:ocor:schema:canonical-ingestion-envelope:1.1, urn:ocor:schema:event-subscription-contract:1.0, urn:ocor:schema:mcp-tool-contract:1.1, urn:ocor:schema:signed-canonical-ir:1.0
+[PASS] OpenAPI — risoluzione $ref
+       OpenAPI 3.1.0 v1.1.0; 6 path, 25 schemi, 26 $ref; tutti i $ref risolti; schemi mai referenziati: nessuno
+[PASS] OpenAPI — validazione semantica con validator ufficiale
+       openapi-spec-validator==0.9.0; wheel SHA-256 222fecffc7714f6d0a6ad62c0e4b66cc2b7dbfafb7b93acfc6c308abbdb51af8; documento OpenAPI 3.1.0 valido
+[PASS] Protobuf — compilazione
+       protoc compila senza errori
+[PASS] Turtle/RDF — parsing
+       17 triple
+[PASS] Rami condizionali insoddisfacibili (classe RV-01)
+       nessun campo richiesto da un condizionale risulta non dichiarato
+[INFO] Rami condizionali da coprire con casi POSITIVI
+       il §7.1 del prompt richiede almeno un caso positivo per ramo — signed-canonical-ir=0; canonical-ingestion-envelope=4; mcp-tool-contract=11; action-type-contract=9; event-subscription-contract=0
+[PASS] FSM — bijezione diagramma/tabella
+       29 stati in corrispondenza
+[PASS] FSM — famiglia ACT-T
+       ACT-T01–T31 contigui, più le varianti a/b/c
+[INFO] FSM — stati terminali
+       stati senza archi uscenti non attesi: nessuno; stati di indeterminatezza privi di uscita: nessuno
+[PASS] Tracciabilità — allocazione in §7
+       DEC 181/196; BR 18/18; FR 174/174; NFR 93/93; ARC 23/23; CAP 25/26; ELM 103/103; RSK 60/60
+[PASS] Universo normativo
+       693 = 693 atteso
+[PASS] Rimandi di sezione
+       44 rimandi distinti, 59 sezioni; non risolti: nessuno
+[PASS] Evidence fence
+       'E1=0' ricorre 16 volte; claim probatori non supportati: nessuno
+[PASS] Nessun DEC-197 assegnato
+       3 occorrenze, tutte in forma negativa o come nome di file
+==============================================================================
+PASS 14  FAIL 0  NOT_EXECUTED 0
+==============================================================================
+referto JSON: reports/verify_report.json
+
+----- COMMAND 8/10: language policy gate -----
+command: ocor-runtime/.venv/bin/python scripts/validate_language_policy.py
+EXIT CODE: 0
+PASS: no tracked file uses a monitored extension outside its authorized area
+
+----- COMMAND 9/10: change scope gate -----
+command: ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base origin/main --head HEAD
+EXIT CODE: 0
+PASS: 10 changed path(s); immutable surfaces untouched; task ledger stable
+
+----- COMMAND 10/10: RCCAD methodology gate -----
+command: ocor-runtime/.venv/bin/python scripts/validate_rccad.py --base-ref origin/main
+EXIT CODE: 0
+{
+  "checked_artifacts": 22,
+  "dynamic_assurance": "CI_REQUIRED",
+  "findings": [],
+  "fitness_results": {
+    "AFF-001": "PASS_STATIC_PRECHECK",
+    "AFF-002": "PASS_STATIC_PRECHECK",
+    "AFF-003": "PASS_STATIC_PRECHECK",
+    "AFF-004": "PASS_STATIC_PRECHECK",
+    "AFF-005": "PASS_STATIC_PRECHECK",
+    "AFF-006": "PASS_STATIC_PRECHECK",
+    "AFF-007": "PASS_STATIC_PRECHECK",
+    "AFF-008": "PASS_STATIC_PRECHECK",
+    "AFF-009": "PASS_STATIC_PRECHECK",
+    "AFF-010": "PASS_STATIC_PRECHECK"
+  },
+  "methodology_sha256": "231ce3325537de85890b16e97f138bd6a4263fc1e240094ed26499af9aeeb6cd",
+  "status": "PASS_LOCAL_PRECHECK"
+}
+
+========================================================================
