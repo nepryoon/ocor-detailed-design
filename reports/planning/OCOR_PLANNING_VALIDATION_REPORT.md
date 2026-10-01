@@ -1,6 +1,6 @@
 # OCOR Planning Validation Report
 
-Validation commit/base: `f9558275d3db1da30846d6ac0cf8fe8c9921426d`. Mechanical result: **PASS**.
+Validation commit/base: `origin/main`. Mechanical result: **PASS**.
 
 Checks: 37 PASS, 0 FAIL, 2 NOT_EXECUTED. Optional unavailable tools are never counted as PASS.
 
