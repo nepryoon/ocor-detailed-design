@@ -33,6 +33,45 @@ REQUIRED = (
 )
 
 
+def _git(repo: Path, *args: str) -> None:
+    subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True, text=True)
+
+
+def _init_repo(repo: Path) -> None:
+    """Minimal git repo carrying only the files the validator needs to reach the
+    immutable-input precheck: the three fail-closed component modules are read
+    unconditionally, so they must exist or the validator fails closed with
+    RCCAD-VALIDATOR-ERROR before emitting RCCAD-IMMUTABLE-INPUT."""
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.email", "t@t.t")
+    _git(repo, "config", "user.name", "t")
+    for rel, token in (
+        ("ocor-runtime/src/ocor_runtime/c6_capabilities.py", "AuthorizationError"),
+        ("ocor-runtime/src/ocor_runtime/c7_emission.py", "EmissionBlocked"),
+        ("ocor-runtime/src/ocor_runtime/c8_agent.py", "SandboxViolation"),
+    ):
+        path = repo / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"{token} = object()\n", encoding="utf-8")
+    (repo / "README.md").write_text("baseline\n", encoding="utf-8")
+
+
+def _commit_baseline(repo: Path) -> None:
+    _git(repo, "add", "-A")
+    _git(repo, "commit", "-q", "-m", "baseline")
+
+
+def _run_validator(repo: Path, base_ref: str | None = None) -> "subprocess.CompletedProcess[str]":
+    cmd = [sys.executable, str(ROOT / "scripts/validate_rccad.py"), "--root", str(repo)]
+    if base_ref is not None:
+        cmd += ["--base-ref", base_ref]
+    return subprocess.run(cmd, cwd=repo, text=True, capture_output=True, check=False)
+
+
+def _immutable_paths(payload: dict) -> set[str]:
+    return {item["path"] for item in payload["findings"] if item["rule_id"] == "RCCAD-IMMUTABLE-INPUT"}
+
+
 class RccadAdoptionTests(unittest.TestCase):
     def test_required_artifacts_exist(self) -> None:
         missing = [path for path in REQUIRED if not (ROOT / path).is_file()]
@@ -153,6 +192,127 @@ class RccadAdoptionTests(unittest.TestCase):
         self.assertEqual(expected, set(changed))
         for rel in changed:
             self.assertTrue(rel.startswith("inputs/"), rel)
+
+    def test_validator_detects_unstaged_special_path_change(self) -> None:
+        """Working-tree surface: an unstaged modification to a tracked inputs/
+        file whose name carries Unicode must still raise RCCAD-IMMUTABLE-INPUT
+        through the full validator (not just the git_changed() unit)."""
+        modified = "inputs/mod-\u00e9.txt"
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            _init_repo(repo)
+            path = repo / modified
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("baseline\n", encoding="utf-8")
+            _commit_baseline(repo)
+            path.write_text("changed\n", encoding="utf-8")  # unstaged modify
+            result = _run_validator(repo)
+        self.assertNotEqual(0, result.returncode)
+        payload = json.loads(result.stdout)
+        self.assertEqual("FAIL", payload["status"])
+        self.assertIn(modified, _immutable_paths(payload))
+
+    def test_validator_detects_staged_special_path_changes(self) -> None:
+        """Index surface: staged add/modify/delete/rename with Unicode, tab and
+        newline names must each raise RCCAD-IMMUTABLE-INPUT through the full
+        validator with the exact raw path."""
+        added = "inputs/add-\u00e9.txt"          # non-ASCII add
+        modified = "inputs/mod-tab\tname.txt"    # tab in modify
+        deleted = "inputs/del-line\nname.txt"    # newline in delete
+        renamed_old = "inputs/ren-old.txt"
+        renamed_new = "inputs/ren-\u00e9.txt"    # non-ASCII rename target
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            _init_repo(repo)
+            for rel in (modified, deleted, renamed_old):
+                path = repo / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("baseline\n", encoding="utf-8")
+            _commit_baseline(repo)
+            add_path = repo / added
+            add_path.parent.mkdir(parents=True, exist_ok=True)
+            add_path.write_text("added\n", encoding="utf-8")
+            (repo / modified).write_text("modified\n", encoding="utf-8")
+            (repo / deleted).unlink()
+            (repo / renamed_old).rename(repo / renamed_new)
+            _git(repo, "add", "-A")
+            result = _run_validator(repo)
+        self.assertNotEqual(0, result.returncode)
+        payload = json.loads(result.stdout)
+        self.assertEqual("FAIL", payload["status"])
+        paths = _immutable_paths(payload)
+        for rel in (added, modified, deleted, renamed_old, renamed_new):
+            self.assertIn(rel, paths)
+
+    def test_validator_detects_committed_special_path_change(self) -> None:
+        """base..HEAD surface: a committed inputs/ change with a Unicode name
+        must raise RCCAD-IMMUTABLE-INPUT via --base-ref."""
+        changed = "inputs/committed-\u00e9.txt"
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            _init_repo(repo)
+            _commit_baseline(repo)
+            path = repo / changed
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("added\n", encoding="utf-8")
+            _git(repo, "add", "-A")
+            _git(repo, "commit", "-q", "-m", "change inputs")
+            result = _run_validator(repo, base_ref="HEAD~1")
+        self.assertNotEqual(0, result.returncode)
+        payload = json.loads(result.stdout)
+        self.assertEqual("FAIL", payload["status"])
+        self.assertIn(changed, _immutable_paths(payload))
+
+    def test_validator_detects_rename_across_inputs_boundary(self) -> None:
+        """Both sides of a rename across the inputs/ boundary: the inputs/ path
+        that is renamed away must be caught, and the inputs/ path that is
+        renamed into must be caught."""
+        out_old = "inputs/leave-\u00e9.txt"       # rename out of inputs -> old side
+        out_new = "docs/leave-\u00e9.txt"
+        in_old = "docs/enter-\u00e9.txt"
+        in_new = "inputs/enter-\u00e9.txt"        # rename into inputs -> new side
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            _init_repo(repo)
+            for rel in (out_old, in_old):
+                path = repo / rel
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("baseline\n", encoding="utf-8")
+            _commit_baseline(repo)
+            (repo / out_old).rename(repo / out_new)
+            (repo / in_old).rename(repo / in_new)
+            _git(repo, "add", "-A")
+            result = _run_validator(repo)
+        self.assertNotEqual(0, result.returncode)
+        payload = json.loads(result.stdout)
+        self.assertEqual("FAIL", payload["status"])
+        paths = _immutable_paths(payload)
+        self.assertIn(out_old, paths)   # the input side renamed away
+        self.assertIn(in_new, paths)    # the input side renamed into
+
+    def test_validator_allows_changes_outside_inputs(self) -> None:
+        """Positive control: a staged change outside inputs/ must not raise
+        RCCAD-IMMUTABLE-INPUT."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            _init_repo(repo)
+            _commit_baseline(repo)
+            (repo / "docs").mkdir(exist_ok=True)
+            (repo / "docs" / "x.txt").write_text("changed\n", encoding="utf-8")
+            _git(repo, "add", "-A")
+            result = _run_validator(repo)
+        payload = json.loads(result.stdout)
+        self.assertEqual(set(), _immutable_paths(payload))
+
+    def test_validator_unchanged_state_has_no_input_findings(self) -> None:
+        """Positive control: a clean repository produces no RCCAD-IMMUTABLE-INPUT."""
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = Path(tmp)
+            _init_repo(repo)
+            _commit_baseline(repo)
+            result = _run_validator(repo)
+        payload = json.loads(result.stdout)
+        self.assertEqual(set(), _immutable_paths(payload))
 
 
 if __name__ == "__main__":
