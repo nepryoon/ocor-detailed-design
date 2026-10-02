@@ -4005,3 +4005,24 @@
 - Prossima azione: implementare `OCOR-DEV-REM-0016` (record content-addressed per
   REM-0010/0011/0012); poi R3 step (c) — cablare `scripts/validate_evidence_input_drift.py` come
   step CI bloccante; poi `OCOR-DEV-0048` (fase di implementazione).
+
+## 2026-10-02 — Governed: OCOR-DEV-REM-0016 merged (PR #151) + state sync
+
+- Change set `governed/state-sync-ocor-dev-rem-0016` (docs/state), basato sull'HEAD di `main` =
+  `5e1e601431a2ecab15869cdfb4775a39c145cc4f` (merge commit di PR #151).
+- Merge di **PR #151** (`governed/remediation-rem0016-content-addressed`) con `--match-head-commit
+  8174019fe803b24f0fc00dc8a7efe8a727a1a87c`: 13 check verdi sull'HEAD esatto; post-merge verificato
+  `origin/main` == merge commit `5e1e6014…`; hash sigillati del record invariati.
+- `OCOR-DEV-REM-0016` (finding VF-003, record content-addressed per REM-0010/0011/0012) implementato
+  con TDD, ri-verificato `GO_FOR_EVIDENCE_SEAL` al ciclo 2 (ciclo-1 NO_GO VF-001/VF-002 risolti),
+  sigillato content-addressed e mergiato: record `0d4fcfea…`, raw log `b0d7876c…`.
+- `EXECUTION_STATE.json`: `remediation_status.R2_independent_verification.rems_completed` include
+  `OCOR-DEV-REM-0016`; `baseline_commit` → `5e1e6014…`; `latest_ci_evidence` aggiornato con i 6 run
+  ID della CI di PR #151; `next_executable_action` → R3 step (c).
+- `MODEL_HANDOFF.json` riallineato (branch, worktree, `current_task`, `exact_next_action`;
+  `completed_tasks` e `commands_run` aggiornati; `unresolved_blockers` = [`TOOLCHAIN-LOCK-TYPESCRIPT`]).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: R3 step (c) — cablare `scripts/validate_evidence_input_drift.py` come step CI
+  bloccante e nel preflight (aggiornare le allowlist dei validator di piano per i nuovi file e
+  riallineare il self-hash di `OCOR_PLAN_RUN_STATE.json`); poi `OCOR-DEV-0048` (fase di implementazione).
