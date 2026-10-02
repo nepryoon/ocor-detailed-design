@@ -4144,3 +4144,26 @@
   resta `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
 - Prossima azione: chiudere `TOOLCHAIN-LOCK-TYPESCRIPT` come risolta (decisione PO 2026-10-02, Opzione 1)
   in un change set `governed/` separato, poi `TERMINAL_BLOCKED_REPORT.json` e `TERMINAL_BLOCKED`.
+
+## 2026-10-02 — Governed: chiusura decision request TOOLCHAIN-LOCK-TYPESCRIPT (Opzione 1) + state sync
+
+- Change set `governed/state-sync-toolchain-lock-typescript-resolved`, basato sull'HEAD di `main` =
+  `f0f88d906e2c7cc5a57ec1c0c1bd616f63982e18` (merge di PR #158, terminal state sync di OCOR-DEV-0048).
+- **Decisione del Product Owner** `TOOLCHAIN-LOCK-TYPESCRIPT` (2026-10-02), **Opzione 1**: nessuna
+  variazione di `infra/toolchain.lock.json`; `node` 20.20.2 e `typescript@7.0.2` (`bin/tsc`) usati in
+  ambiente isolato (DEC-211) per i gate locali dell'implementatore; il lock e i suoi controlli di
+  validazione/verifica restano invariati.
+- `reports/development/decision_requests/TOOLCHAIN-LOCK-TYPESCRIPT.md` chiusa come `RESOLVED`, con
+  sezione di risoluzione che cita la decisione PO (Opzione 1, nessuna variazione del lock).
+- `EXECUTION_STATE.json`: `baseline_commit` → `f0f88d90…`; blocker `TOOLCHAIN-LOCK-TYPESCRIPT` →
+  `RESOLVED` con `resolution` (Opzione 1); `active_iteration` riallineato al nuovo branch; `updated_at`;
+  `next_executable_action` → registrazione/riallineamento di `TERMINAL_BLOCKED_REPORT.json` allo stato
+  terminale ciclo 3 e `TERMINAL_BLOCKED`.
+- `MODEL_HANDOFF.json` riallineato (branch, worktree, `current_task`, `exact_next_action`,
+  `unresolved_blockers` = [`OCOR-DEV-0048`], `commands_run`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato. Nessuna modifica a codice,
+  validator o workflow: solo `reports/development/` (decision request + stato + handoff + log).
+- Prossima azione: registrare/riallineare `reports/development/TERMINAL_BLOCKED_REPORT.json` allo stato
+  terminale ciclo 3 (`OCOR-DEV-0048` `BLOCKED_REPAIR_BUDGET_EXHAUSTED`) in un change set `governed/`,
+  poi terminare con `TERMINAL_BLOCKED`.
