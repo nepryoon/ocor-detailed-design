@@ -16,11 +16,13 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import ssl
 import subprocess
 import urllib.error
 import urllib.parse
 import urllib.request
 from collections.abc import Callable, Mapping
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import cast
 
@@ -93,20 +95,23 @@ def _request(
     data: bytes | None = None,
     headers: Mapping[str, str] | None = None,
     timeout: float = 3.0,
+    correlation_id: str | None = None,
+    ssl_context: ssl.SSLContext | None = None,
 ) -> tuple[int, bytes]:
     req = urllib.request.Request(url, method=method, data=data)
     if headers:
         for key, value in headers.items():
             req.add_header(key, value)
+    correlation = f"correlation_id={correlation_id}" if correlation_id else "correlation_id=none"
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urllib.request.urlopen(req, timeout=timeout, context=ssl_context) as resp:
             return resp.status, resp.read()
     except urllib.error.HTTPError as exc:
         return exc.code, exc.read()
     except urllib.error.URLError as exc:
-        raise SecurityControlError("SERVICE_UNAVAILABLE", str(exc.reason)) from exc
+        raise SecurityControlError("SERVICE_UNAVAILABLE", f"{correlation} {exc.reason}") from exc
     except TimeoutError as exc:
-        raise SecurityControlError("SERVICE_UNAVAILABLE", "request timed out") from exc
+        raise SecurityControlError("SERVICE_UNAVAILABLE", f"{correlation} request timed out") from exc
 
 
 # --------------------------------------------------------------------------- #
@@ -382,6 +387,57 @@ def _split_der_chain(blob: bytes) -> list[bytes]:
     return certs
 
 
+def _rsa_sign(message: bytes, n: int, d: int) -> bytes:
+    """RSA PKCS#1 v1.5 SHA-256 signature (private-key operation, stdlib only)."""
+    k = (n.bit_length() + 7) // 8
+    digest_info = _DIGEST_INFO["sha256"]
+    digest_value = hashlib.sha256(message).digest()
+    padding_len = k - 3 - len(digest_info) - len(digest_value)
+    if padding_len < 8:
+        raise SecurityControlError("POLICY_BUNDLE_SIGNATURE_INVALID", "modulus too small to sign")
+    encoded = b"\x00\x01" + b"\xff" * padding_len + b"\x00" + digest_info + digest_value
+    return pow(int.from_bytes(encoded, "big"), d, n).to_bytes(k, "big")
+
+
+@dataclass(frozen=True, slots=True)
+class SignedPolicyBundle:
+    """A governed policy bundle: source text plus a detached signature.
+
+    ``signature`` is the base64-encoded RSA PKCS#1 v1.5 SHA-256 signature over
+    :meth:`signing_payload`.  The provider verifies the signature against its
+    pinned signer public key and refuses any bundle outside its validity
+    window or carrying a mismatched ``policy_id``.
+    """
+
+    policy_id: str
+    rego_source: str
+    signer: str
+    not_before: datetime
+    expires_at: datetime
+    signature: str
+
+    def signing_payload(self) -> bytes:
+        if not self.policy_id or not self.rego_source or not self.signer:
+            raise SecurityControlError("POLICY_BUNDLE_INVALID", "bundle fields are incomplete")
+        if (
+            self.not_before.tzinfo is None
+            or self.expires_at.tzinfo is None
+            or self.not_before >= self.expires_at
+        ):
+            raise SecurityControlError("POLICY_BUNDLE_INVALID", "bundle validity window is empty")
+        return json.dumps(
+            {
+                "policy_id": self.policy_id,
+                "rego_source": self.rego_source,
+                "signer": self.signer,
+                "not_before": self.not_before.strftime(_RFC3339),
+                "expires_at": self.expires_at.strftime(_RFC3339),
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+
+
 # --------------------------------------------------------------------------- #
 # Providers
 # --------------------------------------------------------------------------- #
@@ -544,36 +600,80 @@ class KeycloakIdentityProvider:
 
 
 class OpaPolicyDecisionProvider:
-    """Installs a signed policy bundle and evaluates it with real OPA."""
+    """Installs a signed policy bundle and evaluates it with real OPA.
+
+    A bundle is accepted only if its detached RSA signature verifies against
+    the pinned signer public key (the *trust pin*), its ``policy_id`` matches,
+    and the current instant falls inside its declared validity window.  At
+    decision time the provider binds the governed context's
+    ``policy_bundle_digest`` pin to the digest of the bundle actually installed
+    and forwards every governed attribute to OPA, so a policy can never be
+    short-circuited by an omitted scope or a forged delegation chain.
+    """
 
     _ALLOW_PATH = "/v1/data/ocor/control_plane/allow"
 
-    def __init__(self, base_url: str, policy_id: str, *, timeout_seconds: float = 5.0) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        policy_id: str,
+        *,
+        signer_public_key: tuple[int, int],
+        timeout_seconds: float = 5.0,
+    ) -> None:
         self._base_url = base_url.rstrip("/")
         self._policy_id = policy_id
         self._timeout = timeout_seconds
         self._bundle_digest: str | None = None
+        self._signer_n, self._signer_e = signer_public_key
+        if self._signer_n.bit_length() < 2048 or self._signer_e < 3:
+            raise SecurityControlError(
+                "POLICY_BUNDLE_SIGNATURE_INVALID", "trust pin modulus too small"
+            )
+        self._signer_pin = _sha256_urn(f"{self._signer_n}:{self._signer_e}".encode())
 
-    def install_policy(self, rego_source: str) -> str:
-        digest = _sha256_urn(rego_source.encode())
+    def install_policy(self, bundle: SignedPolicyBundle) -> str:
+        if bundle.policy_id != self._policy_id:
+            raise SecurityControlError(
+                "POLICY_BUNDLE_INVALID",
+                f"bundle policy_id {bundle.policy_id!r} does not match {self._policy_id!r}",
+            )
+        payload = bundle.signing_payload()
+        signature = _b64_decode(bundle.signature)
+        if not _rsa_verify(payload, signature, self._signer_n, self._signer_e, "sha256"):
+            raise SecurityControlError(
+                "POLICY_BUNDLE_SIGNATURE_INVALID",
+                f"correlation_id=none bundle signature does not verify against trust pin "
+                f"{self._signer_pin}",
+            )
+        now = _now()
+        if now < bundle.not_before or now >= bundle.expires_at:
+            raise SecurityControlError(
+                "POLICY_BUNDLE_WINDOW_INVALID",
+                "policy bundle is outside its declared validity window",
+            )
+        digest = _sha256_urn(bundle.rego_source.encode())
         status, _ = _request(
             "PUT",
             f"{self._base_url}/v1/policies/{self._policy_id}",
-            data=rego_source.encode(),
+            data=bundle.rego_source.encode(),
             headers={"Content-Type": "text/plain"},
             timeout=self._timeout,
         )
         if status != 200:
             raise SecurityControlError("POLICY_UNAVAILABLE", f"policy install HTTP {status}")
         current = self._fetch_policy_source()
-        if current != rego_source:
+        if current != bundle.rego_source:
             raise SecurityControlError("POLICY_UNAVAILABLE", "installed policy did not persist")
         self._bundle_digest = digest
         return digest
 
-    def _fetch_policy_source(self) -> str:
+    def _fetch_policy_source(self, correlation_id: str | None = None) -> str:
         status, body = _request(
-            "GET", f"{self._base_url}/v1/policies/{self._policy_id}", timeout=self._timeout
+            "GET",
+            f"{self._base_url}/v1/policies/{self._policy_id}",
+            timeout=self._timeout,
+            correlation_id=correlation_id,
         )
         if status != 200:
             raise SecurityControlError("POLICY_UNAVAILABLE", f"policy fetch HTTP {status}")
@@ -586,7 +686,11 @@ class OpaPolicyDecisionProvider:
         return raw
 
     def _require_fresh_bundle(self, correlation_id: str) -> None:
-        current = _sha256_urn(self._fetch_policy_source().encode())
+        if self._bundle_digest is None:
+            raise SecurityControlError(
+                "POLICY_UNAVAILABLE", f"correlation_id={correlation_id} no policy installed"
+            )
+        current = _sha256_urn(self._fetch_policy_source(correlation_id).encode())
         if current != self._bundle_digest:
             raise SecurityControlError(
                 "STALE_BUNDLE",
@@ -594,12 +698,40 @@ class OpaPolicyDecisionProvider:
             )
 
     def evaluate(self, request: PolicyRequest) -> PolicyDecision:
-        self._require_fresh_bundle(request.governed_context.correlation_id)
+        correlation_id = request.governed_context.correlation_id
+        self._require_fresh_bundle(correlation_id)
+        # Binding 1: the governed context's policy pin must equal the digest of
+        # the bundle actually installed and verified, not a caller-declared value.
+        if request.governed_context.policy_bundle_digest != self._bundle_digest:
+            raise SecurityControlError(
+                "STALE_BUNDLE",
+                f"correlation_id={correlation_id} governed policy pin does not match "
+                "the installed bundle",
+            )
+        # Binding 2: the governed actor_chain must be derived from the
+        # authenticated principal's own chain -- an unverified delegator is
+        # never introduced by the request alone.
+        if not set(request.governed_context.actor_chain).issubset(
+            set(request.principal.actor_chain)
+        ):
+            raise SecurityControlError(
+                "IDENTITY_BINDING_MISMATCH",
+                f"correlation_id={correlation_id} actor_chain is not bound to the "
+                "authenticated principal",
+            )
+        gcs = request.governed_context
         policy_input = {
+            "tenant_id": gcs.tenant_id,
+            "organization_id": gcs.organization_id,
+            "domain_id": gcs.domain_id,
+            "compartments": list(gcs.compartments),
+            "classification_marking_ref": gcs.classification_marking_ref,
+            "purpose": gcs.purpose,
+            "effective_principal_id": gcs.effective_principal_id,
             "principal_id": request.principal.principal_id,
+            "actor_chain": list(gcs.actor_chain),
             "action": request.action,
             "resource": request.resource,
-            "purpose": request.governed_context.purpose,
         }
         status, body = _request(
             "POST",
@@ -607,19 +739,30 @@ class OpaPolicyDecisionProvider:
             data=json.dumps({"input": policy_input}).encode(),
             headers={"Content-Type": "application/json"},
             timeout=self._timeout,
+            correlation_id=correlation_id,
         )
         if status != 200:
             raise SecurityControlError("POLICY_UNAVAILABLE", f"policy eval HTTP {status}")
         try:
-            allowed = bool(json.loads(body.decode()).get("result", False))
+            raw_result = json.loads(body.decode()).get("result")
         except (ValueError, json.JSONDecodeError) as exc:
-            raise SecurityControlError("POLICY_UNAVAILABLE", "malformed policy response") from exc
-        effect = PolicyEffect.PERMIT if allowed else PolicyEffect.DENY
+            raise SecurityControlError(
+                "POLICY_DECISION_INVALID",
+                f"correlation_id={correlation_id} malformed policy response",
+            ) from exc
+        # A non-boolean decision (a string, an array, an object) is rejected,
+        # never coerced through truthiness into a permit.
+        if not isinstance(raw_result, bool):
+            raise SecurityControlError(
+                "POLICY_DECISION_INVALID",
+                f"correlation_id={correlation_id} policy result is not boolean",
+            )
+        effect = PolicyEffect.PERMIT if raw_result else PolicyEffect.DENY
         valid_until = _now() + timedelta(seconds=300)
         status_record = ControlStatus.available(
             ControlName.POLICY,
             observed_at=request.at,
-            source_digest=request.governed_context.policy_bundle_digest,
+            source_digest=self._bundle_digest,
         )
         decision_id = _sha256_urn(
             f"{request.principal.principal_id}:{request.action}:"
@@ -789,33 +932,43 @@ class OpenBaoSecretProvider:
         secret_name = request.secret_ref[len("urn:ocor:secret-ref:") :]
         if not secret_name:
             raise SecurityControlError("SECRET_REFERENCE_INVALID", "empty secret reference")
+        correlation = f"governed_context_digest={request.governed_context_digest}"
+        # Resolve-not-overwrite: a lease is always derived from a secret that
+        # already exists under the principal's scope.  The provider never
+        # writes material for a lease; an absent reference is an outright
+        # denial, never an implicit provisioning.
         path = f"{self._mount}/data/{request.principal_id}/{secret_name}"
-        material = hashlib.sha256(
-            f"{request.principal_id}:{secret_name}:{request.purpose}:{_now().isoformat()}".encode()
-        ).hexdigest()
-        write_body = json.dumps(
-            {
-                "data": {
-                    "purpose": request.purpose,
-                    "correlation_id": request.governed_context_digest,
-                    "material": material,
-                }
-            }
-        ).encode()
         status, body = _request(
-            "POST",
+            "GET",
             f"{self._base_url}/v1/{path}",
-            data=write_body,
-            headers={**self._headers(), "Content-Type": "application/json"},
+            headers=self._headers(),
             timeout=self._timeout,
+            correlation_id=correlation,
         )
-        if status not in (200, 204):
-            raise SecurityControlError("SECRETS_UNAVAILABLE", f"secret write HTTP {status}")
-        version = "1"
-        if body:
-            version = str(json.loads(body.decode()).get("data", {}).get("version", "1"))
+        if status == 404:
+            raise SecurityControlError(
+                "SECRET_REFERENCE_UNRESOLVED",
+                f"{correlation} no secret material at reference {request.secret_ref}",
+            )
+        if status != 200:
+            raise SecurityControlError("SECRETS_UNAVAILABLE", f"secret read HTTP {status}")
+        try:
+            payload = json.loads(body.decode())
+            secret_data = payload["data"]["data"]
+            metadata = payload["data"]["metadata"]
+            version = str(metadata.get("version", "1"))
+        except (ValueError, json.JSONDecodeError, KeyError, TypeError) as exc:
+            raise SecurityControlError(
+                "SECRETS_UNAVAILABLE", "malformed secret read response"
+            ) from exc
+        # The opaque handle is bound to the actual secret content and version,
+        # never to caller-supplied material.
+        content_digest = _sha256_urn(
+            json.dumps(secret_data, sort_keys=True, separators=(",", ":")).encode()
+        )
         handle = _sha256_urn(
-            f"{request.principal_id}:{secret_name}:{request.purpose}:{version}".encode()
+            f"{request.principal_id}:{secret_name}:{request.purpose}:"
+            f"{version}:{content_digest}".encode()
         )
         handle_ref = "urn:ocor:secret-handle:" + handle[len("urn:sha256:") :]
         expires_at = request.requested_at + timedelta(seconds=300)

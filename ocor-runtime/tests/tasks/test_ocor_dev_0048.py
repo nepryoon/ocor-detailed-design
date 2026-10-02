@@ -15,13 +15,16 @@ semantics on the *provider* boundary itself, reusing the sealed ports
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import importlib.util
+import json
 import os
 import sys
 import time
 import uuid
-from datetime import UTC, datetime
+from dataclasses import replace
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -31,7 +34,9 @@ from ocor_runtime.security.control_plane import (
     KeycloakIdentityProvider,
     OpaPolicyDecisionProvider,
     OpenBaoSecretProvider,
+    SignedPolicyBundle,
     SpireWorkloadIdentityProvider,
+    _rsa_sign,
 )
 from ocor_runtime.security.ports import (
     AuthenticatedPrincipal,
@@ -84,6 +89,64 @@ SERVICE_URLS = {
     "Keycloak": "http://127.0.0.1:8080/realms/master/.well-known/openid-configuration",
     "OpenBao": "http://127.0.0.1:8200/v1/sys/health",
 }
+
+# Test-only policy-bundle signer (RSA-2048).  This key pair exists solely to
+# prove the provider verifies a detached signature against a pinned public key;
+# it is not a production credential and no private material is used elsewhere.
+_SIGNER = "ocor-policy-signer-test"
+_SIGNER_N = int(
+    "00e1a86107dff3770af8b36aeed51e5f2c82aafc616fb3a365634f1ddcfdb1038"
+    "e238da4600fa9f8b15223a1f4e9d63d60250ed5b323603d77a6659315e71ef71"
+    "ae6982059fe31e6e98c8c12757863f7bcf2b8a83cd8ce0828f8e1b7a5e8128fc"
+    "6a9779db09380fa5436ca701047def3fcec1416c36212bcf3d58b1af38678181"
+    "d5ef740b6b4f0fbca559d4fd3be16aa3d39039e41cd918e4aad55c7c6785661a"
+    "acd857fde6dec923ded1591e904d89024c4457e01984288e6cceb6b6cdafaaece"
+    "ee2f568c245606e2ada66fa54ff4ca638729d1665d9e3a2c833be120f7a10a57"
+    "df84e2dd099e49131291f0945c39ecc6c99be590655bb26460c8bd7d64c20717",
+    16,
+)
+_SIGNER_E = 65537
+_SIGNER_D = int(
+    "0467d4a92232af26cc2f388dbc2471283dced7c991343922f01ae9d2d8331e06"
+    "26e48b8a8293c772b2cf5648a14e18f9a90f8e958641c9416e42ba69e98ebdb5"
+    "4d3e381779b280b71b92da83679bd008e4d63d169f06fabace0d1e18439d2528"
+    "74438d1516f4242f03b8d512444cf28784166a515b3751701341b97f7aa71a95"
+    "62d34fed0cc6d40a97eccc5dfb036d581bb72711fd1dd5f13ce69ce482f40231"
+    "d3bd23a7da2d985862a2e7d33a01d3a261d9fccd2315290736ca7f46a7b61186"
+    "6a39d6a8aa36ba26dbc7ae26a20942bb82d72a47dc877d9a1c17fa3665413c16"
+    "b29d1f08cb29ba9050d41e4a66cb7e14d1f3f67da8707fce47ef20e7c65c8761",
+    16,
+)
+
+
+def _sign_bundle(
+    rego_source: str,
+    *,
+    policy_id: str = POLICY_ID,
+    signer: str = _SIGNER,
+    not_before: datetime | None = None,
+    expires_at: datetime | None = None,
+) -> SignedPolicyBundle:
+    not_before = not_before or _now() - timedelta(minutes=5)
+    expires_at = expires_at or _now() + timedelta(hours=1)
+    unsigned = SignedPolicyBundle(
+        policy_id=policy_id,
+        rego_source=rego_source,
+        signer=signer,
+        not_before=not_before,
+        expires_at=expires_at,
+        signature="",
+    )
+    signature = base64.b64encode(
+        _rsa_sign(unsigned.signing_payload(), _SIGNER_N, _SIGNER_D)
+    ).decode()
+    return replace(unsigned, signature=signature)
+
+
+def _install_policy(
+    provider: OpaPolicyDecisionProvider, rego_source: str = REGO
+) -> str:
+    return provider.install_policy(_sign_bundle(rego_source))
 
 
 def _env_file() -> Path | None:
@@ -247,8 +310,10 @@ def principal(principals: None) -> AuthenticatedPrincipal:
 
 @pytest.fixture
 def opa() -> tuple[OpaPolicyDecisionProvider, str]:
-    provider = OpaPolicyDecisionProvider(OPA, POLICY_ID)
-    digest = provider.install_policy(REGO)
+    provider = OpaPolicyDecisionProvider(
+        OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
+    )
+    digest = _install_policy(provider)
     return provider, digest
 
 
@@ -432,10 +497,24 @@ def test_unexpected_spiffe_id_fails_closed(env: dict[str, str]):
 # --------------------------------------------------------------------------- #
 
 
+def _seed_secret(env: dict[str, str], secret_name: str, data: dict[str, str]) -> None:
+    status, body = _http(
+        "POST",
+        f"{OB}/v1/ocor/data/{USERNAME}/{secret_name}",
+        headers={
+            "X-Vault-Token": env["OCOR_LOCAL_OPENBAO_TOKEN"],
+            "Content-Type": "application/json",
+        },
+        body=json.dumps({"data": data}),
+    )
+    assert status in (200, 204), f"seed secret: HTTP {status} {body}"
+
+
 def test_secret_lease_returns_opaque_handle(
     principal: AuthenticatedPrincipal, env: dict[str, str], opa: tuple[OpaPolicyDecisionProvider, str]
 ):
     _, policy_digest = opa
+    _seed_secret(env, "control-plane-db", {"dsn": "postgres://ocor:secret@control-plane-db/ocor"})
     provider = OpenBaoSecretProvider(OB, env["OCOR_LOCAL_OPENBAO_TOKEN"], mount="ocor")
     gcs = _gcs(principal, policy_digest)
     request = SecretRequest(
@@ -475,8 +554,10 @@ def test_wrong_openbao_token_fails_closed(
 
 
 def test_paused_opa_fails_closed_within_bounded_timeout(principal: AuthenticatedPrincipal):
-    provider = OpaPolicyDecisionProvider(OPA, POLICY_ID, timeout_seconds=2.0)
-    digest = provider.install_policy(REGO)
+    provider = OpaPolicyDecisionProvider(
+        OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E), timeout_seconds=2.0
+    )
+    digest = _install_policy(provider)
     request = _policy_request(principal, digest, action="read")
     provider.evaluate(request)
 
@@ -495,6 +576,8 @@ def test_paused_opa_fails_closed_within_bounded_timeout(principal: Authenticated
         elapsed = time.monotonic() - start
         assert excinfo.value.reason_code in ("SERVICE_UNAVAILABLE", "POLICY_UNAVAILABLE")
         assert elapsed <= 2.0 + 1.0, f"fail-closed took {elapsed:.2f}s, exceeding its bound"
+        # the denial is correlated to the exact request that caused it
+        assert request.governed_context.correlation_id in str(excinfo.value)
     finally:
         unpause = fault_inject.run(
             fault_inject.fault_command("opa", "unpause"), cwd=REPOSITORY_ROOT, timeout=30
@@ -506,3 +589,139 @@ def test_paused_opa_fails_closed_within_bounded_timeout(principal: Authenticated
         assert recovered, "OPA did not recover within the bounded window after unpause"
 
     provider.evaluate(_policy_request(principal, digest, action="read"))
+
+
+# --------------------------------------------------------------------------- #
+# Bundle integrity: digest pin, signature, validity window, non-boolean result
+# --------------------------------------------------------------------------- #
+
+
+def test_policy_pin_mismatch_fails_closed(
+    principal: AuthenticatedPrincipal, opa: tuple[OpaPolicyDecisionProvider, str]
+):
+    provider, _ = opa
+    wrong_digest = "urn:sha256:" + "f" * 64
+    request = _policy_request(principal, wrong_digest, action="read")
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.evaluate(request)
+    assert excinfo.value.reason_code == "STALE_BUNDLE"
+
+
+def test_unsigned_bundle_fails_closed():
+    provider = OpaPolicyDecisionProvider(
+        OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
+    )
+    unsigned = SignedPolicyBundle(
+        policy_id=POLICY_ID,
+        rego_source=REGO,
+        signer=_SIGNER,
+        not_before=_now() - timedelta(minutes=5),
+        expires_at=_now() + timedelta(hours=1),
+        signature="",
+    )
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.install_policy(unsigned)
+    assert excinfo.value.reason_code == "POLICY_BUNDLE_SIGNATURE_INVALID"
+
+
+def test_forged_bundle_signature_fails_closed():
+    provider = OpaPolicyDecisionProvider(
+        OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
+    )
+    valid = _sign_bundle(REGO)
+    tampered = replace(valid, rego_source=REGO + "# tampered\n")
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.install_policy(tampered)
+    assert excinfo.value.reason_code == "POLICY_BUNDLE_SIGNATURE_INVALID"
+
+
+def test_expired_bundle_fails_closed():
+    provider = OpaPolicyDecisionProvider(
+        OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
+    )
+    bundle = _sign_bundle(
+        REGO,
+        not_before=_now() - timedelta(minutes=10),
+        expires_at=_now() - timedelta(minutes=1),
+    )
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.install_policy(bundle)
+    assert excinfo.value.reason_code == "POLICY_BUNDLE_WINDOW_INVALID"
+
+
+def test_non_boolean_policy_result_fails_closed(
+    principal: AuthenticatedPrincipal, opa: tuple[OpaPolicyDecisionProvider, str]
+):
+    provider, _ = opa
+    digest = provider.install_policy(
+        _sign_bundle('package ocor.control_plane\n\nallow := {"permit": true}\n')
+    )
+    request = _policy_request(principal, digest, action="read")
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.evaluate(request)
+    assert excinfo.value.reason_code == "POLICY_DECISION_INVALID"
+
+
+# --------------------------------------------------------------------------- #
+# Delegation binding: a forged actor chain never elevates privilege
+# --------------------------------------------------------------------------- #
+
+
+def test_forged_delegation_chain_fails_closed(
+    principal: AuthenticatedPrincipal, opa: tuple[OpaPolicyDecisionProvider, str]
+):
+    provider, digest = opa
+    gcs = GovernedContext(
+        tenant_id="tenant-a",
+        organization_id="org-a",
+        domain_id="domain-a",
+        compartments=("compartment-a",),
+        classification_marking_ref="urn:sha256:" + "0" * 64,
+        purpose="read-site-1",
+        effective_principal_id=principal.principal_id,
+        actor_chain=("forged-delegator",),
+        ontology_release_digest="urn:sha256:" + "1" * 64,
+        policy_bundle_digest=digest,
+        correlation_id=str(uuid.uuid4()),
+    )
+    request = PolicyRequest(
+        principal=principal,
+        action="read",
+        resource="urn:ocor:target:site-1",
+        governed_context=gcs,
+        governed_context_digest=gcs.digest(),
+        at=_now(),
+    )
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.evaluate(request)
+    assert excinfo.value.reason_code == "IDENTITY_BINDING_MISMATCH"
+
+
+# --------------------------------------------------------------------------- #
+# Secret isolation: an absent reference is an outright denial, never a write
+# --------------------------------------------------------------------------- #
+
+
+def test_absent_secret_ref_fails_closed_without_overwrite(
+    principal: AuthenticatedPrincipal, env: dict[str, str], opa: tuple[OpaPolicyDecisionProvider, str]
+):
+    _, policy_digest = opa
+    provider = OpenBaoSecretProvider(OB, env["OCOR_LOCAL_OPENBAO_TOKEN"], mount="ocor")
+    gcs = _gcs(principal, policy_digest)
+    request = SecretRequest(
+        secret_ref="urn:ocor:secret-ref:absent-secret",
+        principal_id=principal.principal_id,
+        purpose="read-site-1",
+        governed_context_digest=gcs.digest(),
+        requested_at=_now(),
+    )
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.lease(request)
+    assert excinfo.value.reason_code == "SECRET_REFERENCE_UNRESOLVED"
+    # no-overwrite: the lease attempt must not have provisioned the secret
+    status, _ = _http(
+        "GET",
+        f"{OB}/v1/ocor/data/{USERNAME}/absent-secret",
+        headers={"X-Vault-Token": env["OCOR_LOCAL_OPENBAO_TOKEN"]},
+    )
+    assert status == 404
