@@ -1,0 +1,72 @@
+=== ruff check (control_plane.py + test file) ===
+All checks passed!
+
+=== mypy (control_plane.py, strict) ===
+Success: no issues found in 1 source file
+
+=== pytest -v tests/tasks/test_ocor_dev_0048.py (real ocor-bootstrap stack) ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 14 items
+
+tests/tasks/test_ocor_dev_0048.py::test_sha256_urn_and_b64_decode_are_deterministic PASSED [  7%]
+tests/tasks/test_ocor_dev_0048.py::test_split_der_chain_and_tlv_parse_real_concatenation PASSED [ 14%]
+tests/tasks/test_ocor_dev_0048.py::test_authenticate_real_keycloak_principal PASSED [ 21%]
+tests/tasks/test_ocor_dev_0048.py::test_wrong_password_fails_closed PASSED [ 28%]
+tests/tasks/test_ocor_dev_0048.py::test_wrong_audience_fails_closed PASSED [ 35%]
+tests/tasks/test_ocor_dev_0048.py::test_policy_install_persists_and_returns_content_digest PASSED [ 42%]
+tests/tasks/test_ocor_dev_0048.py::test_policy_permit_for_matching_governed_input PASSED [ 50%]
+tests/tasks/test_ocor_dev_0048.py::test_policy_deny_for_non_matching_action PASSED [ 57%]
+tests/tasks/test_ocor_dev_0048.py::test_stale_bundle_fails_closed PASSED [ 64%]
+tests/tasks/test_ocor_dev_0048.py::test_workload_identity_is_fetched_and_verified PASSED [ 71%]
+tests/tasks/test_ocor_dev_0048.py::test_unexpected_spiffe_id_fails_closed PASSED [ 78%]
+tests/tasks/test_ocor_dev_0048.py::test_secret_lease_returns_opaque_handle PASSED [ 85%]
+tests/tasks/test_ocor_dev_0048.py::test_wrong_openbao_token_fails_closed PASSED [ 92%]
+tests/tasks/test_ocor_dev_0048.py::test_paused_opa_fails_closed_within_bounded_timeout PASSED [100%]
+
+============================== 14 passed in 3.85s ==============================
+
+=== sha256sum -c inputs/normative/SHA256SUMS ===
+inputs/normative/OCOR_Architectural_Design_Document_v1.1.md: OK
+inputs/normative/OCOR_CAP_ELM_Requirement_Crosswalk_v0.9.md: OK
+inputs/normative/OCOR_DEC_197_plus_Draft_v0.1.md: OK
+inputs/normative/OCOR_Decision_Register_v1.0.md: OK
+inputs/normative/OCOR_Decision_Traceability_Index_v1.0.md: OK
+inputs/normative/OCOR_Registers_v0.9.md: OK
+inputs/normative/OCOR_Requirement_Register_v0.9.md: OK
+inputs/normative/OCOR_Requirement_Traceability_Index_v0.9.md: OK
+
+=== scripts/validate_rccad.py --base-ref origin/main ===
+{
+  "checked_artifacts": 22,
+  "dynamic_assurance": "CI_REQUIRED",
+  "findings": [],
+  "fitness_results": {
+    "AFF-001": "PASS_STATIC_PRECHECK",
+    "AFF-002": "PASS_STATIC_PRECHECK",
+    "AFF-003": "PASS_STATIC_PRECHECK",
+    "AFF-004": "PASS_STATIC_PRECHECK",
+    "AFF-005": "PASS_STATIC_PRECHECK",
+    "AFF-006": "PASS_STATIC_PRECHECK",
+    "AFF-007": "PASS_STATIC_PRECHECK",
+    "AFF-008": "PASS_STATIC_PRECHECK",
+    "AFF-009": "PASS_STATIC_PRECHECK",
+    "AFF-010": "PASS_STATIC_PRECHECK"
+  },
+  "methodology_sha256": "231ce3325537de85890b16e97f138bd6a4263fc1e240094ed26499af9aeeb6cd",
+  "status": "PASS_LOCAL_PRECHECK"
+}
+
+=== scripts/validate_language_policy.py ===
+PASS: no tracked file uses a monitored extension outside its authorized area
+
+=== scripts/validate_ocor_change_scope.py --base origin/main ===
+PASS: 5 changed path(s); immutable surfaces untouched; task ledger stable
+
+=== scripts/validate_ocor_development_plan.py --base-ref origin/main --authorized-extension ===
+{"verdict": "PASS", "counts": {"PASS": 37, "NOT_EXECUTED": 2}, "tasks": 84, "requirements": 285, "waves": 29, "critical_days": 161}
+

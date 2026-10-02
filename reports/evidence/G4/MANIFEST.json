@@ -159,6 +159,16 @@
       "path": "OCOR-DEV-0047.log",
       "sha256": "0fbd0aae96bfa04efc5268a59885d0cc01ff2af78dd9407a75f3c620854f04c6",
       "task_id": "OCOR-DEV-0047-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0048.json",
+      "sha256": "4f6591acebac65285284f2334ffb363f2acc432103b995ff7f818407b9fb4121",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "path": "OCOR-DEV-0048.log",
+      "sha256": "fda58aed7673f32084772d581154849dd9c766bff9db68478f0c5e6d14a0697f",
+      "task_id": "OCOR-DEV-0048-RAW"
     }
   ],
   "created_at": "2026-09-13T15:45:00Z",
@@ -1450,6 +1460,132 @@
       "requirement_id": "FR-168",
       "status": "PASS",
       "task_id": "OCOR-DEV-0038"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-CRYPTO-DETERMINISTIC-URN",
+      "command": "unit: _sha256_urn() produces a deterministic 'urn:sha256:' digest over identical bytes and _b64url_decode() round-trips a real base64url payload; the two helpers are exercised directly (test_sha256_urn_and_b64_decode_are_deterministic)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "NFR-074",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-MTLS-DER-CHAIN-SPLIT",
+      "command": "unit: _split_der_chain() splits a real concatenated X.509 DER chain on TLV boundaries and _parse_certificate()/_tlv() parse the first certificate's OID/validity/SPKI without any cryptography dependency (test_split_der_chain_and_tlv_parse_real_concatenation)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-KEYCLOAK-AUTHENTICATE",
+      "command": "positive: KeycloakIdentityProvider.authenticate() performs a real OIDC password grant against the live Keycloak token endpoint, fetches the realm JWKS, and verifies the access token signature, returning an AuthenticatedPrincipal with the exact subject, audience and roles (test_authenticate_real_keycloak_principal)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-KEYCLOAK-NEG-WRONG-PASSWORD",
+      "command": "negative: a wrong password is rejected fail-closed by the live Keycloak password grant - the provider raises without ever yielding an AuthenticatedPrincipal (test_wrong_password_fails_closed)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "NFR-049",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-KEYCLOAK-NEG-WRONG-AUDIENCE",
+      "command": "negative: an access token whose audience does not match the expected control-plane audience is rejected fail-closed (test_wrong_audience_fails_closed)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "NFR-052",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-OPA-INSTALL-PERSIST",
+      "command": "positive: OpaPolicyDecisionProvider.install_policy() PUTs the Rego bundle to the live OPA service, persists it across a fresh client, and returns a deterministic content digest (test_policy_install_persists_and_returns_content_digest)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-020",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-OPA-PERMIT",
+      "command": "positive: OpaPolicyDecisionProvider.evaluate() returns an allow for a governed input that matches the installed least-privilege policy (test_policy_permit_for_matching_governed_input)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-021",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-OPA-DENY",
+      "command": "negative: evaluate() returns a deny for a governed input whose action is not allowed by the installed policy (test_policy_deny_for_non_matching_action)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "NFR-063",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-OPA-STALE-BUNDLE",
+      "command": "negative: a stale policy bundle is rejected fail-closed - the provider refuses to decide on a bundle whose digest does not match the installed content digest (test_stale_bundle_fails_closed)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "NFR-064",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-SPIRE-IDENTITY",
+      "command": "positive: SpireWorkloadIdentityProvider.current() fetches the real SVID bundle from the live SPIRE agent and verifies the workload SPIFFE ID and mTLS certificate chain, returning a verified WorkloadIdentity (test_workload_identity_is_fetched_and_verified)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-110",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-SPIRE-NEG-UNEXPECTED-ID",
+      "command": "negative: an unexpected SPIFFE ID is rejected fail-closed - no WorkloadIdentity is returned for a workload whose identity does not match the expected SPIFFE ID (test_unexpected_spiffe_id_fails_closed)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "NFR-073",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-OPENBAO-LEASE",
+      "command": "positive: OpenBaoSecretProvider.lease() mounts and reads from the live OpenBao service and returns an opaque lease handle without exposing the plaintext secret to the caller (test_secret_lease_returns_opaque_handle)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-143",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-OPENBAO-NEG-WRONG-TOKEN",
+      "command": "negative: a wrong OpenBao token is rejected fail-closed - no lease is issued for an unauthenticated caller (test_wrong_openbao_token_fails_closed)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "NFR-086",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-FAULT-OPA-OUTAGE",
+      "command": "fault-injection: pausing the OPA container makes evaluate() fail closed within a bounded timeout - the control-plane outage answers as a denial, never a permit (test_paused_opa_fails_closed_within_bounded_timeout)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "NFR-019",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
     }
   ],
   "schema_version": "1.0"
