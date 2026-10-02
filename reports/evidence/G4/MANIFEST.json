@@ -162,16 +162,16 @@
     },
     {
       "path": "OCOR-DEV-0048.json",
-      "sha256": "17503b1a9e1675f467199088b8a5f7c6f38512154ddc07e7404a72c12d9bec96",
+      "sha256": "f605ab1dc74d67b9d53c920f59e12f57cc563047e68f2d1d5f9bf34c2e693cd6",
       "task_id": "OCOR-DEV-0048"
     },
     {
       "path": "OCOR-DEV-0048.log",
-      "sha256": "cbd4c13f491591a5fd78ad731d85c2b1ad5047bbe2e34313450ebcc3c3aa7e0b",
+      "sha256": "b5b8140a7e6aacdf767848e2417bcc7f8aa7e5c70f5fc7e3a5b5da091684c4b3",
       "task_id": "OCOR-DEV-0048-RAW"
     }
   ],
-  "created_at": "2026-10-02T07:48:55Z",
+  "created_at": "2026-10-02T09:43:32Z",
   "gate": "G4",
   "requirement_results": [
     {
@@ -1561,6 +1561,24 @@
       "task_id": "OCOR-DEV-0048"
     },
     {
+      "case_id": "OCOR-DEV-0048-BUNDLE-EXPIRY-AT-DECISION",
+      "command": "validity window at decision time: a signed bundle valid at install but whose expiry elapses before evaluation is rejected fail-closed at decision time with POLICY_BUNDLE_WINDOW_INVALID, so no decision is ever issued against an expired bundle (test_installed_bundle_expiry_fails_closed_at_decision_time)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-130",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-UNSIGNED-MODULE-CANNOT-EXTEND",
+      "command": "governed package: a signed bundle extended with a foreign unsigned Rego module is rejected before evaluation, binding the decision to the whole governed bundle and refusing an unsigned module from widening the effective policy package (test_unsigned_module_cannot_extend_governed_package)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-130",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
       "case_id": "OCOR-DEV-0048-SPIRE-IDENTITY",
       "command": "positive: SpireWorkloadIdentityProvider.current() fetches the real SVID bundle from the live SPIRE agent, verifies the workload SPIFFE ID is attested, and returns a content-addressed WorkloadIdentity valid at the current instant (test_workload_identity_is_fetched_and_verified)",
       "evidence_path": "OCOR-DEV-0048.json",
@@ -1581,6 +1599,33 @@
     {
       "case_id": "OCOR-DEV-0048-PROVIDER-REQUIRES-MTLS",
       "command": "negative: constructing a boundary provider without a mutual-TLS context is refused with MTLS_REQUIRED instead of silently downgrading to plaintext HTTP (test_provider_requires_mtls_context)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "NFR-042",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-OPA-REJECTS-PLAINTEXT",
+      "command": "transport encryption: OpaPolicyDecisionProvider refuses a plaintext http:// base URL with SECURE_TRANSPORT_REQUIRED before any I/O, preserving the HTTPS+mTLS transport for policy decisions (test_opa_provider_rejects_plaintext_base_url)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "NFR-042",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-KEYCLOAK-REJECTS-PLAINTEXT",
+      "command": "transport encryption: KeycloakIdentityProvider refuses a plaintext http:// base URL with SECURE_TRANSPORT_REQUIRED and re-anchors discovery/JWKS/grant endpoints to the HTTPS authority, never emitting credentials over cleartext (test_keycloak_provider_rejects_plaintext_base_url)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "NFR-042",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-OPENBAO-REJECTS-PLAINTEXT",
+      "command": "transport encryption: OpenBaoSecretProvider refuses a plaintext http:// base URL with SECURE_TRANSPORT_REQUIRED, keeping secret material off cleartext (test_openbao_provider_rejects_plaintext_base_url)",
       "evidence_path": "OCOR-DEV-0048.json",
       "raw_output_path": "OCOR-DEV-0048.log",
       "requirement_id": "NFR-042",
@@ -1624,8 +1669,26 @@
       "task_id": "OCOR-DEV-0048"
     },
     {
+      "case_id": "OCOR-DEV-0048-SECRET-REF-SCOPE-ESCAPE",
+      "command": "secret isolation: a secret_ref whose principal or mount carries a dot-segment, encoded or non-canonical path segment is rejected fail-closed so a lease can never escape the authenticated principal's scope (test_secret_ref_cannot_escape_principal_scope)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-133",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
       "case_id": "OCOR-DEV-0048-FAULT-OPA-OUTAGE",
       "command": "fault-injection: pausing the live OPA container makes evaluate() fail closed within the bounded timeout with a correlated SERVICE_UNAVAILABLE/POLICY_UNAVAILABLE denial carrying the request correlation_id, then recover cleanly after unpause (test_paused_opa_fails_closed_within_bounded_timeout)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "NFR-037",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-FAULT-KEYCLOAK-OUTAGE-CORRELATED",
+      "command": "fault-injection: pausing the live Keycloak container makes authenticate() fail closed within the bounded timeout with an IDENTITY_UNAVAILABLE denial whose correlation_id equals the request correlation_id, then recover cleanly after unpause (test_paused_keycloak_fails_closed_with_correlation)",
       "evidence_path": "OCOR-DEV-0048.json",
       "raw_output_path": "OCOR-DEV-0048.log",
       "requirement_id": "NFR-037",
@@ -1755,6 +1818,15 @@
       "evidence_path": "OCOR-DEV-0048.json",
       "raw_output_path": "OCOR-DEV-0048.log",
       "requirement_id": "FR-133",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-MTLS-REJECTS-WRONG-SERVICE",
+      "command": "workload identity: the client mTLS context verifies the peer SPIFFE URI SAN and rejects a valid same-CA SVID issued to a different service with PEER_IDENTITY_MISMATCH, so a foreign workload cannot impersonate the target on the same trust domain (test_client_rejects_peer_with_different_spiffe_id)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "NFR-042",
       "status": "PASS",
       "task_id": "OCOR-DEV-0048"
     }

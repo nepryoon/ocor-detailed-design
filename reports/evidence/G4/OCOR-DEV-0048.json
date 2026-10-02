@@ -117,6 +117,26 @@
       "status": "PASS"
     },
     {
+      "command": "validity window at decision time: a signed bundle valid at install but whose expiry elapses before evaluation is rejected fail-closed at decision time with POLICY_BUNDLE_WINDOW_INVALID, so no decision is ever issued against an expired bundle (test_installed_bundle_expiry_fails_closed_at_decision_time)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "governed package: a signed bundle extended with a foreign unsigned Rego module is rejected before evaluation, binding the decision to the whole governed bundle and refusing an unsigned module from widening the effective policy package (test_unsigned_module_cannot_extend_governed_package)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
       "command": "positive: SpireWorkloadIdentityProvider.current() fetches the real SVID bundle from the live SPIRE agent, verifies the workload SPIFFE ID is attested, and returns a content-addressed WorkloadIdentity valid at the current instant (test_workload_identity_is_fetched_and_verified)",
       "result": {
         "failed": 0,
@@ -138,6 +158,36 @@
     },
     {
       "command": "negative: constructing a boundary provider without a mutual-TLS context is refused with MTLS_REQUIRED instead of silently downgrading to plaintext HTTP (test_provider_requires_mtls_context)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "transport encryption: OpaPolicyDecisionProvider refuses a plaintext http:// base URL with SECURE_TRANSPORT_REQUIRED before any I/O, preserving the HTTPS+mTLS transport for policy decisions (test_opa_provider_rejects_plaintext_base_url)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "transport encryption: KeycloakIdentityProvider refuses a plaintext http:// base URL with SECURE_TRANSPORT_REQUIRED and re-anchors discovery/JWKS/grant endpoints to the HTTPS authority, never emitting credentials over cleartext (test_keycloak_provider_rejects_plaintext_base_url)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "transport encryption: OpenBaoSecretProvider refuses a plaintext http:// base URL with SECURE_TRANSPORT_REQUIRED, keeping secret material off cleartext (test_openbao_provider_rejects_plaintext_base_url)",
       "result": {
         "failed": 0,
         "not_executed": 0,
@@ -187,7 +237,27 @@
       "status": "PASS"
     },
     {
+      "command": "secret isolation: a secret_ref whose principal or mount carries a dot-segment, encoded or non-canonical path segment is rejected fail-closed so a lease can never escape the authenticated principal's scope (test_secret_ref_cannot_escape_principal_scope)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
       "command": "fault-injection: pausing the live OPA container makes evaluate() fail closed within the bounded timeout with a correlated SERVICE_UNAVAILABLE/POLICY_UNAVAILABLE denial carrying the request correlation_id, then recover cleanly after unpause (test_paused_opa_fails_closed_within_bounded_timeout)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "fault-injection: pausing the live Keycloak container makes authenticate() fail closed within the bounded timeout with an IDENTITY_UNAVAILABLE denial whose correlation_id equals the request correlation_id, then recover cleanly after unpause (test_paused_keycloak_fails_closed_with_correlation)",
       "result": {
         "failed": 0,
         "not_executed": 0,
@@ -335,10 +405,20 @@
         "skipped": 0
       },
       "status": "PASS"
+    },
+    {
+      "command": "workload identity: the client mTLS context verifies the peer SPIFFE URI SAN and rejects a valid same-CA SVID issued to a different service with PEER_IDENTITY_MISMATCH, so a foreign workload cannot impersonate the target on the same trust domain (test_client_rejects_peer_with_different_spiffe_id)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
     }
   ],
-  "commit": "5221912facc461aab945d8732f93ef7306e6a435",
-  "created_at": "2026-10-02T07:48:55Z",
+  "commit": "77de443084b9a72fa0d63ff3f7916e7ecb5db504",
+  "created_at": "2026-10-02T09:43:32Z",
   "environment": {
     "backend_under_test": "OPA (policy/least privilege), Keycloak (OIDC identity), SPIFFE/SPIRE (workload identity and mTLS trust), OpenBao (secret isolation) - all real, pinned, on the local ocor-bootstrap stack",
     "orchestrator": "none - the boundary providers drive the real ocor-bootstrap control-plane services directly over localhost",
@@ -346,10 +426,10 @@
   },
   "inputs": {
     "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
-    "ocor-runtime/src/ocor_runtime/security/control_plane.py": "20a218902a175d132ba897f01bb299b0bb496781515056fd01f3da32e0ff107d",
-    "ocor-runtime/tests/tasks/test_ocor_dev_0048.py": "ed0ab6140601d1a66a98cee2c243952d7e74a84da2e07fb1305eaa6568b2813b"
+    "ocor-runtime/src/ocor_runtime/security/control_plane.py": "637da5d88438d181aedb972840f5db72e779b1afa038b262b2146825e6064c4d",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0048.py": "c8ad577e609090590648e6bb069d6232c3938b68905356495d4f9c544d6f95df"
   },
-  "raw_output_sha256": "cbd4c13f491591a5fd78ad731d85c2b1ad5047bbe2e34313450ebcc3c3aa7e0b",
+  "raw_output_sha256": "b5b8140a7e6aacdf767848e2417bcc7f8aa7e5c70f5fc7e3a5b5da091684c4b3",
   "requirement_results": [
     {
       "case_id": "OCOR-DEV-0048-CRYPTO-DETERMINISTIC-URN",
@@ -484,6 +564,30 @@
       "status": "PASS"
     },
     {
+      "case_id": "OCOR-DEV-0048-BUNDLE-EXPIRY-AT-DECISION",
+      "command": "validity window at decision time: a signed bundle valid at install but whose expiry elapses before evaluation is rejected fail-closed at decision time with POLICY_BUNDLE_WINDOW_INVALID, so no decision is ever issued against an expired bundle (test_installed_bundle_expiry_fails_closed_at_decision_time)",
+      "requirement_id": "FR-130",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-UNSIGNED-MODULE-CANNOT-EXTEND",
+      "command": "governed package: a signed bundle extended with a foreign unsigned Rego module is rejected before evaluation, binding the decision to the whole governed bundle and refusing an unsigned module from widening the effective policy package (test_unsigned_module_cannot_extend_governed_package)",
+      "requirement_id": "FR-130",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
       "case_id": "OCOR-DEV-0048-SPIRE-IDENTITY",
       "command": "positive: SpireWorkloadIdentityProvider.current() fetches the real SVID bundle from the live SPIRE agent, verifies the workload SPIFFE ID is attested, and returns a content-addressed WorkloadIdentity valid at the current instant (test_workload_identity_is_fetched_and_verified)",
       "requirement_id": "FR-129",
@@ -510,6 +614,42 @@
     {
       "case_id": "OCOR-DEV-0048-PROVIDER-REQUIRES-MTLS",
       "command": "negative: constructing a boundary provider without a mutual-TLS context is refused with MTLS_REQUIRED instead of silently downgrading to plaintext HTTP (test_provider_requires_mtls_context)",
+      "requirement_id": "NFR-042",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-OPA-REJECTS-PLAINTEXT",
+      "command": "transport encryption: OpaPolicyDecisionProvider refuses a plaintext http:// base URL with SECURE_TRANSPORT_REQUIRED before any I/O, preserving the HTTPS+mTLS transport for policy decisions (test_opa_provider_rejects_plaintext_base_url)",
+      "requirement_id": "NFR-042",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-KEYCLOAK-REJECTS-PLAINTEXT",
+      "command": "transport encryption: KeycloakIdentityProvider refuses a plaintext http:// base URL with SECURE_TRANSPORT_REQUIRED and re-anchors discovery/JWKS/grant endpoints to the HTTPS authority, never emitting credentials over cleartext (test_keycloak_provider_rejects_plaintext_base_url)",
+      "requirement_id": "NFR-042",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-OPENBAO-REJECTS-PLAINTEXT",
+      "command": "transport encryption: OpenBaoSecretProvider refuses a plaintext http:// base URL with SECURE_TRANSPORT_REQUIRED, keeping secret material off cleartext (test_openbao_provider_rejects_plaintext_base_url)",
       "requirement_id": "NFR-042",
       "result": {
         "failed": 0,
@@ -568,8 +708,32 @@
       "status": "PASS"
     },
     {
+      "case_id": "OCOR-DEV-0048-SECRET-REF-SCOPE-ESCAPE",
+      "command": "secret isolation: a secret_ref whose principal or mount carries a dot-segment, encoded or non-canonical path segment is rejected fail-closed so a lease can never escape the authenticated principal's scope (test_secret_ref_cannot_escape_principal_scope)",
+      "requirement_id": "FR-133",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
       "case_id": "OCOR-DEV-0048-FAULT-OPA-OUTAGE",
       "command": "fault-injection: pausing the live OPA container makes evaluate() fail closed within the bounded timeout with a correlated SERVICE_UNAVAILABLE/POLICY_UNAVAILABLE denial carrying the request correlation_id, then recover cleanly after unpause (test_paused_opa_fails_closed_within_bounded_timeout)",
+      "requirement_id": "NFR-037",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-FAULT-KEYCLOAK-OUTAGE-CORRELATED",
+      "command": "fault-injection: pausing the live Keycloak container makes authenticate() fail closed within the bounded timeout with an IDENTITY_UNAVAILABLE denial whose correlation_id equals the request correlation_id, then recover cleanly after unpause (test_paused_keycloak_fails_closed_with_correlation)",
       "requirement_id": "NFR-037",
       "result": {
         "failed": 0,
@@ -746,15 +910,28 @@
         "skipped": 0
       },
       "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-MTLS-REJECTS-WRONG-SERVICE",
+      "command": "workload identity: the client mTLS context verifies the peer SPIFFE URI SAN and rejects a valid same-CA SVID issued to a different service with PEER_IDENTITY_MISMATCH, so a foreign workload cannot impersonate the target on the same trust domain (test_client_rejects_peer_with_different_spiffe_id)",
+      "requirement_id": "NFR-042",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
     }
   ],
   "residual_risks": [
-    "The 33 qualifying cases exercise the four real control-plane backends (OPA, Keycloak, SPIFFE/SPIRE, OpenBao) plus mTLS, signed-bundle integrity, version-fence and fault-injection fail-closed paths. They qualify the criteria actually exercised: FR-128 (confused-deputy/delegation), FR-129 (individual identity), FR-130 (uniform versioned policy decision), FR-133 (secrets outside the ontology), FR-068 (boundary propagation), NFR-037 (fail-closed) and NFR-042 (encryption/key separation + mTLS).",
+    "The 41 qualifying cases exercise the four real control-plane backends (OPA, Keycloak, SPIFFE/SPIRE, OpenBao) plus mTLS, signed-bundle integrity, version-fence and fault-injection fail-closed paths. They qualify the criteria actually exercised: FR-128 (confused-deputy/delegation), FR-129 (individual identity), FR-130 (uniform versioned policy decision), FR-133 (secrets outside the ontology), FR-068 (boundary propagation), NFR-037 (fail-closed) and NFR-042 (encryption/key separation + mTLS).",
     "The remaining requirement_ids declared on the backlog for OCOR-DEV-0048 (BR-003, BR-007, BR-013, BR-016, FR-020, FR-021, FR-067, FR-103, FR-110, FR-117, FR-143, FR-153, FR-160, NFR-010, NFR-019, NFR-026, NFR-031, NFR-049, NFR-052, NFR-056, NFR-063, NFR-064, NFR-073, NFR-074, NFR-086, NFR-087, NFR-089) are G6/G7 ledger requirements; they remain non-qualified here and are deliberately NOT attributed PASS, pending their own requirement-bound qualifying cases at G6/G7.",
-    "The two crypto unit helpers are pure deterministic functions with no external dependency; they are exercised against real concatenated DER blobs and real base64url payloads, not synthetic stubs, and no full X.509 parse is claimed by the DER case."
+    "The two crypto unit helpers are pure deterministic functions with no external dependency; they are exercised against real concatenated DER blobs and real base64url payloads, not synthetic stubs, and no full X.509 parse is claimed by the DER case.",
+    "The plaintext-rejection cases use a monotonic guard raised before any socket is opened (no network I/O), so they are negative contract tests that prove the transport invariant without touching the live backend."
   ],
   "result": "PASS",
-  "rollback_procedure_verified": "Each provider constructs a fresh client per test and no shared mutable state exists between tests. Verified by consecutive full test-suite runs with no manual cleanup between them, and by the fail-closed tests proving every denial path raises before any side-effecting call is issued.",
+  "rollback_procedure_verified": "Mechanical rollback review (RCCAD rollback_procedure): the change set is confined to five paths - two new source/test files (ocor-runtime/src/ocor_runtime/security/control_plane.py, ocor-runtime/tests/tasks/test_ocor_dev_0048.py), two new evidence files (reports/evidence/G4/OCOR-DEV-0048.json, .log) and an additive edit to reports/evidence/G4/MANIFEST.json. No migration, alembic or schema file is introduced, so versioned down/forward recovery is not applicable. The sealed reused deliverable ocor_runtime.security.ports (OCOR-DEV-0014) is untouched, verified by 'git diff origin/main...HEAD' listing exactly those five paths and no migration/*.sql/alembic file. A 'git revert' of the task commits cleanly deletes the four new files and restores MANIFEST.json to its origin/main state (the diff against origin/main shows a single removed line: the prior created_at value; every OCOR-DEV-0048 artifact and requirement_result entry is a pure addition). Control-plane state is re-seedable: OPA policy is re-installed by the test fixture, the OpenBao lease fixture removes its mount in a finally block, the Keycloak account is shared and re-seeded by the bootstrap fixture, and the temporary SPIRE entry is created and deleted within each test.",
   "schema_version": "1.0",
   "task_id": "OCOR-DEV-0048"
 }

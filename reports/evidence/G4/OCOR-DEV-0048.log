@@ -1,5 +1,5 @@
 === ruff check (control_plane.py + test file) ===
-/tmp/gen_0048_raw.sh: line 9: /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/ruff: No such file or directory
+All checks passed!
 
 === mypy (control_plane.py, strict) ===
 Success: no issues found in 1 source file
@@ -11,43 +11,51 @@ cachedir: .pytest_cache
 rootdir: /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime
 configfile: pyproject.toml
 plugins: cov-7.1.0
-collecting ... collected 33 items
+collecting ... collected 41 items
 
-tests/tasks/test_ocor_dev_0048.py::test_sha256_urn_and_b64_decode_are_deterministic PASSED [  3%]
-tests/tasks/test_ocor_dev_0048.py::test_split_der_chain_and_tlv_parse_synthetic_concatenation PASSED [  6%]
-tests/tasks/test_ocor_dev_0048.py::test_authenticate_real_keycloak_principal PASSED [  9%]
-tests/tasks/test_ocor_dev_0048.py::test_wrong_password_fails_closed PASSED [ 12%]
-tests/tasks/test_ocor_dev_0048.py::test_wrong_audience_fails_closed PASSED [ 15%]
-tests/tasks/test_ocor_dev_0048.py::test_policy_install_persists_and_returns_content_digest PASSED [ 18%]
-tests/tasks/test_ocor_dev_0048.py::test_policy_permit_for_matching_governed_input PASSED [ 21%]
-tests/tasks/test_ocor_dev_0048.py::test_policy_deny_for_non_matching_action PASSED [ 24%]
-tests/tasks/test_ocor_dev_0048.py::test_policy_receives_all_governed_attributes PASSED [ 27%]
-tests/tasks/test_ocor_dev_0048.py::test_policy_denies_when_tenant_is_not_forwarded PASSED [ 30%]
-tests/tasks/test_ocor_dev_0048.py::test_stale_bundle_fails_closed PASSED [ 33%]
-tests/tasks/test_ocor_dev_0048.py::test_workload_identity_is_fetched_and_verified PASSED [ 36%]
-tests/tasks/test_ocor_dev_0048.py::test_unexpected_spiffe_id_fails_closed PASSED [ 39%]
-tests/tasks/test_ocor_dev_0048.py::test_provider_requires_mtls_context PASSED [ 42%]
-tests/tasks/test_ocor_dev_0048.py::test_mtls_transport_presents_and_verifies_workload_svid PASSED [ 45%]
-tests/tasks/test_ocor_dev_0048.py::test_mtls_server_rejects_absent_client_certificate PASSED [ 48%]
-tests/tasks/test_ocor_dev_0048.py::test_secret_lease_returns_opaque_handle PASSED [ 51%]
-tests/tasks/test_ocor_dev_0048.py::test_wrong_openbao_token_fails_closed PASSED [ 54%]
-tests/tasks/test_ocor_dev_0048.py::test_paused_opa_fails_closed_within_bounded_timeout PASSED [ 57%]
-tests/tasks/test_ocor_dev_0048.py::test_policy_pin_mismatch_fails_closed PASSED [ 60%]
-tests/tasks/test_ocor_dev_0048.py::test_unsigned_bundle_fails_closed PASSED [ 63%]
-tests/tasks/test_ocor_dev_0048.py::test_forged_bundle_signature_fails_closed PASSED [ 66%]
-tests/tasks/test_ocor_dev_0048.py::test_expired_bundle_fails_closed PASSED [ 69%]
-tests/tasks/test_ocor_dev_0048.py::test_non_boolean_policy_result_fails_closed PASSED [ 72%]
-tests/tasks/test_ocor_dev_0048.py::test_forged_delegation_chain_fails_closed PASSED [ 75%]
-tests/tasks/test_ocor_dev_0048.py::test_valid_signed_delegation_grants_within_bounds PASSED [ 78%]
-tests/tasks/test_ocor_dev_0048.py::test_delegation_over_scope_fails_closed PASSED [ 81%]
-tests/tasks/test_ocor_dev_0048.py::test_delegation_purpose_mismatch_fails_closed PASSED [ 84%]
+tests/tasks/test_ocor_dev_0048.py::test_sha256_urn_and_b64_decode_are_deterministic PASSED [  2%]
+tests/tasks/test_ocor_dev_0048.py::test_split_der_chain_and_tlv_parse_synthetic_concatenation PASSED [  4%]
+tests/tasks/test_ocor_dev_0048.py::test_authenticate_real_keycloak_principal PASSED [  7%]
+tests/tasks/test_ocor_dev_0048.py::test_wrong_password_fails_closed PASSED [  9%]
+tests/tasks/test_ocor_dev_0048.py::test_wrong_audience_fails_closed PASSED [ 12%]
+tests/tasks/test_ocor_dev_0048.py::test_policy_install_persists_and_returns_content_digest PASSED [ 14%]
+tests/tasks/test_ocor_dev_0048.py::test_policy_permit_for_matching_governed_input PASSED [ 17%]
+tests/tasks/test_ocor_dev_0048.py::test_policy_deny_for_non_matching_action PASSED [ 19%]
+tests/tasks/test_ocor_dev_0048.py::test_policy_receives_all_governed_attributes PASSED [ 21%]
+tests/tasks/test_ocor_dev_0048.py::test_policy_denies_when_tenant_is_not_forwarded PASSED [ 24%]
+tests/tasks/test_ocor_dev_0048.py::test_stale_bundle_fails_closed PASSED [ 26%]
+tests/tasks/test_ocor_dev_0048.py::test_installed_bundle_expiry_fails_closed_at_decision_time PASSED [ 29%]
+tests/tasks/test_ocor_dev_0048.py::test_unsigned_module_cannot_extend_governed_package PASSED [ 31%]
+tests/tasks/test_ocor_dev_0048.py::test_workload_identity_is_fetched_and_verified PASSED [ 34%]
+tests/tasks/test_ocor_dev_0048.py::test_unexpected_spiffe_id_fails_closed PASSED [ 36%]
+tests/tasks/test_ocor_dev_0048.py::test_provider_requires_mtls_context PASSED [ 39%]
+tests/tasks/test_ocor_dev_0048.py::test_opa_provider_rejects_plaintext_base_url PASSED [ 41%]
+tests/tasks/test_ocor_dev_0048.py::test_keycloak_provider_rejects_plaintext_base_url PASSED [ 43%]
+tests/tasks/test_ocor_dev_0048.py::test_openbao_provider_rejects_plaintext_base_url PASSED [ 46%]
+tests/tasks/test_ocor_dev_0048.py::test_mtls_transport_presents_and_verifies_workload_svid PASSED [ 48%]
+tests/tasks/test_ocor_dev_0048.py::test_mtls_server_rejects_absent_client_certificate PASSED [ 51%]
+tests/tasks/test_ocor_dev_0048.py::test_secret_lease_returns_opaque_handle PASSED [ 53%]
+tests/tasks/test_ocor_dev_0048.py::test_wrong_openbao_token_fails_closed PASSED [ 56%]
+tests/tasks/test_ocor_dev_0048.py::test_secret_ref_cannot_escape_principal_scope PASSED [ 58%]
+tests/tasks/test_ocor_dev_0048.py::test_paused_opa_fails_closed_within_bounded_timeout PASSED [ 60%]
+tests/tasks/test_ocor_dev_0048.py::test_paused_keycloak_fails_closed_with_correlation PASSED [ 63%]
+tests/tasks/test_ocor_dev_0048.py::test_policy_pin_mismatch_fails_closed PASSED [ 65%]
+tests/tasks/test_ocor_dev_0048.py::test_unsigned_bundle_fails_closed PASSED [ 68%]
+tests/tasks/test_ocor_dev_0048.py::test_forged_bundle_signature_fails_closed PASSED [ 70%]
+tests/tasks/test_ocor_dev_0048.py::test_expired_bundle_fails_closed PASSED [ 73%]
+tests/tasks/test_ocor_dev_0048.py::test_non_boolean_policy_result_fails_closed PASSED [ 75%]
+tests/tasks/test_ocor_dev_0048.py::test_forged_delegation_chain_fails_closed PASSED [ 78%]
+tests/tasks/test_ocor_dev_0048.py::test_valid_signed_delegation_grants_within_bounds PASSED [ 80%]
+tests/tasks/test_ocor_dev_0048.py::test_delegation_over_scope_fails_closed PASSED [ 82%]
+tests/tasks/test_ocor_dev_0048.py::test_delegation_purpose_mismatch_fails_closed PASSED [ 85%]
 tests/tasks/test_ocor_dev_0048.py::test_delegation_binding_mismatch_fails_closed PASSED [ 87%]
 tests/tasks/test_ocor_dev_0048.py::test_altered_delegation_fails_closed PASSED [ 90%]
-tests/tasks/test_ocor_dev_0048.py::test_revoked_delegation_fails_closed PASSED [ 93%]
-tests/tasks/test_ocor_dev_0048.py::test_expired_delegation_fails_closed PASSED [ 96%]
-tests/tasks/test_ocor_dev_0048.py::test_absent_secret_ref_fails_closed_without_overwrite PASSED [100%]
+tests/tasks/test_ocor_dev_0048.py::test_revoked_delegation_fails_closed PASSED [ 92%]
+tests/tasks/test_ocor_dev_0048.py::test_expired_delegation_fails_closed PASSED [ 95%]
+tests/tasks/test_ocor_dev_0048.py::test_absent_secret_ref_fails_closed_without_overwrite PASSED [ 97%]
+tests/tasks/test_ocor_dev_0048.py::test_client_rejects_peer_with_different_spiffe_id PASSED [100%]
 
-============================== 33 passed in 6.48s ==============================
+============================= 41 passed in 21.57s ==============================
 
 === sha256sum -c inputs/normative/SHA256SUMS ===
 inputs/normative/OCOR_Architectural_Design_Document_v1.1.md: OK
