@@ -4116,3 +4116,31 @@
 - Prossima azione: attendere il verdetto `OCOR-DEV-0048-7f2fff555621-3`. Con `GO_FOR_EVIDENCE_SEAL`: sigillare
   e integrare `OCOR-DEV-0048`; con `NO_GO`: nessuna ulteriore riparazione (decisione PO), escalation e
   `TERMINAL_BLOCKED`.
+
+## 2026-10-02 — Governed: OCOR-DEV-0048 terminal (cycle-3 NO_GO, PO decision OCOR-DEV-0048-REPAIR-3) + state sync
+
+- Change set `governed/state-sync-ocor-dev-0048-terminal-no-go`, basato sull'HEAD di `main` =
+  `792842d91ae12d64756ff133f763c6ace6c7734f` (merge di PR #157, state sync del ciclo 3).
+- **Verdetto indipendente (ciclo 3)** `OCOR-DEV-0048-7f2fff555621-3` = `NO_GO`, 2 finding bloccanti `high`
+  diversi dai precedenti (suite completa `955 passed` sullo stack reale, backend reali healthy):
+  - `VF-001` — `control_plane.py:1212`: finestra della delega rivalidata con `request.at` invece del
+    tempo corrente del boundary; delega scaduta ⇒ `PERMIT` (contraddice ADD v1.3 §5.1, fail-closed/FR-128).
+  - `VF-002` — `control_plane.py:1259-1261`: `valid_until` fissato a 300s limitato solo dal bundle;
+    decisione delegata che sopravvive alla propria Authority (contraddice ADD v1.3 §5.1/§5.2, FR-128).
+- **Decisione del Product Owner** `OCOR-DEV-0048-REPAIR-3`: nessuna ulteriore riparazione dopo `NO_GO`.
+  `OCOR-DEV-0048` è terminale `BLOCKED_REPAIR_BUDGET_EXHAUSTED`; tutti i 21 task residui
+  (`OCOR-DEV-0049`…`OCOR-DEV-0069`) bloccati transitivamente.
+- `EXECUTION_STATE.json`: `baseline_commit` → `792842d91ae12d64756ff133f763c6ace6c7734f`; blocker
+  `OCOR-DEV-0048` → `BLOCKED_REPAIR_BUDGET_EXHAUSTED`; `backlog_escalations.OCOR-DEV-0048` con verdetto
+  ciclo 3 `NO_GO`, `final_findings_cycle_3` e `terminal_disposition`; `current_gate` →
+  `G4_WAVE_15_OCOR_DEV_0048_TERMINAL_BLOCKED`; `next_executable_action` → chiusura di
+  `TOOLCHAIN-LOCK-TYPESCRIPT` (decisione PO 2026-10-02, Opzione 1) e registrazione di
+  `TERMINAL_BLOCKED_REPORT.json`.
+- `MODEL_HANDOFF.json` riallineato (branch, worktree, `current_task`, `exact_next_action`,
+  `unresolved_blockers` = [`OCOR-DEV-0048`, `TOOLCHAIN-LOCK-TYPESCRIPT`], `commands_run`).
+- `OCOR_DEV_0048_ESCALATION.md`: aggiunto verdetto ciclo 3 `NO_GO` e stato finale `TERMINAL_BLOCKED`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato. L'evidenza di `OCOR-DEV-0048`
+  resta `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
+- Prossima azione: chiudere `TOOLCHAIN-LOCK-TYPESCRIPT` come risolta (decisione PO 2026-10-02, Opzione 1)
+  in un change set `governed/` separato, poi `TERMINAL_BLOCKED_REPORT.json` e `TERMINAL_BLOCKED`.

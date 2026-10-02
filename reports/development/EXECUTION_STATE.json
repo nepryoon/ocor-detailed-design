@@ -1,10 +1,10 @@
 {
   "active_iteration": {
-    "branch": "task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR-DEV-0048-REPAIR-CYCLE-3",
+    "branch": "governed/state-sync-ocor-dev-0048-terminal-no-go",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR-DEV-0048-TERMINAL-NO-GO",
     "decision_id": "DEC-210",
-    "phase": "BACKLOG_OCOR_DEV_0048_REPAIR_CYCLE_3",
-    "worktree": ".ocor/worktrees/ocor-dev-0048"
+    "phase": "BACKLOG_OCOR_DEV_0048_TERMINAL_BLOCKED",
+    "worktree": ".ocor/worktrees/ocor-dev-0048-terminal"
   },
   "backlog_escalations": {
     "OCOR-DEV-0048": {
@@ -22,6 +22,18 @@
           "summary": "Delegation not wired into the Keycloak->OPA boundary: verify_signed_delegation is invoked by no provider; the 7 delegation tests exercise only the helper in isolation (contradicts ADD v1.3 5.2 rules 4-5 and the first acceptance_criteria)."
         }
       ],
+      "final_findings_cycle_3": [
+        {
+          "id": "VF-001",
+          "severity": "high",
+          "summary": "Delegation window re-validation uses the request's stored timestamp (request.at) instead of the current trustworthy boundary instant; an expired delegation still yields PERMIT because request.at precedes grant.expires_at (control_plane.py:1212). Contradicts ADD v1.3 5.1 (expired chain => DENY) and the fail-closed/FR-128 criterion."
+        },
+        {
+          "id": "VF-002",
+          "severity": "high",
+          "summary": "PolicyDecision.valid_until is fixed at a 300-second duration limited only by the bundle (control_plane.py:1259-1261); the delegation expiry does not bound the PERMIT, so a delegated decision outlives its Authority. Contradicts ADD v1.3 5.1/5.2 and the authority limited by the Delegation (FR-128)."
+        }
+      ],
       "minimal_unblock_action": "Implement VF-001 (canonical UTC instants with the same precision for sign+enforce, or reject non-canonical time representations) and VF-002 (wire grant/revocation validation into the authorized provider path with real-boundary positive/negative cases), then request a third independent verification. This exceeds the 2-repair-cycle harness budget (RCCAD 8): requires explicit PO authorization or a governed alternative disposition.",
       "po_decision": {
         "date": "2026-10-02",
@@ -34,9 +46,14 @@
         "request_id": "OCOR-DEV-0048-7f2fff555621-3",
         "review_type": "TASK_EVIDENCE",
         "scope": "VF-001 + VF-002",
-        "verdict": "PENDING_INDEPENDENT_VERIFICATION"
+        "verdict": "NO_GO"
       },
-      "status": "REPAIR_CYCLE_3_AUTHORIZED_AND_EXECUTED_AWAITING_VERIFICATION",
+      "status": "REPAIR_CYCLE_3_NO_GO_TERMINAL_BLOCKED",
+      "terminal_disposition": {
+        "date": "2026-10-02",
+        "decision": "OCOR-DEV-0048-REPAIR-3",
+        "note": "Cycle-3 independent verification (OCOR-DEV-0048-7f2fff555621-3) returned NO_GO with 2 blocking high findings (VF-001 delegation window validated against request.at; VF-002 valid_until not bounded by delegation expiry). Per PO decision, no further repair: OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED and the whole remaining backlog (OCOR-DEV-0049..0069) is transitively blocked. Evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed)."
+      },
       "verdicts": [
         {
           "findings": [
@@ -80,16 +97,19 @@
           "verdict": "NO_GO"
         },
         {
-          "findings": [],
+          "findings": [
+            "VF-001",
+            "VF-002"
+          ],
           "head_sha": "7f2fff555621424c8c89764aba16810f038ef509",
           "repair_cycle": 3,
           "request_id": "OCOR-DEV-0048-7f2fff555621-3",
-          "verdict": "PENDING_INDEPENDENT_VERIFICATION"
+          "verdict": "NO_GO"
         }
       ]
     }
   },
-  "baseline_commit": "4452d70ecc170eefd44a328ffa897380cca0a761",
+  "baseline_commit": "792842d91ae12d64756ff133f763c6ace6c7734f",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -174,8 +194,8 @@
       "escalation_record": "reports/development/OCOR_DEV_0048_ESCALATION.md",
       "id": "OCOR-DEV-0048",
       "non_blocking": false,
-      "scope": "OCOR-DEV-0048 real-backend security integration (OPA, Keycloak, SPIFFE/SPIRE, OpenBao, mTLS) exhausted the 2-repair-cycle budget after cycle-2 NO_GO (VF-001 timezone-offset bypass; VF-002 delegation not wired into Keycloak->OPA). PO decision OCOR-DEV-0048-REPAIR-3 (2026-10-02) authorizes ONE third repair cycle in punctual derogation of RCCAD 8. Repair executed at head 7f2fff555621424c8c89764aba16810f038ef509 (VF-001 canonical-UTC window; VF-002 delegation grant/revocation enforced at the policy boundary); awaiting independent verification (OCOR-DEV-0048-7f2fff555621-3). Downstream tasks remain blocked until 0048 integrates and seals.",
-      "status": "IN_PROGRESS_REPAIR_CYCLE_3_AWAITING_VERIFICATION"
+      "scope": "OCOR-DEV-0048 real-backend security integration (OPA, Keycloak, SPIFFE/SPIRE, OpenBao, mTLS). After cycle-2 NO_GO and PO decision OCOR-DEV-0048-REPAIR-3 (one third repair cycle in punctual derogation of RCCAD 8), repair cycle 3 (head 7f2fff555621424c8c89764aba16810f038ef509) was re-verified independently: NO_GO with 2 blocking high findings (VF-001 delegation window validated against request.at; VF-002 valid_until not bounded by delegation expiry). Per PO decision, no further repair: terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED; downstream tasks OCOR-DEV-0049..0069 transitively blocked. Evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed).",
+      "status": "BLOCKED_REPAIR_BUDGET_EXHAUSTED"
     }
   ],
   "claims": {
@@ -249,7 +269,7 @@
     "OCOR-DEV-0046",
     "OCOR-DEV-0047"
   ],
-  "current_gate": "G4_WAVE_15_OCOR_DEV_0048_REPAIR_CYCLE_3_AWAITING_VERIFICATION",
+  "current_gate": "G4_WAVE_15_OCOR_DEV_0048_TERMINAL_BLOCKED",
   "latest_ci_evidence": {
     "candidate_commit": "af61453cfae010dd8b68c82692cb42fbc3e9e678",
     "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR153_MERGED_7d833606756203f28c50913871f6ae6d66c790ee",
@@ -320,7 +340,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0048 repair cycle 3 (PO decision OCOR-DEV-0048-REPAIR-3, 2026-10-02, in punctual derogation of the 2-cycle budget per RCCAD 8) implemented at head 7f2fff555621424c8c89764aba16810f038ef509: VF-001 canonical-UTC window and VF-002 delegation grant/revocation enforced at the policy boundary, 50 qualifying cases on the real ocor-bootstrap stack. Awaiting independent verification (request OCOR-DEV-0048-7f2fff555621-3, TASK_EVIDENCE, repair_cycle 3).",
+  "next_executable_action": "OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED after cycle-3 NO_GO (OCOR-DEV-0048-7f2fff555621-3). Next: close the TOOLCHAIN-LOCK-TYPESCRIPT decision request as resolved (PO decision 2026-10-02, Option 1: no infra/toolchain.lock.json variation; node 20.20.2 + typescript 7.0.2 in isolated DEC-211 env) in a separate governed change set; then register reports/development/TERMINAL_BLOCKED_REPORT.json with the decisions package and terminate TERMINAL_BLOCKED.",
   "remediation_status": {
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -519,5 +539,5 @@
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-10-02T12:15:30Z"
+  "updated_at": "2026-10-02T13:03:19Z"
 }
