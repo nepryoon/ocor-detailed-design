@@ -15,8 +15,11 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import http.client
 import json
 import os
+import re
+import socket
 import ssl
 import subprocess
 import tempfile
@@ -26,7 +29,7 @@ import urllib.request
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-from typing import cast
+from typing import IO, cast
 
 from .ports import (
     AuthenticatedPrincipal,
@@ -43,6 +46,9 @@ from .ports import (
 )
 
 _RFC3339 = "%Y-%m-%dT%H:%M:%SZ"
+# A single safe path segment for OpenBao kv-v2 interpolation: non-empty, no
+# slash, no leading/trailing dot and no '..' segment (rejects traversal).
+_VAULT_PATH_SEGMENT = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
 _DIGEST_INFO: dict[str, bytes] = {
     "sha256": bytes.fromhex("3031300d060960864801650304020105000420"),
     "sha384": bytes.fromhex("3041300d060960864801650304020205000430"),
@@ -98,6 +104,32 @@ def _der_to_pem(der: bytes, label: str) -> str:
     return f"-----BEGIN {label}-----\n" + "\n".join(lines) + f"\n-----END {label}-----\n"
 
 
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Reject any HTTP redirect.
+
+    An authenticated control-plane flow must never be silently re-routed to a
+    different endpoint or authority, so a 3xx response is treated as a
+    transport denial rather than followed."""
+
+    def redirect_request(
+        self,
+        req: urllib.request.Request,
+        fp: IO[bytes],
+        code: int,
+        msg: str,
+        headers: http.client.HTTPMessage,
+        newurl: str,
+    ) -> urllib.request.Request | None:
+        raise SecurityControlError(
+            "SERVICE_UNAVAILABLE", "correlation_id=none unexpected HTTP redirect"
+        )
+
+
+def _correlation(correlation_id: str | None) -> str:
+    """Render a correlation prefix for denial messages (never a secret)."""
+    return f"correlation_id={correlation_id}" if correlation_id else "correlation_id=none"
+
+
 def _request(
     method: str,
     url: str,
@@ -108,13 +140,23 @@ def _request(
     correlation_id: str | None = None,
     ssl_context: ssl.SSLContext | None = None,
 ) -> tuple[int, bytes]:
+    correlation = _correlation(correlation_id)
+    scheme = urllib.parse.urlsplit(url).scheme
+    if scheme != "https":
+        raise SecurityControlError(
+            "MTLS_REQUIRED",
+            f"{correlation} authenticated control-plane I/O requires an HTTPS "
+            f"URL (got {scheme or 'no scheme'!r})",
+        )
     req = urllib.request.Request(url, method=method, data=data)
     if headers:
         for key, value in headers.items():
             req.add_header(key, value)
-    correlation = f"correlation_id={correlation_id}" if correlation_id else "correlation_id=none"
+    opener = urllib.request.build_opener(
+        _NoRedirectHandler(), urllib.request.HTTPSHandler(context=ssl_context)
+    )
     try:
-        with urllib.request.urlopen(req, timeout=timeout, context=ssl_context) as resp:
+        with opener.open(req, timeout=timeout) as resp:
             return resp.status, resp.read()
     except urllib.error.HTTPError as exc:
         return exc.code, exc.read()
@@ -147,6 +189,72 @@ def _require_mtls_context(context: ssl.SSLContext | None) -> ssl.SSLContext:
             "peer certificate against the trust bundle",
         )
     return context
+
+
+class _PeerIdentitySSLContext(ssl.SSLContext):
+    """A mutual-TLS client context that also verifies the peer SPIFFE identity.
+
+    The stdlib hostname matcher only understands DNS/IP subjectAltNames and
+    never SPIFFE URI SANs, so ``check_hostname`` cannot express the peer
+    identity obligation.  This context keeps ``check_hostname=False`` (the
+    chain and validity are still verified through ``CERT_REQUIRED``) and
+    instead enforces, on every handshake, that the peer certificate's URI SAN
+    carries exactly the expected SPIFFE ID.  A valid SVID from the same trust
+    domain belonging to a different service is therefore rejected before any
+    request bytes are written.
+    """
+
+    def __new__(cls, expected_peer_spiffe_id: str) -> "_PeerIdentitySSLContext":
+        return super().__new__(cls, ssl.PROTOCOL_TLS_CLIENT)
+
+    def __init__(self, expected_peer_spiffe_id: str) -> None:
+        self._expected_peer_spiffe_id = expected_peer_spiffe_id
+
+    def wrap_socket(
+        self,
+        sock: socket.socket,
+        server_side: bool = False,
+        do_handshake_on_connect: bool = True,
+        suppress_ragged_eofs: bool = True,
+        server_hostname: str | bytes | None = None,
+        session: ssl.SSLSession | None = None,
+    ) -> ssl.SSLSocket:
+        tls = super().wrap_socket(
+            sock,
+            server_side=server_side,
+            do_handshake_on_connect=do_handshake_on_connect,
+            suppress_ragged_eofs=suppress_ragged_eofs,
+            server_hostname=server_hostname,
+            session=session,
+        )
+        self._verify_peer_spiffe_id(tls)
+        return tls
+
+    def _verify_peer_spiffe_id(self, tls: ssl.SSLSocket) -> None:
+        peer = tls.getpeercert()
+        if not peer:
+            # A deferred handshake (do_handshake_on_connect=False) has not yet
+            # presented the peer certificate; force it now so the identity is
+            # verified before any application bytes can be exchanged.
+            try:
+                tls.do_handshake()
+            except (ssl.SSLError, OSError) as exc:
+                tls.close()
+                raise ssl.SSLError("peer TLS handshake failed") from exc
+            peer = tls.getpeercert()
+        if not peer:
+            tls.close()
+            raise ssl.SSLError("peer presented no certificate for SPIFFE identity check")
+        uri_sans: list[str] = []
+        for entry in peer.get("subjectAltName", []):
+            if isinstance(entry, tuple) and len(entry) == 2 and entry[0] == "URI":
+                uri_sans.append(str(entry[1]))
+        if self._expected_peer_spiffe_id not in uri_sans:
+            tls.close()
+            raise ssl.SSLError(
+                "peer SPIFFE identity mismatch: expected "
+                f"{self._expected_peer_spiffe_id!r}, got {uri_sans!r}"
+            )
 
 
 # --------------------------------------------------------------------------- #
@@ -595,36 +703,54 @@ class KeycloakIdentityProvider:
         self._ssl_context = _require_mtls_context(ssl_context)
 
     def _secure_endpoint(self, url: str) -> str:
-        """Resolve a discovery-document endpoint URL over the configured secure
-        transport.
+        """Confine a discovery-document endpoint to the HTTPS base authority.
 
         The discovery document is fetched from ``self._base_url`` (already over
-        mutual TLS).  When it advertises an endpoint on the *same authority* but
-        with a plaintext scheme (an artifact of a backend that terminates TLS at
-        a front proxy), the provider must never downgrade the authenticated flow
-        to plaintext: it re-anchors the endpoint to the ``https`` scheme used for
-        ``self._base_url``.  Endpoints on a different authority are left
-        untouched.
+        mutual TLS).  It may advertise a token or JWKS endpoint on a plaintext
+        backend or on a different authority; the provider must never downgrade
+        the authenticated flow to plaintext nor move it to a foreign authority.
+        Every endpoint is therefore re-anchored to the ``https`` scheme and to
+        ``self._base_url``'s host and port, preserving only the path, query and
+        fragment.  A compromised discovery document is thus unable to steer the
+        credentialed flow to a different or plaintext endpoint.
         """
         parsed = urllib.parse.urlsplit(url)
         base = urllib.parse.urlsplit(self._base_url)
-        if parsed.scheme == "http" and parsed.hostname == base.hostname and parsed.port == base.port:
-            return urllib.parse.urlunsplit(
-                ("https", parsed.netloc, parsed.path, parsed.query, parsed.fragment)
-            )
-        return url
+        return urllib.parse.urlunsplit(
+            ("https", base.netloc, parsed.path, parsed.query, parsed.fragment)
+        )
 
-    def _oidc_configuration(self) -> dict[str, object]:
+    def _oidc_configuration(self, correlation_id: str | None = None) -> dict[str, object]:
         url = f"{self._base_url}/realms/{self._realm}/.well-known/openid-configuration"
-        status, body = _request("GET", url, timeout=self._timeout, ssl_context=self._ssl_context)
+        status, body = _request(
+            "GET",
+            url,
+            timeout=self._timeout,
+            correlation_id=correlation_id,
+            ssl_context=self._ssl_context,
+        )
         if status != 200:
-            raise SecurityControlError("IDENTITY_UNAVAILABLE", f"OIDC discovery HTTP {status}")
+            raise SecurityControlError(
+                "IDENTITY_UNAVAILABLE",
+                f"{_correlation(correlation_id)} OIDC discovery HTTP {status}",
+            )
         return cast(dict[str, object], json.loads(body.decode()))
 
-    def _jwks(self, jwks_uri: str) -> dict[str, tuple[int, int]]:
-        status, body = _request("GET", jwks_uri, timeout=self._timeout, ssl_context=self._ssl_context)
+    def _jwks(
+        self, jwks_uri: str, correlation_id: str | None = None
+    ) -> dict[str, tuple[int, int]]:
+        status, body = _request(
+            "GET",
+            jwks_uri,
+            timeout=self._timeout,
+            correlation_id=correlation_id,
+            ssl_context=self._ssl_context,
+        )
         if status != 200:
-            raise SecurityControlError("IDENTITY_UNAVAILABLE", f"JWKS HTTP {status}")
+            raise SecurityControlError(
+                "IDENTITY_UNAVAILABLE",
+                f"{_correlation(correlation_id)} JWKS HTTP {status}",
+            )
         keys = json.loads(body.decode()).get("keys", [])
         result: dict[str, tuple[int, int]] = {}
         for key in keys:
@@ -635,7 +761,13 @@ class KeycloakIdentityProvider:
             result[str(key["kid"])] = (n, e)
         return result
 
-    def _password_grant(self, token_endpoint: str, username: str, password: str) -> str:
+    def _password_grant(
+        self,
+        token_endpoint: str,
+        username: str,
+        password: str,
+        correlation_id: str | None = None,
+    ) -> str:
         form = urllib.parse.urlencode(
             {
                 "client_id": self._client_id,
@@ -650,10 +782,14 @@ class KeycloakIdentityProvider:
             data=form,
             headers={"Content-Type": "application/x-www-form-urlencoded"},
             timeout=self._timeout,
+            correlation_id=correlation_id,
             ssl_context=self._ssl_context,
         )
         if status != 200:
-            raise SecurityControlError("IDENTITY_REJECTED", f"token grant HTTP {status}")
+            raise SecurityControlError(
+                "IDENTITY_REJECTED",
+                f"{_correlation(correlation_id)} token grant HTTP {status}",
+            )
         return cast(str, json.loads(body.decode())["access_token"])
 
     def _verify_access_token(
@@ -662,32 +798,34 @@ class KeycloakIdentityProvider:
         jwks: dict[str, tuple[int, int]],
         issuer: str,
         audience: str,
+        correlation_id: str | None = None,
     ) -> dict[str, object]:
+        correlation = _correlation(correlation_id)
         try:
             header_b64, payload_b64, signature_b64 = token.split(".")
         except ValueError as exc:
-            raise SecurityControlError("IDENTITY_REJECTED", "malformed JWT") from exc
+            raise SecurityControlError("IDENTITY_REJECTED", f"{correlation} malformed JWT") from exc
         header = json.loads(_b64url_decode(header_b64))
         payload = json.loads(_b64url_decode(payload_b64))
         signature = _b64url_decode(signature_b64)
         if header.get("alg") != "RS256":
-            raise SecurityControlError("IDENTITY_REJECTED", "unsupported JWT algorithm")
+            raise SecurityControlError("IDENTITY_REJECTED", f"{correlation} unsupported JWT algorithm")
         key = jwks.get(str(header.get("kid")))
         if key is None:
-            raise SecurityControlError("IDENTITY_REJECTED", "unknown signing key")
+            raise SecurityControlError("IDENTITY_REJECTED", f"{correlation} unknown signing key")
         signing_input = f"{header_b64}.{payload_b64}".encode()
         if not _rsa_verify(signing_input, signature, key[0], key[1], "sha256"):
-            raise SecurityControlError("IDENTITY_REJECTED", "JWT signature check failed")
+            raise SecurityControlError("IDENTITY_REJECTED", f"{correlation} JWT signature check failed")
         if payload.get("iss") != issuer:
-            raise SecurityControlError("IDENTITY_REJECTED", "issuer mismatch")
+            raise SecurityControlError("IDENTITY_REJECTED", f"{correlation} issuer mismatch")
         audience_list = payload.get("aud", [])
         if isinstance(audience_list, str):
             audience_list = [audience_list]
         if audience not in audience_list:
-            raise SecurityControlError("IDENTITY_REJECTED", "audience mismatch")
+            raise SecurityControlError("IDENTITY_REJECTED", f"{correlation} audience mismatch")
         now = int(_now().timestamp())
         if int(payload["exp"]) <= now:
-            raise SecurityControlError("IDENTITY_REJECTED", "access token is expired")
+            raise SecurityControlError("IDENTITY_REJECTED", f"{correlation} access token is expired")
         return cast(dict[str, object], payload)
 
     def authenticate(self, request: IdentityRequest) -> AuthenticatedPrincipal:
@@ -699,14 +837,15 @@ class KeycloakIdentityProvider:
             raise SecurityControlError("IDENTITY_REJECTED", "empty credential reference")
         password = self._password_resolver(username)
 
-        configuration = self._oidc_configuration()
+        correlation_id = request.correlation_id
+        configuration = self._oidc_configuration(correlation_id)
         issuer = str(configuration["issuer"])
         token_endpoint = self._secure_endpoint(str(configuration["token_endpoint"]))
         jwks_uri = self._secure_endpoint(str(configuration["jwks_uri"]))
-        jwks = self._jwks(jwks_uri)
-        token = self._password_grant(token_endpoint, username, password)
+        jwks = self._jwks(jwks_uri, correlation_id)
+        token = self._password_grant(token_endpoint, username, password, correlation_id)
         claims = self._verify_access_token(
-            token, jwks, issuer, request.expected_audience
+            token, jwks, issuer, request.expected_audience, correlation_id
         )
 
         subject = claims.get("sub")
@@ -755,6 +894,29 @@ class KeycloakIdentityProvider:
         )
 
 
+_GOVERNED_PACKAGE_PATH = ("data", "ocor", "control_plane")
+
+
+def _policy_package_path(item: Mapping[str, object]) -> tuple[str, ...]:
+    """Return the parsed ``package`` path (e.g. ``("data","ocor","control_plane")``)
+    for an OPA ``/v1/policies`` entry, or ``()`` when it cannot be determined."""
+    ast = item.get("ast")
+    if not isinstance(ast, dict):
+        return ()
+    package = ast.get("package")
+    if not isinstance(package, dict):
+        return ()
+    path = package.get("path")
+    if not isinstance(path, list):
+        return ()
+    values: list[str] = []
+    for node in path:
+        if not (isinstance(node, dict) and isinstance(node.get("value"), str)):
+            return ()
+        values.append(str(node["value"]))
+    return tuple(values)
+
+
 class OpaPolicyDecisionProvider:
     """Installs a signed policy bundle and evaluates it with real OPA.
 
@@ -762,9 +924,10 @@ class OpaPolicyDecisionProvider:
     the pinned signer public key (the *trust pin*), its ``policy_id`` matches,
     and the current instant falls inside its declared validity window.  At
     decision time the provider binds the governed context's
-    ``policy_bundle_digest`` pin to the digest of the bundle actually installed
-    and forwards every governed attribute to OPA, so a policy can never be
-    short-circuited by an omitted scope or a forged delegation chain.
+    ``policy_bundle_digest`` pin to the digest of the bundle actually installed,
+    rejects any unsolicited module in the governed package, and forwards every
+    governed attribute to OPA, so a policy can never be short-circuited by an
+    omitted scope, an expired bundle or a forged delegation chain.
     """
 
     _ALLOW_PATH = "/v1/data/ocor/control_plane/allow"
@@ -783,6 +946,7 @@ class OpaPolicyDecisionProvider:
         self._timeout = timeout_seconds
         self._ssl_context = _require_mtls_context(ssl_context)
         self._bundle_digest: str | None = None
+        self._bundle_expires_at: datetime | None = None
         self._signer_n, self._signer_e = signer_public_key
         if self._signer_n.bit_length() < 2048 or self._signer_e < 3:
             raise SecurityControlError(
@@ -825,6 +989,7 @@ class OpaPolicyDecisionProvider:
         if current != bundle.rego_source:
             raise SecurityControlError("POLICY_UNAVAILABLE", "installed policy did not persist")
         self._bundle_digest = digest
+        self._bundle_expires_at = bundle.expires_at
         return digest
 
     def _fetch_policy_source(self, correlation_id: str | None = None) -> str:
@@ -845,16 +1010,67 @@ class OpaPolicyDecisionProvider:
             raise SecurityControlError("POLICY_UNAVAILABLE", "policy source is not textual")
         return raw
 
+    def _fetch_policy_modules(
+        self, correlation_id: str | None = None
+    ) -> list[dict[str, object]]:
+        """Return every module OPA currently evaluates (id + raw + parsed AST)."""
+        status, body = _request(
+            "GET",
+            f"{self._base_url}/v1/policies",
+            timeout=self._timeout,
+            correlation_id=correlation_id,
+            ssl_context=self._ssl_context,
+        )
+        if status != 200:
+            raise SecurityControlError("POLICY_UNAVAILABLE", f"policy list HTTP {status}")
+        try:
+            result = json.loads(body.decode()).get("result", [])
+        except (ValueError, json.JSONDecodeError) as exc:
+            raise SecurityControlError("POLICY_UNAVAILABLE", "malformed policy list") from exc
+        if not isinstance(result, list):
+            raise SecurityControlError("POLICY_UNAVAILABLE", "policy list is not an array")
+        return [item for item in result if isinstance(item, dict)]
+
     def _require_fresh_bundle(self, correlation_id: str) -> None:
         if self._bundle_digest is None:
             raise SecurityControlError(
                 "POLICY_UNAVAILABLE", f"correlation_id={correlation_id} no policy installed"
             )
-        current = _sha256_urn(self._fetch_policy_source(correlation_id).encode())
-        if current != self._bundle_digest:
+        if self._bundle_expires_at is None or _now() >= self._bundle_expires_at:
+            raise SecurityControlError(
+                "POLICY_BUNDLE_WINDOW_INVALID",
+                f"correlation_id={correlation_id} installed policy bundle has expired",
+            )
+        # Bind the decision to the *entire* evaluated package, not just the
+        # single installed module: an unsigned module dropped into the same OPA
+        # package can silently extend the decision, so any unsolicited module
+        # declaring ``package ocor.control_plane`` is a stale-bundle denial.
+        modules = self._fetch_policy_modules(correlation_id)
+        governed_members: list[str] = []
+        installed_raw: str | None = None
+        for item in modules:
+            module_id = str(item.get("id", ""))
+            raw = item.get("raw")
+            raw = raw if isinstance(raw, str) else ""
+            if module_id == self._policy_id:
+                installed_raw = raw
+            elif _policy_package_path(item) == _GOVERNED_PACKAGE_PATH:
+                governed_members.append(module_id)
+        if installed_raw is None:
+            raise SecurityControlError(
+                "STALE_BUNDLE",
+                f"correlation_id={correlation_id} installed module is missing from OPA",
+            )
+        if _sha256_urn(installed_raw.encode()) != self._bundle_digest:
             raise SecurityControlError(
                 "STALE_BUNDLE",
                 f"correlation_id={correlation_id} live policy digest drifted",
+            )
+        if governed_members:
+            raise SecurityControlError(
+                "STALE_BUNDLE",
+                f"correlation_id={correlation_id} unsolicited modules extend the "
+                f"governed package: {sorted(governed_members)}",
             )
 
     def evaluate(self, request: PolicyRequest) -> PolicyDecision:
@@ -919,7 +1135,13 @@ class OpaPolicyDecisionProvider:
                 f"correlation_id={correlation_id} policy result is not boolean",
             )
         effect = PolicyEffect.PERMIT if raw_result else PolicyEffect.DENY
-        valid_until = _now() + timedelta(seconds=300)
+        # A decision must never outlive the bundle that authorised it: the
+        # decision cache window is capped by the bundle's expiry so a permit
+        # cannot be replayed against an expired bundle.
+        now = _now()
+        valid_until = now + timedelta(seconds=300)
+        if self._bundle_expires_at is not None:
+            valid_until = min(valid_until, self._bundle_expires_at)
         status_record = ControlStatus.available(
             ControlName.POLICY,
             observed_at=request.at,
@@ -1075,7 +1297,7 @@ class SpireWorkloadIdentityProvider:
         key_pem = _der_to_pem(key_der, "PRIVATE KEY")
         bundle_pem = _der_to_pem(bundle_der, "CERTIFICATE")
 
-        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context = _PeerIdentitySSLContext(self._expected_spiffe_id)
         context.verify_mode = ssl.CERT_REQUIRED
         context.check_hostname = False
         context.load_verify_locations(cadata=bundle_pem)
@@ -1106,6 +1328,10 @@ class OpenBaoSecretProvider:
         self._base_url = base_url.rstrip("/")
         self._token = token
         self._mount = mount
+        if not _VAULT_PATH_SEGMENT.fullmatch(self._mount):
+            raise SecurityControlError(
+                "SECRET_REFERENCE_INVALID", f"invalid mount name {self._mount!r}"
+            )
         self._timeout = timeout_seconds
         self._ssl_context = _require_mtls_context(ssl_context)
         self._mount_digest: str | None = None
@@ -1156,6 +1382,18 @@ class OpenBaoSecretProvider:
         secret_name = request.secret_ref[len("urn:ocor:secret-ref:") :]
         if not secret_name:
             raise SecurityControlError("SECRET_REFERENCE_INVALID", "empty secret reference")
+        # ``secret_ref`` and ``principal_id`` are interpolated into an OpenBao
+        # kv-v2 path.  Both are restricted to a single path segment (no slash,
+        # no dot-prefix, no traversal) so a crafted reference cannot reach
+        # outside the principal's scope or a foreign mount.
+        if not _VAULT_PATH_SEGMENT.fullmatch(secret_name):
+            raise SecurityControlError(
+                "SECRET_REFERENCE_INVALID", f"invalid secret reference {request.secret_ref!r}"
+            )
+        if not _VAULT_PATH_SEGMENT.fullmatch(request.principal_id):
+            raise SecurityControlError(
+                "SECRET_REFERENCE_INVALID", f"invalid principal id {request.principal_id!r}"
+            )
         correlation = f"governed_context_digest={request.governed_context_digest}"
         # Resolve-not-overwrite: a lease is always derived from a secret that
         # already exists under the principal's scope.  The provider never

@@ -779,6 +779,64 @@ def test_stale_bundle_fails_closed(
     assert excinfo.value.reason_code == "STALE_BUNDLE"
 
 
+def test_installed_bundle_expiry_fails_closed_at_decision_time(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object]
+):
+    # A bundle installed while still valid must not keep authorising after its
+    # validity window closes: the freshness fence re-checks ``expires_at`` on
+    # every decision, so a permit cannot outlive the bundle that granted it.
+    provider = OpaPolicyDecisionProvider(
+        str(mtls["opa"]),
+        POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"],
+    )
+    digest = provider.install_policy(
+        _sign_bundle(_rego(principal.principal_id), expires_at=_now() + timedelta(seconds=2))
+    )
+    request = _policy_request(principal, digest, action="read")
+    assert provider.evaluate(request).effect is PolicyEffect.PERMIT
+    time.sleep(3.0)
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.evaluate(_policy_request(principal, digest, action="read"))
+    assert excinfo.value.reason_code == "POLICY_BUNDLE_WINDOW_INVALID"
+
+
+def test_unsigned_module_cannot_extend_governed_package(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object]
+):
+    # A module dropped into the governed OPA package without a signed bundle
+    # must not silently extend the decision.  The freshness fence lists every
+    # evaluated module and rejects any unsolicited member of the governed
+    # package before the (now widened) policy is ever consulted.
+    provider = OpaPolicyDecisionProvider(
+        str(mtls["opa"]),
+        POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"],
+    )
+    digest = _install_policy(provider, _rego(principal.principal_id))
+    request = _policy_request(principal, digest, action="erase")
+    # Positive control: the signed bundle alone denies the erase action.
+    assert provider.evaluate(request).effect is PolicyEffect.DENY
+
+    extra_id = "unsigned-extension"
+    unsigned = 'package ocor.control_plane\n\nallow if { input.action == "erase" }\n'
+    status, _ = _http(
+        "PUT",
+        f"{OPA}/v1/policies/{extra_id}",
+        headers={"Content-Type": "text/plain"},
+        body=unsigned,
+    )
+    assert status == 200
+    try:
+        with pytest.raises(SecurityControlError) as excinfo:
+            provider.evaluate(request)
+        assert excinfo.value.reason_code == "STALE_BUNDLE"
+    finally:
+        _http("DELETE", f"{OPA}/v1/policies/{extra_id}")
+
+
 # --------------------------------------------------------------------------- #
 # SPIFFE/SPIRE: workload identity and mTLS trust verification
 # --------------------------------------------------------------------------- #
@@ -830,6 +888,55 @@ def test_provider_requires_mtls_context():
     with pytest.raises(SecurityControlError) as excinfo:
         OpaPolicyDecisionProvider(OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E))
     assert excinfo.value.reason_code == "MTLS_REQUIRED"
+
+
+def test_opa_provider_rejects_plaintext_base_url():
+    # An authenticated policy flow must never perform credentialed I/O over
+    # plaintext HTTP: an http:// base URL is rejected at the I/O boundary,
+    # before any socket is opened, even with a mutual-TLS-capable context.
+    provider = OpaPolicyDecisionProvider(
+        OPA,
+        POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=ssl.create_default_context(),
+    )
+    with pytest.raises(SecurityControlError) as excinfo:
+        _install_policy(provider, _rego("urn:ocor:principal:plaintext-opa"))
+    assert excinfo.value.reason_code == "MTLS_REQUIRED"
+    assert "HTTPS" in str(excinfo.value)
+
+
+def test_keycloak_provider_rejects_plaintext_base_url():
+    provider = KeycloakIdentityProvider(
+        KC,
+        REALM,
+        CLIENT_ID,
+        password_resolver=lambda u: "x",
+        ssl_context=ssl.create_default_context(),
+    )
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.authenticate(
+            IdentityRequest(f"urn:ocor:credential-ref:{USERNAME}", "account", str(uuid.uuid4()))
+        )
+    assert excinfo.value.reason_code == "MTLS_REQUIRED"
+    assert "HTTPS" in str(excinfo.value)
+
+
+def test_openbao_provider_rejects_plaintext_base_url():
+    provider = OpenBaoSecretProvider(
+        OB, "token", mount="ocor", ssl_context=ssl.create_default_context()
+    )
+    request = SecretRequest(
+        secret_ref="urn:ocor:secret-ref:plaintext-openbao",
+        principal_id="urn:ocor:principal:plaintext-openbao",
+        purpose="read-site-1",
+        governed_context_digest=f"urn:sha256:{'0' * 64}",
+        requested_at=_now(),
+    )
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.lease(request)
+    assert excinfo.value.reason_code == "MTLS_REQUIRED"
+    assert "HTTPS" in str(excinfo.value)
 
 
 def test_mtls_transport_presents_and_verifies_workload_svid(mtls: dict[str, object]):
@@ -937,6 +1044,32 @@ def test_wrong_openbao_token_fails_closed(
     assert excinfo.value.reason_code == "SECRETS_UNAVAILABLE"
 
 
+def test_secret_ref_cannot_escape_principal_scope(
+    principal: AuthenticatedPrincipal,
+    env: dict[str, str],
+    opa: tuple[OpaPolicyDecisionProvider, str],
+    mtls: dict[str, object],
+):
+    # A secret reference is interpolated into an OpenBao kv-v2 path; a crafted
+    # reference carrying a path segment must be rejected outright rather than
+    # resolved outside the principal's scope.
+    _, policy_digest = opa
+    provider = OpenBaoSecretProvider(
+        str(mtls["openbao"]), env["OCOR_LOCAL_OPENBAO_TOKEN"], mount="ocor", ssl_context=mtls["ssl_context"]
+    )
+    gcs = _gcs(principal, policy_digest)
+    request = SecretRequest(
+        secret_ref="urn:ocor:secret-ref:../victim/isolation-fixture",
+        principal_id=principal.principal_id,
+        purpose="read-site-1",
+        governed_context_digest=gcs.digest(),
+        requested_at=_now(),
+    )
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.lease(request)
+    assert excinfo.value.reason_code == "SECRET_REFERENCE_INVALID"
+
+
 # --------------------------------------------------------------------------- #
 # Fault injection: a paused control plane stops answering as a denial
 # --------------------------------------------------------------------------- #
@@ -984,6 +1117,46 @@ def test_paused_opa_fails_closed_within_bounded_timeout(
         assert recovered, "OPA did not recover within the bounded window after unpause"
 
     provider.evaluate(_policy_request(principal, digest, action="read"))
+
+
+def test_paused_keycloak_fails_closed_with_correlation(mtls: dict[str, object]):
+    # An unreachable identity provider is a denial correlated to the exact
+    # request, not a silent permit nor a bare timeout without context.
+    provider = KeycloakIdentityProvider(
+        str(mtls["keycloak"]),
+        REALM,
+        CLIENT_ID,
+        password_resolver=lambda u: USER_PWD,
+        timeout_seconds=0.5,
+        ssl_context=mtls["ssl_context"],
+    )
+    correlation_id = str(uuid.uuid4())
+    request = IdentityRequest(f"urn:ocor:credential-ref:{USERNAME}", "account", correlation_id)
+
+    pause = fault_inject.run(
+        fault_inject.fault_command("keycloak", "pause"), cwd=REPOSITORY_ROOT, timeout=30
+    )
+    assert pause.returncode == 0, pause.stderr
+    try:
+        detected = fault_inject._poll(
+            lambda: not fault_inject.http_reachable(SERVICE_URLS["Keycloak"], timeout=1.0),
+            timeout=10.0,
+        )
+        assert detected, "Keycloak was never observed unreachable after pause"
+        with pytest.raises(SecurityControlError) as excinfo:
+            provider.authenticate(request)
+        assert excinfo.value.reason_code == "SERVICE_UNAVAILABLE"
+        assert correlation_id in str(excinfo.value)
+    finally:
+        unpause = fault_inject.run(
+            fault_inject.fault_command("keycloak", "unpause"), cwd=REPOSITORY_ROOT, timeout=30
+        )
+        assert unpause.returncode == 0, unpause.stderr
+        recovered = fault_inject._poll(
+            lambda: fault_inject.http_reachable(SERVICE_URLS["Keycloak"], timeout=2.0),
+            timeout=15.0,
+        )
+        assert recovered, "Keycloak did not recover within the bounded window after unpause"
 
 
 # --------------------------------------------------------------------------- #
@@ -1276,3 +1449,129 @@ def test_absent_secret_ref_fails_closed_without_overwrite(
         headers={"X-Vault-Token": env["OCOR_LOCAL_OPENBAO_TOKEN"]},
     )
     assert status == 404
+
+
+# --------------------------------------------------------------------------- #
+# Peer identity: a valid SVID from the same trust domain but a *different*
+# service must be rejected by the client context, not merely chain-verified.
+# --------------------------------------------------------------------------- #
+
+SPIRE_SERVER_CONTAINER = "ocor-bootstrap-spire-server-1"
+SPIRE_SERVER_SOCKET = "/run/spire/sockets/server.sock"
+
+
+def _spire_server_json(command: list[str]) -> dict[str, object]:
+    completed = subprocess.run(
+        [
+            "docker",
+            "exec",
+            SPIRE_SERVER_CONTAINER,
+            "/opt/spire/bin/spire-server",
+            *command,
+            "-socketPath",
+            SPIRE_SERVER_SOCKET,
+            "-output",
+            "json",
+        ],
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stderr.decode()
+    return json.loads(completed.stdout.decode())
+
+
+def _register_other_service_svid() -> tuple[str, str, str, str]:
+    """Register a temporary second workload SVID and return (cert_pem, key_pem,
+    ca_pem, entry_id) plus poll the agent until that SVID is delivered."""
+    entries = _spire_server_json(["entry", "show"]).get("entries", [])
+    control = next(
+        (e for e in entries if e.get("spiffe_id", {}).get("path") == "/ocor/control-plane"),
+        None,
+    )
+    assert control is not None, "control-plane SPIRE entry is missing"
+    parent = control["parent_id"]
+    parent_id = f"spiffe://{parent['trust_domain']}{parent['path']}"
+    other_id = f"spiffe://ocor.test/ocor/verifier-other-service-{uuid.uuid4().hex[:16]}"
+
+    created = _spire_server_json(
+        ["entry", "create", "-parentID", parent_id, "-spiffeID", other_id,
+         "-selector", "unix:uid:0", "-x509SVIDTTL", "120"]
+    )
+    entry_list = created.get("entries") or [
+        item.get("entry", {})
+        for item in created.get("results", [])
+        if item.get("status", {}).get("code") in (0, None)
+    ] or ([created] if created.get("id") else [])
+    assert len(entry_list) == 1 and entry_list[0].get("id"), "no SPIRE entry id returned"
+    entry_id = str(entry_list[0]["id"])
+
+    svid: dict[str, object] | None = None
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline:
+        fetch = subprocess.run(
+            [
+                "docker", "exec", SPIRE_AGENT_CONTAINER, "/opt/spire/bin/spire-agent",
+                "api", "fetch", "x509", "-socketPath", SPIRE_SOCKET, "-output", "json",
+            ],
+            capture_output=True, timeout=30, check=False,
+        )
+        if fetch.returncode == 0:
+            for item in json.loads(fetch.stdout.decode()).get("svids", []):
+                if item.get("spiffe_id") == other_id:
+                    svid = item
+                    break
+        if svid is not None:
+            break
+        time.sleep(0.5)
+    assert svid is not None, "second SVID was not delivered within the bound"
+    chain = _split_der_chain(_b64_decode(str(svid["x509_svid"])))
+    cert_pem = "".join(_der_to_pem(der, "CERTIFICATE") for der in chain)
+    key_pem = _der_to_pem(_b64_decode(str(svid["x509_svid_key"])), "PRIVATE KEY")
+    ca_pem = _der_to_pem(_b64_decode(str(svid["bundle"])), "CERTIFICATE")
+    return cert_pem, key_pem, ca_pem, entry_id
+
+
+def _delete_spire_entry(entry_id: str) -> None:
+    subprocess.run(
+        [
+            "docker", "exec", SPIRE_SERVER_CONTAINER, "/opt/spire/bin/spire-server",
+            "entry", "delete", "-socketPath", SPIRE_SERVER_SOCKET, "-entryID", entry_id,
+        ],
+        capture_output=True, timeout=30, check=False,
+    )
+    # Let the agent converge so the temporary identity cannot leak into a later
+    # fetch in the same or a subsequent run.
+    deadline = time.monotonic() + 30
+    while time.monotonic() < deadline:
+        fetch = subprocess.run(
+            [
+                "docker", "exec", SPIRE_AGENT_CONTAINER, "/opt/spire/bin/spire-agent",
+                "api", "fetch", "x509", "-socketPath", SPIRE_SOCKET, "-output", "json",
+            ],
+            capture_output=True, timeout=30, check=False,
+        )
+        if fetch.returncode != 0:
+            break
+        ids = [
+            str(i.get("spiffe_id"))
+            for i in json.loads(fetch.stdout.decode()).get("svids", [])
+        ]
+        if not any(i.startswith("spiffe://ocor.test/ocor/verifier-other-service-") for i in ids):
+            break
+        time.sleep(0.5)
+
+
+def test_client_rejects_peer_with_different_spiffe_id(mtls: dict[str, object]):
+    # A peer that presents a *valid* SVID from the same SPIRE trust domain but
+    # belonging to a different service is rejected before any request byte is
+    # written: chain verification is not service authentication.
+    if not fault_inject.container_healthy(SPIRE_AGENT_CONTAINER):
+        pytest.skip("SPIRE agent container is unavailable; real peer identity is mandatory")
+    cert_pem, key_pem, ca_pem, entry_id = _register_other_service_svid()
+    try:
+        with _MtlsReverseProxy("127.0.0.1", 8181, cert_pem, key_pem, ca_pem) as proxy:
+            with pytest.raises(ssl.SSLError):
+                _tls_handshake(proxy.url, mtls["ssl_context"])
+    finally:
+        _delete_spire_entry(entry_id)
