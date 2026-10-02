@@ -4026,3 +4026,29 @@
 - Prossima azione: R3 step (c) — cablare `scripts/validate_evidence_input_drift.py` come step CI
   bloccante e nel preflight (aggiornare le allowlist dei validator di piano per i nuovi file e
   riallineare il self-hash di `OCOR_PLAN_RUN_STATE.json`); poi `OCOR-DEV-0048` (fase di implementazione).
+
+## 2026-10-02 — Governed: R3 step (c) merged (PR #153) + state sync
+
+- Change set `governed/state-sync-r3c-wire-drift-validator` (docs/state), basato sull'HEAD di `main` =
+  `7d833606756203f28c50913871f6ae6d66c790ee` (merge commit di PR #153).
+- Merge di **PR #153** (`governed/remediation-r3c-wire-drift-validator`) con `--match-head-commit
+  af61453cfae010dd8b68c82692cb42fbc3e9e678`: 13 check verdi sull'HEAD esatto; post-merge verificato
+  `origin/main` == merge commit `7d833606…`.
+- R3 step (c) chiuso: `scripts/validate_evidence_input_drift.py` cablato come step CI bloccante
+  (`.github/workflows/ocor-tooling-bootstrap.yml`: job `type-and-lint-gate` esegue la suite di regressione
+  `reports/tests/test_evidence_input_drift.py`; job `tooling-policy` esegue il validator contro HEAD
+  `scripts/validate_evidence_input_drift.py --root .`) e come step di preflight (`AGENTS.md`). Nessun nuovo
+  file: allowlist dei validator di piano e self-hash di `OCOR_PLAN_RUN_STATE.json` non richiedono
+  riallineamento. Validator GREEN all'HEAD: `checked_inputs=165`, `checked_tasks=62`,
+  `drifted_inputs=0`, `drifted_tasks=0`.
+- `EXECUTION_STATE.json`: `remediation_status.R3_evidence_input_drift` → `COMPLETE` (step (a), (b), (c)
+  tutti chiusi) con `pr_step_c=153` e `merge_commit_step_c=7d833606…`; `baseline_commit` → `7d833606…`;
+  `latest_ci_evidence` aggiornato con i 6 run ID della CI di PR #153; `next_executable_action` →
+  `OCOR-DEV-0048` (fase di implementazione). `MODEL_HANDOFF.json` riallineato (branch, worktree,
+  `current_task`, `exact_next_action`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: `OCOR-DEV-0048` (fase di implementazione) — task a backend reale (OPA, Keycloak,
+  SPIFFE/SPIRE, OpenBao, mTLS); leggere per intero lo spike `OCOR-DEV-0021` e i port riusati, poi TDD
+  RED→GREEN→REFACTOR con criteri eseguibili prima del codice. `RVW-03`/`INFO-A`/`INFO-C` e
+  `TOOLCHAIN-LOCK-TYPESCRIPT` restano riservati al Product Owner (non bloccanti).
