@@ -82,6 +82,19 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _canonical_utc(dt: datetime) -> datetime:
+    """Normalise a timezone-aware instant to UTC whole-second precision.
+
+    Both signing and enforcement must reduce a ``datetime`` to the exact same
+    canonical UTC instant; otherwise an offset-only alteration (which leaves
+    the signed wall-clock string unchanged) could shift the enforced instant
+    and reopen a time window that the authority never granted.
+    """
+    if dt.tzinfo is None or dt.utcoffset() is None:
+        raise SecurityControlError("SECURITY_RECORD_INVALID", "time must be timezone-aware")
+    return dt.astimezone(timezone.utc).replace(microsecond=0)
+
+
 def _sha256_urn(data: bytes) -> str:
     return "urn:sha256:" + hashlib.sha256(data).hexdigest()
 
@@ -562,19 +575,19 @@ class SignedPolicyBundle:
     def signing_payload(self) -> bytes:
         if not self.policy_id or not self.rego_source or not self.signer:
             raise SecurityControlError("POLICY_BUNDLE_INVALID", "bundle fields are incomplete")
-        if (
-            self.not_before.tzinfo is None
-            or self.expires_at.tzinfo is None
-            or self.not_before >= self.expires_at
-        ):
+        if self.not_before.tzinfo is None or self.expires_at.tzinfo is None:
+            raise SecurityControlError("POLICY_BUNDLE_INVALID", "bundle validity window is empty")
+        not_before = _canonical_utc(self.not_before)
+        expires_at = _canonical_utc(self.expires_at)
+        if not_before >= expires_at:
             raise SecurityControlError("POLICY_BUNDLE_INVALID", "bundle validity window is empty")
         return json.dumps(
             {
                 "policy_id": self.policy_id,
                 "rego_source": self.rego_source,
                 "signer": self.signer,
-                "not_before": self.not_before.strftime(_RFC3339),
-                "expires_at": self.expires_at.strftime(_RFC3339),
+                "not_before": not_before.strftime(_RFC3339),
+                "expires_at": expires_at.strftime(_RFC3339),
             },
             sort_keys=True,
             separators=(",", ":"),
@@ -604,11 +617,11 @@ class SignedDelegation:
     def signing_payload(self) -> bytes:
         if not self.delegation_id or not self.delegator_id or not self.delegatee_id:
             raise SecurityControlError("DELEGATION_INVALID", "delegation fields are incomplete")
-        if (
-            self.not_before.tzinfo is None
-            or self.expires_at.tzinfo is None
-            or self.not_before >= self.expires_at
-        ):
+        if self.not_before.tzinfo is None or self.expires_at.tzinfo is None:
+            raise SecurityControlError("DELEGATION_INVALID", "delegation validity window is empty")
+        not_before = _canonical_utc(self.not_before)
+        expires_at = _canonical_utc(self.expires_at)
+        if not_before >= expires_at:
             raise SecurityControlError("DELEGATION_INVALID", "delegation validity window is empty")
         if not self.resource_scopes or not self.permitted_purposes:
             raise SecurityControlError("DELEGATION_INVALID", "delegation scope or purpose is empty")
@@ -623,8 +636,8 @@ class SignedDelegation:
                 "delegatee_id": self.delegatee_id,
                 "resource_scopes": sorted(self.resource_scopes),
                 "permitted_purposes": sorted(self.permitted_purposes),
-                "not_before": self.not_before.strftime(_RFC3339),
-                "expires_at": self.expires_at.strftime(_RFC3339),
+                "not_before": not_before.strftime(_RFC3339),
+                "expires_at": expires_at.strftime(_RFC3339),
             },
             sort_keys=True,
             separators=(",", ":"),
@@ -663,7 +676,11 @@ def verify_signed_delegation(
         raise SecurityControlError(
             "DELEGATION_BINDING_MISMATCH", "delegation does not bind the actor chain"
         )
-    if at < delegation.not_before or at >= delegation.expires_at:
+    instant = _canonical_utc(at)
+    if (
+        instant < _canonical_utc(delegation.not_before)
+        or instant >= _canonical_utc(delegation.expires_at)
+    ):
         raise SecurityControlError(
             "DELEGATION_EXPIRED", "delegation is outside its validity window"
         )
@@ -674,6 +691,60 @@ def verify_signed_delegation(
     if purpose not in delegation.permitted_purposes:
         raise SecurityControlError(
             "DELEGATION_PURPOSE_MISMATCH", "delegation does not cover the purpose"
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class SignedDelegationRevocation:
+    """A signed, content-addressed revocation of one delegation grant.
+
+    ``signature`` is the base64-encoded RSA PKCS#1 v1.5 SHA-256 signature over
+    :meth:`signing_payload`, produced by the same authority that signed the
+    grant.  A provider honours a revocation only after verifying its signature
+    against the pinned delegation authority key, so a forged revocation is
+    rejected exactly like a forged grant.
+    """
+
+    delegation_id: str
+    revoked_at: datetime
+    signature: str
+
+    def signing_payload(self) -> bytes:
+        if not self.delegation_id:
+            raise SecurityControlError(
+                "DELEGATION_REVOCATION_INVALID", "revocation fields are incomplete"
+            )
+        if self.revoked_at.tzinfo is None or self.revoked_at.utcoffset() is None:
+            raise SecurityControlError(
+                "DELEGATION_REVOCATION_INVALID", "revocation time is not timezone-aware"
+            )
+        return json.dumps(
+            {
+                "delegation_id": self.delegation_id,
+                "revoked_at": _canonical_utc(self.revoked_at).strftime(_RFC3339),
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+
+
+def verify_signed_delegation_revocation(
+    revocation: SignedDelegationRevocation,
+    signer_public_key: tuple[int, int],
+) -> None:
+    """Reject an unsigned, altered or authority-mismatched revocation."""
+
+    signer_n, signer_e = signer_public_key
+    payload = revocation.signing_payload()
+    try:
+        signature = _b64_decode(revocation.signature)
+    except (ValueError, TypeError) as exc:
+        raise SecurityControlError(
+            "DELEGATION_REVOCATION_INVALID", "revocation signature is malformed"
+        ) from exc
+    if not _rsa_verify(payload, signature, signer_n, signer_e, "sha256"):
+        raise SecurityControlError(
+            "DELEGATION_REVOCATION_INVALID", "revocation signature does not verify"
         )
 
 
@@ -940,6 +1011,8 @@ class OpaPolicyDecisionProvider:
         signer_public_key: tuple[int, int],
         timeout_seconds: float = 5.0,
         ssl_context: ssl.SSLContext | None = None,
+        delegation_signer_public_key: tuple[int, int] | None = None,
+        delegation_revocations: tuple[SignedDelegationRevocation, ...] = (),
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._policy_id = policy_id
@@ -953,6 +1026,22 @@ class OpaPolicyDecisionProvider:
                 "POLICY_BUNDLE_SIGNATURE_INVALID", "trust pin modulus too small"
             )
         self._signer_pin = _sha256_urn(f"{self._signer_n}:{self._signer_e}".encode())
+        self._delegation_signer_key = delegation_signer_public_key
+        if delegation_signer_public_key is not None:
+            dn, de = delegation_signer_public_key
+            if dn.bit_length() < 2048 or de < 3:
+                raise SecurityControlError(
+                    "DELEGATION_BINDING_MISMATCH", "delegation trust pin modulus too small"
+                )
+        elif delegation_revocations:
+            raise SecurityControlError(
+                "DELEGATION_BINDING_MISMATCH", "revocations require a delegation trust pin"
+            )
+        self._delegation_revocations: dict[str, SignedDelegationRevocation] = {}
+        for revocation in delegation_revocations:
+            assert delegation_signer_public_key is not None
+            verify_signed_delegation_revocation(revocation, delegation_signer_public_key)
+            self._delegation_revocations[revocation.delegation_id] = revocation
 
     def install_policy(self, bundle: SignedPolicyBundle) -> str:
         if bundle.policy_id != self._policy_id:
@@ -968,8 +1057,8 @@ class OpaPolicyDecisionProvider:
                 f"correlation_id=none bundle signature does not verify against trust pin "
                 f"{self._signer_pin}",
             )
-        now = _now()
-        if now < bundle.not_before or now >= bundle.expires_at:
+        now = _canonical_utc(_now())
+        if now < _canonical_utc(bundle.not_before) or now >= _canonical_utc(bundle.expires_at):
             raise SecurityControlError(
                 "POLICY_BUNDLE_WINDOW_INVALID",
                 "policy bundle is outside its declared validity window",
@@ -989,7 +1078,7 @@ class OpaPolicyDecisionProvider:
         if current != bundle.rego_source:
             raise SecurityControlError("POLICY_UNAVAILABLE", "installed policy did not persist")
         self._bundle_digest = digest
-        self._bundle_expires_at = bundle.expires_at
+        self._bundle_expires_at = _canonical_utc(bundle.expires_at)
         return digest
 
     def _fetch_policy_source(self, correlation_id: str | None = None) -> str:
@@ -1036,7 +1125,7 @@ class OpaPolicyDecisionProvider:
             raise SecurityControlError(
                 "POLICY_UNAVAILABLE", f"correlation_id={correlation_id} no policy installed"
             )
-        if self._bundle_expires_at is None or _now() >= self._bundle_expires_at:
+        if self._bundle_expires_at is None or _canonical_utc(_now()) >= self._bundle_expires_at:
             raise SecurityControlError(
                 "POLICY_BUNDLE_WINDOW_INVALID",
                 f"correlation_id={correlation_id} installed policy bundle has expired",
@@ -1073,7 +1162,9 @@ class OpaPolicyDecisionProvider:
                 f"governed package: {sorted(governed_members)}",
             )
 
-    def evaluate(self, request: PolicyRequest) -> PolicyDecision:
+    def evaluate(
+        self, request: PolicyRequest, *, delegation: SignedDelegation | None = None
+    ) -> PolicyDecision:
         correlation_id = request.governed_context.correlation_id
         self._require_fresh_bundle(correlation_id)
         # Binding 1: the governed context's policy pin must equal the digest of
@@ -1086,14 +1177,40 @@ class OpaPolicyDecisionProvider:
             )
         # Binding 2: the governed actor_chain must be derived from the
         # authenticated principal's own chain -- an unverified delegator is
-        # never introduced by the request alone.
-        if not set(request.governed_context.actor_chain).issubset(
-            set(request.principal.actor_chain)
-        ):
-            raise SecurityControlError(
-                "IDENTITY_BINDING_MISMATCH",
-                f"correlation_id={correlation_id} actor_chain is not bound to the "
-                "authenticated principal",
+        # never introduced by the request alone.  A multi-hop chain is only
+        # accepted when accompanied by a signed delegation grant whose signer,
+        # validity window, revocation state, resource scope and purpose are all
+        # verified against the pinned authority at the decision boundary.
+        chain = tuple(request.governed_context.actor_chain)
+        if delegation is None:
+            if not set(chain).issubset(set(request.principal.actor_chain)):
+                raise SecurityControlError(
+                    "IDENTITY_BINDING_MISMATCH",
+                    f"correlation_id={correlation_id} actor_chain is not bound to the "
+                    "authenticated principal",
+                )
+        else:
+            if self._delegation_signer_key is None:
+                raise SecurityControlError(
+                    "DELEGATION_BINDING_MISMATCH",
+                    f"correlation_id={correlation_id} delegation authority is not "
+                    "configured",
+                )
+            if len(chain) != 2 or chain[1] != request.principal.principal_id:
+                raise SecurityControlError(
+                    "DELEGATION_BINDING_MISMATCH",
+                    f"correlation_id={correlation_id} delegated actor_chain is not a "
+                    "single-hop delegation to the authenticated principal",
+                )
+            verify_signed_delegation(
+                delegation,
+                self._delegation_signer_key,
+                resource_scope=request.resource,
+                purpose=request.governed_context.purpose,
+                delegator_id=chain[0],
+                delegatee_id=request.principal.principal_id,
+                at=request.at,
+                revoked=delegation.delegation_id in self._delegation_revocations,
             )
         gcs = request.governed_context
         policy_input = {

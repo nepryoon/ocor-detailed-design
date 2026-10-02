@@ -29,7 +29,7 @@ import threading
 import time
 import uuid
 from dataclasses import replace
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -40,6 +40,7 @@ from ocor_runtime.security.control_plane import (
     OpaPolicyDecisionProvider,
     OpenBaoSecretProvider,
     SignedDelegation,
+    SignedDelegationRevocation,
     SignedPolicyBundle,
     SpireWorkloadIdentityProvider,
     _b64_decode,
@@ -1278,13 +1279,14 @@ def _sign_delegation(
     *,
     delegatee_id: str,
     delegator_id: str = "delegator-1",
+    delegation_id: str = "urn:ocor:delegation:test",
     resource_scopes: tuple[str, ...] = ("urn:ocor:target:site-1",),
     permitted_purposes: tuple[str, ...] = ("read-site-1",),
     not_before: datetime | None = None,
     expires_at: datetime | None = None,
 ) -> SignedDelegation:
     unsigned = SignedDelegation(
-        delegation_id="urn:ocor:delegation:test",
+        delegation_id=delegation_id,
         delegator_id=delegator_id,
         delegatee_id=delegatee_id,
         resource_scopes=resource_scopes,
@@ -1297,6 +1299,46 @@ def _sign_delegation(
         _rsa_sign(unsigned.signing_payload(), _SIGNER_N, _SIGNER_D)
     ).decode("ascii")
     return replace(unsigned, signature=signature)
+
+
+def _sign_revocation(delegation_id: str) -> SignedDelegationRevocation:
+    unsigned = SignedDelegationRevocation(
+        delegation_id=delegation_id,
+        revoked_at=_now(),
+        signature="",
+    )
+    signature = base64.b64encode(
+        _rsa_sign(unsigned.signing_payload(), _SIGNER_N, _SIGNER_D)
+    ).decode("ascii")
+    return replace(unsigned, signature=signature)
+
+
+def _delegated_policy_request(
+    principal: AuthenticatedPrincipal,
+    policy_digest: str,
+    delegation: SignedDelegation,
+) -> PolicyRequest:
+    gcs = GovernedContext(
+        tenant_id="tenant-a",
+        organization_id="org-a",
+        domain_id="domain-a",
+        compartments=("compartment-a",),
+        classification_marking_ref="urn:sha256:" + "0" * 64,
+        purpose="read-site-1",
+        effective_principal_id=principal.principal_id,
+        actor_chain=(delegation.delegator_id, delegation.delegatee_id),
+        ontology_release_digest="urn:sha256:" + "1" * 64,
+        policy_bundle_digest=policy_digest,
+        correlation_id=str(uuid.uuid4()),
+    )
+    return PolicyRequest(
+        principal=principal,
+        action="read",
+        resource="urn:ocor:target:site-1",
+        governed_context=gcs,
+        governed_context_digest=gcs.digest(),
+        at=_now(),
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -1414,6 +1456,194 @@ def test_expired_delegation_fails_closed(principal: AuthenticatedPrincipal):
             at=_now(),
         )
     assert excinfo.value.reason_code == "DELEGATION_EXPIRED"
+
+
+# --------------------------------------------------------------------------- #
+# VF-001: canonical UTC time -- offset-equivalence is preserved, but an
+# offset-only reinterpretation of the signed wall clock must never extend a
+# window that the authority did not grant.
+# --------------------------------------------------------------------------- #
+
+
+def test_offset_equivalent_bundle_signing_is_stable(mtls: dict[str, object]):
+    provider = OpaPolicyDecisionProvider(
+        str(mtls["opa"]),
+        POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"],
+    )
+    rego = _rego("offset-equivalent")
+    bundle = _sign_bundle(rego)
+    # Same instant, different offset: the canonical UTC payload is unchanged,
+    # so the detached signature still verifies and the bundle is accepted.
+    equivalent = replace(
+        bundle,
+        expires_at=bundle.expires_at.astimezone(timezone(timedelta(hours=2))),
+    )
+    digest = provider.install_policy(equivalent)
+    assert digest == "urn:sha256:" + hashlib.sha256(rego.encode()).hexdigest()
+
+
+def test_offset_shifted_bundle_rejected(mtls: dict[str, object]):
+    provider = OpaPolicyDecisionProvider(
+        str(mtls["opa"]),
+        POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"],
+    )
+    expired = _sign_bundle(
+        _rego("offset-shifted"),
+        not_before=_now() - timedelta(minutes=10),
+        expires_at=_now() - timedelta(minutes=5),
+    )
+    # Reinterpret the *wall clock* under a -02:00 offset while keeping payload
+    # and signature byte-for-byte unchanged: the instant silently moves two
+    # hours into the future.  Canonical UTC signing must reject this because
+    # the signature no longer covers the re-canonicalised payload.
+    shifted = replace(
+        expired,
+        expires_at=expired.expires_at.replace(tzinfo=timezone(timedelta(hours=-2))),
+    )
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.install_policy(shifted)
+    assert excinfo.value.reason_code == "POLICY_BUNDLE_SIGNATURE_INVALID"
+
+
+# --------------------------------------------------------------------------- #
+# VF-002: the signed delegation grant and its revocation state are consumed at
+# the policy boundary (``OpaPolicyDecisionProvider.evaluate``) on real OPA, with
+# a valid delegated request and fail-closed negatives on the same operation.
+# --------------------------------------------------------------------------- #
+
+
+@pytest.fixture
+def opa_delegated(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object]
+) -> tuple[OpaPolicyDecisionProvider, str]:
+    provider = OpaPolicyDecisionProvider(
+        str(mtls["opa"]),
+        POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E),
+        delegation_signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"],
+    )
+    digest = _install_policy(provider, _rego(principal.principal_id))
+    return provider, digest
+
+
+def test_valid_delegated_request_on_real_backends(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str]
+):
+    provider, digest = opa_delegated
+    delegation = _sign_delegation(delegatee_id=principal.principal_id)
+    request = _delegated_policy_request(principal, digest, delegation)
+    decision = provider.evaluate(request, delegation=delegation)
+    assert decision.effect is PolicyEffect.PERMIT
+    decision.verify(request, at=_now())
+
+
+def test_delegated_request_without_grant_fails_closed(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str]
+):
+    provider, digest = opa_delegated
+    delegation = _sign_delegation(delegatee_id=principal.principal_id)
+    request = _delegated_policy_request(principal, digest, delegation)
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.evaluate(request)
+    assert excinfo.value.reason_code == "IDENTITY_BINDING_MISMATCH"
+
+
+def test_delegated_request_expired_fails_closed(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str]
+):
+    provider, digest = opa_delegated
+    delegation = _sign_delegation(
+        delegatee_id=principal.principal_id,
+        not_before=_now() - timedelta(minutes=10),
+        expires_at=_now() - timedelta(minutes=1),
+    )
+    request = _delegated_policy_request(principal, digest, delegation)
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.evaluate(request, delegation=delegation)
+    assert excinfo.value.reason_code == "DELEGATION_EXPIRED"
+
+
+def test_delegated_request_revoked_fails_closed(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object]
+):
+    provider = OpaPolicyDecisionProvider(
+        str(mtls["opa"]),
+        POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E),
+        delegation_signer_public_key=(_SIGNER_N, _SIGNER_E),
+        delegation_revocations=(_sign_revocation("urn:ocor:delegation:test"),),
+        ssl_context=mtls["ssl_context"],
+    )
+    digest = _install_policy(provider, _rego(principal.principal_id))
+    delegation = _sign_delegation(delegatee_id=principal.principal_id)
+    request = _delegated_policy_request(principal, digest, delegation)
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.evaluate(request, delegation=delegation)
+    assert excinfo.value.reason_code == "DELEGATION_REVOKED"
+
+
+def test_delegated_request_out_of_scope_fails_closed(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str]
+):
+    provider, digest = opa_delegated
+    delegation = _sign_delegation(
+        delegatee_id=principal.principal_id,
+        resource_scopes=("urn:ocor:target:other-site",),
+    )
+    request = _delegated_policy_request(principal, digest, delegation)
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.evaluate(request, delegation=delegation)
+    assert excinfo.value.reason_code == "DELEGATION_SCOPE_MISMATCH"
+
+
+def test_delegated_request_out_of_purpose_fails_closed(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str]
+):
+    provider, digest = opa_delegated
+    delegation = _sign_delegation(
+        delegatee_id=principal.principal_id,
+        permitted_purposes=("write-site-1",),
+    )
+    request = _delegated_policy_request(principal, digest, delegation)
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.evaluate(request, delegation=delegation)
+    assert excinfo.value.reason_code == "DELEGATION_PURPOSE_MISMATCH"
+
+
+def test_delegated_request_altered_chain_fails_closed(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str]
+):
+    provider, digest = opa_delegated
+    delegation = _sign_delegation(delegatee_id=principal.principal_id)
+    gcs = GovernedContext(
+        tenant_id="tenant-a",
+        organization_id="org-a",
+        domain_id="domain-a",
+        compartments=("compartment-a",),
+        classification_marking_ref="urn:sha256:" + "0" * 64,
+        purpose="read-site-1",
+        effective_principal_id=principal.principal_id,
+        actor_chain=("attacker-delegator", principal.principal_id),
+        ontology_release_digest="urn:sha256:" + "1" * 64,
+        policy_bundle_digest=digest,
+        correlation_id=str(uuid.uuid4()),
+    )
+    request = PolicyRequest(
+        principal=principal,
+        action="read",
+        resource="urn:ocor:target:site-1",
+        governed_context=gcs,
+        governed_context_digest=gcs.digest(),
+        at=_now(),
+    )
+    with pytest.raises(SecurityControlError) as excinfo:
+        provider.evaluate(request, delegation=delegation)
+    assert excinfo.value.reason_code == "DELEGATION_BINDING_MISMATCH"
 
 
 # --------------------------------------------------------------------------- #
