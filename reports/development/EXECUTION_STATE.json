@@ -1,12 +1,12 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-rem-0016",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-OCOR-DEV-REM-0016",
+    "branch": "governed/state-sync-r3c-wire-drift-validator",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__STATE-SYNC-R3C-WIRE-DRIFT-VALIDATOR",
     "decision_id": "DEC-211",
-    "phase": "REMEDIATION_R2_INDEPENDENT_VERIFICATION",
+    "phase": "REMEDIATION_R3_EVIDENCE_INPUT_DRIFT",
     "worktree": null
   },
-  "baseline_commit": "5e1e601431a2ecab15869cdfb4775a39c145cc4f",
+  "baseline_commit": "7d833606756203f28c50913871f6ae6d66c790ee",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -138,15 +138,15 @@
   ],
   "current_gate": "G4_WAVE_15_IN_PROGRESS",
   "latest_ci_evidence": {
-    "candidate_commit": "8174019fe803b24f0fc00dc8a7efe8a727a1a87c",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR151_MERGED_5e1e601431a2ecab15869cdfb4775a39c145cc4f",
+    "candidate_commit": "af61453cfae010dd8b68c82692cb42fbc3e9e678",
+    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR153_MERGED_7d833606756203f28c50913871f6ae6d66c790ee",
     "run_ids": [
-      36949787265,
-      36949787258,
-      36949787287,
-      36949787236,
-      36949787235,
-      36949787295
+      36952480201,
+      36952480191,
+      36952480256,
+      36952480243,
+      36952480232,
+      36952480149
     ]
   },
   "mandate_phase_status": {
@@ -207,7 +207,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-REM-0016 merged (PR #151, merge commit 5e1e601431a2ecab15869cdfb4775a39c145cc4f), all 13 checks green on exact head 8174019fe803b24f0fc00dc8a7efe8a727a1a87c; sealed evidence hashes verified intact post-merge. R2 remediation REMs (0014/0015/0016) all complete. Next unit of work: R3 step (c) \u2014 wire scripts/validate_evidence_input_drift.py as blocking CI and preflight; then OCOR-DEV-0048 implementation phase.",
+  "next_executable_action": "R3 remediation complete: scripts/validate_evidence_input_drift.py wired as blocking CI gate (ocor-tooling-bootstrap.yml: type-and-lint-gate regression test + tooling-policy gate step) and preflight step (AGENTS.md). Validator GREEN at HEAD (0/165 inputs, 0/62 tasks drifted). Next unit of work: OCOR-DEV-0048 implementation phase (real-backend task: OPA, Keycloak, SPIFFE/SPIRE, OpenBao, mTLS).",
   "remediation_status": {
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -313,16 +313,18 @@
       "merge_commit_step_a": "80fcbaa676055e34ac079539806c6093f328f187",
       "merge_commit_step_b_part1": "362e1a598ce3438d44207b05b9b35dbcd08273af",
       "merge_commit_step_b_part2": "168665f8fc5942086f6390896c8ab3e76a927772",
-      "next_step": "STEP_C_WIRE_VALIDATOR",
+      "merge_commit_step_c": "7d833606756203f28c50913871f6ae6d66c790ee",
       "notes": [
         "Fail-closed validator merged as PR #140; RED demonstrated (51/165 inputs and 32/62 tasks drifted vs sealed evidence records at HEAD).",
         "Validator is NOT yet wired into CI/preflight: deferred to R3 step (c) after step (b) requalification brings it back to GREEN.",
         "R3 step (b) part 1 merged as PR #143 (362e1a5): 12 G0/G1 drifted tasks requalified at HEAD (OCOR-DEV-0002..0006, 0008..0014) with new content-addressed records (*.requalified.json/.log) carrying explicit 'supersedes' links; surgical MANIFEST.json insertion; original sealed records never modified. Post-merge drift validator: 29/165 inputs, 20/62 tasks remain drifted.",
-        "R3 step (b) part 2 merged as PR #145 (168665f): 20 remaining G1/G2/G4 drifted tasks requalified at HEAD (OCOR-DEV-0007, 0015, 0019, 0020, 0022, 0023, 0032, 0037, 0038, 0070..0079, 0081) with new content-addressed records (*.requalified.json/.log) carrying explicit 'supersedes' links; surgical MANIFEST.json insertion; original sealed records never modified. Post-merge drift validator GREEN: 0/165 inputs, 0/62 tasks drifted."
+        "R3 step (b) part 2 merged as PR #145 (168665f): 20 remaining G1/G2/G4 drifted tasks requalified at HEAD (OCOR-DEV-0007, 0015, 0019, 0020, 0022, 0023, 0032, 0037, 0038, 0070..0079, 0081) with new content-addressed records (*.requalified.json/.log) carrying explicit 'supersedes' links; surgical MANIFEST.json insertion; original sealed records never modified. Post-merge drift validator GREEN: 0/165 inputs, 0/62 tasks drifted.",
+        "R3 step (c) merged as PR #153 (7d83360): scripts/validate_evidence_input_drift.py wired as a blocking CI gate (ocor-tooling-bootstrap.yml: type-and-lint-gate runs the regression suite reports/tests/test_evidence_input_drift.py; tooling-policy runs the validator against HEAD) and as a preflight step (AGENTS.md). Validator GREEN at HEAD: 0/165 inputs, 0/62 tasks drifted. No validator/allowlist/self-hash changes were required by this wiring (no new files)."
       ],
       "pr_step_a": 140,
       "pr_step_b_part1": 143,
       "pr_step_b_part2": 145,
+      "pr_step_c": 153,
       "red_evidence": {
         "checked_inputs": 165,
         "checked_tasks": 62,
@@ -397,12 +399,12 @@
           "OCOR-DEV-0081"
         ]
       },
-      "status": "STEP_B_MERGED",
+      "status": "COMPLETE",
       "validator": "scripts/validate_evidence_input_drift.py"
     }
   },
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-10-02T01:24:13.416393+00:00"
+  "updated_at": "2026-10-02T01:58:49.926724+00:00"
 }
