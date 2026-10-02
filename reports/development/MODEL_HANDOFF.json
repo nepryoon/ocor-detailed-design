@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "54ec7d13d7e954b4264efdb2d4965b6f8957b2a7",
-  "branch": "governed/state-sync-ocor-dev-rem-0015",
+  "baseline_commit": "5e1e601431a2ecab15869cdfb4775a39c145cc4f",
+  "branch": "governed/state-sync-ocor-dev-rem-0016",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -590,6 +590,14 @@
     {
       "command": "gh pr merge 149 --merge --match-head-commit 0f98a5d0f29801e0a2c7aabe1f0dbbe999d5447d",
       "result": "MERGED_54ec7d13d7e954b4264efdb2d4965b6f8957b2a7_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_0f98a5d; post-merge fetch confirms origin/main == merge commit; sealed evidence hashes intact (record f165975a8327f4c13cf9f66c6f6001b697c0032c8f4f2ac5f9a53c03cc90619f, raw log 3d59fbee761dc6d68b900e09e6b1032277b30eb63c4679f4f053cc1a65dd49cf)"
+    },
+    {
+      "command": "gh pr merge 151 --merge --match-head-commit 8174019fe803b24f0fc00dc8a7efe8a727a1a87c",
+      "result": "MERGED_5e1e601431a2ecab15869cdfb4775a39c145cc4f_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD"
+    },
+    {
+      "command": "seal REM-0016 evidence + record PR #151 + push + wait CI green + merge",
+      "result": "PASS_GO_FOR_EVIDENCE_SEAL_CYCLE_2_SEALED"
     }
   ],
   "completed_tasks": [
@@ -703,9 +711,10 @@
     "R1 state realignment: closed PR #131 as superseded; baseline_commit -> 276fc65 (HEAD of main); registered merges #128/#129/#130/#132; GITHUB-BRANCH-PROTECTION-001 resolved server-side by ruleset 23412233; OCOR-DEV-0048 unblocked (local preflight all 11 services READY, SPIRE included); historical ITERATION_LOG entry of PR #131 carried verbatim.",
     "OCOR-DEV-REM-0014: PR #135 merged (a8c5e5d92513b1a333593bbc56c411b61773f29b). All 13 checks green on the exact head 0820fec. TypeDB commit_id/watermark safe literal rendering + identifier contract; 17 live positive/negative cases on the real TypeDB backend; sealed content-addressed evidence record (record 04f60e45d9b79be0045ea2e3ab34f930335c386b9ed0ecf2eb652321565bf6cb, raw log 8733c7c227041ad92e5a7545b8033ae1917cb06b4ba26155d053b43566ceb9f9).",
     "R3 step (b) part 2: PR #145 merged (168665f). 20 remaining G1/G2/G4 drifted evidence records requalified at HEAD with content-addressed *.requalified.json/.log records carrying explicit 'supersedes' links; surgical MANIFEST.json insertion; original sealed records never modified; planning self-hash re-aligned. Post-merge drift validator GREEN (0/165 inputs, 0/62 tasks).",
-    "OCOR-DEV-REM-0015: PR #149 merged (54ec7d13d7e954b4264efdb2d4965b6f8957b2a7). All 13 checks green on the exact head 0f98a5d0f29801e0a2c7aabe1f0dbbe999d5447d. validate_rccad.py NUL-delimited git diff path handling (finding VF-002); sealed content-addressed evidence record."
+    "OCOR-DEV-REM-0015: PR #149 merged (54ec7d13d7e954b4264efdb2d4965b6f8957b2a7). All 13 checks green on the exact head 0f98a5d0f29801e0a2c7aabe1f0dbbe999d5447d. validate_rccad.py NUL-delimited git diff path handling (finding VF-002); sealed content-addressed evidence record.",
+    "OCOR-DEV-REM-0016: PR #151 merged (5e1e601431a2ecab15869cdfb4775a39c145cc4f). All 13 checks green on the exact head 8174019fe803b24f0fc00dc8a7efe8a727a1a87c. Content-addressed evidence records for REM-0010/0011/0012 (finding VF-003); fail-closed validate_runtime_evidence.py; sealed content-addressed evidence record."
   ],
-  "current_task": "R2 (remediation): OCOR-DEV-REM-0015 merged (PR #149); next OCOR-DEV-REM-0016, then R3 step (c), then OCOR-DEV-0048",
+  "current_task": "R2 (remediation): OCOR-DEV-REM-0016 merged (PR #151); next R3 step (c), then OCOR-DEV-0048",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -795,7 +804,7 @@
     "reports/evidence/G4/OCOR-DEV-0047.json",
     "reports/evidence/G4/OCOR-DEV-0047.log"
   ],
-  "exact_next_action": "Implement OCOR-DEV-REM-0016 (content-addressed evidence records for REM-0010/0011/0012) as a governed/ change set with TDD RED->GREEN, gates verdi and evidence; then R3 step (c) (wire validate_evidence_input_drift.py as blocking CI + preflight); then OCOR-DEV-0048 implementation phase. RVW-03/INFO-A/INFO-C and TOOLCHAIN-LOCK-TYPESCRIPT remain reserved to the Product Owner (non-blocking).",
+  "exact_next_action": "R3 step (c): wire scripts/validate_evidence_input_drift.py as blocking CI + preflight (update validator allowlists for new files, re-align OCOR_PLAN_RUN_STATE.json self-hash); then OCOR-DEV-0048 implementation phase. RVW-03/INFO-A/INFO-C and TOOLCHAIN-LOCK-TYPESCRIPT remain reserved to the Product Owner (non-blocking).",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "TOOLCHAIN-LOCK-TYPESCRIPT"
