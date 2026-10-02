@@ -4052,3 +4052,34 @@
   SPIFFE/SPIRE, OpenBao, mTLS); leggere per intero lo spike `OCOR-DEV-0021` e i port riusati, poi TDD
   RED→GREEN→REFACTOR con criteri eseguibili prima del codice. `RVW-03`/`INFO-A`/`INFO-C` e
   `TOOLCHAIN-LOCK-TYPESCRIPT` restano riservati al Product Owner (non bloccanti).
+
+## 2026-10-02 — Governed: OCOR-DEV-0048 escalation (repair budget exhausted) + state sync
+
+- Change set `governed/state-sync-ocor-dev-0048-escalation` (docs/state), basato sull'HEAD di `main` =
+  `5e2a0909e842fa0cc550a5b6b2da23ad42b8fa63` (merge commit di PR #155, `governed/ocor-dev-0048-conditional-backend-guard`,
+  che registra `test_ocor_dev_0048.py` come guard infrastrutturale condizionale).
+- **Escalation di `OCOR-DEV-0048`** ai sensi di RCCAD §8 (harness): il task a backend reale (OPA, Keycloak,
+  SPIFFE/SPIRE, OpenBao, mTLS) ha esaurito il budget di 2 cicli di riparazione materialmente diversi. Tre verdetti
+  indipendenti `NO_GO`:
+  - ciclo 0 `OCOR-DEV-0048-587e4a8485c4-0` (head `587e4a84…`): 8 finding (`VF-001`…`VF-008`);
+  - ciclo 1 `OCOR-DEV-0048-de9e7cd429f6-1` (head `de9e7cd4…`): 7 finding (`VF-001`…`VF-007`);
+  - ciclo 2 `OCOR-DEV-0048-eda08db30ca2-2` (head `eda08db3…`): 2 finding bloccanti `high`.
+- Finding finali (ciclo 2): `VF-001` — bypass della finestra temporale via offset timezone (serializzazione firmata
+  `strftime` con `Z` senza conversione UTC mentre i guard confrontano istanti offset-aware; `DELEGATION_EXPIRED`
+  diventa `ACCEPTED` alterando solo `tzinfo`; contraddice ADD v1.3 §§5.1–5.2). `VF-002` — delega non cablata nel
+  percorso Keycloak→OPA (`verify_signed_delegation` invocato da nessun provider; i 7 test di delega esercitano solo
+  l'helper in isolamento; contraddice ADD v1.3 §5.2 regole 4–5 e il primo `acceptance_criteria`).
+- Record di escalation: `reports/development/OCOR_DEV_0048_ESCALATION.md`. `OCOR-DEV-0048` marcato
+  `BLOCKED_REPAIR_BUDGET_EXHAUSTED`; tutti i 21 task residui (`OCOR-DEV-0049`…`OCOR-DEV-0069`) bloccati
+  transitivamente. Azione minima di sblocco: correggere `VF-001` (UTC canonico con identica precisione per
+  firma+enforcement) e `VF-002` (cablaggio della validazione di grant/revoca nel percorso dei provider autorizzati)
+  e richiedere una terza verifica indipendente — eccede il budget di 2 cicli, richiede l'autorizzazione del Product
+  Owner o una disposition governata alternativa.
+- `EXECUTION_STATE.json`: `baseline_commit` → `5e2a0909…`; nuovo blocker `OCOR-DEV-0048`; nuova sezione
+  `backlog_escalations`; `current_gate` → `G4_WAVE_15_BLOCKED_OCOR_DEV_0048_ESCALATED`; `next_executable_action`
+  → stato terminale `TERMINAL_BLOCKED`.
+- `MODEL_HANDOFF.json` riallineato (branch, worktree, `current_task`, `exact_next_action`; `unresolved_blockers`
+  = [`TOOLCHAIN-LOCK-TYPESCRIPT`, `OCOR-DEV-0048`]).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance` `NOT_ESTABLISHED`,
+  `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: nessuna — `TERMINAL_BLOCKED` in attesa della disposition del Product Owner.
