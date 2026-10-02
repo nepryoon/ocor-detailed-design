@@ -11,6 +11,7 @@ from collections.abc import Sequence
 from pathlib import Path
 
 NON_QUALIFYING = {"SKIPPED", "UNAVAILABLE", "NOT_EXECUTED", "XFAIL"}
+RESULT_COUNTERS = ("failed", "skipped", "not_executed", "xfailed")
 
 
 def digest(path: Path) -> str:
@@ -27,25 +28,31 @@ def _validate_command(command: dict[str, object]) -> None:
     """Fail closed unless a command carries concrete numeric success evidence.
 
     The `status` label and the top-level `result` string are not trusted on their
-    own: a command must back its PASS claim with either an exit_code of 0 or a
-    result/counters object whose failure counters are all 0.
+    own: a command must back its PASS claim with either an integer exit_code of 0
+    or a result/counters object carrying at least one failure counter, every one
+    of which must be 0. An empty result object, or one holding only non-failure
+    fields (e.g. just ``passed``), is not sufficient evidence.
     """
     exit_code = command.get("exit_code")
     result = command.get("result")
     if result is not None and not isinstance(result, dict):
         raise ValueError(f"command result is not an object: {result!r}")
-    has_numeric_evidence = exit_code is not None or isinstance(result, dict) or any(
-        key in command for key in ("failed", "skipped", "not_executed", "xfailed")
+    has_result_counters = isinstance(result, dict) and any(
+        key in result for key in RESULT_COUNTERS
     )
-    if not has_numeric_evidence:
-        raise ValueError("command has no numeric outcome evidence (exit_code or result)")
+    has_flat_counters = any(key in command for key in RESULT_COUNTERS)
+    if exit_code is None and not has_result_counters and not has_flat_counters:
+        raise ValueError(
+            "command has no numeric outcome evidence "
+            "(integer exit_code 0 or result/counters with a failure counter)"
+        )
     if exit_code is not None:
         _require_zero_int(exit_code, "command exit_code")
     if isinstance(result, dict):
-        for key in ("failed", "skipped", "not_executed"):
+        for key in RESULT_COUNTERS:
             if key in result:
                 _require_zero_int(result[key], f"command result.{key}")
-    for key in ("failed", "skipped", "not_executed", "xfailed"):
+    for key in RESULT_COUNTERS:
         if key in command:
             _require_zero_int(command[key], f"command {key}")
 

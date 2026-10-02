@@ -190,6 +190,56 @@ class RuntimeEvidenceValidatorTests(unittest.TestCase):
             _write_fixture(base, [command])
             _assert_fail(self, base)
 
+    def test_rejects_empty_result_dict(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            command = {"command": "pytest test.py", "result": {}, "status": "PASS"}
+            _write_fixture(base, [command])
+            _assert_fail(self, base)
+
+    def test_rejects_result_with_only_passed_counter(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            command = {
+                "command": "pytest -q ...",
+                "result": {"passed": 7},
+                "status": "PASS",
+            }
+            _write_fixture(base, [command])
+            _assert_fail(self, base)
+
+    def test_rejects_result_xfailed_nonzero(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            command = {
+                "command": "pytest -q ...",
+                "exit_code": 0,
+                "failed": 0,
+                "not_executed": 0,
+                "skipped": 0,
+                "result": {"xfailed": 1},
+                "status": "PASS",
+            }
+            _write_fixture(base, [command])
+            _assert_fail(self, base)
+
+    def test_accepts_result_xfailed_zero(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            command = {
+                "command": "pytest -q ...",
+                "result": {
+                    "failed": 0,
+                    "not_executed": 0,
+                    "passed": 7,
+                    "skipped": 0,
+                    "xfailed": 0,
+                },
+                "status": "PASS",
+            }
+            _write_fixture(base, [command])
+            _assert_pass(self, base)
+
 
 if __name__ == "__main__":
     unittest.main()
