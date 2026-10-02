@@ -115,12 +115,36 @@ Il budget resta 2 per ogni altro task.
 - Richiesta di verifica indipendente: `OCOR-DEV-0048-7f2fff555621-3` (`TASK_EVIDENCE`,
   `repair_cycle: 3`).
 
-### Stato
+### Verdetto indipendente (ciclo 3): `NO_GO`
 
-`OCOR-DEV-0048` riportato in lavorazione (`IN_PROGRESS_REPAIR_CYCLE_3_AWAITING_VERIFICATION`).
-I task `OCOR-DEV-0049`…`OCOR-DEV-0069` restano bloccati transitivamente fino all'integrazione e al
-sigillo di `OCOR-DEV-0048`. Se il verdetto è ancora `NO_GO`: nessuna ulteriore riparazione;
-aggiornamento dell'escalation e termine con `TERMINAL_BLOCKED`.
+Richiesta `OCOR-DEV-0048-7f2fff555621-3` (`TASK_EVIDENCE`, `repair_cycle: 3`) eseguita dal verifier
+indipendente sull'HEAD esatto `7f2fff555621424c8c89764aba16810f038ef509` (suite completa `955 passed`
+sullo stack reale, `ruff`/`mypy` puliti, backend reali OPA/Keycloak/OpenBao/SPIRE healthy). Verdetto
+`NO_GO` con 2 finding bloccanti `high`, diversi dai precedenti:
+
+- **VF-001** (`high`) — `ocor-runtime/src/ocor_runtime/security/control_plane.py:1212`: la rivalidazione
+  della finestra della delega usa l'istante conservato nella richiesta (`request.at`) anziché l'istante
+  corrente attendibile del boundary. Una delega scaduta genera comunque `PERMIT` perché `request.at`
+  precede `grant.expires_at` (riproduzione `test_delegation_time.py`, raw `command-019.log`).
+  Contraddice ADD v1.3 §5.1 (catena scaduta ⇒ `DENY`) e il criterio fail-closed/FR-128.
+- **VF-002** (`high`) — `ocor-runtime/src/ocor_runtime/security/control_plane.py:1259-1261`:
+  `PolicyDecision.valid_until` è fissato a una durata di 300 secondi limitata solo dal bundle; la
+  scadenza della delega non limita il `PERMIT`, quindi una decisione delegata sopravvive alla propria
+  Authority. Contraddice ADD v1.3 §5.1/§5.2 e l'autorità limitata dalla `Delegation` (FR-128).
+
+Azione di correzione indicata dal verifier: rivalidare la finestra al tempo corrente del boundary e
+limitare `valid_until` alla scadenza canonica del grant, con positivi/negativi dedicati
+(`DELEGATION_EXPIRED` / `POLICY_DECISION_EXPIRED` per la ragione corretta). **Non eseguita**: la
+decisione `OCOR-DEV-0048-REPAIR-3` autorizza un solo terzo ciclo e vieta ulteriori riparazioni.
+
+### Stato (finale)
+
+`OCOR-DEV-0048` è terminale: `BLOCKED_REPAIR_BUDGET_EXHAUSTED`. Il ciclo 3 (head
+`7f2fff555621424c8c89764aba16810f038ef509`) è stato verificato indipendente `NO_GO`; per la decisione
+`OCOR-DEV-0048-REPAIR-3` non è consentita alcuna ulteriore riparazione. Tutti i 21 task residui
+(`OCOR-DEV-0049`…`OCOR-DEV-0069`) restano bloccati transitivamente. L'evidenza di `OCOR-DEV-0048`
+resta `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata). Nessun lavoro di backlog eseguibile
+resta: stato terminale `TERMINAL_BLOCKED`.
 
 ## Claim fence
 
