@@ -438,6 +438,102 @@ class SignedPolicyBundle:
         ).encode("utf-8")
 
 
+@dataclass(frozen=True, slots=True)
+class SignedDelegation:
+    """A governed delegation: a delegator grants a delegatee a bounded scope.
+
+    ``signature`` is the base64-encoded RSA PKCS#1 v1.5 SHA-256 signature over
+    :meth:`signing_payload`.  A delegation is honoured only while its declared
+    validity window is open, its signer is the pinned authority, the requested
+    resource scope and purpose fall inside the granted bounds, and the
+    delegator/delegatee pair matches the authenticated actor chain.
+    """
+
+    delegation_id: str
+    delegator_id: str
+    delegatee_id: str
+    resource_scopes: tuple[str, ...]
+    permitted_purposes: tuple[str, ...]
+    not_before: datetime
+    expires_at: datetime
+    signature: str
+
+    def signing_payload(self) -> bytes:
+        if not self.delegation_id or not self.delegator_id or not self.delegatee_id:
+            raise SecurityControlError("DELEGATION_INVALID", "delegation fields are incomplete")
+        if (
+            self.not_before.tzinfo is None
+            or self.expires_at.tzinfo is None
+            or self.not_before >= self.expires_at
+        ):
+            raise SecurityControlError("DELEGATION_INVALID", "delegation validity window is empty")
+        if not self.resource_scopes or not self.permitted_purposes:
+            raise SecurityControlError("DELEGATION_INVALID", "delegation scope or purpose is empty")
+        if len(set(self.resource_scopes)) != len(self.resource_scopes):
+            raise SecurityControlError("DELEGATION_INVALID", "delegation scopes contain duplicates")
+        if len(set(self.permitted_purposes)) != len(self.permitted_purposes):
+            raise SecurityControlError("DELEGATION_INVALID", "delegation purposes contain duplicates")
+        return json.dumps(
+            {
+                "delegation_id": self.delegation_id,
+                "delegator_id": self.delegator_id,
+                "delegatee_id": self.delegatee_id,
+                "resource_scopes": sorted(self.resource_scopes),
+                "permitted_purposes": sorted(self.permitted_purposes),
+                "not_before": self.not_before.strftime(_RFC3339),
+                "expires_at": self.expires_at.strftime(_RFC3339),
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+
+
+def verify_signed_delegation(
+    delegation: SignedDelegation,
+    signer_public_key: tuple[int, int],
+    *,
+    resource_scope: str,
+    purpose: str,
+    delegator_id: str,
+    delegatee_id: str,
+    at: datetime,
+    revoked: bool = False,
+) -> None:
+    """Reject an unsigned, altered, revoked, out-of-window or out-of-scope
+    delegation (FR-128: confused-deputy and delegation laundering defence)."""
+
+    signer_n, signer_e = signer_public_key
+    payload = delegation.signing_payload()
+    try:
+        signature = _b64_decode(delegation.signature)
+    except (ValueError, TypeError) as exc:
+        raise SecurityControlError(
+            "DELEGATION_SIGNATURE_INVALID", "delegation signature is malformed"
+        ) from exc
+    if not _rsa_verify(payload, signature, signer_n, signer_e, "sha256"):
+        raise SecurityControlError(
+            "DELEGATION_SIGNATURE_INVALID", "delegation signature does not verify"
+        )
+    if revoked:
+        raise SecurityControlError("DELEGATION_REVOKED", "delegation is revoked")
+    if delegator_id != delegation.delegator_id or delegatee_id != delegation.delegatee_id:
+        raise SecurityControlError(
+            "DELEGATION_BINDING_MISMATCH", "delegation does not bind the actor chain"
+        )
+    if at < delegation.not_before or at >= delegation.expires_at:
+        raise SecurityControlError(
+            "DELEGATION_EXPIRED", "delegation is outside its validity window"
+        )
+    if resource_scope not in delegation.resource_scopes:
+        raise SecurityControlError(
+            "DELEGATION_SCOPE_MISMATCH", "delegation does not cover the resource scope"
+        )
+    if purpose not in delegation.permitted_purposes:
+        raise SecurityControlError(
+            "DELEGATION_PURPOSE_MISMATCH", "delegation does not cover the purpose"
+        )
+
+
 # --------------------------------------------------------------------------- #
 # Providers
 # --------------------------------------------------------------------------- #
@@ -555,12 +651,14 @@ class KeycloakIdentityProvider:
             token, jwks, issuer, request.expected_audience
         )
 
-        subject = str(claims["sub"])
-        principal_id = str(claims.get("preferred_username", subject))
+        subject = claims.get("sub")
+        if not isinstance(subject, str) or not subject:
+            raise SecurityControlError("IDENTITY_REJECTED", "missing subject claim")
+        principal_id = subject
         actor_chain = [principal_id]
-        authorized_party = claims.get("azp")
-        if isinstance(authorized_party, str) and authorized_party not in actor_chain:
-            actor_chain.append(authorized_party)
+        # Delegation is expressed only by a verified ``act`` claim (RFC 8693
+        # token exchange); neither ``azp`` nor ``preferred_username`` is ever a
+        # delegation proof, so neither is added to the actor chain.
         actor = claims.get("act")
         if isinstance(actor, dict) and isinstance(actor.get("sub"), str):
             if actor["sub"] not in actor_chain:

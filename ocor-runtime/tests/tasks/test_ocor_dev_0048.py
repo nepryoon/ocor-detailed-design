@@ -34,9 +34,11 @@ from ocor_runtime.security.control_plane import (
     KeycloakIdentityProvider,
     OpaPolicyDecisionProvider,
     OpenBaoSecretProvider,
+    SignedDelegation,
     SignedPolicyBundle,
     SpireWorkloadIdentityProvider,
     _rsa_sign,
+    verify_signed_delegation,
 )
 from ocor_runtime.security.ports import (
     AuthenticatedPrincipal,
@@ -74,15 +76,16 @@ SPIRE_AGENT_CONTAINER = "ocor-bootstrap-spire-agent-1"
 SPIRE_SOCKET = "/run/spire/sockets/agent.sock"
 EXPECTED_SPIFFE_ID = "spiffe://ocor.test/ocor/control-plane"
 
-REGO = (
-    "package ocor.control_plane\n\n"
-    "default allow := false\n\n"
-    "allow if {\n"
-    '    input.principal_id == "analyst-1"\n'
-    '    input.action == "read"\n'
-    '    input.resource == "urn:ocor:target:site-1"\n'
-    "}\n"
-)
+def _rego(principal_id: str) -> str:
+    return (
+        "package ocor.control_plane\n\n"
+        "default allow := false\n\n"
+        "allow if {\n"
+        f'    input.principal_id == "{principal_id}"\n'
+        '    input.action == "read"\n'
+        '    input.resource == "urn:ocor:target:site-1"\n'
+        "}\n"
+    )
 
 SERVICE_URLS = {
     "OPA": "http://127.0.0.1:8181/health",
@@ -144,7 +147,7 @@ def _sign_bundle(
 
 
 def _install_policy(
-    provider: OpaPolicyDecisionProvider, rego_source: str = REGO
+    provider: OpaPolicyDecisionProvider, rego_source: str
 ) -> str:
     return provider.install_policy(_sign_bundle(rego_source))
 
@@ -309,11 +312,11 @@ def principal(principals: None) -> AuthenticatedPrincipal:
 
 
 @pytest.fixture
-def opa() -> tuple[OpaPolicyDecisionProvider, str]:
+def opa(principal: AuthenticatedPrincipal) -> tuple[OpaPolicyDecisionProvider, str]:
     provider = OpaPolicyDecisionProvider(
         OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
     )
-    digest = _install_policy(provider)
+    digest = _install_policy(provider, _rego(principal.principal_id))
     return provider, digest
 
 
@@ -383,8 +386,9 @@ def test_split_der_chain_and_tlv_parse_real_concatenation():
 
 
 def test_authenticate_real_keycloak_principal(principal: AuthenticatedPrincipal):
-    assert principal.principal_id == USERNAME
-    assert USERNAME in principal.actor_chain
+    # principal_id is the immutable Keycloak subject (sub), never the username
+    assert principal.principal_id != USERNAME
+    assert principal.principal_id == principal.actor_chain[-1]
     assert principal.assurance_level in ("LEVEL_1", "LEVEL_2")
     assert principal.session_id
 
@@ -416,10 +420,13 @@ def test_wrong_audience_fails_closed(principals: None):
 # --------------------------------------------------------------------------- #
 
 
-def test_policy_install_persists_and_returns_content_digest(opa: tuple[OpaPolicyDecisionProvider, str]):
+def test_policy_install_persists_and_returns_content_digest(
+    principal: AuthenticatedPrincipal, opa: tuple[OpaPolicyDecisionProvider, str]
+):
     provider, digest = opa
-    assert digest == "urn:sha256:" + hashlib.sha256(REGO.encode()).hexdigest()
-    assert provider._fetch_policy_source() == REGO
+    source = _rego(principal.principal_id)
+    assert digest == "urn:sha256:" + hashlib.sha256(source.encode()).hexdigest()
+    assert provider._fetch_policy_source() == source
 
 
 def test_policy_permit_for_matching_governed_input(
@@ -440,6 +447,55 @@ def test_policy_deny_for_non_matching_action(
     assert decision.effect is PolicyEffect.DENY
 
 
+def test_policy_receives_all_governed_attributes(
+    principal: AuthenticatedPrincipal,
+):
+    provider = OpaPolicyDecisionProvider(
+        OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
+    )
+    rego = (
+        "package ocor.control_plane\n\n"
+        "default allow := false\n\n"
+        "allow if {\n"
+        '    input.tenant_id == "tenant-a"\n'
+        '    input.organization_id == "org-a"\n'
+        '    input.domain_id == "domain-a"\n'
+        '    input.compartments == ["compartment-a"]\n'
+        '    input.classification_marking_ref == "urn:sha256:' + "0" * 64 + '"\n'
+        "    input.effective_principal_id == input.principal_id\n"
+        "    input.actor_chain[_] == input.principal_id\n"
+        '    input.action == "read"\n'
+        '    input.resource == "urn:ocor:target:site-1"\n'
+        "}\n"
+    )
+    digest = _install_policy(provider, rego)
+    request = _policy_request(principal, digest, action="read")
+    decision = provider.evaluate(request)
+    assert decision.effect is PolicyEffect.PERMIT
+
+
+def test_policy_denies_when_tenant_is_not_forwarded(
+    principal: AuthenticatedPrincipal,
+):
+    provider = OpaPolicyDecisionProvider(
+        OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
+    )
+    rego = (
+        "package ocor.control_plane\n\n"
+        "default allow := false\n\n"
+        "allow if {\n"
+        '    input.tenant_id == "tenant-b"\n'
+        '    input.action == "read"\n'
+        "}\n"
+    )
+    digest = _install_policy(provider, rego)
+    # The governed context is tenant-a; if tenant_id were silently omitted the
+    # comparison would be undefined, but it must be forwarded and denied here.
+    request = _policy_request(principal, digest, action="read")
+    decision = provider.evaluate(request)
+    assert decision.effect is PolicyEffect.DENY
+
+
 def test_stale_bundle_fails_closed(
     principal: AuthenticatedPrincipal, opa: tuple[OpaPolicyDecisionProvider, str]
 ):
@@ -448,7 +504,7 @@ def test_stale_bundle_fails_closed(
         "PUT",
         f"{OPA}/v1/policies/{POLICY_ID}",
         headers={"Content-Type": "text/plain"},
-        body=REGO + "# drift\n",
+        body=_rego(principal.principal_id) + "# drift\n",
     )
     with pytest.raises(SecurityControlError) as excinfo:
         provider.evaluate(_policy_request(principal, digest, action="read"))
@@ -497,10 +553,12 @@ def test_unexpected_spiffe_id_fails_closed(env: dict[str, str]):
 # --------------------------------------------------------------------------- #
 
 
-def _seed_secret(env: dict[str, str], secret_name: str, data: dict[str, str]) -> None:
+def _seed_secret(
+    env: dict[str, str], principal_id: str, secret_name: str, data: dict[str, str]
+) -> None:
     status, body = _http(
         "POST",
-        f"{OB}/v1/ocor/data/{USERNAME}/{secret_name}",
+        f"{OB}/v1/ocor/data/{principal_id}/{secret_name}",
         headers={
             "X-Vault-Token": env["OCOR_LOCAL_OPENBAO_TOKEN"],
             "Content-Type": "application/json",
@@ -514,7 +572,10 @@ def test_secret_lease_returns_opaque_handle(
     principal: AuthenticatedPrincipal, env: dict[str, str], opa: tuple[OpaPolicyDecisionProvider, str]
 ):
     _, policy_digest = opa
-    _seed_secret(env, "control-plane-db", {"dsn": "postgres://ocor:secret@control-plane-db/ocor"})
+    _seed_secret(
+        env, principal.principal_id, "control-plane-db",
+        {"dsn": "postgres://ocor:secret@control-plane-db/ocor"},
+    )
     provider = OpenBaoSecretProvider(OB, env["OCOR_LOCAL_OPENBAO_TOKEN"], mount="ocor")
     gcs = _gcs(principal, policy_digest)
     request = SecretRequest(
@@ -557,7 +618,7 @@ def test_paused_opa_fails_closed_within_bounded_timeout(principal: Authenticated
     provider = OpaPolicyDecisionProvider(
         OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E), timeout_seconds=2.0
     )
-    digest = _install_policy(provider)
+    digest = _install_policy(provider, _rego(principal.principal_id))
     request = _policy_request(principal, digest, action="read")
     provider.evaluate(request)
 
@@ -613,7 +674,7 @@ def test_unsigned_bundle_fails_closed():
     )
     unsigned = SignedPolicyBundle(
         policy_id=POLICY_ID,
-        rego_source=REGO,
+        rego_source=_rego("placeholder"),
         signer=_SIGNER,
         not_before=_now() - timedelta(minutes=5),
         expires_at=_now() + timedelta(hours=1),
@@ -628,8 +689,8 @@ def test_forged_bundle_signature_fails_closed():
     provider = OpaPolicyDecisionProvider(
         OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
     )
-    valid = _sign_bundle(REGO)
-    tampered = replace(valid, rego_source=REGO + "# tampered\n")
+    valid = _sign_bundle(_rego("placeholder"))
+    tampered = replace(valid, rego_source=_rego("placeholder") + "# tampered\n")
     with pytest.raises(SecurityControlError) as excinfo:
         provider.install_policy(tampered)
     assert excinfo.value.reason_code == "POLICY_BUNDLE_SIGNATURE_INVALID"
@@ -640,7 +701,7 @@ def test_expired_bundle_fails_closed():
         OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
     )
     bundle = _sign_bundle(
-        REGO,
+        _rego("placeholder"),
         not_before=_now() - timedelta(minutes=10),
         expires_at=_now() - timedelta(minutes=1),
     )
@@ -697,6 +758,148 @@ def test_forged_delegation_chain_fails_closed(
     assert excinfo.value.reason_code == "IDENTITY_BINDING_MISMATCH"
 
 
+def _sign_delegation(
+    *,
+    delegatee_id: str,
+    delegator_id: str = "delegator-1",
+    resource_scopes: tuple[str, ...] = ("urn:ocor:target:site-1",),
+    permitted_purposes: tuple[str, ...] = ("read-site-1",),
+    not_before: datetime | None = None,
+    expires_at: datetime | None = None,
+) -> SignedDelegation:
+    unsigned = SignedDelegation(
+        delegation_id="urn:ocor:delegation:test",
+        delegator_id=delegator_id,
+        delegatee_id=delegatee_id,
+        resource_scopes=resource_scopes,
+        permitted_purposes=permitted_purposes,
+        not_before=not_before or _now() - timedelta(minutes=5),
+        expires_at=expires_at or _now() + timedelta(hours=1),
+        signature="",
+    )
+    signature = base64.b64encode(
+        _rsa_sign(unsigned.signing_payload(), _SIGNER_N, _SIGNER_D)
+    ).decode("ascii")
+    return replace(unsigned, signature=signature)
+
+
+# --------------------------------------------------------------------------- #
+# Signed delegation: real crypto, bounded scope, revocation and window fences
+# --------------------------------------------------------------------------- #
+
+
+def test_valid_signed_delegation_grants_within_bounds(principal: AuthenticatedPrincipal):
+    delegation = _sign_delegation(delegatee_id=principal.principal_id)
+    verify_signed_delegation(
+        delegation,
+        (_SIGNER_N, _SIGNER_E),
+        resource_scope="urn:ocor:target:site-1",
+        purpose="read-site-1",
+        delegator_id="delegator-1",
+        delegatee_id=principal.principal_id,
+        at=_now(),
+    )
+
+
+def test_delegation_over_scope_fails_closed(principal: AuthenticatedPrincipal):
+    delegation = _sign_delegation(delegatee_id=principal.principal_id)
+    with pytest.raises(SecurityControlError) as excinfo:
+        verify_signed_delegation(
+            delegation,
+            (_SIGNER_N, _SIGNER_E),
+            resource_scope="urn:ocor:target:other-site",
+            purpose="read-site-1",
+            delegator_id="delegator-1",
+            delegatee_id=principal.principal_id,
+            at=_now(),
+        )
+    assert excinfo.value.reason_code == "DELEGATION_SCOPE_MISMATCH"
+
+
+def test_delegation_purpose_mismatch_fails_closed(principal: AuthenticatedPrincipal):
+    delegation = _sign_delegation(delegatee_id=principal.principal_id)
+    with pytest.raises(SecurityControlError) as excinfo:
+        verify_signed_delegation(
+            delegation,
+            (_SIGNER_N, _SIGNER_E),
+            resource_scope="urn:ocor:target:site-1",
+            purpose="write-site-1",
+            delegator_id="delegator-1",
+            delegatee_id=principal.principal_id,
+            at=_now(),
+        )
+    assert excinfo.value.reason_code == "DELEGATION_PURPOSE_MISMATCH"
+
+
+def test_delegation_binding_mismatch_fails_closed(principal: AuthenticatedPrincipal):
+    delegation = _sign_delegation(delegatee_id=principal.principal_id)
+    with pytest.raises(SecurityControlError) as excinfo:
+        verify_signed_delegation(
+            delegation,
+            (_SIGNER_N, _SIGNER_E),
+            resource_scope="urn:ocor:target:site-1",
+            purpose="read-site-1",
+            delegator_id="delegator-1",
+            delegatee_id="someone-else",
+            at=_now(),
+        )
+    assert excinfo.value.reason_code == "DELEGATION_BINDING_MISMATCH"
+
+
+def test_altered_delegation_fails_closed(principal: AuthenticatedPrincipal):
+    delegation = _sign_delegation(delegatee_id=principal.principal_id)
+    tampered = replace(
+        delegation,
+        resource_scopes=("urn:ocor:target:site-1", "urn:ocor:target:other-site"),
+    )
+    with pytest.raises(SecurityControlError) as excinfo:
+        verify_signed_delegation(
+            tampered,
+            (_SIGNER_N, _SIGNER_E),
+            resource_scope="urn:ocor:target:other-site",
+            purpose="read-site-1",
+            delegator_id="delegator-1",
+            delegatee_id=principal.principal_id,
+            at=_now(),
+        )
+    assert excinfo.value.reason_code == "DELEGATION_SIGNATURE_INVALID"
+
+
+def test_revoked_delegation_fails_closed(principal: AuthenticatedPrincipal):
+    delegation = _sign_delegation(delegatee_id=principal.principal_id)
+    with pytest.raises(SecurityControlError) as excinfo:
+        verify_signed_delegation(
+            delegation,
+            (_SIGNER_N, _SIGNER_E),
+            resource_scope="urn:ocor:target:site-1",
+            purpose="read-site-1",
+            delegator_id="delegator-1",
+            delegatee_id=principal.principal_id,
+            at=_now(),
+            revoked=True,
+        )
+    assert excinfo.value.reason_code == "DELEGATION_REVOKED"
+
+
+def test_expired_delegation_fails_closed(principal: AuthenticatedPrincipal):
+    delegation = _sign_delegation(
+        delegatee_id=principal.principal_id,
+        not_before=_now() - timedelta(minutes=10),
+        expires_at=_now() - timedelta(minutes=1),
+    )
+    with pytest.raises(SecurityControlError) as excinfo:
+        verify_signed_delegation(
+            delegation,
+            (_SIGNER_N, _SIGNER_E),
+            resource_scope="urn:ocor:target:site-1",
+            purpose="read-site-1",
+            delegator_id="delegator-1",
+            delegatee_id=principal.principal_id,
+            at=_now(),
+        )
+    assert excinfo.value.reason_code == "DELEGATION_EXPIRED"
+
+
 # --------------------------------------------------------------------------- #
 # Secret isolation: an absent reference is an outright denial, never a write
 # --------------------------------------------------------------------------- #
@@ -721,7 +924,7 @@ def test_absent_secret_ref_fails_closed_without_overwrite(
     # no-overwrite: the lease attempt must not have provisioned the secret
     status, _ = _http(
         "GET",
-        f"{OB}/v1/ocor/data/{USERNAME}/absent-secret",
+        f"{OB}/v1/ocor/data/{principal.principal_id}/absent-secret",
         headers={"X-Vault-Token": env["OCOR_LOCAL_OPENBAO_TOKEN"]},
     )
     assert status == 404
