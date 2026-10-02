@@ -40,6 +40,17 @@
       "status": "PASS"
     },
     {
+      "command": "ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_runtime_evidence_validator.py",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 14,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
       "command": "/home/luca/.local/bin/ruff check .",
       "exit_code": 0,
       "result": {
@@ -117,27 +128,31 @@
       "status": "PASS"
     }
   ],
-  "commit": "313551781d9015aad1b57c4eddabb83fe41588da",
-  "created_at": "2026-10-01T23:18:57Z",
+  "commit": "15958feed11c00fac61607cc39ca0b98883dfec9",
+  "created_at": "2026-10-02T00:34:15Z",
   "environment": {
-    "backend_under_test": "none -- this REM produces content-addressed runtime evidence for REM-0010 (real TypeDB/Fuseki/PostgreSQL), REM-0011 (in-memory C1) and REM-0012 (hermetic git); the qualifying checks are the validate_runtime_evidence.py --non-skipped runs against each produced MANIFEST, plus the RCCAD/planning/language/scope gates",
-    "orchestrator": "single-agent development worktree at origin/main HEAD",
-    "reused_deliverable": "none -- the three content-addressed records under reports/assurance/OCOR-DEV-REM-00NN-RCCAD/ are produced fresh at HEAD, superseding the historical 2026-09-15 candidate evidence.json records (preserved immutable)",
+    "backend_under_test": "none -- this REM hardens scripts/validate_runtime_evidence.py to fail closed (VF-001) and requalifies the three content-addressed runtime evidence records for REM-0010/0011/0012 (VF-002); qualifying checks are the validate_runtime_evidence.py --non-skipped runs against each produced MANIFEST, the positive/negative regression suite, and the RCCAD/planning/language/scope gates",
+    "orchestrator": "single-agent development worktree at origin/main HEAD (governed/remediation-rem0016-content-addressed)",
+    "reused_deliverable": "the three historical 2026-09-15 candidate evidence.json records (REM-0010/0011/0012) are preserved immutable and superseded; the fix modifies only scripts/validate_runtime_evidence.py, reports/tests/test_runtime_evidence_validator.py, scripts/validate_ocor_development_plan.py (authorized-extension allowlist) and .github/workflows/ocor-tooling-bootstrap.yml (CI wiring)",
     "toolchain": "Python 3.12.11 (uv-managed ocor-runtime/.venv), pytest 9.1.1, ruff 0.13.1, mypy 2.3.1"
   },
   "inputs": {
+    ".github/workflows/ocor-tooling-bootstrap.yml": "ada0e437ebd9f0914e298c71a5d25d78d7e4e82aca5ebbe4ea0f187669b09d3b",
     "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
     "reports/assurance/OCOR-DEV-REM-0010-RCCAD/evidence.json": "b94ae2f809bc5e863821fb723c95618679aa01282fbc3d007924b16d9893cbe6",
     "reports/assurance/OCOR-DEV-REM-0011-RCCAD/evidence.json": "be9be43770f70c8dd48115d9f2aeb214aab326f81895b58160e471007091fd4c",
-    "reports/assurance/OCOR-DEV-REM-0012-RCCAD/evidence.json": "d1975c446b01276df54cae89af8e5a02c3ac806966d2ae42e1d5aa746f06db2e"
+    "reports/assurance/OCOR-DEV-REM-0012-RCCAD/evidence.json": "d1975c446b01276df54cae89af8e5a02c3ac806966d2ae42e1d5aa746f06db2e",
+    "reports/tests/test_runtime_evidence_validator.py": "e32935949c7a11a25c9a6099c1b007e60b5d9c609fa9a6fe01208a8aeacce41e",
+    "scripts/validate_ocor_development_plan.py": "35ec1b0ddb64dae5bfe14ee584829538d7369d15707232f7037df570be543462",
+    "scripts/validate_runtime_evidence.py": "31a54f77cb716fb0f8ed0dae9a664b24426b0680d3408da3e7cb616f4465b037"
   },
-  "raw_output_sha256": "a7c60b212f66b61acc53561456b65d7b09a23c47490c8287165126c51ee845e5",
+  "raw_output_sha256": "b0d7876ce226a00d9a29c513d15688008c69376f68ecb2b404c9641f92e60b20",
   "residual_risks": [
-    "This REM produces evidence records only: it introduces no code, schema or data change, so there is no runtime behaviour to regress.",
+    "The fail-closed validator hardening (VF-001) changes only the numeric-outcome predicates in scripts/validate_runtime_evidence.py: it now rejects a bare PASS label with no integer exit_code/result counters, an empty result object, and any non-zero result.xfailed. The three requalified records and all G0 qualifying evidence still pass --non-skipped, so no valid evidence is rejected.",
     "The three content-addressed records capture the cumulative HEAD state of the remediated files (typedb_adapter.py carries REM-0014, validate_rccad.py carries REM-0015): their inputs hashes differ from the 2026-09-15 candidates for that reason, which is the intended requalification."
   ],
   "result": "PASS",
-  "rollback_procedure_verified": "Reverting this REM removes only the produced evidence records (OCOR-DEV-REM-00NN.json/.log, MANIFEST.json and this meta record); the historical candidate evidence.json files are untouched, and no code/migration is involved.",
+  "rollback_procedure_verified": "Reverting this REM restores the pre-fix validator (the historical record and code remain in git history); the produced evidence records (OCOR-DEV-REM-00NN.json/.log, MANIFEST.json and this meta record) are removed, the historical candidate evidence.json files are untouched, and no migration/data change is involved.",
   "schema_version": "1.0",
   "supersedes": "OCOR-DEV-REM-0016-RCCAD-20261001",
   "task_id": "OCOR-DEV-REM-0016"
