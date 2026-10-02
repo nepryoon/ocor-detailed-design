@@ -100,10 +100,11 @@ def _assert_pass(self: unittest.TestCase, base: Path) -> None:
     self.assertIn("PASS", result.stdout)
 
 
-def _assert_fail(self: unittest.TestCase, base: Path) -> None:
+def _assert_fail(self: unittest.TestCase, base: Path, *, expected: str) -> None:
     result = _run_validator(base)
     self.assertNotEqual(0, result.returncode)
     self.assertIn("FAIL", result.stderr)
+    self.assertIn(expected, result.stderr)
 
 
 class RuntimeEvidenceValidatorTests(unittest.TestCase):
@@ -139,25 +140,25 @@ class RuntimeEvidenceValidatorTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             _write_fixture(base, [_full_command(exit_code=1)])
-            _assert_fail(self, base)
+            _assert_fail(self, base, expected="command exit_code is not a valid zero: 1")
 
     def test_rejects_nonzero_failed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             _write_fixture(base, [_full_command(failed=1)])
-            _assert_fail(self, base)
+            _assert_fail(self, base, expected="command result.failed is not a valid zero: 1")
 
     def test_rejects_nonzero_skipped(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             _write_fixture(base, [_full_command(skipped=1)])
-            _assert_fail(self, base)
+            _assert_fail(self, base, expected="command result.skipped is not a valid zero: 1")
 
     def test_rejects_nonzero_not_executed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             _write_fixture(base, [_full_command(not_executed=1)])
-            _assert_fail(self, base)
+            _assert_fail(self, base, expected="command result.not_executed is not a valid zero: 1")
 
     def test_rejects_invalid_exit_code_type(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -169,7 +170,7 @@ class RuntimeEvidenceValidatorTests(unittest.TestCase):
                 "status": "PASS",
             }
             _write_fixture(base, [command])
-            _assert_fail(self, base)
+            _assert_fail(self, base, expected="command exit_code is not a valid zero: '0'")
 
     def test_rejects_flat_nonzero_failed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -181,21 +182,21 @@ class RuntimeEvidenceValidatorTests(unittest.TestCase):
                 "status": "PASS",
             }
             _write_fixture(base, [command])
-            _assert_fail(self, base)
+            _assert_fail(self, base, expected="command failed is not a valid zero: 1")
 
     def test_rejects_bare_status_label(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             command = {"command": "pytest -q ...", "status": "PASS"}
             _write_fixture(base, [command])
-            _assert_fail(self, base)
+            _assert_fail(self, base, expected="command has no numeric outcome evidence")
 
     def test_rejects_empty_result_dict(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             command = {"command": "pytest test.py", "result": {}, "status": "PASS"}
             _write_fixture(base, [command])
-            _assert_fail(self, base)
+            _assert_fail(self, base, expected="command has no numeric outcome evidence")
 
     def test_rejects_result_with_only_passed_counter(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -206,7 +207,7 @@ class RuntimeEvidenceValidatorTests(unittest.TestCase):
                 "status": "PASS",
             }
             _write_fixture(base, [command])
-            _assert_fail(self, base)
+            _assert_fail(self, base, expected="command has no numeric outcome evidence")
 
     def test_rejects_result_xfailed_nonzero(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -221,7 +222,7 @@ class RuntimeEvidenceValidatorTests(unittest.TestCase):
                 "status": "PASS",
             }
             _write_fixture(base, [command])
-            _assert_fail(self, base)
+            _assert_fail(self, base, expected="command result.xfailed is not a valid zero: 1")
 
     def test_accepts_result_xfailed_zero(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
