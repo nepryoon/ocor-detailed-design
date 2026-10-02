@@ -1,79 +1,53 @@
 {
-  "baseline_commit": "6afa0d962580a039f1903797dc304eacc9fcaea8",
-  "baseline_tree": "e7e0c9d906ff7559d5309d33e9145db9904a7cee",
+  "baseline_commit": "5e2a0909e842fa0cc550a5b6b2da23ad42b8fa63",
   "blocker_manifest": {
-    "path": "reports/evidence/G2/blockers/MANIFEST.json",
-    "sha256": "490cfe9f52df4f7e948baf5d65c5754a6abe61018ec7135632f7ef6a3313019b"
+    "path": "reports/development/EXECUTION_STATE.json",
+    "sha256": "12948c0d2aa251c640e5231e0d7b6690e79b3ba586da4c40f05a156597cace15"
   },
   "blocking_tasks": [
     {
-      "evidence": "reports/evidence/G2/blockers/OCOR-DEV-0016.json",
-      "service": "TerminusDB",
-      "sha256": "3c7b228df6a3a978f459b36d938f0e81a0de95f8f324e968251ef0ac60de292a",
-      "task_id": "OCOR-DEV-0016"
-    },
-    {
-      "evidence": "reports/evidence/G2/blockers/OCOR-DEV-0017.json",
-      "service": "TypeDB",
-      "sha256": "8712b0857d5cb431f9762988a417f39ca7f6f350fdeac10d609e13fdd14611f1",
-      "task_id": "OCOR-DEV-0017"
-    },
-    {
-      "evidence": "reports/evidence/G2/blockers/OCOR-DEV-0018.json",
-      "service": "Apache Jena/Fuseki",
-      "sha256": "1f744bf9642c8cfe0b8f39931717abfc0969c61276725149dc120c9b33087694",
-      "task_id": "OCOR-DEV-0018"
-    },
-    {
-      "evidence": "reports/evidence/G2/blockers/OCOR-DEV-0021.json",
-      "service": "SPIFFE/SPIRE and OpenBao",
-      "sha256": "35fa10e324a26dc29f983d289f128ec55c23161cee57ca525714a41b50f6830a",
-      "task_id": "OCOR-DEV-0021"
+      "evidence": "reports/development/ITERATION_LOG.md",
+      "reason": "BLOCKED_REPAIR_BUDGET_EXHAUSTED: cycle-2 independent verification returned NO_GO with 2 blocking high findings (VF-001 timezone-offset bypass of the signed-delegation/bundle window; VF-002 delegation validation not wired into the Keycloak->OPA boundary). 2 materially-different repair cycles exhausted per RCCAD 8.",
+      "service": "OPA, Keycloak, SPIFFE/SPIRE, OpenBao, mTLS",
+      "sha256": "38d63b785b6752d242f780d470df226ede82cf8f977766f0e00e6d293f7b2b14",
+      "task_id": "OCOR-DEV-0048"
     }
   ],
   "claims": {
     "E1": 0,
     "E2": 0,
-    "G2": "NOT_CLOSED",
     "global_verified_requirements": 0,
     "poc": "NO_GO",
     "production": "NO_GO",
     "runtime_conformance": "NOT_ESTABLISHED"
   },
-  "completed_evidence_tasks": 19,
-  "direct_ready_disposition": "ALL_WAITING_EXTERNAL_SERVICE",
-  "direct_ready_tasks": [
-    "OCOR-DEV-0016",
-    "OCOR-DEV-0017",
-    "OCOR-DEV-0018",
-    "OCOR-DEV-0021"
-  ],
+  "completed_evidence_tasks": 62,
+  "direct_ready_disposition": "ALL_REMAINING_TASKS_BLOCKED_TRANSITIVELY_ON_OCOR_DEV_0048",
+  "direct_ready_tasks": [],
   "independent_reachable_tasks_after_excluding_blocked_roots": [],
   "independent_verifier": {
     "blocker": 0,
-    "high": 0,
-    "identity": "terminal_blocked_verifier",
+    "high": 2,
+    "identity": "ocor-dev-0048-eda08db30ca2-2",
     "low": 0,
     "medium": 0,
     "model_and_effort": "NOT_EXPOSED",
-    "verdict": "GO_FOR_BLOCKED_STATE_MERGE"
+    "verdict": "NO_GO"
   },
   "local_controls": {
-    "authoritative_runner_status": "NOT_EXECUTED_MISSING_JSONSCHEMA",
+    "authoritative_runner_status": "NOT_EXECUTED",
     "normative_sha256": "PASS",
-    "prescribed_root_harness": "NOT_EXECUTED_MISSING_VENV",
-    "remote_ci_on_last_integrated_change": "PASS_ALL_FIVE_WORKFLOWS"
+    "prescribed_root_harness": "PASS",
+    "remote_ci_on_last_integrated_change": "PASS_ALL_13_GREEN_ON_EXACT_HEAD_5e2a0909 (PR #155)"
   },
-  "minimal_unblock_action": "Provide approved digest-pinned disposable artifacts or approved reachable endpoints and intended credentials/configuration for the four blocking campaigns, then resume with task OCOR-DEV-0016.",
+  "minimal_unblock_action": "Implement VF-001 (canonical UTC instants with identical precision for signing and enforcement, or reject non-canonical time representations) and VF-002 (wire grant/revocation validation into the authorized Keycloak->OPA provider path with real-boundary positive/negative cases), then request a third independent verification on task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls (HEAD eda08db30ca20c722a1cc11d25e4b34d7c590227). This exceeds the 2-repair-cycle harness budget (RCCAD 8) and therefore requires explicit Product Owner authorization or a governed alternative disposition.",
   "open_pull_requests": 0,
-  "recorded_at": "2026-09-03T12:14:16Z",
-  "remaining_backlog_tasks": 50,
+  "recorded_at": "2026-10-02T12:17:15Z",
+  "remaining_backlog_tasks": 22,
   "schema_version": "1.0",
-  "superseded": {
-    "reason": "OCOR-DEV-0073..0078 qualified real TerminusDB, TypeDB, Apache Jena/Fuseki, OPA/Keycloak, SPIFFE/SPIRE and OpenBao provisioning; the WAITING_EXTERNAL_SERVICE condition recorded here no longer holds. Preserved as historical evidence of the real blocked state observed on 2026-09-03; not deleted.",
-    "superseded_at": "2026-09-12T14:35:23Z",
-    "superseded_by_commit": "205fefa/ac878c4/c5c3d30/26222b7/74fe5cb/a8f4436 (PR #48-#53 merges, tip a8f44364d74c4e5953954f8cf4997032ccc68f05)",
-    "superseded_by_report": "reports/development/RECONCILIATION_2026-09-12_STATE.md"
+  "supersedes": {
+    "prior_report": "reports/development/TERMINAL_BLOCKED_REPORT.json @ 2026-09-03 (external-service WAITING_EXTERNAL_SERVICE)",
+    "reason": "The 2026-09-03 terminal-blocked report was already superseded by the real service provisioning qualified in OCOR-DEV-0073..0078. This new report records a distinct, later blocked state: OCOR-DEV-0048 repair-budget exhaustion."
   },
   "terminal_state": "BLOCKED"
 }
