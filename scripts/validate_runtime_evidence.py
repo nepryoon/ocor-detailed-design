@@ -17,6 +17,39 @@ def digest(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _require_zero_int(value: object, path: str) -> None:
+    """Fail closed on a missing, non-integer or non-zero outcome field."""
+    if type(value) is not int or value != 0:
+        raise ValueError(f"{path} is not a valid zero: {value!r}")
+
+
+def _validate_command(command: dict[str, object]) -> None:
+    """Fail closed unless a command carries concrete numeric success evidence.
+
+    The `status` label and the top-level `result` string are not trusted on their
+    own: a command must back its PASS claim with either an exit_code of 0 or a
+    result/counters object whose failure counters are all 0.
+    """
+    exit_code = command.get("exit_code")
+    result = command.get("result")
+    if result is not None and not isinstance(result, dict):
+        raise ValueError(f"command result is not an object: {result!r}")
+    has_numeric_evidence = exit_code is not None or isinstance(result, dict) or any(
+        key in command for key in ("failed", "skipped", "not_executed", "xfailed")
+    )
+    if not has_numeric_evidence:
+        raise ValueError("command has no numeric outcome evidence (exit_code or result)")
+    if exit_code is not None:
+        _require_zero_int(exit_code, "command exit_code")
+    if isinstance(result, dict):
+        for key in ("failed", "skipped", "not_executed"):
+            if key in result:
+                _require_zero_int(result[key], f"command result.{key}")
+    for key in ("failed", "skipped", "not_executed", "xfailed"):
+        if key in command:
+            _require_zero_int(command[key], f"command {key}")
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--task", required=True)
@@ -52,6 +85,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         commands = record.get("commands", [])
         if not commands:
             raise ValueError("evidence has no executed command")
+        for command in commands:
+            if not isinstance(command, dict):
+                raise ValueError(f"command entry is not an object: {command!r}")
+            _validate_command(command)
         statuses = {str(item.get("status", "")).upper() for item in commands}
         if args.non_skipped and statuses & NON_QUALIFYING:
             raise ValueError(f"non-qualifying result present: {sorted(statuses & NON_QUALIFYING)}")
