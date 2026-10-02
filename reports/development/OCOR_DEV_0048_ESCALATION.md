@@ -77,3 +77,53 @@ Product Owner.
 Invarato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance` `NOT_ESTABLISHED`,
 `PoC`/`Production` `NO-GO`. `inputs/` invariato. L'evidenza di `OCOR-DEV-0048` resta
 `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
+
+## Disposition (Product Owner, 2026-10-02)
+
+Il Product Owner ha autorizzato **UN SOLO** terzo ciclo di riparazione con decisione
+`OCOR-DEV-0048-REPAIR-3` (2026-10-02), in deroga puntuale al budget di 2 cicli (OCOR-RCCAD §8).
+Il budget resta 2 per ogni altro task.
+
+- **Ambito**: esclusivamente `VF-001` e `VF-002` del verdetto `OCOR-DEV-0048-eda08db30ca2-2`,
+  secondo l'"Azione minima di sblocco" sopra.
+- **Branch**: `task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls`, a partire da head
+  `eda08db30ca20c722a1cc11d25e4b34d7c590227`, senza riscrivere ciò che è già stato accettato.
+- **Vincolo VF-002**: `verify_signed_delegation` e lo stato di revoca devono essere consumati nel
+  percorso obbligatorio dei provider, con una richiesta delegata valida sui backend reali e i
+  negativi sulla stessa operazione (grant assente, scaduto, revocato, fuori scope/purpose, chain
+  alterata), senza mock del boundary.
+- **Divieto**: indebolire test, gate o criteri di accettazione per ottenere il GO.
+
+### Esito della riparazione (ciclo 3)
+
+- Head del branch: `7f2fff555621424c8c89764aba16810f038ef509` (2 commit su `eda08db3…`):
+  `fix(OCOR-DEV-0048): VF-001 canonical UTC bundle signing + VF-002 delegation grant/revocation
+  enforced at the policy boundary` e `evidence(OCOR-DEV-0048): regenerate G4 evidence with 50
+  qualifying cases`.
+- `VF-001`: istanti canonici UTC con identica precisione usati per firma ed enforcement
+  (`signing_payload` corretto in entrambi i percorsi); aggiunti 2 casi di finestra
+  (`BUNDLE-OFFSET-EQUIVALENT-STABLE`, `BUNDLE-OFFSET-SHIFTED-REJECTED`).
+- `VF-002`: `verify_signed_delegation` e lo stato di revoca consumati da
+  `OpaPolicyDecisionProvider.evaluate`; aggiunti 7 casi sulla stessa operazione
+  (`DELEGATED-REQUEST-{VALID-PERMIT, ABSENT-GRANT, EXPIRED, REVOKED, OUT-OF-SCOPE, OUT-OF-PURPOSE,
+  ALTERED-CHAIN}`) sui backend reali, senza mock del boundary.
+- Gate locali verdi: `50 passed` su `test_ocor_dev_0048.py` (stack `ocor-bootstrap` reale),
+  `ruff check` e `mypy --strict` puliti, `validate_runtime_evidence.py` `PASS`,
+  `validate_rccad.py` `PASS_LOCAL_PRECHECK`, `validate_language_policy.py`,
+  `validate_ocor_change_scope.py` e `validate_evidence_input_drift.py` verdi, `sha256sum` normativo
+  `PASS`.
+- Richiesta di verifica indipendente: `OCOR-DEV-0048-7f2fff555621-3` (`TASK_EVIDENCE`,
+  `repair_cycle: 3`).
+
+### Stato
+
+`OCOR-DEV-0048` riportato in lavorazione (`IN_PROGRESS_REPAIR_CYCLE_3_AWAITING_VERIFICATION`).
+I task `OCOR-DEV-0049`…`OCOR-DEV-0069` restano bloccati transitivamente fino all'integrazione e al
+sigillo di `OCOR-DEV-0048`. Se il verdetto è ancora `NO_GO`: nessuna ulteriore riparazione;
+aggiornamento dell'escalation e termine con `TERMINAL_BLOCKED`.
+
+## Claim fence
+
+Invarato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance` `NOT_ESTABLISHED`,
+`PoC`/`Production` `NO-GO`. `inputs/` invariato. L'evidenza di `OCOR-DEV-0048` resta
+`CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
