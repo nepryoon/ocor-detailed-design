@@ -16,8 +16,10 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import os
 import ssl
 import subprocess
+import tempfile
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -88,6 +90,14 @@ def _b64_decode(value: str) -> bytes:
     return base64.b64decode(value + padding)
 
 
+def _der_to_pem(der: bytes, label: str) -> str:
+    """Encode DER bytes as a single PEM block (used to feed the stdlib ssl
+    loaders, which only accept PEM on disk or as a string)."""
+    body = base64.b64encode(der).decode("ascii")
+    lines = [body[i : i + 64] for i in range(0, len(body), 64)]
+    return f"-----BEGIN {label}-----\n" + "\n".join(lines) + f"\n-----END {label}-----\n"
+
+
 def _request(
     method: str,
     url: str,
@@ -112,6 +122,31 @@ def _request(
         raise SecurityControlError("SERVICE_UNAVAILABLE", f"{correlation} {exc.reason}") from exc
     except TimeoutError as exc:
         raise SecurityControlError("SERVICE_UNAVAILABLE", f"{correlation} request timed out") from exc
+    except (ssl.SSLError, OSError) as exc:
+        # A TLS handshake failure (e.g. the peer rejected our SVID, or its
+        # certificate is not signed by the pinned trust bundle) is a transport
+        # denial, never an exception that escapes the fail-closed boundary.
+        raise SecurityControlError(
+            "SERVICE_UNAVAILABLE", f"{correlation} mutual-TLS transport failed: {exc}"
+        ) from exc
+
+
+def _require_mtls_context(context: ssl.SSLContext | None) -> ssl.SSLContext:
+    """Fail closed unless the caller supplied a real mutual-TLS context that
+    both presents a workload certificate and requires/verifies the peer."""
+    if context is None:
+        raise SecurityControlError(
+            "MTLS_REQUIRED",
+            "correlation_id=none mutual TLS is mandatory for authenticated "
+            "control-plane flows (workload identity + verified trust bundle)",
+        )
+    if context.verify_mode != ssl.CERT_REQUIRED:
+        raise SecurityControlError(
+            "MTLS_REQUIRED",
+            "correlation_id=none mutual-TLS context must require and verify a "
+            "peer certificate against the trust bundle",
+        )
+    return context
 
 
 # --------------------------------------------------------------------------- #
@@ -550,22 +585,44 @@ class KeycloakIdentityProvider:
         *,
         password_resolver: Callable[[str], str],
         timeout_seconds: float = 5.0,
+        ssl_context: ssl.SSLContext | None = None,
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._realm = realm
         self._client_id = client_id
         self._password_resolver = password_resolver
         self._timeout = timeout_seconds
+        self._ssl_context = _require_mtls_context(ssl_context)
+
+    def _secure_endpoint(self, url: str) -> str:
+        """Resolve a discovery-document endpoint URL over the configured secure
+        transport.
+
+        The discovery document is fetched from ``self._base_url`` (already over
+        mutual TLS).  When it advertises an endpoint on the *same authority* but
+        with a plaintext scheme (an artifact of a backend that terminates TLS at
+        a front proxy), the provider must never downgrade the authenticated flow
+        to plaintext: it re-anchors the endpoint to the ``https`` scheme used for
+        ``self._base_url``.  Endpoints on a different authority are left
+        untouched.
+        """
+        parsed = urllib.parse.urlsplit(url)
+        base = urllib.parse.urlsplit(self._base_url)
+        if parsed.scheme == "http" and parsed.hostname == base.hostname and parsed.port == base.port:
+            return urllib.parse.urlunsplit(
+                ("https", parsed.netloc, parsed.path, parsed.query, parsed.fragment)
+            )
+        return url
 
     def _oidc_configuration(self) -> dict[str, object]:
         url = f"{self._base_url}/realms/{self._realm}/.well-known/openid-configuration"
-        status, body = _request("GET", url, timeout=self._timeout)
+        status, body = _request("GET", url, timeout=self._timeout, ssl_context=self._ssl_context)
         if status != 200:
             raise SecurityControlError("IDENTITY_UNAVAILABLE", f"OIDC discovery HTTP {status}")
         return cast(dict[str, object], json.loads(body.decode()))
 
     def _jwks(self, jwks_uri: str) -> dict[str, tuple[int, int]]:
-        status, body = _request("GET", jwks_uri, timeout=self._timeout)
+        status, body = _request("GET", jwks_uri, timeout=self._timeout, ssl_context=self._ssl_context)
         if status != 200:
             raise SecurityControlError("IDENTITY_UNAVAILABLE", f"JWKS HTTP {status}")
         keys = json.loads(body.decode()).get("keys", [])
@@ -593,6 +650,7 @@ class KeycloakIdentityProvider:
             data=form,
             headers={"Content-Type": "application/x-www-form-urlencoded"},
             timeout=self._timeout,
+            ssl_context=self._ssl_context,
         )
         if status != 200:
             raise SecurityControlError("IDENTITY_REJECTED", f"token grant HTTP {status}")
@@ -643,8 +701,8 @@ class KeycloakIdentityProvider:
 
         configuration = self._oidc_configuration()
         issuer = str(configuration["issuer"])
-        token_endpoint = str(configuration["token_endpoint"])
-        jwks_uri = str(configuration["jwks_uri"])
+        token_endpoint = self._secure_endpoint(str(configuration["token_endpoint"]))
+        jwks_uri = self._secure_endpoint(str(configuration["jwks_uri"]))
         jwks = self._jwks(jwks_uri)
         token = self._password_grant(token_endpoint, username, password)
         claims = self._verify_access_token(
@@ -718,10 +776,12 @@ class OpaPolicyDecisionProvider:
         *,
         signer_public_key: tuple[int, int],
         timeout_seconds: float = 5.0,
+        ssl_context: ssl.SSLContext | None = None,
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._policy_id = policy_id
         self._timeout = timeout_seconds
+        self._ssl_context = _require_mtls_context(ssl_context)
         self._bundle_digest: str | None = None
         self._signer_n, self._signer_e = signer_public_key
         if self._signer_n.bit_length() < 2048 or self._signer_e < 3:
@@ -757,6 +817,7 @@ class OpaPolicyDecisionProvider:
             data=bundle.rego_source.encode(),
             headers={"Content-Type": "text/plain"},
             timeout=self._timeout,
+            ssl_context=self._ssl_context,
         )
         if status != 200:
             raise SecurityControlError("POLICY_UNAVAILABLE", f"policy install HTTP {status}")
@@ -772,6 +833,7 @@ class OpaPolicyDecisionProvider:
             f"{self._base_url}/v1/policies/{self._policy_id}",
             timeout=self._timeout,
             correlation_id=correlation_id,
+            ssl_context=self._ssl_context,
         )
         if status != 200:
             raise SecurityControlError("POLICY_UNAVAILABLE", f"policy fetch HTTP {status}")
@@ -838,6 +900,7 @@ class OpaPolicyDecisionProvider:
             headers={"Content-Type": "application/json"},
             timeout=self._timeout,
             correlation_id=correlation_id,
+            ssl_context=self._ssl_context,
         )
         if status != 200:
             raise SecurityControlError("POLICY_UNAVAILABLE", f"policy eval HTTP {status}")
@@ -975,6 +1038,58 @@ class SpireWorkloadIdentityProvider:
             status=status,
         )
 
+    def mtls_context(self) -> ssl.SSLContext:
+        """Build a mutual-TLS client context from the live SPIRE SVID.
+
+        The context presents the workload SVID as the client certificate and
+        verifies the peer against the SPIRE trust bundle (``CERT_REQUIRED``).
+        Hostname matching is disabled: SPIFFE peer identity is URI-SAN based and
+        is already attested at fetch time; trust is anchored to the pinned
+        bundle digest, not to DNS names.
+        """
+        svid = self._fetch_svid()
+        spiffe_id = str(svid.get("spiffe_id", ""))
+        if spiffe_id != self._expected_spiffe_id:
+            raise SecurityControlError(
+                "WORKLOAD_IDENTITY_UNAVAILABLE",
+                f"unexpected SPIFFE ID {spiffe_id!r}",
+            )
+        try:
+            chain = _split_der_chain(_b64_decode(str(svid["x509_svid"])))
+            key_der = _b64_decode(str(svid["x509_svid_key"]))
+            bundle_der = _b64_decode(str(svid["bundle"]))
+        except (KeyError, ValueError) as exc:
+            raise SecurityControlError(
+                "WORKLOAD_IDENTITY_UNAVAILABLE", "malformed SVID material"
+            ) from exc
+        if len(chain) < 2:
+            raise SecurityControlError(
+                "WORKLOAD_IDENTITY_UNAVAILABLE", "incomplete SVID chain"
+            )
+        if not key_der:
+            raise SecurityControlError(
+                "WORKLOAD_IDENTITY_UNAVAILABLE", "SVID private key is missing"
+            )
+
+        cert_pem = "".join(_der_to_pem(der, "CERTIFICATE") for der in chain)
+        key_pem = _der_to_pem(key_der, "PRIVATE KEY")
+        bundle_pem = _der_to_pem(bundle_der, "CERTIFICATE")
+
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        context.verify_mode = ssl.CERT_REQUIRED
+        context.check_hostname = False
+        context.load_verify_locations(cadata=bundle_pem)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cert_path = os.path.join(tmpdir, "svid.pem")
+            key_path = os.path.join(tmpdir, "svid.key")
+            with open(cert_path, "w") as handle:
+                handle.write(cert_pem)
+            with open(key_path, "w") as handle:
+                handle.write(key_pem)
+            os.chmod(key_path, 0o600)
+            context.load_cert_chain(certfile=cert_path, keyfile=key_path)
+        return context
+
 
 class OpenBaoSecretProvider:
     """Leases principal-scoped secrets from a real OpenBao kv-v2 engine."""
@@ -986,11 +1101,13 @@ class OpenBaoSecretProvider:
         mount: str = "ocor",
         *,
         timeout_seconds: float = 5.0,
+        ssl_context: ssl.SSLContext | None = None,
     ) -> None:
         self._base_url = base_url.rstrip("/")
         self._token = token
         self._mount = mount
         self._timeout = timeout_seconds
+        self._ssl_context = _require_mtls_context(ssl_context)
         self._mount_digest: str | None = None
 
     def _headers(self) -> dict[str, str]:
@@ -998,7 +1115,11 @@ class OpenBaoSecretProvider:
 
     def _ensure_mount(self) -> str:
         status, body = _request(
-            "GET", f"{self._base_url}/v1/sys/mounts", headers=self._headers(), timeout=self._timeout
+            "GET",
+            f"{self._base_url}/v1/sys/mounts",
+            headers=self._headers(),
+            timeout=self._timeout,
+            ssl_context=self._ssl_context,
         )
         if status != 200:
             raise SecurityControlError("SECRETS_UNAVAILABLE", f"mount list HTTP {status}")
@@ -1012,11 +1133,16 @@ class OpenBaoSecretProvider:
                 data=json.dumps({"type": "kv", "options": {"version": "2"}}).encode(),
                 headers={**self._headers(), "Content-Type": "application/json"},
                 timeout=self._timeout,
+                ssl_context=self._ssl_context,
             )
             if status not in (200, 204):
                 raise SecurityControlError("SECRETS_UNAVAILABLE", f"mount enable HTTP {status}")
             status, body = _request(
-                "GET", f"{self._base_url}/v1/sys/mounts", headers=self._headers(), timeout=self._timeout
+                "GET",
+                f"{self._base_url}/v1/sys/mounts",
+                headers=self._headers(),
+                timeout=self._timeout,
+                ssl_context=self._ssl_context,
             )
             mounts = json.loads(body.decode()).get("data", {})
             accessor = mounts.get(mount_key, {}).get("accessor") if isinstance(mounts, dict) else None
@@ -1042,6 +1168,7 @@ class OpenBaoSecretProvider:
             headers=self._headers(),
             timeout=self._timeout,
             correlation_id=correlation,
+            ssl_context=self._ssl_context,
         )
         if status == 404:
             raise SecurityControlError(

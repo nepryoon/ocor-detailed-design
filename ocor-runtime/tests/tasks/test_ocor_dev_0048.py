@@ -20,7 +20,12 @@ import hashlib
 import importlib.util
 import json
 import os
+import socket
+import ssl
+import subprocess
 import sys
+import tempfile
+import threading
 import time
 import uuid
 from dataclasses import replace
@@ -37,7 +42,10 @@ from ocor_runtime.security.control_plane import (
     SignedDelegation,
     SignedPolicyBundle,
     SpireWorkloadIdentityProvider,
+    _b64_decode,
+    _der_to_pem,
     _rsa_sign,
+    _split_der_chain,
     verify_signed_delegation,
 )
 from ocor_runtime.security.ports import (
@@ -203,6 +211,244 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
+# --------------------------------------------------------------------------- #
+# mTLS reverse proxy: a real TLS-terminating front that requires and verifies
+# the caller's workload SVID and forwards plaintext to the local backend.  It
+# exists solely to prove the providers carry the SVID on the transport, not
+# merely fetch it in a separate (unused) probe.
+# --------------------------------------------------------------------------- #
+
+
+def _fetch_svid_json() -> dict[str, object]:
+    completed = subprocess.run(
+        [
+            "docker",
+            "exec",
+            SPIRE_AGENT_CONTAINER,
+            "/opt/spire/bin/spire-agent",
+            "api",
+            "fetch",
+            "x509",
+            "-socketPath",
+            SPIRE_SOCKET,
+            "-output",
+            "json",
+        ],
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    if completed.returncode != 0:
+        pytest.skip("spire-agent api fetch x509 failed; a real SVID is mandatory")
+    svids = json.loads(completed.stdout.decode()).get("svids") or []
+    assert svids, "no SVID returned by spire-agent"
+    return svids[0]
+
+
+def _server_tls_material() -> dict[str, str]:
+    svid = _fetch_svid_json()
+    chain = _split_der_chain(_b64_decode(str(svid["x509_svid"])))
+    key_der = _b64_decode(str(svid["x509_svid_key"]))
+    bundle_der = _b64_decode(str(svid["bundle"]))
+    return {
+        "cert_pem": "".join(_der_to_pem(der, "CERTIFICATE") for der in chain),
+        "key_pem": _der_to_pem(key_der, "PRIVATE KEY"),
+        "ca_pem": _der_to_pem(bundle_der, "CERTIFICATE"),
+    }
+
+
+def _read_http_head_and_body(sock: socket.socket) -> tuple[bytes, bytes]:
+    buf = b""
+    while b"\r\n\r\n" not in buf:
+        chunk = sock.recv(65536)
+        if not chunk:
+            break
+        buf += chunk
+    head, _, body = buf.partition(b"\r\n\r\n")
+    content_length = 0
+    for line in head.split(b"\r\n"):
+        if line.lower().startswith(b"content-length:"):
+            content_length = int(line.split(b":", 1)[1].strip())
+    while len(body) < content_length:
+        chunk = sock.recv(65536)
+        if not chunk:
+            break
+        body += chunk
+    return head, body
+
+
+def _read_until_eof(sock: socket.socket) -> bytes:
+    chunks: list[bytes] = []
+    while True:
+        chunk = sock.recv(65536)
+        if not chunk:
+            break
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+def _set_header(head: bytes, name: bytes, value: bytes) -> bytes:
+    lines = head.split(b"\r\n")
+    lowered = name.lower()
+    updated = False
+    for i, line in enumerate(lines):
+        if b":" in line and line.split(b":", 1)[0].strip().lower() == lowered:
+            lines[i] = name + b": " + value
+            updated = True
+    if not updated:
+        lines.append(name + b": " + value)
+    return b"\r\n".join(lines)
+
+
+class _MtlsReverseProxy:
+    """TLS-terminating loopback proxy with mandatory, verified client auth."""
+
+    def __init__(
+        self,
+        backend_host: str,
+        backend_port: int,
+        server_cert_pem: str,
+        server_key_pem: str,
+        client_ca_pem: str,
+    ) -> None:
+        self._backend = (backend_host, backend_port)
+        self._server_cert_pem = server_cert_pem
+        self._server_key_pem = server_key_pem
+        self._client_ca_pem = client_ca_pem
+        self._lsock: socket.socket | None = None
+        self._thread: threading.Thread | None = None
+        self._stop = threading.Event()
+        self._port = 0
+        self._td: tempfile.TemporaryDirectory[str] | None = None
+
+    def __enter__(self) -> "_MtlsReverseProxy":
+        self._td = tempfile.TemporaryDirectory()
+        cert_path = os.path.join(self._td.name, "server.pem")
+        key_path = os.path.join(self._td.name, "server.key")
+        with open(cert_path, "w") as handle:
+            handle.write(self._server_cert_pem)
+        with open(key_path, "w") as handle:
+            handle.write(self._server_key_pem)
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(certfile=cert_path, keyfile=key_path)
+        context.verify_mode = ssl.CERT_REQUIRED
+        context.load_verify_locations(cadata=self._client_ca_pem)
+        self._context = context
+        self._lsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._lsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._lsock.bind(("127.0.0.1", 0))
+        self._lsock.listen(16)
+        self._port = int(self._lsock.getsockname()[1])
+        self._thread = threading.Thread(target=self._serve, daemon=True)
+        self._thread.start()
+        return self
+
+    def _serve(self) -> None:
+        assert self._lsock is not None
+        while not self._stop.is_set():
+            try:
+                self._lsock.settimeout(0.5)
+                conn, _ = self._lsock.accept()
+            except (socket.timeout, OSError):
+                continue
+            threading.Thread(target=self._handle, args=(conn,), daemon=True).start()
+
+    def _handle(self, conn: socket.socket) -> None:
+        try:
+            tls = self._context.wrap_socket(conn, server_side=True)
+        except (ssl.SSLError, OSError):
+            conn.close()
+            return
+        try:
+            head, body = _read_http_head_and_body(tls)
+            if not head:
+                return
+            head = _set_header(head, b"Connection", b"close")
+            backend = socket.create_connection(self._backend, timeout=10)
+            try:
+                backend.sendall(head + b"\r\n\r\n" + body)
+                backend.settimeout(30)
+                response = _read_until_eof(backend)
+            finally:
+                backend.close()
+            tls.sendall(response)
+        except (ssl.SSLError, OSError):
+            pass
+        finally:
+            tls.close()
+
+    @property
+    def url(self) -> str:
+        return f"https://127.0.0.1:{self._port}"
+
+    def __exit__(self, *exc: object) -> None:
+        self._stop.set()
+        if self._lsock is not None:
+            try:
+                self._lsock.close()
+            except OSError:
+                pass
+        if self._thread is not None:
+            self._thread.join(timeout=5)
+        if self._td is not None:
+            self._td.cleanup()
+
+
+# --------------------------------------------------------------------------- #
+# mTLS fixtures: a session-scoped client context carrying the real workload
+# SVID plus three TLS-terminating reverse proxies that require and verify the
+# caller's certificate before forwarding to the plaintext local backend.
+# --------------------------------------------------------------------------- #
+
+
+def _tls_handshake(url: str, context: ssl.SSLContext) -> dict[str, object]:
+    host = "127.0.0.1"
+    port = int(url.rsplit(":", 1)[1])
+    with socket.create_connection((host, port), timeout=10) as raw:
+        with context.wrap_socket(raw, server_hostname=host) as tls:
+            tls.do_handshake()
+            return tls.getpeercert() or {}
+
+
+@pytest.fixture(scope="session")
+def mtls(live_stack: None) -> dict[str, object]:
+    if not fault_inject.container_healthy(SPIRE_AGENT_CONTAINER):
+        pytest.skip("SPIRE agent container is unavailable; real mTLS is mandatory")
+    provider = SpireWorkloadIdentityProvider(
+        agent_container=SPIRE_AGENT_CONTAINER,
+        socket_path=SPIRE_SOCKET,
+        expected_spiffe_id=EXPECTED_SPIFFE_ID,
+    )
+    client_context = provider.mtls_context()
+    material = _server_tls_material()
+    proxies: list[_MtlsReverseProxy] = []
+    for backend_port in (8181, 8080, 8200):
+        proxy = _MtlsReverseProxy(
+            "127.0.0.1",
+            backend_port,
+            material["cert_pem"],
+            material["key_pem"],
+            material["ca_pem"],
+        )
+        proxy.__enter__()
+        proxies.append(proxy)
+    try:
+        yield {
+            "ssl_context": client_context,
+            "opa": proxies[0].url,
+            "keycloak": proxies[1].url,
+            "openbao": proxies[2].url,
+        }
+    finally:
+        for proxy in proxies:
+            proxy.__exit__(None, None, None)
+
+
+
+
+
+
+
 @pytest.fixture(scope="session")
 def env() -> dict[str, str]:
     return _load_env()
@@ -302,9 +548,13 @@ def principals(admin_token: str) -> None:
 
 
 @pytest.fixture
-def principal(principals: None) -> AuthenticatedPrincipal:
+def principal(principals: None, mtls: dict[str, object]) -> AuthenticatedPrincipal:
     provider = KeycloakIdentityProvider(
-        KC, REALM, CLIENT_ID, password_resolver=lambda u: USER_PWD if u == USERNAME else ""
+        str(mtls["keycloak"]),
+        REALM,
+        CLIENT_ID,
+        password_resolver=lambda u: USER_PWD if u == USERNAME else "",
+        ssl_context=mtls["ssl_context"],
     )
     return provider.authenticate(
         IdentityRequest(f"urn:ocor:credential-ref:{USERNAME}", "account", str(uuid.uuid4()))
@@ -312,9 +562,11 @@ def principal(principals: None) -> AuthenticatedPrincipal:
 
 
 @pytest.fixture
-def opa(principal: AuthenticatedPrincipal) -> tuple[OpaPolicyDecisionProvider, str]:
+def opa(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object]
+) -> tuple[OpaPolicyDecisionProvider, str]:
     provider = OpaPolicyDecisionProvider(
-        OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
+        str(mtls["opa"]), POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E), ssl_context=mtls["ssl_context"]
     )
     digest = _install_policy(provider, _rego(principal.principal_id))
     return provider, digest
@@ -369,7 +621,7 @@ def test_sha256_urn_and_b64_decode_are_deterministic():
     assert _b64url_decode(base64.urlsafe_b64encode(payload).decode()) == payload
 
 
-def test_split_der_chain_and_tlv_parse_real_concatenation():
+def test_split_der_chain_and_tlv_parse_synthetic_concatenation():
     from ocor_runtime.security.control_plane import _split_der_chain, _tlv
 
     # a SEQUENCE of 3 content bytes parses to (tag=0x30, len=3, start=2, end=5)
@@ -393,8 +645,14 @@ def test_authenticate_real_keycloak_principal(principal: AuthenticatedPrincipal)
     assert principal.session_id
 
 
-def test_wrong_password_fails_closed(principals: None):
-    provider = KeycloakIdentityProvider(KC, REALM, CLIENT_ID, password_resolver=lambda u: "wrong")
+def test_wrong_password_fails_closed(principals: None, mtls: dict[str, object]):
+    provider = KeycloakIdentityProvider(
+        str(mtls["keycloak"]),
+        REALM,
+        CLIENT_ID,
+        password_resolver=lambda u: "wrong",
+        ssl_context=mtls["ssl_context"],
+    )
     with pytest.raises(SecurityControlError) as excinfo:
         provider.authenticate(
             IdentityRequest(f"urn:ocor:credential-ref:{USERNAME}", "account", str(uuid.uuid4()))
@@ -402,9 +660,13 @@ def test_wrong_password_fails_closed(principals: None):
     assert excinfo.value.reason_code == "IDENTITY_REJECTED"
 
 
-def test_wrong_audience_fails_closed(principals: None):
+def test_wrong_audience_fails_closed(principals: None, mtls: dict[str, object]):
     provider = KeycloakIdentityProvider(
-        KC, REALM, CLIENT_ID, password_resolver=lambda u: USER_PWD
+        str(mtls["keycloak"]),
+        REALM,
+        CLIENT_ID,
+        password_resolver=lambda u: USER_PWD,
+        ssl_context=mtls["ssl_context"],
     )
     with pytest.raises(SecurityControlError) as excinfo:
         provider.authenticate(
@@ -448,10 +710,13 @@ def test_policy_deny_for_non_matching_action(
 
 
 def test_policy_receives_all_governed_attributes(
-    principal: AuthenticatedPrincipal,
+    principal: AuthenticatedPrincipal, mtls: dict[str, object]
 ):
     provider = OpaPolicyDecisionProvider(
-        OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
+        str(mtls["opa"]),
+        POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"],
     )
     rego = (
         "package ocor.control_plane\n\n"
@@ -475,10 +740,13 @@ def test_policy_receives_all_governed_attributes(
 
 
 def test_policy_denies_when_tenant_is_not_forwarded(
-    principal: AuthenticatedPrincipal,
+    principal: AuthenticatedPrincipal, mtls: dict[str, object]
 ):
     provider = OpaPolicyDecisionProvider(
-        OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
+        str(mtls["opa"]),
+        POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"],
     )
     rego = (
         "package ocor.control_plane\n\n"
@@ -548,6 +816,57 @@ def test_unexpected_spiffe_id_fails_closed(env: dict[str, str]):
     assert excinfo.value.reason_code == "WORKLOAD_IDENTITY_UNAVAILABLE"
 
 
+
+
+# --------------------------------------------------------------------------- #
+# mTLS transport: the providers present their workload SVID on the wire and
+# verify the peer against the trust bundle; without either, they fail closed.
+# --------------------------------------------------------------------------- #
+
+
+def test_provider_requires_mtls_context():
+    # Constructing a provider without a mutual-TLS context is an outright
+    # refusal, not a silent downgrade to plaintext HTTP.
+    with pytest.raises(SecurityControlError) as excinfo:
+        OpaPolicyDecisionProvider(OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E))
+    assert excinfo.value.reason_code == "MTLS_REQUIRED"
+
+
+def test_mtls_transport_presents_and_verifies_workload_svid(mtls: dict[str, object]):
+    # A successful handshake here means the provider-side context both presented
+    # a client SVID that the proxy accepted and verified the proxy's SVID chain
+    # against the SPIRE trust bundle (the context requires CERT_REQUIRED).
+    peer = _tls_handshake(str(mtls["opa"]), mtls["ssl_context"])
+    assert peer, "mutual-TLS handshake completed but no peer certificate was parsed"
+
+
+def test_mtls_server_rejects_absent_client_certificate(mtls: dict[str, object]):
+    # The reverse proxy requires and verifies a client certificate: a peer that
+    # presents none is rejected, proving the "mutual" half of mTLS is enforced
+    # by the server side, not merely claimed by the client.  With TLS 1.3 the
+    # client may see its own Finished before the server's rejection lands, so
+    # we drive a full request and require either a transport error or the
+    # absence of any well-formed HTTP response.
+    no_cert = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    no_cert.check_hostname = False
+    no_cert.verify_mode = ssl.CERT_NONE
+    host = "127.0.0.1"
+    port = int(str(mtls["opa"]).rsplit(":", 1)[1])
+    rejected = False
+    with socket.create_connection((host, port), timeout=10) as raw:
+        with no_cert.wrap_socket(raw, server_hostname=host) as tls:
+            try:
+                tls.do_handshake()
+                tls.sendall(b"GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n")
+                data = tls.recv(4096)
+            except (ssl.SSLError, OSError):
+                rejected = True
+            else:
+                rejected = not data.startswith(b"HTTP/")
+    assert rejected, "server accepted an anonymous peer without a client certificate"
+
+
+
 # --------------------------------------------------------------------------- #
 # OpenBao: secret isolation, opaque handle, fail-closed
 # --------------------------------------------------------------------------- #
@@ -569,14 +888,19 @@ def _seed_secret(
 
 
 def test_secret_lease_returns_opaque_handle(
-    principal: AuthenticatedPrincipal, env: dict[str, str], opa: tuple[OpaPolicyDecisionProvider, str]
+    principal: AuthenticatedPrincipal,
+    env: dict[str, str],
+    opa: tuple[OpaPolicyDecisionProvider, str],
+    mtls: dict[str, object],
 ):
     _, policy_digest = opa
     _seed_secret(
         env, principal.principal_id, "control-plane-db",
         {"dsn": "postgres://ocor:secret@control-plane-db/ocor"},
     )
-    provider = OpenBaoSecretProvider(OB, env["OCOR_LOCAL_OPENBAO_TOKEN"], mount="ocor")
+    provider = OpenBaoSecretProvider(
+        str(mtls["openbao"]), env["OCOR_LOCAL_OPENBAO_TOKEN"], mount="ocor", ssl_context=mtls["ssl_context"]
+    )
     gcs = _gcs(principal, policy_digest)
     request = SecretRequest(
         secret_ref="urn:ocor:secret-ref:control-plane-db",
@@ -592,10 +916,14 @@ def test_secret_lease_returns_opaque_handle(
 
 
 def test_wrong_openbao_token_fails_closed(
-    principal: AuthenticatedPrincipal, opa: tuple[OpaPolicyDecisionProvider, str]
+    principal: AuthenticatedPrincipal,
+    opa: tuple[OpaPolicyDecisionProvider, str],
+    mtls: dict[str, object],
 ):
     _, policy_digest = opa
-    provider = OpenBaoSecretProvider(OB, "wrong-token", mount="ocor")
+    provider = OpenBaoSecretProvider(
+        str(mtls["openbao"]), "wrong-token", mount="ocor", ssl_context=mtls["ssl_context"]
+    )
     gcs = _gcs(principal, policy_digest)
     request = SecretRequest(
         secret_ref="urn:ocor:secret-ref:control-plane-db",
@@ -614,9 +942,15 @@ def test_wrong_openbao_token_fails_closed(
 # --------------------------------------------------------------------------- #
 
 
-def test_paused_opa_fails_closed_within_bounded_timeout(principal: AuthenticatedPrincipal):
+def test_paused_opa_fails_closed_within_bounded_timeout(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object]
+):
     provider = OpaPolicyDecisionProvider(
-        OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E), timeout_seconds=2.0
+        str(mtls["opa"]),
+        POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E),
+        timeout_seconds=2.0,
+        ssl_context=mtls["ssl_context"],
     )
     digest = _install_policy(provider, _rego(principal.principal_id))
     request = _policy_request(principal, digest, action="read")
@@ -668,9 +1002,12 @@ def test_policy_pin_mismatch_fails_closed(
     assert excinfo.value.reason_code == "STALE_BUNDLE"
 
 
-def test_unsigned_bundle_fails_closed():
+def test_unsigned_bundle_fails_closed(mtls: dict[str, object]):
     provider = OpaPolicyDecisionProvider(
-        OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
+        str(mtls["opa"]),
+        POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"],
     )
     unsigned = SignedPolicyBundle(
         policy_id=POLICY_ID,
@@ -685,9 +1022,12 @@ def test_unsigned_bundle_fails_closed():
     assert excinfo.value.reason_code == "POLICY_BUNDLE_SIGNATURE_INVALID"
 
 
-def test_forged_bundle_signature_fails_closed():
+def test_forged_bundle_signature_fails_closed(mtls: dict[str, object]):
     provider = OpaPolicyDecisionProvider(
-        OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
+        str(mtls["opa"]),
+        POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"],
     )
     valid = _sign_bundle(_rego("placeholder"))
     tampered = replace(valid, rego_source=_rego("placeholder") + "# tampered\n")
@@ -696,9 +1036,12 @@ def test_forged_bundle_signature_fails_closed():
     assert excinfo.value.reason_code == "POLICY_BUNDLE_SIGNATURE_INVALID"
 
 
-def test_expired_bundle_fails_closed():
+def test_expired_bundle_fails_closed(mtls: dict[str, object]):
     provider = OpaPolicyDecisionProvider(
-        OPA, POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E)
+        str(mtls["opa"]),
+        POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"],
     )
     bundle = _sign_bundle(
         _rego("placeholder"),
@@ -906,10 +1249,15 @@ def test_expired_delegation_fails_closed(principal: AuthenticatedPrincipal):
 
 
 def test_absent_secret_ref_fails_closed_without_overwrite(
-    principal: AuthenticatedPrincipal, env: dict[str, str], opa: tuple[OpaPolicyDecisionProvider, str]
+    principal: AuthenticatedPrincipal,
+    env: dict[str, str],
+    opa: tuple[OpaPolicyDecisionProvider, str],
+    mtls: dict[str, object],
 ):
     _, policy_digest = opa
-    provider = OpenBaoSecretProvider(OB, env["OCOR_LOCAL_OPENBAO_TOKEN"], mount="ocor")
+    provider = OpenBaoSecretProvider(
+        str(mtls["openbao"]), env["OCOR_LOCAL_OPENBAO_TOKEN"], mount="ocor", ssl_context=mtls["ssl_context"]
+    )
     gcs = _gcs(principal, policy_digest)
     request = SecretRequest(
         secret_ref="urn:ocor:secret-ref:absent-secret",
