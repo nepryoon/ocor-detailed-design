@@ -4167,3 +4167,30 @@
 - Prossima azione: registrare/riallineare `reports/development/TERMINAL_BLOCKED_REPORT.json` allo stato
   terminale ciclo 3 (`OCOR-DEV-0048` `BLOCKED_REPAIR_BUDGET_EXHAUSTED`) in un change set `governed/`,
   poi terminare con `TERMINAL_BLOCKED`.
+
+## 2026-10-02 — Governed: refresh TERMINAL_BLOCKED_REPORT.json to cycle-3 terminal state + final state sync
+
+- Change set `governed/state-sync-terminal-blocked-report-cycle3`, basato sull'HEAD di `main` =
+  `7cac163e960cb86a3a780b42b65a96d518453791` (merge di PR #159, chiusura `TOOLCHAIN-LOCK-TYPESCRIPT`).
+- `reports/development/TERMINAL_BLOCKED_REPORT.json` riallineato allo stato terminale ciclo 3:
+  `baseline_commit` → `7cac163e96…`; `independent_verifier.identity` →
+  `OCOR-DEV-0048-7f2fff555621-3` (verdetto `NO_GO`, 2 finding `high`); `blocking_tasks[0].reason`
+  aggiornato ai finding del ciclo 3 (`VF-001` finestra della delega rivalidata con `request.at`
+  invece del tempo corrente del boundary; `VF-002` `valid_until` non limitato dalla scadenza della
+  delega); `supersedes` → report ciclo 2; `recorded_at` e
+  `local_controls.remote_ci_on_last_integrated_change` aggiornati (PR #159).
+  `terminal_state` resta `BLOCKED`; `claims` invariato (`E1=0`, `E2=0`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`).
+- `EXECUTION_STATE.json`: `baseline_commit` → `7cac163e96…`; `active_iteration` → nuovo branch;
+  `latest_ci_evidence` → PR #159 (6 run verde, head `c94c072e…`, merge `7cac163e…`);
+  `current_gate` → `TERMINAL_BLOCKED_REPORT_CYCLE3`; `next_executable_action` → `TERMINAL_BLOCKED`
+  (nessun lavoro eseguibile residuo); `updated_at`.
+- `MODEL_HANDOFF.json` riallineato (branch, worktree, `current_task`, `exact_next_action`,
+  `unresolved_blockers` = [`OCOR-DEV-0048`], `completed_tasks`, `commands_run`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato. Nessuna modifica a codice,
+  validator o workflow: solo `reports/development/` (report terminale + stato + handoff + log).
+- Prossima azione: nessuna — il ciclo termina con `TERMINAL_BLOCKED`. Tutto il residuo
+  (`OCOR-DEV-0049`…`OCOR-DEV-0069`) è bloccato transitivamente su `OCOR-DEV-0048`
+  (`BLOCKED_REPAIR_BUDGET_EXHAUSTED`); le decisioni PO non bloccanti `RVW-03`/`INFO-A`/`INFO-C`
+  restano aperte.
