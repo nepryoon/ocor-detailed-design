@@ -162,7 +162,7 @@
     },
     {
       "path": "OCOR-DEV-0048.json",
-      "sha256": "f605ab1dc74d67b9d53c920f59e12f57cc563047e68f2d1d5f9bf34c2e693cd6",
+      "sha256": "251ea9ed2b1d6c65aacd2d034d5ecbf57c2e2ca499c939dfcb4f7c99bbcda803",
       "task_id": "OCOR-DEV-0048"
     },
     {
@@ -171,7 +171,7 @@
       "task_id": "OCOR-DEV-0048-RAW"
     }
   ],
-  "created_at": "2026-10-02T09:43:32Z",
+  "created_at": "2026-10-02T09:48:04Z",
   "gate": "G4",
   "requirement_results": [
     {
@@ -1571,7 +1571,7 @@
     },
     {
       "case_id": "OCOR-DEV-0048-UNSIGNED-MODULE-CANNOT-EXTEND",
-      "command": "governed package: a signed bundle extended with a foreign unsigned Rego module is rejected before evaluation, binding the decision to the whole governed bundle and refusing an unsigned module from widening the effective policy package (test_unsigned_module_cannot_extend_governed_package)",
+      "command": "governed package: a signed bundle alone denies the erase action (positive control); a foreign unsigned Rego module dropped into the governed OPA package is then rejected with STALE_BUNDLE before the widened policy is ever consulted (test_unsigned_module_cannot_extend_governed_package)",
       "evidence_path": "OCOR-DEV-0048.json",
       "raw_output_path": "OCOR-DEV-0048.log",
       "requirement_id": "FR-130",
@@ -1607,7 +1607,7 @@
     },
     {
       "case_id": "OCOR-DEV-0048-OPA-REJECTS-PLAINTEXT",
-      "command": "transport encryption: OpaPolicyDecisionProvider refuses a plaintext http:// base URL with SECURE_TRANSPORT_REQUIRED before any I/O, preserving the HTTPS+mTLS transport for policy decisions (test_opa_provider_rejects_plaintext_base_url)",
+      "command": "transport encryption: OpaPolicyDecisionProvider refuses an http:// base URL with MTLS_REQUIRED before any socket is opened, preserving the HTTPS+mTLS transport for policy decisions (test_opa_provider_rejects_plaintext_base_url)",
       "evidence_path": "OCOR-DEV-0048.json",
       "raw_output_path": "OCOR-DEV-0048.log",
       "requirement_id": "NFR-042",
@@ -1616,7 +1616,7 @@
     },
     {
       "case_id": "OCOR-DEV-0048-KEYCLOAK-REJECTS-PLAINTEXT",
-      "command": "transport encryption: KeycloakIdentityProvider refuses a plaintext http:// base URL with SECURE_TRANSPORT_REQUIRED and re-anchors discovery/JWKS/grant endpoints to the HTTPS authority, never emitting credentials over cleartext (test_keycloak_provider_rejects_plaintext_base_url)",
+      "command": "transport encryption: KeycloakIdentityProvider refuses an http:// base URL with MTLS_REQUIRED before any credentialed I/O, never emitting credentials over cleartext (test_keycloak_provider_rejects_plaintext_base_url)",
       "evidence_path": "OCOR-DEV-0048.json",
       "raw_output_path": "OCOR-DEV-0048.log",
       "requirement_id": "NFR-042",
@@ -1625,7 +1625,7 @@
     },
     {
       "case_id": "OCOR-DEV-0048-OPENBAO-REJECTS-PLAINTEXT",
-      "command": "transport encryption: OpenBaoSecretProvider refuses a plaintext http:// base URL with SECURE_TRANSPORT_REQUIRED, keeping secret material off cleartext (test_openbao_provider_rejects_plaintext_base_url)",
+      "command": "transport encryption: OpenBaoSecretProvider refuses an http:// base URL with MTLS_REQUIRED before any socket is opened, keeping secret material off cleartext (test_openbao_provider_rejects_plaintext_base_url)",
       "evidence_path": "OCOR-DEV-0048.json",
       "raw_output_path": "OCOR-DEV-0048.log",
       "requirement_id": "NFR-042",
@@ -1670,7 +1670,7 @@
     },
     {
       "case_id": "OCOR-DEV-0048-SECRET-REF-SCOPE-ESCAPE",
-      "command": "secret isolation: a secret_ref whose principal or mount carries a dot-segment, encoded or non-canonical path segment is rejected fail-closed so a lease can never escape the authenticated principal's scope (test_secret_ref_cannot_escape_principal_scope)",
+      "command": "secret isolation: a secret_ref carrying a dot-segment path traversal is rejected fail-closed with SECRET_REFERENCE_INVALID before any OpenBao request, so a lease can never escape the authenticated principal's scope (test_secret_ref_cannot_escape_principal_scope)",
       "evidence_path": "OCOR-DEV-0048.json",
       "raw_output_path": "OCOR-DEV-0048.log",
       "requirement_id": "FR-133",
@@ -1688,7 +1688,7 @@
     },
     {
       "case_id": "OCOR-DEV-0048-FAULT-KEYCLOAK-OUTAGE-CORRELATED",
-      "command": "fault-injection: pausing the live Keycloak container makes authenticate() fail closed within the bounded timeout with an IDENTITY_UNAVAILABLE denial whose correlation_id equals the request correlation_id, then recover cleanly after unpause (test_paused_keycloak_fails_closed_with_correlation)",
+      "command": "fault-injection: pausing the live Keycloak container makes authenticate() fail closed within the bounded timeout with SERVICE_UNAVAILABLE carrying the exact request correlation_id, then recover cleanly after unpause (test_paused_keycloak_fails_closed_with_correlation)",
       "evidence_path": "OCOR-DEV-0048.json",
       "raw_output_path": "OCOR-DEV-0048.log",
       "requirement_id": "NFR-037",
@@ -1823,7 +1823,7 @@
     },
     {
       "case_id": "OCOR-DEV-0048-MTLS-REJECTS-WRONG-SERVICE",
-      "command": "workload identity: the client mTLS context verifies the peer SPIFFE URI SAN and rejects a valid same-CA SVID issued to a different service with PEER_IDENTITY_MISMATCH, so a foreign workload cannot impersonate the target on the same trust domain (test_client_rejects_peer_with_different_spiffe_id)",
+      "command": "workload identity: the client mTLS context verifies the peer SPIFFE URI SAN and rejects a valid same-CA SVID issued to a different service at the TLS handshake (ssl.SSLError), so a foreign workload cannot complete mTLS on the same trust domain (test_client_rejects_peer_with_different_spiffe_id)",
       "evidence_path": "OCOR-DEV-0048.json",
       "raw_output_path": "OCOR-DEV-0048.log",
       "requirement_id": "NFR-042",
