@@ -100,6 +100,7 @@ Prima di qualsiasi analisi:
 ```bash
 sha256sum -c inputs/normative/SHA256SUMS
 ./.venv/bin/python3 scripts/verify.py --json
+python3 scripts/validate_evidence_input_drift.py
 ```
 
 
