@@ -4083,3 +4083,36 @@
 - Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance` `NOT_ESTABLISHED`,
   `PoC`/`Production` `NO-GO`. `inputs/` invariato.
 - Prossima azione: nessuna — `TERMINAL_BLOCKED` in attesa della disposition del Product Owner.
+
+## 2026-10-02 — Governed: OCOR-DEV-0048 repair cycle 3 (PO decision OCOR-DEV-0048-REPAIR-3) + state sync
+
+- Change set `governed/state-sync-ocor-dev-0048-repair-cycle-3`, basato sull'HEAD di `main` =
+  `4452d70ecc170eefd44a328ffa897380cca0a761` (merge di PR #156, escalation state sync).
+- **Decisione del Product Owner** `OCOR-DEV-0048-REPAIR-3` (2026-10-02): autorizzato UN SOLO terzo ciclo di
+  riparazione per `OCOR-DEV-0048`, in deroga puntuale al budget di 2 cicli (RCCAD §8); il budget resta 2 per
+  ogni altro task. Ambito esclusivamente `VF-001` e `VF-002` del verdetto `OCOR-DEV-0048-eda08db30ca2-2`.
+- **Branch task**: `task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls`, a partire da head
+  `eda08db30ca20c722a1cc11d25e4b34d7c590227`; nessuna riscrittura di ciò che è già stato accettato. Head
+  riparato: `7f2fff555621424c8c89764aba16810f038ef509` (2 commit).
+- **VF-001**: istanti canonici UTC con identica precisione per firma ed enforcement; aggiunti 2 casi di
+  finestra (`BUNDLE-OFFSET-EQUIVALENT-STABLE`, `BUNDLE-OFFSET-SHIFTED-REJECTED`).
+- **VF-002**: `verify_signed_delegation` e stato di revoca consumati da `OpaPolicyDecisionProvider.evaluate`;
+  aggiunti 7 casi sulla stessa operazione (`DELEGATED-REQUEST-{VALID-PERMIT, ABSENT-GRANT, EXPIRED, REVOKED,
+  OUT-OF-SCOPE, OUT-OF-PURPOSE, ALTERED-CHAIN}`) sui backend reali, senza mock del boundary.
+- Gate locali verdi: `50 passed` su `test_ocor_dev_0048.py` (stack `ocor-bootstrap` reale), `ruff check` e
+  `mypy --strict` puliti, `validate_runtime_evidence.py` `PASS`, `validate_rccad.py` `PASS_LOCAL_PRECHECK`,
+  `validate_language_policy.py`, `validate_ocor_change_scope.py` e `validate_evidence_input_drift.py` verdi,
+  `sha256sum` normativo `PASS` (8/8).
+- Richiesta di verifica indipendente: `OCOR-DEV-0048-7f2fff555621-3` (`TASK_EVIDENCE`, `repair_cycle: 3`).
+- `EXECUTION_STATE.json`: `baseline_commit` → `4452d70e…`; blocker `OCOR-DEV-0048` →
+  `IN_PROGRESS_REPAIR_CYCLE_3_AWAITING_VERIFICATION`; `backlog_escalations.OCOR-DEV-0048` aggiornato con la
+  decisione PO e il ciclo 3; `current_gate` → `G4_WAVE_15_OCOR_DEV_0048_REPAIR_CYCLE_3_AWAITING_VERIFICATION`;
+  `next_executable_action` → attesa del verdetto indipendente.
+- `MODEL_HANDOFF.json` riallineato (branch, worktree, `current_task`, `exact_next_action`,
+  `unresolved_blockers`, `commands_run`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance` `NOT_ESTABLISHED`,
+  `PoC`/`Production` `NO-GO`. `inputs/` invariato. L'evidenza di `OCOR-DEV-0048` resta
+  `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
+- Prossima azione: attendere il verdetto `OCOR-DEV-0048-7f2fff555621-3`. Con `GO_FOR_EVIDENCE_SEAL`: sigillare
+  e integrare `OCOR-DEV-0048`; con `NO_GO`: nessuna ulteriore riparazione (decisione PO), escalation e
+  `TERMINAL_BLOCKED`.

@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "5e2a0909e842fa0cc550a5b6b2da23ad42b8fa63",
-  "branch": "governed/state-sync-ocor-dev-0048-escalation",
+  "baseline_commit": "4452d70ecc170eefd44a328ffa897380cca0a761",
+  "branch": "task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -610,6 +610,30 @@
     {
       "command": "Process cycle-2 NO_GO verdict for OCOR-DEV-0048 (eda08db30ca2-2): escalate per RCCAD 8",
       "result": "ESCALATED_BLOCKED_REPAIR_BUDGET_EXHAUSTED_2_cycles_exhausted_cycle0_8_findings_cycle1_7_findings_cycle2_VF-001_timezone_offset_bypass_VF-002_delegation_not_wired_into_keycloak_opa_boundary"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python -m pytest -q -ra ocor-runtime/tests/tasks/test_ocor_dev_0048.py (real ocor-bootstrap stack)",
+      "result": "50 passed in 21.12s (VF-001 canonical-UTC window + VF-002 delegation grant/revocation at the policy boundary)"
+    },
+    {
+      "command": "python scripts/validate_runtime_evidence.py --task OCOR-DEV-0048 --non-skipped --manifest reports/evidence/G4/MANIFEST.json",
+      "result": "PASS: qualifying task evidence for OCOR-DEV-0048"
+    },
+    {
+      "command": "ruff check . && ocor-runtime/.venv/bin/python -m mypy ocor-runtime/src/ocor_runtime/security/control_plane.py (strict)",
+      "result": "PASS (ruff 0.13.1 clean; mypy strict clean)"
+    },
+    {
+      "command": "scripts/validate_rccad.py --base-ref origin/main; validate_language_policy.py; validate_ocor_change_scope.py; validate_evidence_input_drift.py; sha256sum -c inputs/normative/SHA256SUMS",
+      "result": "PASS_LOCAL_PRECHECK; PASS; PASS; PASS; 8/8 PASS"
+    },
+    {
+      "command": "git push origin HEAD (task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls)",
+      "result": "PUSH_eda08db..7f2fff5"
+    },
+    {
+      "command": "wrote ~/.ocor-codex/verify_request.json",
+      "result": "REQUEST_OCOR-DEV-0048-7f2fff555621-3_TASK_EVIDENCE_repair_cycle_3"
     }
   ],
   "completed_tasks": [
@@ -728,7 +752,7 @@
     "R3 step (c): PR #153 merged (7d833606756203f28c50913871f6ae6d66c790ee). scripts/validate_evidence_input_drift.py wired as blocking CI gate (ocor-tooling-bootstrap.yml) and preflight step (AGENTS.md); all 13 checks green on the exact head af61453cfae010dd8b68c82692cb42fbc3e9e678; drift validator GREEN at HEAD (0/165 inputs, 0/62 tasks).",
     "OCOR-DEV-0048 escalation: cycle-2 independent verification (head eda08db30ca20c722a1cc11d25e4b34d7c590227) returned NO_GO with 2 blocking high findings (VF-001 timezone-offset bypass of signed-delegation/bundle window; VF-002 delegation not wired into Keycloak->OPA boundary). 2 repair cycles exhausted -> escalated BLOCKED_REPAIR_BUDGET_EXHAUSTED per RCCAD 8; task and all transitive dependents (OCOR-DEV-0049..0069) blocked pending PO disposition. Evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed)."
   ],
-  "current_task": "OCOR-DEV-0048 escalated (BLOCKED_REPAIR_BUDGET_EXHAUSTED) after cycle-2 independent verification returned NO_GO with 2 blocking high findings: VF-001 (timezone-offset bypass of the signed-delegation/bundle window) and VF-002 (delegation validation not wired into the Keycloak->OPA boundary). 2 materially-different repair cycles exhausted per RCCAD 8.",
+  "current_task": "OCOR-DEV-0048 repair cycle 3 (PO decision OCOR-DEV-0048-REPAIR-3, 2026-10-02, punctual derogation of the 2-cycle budget per RCCAD 8) implemented at head 7f2fff555621424c8c89764aba16810f038ef509: VF-001 canonical-UTC bundle signing and VF-002 delegation grant/revocation enforced at the OpaPolicyDecisionProvider policy boundary. 50 qualifying cases pass on the real ocor-bootstrap stack. Awaiting independent verification (request OCOR-DEV-0048-7f2fff555621-3).",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -818,11 +842,11 @@
     "reports/evidence/G4/OCOR-DEV-0047.json",
     "reports/evidence/G4/OCOR-DEV-0047.log"
   ],
-  "exact_next_action": "Terminal state TERMINAL_BLOCKED. No executable work remains: all remaining backlog tasks (OCOR-DEV-0049..0069) depend transitively on OCOR-DEV-0048. Await Product Owner disposition: authorize a third repair cycle (fix VF-001 with canonical UTC sign+enforce, wire VF-002 into the authorized provider path) or a governed alternative disposition.",
+  "exact_next_action": "Await independent verification verdict OCOR-DEV-0048-7f2fff555621-3 in ~/.ocor-codex/verdicts/. On GO_FOR_EVIDENCE_SEAL: record verifier identity/config/verdict in the evidence, seal hashes, open the PR on task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls, wait for all mandatory checks on the exact head, merge with --merge --match-head-commit, then run the governed state-sync change set. On NO_GO: no further repair (PO decision OCOR-DEV-0048-REPAIR-3), update the escalation record and terminate with TERMINAL_BLOCKED.",
   "schema_version": "1.0",
   "unresolved_blockers": [
     "TOOLCHAIN-LOCK-TYPESCRIPT",
     "OCOR-DEV-0048"
   ],
-  "worktree": ".ocor/worktrees/ocor-dev-0048-escalation"
+  "worktree": ".ocor/worktrees/ocor-dev-0048"
 }
