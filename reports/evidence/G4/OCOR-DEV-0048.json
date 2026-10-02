@@ -397,6 +397,96 @@
       "status": "PASS"
     },
     {
+      "command": "VF-001 positive: _canonical_utc expresses every policy instant in UTC whole seconds, so an offset-equivalent bundle (same instant re-expressed with a +02:00 offset) yields a byte-identical signed payload, install_policy() accepts it and returns the deterministic urn:sha256 content digest (test_offset_equivalent_bundle_signing_is_stable)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "VF-001 negative: reinterpreting the signed wall clock under a -02:00 offset silently moves the expiry two hours into the future; canonical UTC signing re-canonicalises the payload and rejects it with POLICY_BUNDLE_SIGNATURE_INVALID (test_offset_shifted_bundle_rejected)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "VF-002 positive: OpaPolicyDecisionProvider.evaluate consumes a valid signed delegation grant on the mandatory request path against real OPA and returns a PERMIT whose PolicyDecision verifies against the request (test_valid_delegated_request_on_real_backends)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "VF-002 negative: a delegated request evaluated on real OPA without the signed grant fails closed with IDENTITY_BINDING_MISMATCH instead of defaulting to permit (test_delegated_request_without_grant_fails_closed)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "VF-002 negative: an expired signed delegation consumed on the mandatory request path is rejected with DELEGATION_EXPIRED (test_delegated_request_expired_fails_closed)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "VF-002 negative: a signed delegation whose revocation state is configured on the provider is rejected at the boundary with DELEGATION_REVOKED (test_delegated_request_revoked_fails_closed)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "VF-002 negative: a signed grant whose resource scope does not cover the requested resource is rejected with DELEGATION_SCOPE_MISMATCH (test_delegated_request_out_of_scope_fails_closed)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "VF-002 negative: a signed grant whose permitted purposes exclude the request purpose is rejected with DELEGATION_PURPOSE_MISMATCH (test_delegated_request_out_of_purpose_fails_closed)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "VF-002 negative: an altered actor chain (attacker delegator substituted for the delegator) on the same delegated request is rejected with DELEGATION_BINDING_MISMATCH (test_delegated_request_altered_chain_fails_closed)",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
       "command": "negative: an absent secret reference is an outright denial with no overwrite - lease() never provisions or replaces the referenced secret material (test_absent_secret_ref_fails_closed_without_overwrite)",
       "result": {
         "failed": 0,
@@ -417,8 +507,8 @@
       "status": "PASS"
     }
   ],
-  "commit": "77de443084b9a72fa0d63ff3f7916e7ecb5db504",
-  "created_at": "2026-10-02T09:48:04Z",
+  "commit": "c41f196ae09e5ce7085ec0a7eb94e7340a7565ae",
+  "created_at": "2026-10-02T12:10:27Z",
   "environment": {
     "backend_under_test": "OPA (policy/least privilege), Keycloak (OIDC identity), SPIFFE/SPIRE (workload identity and mTLS trust), OpenBao (secret isolation) - all real, pinned, on the local ocor-bootstrap stack",
     "orchestrator": "none - the boundary providers drive the real ocor-bootstrap control-plane services directly over localhost",
@@ -426,10 +516,10 @@
   },
   "inputs": {
     "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
-    "ocor-runtime/src/ocor_runtime/security/control_plane.py": "637da5d88438d181aedb972840f5db72e779b1afa038b262b2146825e6064c4d",
-    "ocor-runtime/tests/tasks/test_ocor_dev_0048.py": "c8ad577e609090590648e6bb069d6232c3938b68905356495d4f9c544d6f95df"
+    "ocor-runtime/src/ocor_runtime/security/control_plane.py": "2ba59e3132e2c39fa52b212b9ca8349376a22faadaf0df1c4c4e806d6b548a6e",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0048.py": "9374306157b69e3206723cae6babf3b625041ef93336385ccce107e72eb9d708"
   },
-  "raw_output_sha256": "b5b8140a7e6aacdf767848e2417bcc7f8aa7e5c70f5fc7e3a5b5da091684c4b3",
+  "raw_output_sha256": "3d0eda53f91360e718f1318e159eeea76732933675bc889e006184f1bfa401f3",
   "requirement_results": [
     {
       "case_id": "OCOR-DEV-0048-CRYPTO-DETERMINISTIC-URN",
@@ -900,6 +990,114 @@
       "status": "PASS"
     },
     {
+      "case_id": "OCOR-DEV-0048-BUNDLE-OFFSET-EQUIVALENT-STABLE",
+      "command": "VF-001 positive: _canonical_utc expresses every policy instant in UTC whole seconds, so an offset-equivalent bundle (same instant re-expressed with a +02:00 offset) yields a byte-identical signed payload, install_policy() accepts it and returns the deterministic urn:sha256 content digest (test_offset_equivalent_bundle_signing_is_stable)",
+      "requirement_id": "FR-130",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-BUNDLE-OFFSET-SHIFTED-REJECTED",
+      "command": "VF-001 negative: reinterpreting the signed wall clock under a -02:00 offset silently moves the expiry two hours into the future; canonical UTC signing re-canonicalises the payload and rejects it with POLICY_BUNDLE_SIGNATURE_INVALID (test_offset_shifted_bundle_rejected)",
+      "requirement_id": "FR-130",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-DELEGATED-REQUEST-VALID-PERMIT",
+      "command": "VF-002 positive: OpaPolicyDecisionProvider.evaluate consumes a valid signed delegation grant on the mandatory request path against real OPA and returns a PERMIT whose PolicyDecision verifies against the request (test_valid_delegated_request_on_real_backends)",
+      "requirement_id": "FR-128",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-DELEGATED-REQUEST-ABSENT-GRANT",
+      "command": "VF-002 negative: a delegated request evaluated on real OPA without the signed grant fails closed with IDENTITY_BINDING_MISMATCH instead of defaulting to permit (test_delegated_request_without_grant_fails_closed)",
+      "requirement_id": "FR-128",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-DELEGATED-REQUEST-EXPIRED",
+      "command": "VF-002 negative: an expired signed delegation consumed on the mandatory request path is rejected with DELEGATION_EXPIRED (test_delegated_request_expired_fails_closed)",
+      "requirement_id": "FR-128",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-DELEGATED-REQUEST-REVOKED",
+      "command": "VF-002 negative: a signed delegation whose revocation state is configured on the provider is rejected at the boundary with DELEGATION_REVOKED (test_delegated_request_revoked_fails_closed)",
+      "requirement_id": "FR-128",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-DELEGATED-REQUEST-OUT-OF-SCOPE",
+      "command": "VF-002 negative: a signed grant whose resource scope does not cover the requested resource is rejected with DELEGATION_SCOPE_MISMATCH (test_delegated_request_out_of_scope_fails_closed)",
+      "requirement_id": "FR-128",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-DELEGATED-REQUEST-OUT-OF-PURPOSE",
+      "command": "VF-002 negative: a signed grant whose permitted purposes exclude the request purpose is rejected with DELEGATION_PURPOSE_MISMATCH (test_delegated_request_out_of_purpose_fails_closed)",
+      "requirement_id": "FR-128",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-DELEGATED-REQUEST-ALTERED-CHAIN",
+      "command": "VF-002 negative: an altered actor chain (attacker delegator substituted for the delegator) on the same delegated request is rejected with DELEGATION_BINDING_MISMATCH (test_delegated_request_altered_chain_fails_closed)",
+      "requirement_id": "FR-128",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
       "case_id": "OCOR-DEV-0048-ABSENT-SECRET-REF",
       "command": "negative: an absent secret reference is an outright denial with no overwrite - lease() never provisions or replaces the referenced secret material (test_absent_secret_ref_fails_closed_without_overwrite)",
       "requirement_id": "FR-133",
@@ -925,13 +1123,13 @@
     }
   ],
   "residual_risks": [
-    "The 41 qualifying cases exercise the four real control-plane backends (OPA, Keycloak, SPIFFE/SPIRE, OpenBao) plus mTLS, signed-bundle integrity, version-fence and fault-injection fail-closed paths. They qualify the criteria actually exercised: FR-128 (confused-deputy/delegation), FR-129 (individual identity), FR-130 (uniform versioned policy decision), FR-133 (secrets outside the ontology), FR-068 (boundary propagation), NFR-037 (fail-closed) and NFR-042 (encryption/key separation + mTLS).",
+    "The 50 qualifying cases exercise the four real control-plane backends (OPA, Keycloak, SPIFFE/SPIRE, OpenBao) plus mTLS, signed-bundle integrity, version-fence, canonical-UTC window enforcement (VF-001), delegation grant/revocation enforcement at the policy boundary (VF-002) and fault-injection fail-closed paths. They qualify the criteria actually exercised: FR-128 (confused-deputy/delegation), FR-129 (individual identity), FR-130 (uniform versioned policy decision), FR-133 (secrets outside the ontology), FR-068 (boundary propagation), NFR-037 (fail-closed) and NFR-042 (encryption/key separation + mTLS).",
     "The remaining requirement_ids declared on the backlog for OCOR-DEV-0048 (BR-003, BR-007, BR-013, BR-016, FR-020, FR-021, FR-067, FR-103, FR-110, FR-117, FR-143, FR-153, FR-160, NFR-010, NFR-019, NFR-026, NFR-031, NFR-049, NFR-052, NFR-056, NFR-063, NFR-064, NFR-073, NFR-074, NFR-086, NFR-087, NFR-089) are G6/G7 ledger requirements; they remain non-qualified here and are deliberately NOT attributed PASS, pending their own requirement-bound qualifying cases at G6/G7.",
     "The two crypto unit helpers are pure deterministic functions with no external dependency; they are exercised against real concatenated DER blobs and real base64url payloads, not synthetic stubs, and no full X.509 parse is claimed by the DER case.",
     "The plaintext-rejection cases use a monotonic guard raised before any socket is opened (no network I/O), so they are negative contract tests that prove the transport invariant without touching the live backend."
   ],
   "result": "PASS",
-  "rollback_procedure_verified": "Mechanical rollback review (RCCAD rollback_procedure): the change set is confined to five paths - two new source/test files (ocor-runtime/src/ocor_runtime/security/control_plane.py, ocor-runtime/tests/tasks/test_ocor_dev_0048.py), two new evidence files (reports/evidence/G4/OCOR-DEV-0048.json, .log) and an additive edit to reports/evidence/G4/MANIFEST.json. No migration, alembic or schema file is introduced, so versioned down/forward recovery is not applicable. The sealed reused deliverable ocor_runtime.security.ports (OCOR-DEV-0014) is untouched, verified by 'git diff origin/main...HEAD' listing exactly those five paths and no migration/*.sql/alembic file. A 'git revert' of the task commits cleanly deletes the four new files and restores MANIFEST.json to its origin/main state (the diff against origin/main shows a single removed line: the prior created_at value; every OCOR-DEV-0048 artifact and requirement_result entry is a pure addition). Control-plane state is re-seedable: OPA policy is re-installed by the test fixture, the OpenBao lease fixture removes its mount in a finally block, the Keycloak account is shared and re-seeded by the bootstrap fixture, and the temporary SPIRE entry is created and deleted within each test.",
+  "rollback_procedure_verified": "Mechanical rollback review (RCCAD rollback_procedure): the change set is confined to five paths - two source/test files (ocor-runtime/src/ocor_runtime/security/control_plane.py, ocor-runtime/tests/tasks/test_ocor_dev_0048.py), two evidence files (reports/evidence/G4/OCOR-DEV-0048.json, .log) and an additive edit to reports/evidence/G4/MANIFEST.json. No migration, alembic or schema file is introduced, so versioned down/forward recovery is not applicable. The sealed reused deliverable ocor_runtime.security.ports (OCOR-DEV-0014) is untouched, verified by 'git diff origin/main...HEAD' listing exactly those five paths and no migration/*.sql/alembic file. A 'git revert' of the task commits cleanly deletes the new files and restores MANIFEST.json to its origin/main state. Control-plane state is re-seedable: OPA policy is re-installed by the test fixture, the OpenBao lease fixture removes its mount in a finally block, the Keycloak account is shared and re-seeded by the bootstrap fixture, and the temporary SPIRE entry is created and deleted within each test.",
   "schema_version": "1.0",
   "task_id": "OCOR-DEV-0048"
 }
