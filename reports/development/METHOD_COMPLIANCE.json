@@ -42,6 +42,13 @@
       "path": "reports/tests/test_language_migration_benchmark_harness.py",
       "qualifying_ci_must_execute": true,
       "type": "CONDITIONAL_INFRASTRUCTURE_GUARD"
+    },
+    {
+      "id": "TEST-INFRA-005",
+      "justification": "The OCOR-DEV-0048 control-plane provider tests (least privilege via OPA, workload identity and mTLS trust via SPIFFE/SPIRE, delegation via Keycloak, secret isolation via OpenBao) guard on the real ocor-bootstrap services and their bootstrap credentials; the qualifying run on the local stack provides every service and credential so the guard never trips, and validate_runtime_evidence.py --non-skipped rejects any skip in the sealed evidence.",
+      "path": "ocor-runtime/tests/tasks/test_ocor_dev_0048.py",
+      "qualifying_ci_must_execute": true,
+      "type": "CONDITIONAL_INFRASTRUCTURE_GUARD"
     }
   ],
   "verifier": "GO_FOR_BLOCKED_STATE_MERGE__ZERO_BLOCKER_HIGH_MEDIUM_LOW"
