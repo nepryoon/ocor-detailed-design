@@ -46,6 +46,8 @@ jobs:
         run: ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests/sdk/test_typescript_sdk_conformance.py
       - name: Backlog generator reality-parity regression (DEC-212 Phase 2.4)
         run: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_backlog_generator_reality_parity.py
+      - name: Runtime evidence validator fail-closed gate (OCOR-DEV-REM-0016)
+        run: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_runtime_evidence_validator.py
       - name: Phase 3 language-migration benchmark harness guards (DEC-212 Phase 3)
         run: ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_language_migration_benchmark_harness.py
   tooling-policy:

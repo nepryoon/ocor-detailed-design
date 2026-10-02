@@ -1,0 +1,127 @@
+================================================================================
+ OCOR-DEV-REM-0016 — raw evidence log (content-addressed)
+ fail-closed runtime-evidence validator repair (VF-001) + record requalification (VF-002)
+ commit: 15958feed11c00fac61607cc39ca0b98883dfec9
+ generated_at: 2026-10-02T00:40:36Z
+================================================================================
+
+----- VF-001 RED: unfixed validator @ b93dab8 (bypasses must be ACCEPTED) -----
+  empty_result_dict: rc=0 -> PASS: qualifying task evidence for OCOR-DEV-9999
+  xfailed_in_result_1: rc=0 -> PASS: qualifying task evidence for OCOR-DEV-9999
+  full_valid: rc=0 -> PASS: qualifying task evidence for OCOR-DEV-9999
+
+----- VF-001 GREEN: fixed validator @ HEAD (bypasses REJECTED, valid ACCEPTED) -----
+  empty_result_dict: rc=1 -> FAIL: command has no numeric outcome evidence (integer exit_code 0 or result/counters with a failure counter)
+  xfailed_in_result_1: rc=1 -> FAIL: command result.xfailed is not a valid zero: 1
+  full_valid: rc=0 -> PASS: qualifying task evidence for OCOR-DEV-9999
+
+----- OCOR-DEV-REM-0010: validate_runtime_evidence.py --non-skipped -----
+PASS: qualifying task evidence for OCOR-DEV-REM-0010
+[exit_code=0]
+
+----- OCOR-DEV-REM-0011: validate_runtime_evidence.py --non-skipped -----
+PASS: qualifying task evidence for OCOR-DEV-REM-0011
+[exit_code=0]
+
+----- OCOR-DEV-REM-0012: validate_runtime_evidence.py --non-skipped -----
+PASS: qualifying task evidence for OCOR-DEV-REM-0012
+[exit_code=0]
+
+----- GATE: pytest reports/tests/test_runtime_evidence_validator.py -----
+..............                                                           [100%]
+14 passed in 0.34s
+[exit_code=0]
+
+----- GATE: ruff check . -----
+All checks passed!
+[exit_code=0]
+
+----- GATE: mypy (strict, DEC-212 Phase 2.1) -----
+Success: no issues found in 68 source files
+[exit_code=0]
+
+----- GATE: sha256sum -c inputs/normative/SHA256SUMS -----
+inputs/normative/OCOR_Architectural_Design_Document_v1.1.md: OK
+inputs/normative/OCOR_CAP_ELM_Requirement_Crosswalk_v0.9.md: OK
+inputs/normative/OCOR_DEC_197_plus_Draft_v0.1.md: OK
+inputs/normative/OCOR_Decision_Register_v1.0.md: OK
+inputs/normative/OCOR_Decision_Traceability_Index_v1.0.md: OK
+inputs/normative/OCOR_Registers_v0.9.md: OK
+inputs/normative/OCOR_Requirement_Register_v0.9.md: OK
+inputs/normative/OCOR_Requirement_Traceability_Index_v0.9.md: OK
+[exit_code=0]
+
+----- GATE: verify.py --json -----
+==============================================================================
+OCOR ADD — harness di verifica tool-backed
+oggetto: inputs/normative/OCOR_Architectural_Design_Document_v1.1.md
+sha256:  3e7532c7101e80c74b511cedc56a0563ca0938a3fe259911a91245cb19dedc7f
+==============================================================================
+[PASS] Integrità sorgenti
+       8 file, tutti i digest coincidono
+[PASS] JSON Schema — parsing e meta-validazione
+       5 schemi Draft 2020-12 validi: urn:ocor:schema:action-type-contract:1.0, urn:ocor:schema:canonical-ingestion-envelope:1.1, urn:ocor:schema:event-subscription-contract:1.0, urn:ocor:schema:mcp-tool-contract:1.1, urn:ocor:schema:signed-canonical-ir:1.0
+[PASS] OpenAPI — risoluzione $ref
+       OpenAPI 3.1.0 v1.1.0; 6 path, 25 schemi, 26 $ref; tutti i $ref risolti; schemi mai referenziati: nessuno
+[PASS] OpenAPI — validazione semantica con validator ufficiale
+       openapi-spec-validator==0.9.0; wheel SHA-256 222fecffc7714f6d0a6ad62c0e4b66cc2b7dbfafb7b93acfc6c308abbdb51af8; documento OpenAPI 3.1.0 valido
+[PASS] Protobuf — compilazione
+       protoc compila senza errori
+[PASS] Turtle/RDF — parsing
+       17 triple
+[PASS] Rami condizionali insoddisfacibili (classe RV-01)
+       nessun campo richiesto da un condizionale risulta non dichiarato
+[INFO] Rami condizionali da coprire con casi POSITIVI
+       il §7.1 del prompt richiede almeno un caso positivo per ramo — signed-canonical-ir=0; canonical-ingestion-envelope=4; mcp-tool-contract=11; action-type-contract=9; event-subscription-contract=0
+[PASS] FSM — bijezione diagramma/tabella
+       29 stati in corrispondenza
+[PASS] FSM — famiglia ACT-T
+       ACT-T01–T31 contigui, più le varianti a/b/c
+[INFO] FSM — stati terminali
+       stati senza archi uscenti non attesi: nessuno; stati di indeterminatezza privi di uscita: nessuno
+[PASS] Tracciabilità — allocazione in §7
+       DEC 181/196; BR 18/18; FR 174/174; NFR 93/93; ARC 23/23; CAP 25/26; ELM 103/103; RSK 60/60
+[PASS] Universo normativo
+       693 = 693 atteso
+[PASS] Rimandi di sezione
+       44 rimandi distinti, 59 sezioni; non risolti: nessuno
+[PASS] Evidence fence
+       'E1=0' ricorre 16 volte; claim probatori non supportati: nessuno
+[PASS] Nessun DEC-197 assegnato
+       3 occorrenze, tutte in forma negativa o come nome di file
+==============================================================================
+PASS 14  FAIL 0  NOT_EXECUTED 0
+==============================================================================
+referto JSON: reports/verify_report.json
+[exit_code=0]
+
+----- GATE: validate_language_policy.py -----
+PASS: no tracked file uses a monitored extension outside its authorized area
+[exit_code=0]
+
+----- GATE: validate_ocor_change_scope.py --base origin/main --head HEAD -----
+PASS: 22 changed path(s); immutable surfaces untouched; task ledger stable
+[exit_code=0]
+
+----- GATE: validate_rccad.py --base-ref origin/main -----
+{
+  "checked_artifacts": 22,
+  "dynamic_assurance": "CI_REQUIRED",
+  "findings": [],
+  "fitness_results": {
+    "AFF-001": "PASS_STATIC_PRECHECK",
+    "AFF-002": "PASS_STATIC_PRECHECK",
+    "AFF-003": "PASS_STATIC_PRECHECK",
+    "AFF-004": "PASS_STATIC_PRECHECK",
+    "AFF-005": "PASS_STATIC_PRECHECK",
+    "AFF-006": "PASS_STATIC_PRECHECK",
+    "AFF-007": "PASS_STATIC_PRECHECK",
+    "AFF-008": "PASS_STATIC_PRECHECK",
+    "AFF-009": "PASS_STATIC_PRECHECK",
+    "AFF-010": "PASS_STATIC_PRECHECK"
+  },
+  "methodology_sha256": "231ce3325537de85890b16e97f138bd6a4263fc1e240094ed26499af9aeeb6cd",
+  "status": "PASS_LOCAL_PRECHECK"
+}
+[exit_code=0]
+

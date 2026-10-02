@@ -24,3 +24,11 @@ Candidato qualificato con TDD RED→GREEN (test hermetici su repo git temporaneo
 e gate locali verdi. **Non** è un sigillo: richiede verifica indipendente e CI
 verde sull'HEAD esatto. Nessuna modifica a `inputs/`, ADD o LLD; nessun claim
 probatorio promosso.
+
+## Requalificazione content-addressed (2026-10-01)
+
+A fronte di `VF-003` (`OCOR-DEV-REM-0016`) è prodotto il record candidato
+content-addressed `OCOR-DEV-REM-0012.json` (con `.log` e `MANIFEST.json`),
+riqualificato all'HEAD `3135517` e accettato da
+`validate_runtime_evidence.py --non-skipped`. Supersede questo `evidence.json`
+(immutabile) tramite il campo `supersedes`.

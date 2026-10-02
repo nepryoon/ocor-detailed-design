@@ -52,3 +52,11 @@ La verifica indipendente richiesta da R2 (`request_id`
 finding bloccanti (`VF-001`…`VF-004`). Il risultato completo è appeso in append al
 record `evidence.json` (campo `independent_verification_result`) senza riscrivere i
 campi storici. Questo candidato resta **non sigillato**.
+
+## Requalificazione content-addressed (2026-10-01)
+
+A fronte di `VF-003` (`OCOR-DEV-REM-0016`) è prodotto il record candidato
+content-addressed `OCOR-DEV-REM-0010.json` (con `.log` e `MANIFEST.json`),
+riqualificato all'HEAD `3135517` e accettato da
+`validate_runtime_evidence.py --non-skipped`. Supersede questo `evidence.json`
+(immutabile) tramite il campo `supersedes`.
