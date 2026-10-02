@@ -2,8 +2,8 @@
   "assumptions_requiring_revalidation": [
     "The effective model name and reasoning effort are not exposed by the runtime."
   ],
-  "baseline_commit": "792842d91ae12d64756ff133f763c6ace6c7734f",
-  "branch": "governed/state-sync-ocor-dev-0048-terminal-no-go",
+  "baseline_commit": "f0f88d906e2c7cc5a57ec1c0c1bd616f63982e18",
+  "branch": "governed/state-sync-toolchain-lock-typescript-resolved",
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -638,6 +638,10 @@
     {
       "command": "read ~/.ocor-codex/verdicts/OCOR-DEV-0048-7f2fff555621-3.json",
       "result": "NO_GO: 2 blocking high findings (VF-001 delegation window re-validated against request.at -> expired delegation still PERMIT; VF-002 valid_until fixed at 300s not bounded by delegation expiry -> decision outlives Authority). Full suite 955 passed on real stack, ruff/mypy clean, real OPA/Keycloak/OpenBao/SPIRE healthy. Per PO decision no further repair."
+    },
+    {
+      "command": "governed/state-sync-toolchain-lock-typescript-resolved: close TOOLCHAIN-LOCK-TYPESCRIPT decision request as RESOLVED (PO decision 2026-10-02 Option 1)",
+      "result": "DECISION_REQUEST_RESOLVED_NO_LOCK_VARIATION_isolated_node_20.20.2_typescript_7.0.2_for_local_gates"
     }
   ],
   "completed_tasks": [
@@ -756,7 +760,7 @@
     "R3 step (c): PR #153 merged (7d833606756203f28c50913871f6ae6d66c790ee). scripts/validate_evidence_input_drift.py wired as blocking CI gate (ocor-tooling-bootstrap.yml) and preflight step (AGENTS.md); all 13 checks green on the exact head af61453cfae010dd8b68c82692cb42fbc3e9e678; drift validator GREEN at HEAD (0/165 inputs, 0/62 tasks).",
     "OCOR-DEV-0048 escalation: cycle-2 independent verification (head eda08db30ca20c722a1cc11d25e4b34d7c590227) returned NO_GO with 2 blocking high findings (VF-001 timezone-offset bypass of signed-delegation/bundle window; VF-002 delegation not wired into Keycloak->OPA boundary). 2 repair cycles exhausted -> escalated BLOCKED_REPAIR_BUDGET_EXHAUSTED per RCCAD 8; task and all transitive dependents (OCOR-DEV-0049..0069) blocked pending PO disposition. Evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed)."
   ],
-  "current_task": "Recorded OCOR-DEV-0048 cycle-3 independent verification NO_GO (OCOR-DEV-0048-7f2fff555621-3): VF-001 delegation window validated against request.at (control_plane.py:1212); VF-002 valid_until not bounded by delegation expiry (control_plane.py:1259-1261). Per PO decision OCOR-DEV-0048-REPAIR-3 no further repair: OCOR-DEV-0048 terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED; backlog OCOR-DEV-0049..0069 transitively blocked. Evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed).",
+  "current_task": "Closed the TOOLCHAIN-LOCK-TYPESCRIPT decision request as RESOLVED (PO decision 2026-10-02, Option 1: no infra/toolchain.lock.json variation; node 20.20.2 + typescript 7.0.2 in isolated DEC-211 env for local gates).",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -846,11 +850,10 @@
     "reports/evidence/G4/OCOR-DEV-0047.json",
     "reports/evidence/G4/OCOR-DEV-0047.log"
   ],
-  "exact_next_action": "Close the TOOLCHAIN-LOCK-TYPESCRIPT decision request as resolved (PO decision 2026-10-02, Option 1) in a separate governed change set; then register reports/development/TERMINAL_BLOCKED_REPORT.json with the decisions package and terminate TERMINAL_BLOCKED.",
+  "exact_next_action": "Register/refresh reports/development/TERMINAL_BLOCKED_REPORT.json to the cycle-3 terminal state (OCOR-DEV-0048 BLOCKED_REPAIR_BUDGET_EXHAUSTED) in a governed change set, then terminate TERMINAL_BLOCKED.",
   "schema_version": "1.0",
   "unresolved_blockers": [
-    "OCOR-DEV-0048",
-    "TOOLCHAIN-LOCK-TYPESCRIPT"
+    "OCOR-DEV-0048"
   ],
-  "worktree": ".ocor/worktrees/ocor-dev-0048-terminal"
+  "worktree": ".ocor/worktrees/toolchain-lock-typescript"
 }

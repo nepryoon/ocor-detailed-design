@@ -1,10 +1,10 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0048-terminal-no-go",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR-DEV-0048-TERMINAL-NO-GO",
+    "branch": "governed/state-sync-toolchain-lock-typescript-resolved",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__TOOLCHAIN-LOCK-TYPESCRIPT-RESOLVED",
     "decision_id": "DEC-210",
-    "phase": "BACKLOG_OCOR_DEV_0048_TERMINAL_BLOCKED",
-    "worktree": ".ocor/worktrees/ocor-dev-0048-terminal"
+    "phase": "GOVERNED_TOOLCHAIN_LOCK_TYPESCRIPT_RESOLVED",
+    "worktree": ".ocor/worktrees/toolchain-lock-typescript"
   },
   "backlog_escalations": {
     "OCOR-DEV-0048": {
@@ -109,7 +109,7 @@
       ]
     }
   },
-  "baseline_commit": "792842d91ae12d64756ff133f763c6ace6c7734f",
+  "baseline_commit": "f0f88d906e2c7cc5a57ec1c0c1bd616f63982e18",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -164,8 +164,9 @@
       "decision_request": "reports/development/decision_requests/TOOLCHAIN-LOCK-TYPESCRIPT.md",
       "id": "TOOLCHAIN-LOCK-TYPESCRIPT",
       "non_blocking": true,
+      "resolution": "PO decision 2026-10-02 Option 1: no infra/toolchain.lock.json variation. Use node 20.20.2 and typescript@7.0.2 (bin/tsc) in an isolated DEC-211 environment for the implementer's local gates; the lock and its validation/verification controls remain unchanged. Independent verification already confirms the entries match in isolation (cycle-2: 8/9 toolchain entries).",
       "scope": "typescript (tsc) 7.0.2 not installed on this machine and host node v24.21.0 differs from lock 20.20.2. The independent verifier provisions both in isolation (cycle-2 confirmed 8/9 toolchain entries match after isolated acquisition), so this does NOT block REM-0015/0016 verification; it is a host-toolchain alignment question for the implementer's local gates.",
-      "status": "OPEN_PO_DECISION_REQUIRED"
+      "status": "RESOLVED"
     },
     {
       "blocked_tasks": [
@@ -340,7 +341,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED after cycle-3 NO_GO (OCOR-DEV-0048-7f2fff555621-3). Next: close the TOOLCHAIN-LOCK-TYPESCRIPT decision request as resolved (PO decision 2026-10-02, Option 1: no infra/toolchain.lock.json variation; node 20.20.2 + typescript 7.0.2 in isolated DEC-211 env) in a separate governed change set; then register reports/development/TERMINAL_BLOCKED_REPORT.json with the decisions package and terminate TERMINAL_BLOCKED.",
+  "next_executable_action": "OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED after cycle-3 NO_GO (OCOR-DEV-0048-7f2fff555621-3). TOOLCHAIN-LOCK-TYPESCRIPT is now RESOLVED (PO decision 2026-10-02, Option 1: no infra/toolchain.lock.json variation; node 20.20.2 + typescript 7.0.2 in isolated DEC-211 env for local gates). Next: register/refresh reports/development/TERMINAL_BLOCKED_REPORT.json to the cycle-3 terminal state and terminate TERMINAL_BLOCKED.",
   "remediation_status": {
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -539,5 +540,5 @@
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-10-02T13:03:19Z"
+  "updated_at": "2026-10-02T13:27:20Z"
 }
