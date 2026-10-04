@@ -4250,3 +4250,35 @@
   (`OCOR-DEV-0049`…`OCOR-DEV-0069`) è bloccato transitivamente su `OCOR-DEV-0048`
   (`BLOCKED_REPAIR_BUDGET_EXHAUSTED`); le decisioni PO non bloccanti `RVW-03`/`INFO-A`/`INFO-C`
   restano aperte.
+
+
+## 2026-10-04 — OCOR-DEV-0048: verdetto ciclo 5 NO_GO → TERMINAL_BLOCKED (decisione OCOR-DEV-0048-REPAIR-5-CLAUDE)
+
+- Il verifier indipendente ha prodotto il verdetto `OCOR-DEV-0048-4d9a0644cdd1-5` (head
+  `4d9a0644cdd1553ae899409f76e7839bd03e26b8`, `repair_cycle: 5`, `TASK_EVIDENCE`): `NO_GO` con 2
+  finding bloccanti, uno `high` e uno `medium`.
+  - `VF-001` (`high`, `security/control_plane.py:1802`): `KeycloakIdentityProvider` include il claim
+    `act` firmato nella `principal.actor_chain`; nel ramo `delegation=None` `evaluate` controlla
+    soltanto un subset insiemistico e salta `_verify_grant_chain`. Con un token `act` realmente
+    firmato da Keycloak e la delega revocata, presentando grant/capability si ottiene
+    `DELEGATION_REVOKED`, ma omettendo entrambi si ottiene comunque `PERMIT`. Il claim autentica gli
+    attori ma non sostituisce scope, ceilings, binding e revoca del grant.
+  - `VF-002` (`medium`, `reports/evidence/G4/OCOR-DEV-0048.json:1775`): `inputs.inputs_tree` registra
+    `d9d827619d9c0215f5edbd4d372b1f0b52558f84` mentre l'HEAD verificato è
+    `60a73de8e47b38e94aeb0e2b8dedc689fab6eb35`; gli hash per-file, il commit sorgente, il manifest e i
+    24 raw log coincidono, ma il digest tree registrato è errato.
+- Per la decisione PO `OCOR-DEV-0048-REPAIR-5-CLAUDE` (2026-10-04): nessuna sesta riparazione senza
+  nuova decisione, `TERMINAL_BLOCKED`. Implementatore della riparazione Claude Code (Anthropic),
+  verifier Codex (OpenAI): modelli di fornitori diversi in processi separati.
+- Stato: `OCOR-DEV-0048` `BLOCKED_REPAIR_BUDGET_EXHAUSTED` terminale; downstream
+  `OCOR-DEV-0049`…`OCOR-DEV-0069` transitivamente bloccato. Evidenza
+  `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
+- `EXECUTION_STATE.json`, `MODEL_HANDOFF.json` riallineati (ciclo 5 `NO_GO`, terminal disposition);
+  `TERMINAL_BLOCKED_REPORT.json` riallineato allo stato terminale ciclo 5.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`; `inputs/` invariato. Nessuna modifica a codice,
+  validator o workflow: solo `reports/development/` (report terminale + stato + handoff + log).
+- Prossima azione: nessuna — il ciclo termina con `TERMINAL_BLOCKED`. Tutto il residuo
+  (`OCOR-DEV-0049`…`OCOR-DEV-0069`) è bloccato transitivamente su `OCOR-DEV-0048`
+  (`BLOCKED_REPAIR_BUDGET_EXHAUSTED`); le decisioni PO non bloccanti `RVW-03`/`INFO-A`/`INFO-C`
+  restano aperte.

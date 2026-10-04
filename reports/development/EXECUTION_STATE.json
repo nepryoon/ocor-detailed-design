@@ -1,13 +1,13 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0048-repair-cycle-4",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__TERMINAL_BLOCKED_REPORT_CYCLE4",
+    "branch": "governed/state-sync-ocor-dev-0048-repair-cycle-5",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__TERMINAL_BLOCKED_REPORT_CYCLE5",
     "decision_id": "DEC-210",
-    "phase": "GOVERNED_TERMINAL_BLOCKED_REPORT_CYCLE4",
+    "phase": "GOVERNED_TERMINAL_BLOCKED_REPORT_CYCLE5",
     "task_branch": "task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls",
-    "task_head_sha": "c6cbcd3282161aafd404e73bec49acffb1ffb011",
+    "task_head_sha": "4d9a0644cdd1553ae899409f76e7839bd03e26b8",
     "task_worktree": ".ocor/worktrees/ocor-dev-0048",
-    "worktree": ".ocor/worktrees/ocor-dev-0048-repair4-state"
+    "worktree": ".ocor/worktrees/ocor-dev-0048-repair5-state"
   },
   "backlog_escalations": {
     "OCOR-DEV-0048": {
@@ -49,6 +49,18 @@
           "summary": "evaluate verifica lista/digest dei moduli OPA prima del POST (r. 1243) e rivalida solo le finestre temporali (rr. 1330\u20131343); un proxy mTLS trasparente inietta un modulo non firmato prima del POST reale, OPA restituisce true e il provider emette PERMIT con il vecchio digest firmato anzich\u00e9 STALE_BUNDLE (control_plane.py:1243). Viola il criterio \u00abstale bundle fails closed\u00bb e il version fence di ADD \u00a75.1."
         }
       ],
+      "final_findings_cycle_5": [
+        {
+          "id": "VF-001",
+          "severity": "high",
+          "summary": "KeycloakIdentityProvider include il claim act firmato nella principal.actor_chain; nel ramo delegation=None evaluate controlla soltanto un subset insiemistico e salta _verify_grant_chain, cos\u00ec un token con act firmato + grant valido produce PERMIT e l'omissione di grant/capability produce ugualmente PERMIT (control_plane.py:1802). Il claim autentica gli attori ma non sostituisce scope, ceilings, binding e revoca del grant."
+        },
+        {
+          "id": "VF-002",
+          "severity": "medium",
+          "summary": "Il campo inputs.inputs_tree dell'evidenza candidata (reports/evidence/G4/OCOR-DEV-0048.json:1775) registra d9d827619d9c0215f5edbd4d372b1f0b52558f84 mentre l'HEAD verificato \u00e8 60a73de8e47b38e94aeb0e2b8dedc689fab6eb35; gli hash per-file, il commit sorgente, il manifest e i 24 raw log coincidono, ma il digest tree registrato non coincide con il tree reale del commit."
+        }
+      ],
       "minimal_unblock_action": "Implement VF-001 (canonical UTC instants with the same precision for sign+enforce, or reject non-canonical time representations) and VF-002 (wire grant/revocation validation into the authorized provider path with real-boundary positive/negative cases), then request a third independent verification. This exceeds the 2-repair-cycle harness budget (RCCAD 8): requires explicit PO authorization or a governed alternative disposition.",
       "po_decision": {
         "date": "2026-10-02",
@@ -61,6 +73,16 @@
         "date": "2026-10-03",
         "id": "OCOR-DEV-0048-REPAIR-4-CODEX",
         "scope": "VF-001/VF-002 ciclo 3 e intera classe di difetti temporali in security/control_plane.py; una sola fase implementativa Codex; no merge e nessun altro task"
+      },
+      "po_decision_repair_cycle_5": {
+        "NO_GO_disposition": "TERMINAL_BLOCKED; nessuna ulteriore riparazione senza nuova decisione del Product Owner",
+        "audit_matrix": "~/.ocor-codex/audit_0048.md (fuori dal repository)",
+        "authorized_start_head": "c6cbcd3282161aafd404e73bec49acffb1ffb011",
+        "date": "2026-10-04",
+        "id": "OCOR-DEV-0048-REPAIR-5-CLAUDE",
+        "implementer": "Claude Code (Anthropic)",
+        "scope": "Audit completo ADD v1.3 \u00a75.1/\u00a75.2 e LLD collegate + riparazione unica dei vincoli firmati DelegationGrant e binding atomico OPA\u2192snapshot bundle; implementatore Claude Code, verifier Codex (fornitori diversi).",
+        "verifier": "Codex (OpenAI)"
       },
       "repair_cycle_3": {
         "head_sha": "7f2fff555621424c8c89764aba16810f038ef509",
@@ -91,13 +113,29 @@
           "retry_count": 1
         }
       },
-      "status": "REPAIR_CYCLE_4_NO_GO_TERMINAL_BLOCKED",
+      "repair_cycle_5": {
+        "findings": [
+          "VF-001",
+          "VF-002"
+        ],
+        "head_sha": "4d9a0644cdd1553ae899409f76e7839bd03e26b8",
+        "implementer": "Claude Code (Anthropic)",
+        "model_diversity": "different providers (Claude/Anthropic implementer, Codex/OpenAI verifier)",
+        "repair_cycle": 5,
+        "request_id": "OCOR-DEV-0048-4d9a0644cdd1-5",
+        "review_type": "TASK_EVIDENCE",
+        "scope": "VF-001/VF-002 ciclo 4 + vincoli firmati DelegationGrant + binding atomico OPA\u2192snapshot bundle",
+        "source_commit": "46854e06ee3cc139c2042ba4373f08ea80e3a6fa",
+        "verdict": "NO_GO",
+        "verifier": "Codex (OpenAI)"
+      },
+      "status": "REPAIR_CYCLE_5_NO_GO_TERMINAL_BLOCKED",
       "terminal_disposition": {
         "date": "2026-10-04",
-        "decision": "OCOR-DEV-0048-REPAIR-4-CODEX",
-        "note": "Cycle-4 independent verification (OCOR-DEV-0048-c6cbcd328216-4) returned NO_GO with 2 blocking high findings (VF-001 SignedDelegation does not sign tenant_id/domains/compartments required by ADD v1.3 \u00a75.2; VF-002 unsigned OPA module injected between freshness check and eval yields PERMIT with stale digest instead of STALE_BUNDLE). Per PO decision OCOR-DEV-0048-REPAIR-4-CODEX (2026-10-03), no fifth repair is authorized: OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED and the whole remaining backlog (OCOR-DEV-0049..0069) is transitively blocked. Evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed)."
+        "decision": "OCOR-DEV-0048-REPAIR-5-CLAUDE",
+        "note": "Cycle-5 independent verification (OCOR-DEV-0048-4d9a0644cdd1-5) returned NO_GO with 2 blocking findings (VF-001 high: the signed act claim does not replace the DelegationGrant chain validation \u2014 omitting grant/capability yields PERMIT; VF-002 medium: evidence inputs_tree digest mismatch d9d827... vs 60a73de8...). Per PO decision OCOR-DEV-0048-REPAIR-5-CLAUDE (2026-10-04), no sixth repair is authorized: OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED and the whole remaining backlog (OCOR-DEV-0049..0069) is transitively blocked. Evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed)."
       },
-      "terminal_disposition_superseded_by": "OCOR-DEV-0048-REPAIR-4-CODEX (solo un quarto ciclo, nessuna quinta riparazione)",
+      "terminal_disposition_superseded_by": "OCOR-DEV-0048-REPAIR-5-CLAUDE (solo un quinto ciclo, nessuna sesta riparazione senza nuova decisione)",
       "verdicts": [
         {
           "findings": [
@@ -159,11 +197,21 @@
           "repair_cycle": 4,
           "request_id": "OCOR-DEV-0048-c6cbcd328216-4",
           "verdict": "NO_GO"
+        },
+        {
+          "findings": [
+            "VF-001",
+            "VF-002"
+          ],
+          "head_sha": "4d9a0644cdd1553ae899409f76e7839bd03e26b8",
+          "repair_cycle": 5,
+          "request_id": "OCOR-DEV-0048-4d9a0644cdd1-5",
+          "verdict": "NO_GO"
         }
       ]
     }
   },
-  "baseline_commit": "366a66d40a2b98c2df8f4c5d51ebcbbcb4c8e8fa",
+  "baseline_commit": "97f1081ec825356f276073d093bf20f51e47ba25",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -250,13 +298,13 @@
       "id": "OCOR-DEV-0048",
       "non_blocking": false,
       "po_authorization": {
-        "NO_GO_disposition": "TERMINAL_BLOCKED, nessuna riparazione ulteriore",
-        "authorized_start_head": "7f2fff555621424c8c89764aba16810f038ef509",
-        "date": "2026-10-03",
-        "id": "OCOR-DEV-0048-REPAIR-4-CODEX",
-        "scope": "VF-001/VF-002 ciclo 3 e intera classe di difetti temporali in security/control_plane.py; una sola fase implementativa Codex; no merge e nessun altro task"
+        "NO_GO_disposition": "TERMINAL_BLOCKED; nessuna ulteriore riparazione senza nuova decisione del Product Owner",
+        "authorized_start_head": "c6cbcd3282161aafd404e73bec49acffb1ffb011",
+        "date": "2026-10-04",
+        "id": "OCOR-DEV-0048-REPAIR-5-CLAUDE",
+        "scope": "Audit completo ADD v1.3 \u00a75.1/\u00a75.2 e LLD + riparazione unica vincoli DelegationGrant/binding OPA; implementatore Claude Code, verifier Codex"
       },
-      "scope": "Decisione PO OCOR-DEV-0048-REPAIR-4-CODEX del 2026-10-03 supersede il divieto terminale del ciclo 3 per un solo quarto ciclo. Riparazione implementata (head c6cbcd3282161aafd404e73bec49acffb1ffb011) e verificata indipendentemente NO_GO (OCOR-DEV-0048-c6cbcd328216-4) con 2 finding high (VF-001 delega non firma tenant/domini/compartimenti; VF-002 modulo OPA non firmato iniettato -> PERMIT con digest stantio). Nessuna quinta riparazione autorizzata: BLOCKED_REPAIR_BUDGET_EXHAUSTED; downstream OCOR-DEV-0049..0069 transitivamente bloccato. Evidenza CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (non sigillata).",
+      "scope": "Decisione PO OCOR-DEV-0048-REPAIR-5-CLAUDE del 2026-10-04 supersede il divieto terminale del ciclo 4 per un solo quinto ciclo (implementatore Claude Code, verifier Codex, fornitori diversi). Riparazione implementata (head 4d9a0644cdd1553ae899409f76e7839bd03e26b8) e verificata indipendentemente NO_GO (OCOR-DEV-0048-4d9a0644cdd1-5) con 2 finding (VF-001 high: claim act firmato non sostituisce la catena del grant; VF-002 medium: digest inputs_tree dell'evidenza errato). Nessuna sesta riparazione autorizzata: BLOCKED_REPAIR_BUDGET_EXHAUSTED; downstream OCOR-DEV-0049..0069 transitivamente bloccato. Evidenza CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (non sigillata).",
       "status": "BLOCKED_REPAIR_BUDGET_EXHAUSTED"
     }
   ],
@@ -331,17 +379,18 @@
     "OCOR-DEV-0046",
     "OCOR-DEV-0047"
   ],
-  "current_gate": "TERMINAL_BLOCKED_REPORT_CYCLE4",
+  "current_gate": "TERMINAL_BLOCKED_REPORT_CYCLE5",
   "latest_ci_evidence": {
-    "candidate_commit": "c94c072e0bd70a27e1350980320659f6b7d6370a",
-    "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR159_MERGED_7cac163e960cb86a3a780b42b65a96d518453791",
+    "candidate_commit": "57beb97dedcd2fd9cb173c16ffafbae06fb9409e",
+    "conclusion": "PASS_ALL_13_GREEN_ON_EXACT_HEAD_PR161_MERGED_97f1081ec825356f276073d093bf20f51e47ba25",
     "run_ids": [
-      37013521745,
-      37013521062,
-      37013521106,
-      37013521407,
-      37013521444,
-      37013521759
+      37201866187,
+      37201866189,
+      37201866191,
+      37201866203,
+      37201866212,
+      37201866217,
+      37201866223
     ]
   },
   "mandate_phase_status": {
@@ -402,7 +451,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "TERMINAL_BLOCKED: no executable work remains. OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED after cycle-4 NO_GO (OCOR-DEV-0048-c6cbcd328216-4, PO decision OCOR-DEV-0048-REPAIR-4-CODEX); the residual backlog OCOR-DEV-0049..0069 is transitively blocked. Non-blocking PO decisions RVW-03, INFO-A, INFO-C remain OPEN_PO_DECISION_REQUIRED. TERMINAL_BLOCKED_REPORT.json refreshed to the cycle-4 terminal state.",
+  "next_executable_action": "TERMINAL_BLOCKED: no executable work remains. OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED after cycle-5 NO_GO (OCOR-DEV-0048-4d9a0644cdd1-5, PO decision OCOR-DEV-0048-REPAIR-5-CLAUDE); the residual backlog OCOR-DEV-0049..0069 is transitively blocked. Non-blocking PO decisions RVW-03, INFO-A, INFO-C remain OPEN_PO_DECISION_REQUIRED. TERMINAL_BLOCKED_REPORT.json refreshed to the cycle-5 terminal state.",
   "remediation_status": {
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -601,5 +650,5 @@
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-10-04T12:20:50Z"
+  "updated_at": "2026-10-04T13:49:11Z"
 }
