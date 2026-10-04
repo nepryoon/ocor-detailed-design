@@ -217,3 +217,58 @@ allo snapshot/revisione verificato del bundle completo. **Non eseguita**: la dec
 (`OCOR-DEV-0049`…`OCOR-DEV-0069`) restano bloccati transitivamente. L'evidenza di `OCOR-DEV-0048`
 resta `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata). Nessun lavoro di backlog eseguibile
 resta: stato terminale `TERMINAL_BLOCKED`.
+
+## Disposition (Product Owner, 2026-10-04) — OCOR-DEV-0048-REPAIR-5-CLAUDE
+
+Il Product Owner ha autorizzato **UN SOLO** quinto ciclo di riparazione con decisione
+`OCOR-DEV-0048-REPAIR-5-CLAUDE` (2026-10-04), sostituendo il divieto finale del ciclo 4. Il ciclo è
+eseguito da Claude Code come implementatore, preceduto da un audit completo.
+
+- **Ambito**: audit per ogni regola ADD v1.3 §5.1/§5.2 e LLD collegate e per ogni
+  acceptance/negative-acceptance criterion del task; riparazione unica dei vincoli firmati del
+  `DelegationGrant` (tenant, domini, compartimenti, capability/effect/risk ceiling, binding a
+  policy/workload) con rifiuto dei grant incompleti, e binding atomico della valutazione OPA e del
+  `PolicyDecision` allo snapshot verificato del bundle completo. Positivi/negativi sui backend reali,
+  senza mock del boundary.
+- **Branch**: `task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls`, da head
+  `c6cbcd3282161aafd404e73bec49acffb1ffb011`, senza riscrivere ciò che è già stato accettato.
+- **Disclosure**: implementatore della riparazione Claude Code (Anthropic), verifier Codex (OpenAI):
+  modelli di fornitori diversi in processi separati.
+- **Disposition su NO_GO**: nessuna sesta riparazione senza nuova decisione, `TERMINAL_BLOCKED`.
+
+### Esito della riparazione (ciclo 5)
+
+- Audit pre-modifica registrato in `~/.ocor-codex/audit_0048.md` (fuori dal repository); matrice
+  regole ADD §5.1/§5.2/LLD → implementato/parziale/assente con riga e test positivo/negativo.
+- Head candidato: `4d9a0644cdd1553ae899409f76e7839bd03e26b8` (commit sorgente/test
+  `46854e06ee3cc139c2042ba4373f08ea80e3a6fa`).
+- `DelegationGrant` firmato completo con intersezione tenant/org/domini/compartimenti/capability/
+  ceiling/policy/chiave workload, catena con parent digest/redelegation/depth/non-ampliamento, revoca
+  runtime, nonce; snapshot bundle verificato con provenienza `explain=full` e ricontrollo
+  post-valutazione; lease OpenBao legata al principal.
+- Gate locali verdi: `166` casi task, `1071` runtime, `82` reports CI, zero skip; ruff, mypy, RCCAD,
+  scope, drift, language, plan, verify.py, SHA256SUMS.
+
+### Verdetto indipendente (ciclo 5): `NO_GO`
+
+Richiesta `OCOR-DEV-0048-4d9a0644cdd1-5` (`TASK_EVIDENCE`, `repair_cycle: 5`) eseguita dal verifier
+indipendente sull'HEAD esatto `4d9a0644cdd1553ae899409f76e7839bd03e26b8`. Verdetto `NO_GO` con 2
+finding bloccanti:
+
+- **VF-001** (`high`) — `security/control_plane.py:1802`: il claim `act` firmato non sostituisce la
+  catena del `DelegationGrant`; nel ramo `delegation=None` l'omissione di grant/capability produce
+  `PERMIT` (il claim autentica gli attori ma non sostituisce scope, ceilings, binding e revoca).
+- **VF-002** (`medium`) — `reports/evidence/G4/OCOR-DEV-0048.json:1775`: `inputs.inputs_tree` errato
+  (`d9d827…` vs `60a73de8…`); il validatore di drift per-file ignora questo campo.
+
+**Non eseguita alcuna ulteriore riparazione**: la decisione `OCOR-DEV-0048-REPAIR-5-CLAUDE` autorizza
+un solo quinto ciclo e, su nuovo `NO_GO`, vieta ulteriori riparazioni senza nuova decisione.
+
+### Stato (finale ciclo 5)
+
+`OCOR-DEV-0048` è terminale: `BLOCKED_REPAIR_BUDGET_EXHAUSTED`. Il ciclo 5 (head
+`4d9a0644cdd1553ae899409f76e7839bd03e26b8`) è stato verificato indipendente `NO_GO`; per la decisione
+`OCOR-DEV-0048-REPAIR-5-CLAUDE` non è consentita alcuna ulteriore riparazione senza nuova decisione.
+Tutti i 21 task residui (`OCOR-DEV-0049`…`OCOR-DEV-0069`) restano bloccati transitivamente.
+L'evidenza di `OCOR-DEV-0048` resta `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
+Nessun lavoro di backlog eseguibile resta: stato terminale `TERMINAL_BLOCKED`.
