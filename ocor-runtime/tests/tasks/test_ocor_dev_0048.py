@@ -34,11 +34,14 @@ from pathlib import Path
 
 import pytest
 
+from ocor_runtime.kernel.governance import RiskClass
 from ocor_runtime.kernel.governed_context import GovernedContext
 from ocor_runtime.security.control_plane import (
+    CapabilityInvocation,
     KeycloakIdentityProvider,
     OpaPolicyDecisionProvider,
     OpenBaoSecretProvider,
+    OperationClass,
     SignedDelegation,
     SignedDelegationRevocation,
     SignedPolicyBundle,
@@ -47,10 +50,14 @@ from ocor_runtime.security.control_plane import (
     _der_to_pem,
     _rsa_sign,
     _split_der_chain,
+    verify_delegation_signature,
     verify_signed_delegation,
+    workload_key_thumbprint,
 )
 from ocor_runtime.security.ports import (
     AuthenticatedPrincipal,
+    ControlName,
+    ControlStatus,
     IdentityRequest,
     PolicyEffect,
     PolicyRequest,
@@ -129,6 +136,9 @@ _SIGNER_D = int(
     "b29d1f08cb29ba9050d41e4a66cb7e14d1f3f67da8707fce47ef20e7c65c8761",
     16,
 )
+
+
+_WORKLOAD_KEY_THUMBPRINT: str | None = None
 
 
 def _sign_bundle(
@@ -315,6 +325,10 @@ class _MtlsReverseProxy:
         self.response_delay = 0.0
         self.delayed_method: bytes | None = None
         self.delayed_path: bytes | None = None
+        # One-shot hooks run around the next policy evaluation POST: the real
+        # request and response still cross the real backend unmodified.
+        self.before_eval: object = None
+        self.after_eval: object = None
         self._backend = (backend_host, backend_port)
         self._server_cert_pem = server_cert_pem
         self._server_key_pem = server_key_pem
@@ -368,6 +382,12 @@ class _MtlsReverseProxy:
             if not head:
                 return
             head = _set_header(head, b"Connection", b"close")
+            is_eval = head.startswith(b"POST /v1/data/ocor/control_plane/allow")
+            before, after = (self.before_eval, self.after_eval) if is_eval else (None, None)
+            if is_eval:
+                self.before_eval = self.after_eval = None
+            if callable(before):
+                before()
             backend = socket.create_connection(self._backend, timeout=10)
             try:
                 backend.sendall(head + b"\r\n\r\n" + body)
@@ -375,6 +395,8 @@ class _MtlsReverseProxy:
                 response = _read_until_eof(backend)
             finally:
                 backend.close()
+            if callable(after):
+                after()
             if (self.response_delay
                     and (self.delayed_method is None or head.startswith(self.delayed_method+b" "))
                     and (self.delayed_path is None or head.split(b" ")[1] == self.delayed_path)):
@@ -428,6 +450,8 @@ def mtls(live_stack: None) -> dict[str, object]:
         expected_spiffe_id=EXPECTED_SPIFFE_ID,
     )
     client_context = provider.mtls_context()
+    global _WORKLOAD_KEY_THUMBPRINT
+    _WORKLOAD_KEY_THUMBPRINT = workload_key_thumbprint(client_context)
     material = _server_tls_material()
     proxies: list[_MtlsReverseProxy] = []
     for backend_port in (8181, 8080, 8200):
@@ -937,13 +961,26 @@ def test_openbao_provider_rejects_plaintext_base_url():
     )
     request = SecretRequest(
         secret_ref="urn:ocor:secret-ref:plaintext-openbao",
-        principal_id="urn:ocor:principal:plaintext-openbao",
+        principal_id="plaintext-openbao",
         purpose="read-site-1",
         governed_context_digest=f"urn:sha256:{'0' * 64}",
         requested_at=_now(),
     )
+    # A correctly bound principal reaches the transport check, which must
+    # refuse plaintext before any socket is opened.
+    principal = AuthenticatedPrincipal(
+        principal_id="plaintext-openbao",
+        session_id="plaintext-session",
+        actor_chain=("plaintext-openbao",),
+        assurance_level="LEVEL_2",
+        authenticated_at=_now() - timedelta(minutes=1),
+        expires_at=_now() + timedelta(minutes=5),
+        status=ControlStatus.available(
+            ControlName.IDENTITY, observed_at=_now(), source_digest="urn:sha256:" + "2" * 64
+        ),
+    )
     with pytest.raises(SecurityControlError) as excinfo:
-        provider.lease(request)
+        provider.lease(request, principal=principal)
     assert excinfo.value.reason_code == "MTLS_REQUIRED"
     assert "HTTPS" in str(excinfo.value)
 
@@ -1025,7 +1062,7 @@ def test_secret_lease_returns_opaque_handle(
         governed_context_digest=gcs.digest(),
         requested_at=_now(),
     )
-    lease = provider.lease(request)
+    lease = provider.lease(request, principal=principal)
     assert lease.handle_ref.startswith("urn:ocor:secret-handle:")
     assert lease.secret_ref == request.secret_ref
     lease.verify(request, at=_now())
@@ -1049,7 +1086,7 @@ def test_wrong_openbao_token_fails_closed(
         requested_at=_now(),
     )
     with pytest.raises(SecurityControlError) as excinfo:
-        provider.lease(request)
+        provider.lease(request, principal=principal)
     assert excinfo.value.reason_code == "SECRETS_UNAVAILABLE"
 
 
@@ -1075,7 +1112,7 @@ def test_secret_ref_cannot_escape_principal_scope(
         requested_at=_now(),
     )
     with pytest.raises(SecurityControlError) as excinfo:
-        provider.lease(request)
+        provider.lease(request, principal=principal)
     assert excinfo.value.reason_code == "SECRET_REFERENCE_INVALID"
 
 
@@ -1283,30 +1320,67 @@ def test_forged_delegation_chain_fails_closed(
     assert excinfo.value.reason_code == "IDENTITY_BINDING_MISMATCH"
 
 
+_CAPABILITY = CapabilityInvocation(
+    capability_id="urn:ocor:capability:read-site",
+    capability_version="1.0.0",
+    effect_class=OperationClass.R0_READ,
+    risk_class=RiskClass.R0_INFORMATIONAL,
+)
+
+
+def _policy_digest(principal_id: str) -> str:
+    return "urn:sha256:" + hashlib.sha256(_rego(principal_id).encode()).hexdigest()
+
+
+def _sign_grant(unsigned: SignedDelegation) -> SignedDelegation:
+    signature = base64.b64encode(
+        _rsa_sign(unsigned.signing_payload(), _SIGNER_N, _SIGNER_D)
+    ).decode("ascii")
+    return replace(unsigned, signature=signature)
+
+
 def _sign_delegation(
     *,
     delegatee_id: str,
     delegator_id: str = "delegator-1",
     delegation_id: str = "urn:ocor:delegation:test",
-    resource_scopes: tuple[str, ...] = ("urn:ocor:target:site-1",),
+    resource_scope: str = "urn:ocor:target:site-1",
     permitted_purposes: tuple[str, ...] = ("read-site-1",),
     not_before: datetime | None = None,
     expires_at: datetime | None = None,
+    policy_bundle_digest: str | None = None,
+    confirmation_key_thumbprint: str | None = None,
+    **overrides: object,
 ) -> SignedDelegation:
-    unsigned = SignedDelegation(
-        delegation_id=delegation_id,
-        delegator_id=delegator_id,
-        delegatee_id=delegatee_id,
-        resource_scopes=resource_scopes,
-        permitted_purposes=permitted_purposes,
-        not_before=not_before or _now() - timedelta(minutes=5),
-        expires_at=expires_at or _now() + timedelta(hours=1),
-        signature="",
-    )
-    signature = base64.b64encode(
-        _rsa_sign(unsigned.signing_payload(), _SIGNER_N, _SIGNER_D)
-    ).decode("ascii")
-    return replace(unsigned, signature=signature)
+    """Sign a complete ADD v1.3 §5.2 DelegationGrant with the test authority.
+
+    By default the grant covers exactly the governed context built by
+    ``_delegated_policy_request``, is bound to the bundle ``_rego(delegatee)``
+    and is confirmed to the SPIRE workload key of the session mTLS context.
+    """
+    fields: dict[str, object] = {
+        "grant_id": delegation_id,
+        "grantor_principal": delegator_id,
+        "grantee_principal": delegatee_id,
+        "capability_id": _CAPABILITY.capability_id,
+        "capability_version": _CAPABILITY.capability_version,
+        "resource_scope": resource_scope,
+        "tenant_id": "tenant-a",
+        "organization_id": "org-a",
+        "domains": ("domain-a",),
+        "compartments": ("compartment-a",),
+        "permitted_purposes": permitted_purposes,
+        "effect_ceiling": OperationClass.R0_READ,
+        "risk_ceiling": RiskClass.R0_INFORMATIONAL,
+        "not_before": not_before or _now() - timedelta(minutes=5),
+        "expires_at": expires_at or _now() + timedelta(hours=1),
+        "max_chain_depth": 1,
+        "policy_bundle_digest": policy_bundle_digest or _policy_digest(delegatee_id),
+        "nonce": uuid.uuid4().hex,
+        "confirmation_key_thumbprint": confirmation_key_thumbprint or _WORKLOAD_KEY_THUMBPRINT,
+    }
+    fields.update(overrides)
+    return _sign_grant(SignedDelegation(**fields))  # type: ignore[arg-type]
 
 
 def _sign_revocation(delegation_id: str) -> SignedDelegationRevocation:
@@ -1324,21 +1398,26 @@ def _sign_revocation(delegation_id: str) -> SignedDelegationRevocation:
 def _delegated_policy_request(
     principal: AuthenticatedPrincipal,
     policy_digest: str,
-    delegation: SignedDelegation,
+    delegation: SignedDelegation | tuple[SignedDelegation, ...],
+    **gcs_overrides: object,
 ) -> PolicyRequest:
-    gcs = GovernedContext(
-        tenant_id="tenant-a",
-        organization_id="org-a",
-        domain_id="domain-a",
-        compartments=("compartment-a",),
-        classification_marking_ref="urn:sha256:" + "0" * 64,
-        purpose="read-site-1",
-        effective_principal_id=principal.principal_id,
-        actor_chain=(delegation.delegator_id, delegation.delegatee_id),
-        ontology_release_digest="urn:sha256:" + "1" * 64,
-        policy_bundle_digest=policy_digest,
-        correlation_id=str(uuid.uuid4()),
-    )
+    grants = delegation if isinstance(delegation, tuple) else (delegation,)
+    fields: dict[str, object] = {
+        "tenant_id": "tenant-a",
+        "organization_id": "org-a",
+        "domain_id": "domain-a",
+        "compartments": ("compartment-a",),
+        "classification_marking_ref": "urn:sha256:" + "0" * 64,
+        "purpose": "read-site-1",
+        "effective_principal_id": principal.principal_id,
+        "actor_chain": (grants[0].grantor_principal,)
+        + tuple(grant.grantee_principal for grant in grants),
+        "ontology_release_digest": "urn:sha256:" + "1" * 64,
+        "policy_bundle_digest": policy_digest,
+        "correlation_id": str(uuid.uuid4()),
+    }
+    fields.update(gcs_overrides)
+    gcs = GovernedContext(**fields)  # type: ignore[arg-type]
     return PolicyRequest(
         principal=principal,
         action="read",
@@ -1414,10 +1493,7 @@ def test_delegation_binding_mismatch_fails_closed(principal: AuthenticatedPrinci
 
 def test_altered_delegation_fails_closed(principal: AuthenticatedPrincipal):
     delegation = _sign_delegation(delegatee_id=principal.principal_id)
-    tampered = replace(
-        delegation,
-        resource_scopes=("urn:ocor:target:site-1", "urn:ocor:target:other-site"),
-    )
+    tampered = replace(delegation, resource_scope="urn:ocor:target:other-site")
     with pytest.raises(SecurityControlError) as excinfo:
         verify_signed_delegation(
             tampered,
@@ -1545,7 +1621,7 @@ def test_valid_delegated_request_on_real_backends(
     provider, digest = opa_delegated
     delegation = _sign_delegation(delegatee_id=principal.principal_id)
     request = _delegated_policy_request(principal, digest, delegation)
-    decision = provider.evaluate(request, delegation=delegation)
+    decision = provider.evaluate(request, delegation=delegation, capability=_CAPABILITY)
     assert decision.effect is PolicyEffect.PERMIT
     decision.verify(request, at=_now())
 
@@ -1572,7 +1648,7 @@ def test_delegated_request_expired_fails_closed(
     )
     request = _delegated_policy_request(principal, digest, delegation)
     with pytest.raises(SecurityControlError) as excinfo:
-        provider.evaluate(request, delegation=delegation)
+        provider.evaluate(request, delegation=delegation, capability=_CAPABILITY)
     assert excinfo.value.reason_code == "DELEGATION_EXPIRED"
 
 
@@ -1591,7 +1667,7 @@ def test_delegated_request_revoked_fails_closed(
     delegation = _sign_delegation(delegatee_id=principal.principal_id)
     request = _delegated_policy_request(principal, digest, delegation)
     with pytest.raises(SecurityControlError) as excinfo:
-        provider.evaluate(request, delegation=delegation)
+        provider.evaluate(request, delegation=delegation, capability=_CAPABILITY)
     assert excinfo.value.reason_code == "DELEGATION_REVOKED"
 
 
@@ -1601,11 +1677,11 @@ def test_delegated_request_out_of_scope_fails_closed(
     provider, digest = opa_delegated
     delegation = _sign_delegation(
         delegatee_id=principal.principal_id,
-        resource_scopes=("urn:ocor:target:other-site",),
+        resource_scope="urn:ocor:target:other-site",
     )
     request = _delegated_policy_request(principal, digest, delegation)
     with pytest.raises(SecurityControlError) as excinfo:
-        provider.evaluate(request, delegation=delegation)
+        provider.evaluate(request, delegation=delegation, capability=_CAPABILITY)
     assert excinfo.value.reason_code == "DELEGATION_SCOPE_MISMATCH"
 
 
@@ -1619,7 +1695,7 @@ def test_delegated_request_out_of_purpose_fails_closed(
     )
     request = _delegated_policy_request(principal, digest, delegation)
     with pytest.raises(SecurityControlError) as excinfo:
-        provider.evaluate(request, delegation=delegation)
+        provider.evaluate(request, delegation=delegation, capability=_CAPABILITY)
     assert excinfo.value.reason_code == "DELEGATION_PURPOSE_MISMATCH"
 
 
@@ -1650,7 +1726,7 @@ def test_delegated_request_altered_chain_fails_closed(
         at=_now(),
     )
     with pytest.raises(SecurityControlError) as excinfo:
-        provider.evaluate(request, delegation=delegation)
+        provider.evaluate(request, delegation=delegation, capability=_CAPABILITY)
     assert excinfo.value.reason_code == "DELEGATION_BINDING_MISMATCH"
 
 
@@ -1678,7 +1754,7 @@ def test_absent_secret_ref_fails_closed_without_overwrite(
         requested_at=_now(),
     )
     with pytest.raises(SecurityControlError) as excinfo:
-        provider.lease(request)
+        provider.lease(request, principal=principal)
     assert excinfo.value.reason_code == "SECRET_REFERENCE_UNRESOLVED"
     # no-overwrite: the lease attempt must not have provisioned the secret
     status, _ = _http(
@@ -1843,10 +1919,10 @@ def test_repair4_queued_delegation_expires(principal, opa_delegated):
     grant = _sign_delegation(delegatee_id=principal.principal_id,
                             expires_at=_now() + timedelta(seconds=3))
     request = _delegated_policy_request(principal, digest, grant)
-    assert provider.evaluate(request, delegation=grant).effect is PolicyEffect.PERMIT
+    assert provider.evaluate(request, delegation=grant, capability=_CAPABILITY).effect is PolicyEffect.PERMIT
     _wait_past(grant.expires_at)
     with pytest.raises(SecurityControlError) as err:
-        provider.evaluate(request, delegation=grant)
+        provider.evaluate(request, delegation=grant, capability=_CAPABILITY)
     assert err.value.reason_code == 'DELEGATION_EXPIRED'
 
 
@@ -1866,7 +1942,7 @@ def test_repair4_decision_capped_at_canonical_authority(principal, mtls, authori
     grant = _sign_delegation(delegatee_id=principal.principal_id,
                             expires_at=expiry if authority == 'delegation' else None)
     request = _delegated_policy_request(principal, digest, grant)
-    decision = provider.evaluate(request, delegation=grant)
+    decision = provider.evaluate(request, delegation=grant, capability=_CAPABILITY)
     limit = expiry if authority == 'principal' else expiry.replace(microsecond=0)
     assert decision.effect is PolicyEffect.PERMIT
     decision.verify(request, at=_now())
@@ -1894,7 +1970,7 @@ def test_repair4_future_request_cannot_activate_delegation(principal, opa_delega
                             not_before=_now()+timedelta(seconds=30))
     request = replace(_delegated_policy_request(principal, digest, grant), at=grant.not_before)
     with pytest.raises(SecurityControlError) as err:
-        provider.evaluate(request, delegation=grant)
+        provider.evaluate(request, delegation=grant, capability=_CAPABILITY)
     assert err.value.reason_code == 'DELEGATION_EXPIRED'
 
 
@@ -1904,7 +1980,7 @@ def test_repair4_helper_cannot_replay_old_time(principal):
     with pytest.raises(SecurityControlError) as err:
         verify_signed_delegation(grant, (_SIGNER_N, _SIGNER_E),
             resource_scope='urn:ocor:target:site-1', purpose='read-site-1',
-            delegator_id=grant.delegator_id, delegatee_id=principal.principal_id,
+            delegator_id=grant.grantor_principal, delegatee_id=principal.principal_id,
             at=grant.not_before)
     assert err.value.reason_code == 'DELEGATION_EXPIRED'
 
@@ -1919,7 +1995,7 @@ def test_repair4_secret_lease_uses_boundary_time(principal, env, mtls, offset):
                             'read-site-1', 'urn:sha256:'+'1'*64,
                             _now()+timedelta(seconds=offset))
     before = _now()
-    lease = provider.lease(request)
+    lease = provider.lease(request, principal=principal)
     after = _now()
     assert before <= lease.issued_at <= after
     assert lease.status.observed_at == lease.issued_at
@@ -2038,7 +2114,7 @@ def test_repair4_openbao_token_bounds_lease(principal, env, mtls):
     provider = OpenBaoSecretProvider(str(mtls['openbao']), token, ssl_context=mtls['ssl_context'])
     request = SecretRequest('urn:ocor:secret-ref:'+name, principal.principal_id,
                             'read-site-1', 'urn:sha256:'+'1'*64, _now())
-    lease = provider.lease(request)
+    lease = provider.lease(request, principal=principal)
     assert lease.expires_at <= expiry
     lease.verify(request, at=_now())
     _wait_past(expiry)
@@ -2046,7 +2122,7 @@ def test_repair4_openbao_token_bounds_lease(principal, env, mtls):
         lease.verify(request, at=_now())
     assert err.value.reason_code == 'SECRET_LEASE_EXPIRED'
     with pytest.raises(SecurityControlError) as err:
-        provider.lease(request)
+        provider.lease(request, principal=principal)
     assert err.value.reason_code == 'SECRETS_UNAVAILABLE'
 
 
@@ -2066,13 +2142,13 @@ def test_repair4_expiry_during_real_opa_response(principal, mtls, authority, rea
     grant = _sign_delegation(delegatee_id=principal.principal_id,
                             expires_at=expiry if authority == 'delegation' else None)
     request = _delegated_policy_request(principal, digest, grant)
-    assert provider.evaluate(request, delegation=grant).effect is PolicyEffect.PERMIT
+    assert provider.evaluate(request, delegation=grant, capability=_CAPABILITY).effect is PolicyEffect.PERMIT
     proxy = mtls['proxies'][0]
     proxy.response_delay = 2.1
     proxy.delayed_method = b'POST'
     try:
         with pytest.raises(SecurityControlError) as err:
-            provider.evaluate(request, delegation=grant)
+            provider.evaluate(request, delegation=grant, capability=_CAPABILITY)
         assert err.value.reason_code == reason
     finally:
         proxy.response_delay = 0.0
@@ -2110,7 +2186,7 @@ def test_repair4_openbao_scheduled_deletion_bounds_lease(principal, env, mtls):
                                     ssl_context=mtls['ssl_context'])
     request = SecretRequest('urn:ocor:secret-ref:'+name, principal.principal_id,
                             'read-site-1', 'urn:sha256:'+'1'*64, _now())
-    lease = provider.lease(request)
+    lease = provider.lease(request, principal=principal)
     lease.verify(request, at=_now())
     assert lease.expires_at <= expiry
     _wait_past(expiry)
@@ -2118,7 +2194,7 @@ def test_repair4_openbao_scheduled_deletion_bounds_lease(principal, env, mtls):
         lease.verify(request, at=_now())
     assert err.value.reason_code == 'SECRET_LEASE_EXPIRED'
     with pytest.raises(SecurityControlError) as err:
-        provider.lease(request)
+        provider.lease(request, principal=principal)
     assert err.value.reason_code == 'SECRET_REFERENCE_UNRESOLVED'
 
 
@@ -2145,11 +2221,11 @@ def test_repair4_svid_bounds_identity_and_secret(principals, env, repair4_short_
     secrets = OpenBaoSecretProvider(urls[2], env['OCOR_LOCAL_OPENBAO_TOKEN'], ssl_context=context)
     request = SecretRequest('urn:ocor:secret-ref:'+name, principal.principal_id,
                            'read-site-1', 'urn:sha256:'+'1'*64, _now())
-    lease = secrets.lease(request)
+    lease = secrets.lease(request, principal=principal)
     assert lease.expires_at <= expiry
     lease.verify(request, at=_now())
     _wait_past(expiry)
-    for operation in [lambda: secrets.lease(request), lambda: provider.authenticate(
+    for operation in [lambda: secrets.lease(request, principal=principal), lambda: provider.authenticate(
         IdentityRequest('urn:ocor:credential-ref:'+USERNAME, 'account', str(uuid.uuid4())))]:
         with pytest.raises(SecurityControlError) as err:
             operation()
@@ -2194,13 +2270,13 @@ def test_repair4_expiry_during_real_secret_read(principal, env, mtls, authority,
     provider = OpenBaoSecretProvider(str(mtls['openbao']), token, ssl_context=mtls['ssl_context'])
     request = SecretRequest('urn:ocor:secret-ref:'+name, principal.principal_id,
                            'read-site-1', 'urn:sha256:'+'1'*64, _now())
-    provider.lease(request).verify(request, at=_now())
+    provider.lease(request, principal=principal).verify(request, at=_now())
     proxy = mtls['proxies'][2]
     proxy.response_delay = 3.1
     proxy.delayed_path = path.encode()
     try:
         with pytest.raises(SecurityControlError) as err:
-            provider.lease(request)
+            provider.lease(request, principal=principal)
         assert err.value.reason_code == reason
     finally:
         proxy.response_delay = 0.0
@@ -2213,10 +2289,586 @@ def test_repair4_utc_equivalent_delegation_has_same_deadline(principal, opa_dele
                              expires_at=_now()+timedelta(seconds=20, microseconds=900000))
     shifted = replace(grant, expires_at=grant.expires_at.astimezone(timezone(timedelta(hours=2))))
     request = _delegated_policy_request(principal, digest, shifted)
-    decision = provider.evaluate(request, delegation=shifted)
+    decision = provider.evaluate(request, delegation=shifted, capability=_CAPABILITY)
     assert decision.effect is PolicyEffect.PERMIT
     assert decision.valid_until == grant.expires_at.replace(microsecond=0)
     reinterpreted = replace(grant, expires_at=grant.expires_at.replace(tzinfo=timezone(timedelta(hours=-2))))
     with pytest.raises(SecurityControlError) as err:
-        provider.evaluate(request, delegation=reinterpreted)
+        provider.evaluate(request, delegation=reinterpreted, capability=_CAPABILITY)
     assert err.value.reason_code == 'DELEGATION_SIGNATURE_INVALID'
+
+
+# =========================================================================== #
+# REPAIR-5 (decision OCOR-DEV-0048-REPAIR-5-CLAUDE; implementer Claude Code,
+# verifier Codex).  VF-001: the signed DelegationGrant carries and enforces
+# every ADD v1.3 §5.2 constraint.  VF-002: the OPA evaluation and the emitted
+# PolicyDecision are bound atomically to the verified bundle snapshot.  Every
+# case drives the real OPA, SPIRE/mTLS, Keycloak or OpenBao boundary.
+# =========================================================================== #
+
+from ocor_runtime.kernel.governed_context import GovernedContextError  # noqa: E402
+
+_DESIGN_GRANT_FIELDS = {
+    "grant_id", "grantor_principal", "grantee_principal", "capability_id",
+    "capability_version", "resource_scope", "tenant_id", "domains", "compartments",
+    "permitted_purposes", "effect_ceiling", "risk_ceiling", "not_before", "expires_at",
+    "max_chain_depth", "redelegation_allowed", "parent_grant_digest",
+    "policy_bundle_digest", "nonce", "confirmation_key_thumbprint",
+}
+
+
+def _expect(reason: str, operation) -> SecurityControlError:
+    with pytest.raises(SecurityControlError) as excinfo:
+        operation()
+    assert excinfo.value.reason_code == reason, str(excinfo.value)
+    return excinfo.value
+
+
+def test_repair5_grant_signs_every_design_field(principal: AuthenticatedPrincipal):
+    grant = _sign_delegation(delegatee_id=principal.principal_id)
+    payload = json.loads(grant.signing_payload())
+    # signature_ref is the detached signature itself; organization_id is the
+    # ADD §1.4 binding the design record leaves implicit.
+    assert set(payload) == _DESIGN_GRANT_FIELDS | {"organization_id"}
+    assert verify_delegation_signature(grant, (_SIGNER_N, _SIGNER_E)) == grant.digest()
+    assert grant.digest().startswith("urn:sha256:")
+    # ADD §5.2 rule 1: redelegation is off unless the authority signs it on.
+    assert grant.redelegation_allowed is False and payload["redelegation_allowed"] is False
+    assert grant.parent_grant_digest is None
+
+
+@pytest.mark.parametrize("field,value", [
+    ("grant_id", "urn:ocor:delegation:other"),
+    ("grantor_principal", "delegator-2"),
+    ("grantee_principal", "someone-else"),
+    ("capability_id", "urn:ocor:capability:erase-site"),
+    ("capability_version", "2.0.0"),
+    ("resource_scope", "urn:ocor:target:other-site"),
+    ("tenant_id", "tenant-b"),
+    ("organization_id", "org-b"),
+    ("domains", ("domain-a", "domain-b")),
+    ("compartments", ("compartment-a", "compartment-b")),
+    ("permitted_purposes", ("read-site-1", "write-site-1")),
+    ("effect_ceiling", OperationClass.R3_HIGH_IMPACT),
+    ("risk_ceiling", RiskClass.R3_HIGH_IMPACT),
+    ("not_before", datetime(2026, 1, 1, tzinfo=UTC)),
+    ("expires_at", datetime(2030, 1, 1, tzinfo=UTC)),
+    ("max_chain_depth", 5),
+    ("redelegation_allowed", True),
+    ("parent_grant_digest", "urn:sha256:" + "a" * 64),
+    ("policy_bundle_digest", "urn:sha256:" + "b" * 64),
+    ("nonce", "f" * 32),
+    ("confirmation_key_thumbprint", "urn:sha256:" + "c" * 64),
+])
+def test_repair5_altering_any_grant_field_breaks_signature(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str],
+    field: str, value: object,
+):
+    provider, digest = opa_delegated
+    grant = _sign_delegation(delegatee_id=principal.principal_id)
+    request = _delegated_policy_request(principal, digest, grant)
+    assert provider.evaluate(request, delegation=grant, capability=_CAPABILITY).effect is (
+        PolicyEffect.PERMIT)
+    tampered = replace(grant, **{field: value})
+    _expect("DELEGATION_SIGNATURE_INVALID",
+            lambda: provider.evaluate(request, delegation=tampered, capability=_CAPABILITY))
+
+
+@pytest.mark.parametrize("field,value", [
+    ("grant_id", ""), ("grantor_principal", ""), ("grantee_principal", "delegator-1"),
+    ("capability_id", ""), ("capability_version", ""), ("resource_scope", ""),
+    ("tenant_id", ""), ("organization_id", ""), ("domains", ()), ("compartments", ()),
+    ("permitted_purposes", ()), ("domains", ("domain-a", "domain-a")),
+    ("compartments", "compartment-a"), ("effect_ceiling", 7), ("effect_ceiling", True),
+    ("risk_ceiling", "R0_INFORMATIONAL"), ("max_chain_depth", 0), ("max_chain_depth", True),
+    ("redelegation_allowed", "no"), ("parent_grant_digest", "sha256:abc"),
+    ("policy_bundle_digest", ""), ("nonce", "short"), ("confirmation_key_thumbprint", ""),
+    ("not_before", datetime(2026, 1, 1)), ("expires_at", datetime(2026, 1, 1, tzinfo=UTC)),
+])
+def test_repair5_incomplete_grant_is_rejected(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str],
+    field: str, value: object,
+):
+    provider, digest = opa_delegated
+    grant = _sign_delegation(delegatee_id=principal.principal_id)
+    request = _delegated_policy_request(principal, digest, grant)
+    assert provider.evaluate(request, delegation=grant, capability=_CAPABILITY).effect is (
+        PolicyEffect.PERMIT)
+    incomplete = replace(grant, **{field: value})
+    # The authority cannot sign it, and the boundary refuses it as presented.
+    _expect("DELEGATION_INVALID", incomplete.signing_payload)
+    _expect("DELEGATION_INVALID",
+            lambda: provider.evaluate(request, delegation=incomplete, capability=_CAPABILITY))
+
+
+@pytest.mark.parametrize("field,value", [
+    ("tenant_id", "tenant-b"), ("organization_id", "org-b"), ("domain_id", "domain-b"),
+    ("compartments", ("compartment-b",)), ("compartments", ("compartment-a", "compartment-b")),
+])
+def test_repair5_signed_grant_bounds_governed_scope(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str],
+    field: str, value: object,
+):
+    # VF-001 (cycle 4) counterexample: the same signed grant replayed into a
+    # foreign tenant, organization, domain or compartment set.
+    provider, digest = opa_delegated
+    grant = _sign_delegation(delegatee_id=principal.principal_id)
+    request = _delegated_policy_request(principal, digest, grant)
+    assert provider.evaluate(request, delegation=grant, capability=_CAPABILITY).effect is (
+        PolicyEffect.PERMIT)
+    replay = _delegated_policy_request(principal, digest, grant, **{field: value})
+    _expect("DELEGATION_SCOPE_MISMATCH",
+            lambda: provider.evaluate(replay, delegation=grant, capability=_CAPABILITY))
+
+
+def test_repair5_grant_scope_is_an_intersection(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str],
+):
+    provider, digest = opa_delegated
+    grant = _sign_delegation(
+        delegatee_id=principal.principal_id,
+        domains=("domain-a", "domain-b"),
+        compartments=("compartment-a", "compartment-b"),
+    )
+    for domain, compartments in (("domain-b", ("compartment-a",)),
+                                 ("domain-a", ("compartment-a", "compartment-b"))):
+        request = _delegated_policy_request(
+            principal, digest, grant, domain_id=domain, compartments=compartments
+        )
+        decision = provider.evaluate(request, delegation=grant, capability=_CAPABILITY)
+        assert decision.effect is PolicyEffect.PERMIT
+        decision.verify(request, at=_now())
+    outside = _delegated_policy_request(principal, digest, grant, domain_id="domain-c")
+    _expect("DELEGATION_SCOPE_MISMATCH",
+            lambda: provider.evaluate(outside, delegation=grant, capability=_CAPABILITY))
+
+
+@pytest.mark.parametrize("capability,reason", [
+    (replace(_CAPABILITY, capability_id="urn:ocor:capability:erase-site"),
+     "DELEGATION_CAPABILITY_MISMATCH"),
+    (replace(_CAPABILITY, capability_version="2.0.0"), "DELEGATION_CAPABILITY_MISMATCH"),
+    (replace(_CAPABILITY, effect_class=OperationClass.R2_MUTATE), "DELEGATION_CEILING_EXCEEDED"),
+    (replace(_CAPABILITY, risk_class=RiskClass.R2_CONTROLLED), "DELEGATION_CEILING_EXCEEDED"),
+    (None, "DELEGATION_INVALID"),
+])
+def test_repair5_capability_must_fit_grant_ceilings(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str],
+    capability: CapabilityInvocation | None, reason: str,
+):
+    provider, digest = opa_delegated
+    grant = _sign_delegation(
+        delegatee_id=principal.principal_id,
+        effect_ceiling=OperationClass.R1_DERIVE,
+        risk_ceiling=RiskClass.R1_LOW,
+    )
+    request = _delegated_policy_request(principal, digest, grant)
+    for within in (_CAPABILITY, replace(_CAPABILITY, effect_class=OperationClass.R1_DERIVE,
+                                        risk_class=RiskClass.R1_LOW)):
+        assert provider.evaluate(request, delegation=grant, capability=within).effect is (
+            PolicyEffect.PERMIT)
+    _expect(reason, lambda: provider.evaluate(request, delegation=grant, capability=capability))
+
+
+def test_repair5_capability_invocation_is_strictly_typed():
+    for field, value in (("effect_class", True), ("effect_class", 9), ("risk_class", "R1_LOW"),
+                         ("capability_id", ""), ("capability_version", "")):
+        _expect("CAPABILITY_INVOCATION_INVALID",
+                lambda: replace(_CAPABILITY, **{field: value}))
+
+
+def test_repair5_grant_is_bound_to_the_verified_policy_bundle(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str],
+):
+    provider, digest = opa_delegated
+    foreign = _sign_delegation(delegatee_id=principal.principal_id,
+                               policy_bundle_digest="urn:sha256:" + "9" * 64)
+    request = _delegated_policy_request(principal, digest, foreign)
+    _expect("DELEGATION_POLICY_BINDING_MISMATCH",
+            lambda: provider.evaluate(request, delegation=foreign, capability=_CAPABILITY))
+    grant = _sign_delegation(delegatee_id=principal.principal_id)
+    request = _delegated_policy_request(principal, digest, grant)
+    assert provider.evaluate(request, delegation=grant, capability=_CAPABILITY).effect is (
+        PolicyEffect.PERMIT)
+    # A newly verified bundle revision does not inherit grants of the old one.
+    revised = _install_policy(provider, _rego(principal.principal_id) + "# revision 2\n")
+    request = _delegated_policy_request(principal, revised, grant)
+    _expect("DELEGATION_POLICY_BINDING_MISMATCH",
+            lambda: provider.evaluate(request, delegation=grant, capability=_CAPABILITY))
+
+
+def test_repair5_grant_is_confirmed_to_the_presenting_workload_key(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str],
+):
+    provider, digest = opa_delegated
+    grant = _sign_delegation(delegatee_id=principal.principal_id,
+                             confirmation_key_thumbprint="urn:sha256:" + "c" * 64)
+    request = _delegated_policy_request(principal, digest, grant)
+    _expect("DELEGATION_KEY_BINDING_MISMATCH",
+            lambda: provider.evaluate(request, delegation=grant, capability=_CAPABILITY))
+
+
+def test_repair5_grant_cannot_be_transferred_to_another_workload(
+    principal: AuthenticatedPrincipal, repair4_short_svid,
+):
+    # A real second SPIRE workload presents its own SVID on mTLS: a grant
+    # confirmed to the control-plane key is useless to it, and vice versa.
+    spire, urls, _ = repair4_short_svid
+    other = spire.mtls_context()
+    assert workload_key_thumbprint(other) != _WORKLOAD_KEY_THUMBPRINT
+    provider = OpaPolicyDecisionProvider(
+        urls[0], POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E),
+        delegation_signer_public_key=(_SIGNER_N, _SIGNER_E), ssl_context=other)
+    digest = _install_policy(provider, _rego(principal.principal_id))
+    stolen = _sign_delegation(delegatee_id=principal.principal_id)
+    request = _delegated_policy_request(principal, digest, stolen)
+    _expect("DELEGATION_KEY_BINDING_MISMATCH",
+            lambda: provider.evaluate(request, delegation=stolen, capability=_CAPABILITY))
+    own = _sign_delegation(delegatee_id=principal.principal_id,
+                           confirmation_key_thumbprint=workload_key_thumbprint(other))
+    request = _delegated_policy_request(principal, digest, own)
+    assert provider.evaluate(request, delegation=own, capability=_CAPABILITY).effect is (
+        PolicyEffect.PERMIT)
+
+
+def test_repair5_grant_nonce_cannot_be_reused_by_another_grant(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str],
+):
+    provider, digest = opa_delegated
+    grant = _sign_delegation(delegatee_id=principal.principal_id)
+    request = _delegated_policy_request(principal, digest, grant)
+    for _ in range(2):  # the same standing grant may be presented again
+        assert provider.evaluate(request, delegation=grant, capability=_CAPABILITY).effect is (
+            PolicyEffect.PERMIT)
+    twin = _sign_delegation(delegatee_id=principal.principal_id, nonce=grant.nonce,
+                            permitted_purposes=("read-site-1", "audit-site-1"))
+    _expect("DELEGATION_REPLAY",
+            lambda: provider.evaluate(request, delegation=twin, capability=_CAPABILITY))
+
+
+def _grant_chain(
+    principal: AuthenticatedPrincipal, digest: str, *,
+    root: dict[str, object] | None = None, child: dict[str, object] | None = None,
+) -> tuple[SignedDelegation, SignedDelegation]:
+    root_fields: dict[str, object] = {
+        "delegatee_id": "intermediary-1", "delegation_id": "urn:ocor:delegation:root",
+        "policy_bundle_digest": digest, "redelegation_allowed": True, "max_chain_depth": 2,
+        "domains": ("domain-a", "domain-b"), "compartments": ("compartment-a", "compartment-b"),
+        "permitted_purposes": ("read-site-1", "audit-site-1"),
+        "effect_ceiling": OperationClass.R1_DERIVE, "risk_ceiling": RiskClass.R1_LOW,
+    }
+    root_fields.update(root or {})
+    root_grant = _sign_delegation(**root_fields)  # type: ignore[arg-type]
+    child_fields: dict[str, object] = {
+        "delegatee_id": principal.principal_id, "delegator_id": "intermediary-1",
+        "delegation_id": "urn:ocor:delegation:child", "policy_bundle_digest": digest,
+        "parent_grant_digest": root_grant.digest(),
+        "expires_at": _now() + timedelta(minutes=30),
+    }
+    child_fields.update(child or {})
+    return root_grant, _sign_delegation(**child_fields)  # type: ignore[arg-type]
+
+
+def test_repair5_two_hop_chain_on_real_backends(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str],
+):
+    provider, digest = opa_delegated
+    chain = _grant_chain(principal, digest)
+    request = _delegated_policy_request(principal, digest, chain)
+    assert request.governed_context.actor_chain == ("delegator-1", "intermediary-1",
+                                                    principal.principal_id)
+    decision = provider.evaluate(request, delegation=chain, capability=_CAPABILITY)
+    assert decision.effect is PolicyEffect.PERMIT
+    assert decision.valid_until <= _canonical(chain[1].expires_at)
+    decision.verify(request, at=_now())
+
+
+def _canonical(instant: datetime) -> datetime:
+    return instant.astimezone(UTC).replace(microsecond=0)
+
+
+@pytest.mark.parametrize("root,child,reason", [
+    ({"redelegation_allowed": False}, {}, "DELEGATION_REDELEGATION_FORBIDDEN"),
+    ({}, {"parent_grant_digest": "urn:sha256:" + "d" * 64}, "DELEGATION_CHAIN_INVALID"),
+    ({"parent_grant_digest": "urn:sha256:" + "d" * 64}, {}, "DELEGATION_CHAIN_INVALID"),
+    ({}, {"domains": ("domain-a", "domain-c")}, "DELEGATION_AMPLIFICATION"),
+    ({}, {"compartments": ("compartment-a", "compartment-c")}, "DELEGATION_AMPLIFICATION"),
+    ({}, {"permitted_purposes": ("read-site-1", "write-site-1")}, "DELEGATION_AMPLIFICATION"),
+    ({}, {"effect_ceiling": OperationClass.R2_MUTATE}, "DELEGATION_AMPLIFICATION"),
+    ({}, {"risk_ceiling": RiskClass.R2_CONTROLLED}, "DELEGATION_AMPLIFICATION"),
+    ({}, {"expires_at": _now() + timedelta(hours=3)}, "DELEGATION_AMPLIFICATION"),
+    ({}, {"max_chain_depth": 2}, "DELEGATION_AMPLIFICATION"),
+    ({"max_chain_depth": 1, "redelegation_allowed": True}, {}, "DELEGATION_CHAIN_TOO_DEEP"),
+])
+def test_repair5_chain_cannot_amplify_or_exceed_its_limits(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str],
+    root: dict[str, object], child: dict[str, object], reason: str,
+):
+    provider, digest = opa_delegated
+    chain = _grant_chain(principal, digest, root=root, child=child)
+    request = _delegated_policy_request(principal, digest, chain)
+    _expect(reason, lambda: provider.evaluate(request, delegation=chain, capability=_CAPABILITY))
+
+
+def test_repair5_chain_links_every_actor_and_rejects_cycles(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str],
+):
+    provider, digest = opa_delegated
+    root_grant, child_grant = _grant_chain(principal, digest)
+    swapped = (child_grant, root_grant)
+    request = _delegated_policy_request(principal, digest, (root_grant, child_grant))
+    _expect("DELEGATION_BINDING_MISMATCH",
+            lambda: provider.evaluate(request, delegation=swapped, capability=_CAPABILITY))
+    _expect("DELEGATION_BINDING_MISMATCH",
+            lambda: provider.evaluate(request, delegation=child_grant, capability=_CAPABILITY))
+    # A cyclic actor chain cannot even be expressed as a governed context.
+    with pytest.raises(GovernedContextError):
+        _delegated_policy_request(
+            principal, digest, root_grant,
+            actor_chain=(principal.principal_id, "intermediary-1", principal.principal_id))
+
+
+def test_repair5_revoking_any_chain_link_denies(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str],
+):
+    provider, digest = opa_delegated
+    chain = _grant_chain(principal, digest)
+    request = _delegated_policy_request(principal, digest, chain)
+    assert provider.evaluate(request, delegation=chain, capability=_CAPABILITY).effect is (
+        PolicyEffect.PERMIT)
+    provider.apply_revocation(_sign_revocation(chain[0].grant_id))
+    _expect("DELEGATION_REVOKED",
+            lambda: provider.evaluate(request, delegation=chain, capability=_CAPABILITY))
+
+
+def test_repair5_runtime_revocation_applies_to_new_calls(
+    principal: AuthenticatedPrincipal, opa_delegated: tuple[OpaPolicyDecisionProvider, str],
+):
+    provider, digest = opa_delegated
+    grant = _sign_delegation(delegatee_id=principal.principal_id)
+    request = _delegated_policy_request(principal, digest, grant)
+    assert provider.evaluate(request, delegation=grant, capability=_CAPABILITY).effect is (
+        PolicyEffect.PERMIT)
+    forged = replace(_sign_revocation("urn:ocor:delegation:unrelated"),
+                     delegation_id=grant.grant_id)
+    _expect("DELEGATION_REVOCATION_INVALID", lambda: provider.apply_revocation(forged))
+    assert provider.evaluate(request, delegation=grant, capability=_CAPABILITY).effect is (
+        PolicyEffect.PERMIT)
+    provider.apply_revocation(_sign_revocation(grant.grant_id))
+    _expect("DELEGATION_REVOKED",
+            lambda: provider.evaluate(request, delegation=grant, capability=_CAPABILITY))
+
+
+def test_repair5_revocation_while_policy_is_evaluating(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object],
+):
+    provider = OpaPolicyDecisionProvider(
+        str(mtls["opa"]), POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E),
+        delegation_signer_public_key=(_SIGNER_N, _SIGNER_E), ssl_context=mtls["ssl_context"])
+    digest = _install_policy(provider, _rego(principal.principal_id))
+    grant = _sign_delegation(delegatee_id=principal.principal_id)
+    request = _delegated_policy_request(principal, digest, grant)
+    assert provider.evaluate(request, delegation=grant, capability=_CAPABILITY).effect is (
+        PolicyEffect.PERMIT)
+    proxy = mtls["proxies"][0]
+    applied: list[bool] = []
+
+    def revoke() -> None:
+        provider.apply_revocation(_sign_revocation(grant.grant_id))
+        applied.append(True)
+
+    proxy.before_eval = revoke
+    try:
+        _expect("DELEGATION_REVOKED",
+                lambda: provider.evaluate(request, delegation=grant, capability=_CAPABILITY))
+        assert applied
+    finally:
+        proxy.before_eval = proxy.after_eval = None
+
+
+_UNSIGNED_ERASE = 'package ocor.control_plane\n\nallow if { input.action == "erase" }\n'
+
+
+def _opa_put(module_id: str, source: str) -> None:
+    status, body = _http("PUT", f"{OPA}/v1/policies/{module_id}",
+                         headers={"Content-Type": "text/plain"}, body=source)
+    assert status == 200, body
+
+
+def _opa_delete(module_id: str) -> None:
+    _http("DELETE", f"{OPA}/v1/policies/{module_id}")
+
+
+@pytest.mark.parametrize("removed_before_response", [False, True])
+def test_repair5_module_injected_after_freshness_check_is_stale(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object], removed_before_response: bool,
+):
+    # VF-002 (cycle 4) counterexample: an unsigned module enters the governed
+    # package after the freshness check and before the real evaluation.  When
+    # it is also removed before the response returns, no later listing can
+    # see it: only the evaluation's own provenance can.
+    provider = OpaPolicyDecisionProvider(
+        str(mtls["opa"]), POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"])
+    digest = _install_policy(provider, _rego(principal.principal_id))
+    request = _policy_request(principal, digest, action="erase")
+    assert provider.evaluate(request).effect is PolicyEffect.DENY
+    module = "repair5-race-" + uuid.uuid4().hex
+    events: list[str] = []
+    proxy = mtls["proxies"][0]
+    proxy.before_eval = lambda: (_opa_put(module, _UNSIGNED_ERASE), events.append("injected"))
+    if removed_before_response:
+        proxy.after_eval = lambda: (_opa_delete(module), events.append("removed"))
+    try:
+        error = _expect("STALE_BUNDLE", lambda: provider.evaluate(request))
+        assert events == (["injected", "removed"] if removed_before_response else ["injected"])
+        assert request.governed_context.correlation_id in str(error)
+        if removed_before_response:
+            assert "evaluated rule is not part of the verified policy bundle" in str(error)
+    finally:
+        proxy.before_eval = proxy.after_eval = None
+        _opa_delete(module)
+    assert provider.evaluate(_policy_request(principal, digest, action="erase")).effect is (
+        PolicyEffect.DENY)
+
+
+def test_repair5_signed_module_swapped_during_evaluation_is_stale(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object],
+):
+    provider = OpaPolicyDecisionProvider(
+        str(mtls["opa"]), POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"])
+    source = _rego(principal.principal_id)
+    digest = _install_policy(provider, source)
+    request = _policy_request(principal, digest, action="erase")
+    assert provider.evaluate(request).effect is PolicyEffect.DENY
+    widened = source + '\nallow if { input.action == "erase" }\n'
+    proxy = mtls["proxies"][0]
+    proxy.before_eval = lambda: _opa_put(POLICY_ID, widened)
+    proxy.after_eval = lambda: _opa_put(POLICY_ID, source)
+    try:
+        error = _expect("STALE_BUNDLE", lambda: provider.evaluate(request))
+        assert "evaluated rule is not part of the verified policy bundle" in str(error)
+    finally:
+        proxy.before_eval = proxy.after_eval = None
+        _opa_put(POLICY_ID, source)
+    assert provider.evaluate(_policy_request(principal, digest, action="erase")).effect is (
+        PolicyEffect.DENY)
+
+
+def test_repair5_enclosing_package_rule_head_is_stale(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object],
+):
+    provider = OpaPolicyDecisionProvider(
+        str(mtls["opa"]), POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"])
+    digest = _install_policy(provider, _rego(principal.principal_id))
+    request = _policy_request(principal, digest, action="erase")
+    assert provider.evaluate(request).effect is PolicyEffect.DENY
+    module = "repair5-enclosing-" + uuid.uuid4().hex
+    _opa_put(module, 'package ocor\n\ncontrol_plane.allow if { input.action == "erase" }\n')
+    try:
+        _expect("STALE_BUNDLE", lambda: provider.evaluate(request))
+    finally:
+        _opa_delete(module)
+    assert provider.evaluate(request).effect is PolicyEffect.DENY
+
+
+@pytest.mark.parametrize("dependency", [
+    "data.ocor.extra.flag == true",
+    "data.ocor.control_plane.flag == true",
+    "data.ocor.bootstrap.allow == false",
+])
+def test_repair5_bundle_depending_on_unsigned_data_is_rejected(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object], dependency: str,
+):
+    provider = OpaPolicyDecisionProvider(
+        str(mtls["opa"]), POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"])
+    rego = (
+        "package ocor.control_plane\n\ndefault allow := false\n\n"
+        f"allow if {{\n    input.action == \"read\"\n    {dependency}\n}}\n"
+    )
+    _expect("POLICY_BUNDLE_INVALID", lambda: provider.install_policy(_sign_bundle(rego)))
+
+
+def test_repair5_self_contained_bundle_with_local_rules_is_accepted(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object],
+):
+    provider = OpaPolicyDecisionProvider(
+        str(mtls["opa"]), POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E),
+        ssl_context=mtls["ssl_context"])
+    rego = (
+        "package ocor.control_plane\n\ndefault allow := false\n\n"
+        'reader if input.action == "read"\n\n'
+        "allow if {\n    reader\n"
+        f'    input.principal_id == "{principal.principal_id}"\n'
+        '    input.resource == "urn:ocor:target:site-1"\n}\n'
+    )
+    digest = provider.install_policy(_sign_bundle(rego))
+    assert provider.evaluate(_policy_request(principal, digest, action="read")).effect is (
+        PolicyEffect.PERMIT)
+    assert provider.evaluate(_policy_request(principal, digest, action="erase")).effect is (
+        PolicyEffect.DENY)
+
+
+def test_repair5_policy_receives_release_pin_capability_and_grants(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object],
+):
+    provider = OpaPolicyDecisionProvider(
+        str(mtls["opa"]), POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E),
+        delegation_signer_public_key=(_SIGNER_N, _SIGNER_E), ssl_context=mtls["ssl_context"])
+    rego = (
+        "package ocor.control_plane\n\ndefault allow := false\n\n"
+        "allow if {\n"
+        f'    input.ontology_release_digest == "urn:sha256:{"1" * 64}"\n'
+        "    input.policy_bundle_digest != \"\"\n"
+        "    input.correlation_id != \"\"\n"
+        '    input.capability.capability_id == "urn:ocor:capability:read-site"\n'
+        '    input.capability.effect_class == "R0_READ"\n'
+        '    input.delegation_grant_ids == ["urn:ocor:delegation:test"]\n'
+        "}\n"
+    )
+    digest = provider.install_policy(_sign_bundle(rego))
+    grant = _sign_delegation(delegatee_id=principal.principal_id, policy_bundle_digest=digest)
+    request = _delegated_policy_request(principal, digest, grant)
+    assert provider.evaluate(request, delegation=grant, capability=_CAPABILITY).effect is (
+        PolicyEffect.PERMIT)
+    other_release = _delegated_policy_request(
+        principal, digest, grant, ontology_release_digest="urn:sha256:" + "2" * 64)
+    assert provider.evaluate(other_release, delegation=grant, capability=_CAPABILITY).effect is (
+        PolicyEffect.DENY)
+
+
+def test_repair5_boundary_recomputes_governed_context_digest(
+    principal: AuthenticatedPrincipal, opa: tuple[OpaPolicyDecisionProvider, str],
+):
+    provider, digest = opa
+    request = _policy_request(principal, digest)
+    assert provider.evaluate(request).effect is PolicyEffect.PERMIT
+    forged = replace(request)
+    object.__setattr__(forged, "governed_context_digest", "urn:sha256:" + "e" * 64)
+    _expect("GOVERNED_CONTEXT_MISMATCH", lambda: provider.evaluate(forged))
+
+
+def test_repair5_secret_lease_is_bound_to_the_authenticated_principal(
+    principal: AuthenticatedPrincipal, env: dict[str, str], mtls: dict[str, object],
+):
+    name = "repair5-isolation-" + uuid.uuid4().hex
+    victim = "repair5-victim-" + uuid.uuid4().hex
+    _seed_secret(env, principal.principal_id, name, {"value": "own"})
+    _seed_secret(env, victim, name, {"value": "victim"})
+    provider = OpenBaoSecretProvider(str(mtls["openbao"]), env["OCOR_LOCAL_OPENBAO_TOKEN"],
+                                     ssl_context=mtls["ssl_context"])
+    own = SecretRequest("urn:ocor:secret-ref:" + name, principal.principal_id,
+                        "read-site-1", "urn:sha256:" + "1" * 64, _now())
+    short = replace(principal, expires_at=_now() + timedelta(seconds=30))
+    lease = provider.lease(own, principal=short)
+    assert lease.expires_at <= short.expires_at
+    lease.verify(own, at=_now())
+    foreign = SecretRequest("urn:ocor:secret-ref:" + name, victim,
+                            "read-site-1", "urn:sha256:" + "1" * 64, _now())
+    _expect("SECRET_BINDING_MISMATCH", lambda: provider.lease(foreign, principal=principal))
+    _expect("SECRET_BINDING_MISMATCH", lambda: provider.lease(own))
+    expired = replace(principal, expires_at=_now() + timedelta(seconds=1))
+    _wait_past(expired.expires_at)
+    _expect("IDENTITY_EXPIRED", lambda: provider.lease(own, principal=expired))

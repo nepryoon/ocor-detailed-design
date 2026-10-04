@@ -23,15 +23,20 @@ import socket
 import ssl
 import subprocess
 import tempfile
+import threading
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
+from enum import IntEnum
 from typing import IO, cast
 
+from ..kernel.canonical import canonical_bytes
+from ..kernel.governance import RiskClass
 from .ports import (
+    DIGEST,
     AuthenticatedPrincipal,
     ControlName,
     ControlStatus,
@@ -112,6 +117,17 @@ def _mtls_deadline(context: ssl.SSLContext | None) -> datetime:
     if not isinstance(context, _PeerIdentitySSLContext):
         raise SecurityControlError("MTLS_REQUIRED", "verified SVID validity is required")
     return context.require_current_identity()
+
+
+def workload_key_thumbprint(context: ssl.SSLContext | None) -> str:
+    """Return the confirmation thumbprint of the workload key presented on mTLS.
+
+    It is the SHA-256 URN of the SVID leaf SubjectPublicKeyInfo loaded into a
+    SPIRE-built mutual-TLS context; any other context fails closed.
+    """
+    if not isinstance(context, _PeerIdentitySSLContext):
+        raise SecurityControlError("MTLS_REQUIRED", "a verified SPIFFE mTLS context is required")
+    return context.workload_key_thumbprint()
 
 
 def _sha256_urn(data: bytes) -> str:
@@ -244,6 +260,14 @@ class _PeerIdentitySSLContext(ssl.SSLContext):
         self._expected_peer_spiffe_id = expected_peer_spiffe_id
         self._identity_window: tuple[datetime, datetime] | None = None
         self._peer_window: tuple[datetime, datetime] | None = None
+        # SHA-256 URN of the SubjectPublicKeyInfo of the SVID this context
+        # presents: the workload key a DelegationGrant is confirmed to.
+        self._identity_key_thumbprint: str | None = None
+
+    def workload_key_thumbprint(self) -> str:
+        if self._identity_key_thumbprint is None:
+            raise SecurityControlError("MTLS_REQUIRED", "workload key thumbprint is unknown")
+        return self._identity_key_thumbprint
 
     def require_current_identity(self) -> datetime:
         if self._identity_window is None:
@@ -432,8 +456,10 @@ def _parse_certificate(der: bytes) -> dict[str, object]:
     not_before, not_after = _parse_validity(der[validity_start:validity_end])
     off = validity_end
     _, _, _, off = _tlv(der, off)  # subject
+    spki_tlv_start = off
     _, _, spki_start, spki_end = _tlv(der, off)  # subjectPublicKeyInfo
     spki = _parse_spki(der[spki_start:spki_end])
+    spki_der = der[spki_tlv_start:spki_end]
     off = spki_end
     uri_sans: list[str] = []
     if off < tbs_end and der[off] == 0xA3:  # [3] EXPLICIT extensions
@@ -449,6 +475,7 @@ def _parse_certificate(der: bytes) -> dict[str, object]:
         "not_after": not_after,
         "spki_oid": spki["oid"],
         "key_der": spki["key_der"],
+        "spki_der": spki_der,
         "uri_sans": uri_sans,
     }
 
@@ -640,54 +667,210 @@ class SignedPolicyBundle:
         ).encode("utf-8")
 
 
-@dataclass(frozen=True, slots=True)
-class SignedDelegation:
-    """A governed delegation: a delegator grants a delegatee a bounded scope.
+class OperationClass(IntEnum):
+    """LLD v1.1 §4.1 operation classes, ordered by impact.
 
-    ``signature`` is the base64-encoded RSA PKCS#1 v1.5 SHA-256 signature over
-    :meth:`signing_payload`.  A delegation is honoured only while its declared
-    validity window is open, its signer is the pinned authority, the requested
-    resource scope and purpose fall inside the granted bounds, and the
-    delegator/delegatee pair matches the authenticated actor chain.
+    A ``DelegationGrant.effect_ceiling`` is the highest class an invocation
+    under the grant may exercise; a higher class is outside the grant.
     """
 
-    delegation_id: str
-    delegator_id: str
-    delegatee_id: str
-    resource_scopes: tuple[str, ...]
+    R0_READ = 0
+    R1_DERIVE = 1
+    R2_MUTATE = 2
+    R3_HIGH_IMPACT = 3
+
+
+def _ordered_enum(field: str, value: object, kind: type[IntEnum], reason: str) -> IntEnum:
+    # Strict: a bool, a string or an unknown ordinal never becomes a ceiling.
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise SecurityControlError(reason, f"{field} must be a {kind.__name__}")
+    try:
+        return kind(value)
+    except ValueError as exc:
+        raise SecurityControlError(reason, f"{field} is not a {kind.__name__}") from exc
+
+
+def _grant_string(field: str, value: object) -> str:
+    if not isinstance(value, str) or not value:
+        raise SecurityControlError("DELEGATION_INVALID", f"grant {field} is incomplete")
+    return value
+
+
+def _grant_digest_field(field: str, value: object) -> str:
+    if not isinstance(value, str) or DIGEST.fullmatch(value) is None:
+        raise SecurityControlError("DELEGATION_INVALID", f"grant {field} is not a SHA-256 URN")
+    return value
+
+
+def _grant_set(field: str, values: object) -> list[str]:
+    """A semantic set: non-empty, no duplicates, sorted before signing."""
+    if isinstance(values, (str, bytes, bytearray)) or not isinstance(values, Sequence):
+        raise SecurityControlError("DELEGATION_INVALID", f"grant {field} must be an array")
+    items = [_grant_string(field, item) for item in values]
+    if not items:
+        raise SecurityControlError("DELEGATION_INVALID", f"grant {field} is empty")
+    if len(set(items)) != len(items):
+        raise SecurityControlError("DELEGATION_INVALID", f"grant {field} contains duplicates")
+    return sorted(items)
+
+
+def _grant_instant(field: str, value: object) -> datetime:
+    if not isinstance(value, datetime) or value.tzinfo is None or value.utcoffset() is None:
+        raise SecurityControlError("DELEGATION_INVALID", f"grant {field} must be timezone-aware")
+    return _canonical_utc(value)
+
+
+@dataclass(frozen=True, slots=True)
+class CapabilityInvocation:
+    """The capability a delegated call exercises (ADD v1.3 §5.1 Authority).
+
+    It is intersected with every grant of the chain: same ``capability_id``
+    and ``capability_version``, ``effect_class`` within ``effect_ceiling`` and
+    ``risk_class`` within ``risk_ceiling``.  It is also forwarded to the signed
+    policy, which binds the requested action to the declared capability.
+    """
+
+    capability_id: str
+    capability_version: str
+    effect_class: OperationClass
+    risk_class: RiskClass
+
+    def __post_init__(self) -> None:
+        reason = "CAPABILITY_INVOCATION_INVALID"
+        for field in ("capability_id", "capability_version"):
+            value = getattr(self, field)
+            if not isinstance(value, str) or not value:
+                raise SecurityControlError(reason, f"{field} is required")
+        object.__setattr__(
+            self, "effect_class",
+            _ordered_enum("effect_class", self.effect_class, OperationClass, reason),
+        )
+        object.__setattr__(
+            self, "risk_class", _ordered_enum("risk_class", self.risk_class, RiskClass, reason)
+        )
+
+    def to_policy_input(self) -> dict[str, object]:
+        return {
+            "capability_id": self.capability_id,
+            "capability_version": self.capability_version,
+            "effect_class": self.effect_class.name,
+            "risk_class": self.risk_class.name,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class SignedDelegation:
+    """A signed, content-addressed ``DelegationGrant`` (ADD v1.3 §5.2).
+
+    ``signature`` is the base64-encoded RSA PKCS#1 v1.5 SHA-256 signature of
+    the pinned delegation authority over :meth:`signing_payload` -- the RFC
+    8785 canonical bytes of every other field (the ``signature_ref`` of the
+    design record).  :meth:`digest` is the content address of the grant and
+    is what a child grant's ``parent_grant_digest`` links to.
+
+    ``organization_id`` extends the design record: ADD v1.3 §1.4 requires the
+    declared ``tenant_id``, ``organization_id``, ``domain_id`` and
+    ``compartments`` to be compared with authorised bindings, so a grant that
+    did not bind the organization could be replayed into a foreign one.
+    Every field is mandatory; an incomplete grant is ``DELEGATION_INVALID``.
+    """
+
+    grant_id: str
+    grantor_principal: str
+    grantee_principal: str
+    capability_id: str
+    capability_version: str
+    resource_scope: str
+    tenant_id: str
+    organization_id: str
+    domains: tuple[str, ...]
+    compartments: tuple[str, ...]
     permitted_purposes: tuple[str, ...]
+    effect_ceiling: OperationClass
+    risk_ceiling: RiskClass
     not_before: datetime
     expires_at: datetime
-    signature: str
+    max_chain_depth: int
+    policy_bundle_digest: str
+    nonce: str
+    confirmation_key_thumbprint: str
+    signature: str = ""
+    redelegation_allowed: bool = False
+    parent_grant_digest: str | None = None
 
     def signing_payload(self) -> bytes:
-        if not self.delegation_id or not self.delegator_id or not self.delegatee_id:
-            raise SecurityControlError("DELEGATION_INVALID", "delegation fields are incomplete")
-        if self.not_before.tzinfo is None or self.expires_at.tzinfo is None:
-            raise SecurityControlError("DELEGATION_INVALID", "delegation validity window is empty")
-        not_before = _canonical_utc(self.not_before)
-        expires_at = _canonical_utc(self.expires_at)
+        record: dict[str, object] = {
+            field: _grant_string(field, getattr(self, field))
+            for field in (
+                "grant_id", "grantor_principal", "grantee_principal", "capability_id",
+                "capability_version", "resource_scope", "tenant_id", "organization_id",
+            )
+        }
+        if self.grantor_principal == self.grantee_principal:
+            raise SecurityControlError("DELEGATION_INVALID", "grant delegates to its grantor")
+        for field in ("domains", "compartments", "permitted_purposes"):
+            record[field] = _grant_set(field, getattr(self, field))
+        reason = "DELEGATION_INVALID"
+        record["effect_ceiling"] = _ordered_enum(
+            "effect_ceiling", self.effect_ceiling, OperationClass, reason
+        ).name
+        record["risk_ceiling"] = _ordered_enum(
+            "risk_ceiling", self.risk_ceiling, RiskClass, reason
+        ).name
+        not_before = _grant_instant("not_before", self.not_before)
+        expires_at = _grant_instant("expires_at", self.expires_at)
         if not_before >= expires_at:
             raise SecurityControlError("DELEGATION_INVALID", "delegation validity window is empty")
-        if not self.resource_scopes or not self.permitted_purposes:
-            raise SecurityControlError("DELEGATION_INVALID", "delegation scope or purpose is empty")
-        if len(set(self.resource_scopes)) != len(self.resource_scopes):
-            raise SecurityControlError("DELEGATION_INVALID", "delegation scopes contain duplicates")
-        if len(set(self.permitted_purposes)) != len(self.permitted_purposes):
-            raise SecurityControlError("DELEGATION_INVALID", "delegation purposes contain duplicates")
-        return json.dumps(
-            {
-                "delegation_id": self.delegation_id,
-                "delegator_id": self.delegator_id,
-                "delegatee_id": self.delegatee_id,
-                "resource_scopes": sorted(self.resource_scopes),
-                "permitted_purposes": sorted(self.permitted_purposes),
-                "not_before": not_before.strftime(_RFC3339),
-                "expires_at": expires_at.strftime(_RFC3339),
-            },
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
+        record["not_before"] = not_before.strftime(_RFC3339)
+        record["expires_at"] = expires_at.strftime(_RFC3339)
+        depth = self.max_chain_depth
+        if isinstance(depth, bool) or not isinstance(depth, int) or depth < 1:
+            raise SecurityControlError("DELEGATION_INVALID", "max_chain_depth must be >= 1")
+        record["max_chain_depth"] = depth
+        if not isinstance(self.redelegation_allowed, bool):
+            raise SecurityControlError("DELEGATION_INVALID", "redelegation_allowed must be boolean")
+        record["redelegation_allowed"] = self.redelegation_allowed
+        record["parent_grant_digest"] = (
+            None if self.parent_grant_digest is None
+            else _grant_digest_field("parent_grant_digest", self.parent_grant_digest)
+        )
+        record["policy_bundle_digest"] = _grant_digest_field(
+            "policy_bundle_digest", self.policy_bundle_digest
+        )
+        nonce = _grant_string("nonce", self.nonce)
+        if len(nonce) < 16:
+            raise SecurityControlError("DELEGATION_INVALID", "grant nonce is too short")
+        record["nonce"] = nonce
+        record["confirmation_key_thumbprint"] = _grant_digest_field(
+            "confirmation_key_thumbprint", self.confirmation_key_thumbprint
+        )
+        return canonical_bytes(record)
+
+    def digest(self) -> str:
+        return _sha256_urn(self.signing_payload())
+
+
+DelegationGrant = SignedDelegation
+
+
+def verify_delegation_signature(
+    grant: SignedDelegation, signer_public_key: tuple[int, int]
+) -> str:
+    """Verify the grant's detached signature; return its content address."""
+
+    signer_n, signer_e = signer_public_key
+    payload = grant.signing_payload()
+    try:
+        signature = _b64_decode(grant.signature)
+    except (ValueError, TypeError) as exc:
+        raise SecurityControlError(
+            "DELEGATION_SIGNATURE_INVALID", "delegation signature is malformed"
+        ) from exc
+    if not _rsa_verify(payload, signature, signer_n, signer_e, "sha256"):
+        raise SecurityControlError(
+            "DELEGATION_SIGNATURE_INVALID", "delegation signature does not verify"
+        )
+    return _sha256_urn(payload)
 
 
 def verify_signed_delegation(
@@ -702,27 +885,18 @@ def verify_signed_delegation(
     revoked: bool = False,
 ) -> None:
     """Reject an unsigned, altered, revoked, out-of-window or out-of-scope
-    delegation (FR-128: confused-deputy and delegation laundering defence).
+    single grant (FR-128: confused-deputy and delegation laundering defence).
 
     ``at`` is retained for source compatibility only; it never supplies the
-    boundary clock. Signing canonicalises authority timestamps, not now.
+    boundary clock.  The policy boundary applies the full chain, capability,
+    governed-scope, policy and workload-key checks on top of these.
     """
 
-    signer_n, signer_e = signer_public_key
-    payload = delegation.signing_payload()
-    try:
-        signature = _b64_decode(delegation.signature)
-    except (ValueError, TypeError) as exc:
-        raise SecurityControlError(
-            "DELEGATION_SIGNATURE_INVALID", "delegation signature is malformed"
-        ) from exc
-    if not _rsa_verify(payload, signature, signer_n, signer_e, "sha256"):
-        raise SecurityControlError(
-            "DELEGATION_SIGNATURE_INVALID", "delegation signature does not verify"
-        )
+    verify_delegation_signature(delegation, signer_public_key)
     if revoked:
         raise SecurityControlError("DELEGATION_REVOKED", "delegation is revoked")
-    if delegator_id != delegation.delegator_id or delegatee_id != delegation.delegatee_id:
+    if (delegator_id != delegation.grantor_principal
+            or delegatee_id != delegation.grantee_principal):
         raise SecurityControlError(
             "DELEGATION_BINDING_MISMATCH", "delegation does not bind the actor chain"
         )
@@ -734,7 +908,7 @@ def verify_signed_delegation(
         raise SecurityControlError(
             "DELEGATION_EXPIRED", "delegation is outside its validity window"
         )
-    if resource_scope not in delegation.resource_scopes:
+    if resource_scope != delegation.resource_scope:
         raise SecurityControlError(
             "DELEGATION_SCOPE_MISMATCH", "delegation does not cover the resource scope"
         )
@@ -1050,17 +1224,92 @@ def _policy_package_path(item: Mapping[str, object]) -> tuple[str, ...]:
     return tuple(values)
 
 
+def _strip_locations(node: object) -> object:
+    if isinstance(node, dict):
+        return {key: _strip_locations(value) for key, value in node.items() if key != "location"}
+    if isinstance(node, list):
+        return [_strip_locations(value) for value in node]
+    return node
+
+
+def _rule_fingerprint(rule: object) -> str:
+    """Canonical, location-free identity of one compiled OPA rule."""
+    return json.dumps(_strip_locations(rule), sort_keys=True, separators=(",", ":"))
+
+
+def _rule_name(rule: object) -> str | None:
+    head = rule.get("head") if isinstance(rule, dict) else None
+    name = head.get("name") if isinstance(head, dict) else None
+    return name if isinstance(name, str) and name else None
+
+
+def _data_references(node: object) -> list[list[object]]:
+    """Every ``data``-rooted reference (and bare ``data`` variable) in an AST."""
+    found: list[list[object]] = []
+    if isinstance(node, dict):
+        if node.get("type") == "var" and node.get("value") == "data":
+            found.append([])
+        value = node.get("value")
+        if (node.get("type") == "ref" and isinstance(value, list) and value
+                and value[0] == {"type": "var", "value": "data"}):
+            found.append(value[1:])
+            for term in value[1:]:
+                found.extend(_data_references(term))
+            return found
+        for key, child in node.items():
+            if key != "location":
+                found.extend(_data_references(child))
+    elif isinstance(node, list):
+        for child in node:
+            found.extend(_data_references(child))
+    return found
+
+
+@dataclass(frozen=True, slots=True)
+class _VerifiedBundleSnapshot:
+    """The immutable, verified policy bundle a decision is bound to.
+
+    ``rules`` are the location-free fingerprints of the compiled rules OPA
+    reported for the signed module right after installation.  The decision
+    is accepted only if every rule OPA evaluated for it is one of these, so a
+    module swapped or injected between the freshness check and the
+    evaluation cannot influence a decision that still names this digest.
+    """
+
+    policy_id: str
+    digest: str
+    rules: frozenset[str]
+    not_before: datetime
+    expires_at: datetime
+
+    def snapshot_digest(self) -> str:
+        return _sha256_urn(canonical_bytes({
+            "policy_id": self.policy_id,
+            "digest": self.digest,
+            "rules": sorted(self.rules),
+            "not_before": self.not_before.strftime(_RFC3339),
+            "expires_at": self.expires_at.strftime(_RFC3339),
+        }))
+
+
 class OpaPolicyDecisionProvider:
     """Installs a signed policy bundle and evaluates it with real OPA.
 
     A bundle is accepted only if its detached RSA signature verifies against
     the pinned signer public key (the *trust pin*), its ``policy_id`` matches,
-    and the current instant falls inside its declared validity window.  At
-    decision time the provider binds the governed context's
-    ``policy_bundle_digest`` pin to the digest of the bundle actually installed,
-    rejects any unsolicited module in the governed package, and forwards every
-    governed attribute to OPA, so a policy can never be short-circuited by an
-    omitted scope, an expired bundle or a forged delegation chain.
+    the current instant falls inside its declared validity window and the
+    module OPA compiled is self-contained: it lives in the governed package
+    and references no ``data`` document other than its own rules, so a
+    decision is a function of the signed source and the forwarded input only.
+
+    Every decision is bound to the immutable verified snapshot captured at
+    its start: the governed context pin must name it, the live module set is
+    checked before and after the evaluation, and the evaluation itself is
+    requested with a full trace whose every evaluated rule must belong to the
+    snapshot.  A delegated request must present the complete signed grant
+    chain, verified against the pinned delegation authority, the live
+    revocation set, the workload key on the mTLS channel, the snapshot and
+    the governed scope, before and after the policy is consulted.
     """
 
     _ALLOW_PATH = "/v1/data/ocor/control_plane/allow"
@@ -1080,9 +1329,7 @@ class OpaPolicyDecisionProvider:
         self._policy_id = policy_id
         self._timeout = timeout_seconds
         self._ssl_context = _require_mtls_context(ssl_context)
-        self._bundle_digest: str | None = None
-        self._bundle_expires_at: datetime | None = None
-        self._bundle_not_before: datetime | None = None
+        self._snapshot: _VerifiedBundleSnapshot | None = None
         self._signer_n, self._signer_e = signer_public_key
         if self._signer_n.bit_length() < 2048 or self._signer_e < 3:
             raise SecurityControlError(
@@ -1100,10 +1347,30 @@ class OpaPolicyDecisionProvider:
             raise SecurityControlError(
                 "DELEGATION_BINDING_MISMATCH", "revocations require a delegation trust pin"
             )
+        self._lock = threading.Lock()
         self._delegation_revocations: dict[str, SignedDelegationRevocation] = {}
+        # nonce -> content address of the only grant allowed to carry it.
+        self._grant_nonces: dict[str, str] = {}
         for revocation in delegation_revocations:
-            assert delegation_signer_public_key is not None
-            verify_signed_delegation_revocation(revocation, delegation_signer_public_key)
+            self.apply_revocation(revocation)
+
+    @property
+    def _bundle_digest(self) -> str | None:
+        snapshot = self._snapshot
+        return None if snapshot is None else snapshot.digest
+
+    def apply_revocation(self, revocation: SignedDelegationRevocation) -> None:
+        """Honour a signed revocation from now on (ADD v1.3 §5.2 rule 5).
+
+        Every later decision, and every decision whose policy evaluation is
+        still in flight, rejects a chain containing the revoked grant.
+        """
+        if self._delegation_signer_key is None:
+            raise SecurityControlError(
+                "DELEGATION_BINDING_MISMATCH", "revocations require a delegation trust pin"
+            )
+        verify_signed_delegation_revocation(revocation, self._delegation_signer_key)
+        with self._lock:
             self._delegation_revocations[revocation.delegation_id] = revocation
 
     def install_policy(self, bundle: SignedPolicyBundle) -> str:
@@ -1140,12 +1407,68 @@ class OpaPolicyDecisionProvider:
         current = self._fetch_policy_source()
         if current != bundle.rego_source:
             raise SecurityControlError("POLICY_UNAVAILABLE", "installed policy did not persist")
+        installed = self._installed_module(self._fetch_policy_modules(), digest, "none")
+        rules = self._self_contained_rules(installed)
         if _now() >= _canonical_utc(bundle.expires_at):
             raise SecurityControlError("POLICY_BUNDLE_WINDOW_INVALID", "bundle expired during install")
-        self._bundle_digest = digest
-        self._bundle_not_before = _canonical_utc(bundle.not_before)
-        self._bundle_expires_at = _canonical_utc(bundle.expires_at)
+        self._snapshot = _VerifiedBundleSnapshot(
+            policy_id=self._policy_id,
+            digest=digest,
+            rules=rules,
+            not_before=_canonical_utc(bundle.not_before),
+            expires_at=_canonical_utc(bundle.expires_at),
+        )
         return digest
+
+    def _installed_module(
+        self, modules: list[dict[str, object]], digest: str, correlation_id: str
+    ) -> dict[str, object]:
+        for item in modules:
+            if str(item.get("id", "")) == self._policy_id:
+                raw = item.get("raw")
+                if not isinstance(raw, str) or _sha256_urn(raw.encode()) != digest:
+                    raise SecurityControlError(
+                        "STALE_BUNDLE",
+                        f"correlation_id={correlation_id} live policy digest drifted",
+                    )
+                return item
+        raise SecurityControlError(
+            "STALE_BUNDLE",
+            f"correlation_id={correlation_id} installed module is missing from OPA",
+        )
+
+    def _self_contained_rules(self, item: Mapping[str, object]) -> frozenset[str]:
+        """Fingerprint the compiled rules of a governed, self-contained module."""
+        if _policy_package_path(item) != _GOVERNED_PACKAGE_PATH:
+            raise SecurityControlError(
+                "POLICY_BUNDLE_INVALID", "signed module is not in the governed package"
+            )
+        ast = item.get("ast")
+        rules = ast.get("rules") if isinstance(ast, dict) else None
+        if not isinstance(rules, list) or not rules:
+            raise SecurityControlError("POLICY_BUNDLE_INVALID", "signed module has no rules")
+        names = {_rule_name(rule) for rule in rules}
+        if None in names:
+            raise SecurityControlError("POLICY_BUNDLE_INVALID", "signed module rule is unnamed")
+        package = [{"type": "string", "value": part} for part in _GOVERNED_PACKAGE_PATH[1:]]
+        imports = ast.get("imports") if isinstance(ast, dict) else None
+        for reference in _data_references(rules) + _data_references(imports or []):
+            # The compiler addresses the module's own rules as
+            # data.<package>.<rule>; any other data document (base data,
+            # another package, the whole tree) is outside the signed bundle.
+            head = reference[len(package)] if len(reference) > len(package) else None
+            local = (
+                reference[: len(package)] == package
+                and isinstance(head, dict)
+                and head.get("type") == "string"
+                and head.get("value") in names
+            )
+            if not local:
+                raise SecurityControlError(
+                    "POLICY_BUNDLE_INVALID",
+                    "signed module depends on a data document outside the bundle",
+                )
+        return frozenset(_rule_fingerprint(rule) for rule in rules)
 
     def _fetch_policy_source(self, correlation_id: str | None = None) -> str:
         status, body = _request(
@@ -1186,64 +1509,283 @@ class OpaPolicyDecisionProvider:
             raise SecurityControlError("POLICY_UNAVAILABLE", "policy list is not an array")
         return [item for item in result if isinstance(item, dict)]
 
-    def _require_fresh_bundle(self, correlation_id: str) -> None:
-        if self._bundle_digest is None:
+    def _require_fresh_bundle(
+        self, correlation_id: str, snapshot: _VerifiedBundleSnapshot | None = None
+    ) -> _VerifiedBundleSnapshot:
+        snapshot = snapshot if snapshot is not None else self._snapshot
+        if snapshot is None:
             raise SecurityControlError(
                 "POLICY_UNAVAILABLE", f"correlation_id={correlation_id} no policy installed"
             )
-        self._require_bundle_window(correlation_id)
+        self._require_bundle_window(correlation_id, snapshot)
         # Bind the decision to the *entire* evaluated package, not just the
-        # single installed module: an unsigned module dropped into the same OPA
-        # package can silently extend the decision, so any unsolicited module
-        # declaring ``package ocor.control_plane`` is a stale-bundle denial.
+        # single installed module: an unsigned module dropped into the governed
+        # package -- or into an enclosing package, whose rule heads can name
+        # data.ocor.control_plane.* -- can silently extend the decision.
         modules = self._fetch_policy_modules(correlation_id)
+        installed = self._installed_module(modules, snapshot.digest, correlation_id)
         governed_members: list[str] = []
-        installed_raw: str | None = None
         for item in modules:
-            module_id = str(item.get("id", ""))
-            raw = item.get("raw")
-            raw = raw if isinstance(raw, str) else ""
-            if module_id == self._policy_id:
-                installed_raw = raw
-            elif _policy_package_path(item) == _GOVERNED_PACKAGE_PATH:
-                governed_members.append(module_id)
-        if installed_raw is None:
-            raise SecurityControlError(
-                "STALE_BUNDLE",
-                f"correlation_id={correlation_id} installed module is missing from OPA",
-            )
-        if _sha256_urn(installed_raw.encode()) != self._bundle_digest:
-            raise SecurityControlError(
-                "STALE_BUNDLE",
-                f"correlation_id={correlation_id} live policy digest drifted",
-            )
+            if item is installed:
+                continue
+            path = _policy_package_path(item)
+            if not path or _GOVERNED_PACKAGE_PATH[: len(path)] == path:
+                governed_members.append(str(item.get("id", "")))
         if governed_members:
             raise SecurityControlError(
                 "STALE_BUNDLE",
                 f"correlation_id={correlation_id} unsolicited modules extend the "
                 f"governed package: {sorted(governed_members)}",
             )
+        ast = installed.get("ast")
+        rules = ast.get("rules") if isinstance(ast, dict) else None
+        live = frozenset(_rule_fingerprint(rule) for rule in rules) if isinstance(
+            rules, list) else frozenset()
+        if live != snapshot.rules:
+            raise SecurityControlError(
+                "STALE_BUNDLE",
+                f"correlation_id={correlation_id} compiled policy differs from the "
+                "verified snapshot",
+            )
+        return snapshot
 
-    def _require_bundle_window(self, correlation_id: str) -> datetime:
+    def _require_bundle_window(
+        self, correlation_id: str, snapshot: _VerifiedBundleSnapshot | None = None
+    ) -> datetime:
+        snapshot = snapshot if snapshot is not None else self._snapshot
         now = _now()
-        if (self._bundle_not_before is None or self._bundle_expires_at is None
-                or now < self._bundle_not_before or now >= self._bundle_expires_at):
+        if snapshot is None or now < snapshot.not_before or now >= snapshot.expires_at:
             raise SecurityControlError(
                 "POLICY_BUNDLE_WINDOW_INVALID",
                 f"correlation_id={correlation_id} installed policy bundle is outside its window",
             )
-        return self._bundle_expires_at
+        return snapshot.expires_at
+
+    def _require_evaluation_provenance(
+        self, response: Mapping[str, object], snapshot: _VerifiedBundleSnapshot,
+        correlation_id: str,
+    ) -> None:
+        """Bind the decision to the verified snapshot within the same response.
+
+        OPA reports, alongside the result, every rule it entered to produce
+        it.  Any rule outside the verified snapshot -- an injected module, a
+        swapped module or an enclosing-package rule head -- means the result
+        does not belong to the bundle the decision would name.
+        """
+        trace = response.get("explanation")
+        if not isinstance(trace, list):
+            raise SecurityControlError(
+                "POLICY_DECISION_INVALID",
+                f"correlation_id={correlation_id} policy evaluation provenance is missing",
+            )
+        decided = False
+        for event in trace:
+            if not isinstance(event, dict) or event.get("type") != "rule":
+                continue
+            node = event.get("node")
+            if _rule_fingerprint(node) not in snapshot.rules:
+                raise SecurityControlError(
+                    "STALE_BUNDLE",
+                    f"correlation_id={correlation_id} evaluated rule is not part of the "
+                    "verified policy bundle",
+                )
+            if event.get("op") == "exit" and _rule_name(node) == "allow":
+                decided = True
+        if not decided:
+            raise SecurityControlError(
+                "POLICY_DECISION_INVALID",
+                f"correlation_id={correlation_id} decision was not produced by the "
+                "verified allow rule",
+            )
+
+    def _verify_grant_chain(
+        self,
+        request: PolicyRequest,
+        grants: tuple[SignedDelegation, ...],
+        capability: CapabilityInvocation | None,
+        snapshot: _VerifiedBundleSnapshot,
+        correlation_id: str,
+    ) -> tuple[str, datetime]:
+        """Verify a complete delegation chain at the boundary instant.
+
+        ``actor_chain = (a0, a1, ..., an)`` with ``an`` the authenticated
+        principal is delegated by ``grants = (g1, ..., gn)``: ``gi`` is signed
+        by the pinned authority, links ``a(i-1) -> ai`` and its parent's
+        content address, may follow ``g(i-1)`` only if that allowed
+        redelegation, never widens it, and every grant intersects the
+        requested capability, governed scope, purpose and policy bundle.  The
+        last grant is confirmed to the workload key presented on mTLS.
+        Returns the chain content address and its earliest expiry.
+        """
+        correlation = f"correlation_id={correlation_id}"
+        if self._delegation_signer_key is None:
+            raise SecurityControlError(
+                "DELEGATION_BINDING_MISMATCH", f"{correlation} delegation authority is not configured"
+            )
+        if not grants:
+            raise SecurityControlError("DELEGATION_INVALID", f"{correlation} grant chain is empty")
+        if capability is None:
+            raise SecurityControlError(
+                "DELEGATION_INVALID", f"{correlation} delegated call declares no capability"
+            )
+        gcs = request.governed_context
+        chain = tuple(gcs.actor_chain)
+        principal_id = request.principal.principal_id
+        if len(chain) != len(grants) + 1 or chain[-1] != principal_id:
+            raise SecurityControlError(
+                "DELEGATION_BINDING_MISMATCH",
+                f"{correlation} actor_chain is not the delegation chain to the principal",
+            )
+        if gcs.policy_bundle_digest != snapshot.digest:
+            raise SecurityControlError(
+                "DELEGATION_POLICY_BINDING_MISMATCH", f"{correlation} policy pin differs"
+            )
+        key_thumbprint = workload_key_thumbprint(self._ssl_context)
+        with self._lock:
+            revoked = set(self._delegation_revocations)
+        digests: list[str] = []
+        instant = _now()
+        for index, grant in enumerate(grants):
+            if not isinstance(grant, SignedDelegation):
+                raise SecurityControlError("DELEGATION_INVALID", f"{correlation} not a grant")
+            digest = verify_delegation_signature(grant, self._delegation_signer_key)
+            if grant.grant_id in revoked:
+                raise SecurityControlError("DELEGATION_REVOKED", f"{correlation} grant is revoked")
+            if (grant.grantor_principal, grant.grantee_principal) != (chain[index], chain[index + 1]):
+                raise SecurityControlError(
+                    "DELEGATION_BINDING_MISMATCH", f"{correlation} grant does not bind the actor chain"
+                )
+            if index == 0:
+                if grant.parent_grant_digest is not None:
+                    raise SecurityControlError(
+                        "DELEGATION_CHAIN_INVALID", f"{correlation} root grant names a parent"
+                    )
+            else:
+                self._require_narrowing(grants[index - 1], grant, digests[-1], correlation)
+            if len(grants) - index > grant.max_chain_depth:
+                raise SecurityControlError(
+                    "DELEGATION_CHAIN_TOO_DEEP", f"{correlation} chain exceeds max_chain_depth"
+                )
+            if instant < _canonical_utc(grant.not_before) or instant >= _canonical_utc(
+                    grant.expires_at):
+                raise SecurityControlError(
+                    "DELEGATION_EXPIRED", f"{correlation} delegation is outside its validity window"
+                )
+            self._require_grant_covers(request, grant, capability, snapshot, correlation)
+            digests.append(digest)
+        if grants[-1].confirmation_key_thumbprint != key_thumbprint:
+            raise SecurityControlError(
+                "DELEGATION_KEY_BINDING_MISMATCH",
+                f"{correlation} grant is not confirmed to the presenting workload key",
+            )
+        with self._lock:
+            for grant, digest in zip(grants, digests):
+                if self._grant_nonces.get(grant.nonce, digest) != digest:
+                    raise SecurityControlError(
+                        "DELEGATION_REPLAY", f"{correlation} grant nonce was already used"
+                    )
+            if len({grant.nonce for grant in grants}) != len(grants):
+                raise SecurityControlError(
+                    "DELEGATION_REPLAY", f"{correlation} grant nonce repeats in the chain"
+                )
+            for grant, digest in zip(grants, digests):
+                self._grant_nonces[grant.nonce] = digest
+        expiry = min(_canonical_utc(grant.expires_at) for grant in grants)
+        return _sha256_urn(":".join(digests).encode()), expiry
+
+    @staticmethod
+    def _require_narrowing(
+        parent: SignedDelegation, child: SignedDelegation, parent_digest: str, correlation: str
+    ) -> None:
+        if child.parent_grant_digest != parent_digest:
+            raise SecurityControlError(
+                "DELEGATION_CHAIN_INVALID", f"{correlation} parent_grant_digest does not link"
+            )
+        if parent.redelegation_allowed is not True:
+            raise SecurityControlError(
+                "DELEGATION_REDELEGATION_FORBIDDEN", f"{correlation} parent forbids redelegation"
+            )
+        narrowed = (
+            child.capability_id == parent.capability_id
+            and child.capability_version == parent.capability_version
+            and child.resource_scope == parent.resource_scope
+            and child.tenant_id == parent.tenant_id
+            and child.organization_id == parent.organization_id
+            and child.policy_bundle_digest == parent.policy_bundle_digest
+            and set(child.domains) <= set(parent.domains)
+            and set(child.compartments) <= set(parent.compartments)
+            and set(child.permitted_purposes) <= set(parent.permitted_purposes)
+            and child.effect_ceiling <= parent.effect_ceiling
+            and child.risk_ceiling <= parent.risk_ceiling
+            and child.max_chain_depth < parent.max_chain_depth
+            and _canonical_utc(child.not_before) >= _canonical_utc(parent.not_before)
+            and _canonical_utc(child.expires_at) <= _canonical_utc(parent.expires_at)
+        )
+        if not narrowed:
+            raise SecurityControlError(
+                "DELEGATION_AMPLIFICATION", f"{correlation} grant widens its parent"
+            )
+
+    @staticmethod
+    def _require_grant_covers(
+        request: PolicyRequest,
+        grant: SignedDelegation,
+        capability: CapabilityInvocation,
+        snapshot: _VerifiedBundleSnapshot,
+        correlation: str,
+    ) -> None:
+        gcs = request.governed_context
+        if (
+            request.resource != grant.resource_scope
+            or gcs.tenant_id != grant.tenant_id
+            or gcs.organization_id != grant.organization_id
+            or gcs.domain_id not in grant.domains
+            or not set(gcs.compartments) <= set(grant.compartments)
+        ):
+            raise SecurityControlError(
+                "DELEGATION_SCOPE_MISMATCH", f"{correlation} grant does not cover the governed scope"
+            )
+        if gcs.purpose not in grant.permitted_purposes:
+            raise SecurityControlError(
+                "DELEGATION_PURPOSE_MISMATCH", f"{correlation} grant does not cover the purpose"
+            )
+        if (capability.capability_id, capability.capability_version) != (
+                grant.capability_id, grant.capability_version):
+            raise SecurityControlError(
+                "DELEGATION_CAPABILITY_MISMATCH", f"{correlation} grant does not cover the capability"
+            )
+        if (capability.effect_class > grant.effect_ceiling
+                or capability.risk_class > grant.risk_ceiling):
+            raise SecurityControlError(
+                "DELEGATION_CEILING_EXCEEDED", f"{correlation} call exceeds the grant ceilings"
+            )
+        if grant.policy_bundle_digest != snapshot.digest:
+            raise SecurityControlError(
+                "DELEGATION_POLICY_BINDING_MISMATCH",
+                f"{correlation} grant is bound to another policy bundle",
+            )
 
     def evaluate(
-        self, request: PolicyRequest, *, delegation: SignedDelegation | None = None
+        self,
+        request: PolicyRequest,
+        *,
+        delegation: SignedDelegation | Sequence[SignedDelegation] | None = None,
+        capability: CapabilityInvocation | None = None,
     ) -> PolicyDecision:
         correlation_id = request.governed_context.correlation_id
+        # LLD v1.1 §1.1: a received digest is recomputed before policy.
+        if request.governed_context.digest() != request.governed_context_digest:
+            raise SecurityControlError(
+                "GOVERNED_CONTEXT_MISMATCH", f"correlation_id={correlation_id} GCS digest differs"
+            )
         request.principal.require_valid(at=_now())
         _mtls_deadline(self._ssl_context)
-        self._require_fresh_bundle(correlation_id)
+        # One immutable snapshot for the whole decision: a concurrent install
+        # cannot change which bundle this decision is checked against.
+        snapshot = self._require_fresh_bundle(correlation_id)
         # Binding 1: the governed context's policy pin must equal the digest of
         # the bundle actually installed and verified, not a caller-declared value.
-        if request.governed_context.policy_bundle_digest != self._bundle_digest:
+        if request.governed_context.policy_bundle_digest != snapshot.digest:
             raise SecurityControlError(
                 "STALE_BUNDLE",
                 f"correlation_id={correlation_id} governed policy pin does not match "
@@ -1252,10 +1794,10 @@ class OpaPolicyDecisionProvider:
         # Binding 2: the governed actor_chain must be derived from the
         # authenticated principal's own chain -- an unverified delegator is
         # never introduced by the request alone.  A multi-hop chain is only
-        # accepted when accompanied by a signed delegation grant whose signer,
-        # validity window, revocation state, resource scope and purpose are all
-        # verified against the pinned authority at the decision boundary.
+        # accepted with the complete signed grant chain that delegates it.
         chain = tuple(request.governed_context.actor_chain)
+        grants: tuple[SignedDelegation, ...] = ()
+        chain_digest: str | None = None
         if delegation is None:
             if not set(chain).issubset(set(request.principal.actor_chain)):
                 raise SecurityControlError(
@@ -1264,26 +1806,10 @@ class OpaPolicyDecisionProvider:
                     "authenticated principal",
                 )
         else:
-            if self._delegation_signer_key is None:
-                raise SecurityControlError(
-                    "DELEGATION_BINDING_MISMATCH",
-                    f"correlation_id={correlation_id} delegation authority is not "
-                    "configured",
-                )
-            if len(chain) != 2 or chain[1] != request.principal.principal_id:
-                raise SecurityControlError(
-                    "DELEGATION_BINDING_MISMATCH",
-                    f"correlation_id={correlation_id} delegated actor_chain is not a "
-                    "single-hop delegation to the authenticated principal",
-                )
-            verify_signed_delegation(
-                delegation,
-                self._delegation_signer_key,
-                resource_scope=request.resource,
-                purpose=request.governed_context.purpose,
-                delegator_id=chain[0],
-                delegatee_id=request.principal.principal_id,
-                revoked=delegation.delegation_id in self._delegation_revocations,
+            grants = (delegation,) if isinstance(delegation, SignedDelegation) else tuple(
+                delegation)
+            chain_digest, _ = self._verify_grant_chain(
+                request, grants, capability, snapshot, correlation_id
             )
         gcs = request.governed_context
         policy_input = {
@@ -1296,12 +1822,17 @@ class OpaPolicyDecisionProvider:
             "effective_principal_id": gcs.effective_principal_id,
             "principal_id": request.principal.principal_id,
             "actor_chain": list(gcs.actor_chain),
+            "ontology_release_digest": gcs.ontology_release_digest,
+            "policy_bundle_digest": gcs.policy_bundle_digest,
+            "correlation_id": correlation_id,
             "action": request.action,
             "resource": request.resource,
+            "capability": None if capability is None else capability.to_policy_input(),
+            "delegation_grant_ids": [grant.grant_id for grant in grants],
         }
         status, body = _request(
             "POST",
-            f"{self._base_url}{self._ALLOW_PATH}",
+            f"{self._base_url}{self._ALLOW_PATH}?explain=full",
             data=json.dumps({"input": policy_input}).encode(),
             headers={"Content-Type": "application/json"},
             timeout=self._timeout,
@@ -1311,12 +1842,18 @@ class OpaPolicyDecisionProvider:
         if status != 200:
             raise SecurityControlError("POLICY_UNAVAILABLE", f"policy eval HTTP {status}")
         try:
-            raw_result = json.loads(body.decode()).get("result")
+            response = json.loads(body.decode())
         except (ValueError, json.JSONDecodeError) as exc:
             raise SecurityControlError(
                 "POLICY_DECISION_INVALID",
                 f"correlation_id={correlation_id} malformed policy response",
             ) from exc
+        if not isinstance(response, dict):
+            raise SecurityControlError(
+                "POLICY_DECISION_INVALID",
+                f"correlation_id={correlation_id} malformed policy response",
+            )
+        raw_result = response.get("result")
         # A non-boolean decision (a string, an array, an object) is rejected,
         # never coerced through truthiness into a permit.
         if not isinstance(raw_result, bool):
@@ -1324,30 +1861,29 @@ class OpaPolicyDecisionProvider:
                 "POLICY_DECISION_INVALID",
                 f"correlation_id={correlation_id} policy result is not boolean",
             )
+        self._require_evaluation_provenance(response, snapshot, correlation_id)
+        # Revalidate after backend I/O: a module can drift, a grant can be
+        # revoked and an authority can expire while OPA is answering.
+        self._require_fresh_bundle(correlation_id, snapshot)
         effect = PolicyEffect.PERMIT if raw_result else PolicyEffect.DENY
-        # Revalidate after backend I/O: an authority can expire while OPA is
-        # answering. The emitted window intersects every verified authority.
         now = _now()
         request.principal.require_valid(at=now)
         valid_until = min(now + timedelta(seconds=300), request.principal.expires_at,
-                          self._require_bundle_window(correlation_id),
+                          self._require_bundle_window(correlation_id, snapshot),
                           _mtls_deadline(self._ssl_context))
-        if delegation is not None:
-            assert self._delegation_signer_key is not None
-            verify_signed_delegation(
-                delegation, self._delegation_signer_key,
-                resource_scope=request.resource, purpose=gcs.purpose,
-                delegator_id=chain[0], delegatee_id=request.principal.principal_id,
-                revoked=delegation.delegation_id in self._delegation_revocations,
+        if grants:
+            chain_digest, chain_expiry = self._verify_grant_chain(
+                request, grants, capability, snapshot, correlation_id
             )
-            valid_until = min(valid_until, _canonical_utc(delegation.expires_at))
+            valid_until = min(valid_until, chain_expiry)
         status_record = ControlStatus.available(
             ControlName.POLICY,
             observed_at=now,
-            source_digest=self._bundle_digest,
+            source_digest=snapshot.digest,
         )
         decision_id = _sha256_urn(
-            f"{request.principal.principal_id}:{request.action}:"
+            f"{snapshot.snapshot_digest()}:{request.governed_context_digest}:"
+            f"{chain_digest or '-'}:{request.principal.principal_id}:{request.action}:"
             f"{request.resource}:{now.isoformat()}".encode()
         )
         return PolicyDecision.from_request(
@@ -1505,6 +2041,9 @@ class SpireWorkloadIdentityProvider:
 
         context = _PeerIdentitySSLContext(self._expected_spiffe_id)
         context._identity_window = window
+        context._identity_key_thumbprint = _sha256_urn(
+            cast(bytes, certificates[0]["spki_der"])
+        )
         context.verify_mode = ssl.CERT_REQUIRED
         context.check_hostname = False
         context.load_verify_locations(cadata=bundle_pem)
@@ -1603,8 +2142,26 @@ class OpenBaoSecretProvider:
         self._mount_digest = _sha256_urn(str(accessor).encode())
         return self._mount_digest
 
-    def lease(self, request: SecretRequest) -> SecretLease:
+    def lease(
+        self, request: SecretRequest, *, principal: AuthenticatedPrincipal | None = None
+    ) -> SecretLease:
         started_at = _now()
+        # Secret isolation: the kv-v2 prefix is the authenticated principal's
+        # own, never a principal id the caller merely declares.
+        if not isinstance(principal, AuthenticatedPrincipal):
+            raise SecurityControlError(
+                "SECRET_BINDING_MISMATCH", "a secret lease requires the authenticated principal"
+            )
+        if request.principal_id != principal.principal_id:
+            raise SecurityControlError(
+                "SECRET_BINDING_MISMATCH", "secret request is not bound to the authenticated principal"
+            )
+        # Transport authority first (an expired SVID is reported as such),
+        # then the principal's own window; any other context is refused by
+        # the HTTPS/mTLS I/O boundary before a socket is opened.
+        if isinstance(self._ssl_context, _PeerIdentitySSLContext):
+            self._ssl_context.require_current_identity()
+        principal.require_valid(at=started_at)
         mount_digest = self._mount_digest or self._ensure_mount()
         secret_name = request.secret_ref[len("urn:ocor:secret-ref:") :]
         if not secret_name:
@@ -1663,7 +2220,8 @@ class OpenBaoSecretProvider:
         handle_ref = "urn:ocor:secret-handle:" + handle[len("urn:sha256:") :]
         token_deadline = self._token_deadline()
         now = _now()
-        expires_at = min(now + timedelta(seconds=300), _mtls_deadline(self._ssl_context))
+        expires_at = min(now + timedelta(seconds=300), _mtls_deadline(self._ssl_context),
+                         principal.expires_at)
         if token_deadline is not None:
             expires_at = min(expires_at, token_deadline)
         try:
@@ -1680,6 +2238,7 @@ class OpenBaoSecretProvider:
                 expires_at = min(expires_at, deletion_at)
         except (TypeError, AttributeError, ValueError) as exc:
             raise SecurityControlError("SECRETS_UNAVAILABLE", "invalid secret validity") from exc
+        principal.require_valid(at=_now())
         if _now() >= expires_at:
             raise SecurityControlError("SECRET_LEASE_EXPIRED", "authority expired during secret read")
         status_record = ControlStatus.available(
