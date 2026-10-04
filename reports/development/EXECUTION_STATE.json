@@ -1,9 +1,9 @@
 {
   "active_iteration": {
     "branch": "governed/state-sync-ocor-dev-0048-repair-cycle-4",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR-DEV-0048-REPAIR-4-CODEX",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__TERMINAL_BLOCKED_REPORT_CYCLE4",
     "decision_id": "DEC-210",
-    "phase": "IMPLEMENTATION_REPAIR_CYCLE_4_VERIFIER_ERROR_RETRY_ONCE",
+    "phase": "GOVERNED_TERMINAL_BLOCKED_REPORT_CYCLE4",
     "task_branch": "task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls",
     "task_head_sha": "c6cbcd3282161aafd404e73bec49acffb1ffb011",
     "task_worktree": ".ocor/worktrees/ocor-dev-0048",
@@ -37,6 +37,18 @@
           "summary": "PolicyDecision.valid_until is fixed at a 300-second duration limited only by the bundle (control_plane.py:1259-1261); the delegation expiry does not bound the PERMIT, so a delegated decision outlives its Authority. Contradicts ADD v1.3 5.1/5.2 and the authority limited by the Delegation (FR-128)."
         }
       ],
+      "final_findings_cycle_4": [
+        {
+          "id": "VF-001",
+          "severity": "high",
+          "summary": "SignedDelegation firma solo delegator/delegatee, resource_scopes, purpose e finestra: non firma tenant_id/domains/compartments richiesti da ADD v1.3 \u00a75.2 (rr. 3169\u20133190). Le quattro varianti di scope (tenant/organizzazione/dominio/compartimenti) modificano il GCS ricalcolando il digest, ma la stessa firma \u00e8 accettata e produce PERMIT in tutti i casi (control_plane.py:654); il controllo di policy non applica i limiti che il grant omette."
+        },
+        {
+          "id": "VF-002",
+          "severity": "high",
+          "summary": "evaluate verifica lista/digest dei moduli OPA prima del POST (r. 1243) e rivalida solo le finestre temporali (rr. 1330\u20131343); un proxy mTLS trasparente inietta un modulo non firmato prima del POST reale, OPA restituisce true e il provider emette PERMIT con il vecchio digest firmato anzich\u00e9 STALE_BUNDLE (control_plane.py:1243). Viola il criterio \u00abstale bundle fails closed\u00bb e il version fence di ADD \u00a75.1."
+        }
+      ],
       "minimal_unblock_action": "Implement VF-001 (canonical UTC instants with the same precision for sign+enforce, or reject non-canonical time representations) and VF-002 (wire grant/revocation validation into the authorized provider path with real-boundary positive/negative cases), then request a third independent verification. This exceeds the 2-repair-cycle harness budget (RCCAD 8): requires explicit PO authorization or a governed alternative disposition.",
       "po_decision": {
         "date": "2026-10-02",
@@ -59,13 +71,17 @@
         "verdict": "NO_GO"
       },
       "repair_cycle_4": {
+        "findings": [
+          "VF-001",
+          "VF-002"
+        ],
         "head_sha": "c6cbcd3282161aafd404e73bec49acffb1ffb011",
         "repair_cycle": 4,
         "request_id": "OCOR-DEV-0048-c6cbcd328216-4",
         "review_type": "TASK_EVIDENCE",
         "same_model_separate_contexts": true,
         "scope": "VF-001 + VF-002 + classe dei controlli temporali",
-        "verdict": "VERIFIER_ERROR_RETRY_ONCE",
+        "verdict": "NO_GO",
         "verifier_error": {
           "attempts": 3,
           "cause": "codex exec rc=1; flag di moderazione del modello ('possible cybersecurity risk') sul contenuto di verifica avversariale dei backend di sicurezza",
@@ -75,11 +91,11 @@
           "retry_count": 1
         }
       },
-      "status": "REPAIR_CYCLE_4_VERIFIER_ERROR_RETRY_ONCE",
+      "status": "REPAIR_CYCLE_4_NO_GO_TERMINAL_BLOCKED",
       "terminal_disposition": {
-        "date": "2026-10-02",
-        "decision": "OCOR-DEV-0048-REPAIR-3",
-        "note": "Cycle-3 independent verification (OCOR-DEV-0048-7f2fff555621-3) returned NO_GO with 2 blocking high findings (VF-001 delegation window validated against request.at; VF-002 valid_until not bounded by delegation expiry). Per PO decision, no further repair: OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED and the whole remaining backlog (OCOR-DEV-0049..0069) is transitively blocked. Evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed)."
+        "date": "2026-10-04",
+        "decision": "OCOR-DEV-0048-REPAIR-4-CODEX",
+        "note": "Cycle-4 independent verification (OCOR-DEV-0048-c6cbcd328216-4) returned NO_GO with 2 blocking high findings (VF-001 SignedDelegation does not sign tenant_id/domains/compartments required by ADD v1.3 \u00a75.2; VF-002 unsigned OPA module injected between freshness check and eval yields PERMIT with stale digest instead of STALE_BUNDLE). Per PO decision OCOR-DEV-0048-REPAIR-4-CODEX (2026-10-03), no fifth repair is authorized: OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED and the whole remaining backlog (OCOR-DEV-0049..0069) is transitively blocked. Evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed)."
       },
       "terminal_disposition_superseded_by": "OCOR-DEV-0048-REPAIR-4-CODEX (solo un quarto ciclo, nessuna quinta riparazione)",
       "verdicts": [
@@ -132,6 +148,16 @@
           "head_sha": "7f2fff555621424c8c89764aba16810f038ef509",
           "repair_cycle": 3,
           "request_id": "OCOR-DEV-0048-7f2fff555621-3",
+          "verdict": "NO_GO"
+        },
+        {
+          "findings": [
+            "VF-001",
+            "VF-002"
+          ],
+          "head_sha": "c6cbcd3282161aafd404e73bec49acffb1ffb011",
+          "repair_cycle": 4,
+          "request_id": "OCOR-DEV-0048-c6cbcd328216-4",
           "verdict": "NO_GO"
         }
       ]
@@ -230,8 +256,8 @@
         "id": "OCOR-DEV-0048-REPAIR-4-CODEX",
         "scope": "VF-001/VF-002 ciclo 3 e intera classe di difetti temporali in security/control_plane.py; una sola fase implementativa Codex; no merge e nessun altro task"
       },
-      "scope": "Decisione PO OCOR-DEV-0048-REPAIR-4-CODEX del 2026-10-03 supersede il divieto terminale del ciclo 3. Riparazione implementata, evidenza candidata non sigillata, task non completato. Downstream ancora dipendente dalla verifica e integrazione di 0048.",
-      "status": "IN_PROGRESS_REPAIR_CYCLE_4_AWAITING_VERIFICATION"
+      "scope": "Decisione PO OCOR-DEV-0048-REPAIR-4-CODEX del 2026-10-03 supersede il divieto terminale del ciclo 3 per un solo quarto ciclo. Riparazione implementata (head c6cbcd3282161aafd404e73bec49acffb1ffb011) e verificata indipendentemente NO_GO (OCOR-DEV-0048-c6cbcd328216-4) con 2 finding high (VF-001 delega non firma tenant/domini/compartimenti; VF-002 modulo OPA non firmato iniettato -> PERMIT con digest stantio). Nessuna quinta riparazione autorizzata: BLOCKED_REPAIR_BUDGET_EXHAUSTED; downstream OCOR-DEV-0049..0069 transitivamente bloccato. Evidenza CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (non sigillata).",
+      "status": "BLOCKED_REPAIR_BUDGET_EXHAUSTED"
     }
   ],
   "claims": {
@@ -305,7 +331,7 @@
     "OCOR-DEV-0046",
     "OCOR-DEV-0047"
   ],
-  "current_gate": "G4_WAVE_15_OCOR_DEV_0048_REPAIR_CYCLE_4_AWAITING_VERIFICATION",
+  "current_gate": "TERMINAL_BLOCKED_REPORT_CYCLE4",
   "latest_ci_evidence": {
     "candidate_commit": "c94c072e0bd70a27e1350980320659f6b7d6370a",
     "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR159_MERGED_7cac163e960cb86a3a780b42b65a96d518453791",
@@ -376,7 +402,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Verifier OCOR-DEV-0048-c6cbcd328216-4 in errore (VERIFIER_ERROR, 3 tentativi, flag moderazione). Richiesta ripetuta una volta per \u00a76. Con GO_FOR_EVIDENCE_SEAL: integrazione; con NO_GO o nuovo VERIFIER_ERROR: TERMINAL_BLOCKED (nessuna quinta riparazione).",
+  "next_executable_action": "TERMINAL_BLOCKED: no executable work remains. OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED after cycle-4 NO_GO (OCOR-DEV-0048-c6cbcd328216-4, PO decision OCOR-DEV-0048-REPAIR-4-CODEX); the residual backlog OCOR-DEV-0049..0069 is transitively blocked. Non-blocking PO decisions RVW-03, INFO-A, INFO-C remain OPEN_PO_DECISION_REQUIRED. TERMINAL_BLOCKED_REPORT.json refreshed to the cycle-4 terminal state.",
   "remediation_status": {
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -575,5 +601,5 @@
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-10-04T08:47:33.154852Z"
+  "updated_at": "2026-10-04T12:20:50Z"
 }

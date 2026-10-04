@@ -4217,3 +4217,36 @@
 - Nessuna modifica al codice, ai test, ai gate o all'evidenza candidata; nessun PR/merge. Il candidato resta `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillato). La disclosure same-model-in-separate-contexts è già nella richiesta.
 - Prossima azione: rieseguire il verifier a contesto pulito. Con `GO_FOR_EVIDENCE_SEAL`: integrazione in una sessione successiva; con `NO_GO` o nuovo `VERIFIER_ERROR`: `TERMINAL_BLOCKED` senza quinta riparazione (decisione `OCOR-DEV-0048-REPAIR-4-CODEX`).
 - Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance` `NOT_ESTABLISHED`, PoC/Production `NO-GO`; `inputs/` invariato.
+
+## 2026-10-04 — OCOR-DEV-0048: verdetto ciclo 4 NO_GO → TERMINAL_BLOCKED (decisione OCOR-DEV-0048-REPAIR-4-CODEX)
+
+- Il verifier indipendente ha prodotto il verdetto `OCOR-DEV-0048-c6cbcd328216-4` (head
+  `c6cbcd3282161aafd404e73bec49acffb1ffb011`, `repair_cycle: 4`, `TASK_EVIDENCE`): `NO_GO` con 2
+  finding bloccanti `high`, diversi dai precedenti.
+  - `VF-001` (`security/control_plane.py:654`): `SignedDelegation` firma solo delegator/delegatee,
+    `resource_scopes`, `purpose` e finestra; non firma `tenant_id`/`domains`/`compartments` richiesti
+    da ADD v1.3 §5.2 (rr. 3169–3190). Le quattro varianti di scope cambiano il GCS ricalcolando il
+    digest, ma la stessa firma è accettata e produce `PERMIT` in tutti i casi; il controllo di policy
+    non applica i limiti che il grant omette.
+  - `VF-002` (`security/control_plane.py:1243`): `evaluate` verifica lista/digest dei moduli OPA prima
+    del POST e rivalida solo le finestre temporali (rr. 1330–1343); un proxy mTLS trasparente inietta
+    un modulo non firmato prima del POST reale, OPA restituisce `true` e il provider emette `PERMIT`
+    con il vecchio digest firmato anziché `STALE_BUNDLE` (viola «stale bundle fails closed» e il
+    version fence di ADD §5.1).
+- Per la decisione PO `OCOR-DEV-0048-REPAIR-4-CODEX` (2026-10-03): nessuna quinta riparazione,
+  `TERMINAL_BLOCKED`. Il verifier indica per una futura candidatura sotto nuovo mandato: rappresentare
+  e verificare i vincoli firmati del `DelegationGrant` (tenant, domini, compartimenti,
+  capability/effect/risk ceiling, binding a policy/workload) rifiutando grant incompleti; legare
+  atomicamente valutazione OPA e `PolicyDecision` allo snapshot/revisione verificato del bundle.
+- Stato: `OCOR-DEV-0048` `BLOCKED_REPAIR_BUDGET_EXHAUSTED` terminale; downstream
+  `OCOR-DEV-0049`…`OCOR-DEV-0069` transitivamente bloccato. Evidenza
+  `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
+- `EXECUTION_STATE.json`, `MODEL_HANDOFF.json` riallineati (ciclo 4 `NO_GO`, terminal disposition);
+  `TERMINAL_BLOCKED_REPORT.json` riallineato allo stato terminale ciclo 4.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`; `inputs/` invariato. Nessuna modifica a codice,
+  validator o workflow: solo `reports/development/` (report terminale + stato + handoff + log).
+- Prossima azione: nessuna — il ciclo termina con `TERMINAL_BLOCKED`. Tutto il residuo
+  (`OCOR-DEV-0049`…`OCOR-DEV-0069`) è bloccato transitivamente su `OCOR-DEV-0048`
+  (`BLOCKED_REPAIR_BUDGET_EXHAUSTED`); le decisioni PO non bloccanti `RVW-03`/`INFO-A`/`INFO-C`
+  restano aperte.
