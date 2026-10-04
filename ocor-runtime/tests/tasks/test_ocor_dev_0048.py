@@ -312,6 +312,9 @@ class _MtlsReverseProxy:
         server_key_pem: str,
         client_ca_pem: str,
     ) -> None:
+        self.response_delay = 0.0
+        self.delayed_method: bytes | None = None
+        self.delayed_path: bytes | None = None
         self._backend = (backend_host, backend_port)
         self._server_cert_pem = server_cert_pem
         self._server_key_pem = server_key_pem
@@ -372,6 +375,10 @@ class _MtlsReverseProxy:
                 response = _read_until_eof(backend)
             finally:
                 backend.close()
+            if (self.response_delay
+                    and (self.delayed_method is None or head.startswith(self.delayed_method+b" "))
+                    and (self.delayed_path is None or head.split(b" ")[1] == self.delayed_path)):
+                time.sleep(self.response_delay)
             tls.sendall(response)
         except (ssl.SSLError, OSError):
             pass
@@ -436,6 +443,7 @@ def mtls(live_stack: None) -> dict[str, object]:
     try:
         yield {
             "ssl_context": client_context,
+            "proxies": proxies,
             "opa": proxies[0].url,
             "keycloak": proxies[1].url,
             "openbao": proxies[2].url,
@@ -1711,7 +1719,7 @@ def _spire_server_json(command: list[str]) -> dict[str, object]:
     return json.loads(completed.stdout.decode())
 
 
-def _register_other_service_svid() -> tuple[str, str, str, str]:
+def _register_other_service_svid(*, ttl_seconds: int = 120) -> tuple[str, str, str, str]:
     """Register a temporary second workload SVID and return (cert_pem, key_pem,
     ca_pem, entry_id) plus poll the agent until that SVID is delivered."""
     entries = _spire_server_json(["entry", "show"]).get("entries", [])
@@ -1726,7 +1734,7 @@ def _register_other_service_svid() -> tuple[str, str, str, str]:
 
     created = _spire_server_json(
         ["entry", "create", "-parentID", parent_id, "-spiffeID", other_id,
-         "-selector", "unix:uid:0", "-x509SVIDTTL", "120"]
+         "-selector", "unix:uid:0", "-x509SVIDTTL", str(ttl_seconds)]
     )
     entry_list = created.get("entries") or [
         item.get("entry", {})
@@ -1805,3 +1813,410 @@ def test_client_rejects_peer_with_different_spiffe_id(mtls: dict[str, object]):
                 _tls_handshake(proxy.url, mtls["ssl_context"])
     finally:
         _delete_spire_entry(entry_id)
+
+# REPAIR-4: trusted boundary time and intersected authority lifetimes.
+def _wait_past(instant: datetime) -> None:
+    remaining = (instant - _now()).total_seconds()
+    assert remaining < 20, 'bounded real-time test'
+    if remaining > 0:
+        time.sleep(remaining + 0.05)
+
+
+@pytest.mark.parametrize('offset', [-3600, 3600])
+def test_repair4_policy_time_is_boundary_time(principal, opa, offset):
+    provider, digest = opa
+    request = replace(_policy_request(principal, digest),
+                      at=min(principal.expires_at-timedelta(microseconds=1),
+                             _now()+timedelta(seconds=offset))
+                      if offset > 0 else principal.authenticated_at)
+    before = _now()
+    decision = provider.evaluate(request)
+    after = _now()
+    assert before <= decision.evaluated_at <= after
+    assert decision.status.observed_at == decision.evaluated_at
+    decision.verify(request, at=after)
+    assert decision.valid_until <= principal.expires_at
+
+
+def test_repair4_queued_delegation_expires(principal, opa_delegated):
+    provider, digest = opa_delegated
+    grant = _sign_delegation(delegatee_id=principal.principal_id,
+                            expires_at=_now() + timedelta(seconds=3))
+    request = _delegated_policy_request(principal, digest, grant)
+    assert provider.evaluate(request, delegation=grant).effect is PolicyEffect.PERMIT
+    _wait_past(grant.expires_at)
+    with pytest.raises(SecurityControlError) as err:
+        provider.evaluate(request, delegation=grant)
+    assert err.value.reason_code == 'DELEGATION_EXPIRED'
+
+
+@pytest.mark.parametrize('authority', ['delegation', 'bundle', 'principal'])
+def test_repair4_decision_capped_at_canonical_authority(principal, mtls, authority):
+    expiry = _now() + timedelta(seconds=4, microseconds=700000)
+    provider = OpaPolicyDecisionProvider(
+        str(mtls['opa']), POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E),
+        delegation_signer_public_key=(_SIGNER_N, _SIGNER_E), ssl_context=mtls['ssl_context'])
+    bundle = _sign_bundle(_rego(principal.principal_id),
+                          expires_at=expiry if authority == 'bundle' else None)
+    digest = provider.install_policy(bundle)
+    # Real Keycloak authentication supplies this identity; restricting its
+    # window cannot add authority. Tests still traverse real OPA and mTLS.
+    if authority == 'principal':
+        principal = replace(principal, expires_at=expiry)
+    grant = _sign_delegation(delegatee_id=principal.principal_id,
+                            expires_at=expiry if authority == 'delegation' else None)
+    request = _delegated_policy_request(principal, digest, grant)
+    decision = provider.evaluate(request, delegation=grant)
+    limit = expiry if authority == 'principal' else expiry.replace(microsecond=0)
+    assert decision.effect is PolicyEffect.PERMIT
+    decision.verify(request, at=_now())
+    assert decision.valid_until <= limit
+    _wait_past(limit)
+    with pytest.raises(SecurityControlError) as err:
+        decision.verify(request, at=_now())
+    assert err.value.reason_code == 'POLICY_DECISION_EXPIRED'
+
+
+def test_repair4_queued_principal_expired(principal, opa):
+    provider, digest = opa
+    principal = replace(principal, expires_at=_now()+timedelta(seconds=2))
+    request = _policy_request(principal, digest)
+    assert provider.evaluate(request).effect is PolicyEffect.PERMIT
+    _wait_past(principal.expires_at)
+    with pytest.raises(SecurityControlError) as err:
+        provider.evaluate(request)
+    assert err.value.reason_code == 'IDENTITY_EXPIRED'
+
+
+def test_repair4_future_request_cannot_activate_delegation(principal, opa_delegated):
+    provider, digest = opa_delegated
+    grant = _sign_delegation(delegatee_id=principal.principal_id,
+                            not_before=_now()+timedelta(seconds=30))
+    request = replace(_delegated_policy_request(principal, digest, grant), at=grant.not_before)
+    with pytest.raises(SecurityControlError) as err:
+        provider.evaluate(request, delegation=grant)
+    assert err.value.reason_code == 'DELEGATION_EXPIRED'
+
+
+def test_repair4_helper_cannot_replay_old_time(principal):
+    grant = _sign_delegation(delegatee_id=principal.principal_id,
+                            expires_at=_now()-timedelta(seconds=2))
+    with pytest.raises(SecurityControlError) as err:
+        verify_signed_delegation(grant, (_SIGNER_N, _SIGNER_E),
+            resource_scope='urn:ocor:target:site-1', purpose='read-site-1',
+            delegator_id=grant.delegator_id, delegatee_id=principal.principal_id,
+            at=grant.not_before)
+    assert err.value.reason_code == 'DELEGATION_EXPIRED'
+
+
+@pytest.mark.parametrize('offset', [-86400, 86400])
+def test_repair4_secret_lease_uses_boundary_time(principal, env, mtls, offset):
+    name = 'repair4-time-'+uuid.uuid4().hex
+    _seed_secret(env, principal.principal_id, name, {'value': 'disposable'})
+    provider = OpenBaoSecretProvider(str(mtls['openbao']), env['OCOR_LOCAL_OPENBAO_TOKEN'],
+                                    ssl_context=mtls['ssl_context'])
+    request = SecretRequest('urn:ocor:secret-ref:'+name, principal.principal_id,
+                            'read-site-1', 'urn:sha256:'+'1'*64,
+                            _now()+timedelta(seconds=offset))
+    before = _now()
+    lease = provider.lease(request)
+    after = _now()
+    assert before <= lease.issued_at <= after
+    assert lease.status.observed_at == lease.issued_at
+    assert lease.expires_at <= after+timedelta(seconds=300)
+    lease.verify(request, at=after)
+
+
+@pytest.fixture
+def repair4_short_svid():
+    from ocor_runtime.security.control_plane import _parse_certificate
+    cert, key, ca, entry_id = _register_other_service_svid(ttl_seconds=12)
+    try:
+        leaf = _parse_certificate(ssl.PEM_cert_to_DER_cert(cert.split('-----END CERTIFICATE-----')[0]+'-----END CERTIFICATE-----'))
+        identity = leaf['uri_sans'][0]
+        provider = SpireWorkloadIdentityProvider(agent_container=SPIRE_AGENT_CONTAINER,
+                  socket_path=SPIRE_SOCKET, expected_spiffe_id=identity)
+        proxies = [_MtlsReverseProxy('127.0.0.1', port, cert, key, ca)
+                   for port in (8181, 8080, 8200)]
+        try:
+            for proxy in proxies:
+                proxy.__enter__()
+            yield provider, [proxy.url for proxy in proxies], datetime.fromtimestamp(leaf['not_after'], UTC)
+        finally:
+            for proxy in proxies:
+                proxy.__exit__(None, None, None)
+    finally:
+        _spire_server_json(['entry', 'delete', '-entryID', entry_id])
+
+
+def test_repair4_svid_bounds_policy_and_rejects_expired_context(principal, repair4_short_svid):
+    spire, urls, expiry = repair4_short_svid
+    identity = spire.current()
+    assert identity.expires_at <= expiry
+    context = spire.mtls_context()
+    provider = OpaPolicyDecisionProvider(urls[0], POLICY_ID,
+                signer_public_key=(_SIGNER_N, _SIGNER_E), ssl_context=context)
+    digest = _install_policy(provider, _rego(principal.principal_id))
+    request = _policy_request(principal, digest)
+    decision = provider.evaluate(request)
+    assert decision.effect is PolicyEffect.PERMIT
+    assert decision.valid_until <= expiry
+    _wait_past(expiry)
+    with pytest.raises(SecurityControlError) as err:
+        provider.evaluate(request)
+    assert err.value.reason_code == 'WORKLOAD_IDENTITY_EXPIRED'
+
+
+@pytest.fixture
+def repair4_keycloak_client(env, principals, mtls, request):
+    claim = request.param
+    client_id = 'repair4-'+uuid.uuid4().hex
+    payload = {'clientId': client_id, 'enabled': True, 'publicClient': True,
+               'directAccessGrantsEnabled': True, 'protocol': 'openid-connect',
+               'attributes': {'access.token.lifespan': '3' if claim == 'exp' else '300'}}
+    if claim in ('nbf', 'iat'):
+        payload['protocolMappers'] = [{'name': 'future-'+claim, 'protocol': 'openid-connect',
+            'protocolMapper': 'oidc-hardcoded-claim-mapper', 'config': {
+                'claim.name': claim, 'claim.value': str(int(_now().timestamp())+30),
+                'jsonType.label': 'long', 'access.token.claim': 'true'}}]
+    import urllib.parse
+    status, body = _http('POST', KC+'/realms/master/protocol/openid-connect/token',
+        headers={'Content-Type': 'application/x-www-form-urlencoded'},
+        body=urllib.parse.urlencode({'client_id': 'admin-cli', 'username': 'ocor-admin',
+              'password': env['OCOR_LOCAL_KEYCLOAK_PASSWORD'], 'grant_type': 'password'}))
+    assert status == 200
+    admin_token = json.loads(body)['access_token']
+    headers = {'Authorization': 'Bearer '+admin_token, 'Content-Type': 'application/json'}
+    status, body = _http('POST', f'{KC}/admin/realms/{REALM}/clients', headers=headers, body=json.dumps(payload))
+    assert status == 201, body
+    status, body = _http('GET', f'{KC}/admin/realms/{REALM}/clients?clientId={client_id}', headers=headers)
+    assert status == 200
+    uid = json.loads(body)[0]['id']
+    try:
+        yield KeycloakIdentityProvider(str(mtls['keycloak']), REALM, client_id,
+              password_resolver=lambda _: USER_PWD, ssl_context=mtls['ssl_context'])
+    finally:
+        assert _http('DELETE', f'{KC}/admin/realms/{REALM}/clients/{uid}', headers=headers)[0] == 204
+
+
+@pytest.mark.parametrize('repair4_keycloak_client', ['nbf'], indirect=True)
+def test_repair4_real_signed_future_token_rejected(repair4_keycloak_client):
+    with pytest.raises(SecurityControlError) as err:
+        repair4_keycloak_client.authenticate(IdentityRequest(
+            'urn:ocor:credential-ref:'+USERNAME, 'account', str(uuid.uuid4())))
+    assert err.value.reason_code == 'IDENTITY_REJECTED'
+
+
+@pytest.mark.parametrize('repair4_keycloak_client', ['exp'], indirect=True)
+def test_repair4_real_token_expiry_revalidated_at_policy(repair4_keycloak_client, mtls):
+    principal = repair4_keycloak_client.authenticate(IdentityRequest(
+            'urn:ocor:credential-ref:'+USERNAME, 'account', str(uuid.uuid4())))
+    provider = OpaPolicyDecisionProvider(str(mtls['opa']), POLICY_ID,
+              signer_public_key=(_SIGNER_N, _SIGNER_E), ssl_context=mtls['ssl_context'])
+    digest = _install_policy(provider, _rego(principal.principal_id))
+    request = _policy_request(principal, digest)
+    decision = provider.evaluate(request)
+    assert decision.effect is PolicyEffect.PERMIT
+    assert decision.valid_until <= principal.expires_at
+    _wait_past(principal.expires_at)
+    with pytest.raises(SecurityControlError) as err:
+        provider.evaluate(request)
+    assert err.value.reason_code == 'IDENTITY_EXPIRED'
+
+
+def test_repair4_openbao_token_bounds_lease(principal, env, mtls):
+    root_headers = {'X-Vault-Token': env['OCOR_LOCAL_OPENBAO_TOKEN'], 'Content-Type': 'application/json'}
+    status, body = _http('POST', OB+'/v1/auth/token/create', headers=root_headers,
+                         body=json.dumps({'ttl': '5s', 'policies': ['root'], 'renewable': False}))
+    assert status == 200
+    token = json.loads(body)['auth']['client_token']
+    status, body = _http('GET', OB+'/v1/auth/token/lookup-self', headers={'X-Vault-Token': token})
+    assert status == 200
+    expiry = datetime.fromisoformat(json.loads(body)['data']['expire_time'].replace('Z', '+00:00'))
+    name = 'repair4-token-'+uuid.uuid4().hex
+    _seed_secret(env, principal.principal_id, name, {'value': 'disposable'})
+    provider = OpenBaoSecretProvider(str(mtls['openbao']), token, ssl_context=mtls['ssl_context'])
+    request = SecretRequest('urn:ocor:secret-ref:'+name, principal.principal_id,
+                            'read-site-1', 'urn:sha256:'+'1'*64, _now())
+    lease = provider.lease(request)
+    assert lease.expires_at <= expiry
+    lease.verify(request, at=_now())
+    _wait_past(expiry)
+    with pytest.raises(SecurityControlError) as err:
+        lease.verify(request, at=_now())
+    assert err.value.reason_code == 'SECRET_LEASE_EXPIRED'
+    with pytest.raises(SecurityControlError) as err:
+        provider.lease(request)
+    assert err.value.reason_code == 'SECRETS_UNAVAILABLE'
+
+
+@pytest.mark.parametrize('authority,reason', [
+    ('delegation', 'DELEGATION_EXPIRED'), ('principal', 'IDENTITY_EXPIRED'),
+    ('bundle', 'POLICY_BUNDLE_WINDOW_INVALID'),
+])
+def test_repair4_expiry_during_real_opa_response(principal, mtls, authority, reason):
+    provider = OpaPolicyDecisionProvider(str(mtls['opa']), POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E),
+        delegation_signer_public_key=(_SIGNER_N, _SIGNER_E), ssl_context=mtls['ssl_context'])
+    expiry = _now()+timedelta(seconds=2)
+    digest = provider.install_policy(_sign_bundle(_rego(principal.principal_id),
+                                     expires_at=expiry if authority == 'bundle' else None))
+    if authority == 'principal':
+        principal = replace(principal, expires_at=expiry)
+    grant = _sign_delegation(delegatee_id=principal.principal_id,
+                            expires_at=expiry if authority == 'delegation' else None)
+    request = _delegated_policy_request(principal, digest, grant)
+    assert provider.evaluate(request, delegation=grant).effect is PolicyEffect.PERMIT
+    proxy = mtls['proxies'][0]
+    proxy.response_delay = 2.1
+    proxy.delayed_method = b'POST'
+    try:
+        with pytest.raises(SecurityControlError) as err:
+            provider.evaluate(request, delegation=grant)
+        assert err.value.reason_code == reason
+    finally:
+        proxy.response_delay = 0.0
+        proxy.delayed_method = None
+        proxy.delayed_path = None
+
+
+def test_repair4_bundle_expiry_during_real_install(principal, mtls):
+    provider = OpaPolicyDecisionProvider(str(mtls['opa']), POLICY_ID,
+        signer_public_key=(_SIGNER_N, _SIGNER_E), ssl_context=mtls['ssl_context'])
+    proxy = mtls['proxies'][0]
+    proxy.response_delay = 1.1
+    try:
+        with pytest.raises(SecurityControlError) as err:
+            provider.install_policy(_sign_bundle(_rego(principal.principal_id),
+                                    expires_at=_now()+timedelta(seconds=2)))
+        assert err.value.reason_code == 'POLICY_BUNDLE_WINDOW_INVALID'
+    finally:
+        proxy.response_delay = 0.0
+        proxy.delayed_method = None
+        proxy.delayed_path = None
+
+
+def test_repair4_openbao_scheduled_deletion_bounds_lease(principal, env, mtls):
+    name = 'repair4-deletion-'+uuid.uuid4().hex
+    headers = {'X-Vault-Token': env['OCOR_LOCAL_OPENBAO_TOKEN'], 'Content-Type': 'application/json'}
+    status, _ = _http('POST', f'{OB}/v1/ocor/metadata/{principal.principal_id}/{name}',
+        headers=headers, body=json.dumps({'delete_version_after': '4s'}))
+    assert status in (200, 204)
+    _seed_secret(env, principal.principal_id, name, {'value': 'disposable'})
+    status, body = _http('GET', f'{OB}/v1/ocor/data/{principal.principal_id}/{name}', headers=headers)
+    assert status == 200
+    expiry = datetime.fromisoformat(json.loads(body)['data']['metadata']['deletion_time'].replace('Z','+00:00'))
+    provider = OpenBaoSecretProvider(str(mtls['openbao']), env['OCOR_LOCAL_OPENBAO_TOKEN'],
+                                    ssl_context=mtls['ssl_context'])
+    request = SecretRequest('urn:ocor:secret-ref:'+name, principal.principal_id,
+                            'read-site-1', 'urn:sha256:'+'1'*64, _now())
+    lease = provider.lease(request)
+    lease.verify(request, at=_now())
+    assert lease.expires_at <= expiry
+    _wait_past(expiry)
+    with pytest.raises(SecurityControlError) as err:
+        lease.verify(request, at=_now())
+    assert err.value.reason_code == 'SECRET_LEASE_EXPIRED'
+    with pytest.raises(SecurityControlError) as err:
+        provider.lease(request)
+    assert err.value.reason_code == 'SECRET_REFERENCE_UNRESOLVED'
+
+
+@pytest.mark.parametrize('repair4_keycloak_client', ['iat'], indirect=True)
+def test_repair4_keycloak_issued_at_is_server_controlled(repair4_keycloak_client):
+    # Keycloak 26.6.3 explicitly forbids overriding iat with a claim mapper.
+    # Characterize that real issuer, never claim a future-iat fixture exists.
+    before = _now()
+    principal = repair4_keycloak_client.authenticate(IdentityRequest(
+        'urn:ocor:credential-ref:'+USERNAME, 'account', str(uuid.uuid4())))
+    assert before.replace(microsecond=0) <= principal.authenticated_at <= _now()
+
+
+def test_repair4_svid_bounds_identity_and_secret(principals, env, repair4_short_svid):
+    spire, urls, expiry = repair4_short_svid
+    context = spire.mtls_context()
+    provider = KeycloakIdentityProvider(urls[1], REALM, CLIENT_ID,
+                        password_resolver=lambda _: USER_PWD, ssl_context=context)
+    principal = provider.authenticate(IdentityRequest('urn:ocor:credential-ref:'+USERNAME,
+                                        'account', str(uuid.uuid4())))
+    assert principal.expires_at <= expiry
+    name = 'repair4-svid-'+uuid.uuid4().hex
+    _seed_secret(env, principal.principal_id, name, {'value': 'disposable'})
+    secrets = OpenBaoSecretProvider(urls[2], env['OCOR_LOCAL_OPENBAO_TOKEN'], ssl_context=context)
+    request = SecretRequest('urn:ocor:secret-ref:'+name, principal.principal_id,
+                           'read-site-1', 'urn:sha256:'+'1'*64, _now())
+    lease = secrets.lease(request)
+    assert lease.expires_at <= expiry
+    lease.verify(request, at=_now())
+    _wait_past(expiry)
+    for operation in [lambda: secrets.lease(request), lambda: provider.authenticate(
+        IdentityRequest('urn:ocor:credential-ref:'+USERNAME, 'account', str(uuid.uuid4())))]:
+        with pytest.raises(SecurityControlError) as err:
+            operation()
+        assert err.value.reason_code == 'WORKLOAD_IDENTITY_EXPIRED'
+
+
+@pytest.mark.parametrize('repair4_keycloak_client', ['exp'], indirect=True)
+def test_repair4_token_expiry_during_real_authentication(repair4_keycloak_client, mtls):
+    proxy = mtls['proxies'][1]
+    # All responses cross the real backend; delay the signed token response
+    # so its 3s lifetime is consumed before verification at the boundary.
+    proxy.response_delay = 3.1
+    proxy.delayed_method = b'POST'
+    try:
+        with pytest.raises(SecurityControlError) as err:
+            repair4_keycloak_client.authenticate(IdentityRequest(
+                'urn:ocor:credential-ref:'+USERNAME, 'account', str(uuid.uuid4())))
+        assert err.value.reason_code == 'IDENTITY_REJECTED'
+    finally:
+        proxy.response_delay = 0.0
+        proxy.delayed_method = None
+        proxy.delayed_path = None
+
+
+@pytest.mark.parametrize('authority,reason', [('token', 'SECRETS_UNAVAILABLE'),
+                                            ('deletion', 'SECRET_LEASE_EXPIRED')])
+def test_repair4_expiry_during_real_secret_read(principal, env, mtls, authority, reason):
+    headers = {'X-Vault-Token': env['OCOR_LOCAL_OPENBAO_TOKEN'], 'Content-Type': 'application/json'}
+    token = env['OCOR_LOCAL_OPENBAO_TOKEN']
+    name = 'repair4-race-'+uuid.uuid4().hex
+    path = f'/v1/ocor/data/{principal.principal_id}/{name}'
+    if authority == 'token':
+        status, body = _http('POST', OB+'/v1/auth/token/create', headers=headers,
+                body=json.dumps({'ttl': '3s', 'policies': ['root'], 'renewable': False}))
+        assert status == 200
+        token = json.loads(body)['auth']['client_token']
+    else:
+        status, _ = _http('POST', f'{OB}/v1/ocor/metadata/{principal.principal_id}/{name}',
+                         headers=headers, body=json.dumps({'delete_version_after': '3s'}))
+        assert status in (200, 204)
+    _seed_secret(env, principal.principal_id, name, {'value': 'disposable'})
+    provider = OpenBaoSecretProvider(str(mtls['openbao']), token, ssl_context=mtls['ssl_context'])
+    request = SecretRequest('urn:ocor:secret-ref:'+name, principal.principal_id,
+                           'read-site-1', 'urn:sha256:'+'1'*64, _now())
+    provider.lease(request).verify(request, at=_now())
+    proxy = mtls['proxies'][2]
+    proxy.response_delay = 3.1
+    proxy.delayed_path = path.encode()
+    try:
+        with pytest.raises(SecurityControlError) as err:
+            provider.lease(request)
+        assert err.value.reason_code == reason
+    finally:
+        proxy.response_delay = 0.0
+        proxy.delayed_path = None
+
+
+def test_repair4_utc_equivalent_delegation_has_same_deadline(principal, opa_delegated):
+    provider, digest = opa_delegated
+    grant = _sign_delegation(delegatee_id=principal.principal_id,
+                             expires_at=_now()+timedelta(seconds=20, microseconds=900000))
+    shifted = replace(grant, expires_at=grant.expires_at.astimezone(timezone(timedelta(hours=2))))
+    request = _delegated_policy_request(principal, digest, shifted)
+    decision = provider.evaluate(request, delegation=shifted)
+    assert decision.effect is PolicyEffect.PERMIT
+    assert decision.valid_until == grant.expires_at.replace(microsecond=0)
+    reinterpreted = replace(grant, expires_at=grant.expires_at.replace(tzinfo=timezone(timedelta(hours=-2))))
+    with pytest.raises(SecurityControlError) as err:
+        provider.evaluate(request, delegation=reinterpreted)
+    assert err.value.reason_code == 'DELEGATION_SIGNATURE_INVALID'

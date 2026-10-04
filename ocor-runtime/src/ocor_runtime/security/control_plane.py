@@ -27,7 +27,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timedelta, timezone
 from typing import IO, cast
 
@@ -93,6 +93,25 @@ def _canonical_utc(dt: datetime) -> datetime:
     if dt.tzinfo is None or dt.utcoffset() is None:
         raise SecurityControlError("SECURITY_RECORD_INVALID", "time must be timezone-aware")
     return dt.astimezone(timezone.utc).replace(microsecond=0)
+
+
+def _certificate_window(certificates: list[dict[str, object]]) -> tuple[datetime, datetime]:
+    """Intersect the verified leaf, intermediate and trust-anchor windows."""
+    not_before = datetime.fromtimestamp(
+        max(cast(int, cert["not_before"]) for cert in certificates), timezone.utc
+    )
+    expires_at = datetime.fromtimestamp(
+        min(cast(int, cert["not_after"]) for cert in certificates), timezone.utc
+    )
+    if not_before > _now() or _now() >= expires_at:
+        raise SecurityControlError("WORKLOAD_IDENTITY_EXPIRED", "SVID chain is outside its window")
+    return not_before, expires_at
+
+
+def _mtls_deadline(context: ssl.SSLContext | None) -> datetime:
+    if not isinstance(context, _PeerIdentitySSLContext):
+        raise SecurityControlError("MTLS_REQUIRED", "verified SVID validity is required")
+    return context.require_current_identity()
 
 
 def _sha256_urn(data: bytes) -> str:
@@ -161,6 +180,7 @@ def _request(
             f"{correlation} authenticated control-plane I/O requires an HTTPS "
             f"URL (got {scheme or 'no scheme'!r})",
         )
+    _mtls_deadline(ssl_context)
     req = urllib.request.Request(url, method=method, data=data)
     if headers:
         for key, value in headers.items():
@@ -222,6 +242,19 @@ class _PeerIdentitySSLContext(ssl.SSLContext):
 
     def __init__(self, expected_peer_spiffe_id: str) -> None:
         self._expected_peer_spiffe_id = expected_peer_spiffe_id
+        self._identity_window: tuple[datetime, datetime] | None = None
+        self._peer_window: tuple[datetime, datetime] | None = None
+
+    def require_current_identity(self) -> datetime:
+        if self._identity_window is None:
+            raise SecurityControlError("MTLS_REQUIRED", "verified SVID validity is required")
+        windows = [self._identity_window]
+        if self._peer_window is not None:
+            windows.append(self._peer_window)
+        now = _now()
+        if any(now < start or now >= end for start, end in windows):
+            raise SecurityControlError("WORKLOAD_IDENTITY_EXPIRED", "mTLS authority has expired")
+        return min(end for _, end in windows)
 
     def wrap_socket(
         self,
@@ -232,6 +265,7 @@ class _PeerIdentitySSLContext(ssl.SSLContext):
         server_hostname: str | bytes | None = None,
         session: ssl.SSLSession | None = None,
     ) -> ssl.SSLSocket:
+        self.require_current_identity()
         tls = super().wrap_socket(
             sock,
             server_side=server_side,
@@ -268,6 +302,18 @@ class _PeerIdentitySSLContext(ssl.SSLContext):
                 "peer SPIFFE identity mismatch: expected "
                 f"{self._expected_peer_spiffe_id!r}, got {uri_sans!r}"
             )
+        # OpenSSL has verified this chain. Preserve every authority's window,
+        # including a peer intermediate whose expiry precedes the leaf's.
+        try:
+            ssl_object = getattr(tls, "_sslobj")
+            certificates = [
+                _parse_certificate(ssl.PEM_cert_to_DER_cert(cert.public_bytes()))
+                for cert in ssl_object.get_verified_chain()
+            ]
+            self._peer_window = _certificate_window(certificates)
+        except (AttributeError, ValueError, SecurityControlError):
+            tls.close()
+            raise
 
 
 # --------------------------------------------------------------------------- #
@@ -652,11 +698,15 @@ def verify_signed_delegation(
     purpose: str,
     delegator_id: str,
     delegatee_id: str,
-    at: datetime,
+    at: datetime | None = None,
     revoked: bool = False,
 ) -> None:
     """Reject an unsigned, altered, revoked, out-of-window or out-of-scope
-    delegation (FR-128: confused-deputy and delegation laundering defence)."""
+    delegation (FR-128: confused-deputy and delegation laundering defence).
+
+    ``at`` is retained for source compatibility only; it never supplies the
+    boundary clock. Signing canonicalises authority timestamps, not now.
+    """
 
     signer_n, signer_e = signer_public_key
     payload = delegation.signing_payload()
@@ -676,7 +726,7 @@ def verify_signed_delegation(
         raise SecurityControlError(
             "DELEGATION_BINDING_MISMATCH", "delegation does not bind the actor chain"
         )
-    instant = _canonical_utc(at)
+    instant = _now()
     if (
         instant < _canonical_utc(delegation.not_before)
         or instant >= _canonical_utc(delegation.expires_at)
@@ -894,9 +944,19 @@ class KeycloakIdentityProvider:
             audience_list = [audience_list]
         if audience not in audience_list:
             raise SecurityControlError("IDENTITY_REJECTED", f"{correlation} audience mismatch")
-        now = int(_now().timestamp())
-        if int(payload["exp"]) <= now:
-            raise SecurityControlError("IDENTITY_REJECTED", f"{correlation} access token is expired")
+        now = _now().timestamp()
+        try:
+            exp, iat = payload["exp"], payload["iat"]
+            nbf = payload.get("nbf", iat)
+            if any(isinstance(value, bool) or not isinstance(value, int)
+                   for value in (exp, iat, nbf)):
+                raise ValueError("invalid NumericDate")
+            if int(exp) <= now or int(iat) > now or int(nbf) > now:
+                raise ValueError("outside validity window")
+        except (KeyError, TypeError, ValueError) as exc:
+            raise SecurityControlError(
+                "IDENTITY_REJECTED", f"{correlation} access token is outside its validity window"
+            ) from exc
         return cast(dict[str, object], payload)
 
     def authenticate(self, request: IdentityRequest) -> AuthenticatedPrincipal:
@@ -945,6 +1005,7 @@ class KeycloakIdentityProvider:
         expires_at = datetime.fromtimestamp(
             cast(int, claims["exp"]), tz=timezone.utc
         )
+        expires_at = min(expires_at, _mtls_deadline(self._ssl_context))
 
         jwks_material = b"".join(
             f"{kid}:{key[0]}:{key[1]}".encode() for kid, key in sorted(jwks.items())
@@ -954,7 +1015,7 @@ class KeycloakIdentityProvider:
             observed_at=_now(),
             source_digest=_sha256_urn(jwks_material),
         )
-        return AuthenticatedPrincipal(
+        principal = AuthenticatedPrincipal(
             principal_id=principal_id,
             actor_chain=tuple(actor_chain),
             session_id=session_id,
@@ -963,6 +1024,7 @@ class KeycloakIdentityProvider:
             expires_at=expires_at,
             status=status,
         )
+        return principal.require_valid(at=_now())
 
 
 _GOVERNED_PACKAGE_PATH = ("data", "ocor", "control_plane")
@@ -1020,6 +1082,7 @@ class OpaPolicyDecisionProvider:
         self._ssl_context = _require_mtls_context(ssl_context)
         self._bundle_digest: str | None = None
         self._bundle_expires_at: datetime | None = None
+        self._bundle_not_before: datetime | None = None
         self._signer_n, self._signer_e = signer_public_key
         if self._signer_n.bit_length() < 2048 or self._signer_e < 3:
             raise SecurityControlError(
@@ -1057,7 +1120,7 @@ class OpaPolicyDecisionProvider:
                 f"correlation_id=none bundle signature does not verify against trust pin "
                 f"{self._signer_pin}",
             )
-        now = _canonical_utc(_now())
+        now = _now()
         if now < _canonical_utc(bundle.not_before) or now >= _canonical_utc(bundle.expires_at):
             raise SecurityControlError(
                 "POLICY_BUNDLE_WINDOW_INVALID",
@@ -1077,7 +1140,10 @@ class OpaPolicyDecisionProvider:
         current = self._fetch_policy_source()
         if current != bundle.rego_source:
             raise SecurityControlError("POLICY_UNAVAILABLE", "installed policy did not persist")
+        if _now() >= _canonical_utc(bundle.expires_at):
+            raise SecurityControlError("POLICY_BUNDLE_WINDOW_INVALID", "bundle expired during install")
         self._bundle_digest = digest
+        self._bundle_not_before = _canonical_utc(bundle.not_before)
         self._bundle_expires_at = _canonical_utc(bundle.expires_at)
         return digest
 
@@ -1125,11 +1191,7 @@ class OpaPolicyDecisionProvider:
             raise SecurityControlError(
                 "POLICY_UNAVAILABLE", f"correlation_id={correlation_id} no policy installed"
             )
-        if self._bundle_expires_at is None or _canonical_utc(_now()) >= self._bundle_expires_at:
-            raise SecurityControlError(
-                "POLICY_BUNDLE_WINDOW_INVALID",
-                f"correlation_id={correlation_id} installed policy bundle has expired",
-            )
+        self._require_bundle_window(correlation_id)
         # Bind the decision to the *entire* evaluated package, not just the
         # single installed module: an unsigned module dropped into the same OPA
         # package can silently extend the decision, so any unsolicited module
@@ -1162,10 +1224,22 @@ class OpaPolicyDecisionProvider:
                 f"governed package: {sorted(governed_members)}",
             )
 
+    def _require_bundle_window(self, correlation_id: str) -> datetime:
+        now = _now()
+        if (self._bundle_not_before is None or self._bundle_expires_at is None
+                or now < self._bundle_not_before or now >= self._bundle_expires_at):
+            raise SecurityControlError(
+                "POLICY_BUNDLE_WINDOW_INVALID",
+                f"correlation_id={correlation_id} installed policy bundle is outside its window",
+            )
+        return self._bundle_expires_at
+
     def evaluate(
         self, request: PolicyRequest, *, delegation: SignedDelegation | None = None
     ) -> PolicyDecision:
         correlation_id = request.governed_context.correlation_id
+        request.principal.require_valid(at=_now())
+        _mtls_deadline(self._ssl_context)
         self._require_fresh_bundle(correlation_id)
         # Binding 1: the governed context's policy pin must equal the digest of
         # the bundle actually installed and verified, not a caller-declared value.
@@ -1209,7 +1283,6 @@ class OpaPolicyDecisionProvider:
                 purpose=request.governed_context.purpose,
                 delegator_id=chain[0],
                 delegatee_id=request.principal.principal_id,
-                at=request.at,
                 revoked=delegation.delegation_id in self._delegation_revocations,
             )
         gcs = request.governed_context
@@ -1252,24 +1325,33 @@ class OpaPolicyDecisionProvider:
                 f"correlation_id={correlation_id} policy result is not boolean",
             )
         effect = PolicyEffect.PERMIT if raw_result else PolicyEffect.DENY
-        # A decision must never outlive the bundle that authorised it: the
-        # decision cache window is capped by the bundle's expiry so a permit
-        # cannot be replayed against an expired bundle.
+        # Revalidate after backend I/O: an authority can expire while OPA is
+        # answering. The emitted window intersects every verified authority.
         now = _now()
-        valid_until = now + timedelta(seconds=300)
-        if self._bundle_expires_at is not None:
-            valid_until = min(valid_until, self._bundle_expires_at)
+        request.principal.require_valid(at=now)
+        valid_until = min(now + timedelta(seconds=300), request.principal.expires_at,
+                          self._require_bundle_window(correlation_id),
+                          _mtls_deadline(self._ssl_context))
+        if delegation is not None:
+            assert self._delegation_signer_key is not None
+            verify_signed_delegation(
+                delegation, self._delegation_signer_key,
+                resource_scope=request.resource, purpose=gcs.purpose,
+                delegator_id=chain[0], delegatee_id=request.principal.principal_id,
+                revoked=delegation.delegation_id in self._delegation_revocations,
+            )
+            valid_until = min(valid_until, _canonical_utc(delegation.expires_at))
         status_record = ControlStatus.available(
             ControlName.POLICY,
-            observed_at=request.at,
+            observed_at=now,
             source_digest=self._bundle_digest,
         )
         decision_id = _sha256_urn(
             f"{request.principal.principal_id}:{request.action}:"
-            f"{request.resource}:{request.at.isoformat()}".encode()
+            f"{request.resource}:{now.isoformat()}".encode()
         )
         return PolicyDecision.from_request(
-            request,
+            replace(request, at=now),
             effect=effect,
             decision_id=decision_id,
             valid_until=valid_until,
@@ -1322,7 +1404,9 @@ class SpireWorkloadIdentityProvider:
         svids = data.get("svids")
         if not isinstance(svids, list) or not svids:
             raise SecurityControlError("WORKLOAD_IDENTITY_UNAVAILABLE", "no SVID returned")
-        return cast(dict[str, object], svids[0])
+        selected = next((item for item in svids
+                         if item.get("spiffe_id") == self._expected_spiffe_id), svids[0])
+        return cast(dict[str, object], selected)
 
     def current(self) -> WorkloadIdentity:
         svid = self._fetch_svid()
@@ -1354,12 +1438,10 @@ class SpireWorkloadIdentityProvider:
             raise SecurityControlError(
                 "WORKLOAD_IDENTITY_UNAVAILABLE", "SVID SAN does not carry the SPIFFE ID"
             )
-        not_before = datetime.fromtimestamp(
-            cast(int, leaf["not_before"]), tz=timezone.utc
-        )
-        expires_at = datetime.fromtimestamp(
-            cast(int, leaf["not_after"]), tz=timezone.utc
-        )
+        certificates = [_parse_certificate(der) for der in chain] + [root]
+        for child, issuer in zip(certificates, certificates[1:]):
+            _verify_certificate_signature(child, issuer)
+        not_before, expires_at = _certificate_window(certificates)
         trust_bundle_digest = _sha256_urn(root_der)
         svid_ref = _sha256_urn(leaf_der)
         status = ControlStatus.available(
@@ -1367,7 +1449,7 @@ class SpireWorkloadIdentityProvider:
             observed_at=_now(),
             source_digest=trust_bundle_digest,
         )
-        return WorkloadIdentity(
+        identity = WorkloadIdentity(
             spiffe_id=spiffe_id,
             svid_ref=svid_ref,
             trust_bundle_digest=trust_bundle_digest,
@@ -1376,6 +1458,7 @@ class SpireWorkloadIdentityProvider:
             expires_at=expires_at,
             status=status,
         )
+        return identity.require_valid(at=_now())
 
     def mtls_context(self) -> ssl.SSLContext:
         """Build a mutual-TLS client context from the live SPIRE SVID.
@@ -1409,12 +1492,19 @@ class SpireWorkloadIdentityProvider:
             raise SecurityControlError(
                 "WORKLOAD_IDENTITY_UNAVAILABLE", "SVID private key is missing"
             )
+        certificates = [_parse_certificate(der) for der in chain + [bundle_der]]
+        for child, issuer in zip(certificates, certificates[1:]):
+            _verify_certificate_signature(child, issuer)
+        if spiffe_id not in cast(list[str], certificates[0]["uri_sans"]):
+            raise SecurityControlError("WORKLOAD_IDENTITY_UNAVAILABLE", "SVID SAN mismatch")
+        window = _certificate_window(certificates)
 
         cert_pem = "".join(_der_to_pem(der, "CERTIFICATE") for der in chain)
         key_pem = _der_to_pem(key_der, "PRIVATE KEY")
         bundle_pem = _der_to_pem(bundle_der, "CERTIFICATE")
 
         context = _PeerIdentitySSLContext(self._expected_spiffe_id)
+        context._identity_window = window
         context.verify_mode = ssl.CERT_REQUIRED
         context.check_hostname = False
         context.load_verify_locations(cadata=bundle_pem)
@@ -1456,6 +1546,25 @@ class OpenBaoSecretProvider:
     def _headers(self) -> dict[str, str]:
         return {"X-Vault-Token": self._token}
 
+    def _token_deadline(self) -> datetime | None:
+        status, body = _request(
+            "GET", f"{self._base_url}/v1/auth/token/lookup-self",
+            headers=self._headers(), timeout=self._timeout, ssl_context=self._ssl_context,
+        )
+        if status != 200:
+            raise SecurityControlError("SECRETS_UNAVAILABLE", f"token lookup HTTP {status}")
+        try:
+            data = json.loads(body)["data"]
+            value = data["expire_time"]
+            if value is None and data["ttl"] == 0:
+                return None  # backend-confirmed non-expiring bootstrap token
+            expiry = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            if expiry.tzinfo is None or expiry.utcoffset() is None or _now() >= expiry:
+                raise ValueError("expired or invalid token window")
+            return expiry
+        except (KeyError, TypeError, AttributeError, ValueError) as exc:
+            raise SecurityControlError("SECRETS_UNAVAILABLE", "invalid token expiry") from exc
+
     def _ensure_mount(self) -> str:
         status, body = _request(
             "GET",
@@ -1495,6 +1604,7 @@ class OpenBaoSecretProvider:
         return self._mount_digest
 
     def lease(self, request: SecretRequest) -> SecretLease:
+        started_at = _now()
         mount_digest = self._mount_digest or self._ensure_mount()
         secret_name = request.secret_ref[len("urn:ocor:secret-ref:") :]
         if not secret_name:
@@ -1551,14 +1661,34 @@ class OpenBaoSecretProvider:
             f"{version}:{content_digest}".encode()
         )
         handle_ref = "urn:ocor:secret-handle:" + handle[len("urn:sha256:") :]
-        expires_at = request.requested_at + timedelta(seconds=300)
+        token_deadline = self._token_deadline()
+        now = _now()
+        expires_at = min(now + timedelta(seconds=300), _mtls_deadline(self._ssl_context))
+        if token_deadline is not None:
+            expires_at = min(expires_at, token_deadline)
+        try:
+            duration = payload.get("lease_duration", 0)
+            if isinstance(duration, bool) or not isinstance(duration, int) or duration < 0:
+                raise ValueError("invalid backend lease duration")
+            if duration:
+                expires_at = min(expires_at, started_at + timedelta(seconds=duration))
+            deletion_time = metadata.get("deletion_time")
+            if deletion_time:
+                deletion_at = datetime.fromisoformat(deletion_time.replace("Z", "+00:00"))
+                if deletion_at.tzinfo is None or deletion_at.utcoffset() is None:
+                    raise ValueError("invalid deletion time")
+                expires_at = min(expires_at, deletion_at)
+        except (TypeError, AttributeError, ValueError) as exc:
+            raise SecurityControlError("SECRETS_UNAVAILABLE", "invalid secret validity") from exc
+        if _now() >= expires_at:
+            raise SecurityControlError("SECRET_LEASE_EXPIRED", "authority expired during secret read")
         status_record = ControlStatus.available(
             ControlName.SECRETS,
-            observed_at=_now(),
+            observed_at=now,
             source_digest=mount_digest,
         )
         return SecretLease.from_request(
-            request,
+            replace(request, requested_at=now),
             handle_ref=handle_ref,
             version=version,
             expires_at=expires_at,
