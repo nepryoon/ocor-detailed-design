@@ -4209,3 +4209,11 @@
 - Richiesta `OCOR-DEV-0048-c6cbcd328216-4`, `repair_cycle: 4`, `TASK_EVIDENCE`; raw candidato `8945eb1c9031066c8e384bd6fccc00dd72c744f6aa21c31aa570903d91f82aed`. Evidenza `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION`, non sigillata.
 - Source di verità dei completati invariata (62 task); 0048 in attesa di verifica, downstream non avanzato. `E1=0`, `E2=0`, zero `Verified`, runtime conformance `NOT_ESTABLISHED`, PoC/Production `NO-GO`; `inputs/` invariato.
 - Prossima azione: Attendere esclusivamente il verifier esterno per OCOR-DEV-0048-c6cbcd328216-4, head c6cbcd3282161aafd404e73bec49acffb1ffb011. Nessuna verifica indipendente avviata dall'implementatore. Con GO_FOR_EVIDENCE_SEAL: futura sessione di integrazione; con NO_GO: TERMINAL_BLOCKED senza quinta riparazione, decisione OCOR-DEV-0048-REPAIR-4-CODEX.
+
+## 2026-10-04 — OCOR-DEV-0048: verifier esterno VERIFIER_ERROR, richiesta ripetuta una volta (§6)
+
+- Il verifier indipendente per `OCOR-DEV-0048-c6cbcd328216-4` (head `c6cbcd3282161aafd404e73bec49acffb1ffb011`, `repair_cycle: 4`, `TASK_EVIDENCE`) non ha prodotto un verdetto valido dopo 3 tentativi: `codex exec` è uscito con `rc=1` per un flag di moderazione del modello ("possible cybersecurity risk") sul contenuto di verifica avversariale dei backend di sicurezza (mTLS/SPIFFE/OpenBao). Il verdetto registrato è `VERIFIER_ERROR` (`~/.ocor-codex/verdicts/OCOR-DEV-0048-c6cbcd328216-4.json`).
+- Per OCOR-RCCAD §6 (`VERIFIER_ERROR`: ripetere la richiesta una volta) la richiesta di verifica è stata riemessa identica (stesso `head_sha`, `repair_cycle: 4`, `request_id`). Rimossa la worktree residua del verifier in `/tmp/ocor-verify-OCOR-DEV-0048-c6cbcd328216-4/wt` per consentire un retry pulito.
+- Nessuna modifica al codice, ai test, ai gate o all'evidenza candidata; nessun PR/merge. Il candidato resta `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillato). La disclosure same-model-in-separate-contexts è già nella richiesta.
+- Prossima azione: rieseguire il verifier a contesto pulito. Con `GO_FOR_EVIDENCE_SEAL`: integrazione in una sessione successiva; con `NO_GO` o nuovo `VERIFIER_ERROR`: `TERMINAL_BLOCKED` senza quinta riparazione (decisione `OCOR-DEV-0048-REPAIR-4-CODEX`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance` `NOT_ESTABLISHED`, PoC/Production `NO-GO`; `inputs/` invariato.

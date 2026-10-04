@@ -689,7 +689,11 @@
     "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python scripts/validate_evidence_input_drift.py => exit 0",
     "sha256sum -c inputs/normative/SHA256SUMS => exit 0",
     "validate_rccad.py: PASS_LOCAL_PRECHECK; validate_language_policy.py: PASS; validate_ocor_change_scope.py: PASS sull'intero diff task; validate_runtime_evidence.py --non-skipped: PASS",
-    "validate_ocor_development_plan.py --authorized-extension --base-ref exact committed HEAD: PASS, due strumenti opzionali NOT_EXECUTED; output planning ripristinati"
+    "validate_ocor_development_plan.py --authorized-extension --base-ref exact committed HEAD: PASS, due strumenti opzionali NOT_EXECUTED; output planning ripristinati",
+    {
+      "command": "verifier esterno OCOR-DEV-0048-c6cbcd328216-4 (loop)",
+      "result": "VERIFIER_ERROR_after_3_attempts_rc=1_moderation_flag('possible_cybersecurity_risk'); request re-issued once per RCCAD \u00a76; stale /tmp verifier worktree removed to enable clean retry"
+    }
   ],
   "completed_tasks": [
     "Phase 0: reconciled EXECUTION_STATE/MODEL_HANDOFF/ITERATION_LOG to real evidence (28 sealed tasks, not 19); superseded TERMINAL_BLOCKED_REPORT.json and G2/blockers/MANIFEST.json",
@@ -809,7 +813,7 @@
     "Terminal state sync: refreshed reports/development/TERMINAL_BLOCKED_REPORT.json to the cycle-3 terminal state (OCOR-DEV-0048 BLOCKED_REPAIR_BUDGET_EXHAUSTED after cycle-3 NO_GO OCOR-DEV-0048-7f2fff555621-3); baseline_commit -> 7cac163; latest_ci_evidence -> PR #159 (6 green workflow runs, head c94c072e, merge 7cac163e). No executable work remains; loop terminates TERMINAL_BLOCKED."
   ],
   "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
-  "current_task": "OCOR-DEV-0048:implementation \u2014 quarto ciclo PO autorizzato completato come candidato, non sigillato; no merge/no altri task.",
+  "current_task": "OCOR-DEV-0048: quarto ciclo Codex candidato; verifier esterno in VERIFIER_ERROR (3 tentativi, flag moderazione) -> richiesta ripetuta una volta per \u00a76. Nessuna modifica al codice, nessun PR/merge.",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -899,7 +903,7 @@
     "reports/evidence/G4/OCOR-DEV-0047.json",
     "reports/evidence/G4/OCOR-DEV-0047.log"
   ],
-  "exact_next_action": "Attendere esclusivamente il verifier esterno per OCOR-DEV-0048-c6cbcd328216-4, head c6cbcd3282161aafd404e73bec49acffb1ffb011. Nessuna verifica indipendente avviata dall'implementatore. Con GO_FOR_EVIDENCE_SEAL: futura sessione di integrazione; con NO_GO: TERMINAL_BLOCKED senza quinta riparazione, decisione OCOR-DEV-0048-REPAIR-4-CODEX.",
+  "exact_next_action": "Rieseguire il verifier a contesto pulito per OCOR-DEV-0048-c6cbcd328216-4 su HEAD c6cbcd3282161aafd404e73bec49acffb1ffb011. Con GO_FOR_EVIDENCE_SEAL: integrazione; con NO_GO o nuovo VERIFIER_ERROR: TERMINAL_BLOCKED senza quinta riparazione.",
   "head_sha": "c6cbcd3282161aafd404e73bec49acffb1ffb011",
   "independent_verification": {
     "implementer": "Codex",
@@ -907,7 +911,7 @@
     "model_identity": "NOT_EXPOSED_BY_RUNTIME",
     "reasoning_effort": "NOT_EXPOSED_BY_RUNTIME",
     "same_model_separate_contexts": true,
-    "verdict_status": "PENDING_EXTERNAL_VERIFIER",
+    "verdict_status": "VERIFIER_ERROR_RETRY_ONCE",
     "verifier": "Codex, processo esterno a contesto pulito"
   },
   "migration_rollback_result": "Review meccanica: cinque soli percorsi autorizzati, nessuna migrazione/schema/port sigillato modificato. git diff origin/main...HEAD limita il task a source/test, JSON/log e manifest G4; reverse-apply --check del commit di riparazione passante. Le fixture rimuovono i client temporanei Keycloak e le entry SPIRE, recuperano i container nei finally e usano segreti disposable su OCOR. Nessun rollback semantico o conformance globale dichiarato.",
@@ -981,6 +985,6 @@
   "unresolved_blockers": [
     "OCOR-DEV-0048"
   ],
-  "updated_at": "2026-10-04T07:42:19.426143Z",
+  "updated_at": "2026-10-04T08:47:33.154852Z",
   "worktree": ".ocor/worktrees/ocor-dev-0048-repair4-state"
 }
