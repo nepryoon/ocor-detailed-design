@@ -4194,3 +4194,59 @@
   (`OCOR-DEV-0049`…`OCOR-DEV-0069`) è bloccato transitivamente su `OCOR-DEV-0048`
   (`BLOCKED_REPAIR_BUDGET_EXHAUSTED`); le decisioni PO non bloccanti `RVW-03`/`INFO-A`/`INFO-C`
   restano aperte.
+
+## 2026-10-04 — OCOR-DEV-0048: quarto ciclo Codex, sola implementazione candidata
+
+- Decisione PO `OCOR-DEV-0048-REPAIR-4-CODEX` (2026-10-03): un solo quarto ciclo; supersede il divieto terminale precedente esclusivamente per questa riparazione. HEAD iniziale `7f2fff555621424c8c89764aba16810f038ef509`, baseline main `366a66d40a2b98c2df8f4c5d51ebcbbcb4c8e8fa`. Nessuna riscrittura della storia.
+- Branch task `task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls`, worktree `.ocor/worktrees/ocor-dev-0048`, HEAD candidato `c6cbcd3282161aafd404e73bec49acffb1ffb011`, source/test commit `5571086b3e0e3dc9ad128fd13682db4bc1f2455f`. Solo cinque percorsi del task. Stato/handoff/escalation su `governed/state-sync-ocor-dev-0048-repair-cycle-4` in worktree separato; nessun merge, nessuna PR, nessun altro task.
+- VF-001: rivalidazione corrente della delega e del Principal prima/dopo I/O; timestamp richiesta/parametro legacy non forniscono il clock. VF-002: `valid_until` limitato alla scadenza canonica UTC della delega.
+- Classe temporale: finestre bundle, token Keycloak, Principal, SVID e catene locale/peer verificate; intersezione delle autorità per ogni validità emessa. OpenBao emette al tempo del boundary e limita il lease a token/SVID/deletion time verificati. Port sigillati e lock invariati.
+- RED finale `23 failed / 3 passed` sulla base autorizzata con i nuovi test identici; GREEN `76 passed` sul task (26 nuovi casi), `981 passed` nella suite runtime completa con PostgreSQL reale, `82 passed` nei test reports CI. Zero skip qualificanti, nessun mock del boundary. Ritardi su risposte di backend reali; client Keycloak ed entry SPIRE temporanei rimossi nei finally.
+- Preflight: toolchain conforme per versione/digest, 11 servizi READY. CA disposable SPIRE scaduta rinnovata per due giorni con medesima chiave locale; ricreati solo SPIRE server/agent OCOR e riavviato Fuseki. Nessun lock/config tracciato modificato, nessuna risorsa non OCOR toccata.
+- Gate locali obbligatori verdi: ruff repo, mypy strict, RCCAD, language policy, task scope, runtime evidence non-skipped, drift (62 task/165 input/zero deriva), digest normativi 8/8, harness 14 PASS. Piano validato all'HEAD committato senza delta di planning, scope task verificato separatamente contro origin/main e base autorizzata; Markdown/Mermaid esterni opzionali `NOT_EXECUTED`, fallback deterministici eseguiti. Output generati non pertinenti ripristinati.
+- Primo run completo non qualificante: DSN configurato sulla porta errata 5432, invece della pubblicazione OCOR 55433; 4 fallimenti e 51 setup error. Corretto solo il DSN e rieseguita integralmente la suite. Il tentativo fallito è conservato nel raw candidato; nessun test/gate indebolito.
+- Implementatore della riparazione e verifier usano **lo stesso modello in contesti separati**; nessuna diversità di modello dichiarata. Identificatore esatto/effort `NOT_EXPOSED_BY_RUNTIME`. Verifier esterno non avviato e nessun verdetto scritto.
+- Richiesta `OCOR-DEV-0048-c6cbcd328216-4`, `repair_cycle: 4`, `TASK_EVIDENCE`; raw candidato `8945eb1c9031066c8e384bd6fccc00dd72c744f6aa21c31aa570903d91f82aed`. Evidenza `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION`, non sigillata.
+- Source di verità dei completati invariata (62 task); 0048 in attesa di verifica, downstream non avanzato. `E1=0`, `E2=0`, zero `Verified`, runtime conformance `NOT_ESTABLISHED`, PoC/Production `NO-GO`; `inputs/` invariato.
+- Prossima azione: Attendere esclusivamente il verifier esterno per OCOR-DEV-0048-c6cbcd328216-4, head c6cbcd3282161aafd404e73bec49acffb1ffb011. Nessuna verifica indipendente avviata dall'implementatore. Con GO_FOR_EVIDENCE_SEAL: futura sessione di integrazione; con NO_GO: TERMINAL_BLOCKED senza quinta riparazione, decisione OCOR-DEV-0048-REPAIR-4-CODEX.
+
+## 2026-10-04 — OCOR-DEV-0048: verifier esterno VERIFIER_ERROR, richiesta ripetuta una volta (§6)
+
+- Il verifier indipendente per `OCOR-DEV-0048-c6cbcd328216-4` (head `c6cbcd3282161aafd404e73bec49acffb1ffb011`, `repair_cycle: 4`, `TASK_EVIDENCE`) non ha prodotto un verdetto valido dopo 3 tentativi: `codex exec` è uscito con `rc=1` per un flag di moderazione del modello ("possible cybersecurity risk") sul contenuto di verifica avversariale dei backend di sicurezza (mTLS/SPIFFE/OpenBao). Il verdetto registrato è `VERIFIER_ERROR` (`~/.ocor-codex/verdicts/OCOR-DEV-0048-c6cbcd328216-4.json`).
+- Per OCOR-RCCAD §6 (`VERIFIER_ERROR`: ripetere la richiesta una volta) la richiesta di verifica è stata riemessa identica (stesso `head_sha`, `repair_cycle: 4`, `request_id`). Rimossa la worktree residua del verifier in `/tmp/ocor-verify-OCOR-DEV-0048-c6cbcd328216-4/wt` per consentire un retry pulito.
+- Nessuna modifica al codice, ai test, ai gate o all'evidenza candidata; nessun PR/merge. Il candidato resta `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillato). La disclosure same-model-in-separate-contexts è già nella richiesta.
+- Prossima azione: rieseguire il verifier a contesto pulito. Con `GO_FOR_EVIDENCE_SEAL`: integrazione in una sessione successiva; con `NO_GO` o nuovo `VERIFIER_ERROR`: `TERMINAL_BLOCKED` senza quinta riparazione (decisione `OCOR-DEV-0048-REPAIR-4-CODEX`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance` `NOT_ESTABLISHED`, PoC/Production `NO-GO`; `inputs/` invariato.
+
+## 2026-10-04 — OCOR-DEV-0048: verdetto ciclo 4 NO_GO → TERMINAL_BLOCKED (decisione OCOR-DEV-0048-REPAIR-4-CODEX)
+
+- Il verifier indipendente ha prodotto il verdetto `OCOR-DEV-0048-c6cbcd328216-4` (head
+  `c6cbcd3282161aafd404e73bec49acffb1ffb011`, `repair_cycle: 4`, `TASK_EVIDENCE`): `NO_GO` con 2
+  finding bloccanti `high`, diversi dai precedenti.
+  - `VF-001` (`security/control_plane.py:654`): `SignedDelegation` firma solo delegator/delegatee,
+    `resource_scopes`, `purpose` e finestra; non firma `tenant_id`/`domains`/`compartments` richiesti
+    da ADD v1.3 §5.2 (rr. 3169–3190). Le quattro varianti di scope cambiano il GCS ricalcolando il
+    digest, ma la stessa firma è accettata e produce `PERMIT` in tutti i casi; il controllo di policy
+    non applica i limiti che il grant omette.
+  - `VF-002` (`security/control_plane.py:1243`): `evaluate` verifica lista/digest dei moduli OPA prima
+    del POST e rivalida solo le finestre temporali (rr. 1330–1343); un proxy mTLS trasparente inietta
+    un modulo non firmato prima del POST reale, OPA restituisce `true` e il provider emette `PERMIT`
+    con il vecchio digest firmato anziché `STALE_BUNDLE` (viola «stale bundle fails closed» e il
+    version fence di ADD §5.1).
+- Per la decisione PO `OCOR-DEV-0048-REPAIR-4-CODEX` (2026-10-03): nessuna quinta riparazione,
+  `TERMINAL_BLOCKED`. Il verifier indica per una futura candidatura sotto nuovo mandato: rappresentare
+  e verificare i vincoli firmati del `DelegationGrant` (tenant, domini, compartimenti,
+  capability/effect/risk ceiling, binding a policy/workload) rifiutando grant incompleti; legare
+  atomicamente valutazione OPA e `PolicyDecision` allo snapshot/revisione verificato del bundle.
+- Stato: `OCOR-DEV-0048` `BLOCKED_REPAIR_BUDGET_EXHAUSTED` terminale; downstream
+  `OCOR-DEV-0049`…`OCOR-DEV-0069` transitivamente bloccato. Evidenza
+  `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
+- `EXECUTION_STATE.json`, `MODEL_HANDOFF.json` riallineati (ciclo 4 `NO_GO`, terminal disposition);
+  `TERMINAL_BLOCKED_REPORT.json` riallineato allo stato terminale ciclo 4.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`; `inputs/` invariato. Nessuna modifica a codice,
+  validator o workflow: solo `reports/development/` (report terminale + stato + handoff + log).
+- Prossima azione: nessuna — il ciclo termina con `TERMINAL_BLOCKED`. Tutto il residuo
+  (`OCOR-DEV-0049`…`OCOR-DEV-0069`) è bloccato transitivamente su `OCOR-DEV-0048`
+  (`BLOCKED_REPAIR_BUDGET_EXHAUSTED`); le decisioni PO non bloccanti `RVW-03`/`INFO-A`/`INFO-C`
+  restano aperte.

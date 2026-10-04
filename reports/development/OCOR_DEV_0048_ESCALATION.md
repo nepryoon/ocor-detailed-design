@@ -151,3 +151,69 @@ resta: stato terminale `TERMINAL_BLOCKED`.
 Invarato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance` `NOT_ESTABLISHED`,
 `PoC`/`Production` `NO-GO`. `inputs/` invariato. L'evidenza di `OCOR-DEV-0048` resta
 `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
+
+## Ripresa autorizzata — OCOR-DEV-0048-REPAIR-4-CODEX (2026-10-03)
+
+Il PO autorizza un solo quarto ciclo Codex dalla base `7f2fff555621424c8c89764aba16810f038ef509`. Il divieto terminale del ciclo 3 è superseduto per questo change set; la storia sopra resta invariata.
+
+Implementazione VF-001/VF-002 e classe temporale completata come candidato su `c6cbcd3282161aafd404e73bec49acffb1ffb011`: 76 casi task passanti (26 nuovi), suite runtime `981 passed`, reports CI `82 passed`, zero skip qualificanti. Tempo corrente del boundary prima/dopo I/O e validità limitate all'intersezione delle autorità verificate. Evidenza non sigillata; richiesta `OCOR-DEV-0048-c6cbcd328216-4` (`repair_cycle: 4`).
+
+Implementatore della riparazione e verifier usano lo stesso modello in contesti separati; nessuna diversità di modello dichiarata. Verifica esterna pendente. Con nuovo `NO_GO`: nessuna riparazione ulteriore, `TERMINAL_BLOCKED`. Nessun merge in questa sessione. Claim fence invariato.
+
+## Disposition (Product Owner, 2026-10-03) — OCOR-DEV-0048-REPAIR-4-CODEX
+
+Il Product Owner ha autorizzato **UN SOLO** quarto ciclo di riparazione con decisione
+`OCOR-DEV-0048-REPAIR-4-CODEX` (2026-10-03), sostituendo il divieto finale del ciclo 3. Il ciclo è
+eseguito da Codex come implementatore.
+
+- **Ambito**: correggere `VF-001` e `VF-002` del verdetto `OCOR-DEV-0048-7f2fff555621-3` e l'intera
+  classe di difetti temporali in `security/control_plane.py` (ogni controllo temporale usa il tempo
+  del boundary e mai valori del chiamante; ogni validità emessa è limitata dalla più stretta tra le
+  autorità coinvolte — bundle, delega, token, SVID, lease). Positivi/negativi sui backend reali,
+  senza mock del boundary.
+- **Branch**: `task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls`, da head
+  `7f2fff555621424c8c89764aba16810f038ef509`, senza riscrivere ciò che è già stato accettato.
+- **Disclosure**: implementatore della riparazione e verifier usano lo stesso modello in contesti
+  separati.
+- **Disposition su NO_GO**: nessuna quinta riparazione, `TERMINAL_BLOCKED`.
+
+### Esito della riparazione (ciclo 4)
+
+- Head candidato: `c6cbcd3282161aafd404e73bec49acffb1ffb011` (commit sorgente/test
+  `5571086b3e0e3dc9ad128fd13682db4bc1f2455f`); cinque soli percorsi del task.
+- `VF-001` ciclo 3: rivalidazione corrente della delega e del Principal prima/dopo I/O; il clock non
+  deriva più da `request.at`.
+- `VF-002` ciclo 3: `valid_until` limitato alla scadenza canonica UTC della delega.
+- Classe temporale: finestre bundle, token Keycloak, Principal, SVID e catene locale/peer verificate;
+  intersezione delle autorità per ogni validità emessa.
+- Gate locali verdi: `76 passed` sul task, `981 passed` runtime, `82 passed` reports CI, ruff/mypy
+  puliti, validator verdi, digest normativi 8/8. Zero skip qualificanti, nessun mock del boundary.
+
+### Verdetto indipendente (ciclo 4): `NO_GO`
+
+Richiesta `OCOR-DEV-0048-c6cbcd328216-4` (`TASK_EVIDENCE`, `repair_cycle: 4`) eseguita dal verifier
+indipendente sull'HEAD esatto `c6cbcd3282161aafd404e73bec49acffb1ffb011`. Verdetto `NO_GO` con 2
+finding bloccanti `high`, diversi dai precedenti:
+
+- **VF-001** (`high`) — `security/control_plane.py:654`: `SignedDelegation` non firma
+  `tenant_id`/`domains`/`compartments` richiesti da ADD v1.3 §5.2 (rr. 3169–3190); le quattro varianti
+  di scope cambiano il GCS ricalcolando il digest, ma la stessa firma è accettata e produce `PERMIT`.
+- **VF-002** (`high`) — `security/control_plane.py:1243`: un modulo OPA non firmato iniettato tra il
+  controllo di freschezza e la valutazione produce `PERMIT` associato al vecchio digest firmato
+  anziché `STALE_BUNDLE` (viola il criterio «stale bundle fails closed» e il version fence di ADD §5.1).
+
+Azione di correzione indicata dal verifier (per una futura candidatura sotto nuovo mandato):
+rappresentare e verificare i vincoli firmati del `DelegationGrant` (tenant, domini, compartimenti,
+capability/effect/risk ceiling, binding a policy/workload) rifiutando grant incompleti, con positivi e
+negativi di intersezione dei vincoli; legare atomicamente la valutazione OPA e il `PolicyDecision`
+allo snapshot/revisione verificato del bundle completo. **Non eseguita**: la decisione
+`OCOR-DEV-0048-REPAIR-4-CODEX` autorizza un solo quarto ciclo e vieta ulteriori riparazioni.
+
+### Stato (finale ciclo 4)
+
+`OCOR-DEV-0048` è terminale: `BLOCKED_REPAIR_BUDGET_EXHAUSTED`. Il ciclo 4 (head
+`c6cbcd3282161aafd404e73bec49acffb1ffb011`) è stato verificato indipendente `NO_GO`; per la decisione
+`OCOR-DEV-0048-REPAIR-4-CODEX` non è consentita alcuna ulteriore riparazione. Tutti i 21 task residui
+(`OCOR-DEV-0049`…`OCOR-DEV-0069`) restano bloccati transitivamente. L'evidenza di `OCOR-DEV-0048`
+resta `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata). Nessun lavoro di backlog eseguibile
+resta: stato terminale `TERMINAL_BLOCKED`.
