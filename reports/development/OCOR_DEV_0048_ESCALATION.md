@@ -151,3 +151,11 @@ resta: stato terminale `TERMINAL_BLOCKED`.
 Invarato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance` `NOT_ESTABLISHED`,
 `PoC`/`Production` `NO-GO`. `inputs/` invariato. L'evidenza di `OCOR-DEV-0048` resta
 `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
+
+## Ripresa autorizzata — OCOR-DEV-0048-REPAIR-4-CODEX (2026-10-03)
+
+Il PO autorizza un solo quarto ciclo Codex dalla base `7f2fff555621424c8c89764aba16810f038ef509`. Il divieto terminale del ciclo 3 è superseduto per questo change set; la storia sopra resta invariata.
+
+Implementazione VF-001/VF-002 e classe temporale completata come candidato su `c6cbcd3282161aafd404e73bec49acffb1ffb011`: 76 casi task passanti (26 nuovi), suite runtime `981 passed`, reports CI `82 passed`, zero skip qualificanti. Tempo corrente del boundary prima/dopo I/O e validità limitate all'intersezione delle autorità verificate. Evidenza non sigillata; richiesta `OCOR-DEV-0048-c6cbcd328216-4` (`repair_cycle: 4`).
+
+Implementatore della riparazione e verifier usano lo stesso modello in contesti separati; nessuna diversità di modello dichiarata. Verifica esterna pendente. Con nuovo `NO_GO`: nessuna riparazione ulteriore, `TERMINAL_BLOCKED`. Nessun merge in questa sessione. Claim fence invariato.

@@ -1,10 +1,13 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-terminal-blocked-report-cycle3",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__TERMINAL_BLOCKED_REPORT_CYCLE3",
+    "branch": "governed/state-sync-ocor-dev-0048-repair-cycle-4",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR-DEV-0048-REPAIR-4-CODEX",
     "decision_id": "DEC-210",
-    "phase": "GOVERNED_TERMINAL_BLOCKED_REPORT_CYCLE3",
-    "worktree": ".ocor/worktrees/terminal-blocked-report-cycle3"
+    "phase": "IMPLEMENTATION_REPAIR_CYCLE_4_AWAITING_EXTERNAL_VERIFICATION",
+    "task_branch": "task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls",
+    "task_head_sha": "c6cbcd3282161aafd404e73bec49acffb1ffb011",
+    "task_worktree": ".ocor/worktrees/ocor-dev-0048",
+    "worktree": ".ocor/worktrees/ocor-dev-0048-repair4-state"
   },
   "backlog_escalations": {
     "OCOR-DEV-0048": {
@@ -40,6 +43,13 @@
         "id": "OCOR-DEV-0048-REPAIR-3",
         "note": "Product Owner authorizes ONE third repair cycle for OCOR-DEV-0048 in punctual derogation of the 2-cycle budget (RCCAD 8); budget remains 2 for every other task. Scope exclusively VF-001 and VF-002 of verdict OCOR-DEV-0048-eda08db30ca2-2. Branch task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls from head eda08db30ca20c722a1cc11d25e4b34d7c590227; do not rewrite what was already accepted."
       },
+      "po_decision_repair_cycle_4": {
+        "NO_GO_disposition": "TERMINAL_BLOCKED, nessuna riparazione ulteriore",
+        "authorized_start_head": "7f2fff555621424c8c89764aba16810f038ef509",
+        "date": "2026-10-03",
+        "id": "OCOR-DEV-0048-REPAIR-4-CODEX",
+        "scope": "VF-001/VF-002 ciclo 3 e intera classe di difetti temporali in security/control_plane.py; una sola fase implementativa Codex; no merge e nessun altro task"
+      },
       "repair_cycle_3": {
         "head_sha": "7f2fff555621424c8c89764aba16810f038ef509",
         "repair_cycle": 3,
@@ -48,12 +58,22 @@
         "scope": "VF-001 + VF-002",
         "verdict": "NO_GO"
       },
-      "status": "REPAIR_CYCLE_3_NO_GO_TERMINAL_BLOCKED",
+      "repair_cycle_4": {
+        "head_sha": "c6cbcd3282161aafd404e73bec49acffb1ffb011",
+        "repair_cycle": 4,
+        "request_id": "OCOR-DEV-0048-c6cbcd328216-4",
+        "review_type": "TASK_EVIDENCE",
+        "same_model_separate_contexts": true,
+        "scope": "VF-001 + VF-002 + classe dei controlli temporali",
+        "verdict": "PENDING_EXTERNAL_VERIFIER"
+      },
+      "status": "REPAIR_CYCLE_4_AWAITING_VERIFICATION",
       "terminal_disposition": {
         "date": "2026-10-02",
         "decision": "OCOR-DEV-0048-REPAIR-3",
         "note": "Cycle-3 independent verification (OCOR-DEV-0048-7f2fff555621-3) returned NO_GO with 2 blocking high findings (VF-001 delegation window validated against request.at; VF-002 valid_until not bounded by delegation expiry). Per PO decision, no further repair: OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED and the whole remaining backlog (OCOR-DEV-0049..0069) is transitively blocked. Evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed)."
       },
+      "terminal_disposition_superseded_by": "OCOR-DEV-0048-REPAIR-4-CODEX (solo un quarto ciclo, nessuna quinta riparazione)",
       "verdicts": [
         {
           "findings": [
@@ -109,7 +129,7 @@
       ]
     }
   },
-  "baseline_commit": "7cac163e960cb86a3a780b42b65a96d518453791",
+  "baseline_commit": "366a66d40a2b98c2df8f4c5d51ebcbbcb4c8e8fa",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -195,8 +215,15 @@
       "escalation_record": "reports/development/OCOR_DEV_0048_ESCALATION.md",
       "id": "OCOR-DEV-0048",
       "non_blocking": false,
-      "scope": "OCOR-DEV-0048 real-backend security integration (OPA, Keycloak, SPIFFE/SPIRE, OpenBao, mTLS). After cycle-2 NO_GO and PO decision OCOR-DEV-0048-REPAIR-3 (one third repair cycle in punctual derogation of RCCAD 8), repair cycle 3 (head 7f2fff555621424c8c89764aba16810f038ef509) was re-verified independently: NO_GO with 2 blocking high findings (VF-001 delegation window validated against request.at; VF-002 valid_until not bounded by delegation expiry). Per PO decision, no further repair: terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED; downstream tasks OCOR-DEV-0049..0069 transitively blocked. Evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed).",
-      "status": "BLOCKED_REPAIR_BUDGET_EXHAUSTED"
+      "po_authorization": {
+        "NO_GO_disposition": "TERMINAL_BLOCKED, nessuna riparazione ulteriore",
+        "authorized_start_head": "7f2fff555621424c8c89764aba16810f038ef509",
+        "date": "2026-10-03",
+        "id": "OCOR-DEV-0048-REPAIR-4-CODEX",
+        "scope": "VF-001/VF-002 ciclo 3 e intera classe di difetti temporali in security/control_plane.py; una sola fase implementativa Codex; no merge e nessun altro task"
+      },
+      "scope": "Decisione PO OCOR-DEV-0048-REPAIR-4-CODEX del 2026-10-03 supersede il divieto terminale del ciclo 3. Riparazione implementata, evidenza candidata non sigillata, task non completato. Downstream ancora dipendente dalla verifica e integrazione di 0048.",
+      "status": "IN_PROGRESS_REPAIR_CYCLE_4_AWAITING_VERIFICATION"
     }
   ],
   "claims": {
@@ -270,7 +297,7 @@
     "OCOR-DEV-0046",
     "OCOR-DEV-0047"
   ],
-  "current_gate": "TERMINAL_BLOCKED_REPORT_CYCLE3",
+  "current_gate": "G4_WAVE_15_OCOR_DEV_0048_REPAIR_CYCLE_4_AWAITING_VERIFICATION",
   "latest_ci_evidence": {
     "candidate_commit": "c94c072e0bd70a27e1350980320659f6b7d6370a",
     "conclusion": "PASS_ALL_13_GREEN_EXACT_HEAD_PR159_MERGED_7cac163e960cb86a3a780b42b65a96d518453791",
@@ -341,7 +368,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "TERMINAL_BLOCKED: no executable work remains. OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED after cycle-3 NO_GO (OCOR-DEV-0048-7f2fff555621-3); the residual backlog OCOR-DEV-0049..0069 is transitively blocked. Non-blocking PO decisions RVW-03, INFO-A, INFO-C remain OPEN_PO_DECISION_REQUIRED. TERMINAL_BLOCKED_REPORT.json refreshed to the cycle-3 terminal state.",
+  "next_executable_action": "Attendere esclusivamente il verifier esterno per OCOR-DEV-0048-c6cbcd328216-4, head c6cbcd3282161aafd404e73bec49acffb1ffb011. Nessuna verifica indipendente avviata dall'implementatore. Con GO_FOR_EVIDENCE_SEAL: futura sessione di integrazione; con NO_GO: TERMINAL_BLOCKED senza quinta riparazione, decisione OCOR-DEV-0048-REPAIR-4-CODEX.",
   "remediation_status": {
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -540,5 +567,5 @@
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-10-02T13:47:58Z"
+  "updated_at": "2026-10-04T07:42:19.426143Z"
 }
