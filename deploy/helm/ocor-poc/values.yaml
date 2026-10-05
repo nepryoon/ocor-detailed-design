@@ -1,0 +1,160 @@
+# OCOR PoC single-site profile contract.
+# Design Target / Candidate Implementation. No runtime conformance, no
+# Production readiness, no E1/E2 promotion is claimed by this file.
+ocor:
+  profile:
+    id: poc
+    singleSite: true
+    deploymentTarget: "Design Target / Candidate Implementation"
+
+  isolation:
+    networkPolicyDefaultDeny: true
+    egressPublicNetwork: false
+    zeroSaaSAndCallHome: true
+    namespacePerSubsystem: true
+    serviceAccountPerSubsystem: true
+    syntheticCompartmentsMin: 2
+    rootCaOutsideClusterFaultDomain: true
+    backupVaultOutsideClusterFaultDomain: true
+
+  images:
+    digestPinned: true
+    signatureVerifiedBeforeAdmission: true
+    registry: "local"
+    publicNetworkDependencyAtRuntime: false
+
+  resourceClasses: [CONTROL, INTERACTIVE, BATCH, AUDIT]
+  resourceIsolation:
+    c6ControlAuditSharesCausalBatchPool: false
+
+  observability:
+    exportersLocal: true
+    driftScanIntervalSeconds: 60
+    releaseMismatchBlocksMutativeCommand: true
+    metrics:
+      exporter: prometheus
+      set:
+        - latency_p50_p95_p99_per_contract
+        - error_deny_approval_expiry_rate
+        - projection_lag_watermark_checksum
+        - commit_outbox_retry
+        - constraint_violation
+        - action_fsm_saga_execution_unknown
+        - audit_gap
+        - queue_run_time_budget
+        - model_seed_scenario_ttl
+        - configuration_schema_release_drift
+    logs:
+      fields: [correlation_id, component, operation, release, policy_digest, reason_code]
+      keepClassificationMarking: true
+      excludeClassifiedPayload: true
+    traces:
+      fields:
+        - trace_id
+        - correlation_id
+        - causation_id
+        - governed_context_digest
+        - effective_principal_id
+        - actor_chain
+        - tenant_id
+        - organization_id
+        - domain_id
+        - compartments
+        - classification_marking_ref
+        - purpose
+        - policy_bundle_digest
+        - ontology_release_digest
+        - canonical_commit
+        - projection_watermark
+        - policy_decision_id
+        - scenario_id
+        - model_digest
+        - action_state
+
+  backup:
+    rpoMinutes: 15
+    rtoHours: 4
+    encrypted: true
+    signed: true
+    immutable: true
+    contentAddressed: true
+    authorityAware: true
+    offClusterFaultDomain: true
+    tested: true
+    authorityClasses:
+      - definition
+      - canonical
+      - event
+      - action
+      - governance
+      - audit
+      - model_scenario
+      - projection
+      - key_custody
+
+  restore:
+    isolatedNetwork: true
+    steps:
+      - containment_and_emergency_stop
+      - select_signed_recovery_point_within_rpo
+      - verify_trust_manifest_digest_signatures_dual_control
+      - restore_oaC_ir_policy_config_model_manifests
+      - restore_canonical_event_action_audit_same_cut
+      - rebuild_logic_projection_and_w3c_boundary
+      - reconcile_outbox_offset_checksum_saga_receipt
+      - assign_execution_unknown_to_unprovable_effects
+      - run_conformance_security_mission_thread_replay
+      - require_human_authorization_to_reopen_mutative
+    replay:
+      usesOriginalEventIds: true
+      emitsNoExternalEffects: true
+      pins: [ontology_release, compiler_logic_bundle, canonical_commit, event_schema, model_digest, policy_digest, seed, assumptions, ordering]
+    recoveryGate:
+      - revision
+      - watermark
+      - orphan_duplicate
+      - marking
+      - gcs
+      - deletion_resurrection
+      - sample_semantic_digest
+
+  safeDegraded:
+    faults:
+      - fault: idp_or_policy_engine_unavailable
+        behavior: [no_new_governed_operations, authorized_reads_only_if_policy_snapshot_valid]
+      - fault: canonical_writer_unavailable
+        behavior: [events_durably_queued, no_canonical_commit_confirmation, mutations_suspended]
+      - fault: broker_unavailable
+        behavior: [outbox_retained_relayed_later, no_projection_freshness_claim]
+      - fault: projection_lag_or_failure
+        behavior: [PROJECTION_NOT_READY_or_STALE_CONTEXT, high_impact_blocked]
+      - fault: audit_append_unavailable
+        behavior: [no_new_mutative_command]
+      - fault: action_adapter_timeout
+        behavior: [EXECUTION_UNKNOWN, status_inquiry_or_reconciliation_only, no_blind_retry]
+      - fault: edge_partition
+        behavior: [read_analyze_simulate_on_pinned_snapshot, explicit_staleness, no_high_impact]
+      - fault: emergency_stop
+        behavior: [new_mutative_capabilities_denied_within_10_seconds]
+
+  health:
+    probeTypes: [liveness, readiness]
+    services:
+      - name: gateway
+        liveness: {http_get: /healthz, period_seconds: 10}
+        readiness: {http_get: /readyz, period_seconds: 10}
+      - name: canonical-state
+        liveness: {http_get: /healthz, period_seconds: 10}
+        readiness: {http_get: /readyz, period_seconds: 10}
+      - name: action-engine
+        liveness: {http_get: /healthz, period_seconds: 10}
+        readiness: {http_get: /readyz, period_seconds: 10}
+      - name: policy-engine
+        liveness: {http_get: /healthz, period_seconds: 10}
+        readiness: {http_get: /readyz, period_seconds: 10}
+      - name: identity
+        liveness: {http_get: /healthz, period_seconds: 10}
+        readiness: {http_get: /readyz, period_seconds: 10}
+      - name: audit
+        liveness: {http_get: /healthz, period_seconds: 10}
+        readiness: {http_get: /readyz, period_seconds: 10}
