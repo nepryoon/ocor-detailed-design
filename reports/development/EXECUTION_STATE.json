@@ -3,7 +3,7 @@
     "branch": "governed/state-sync-ocor-dev-0049-cycle3",
     "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_0049_CYCLE3_STATE_SYNC",
     "decision_id": "DEC-210",
-    "phase": "OCOR_DEV_0049_AUTHORIZED_REPAIR_HANDOFF",
+    "phase": "OCOR_DEV_0049_AUTHORIZED_REPAIR_HANDOFF_PENDING_STATE_SYNC_CI",
     "worktree": ".ocor/worktrees/state-sync-ocor-dev-0049-cycle3"
   },
   "backlog_escalations": {
@@ -535,6 +535,16 @@
       "po_decision": "OCOR-DEV-0049-REPAIR-CLAUDE-AUTO",
       "scope": "Ciclo 3 NO_GO con VF-001 high, VF-002 high, VF-003 medium. PO OCOR-DEV-0049-REPAIR-CLAUDE-AUTO supersede l\u2019escalation del ciclo 2: restano i cicli 4 e 5, esclusivamente Claude Code; verifica Codex. Nessuna nuova decisione PO richiesta.",
       "status": "AWAITING_AUTHORIZED_CLAUDE_REPAIR"
+    },
+    {
+      "blocked_tasks": [
+        "OCOR-DEV-0049:integration"
+      ],
+      "decision_request": "reports/development/decision_requests/GITHUB-HOSTED-RUNNER-AVAILABILITY.md",
+      "id": "GITHUB-HOSTED-RUNNER-AVAILABILITY",
+      "non_blocking": true,
+      "scope": "PR #170: quattro job non acquisiti da hosted runner anche dopo l\u2019unico rerun; merge dello state sync impossibile. Non blocca riparazione Claude Code di 0049 n\u00e9 implementazioni locali G5; nessun bypass o risorsa a pagamento autorizzato.",
+      "status": "OPEN_EXTERNAL_CONDITION_REQUIRED"
     }
   ],
   "claims": {
@@ -909,6 +919,118 @@
   },
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
+  "state_sync_ci": {
+    "annotation": "The job was not acquired by Runner of type hosted even after multiple attempts",
+    "cancelled_after_retry": [
+      "validation-closure",
+      "supply-chain",
+      "type-and-lint-gate",
+      "integration-postgresql"
+    ],
+    "checks": [
+      {
+        "conclusion": "CANCELLED",
+        "name": "validation-closure",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37368557542/job/111965448321"
+      },
+      {
+        "conclusion": "CANCELLED",
+        "name": "supply-chain",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37368557572/job/111965454947"
+      },
+      {
+        "conclusion": "CANCELLED",
+        "name": "type-and-lint-gate",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37368557539/job/111965442830"
+      },
+      {
+        "conclusion": "",
+        "name": "rccad-methodology",
+        "status": "IN_PROGRESS",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37368557624/job/111965462642"
+      },
+      {
+        "conclusion": "SKIPPED",
+        "name": "enable-auto-merge",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37368557659/job/111959627804"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "contract",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37368557752/job/111965469213"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "delivery-activation",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37368557646/job/111959626054"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "unit",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37368557752/job/111965506876"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "tooling-policy",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37368557539/job/111965444644"
+      },
+      {
+        "conclusion": "CANCELLED",
+        "name": "integration-postgresql",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37368557752/job/111965468706"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "backend-compatibility-not-ba-evidence",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37368557752/job/111965470428"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "fgm-contract-readiness-not-runtime-evidence",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37368557752/job/111965468938"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "evidence",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37368557752/job/111965471940"
+      },
+      {
+        "conclusion": "",
+        "name": "mandatory-gates",
+        "status": "QUEUED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37368557752/job/111970654155"
+      }
+    ],
+    "merge_performed": false,
+    "next_condition_for_integration": "Disponibilit\u00e0 effettiva hosted runner e 13 check SUCCESS sull\u2019HEAD finale della PR; non aggiungere rerun senza condizione materialmente cambiata.",
+    "observed_at": "2026-10-05T20:48:36Z",
+    "pr": 170,
+    "raw_annotations_sha256": "1fcc2ca6edbb6d546aea792a2145bb249b1fd27b90d44c35f1889637016e410a",
+    "raw_observation_sha256": "72d2fa04f759559764e476608facad3eba93a9009692f5982a73cfea9ac71a59",
+    "retry_budget_exhausted": true,
+    "retry_count": 1,
+    "run_ids": [
+      37368557539,
+      37368557542,
+      37368557572,
+      37368557624,
+      37368557752
+    ],
+    "status": "BLOCKED_HOSTED_RUNNER_UNAVAILABLE",
+    "tested_head_sha": "8e48303e404a78de26f5e58b351ae505f0c9b1cd"
+  },
   "status": "AWAITING_AUTHORIZED_CLAUDE_REPAIR",
-  "updated_at": "2026-10-05T20:12:59Z"
+  "updated_at": "2026-10-05T20:48:36Z"
 }
