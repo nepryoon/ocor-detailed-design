@@ -23,7 +23,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 75,
+        "passed": 91,
         "skipped": 0
       },
       "status": "PASS"
@@ -133,7 +133,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1176,
+        "passed": 1192,
         "skipped": 0
       },
       "status": "PASS"
@@ -161,9 +161,10 @@
       "status": "PASS"
     }
   ],
-  "commit": "9c4dae1c4146e33080ea031024982b18d874101a",
-  "created_at": "2026-10-05T16:23:55.113605+00:00",
+  "commit": "76f20cabe93a64e66ac5d80e7d83802a32250da7",
+  "created_at": "2026-10-05T19:14:21.027695+00:00",
   "environment": {
+    "acquired_from_head": "76f20cabe93a64e66ac5d80e7d83802a32250da7",
     "backend_under_test": "the ocor-ops agent process (deploy/helm/ocor-poc/compose.profiles.yaml configs.ocor-ops-agent) on python:3.11@sha256:c722..., against the real digest-pinned ocor-bootstrap services; OpenBao transit for encryption/signature; ephemeral pinned PostgreSQL/Qdrant for isolated restore",
     "bootstrap_containers": {
       "ocor-bootstrap-fuseki-1": "ocor/jena-fuseki:6.2.0 sha256:a1eb484a7d056a897c7bc832fb735b06136fc876aa90da3055d9882bc1b8d9e3",
@@ -182,12 +183,13 @@
     "docker_server": "29.8.2",
     "environment_repairs": [
       "ocor-bootstrap-fuseki-1 restarted after an OOM kill (exit 137, own 2G cgroup limit), then deploy/bootstrap/init/initialize_services.py, deploy/bootstrap/fixtures/load_fixtures.py and scripts/verify_external_services.py --execute --typed (all services READY)",
-      "SPIRE server had 0 registration entries (tmpfs state lost when the cycle-1 verifier restarted spire-server at ~14:53Z, before this session); the workload entry spiffe://ocor.test/ocor/control-plane (selector unix:uid:0, parent = attested agent) was recreated before the full-suite run; no repository file changed"
+      "leftover OCOR test containers (ocor-spike-0023-*, ocor-c5-backbone-*) from earlier sessions removed to free memory before the run; no non-OCOR container touched; no repository file changed"
     ],
     "host": "nepryoon",
     "kernel": "7.0.0-34-generic",
     "kind_node_image": "kindest/node:v1.33.1@sha256:050072256b9a903bd914c0b2866828150cb229cea0efe5892e2b644d5dd3b34f",
     "language_policy_note": "DEC-212 authorizes .py only outside deploy/helm; the stdlib agent is therefore carried as Compose `configs` content (single source, mounted by the Helm ConfigMap) and kept under ruff and mypy --strict by the task suite",
+    "main_head": "25ee8e3bea7cf5e88630df06cb44a2fc35159494",
     "ops_image": "python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2",
     "orchestrators": "Docker Compose (project-scoped carrier against the running ocor-bootstrap stack) and Kubernetes via a disposable kind cluster created and deleted by the test fixture (DEC-211)",
     "python_runtime_tests": "Python 3.12.11",
@@ -211,16 +213,17 @@
   },
   "inputs": {
     "deploy/helm/ocor-poc/Chart.yaml": "b6731d8de4effda2421dec13e73acc9f3207af1e95a140f5ef363879f3dd8e8b",
-    "deploy/helm/ocor-poc/compose.profiles.yaml": "624d4a2315fac9fc3c3d02c062cbe33159c81d244dcfd37ddfdb657128394706",
+    "deploy/helm/ocor-poc/compose.profiles.yaml": "ed18fb96d19e16e51331f1d1f6c82290341b5b3da9991c2d7122b504ae062335",
     "deploy/helm/ocor-poc/templates/_helpers.tpl": "b14b4ee237b0af17b95fceb0fce7b5dd2627404aa3e2cc30f1b2c4c4fe7f6b33",
     "deploy/helm/ocor-poc/templates/backup-cronjob.yaml": "b7421f7d4e7b2b285ae836f74caf5aec32668b8c030c81f103bcec556b855036",
     "deploy/helm/ocor-poc/templates/configmap.yaml": "3932ca5a5e7ff2d3133493d61ba7af806fde9bface1c3f22b62dfa8277567c21",
     "deploy/helm/ocor-poc/templates/deployment.yaml": "8a6ad2301009a725620c81a1e3b76a085c4c47aad4c212840307f954e6a48573",
-    "deploy/helm/ocor-poc/templates/networkpolicy.yaml": "7cddf0b4301de5ab42c0609fde54e18aadc71eae876f134bc0fb3055a341a39f",
+    "deploy/helm/ocor-poc/templates/networkpolicy.yaml": "c3bc596303e477a753f0a4e83fb91acae923c2f7ac08f46bd43565e0f7a2b386",
     "deploy/helm/ocor-poc/templates/restore-drill-job.yaml": "53fb28f2725198252d789d55a7a8c74f3a794adc60cd1751eb2bc2632e12f56c",
     "deploy/helm/ocor-poc/templates/serviceaccount.yaml": "73f2993e162b886f7ad619956a7c187d540cf17f006cc002e9411f49fc349f9a",
-    "deploy/helm/ocor-poc/values.yaml": "42b7ac841102a43320eb62b094fa0a4591cf988acb9dce43efccd33e949e2c04",
-    "ocor-runtime/tests/tasks/test_ocor_dev_0049.py": "45cb79191d035e1e7e263c104dc744bd29e16a080a1bc3f775566d1b33f4d796"
+    "deploy/helm/ocor-poc/values.yaml": "a6b0ec9e3d65414ecfd8b4000949bf1ff6a3ab0bd29bed6ad78cf065ceb2c069",
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0049.py": "8e4abd5662380156c3b310246a22fee1f9db6044939319598c3916aedcfb3055"
   },
   "not_claimed": [
     "No requirement is Verified; G6 qualification (OCOR-DEV-0060..0066) is not anticipated.",
@@ -232,16 +235,32 @@
     "action_adapter_timeout and edge_partition faults are not observable by the ops plane at G4 and are reported as such in /posture.",
     "The Compose carrier has no scheduler: the 15-minute backup cadence is enforced by the Helm CronJob; with Compose it requires a host scheduler, and RPO compliance is exported as ocor_recovery_point_within_rpo."
   ],
-  "raw_output_sha256": "ba6e34c33339b82cfc6835574f882171e34f0cba31df221c973f35896607145a",
+  "raw_output_sha256": "1d7e92eeef3c47e05d48898e7044ebffc06d3f47534b7d718418bdea59fce011",
   "repair": {
     "audit_matrix": "~/.ocor-codex/audit_0049.md (outside the repository)",
     "closes": [
+      "OCOR-DEV-0049-7fd4f7728801-2 VF-001 (admission fail-closed + governed reopening)",
+      "OCOR-DEV-0049-7fd4f7728801-2 VF-002 (destination/port pair enforcement, Compose and Helm)",
+      "OCOR-DEV-0049-7fd4f7728801-2 VF-003 (per-item tenant/compartment/marking/GCS restore gate)"
+    ],
+    "cycle": 3,
+    "implementer": "Claude Code (Anthropic)",
+    "po_decision": "OCOR-DEV-0049-REPAIR-CLAUDE-AUTO (2026-10-05; first of three authorized Claude Code cycles)",
+    "previously_closed": [
       "OCOR-DEV-0049-2c5a574a5f3a-1 VF-001..VF-006",
       "OCOR-DEV-0049-884f7b1160b1-0 VF-001..VF-003"
     ],
-    "cycle": 2,
-    "implementer": "Claude Code (Anthropic)",
-    "po_decision": "OCOR-DEV-0049-IMPLEMENTER-CLAUDE (2026-10-05)",
+    "red_fingerprint": {
+      "base": "7fd4f77288010b98330f74a4da455fa1b6e9e321",
+      "method": "new test module executed against the unrepaired agent/chart in a disposable detached worktree",
+      "observed": [
+        "test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested: ('read' ADMIT) assert (200, 'ADMIT') == (503, 'DENY') under RESTORE_UNTESTED",
+        "test_default_deny_admits_only_allowlisted_destination_port_pairs: every destination has its own address — 1 distinct IP for 10 aliases",
+        "test_admission_branches_of_the_posture / test_scope_comparison_branches: AttributeError (no fail-closed posture branches, no per-item scope comparison)",
+        "test_restore_scope_mismatch_blocks_materialisation[cross_tenant_scope]: failed at capture (fixture schema), not at the gate; the semantic RED is the verifier counterexample adversarial-restore.log"
+      ],
+      "summary_sha256": "8227559a86cc6b75fd4de59468a4933219bea79854027718221e0e59f9c5a98b"
+    },
     "verifier": "Codex (independent process, separate context)"
   },
   "requirement_results": [
@@ -330,8 +349,56 @@
       "status": "PASS"
     },
     {
+      "case_id": "OCOR-DEV-0049-HELM-CHART-REFUSES-TO-RENDER-A-FLOW-WITHOUT-A-PINNED-ADDRESS",
+      "command": "VF-002: the chart refuses to render when an allowed flow has no pinned intra-site address (no CIDR-wide fallback) (test_helm_chart_refuses_to_render_a_flow_without_a_pinned_address)",
+      "requirement_id": "NFR-041",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-ADMISSION-BRANCHES-OF-THE-POSTURE",
+      "command": "VF-001 decision branches of the agent posture: scanner error, stale or missing scan, unverified restore and open egress admit nothing; gate passed without human reopen admits only reads; healthy + reopened admits all (test_admission_branches_of_the_posture)",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RELAY-SERVES-EXACTLY-ONE-DECLARED-FLOW",
+      "command": "VF-002: a relay instance serves exactly one declared destination/port flow; empty, unknown or host:port selectors are refused (test_relay_serves_exactly_one_declared_flow)",
+      "requirement_id": "NFR-041",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-SCOPE-COMPARISON-BRANCHES",
+      "command": "VF-003 per-item comparison branches: tenant, canonical compartment set (duplicates, non-list), marking and GCS binding as contract digests equal to the authoritative metadata, representation/lifecycle drift; consistent item passes (test_scope_comparison_branches)",
+      "requirement_id": "NFR-067",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 7,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
       "case_id": "OCOR-DEV-0049-OPS-PROCESS-SERVES-HEALTH-AND-BLOCKS-READINESS-UNTIL-RESTORE-IS-TESTED",
-      "command": "live: the Compose ops process serves /livez 200 and /readyz 503 RESTORE_UNTESTED with all ten dependencies probed up; numeric p50/p95/p99 per dependency exported (test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested)",
+      "command": "live: the Compose ops process serves /livez 200 and /readyz 503 RESTORE_UNTESTED with all ten dependencies probed up; numeric p50/p95/p99 per dependency exported; VF-001: every operation class denied (restore_not_verified) (test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested)",
       "requirement_id": "FR-156",
       "result": {
         "failed": 0,
@@ -355,7 +422,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-ISOLATED-RESTORE-REPLAYS-TOMBSTONES-AND-PASSES-THE-RECOVERY-GATE",
-      "command": "live: restore on an internal network, tombstones evt-del-m2/evt-del-m4 replayed with original ids before retrieval, all eight recovery-gate checks pass, plaintext erased, signed receipt (test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate)",
+      "command": "live: restore on an internal network, tombstones evt-del-m2/evt-del-m4 replayed with original ids before retrieval, restored index read from the isolated network matches the authoritative tenant/compartments/marking/GCS of every live item, all eight recovery-gate checks pass, plaintext erased, signed receipt (test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate)",
       "requirement_id": "NFR-067",
       "result": {
         "failed": 0,
@@ -378,8 +445,20 @@
       "status": "PASS"
     },
     {
+      "case_id": "OCOR-DEV-0049-MUTATIVE-PATH-REOPENS-ONLY-BY-A-HUMAN-BOUND-TO-THE-PASSED-RECEIPT",
+      "command": "live VF-001: after the gate only reads are admitted; reopen refused for wrong token (401), missing human (400), other receipt (409); human reopen bound to the receipt digest admits all six classes (test_mutative_path_reopens_only_by_a_human_bound_to_the_passed_receipt)",
+      "requirement_id": "BR-003",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
       "case_id": "OCOR-DEV-0049-RESTORE-REPLAY-IS-DETERMINISTIC",
-      "command": "live: a second restore of the same recovery point yields the same replay digest (test_restore_replay_is_deterministic)",
+      "command": "live: a second restore of the same recovery point yields the same replay digest; the new receipt voids the previous human authorization (old digest 409) until a new reopen (test_restore_replay_is_deterministic)",
       "requirement_id": "NFR-065",
       "result": {
         "failed": 0,
@@ -403,7 +482,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-TAMPERED-RESTORE-RECEIPT-BLOCKS-READINESS",
-      "command": "live: an altered restore receipt makes readiness RESTORE_RECEIPT_INVALID (test_tampered_restore_receipt_blocks_readiness)",
+      "command": "live: an altered restore receipt makes readiness RESTORE_RECEIPT_INVALID, denies every operation class and refuses reopening (409) (test_tampered_restore_receipt_blocks_readiness)",
       "requirement_id": "NFR-043",
       "result": {
         "failed": 0,
@@ -415,12 +494,24 @@
     },
     {
       "case_id": "OCOR-DEV-0049-INCONSISTENT-DELETION-JOURNAL-BLOCKS-MATERIALISATION-AND-READINESS",
-      "command": "live: missing tombstone (stale deletion epoch) -> recovery gate FAILED, deletion_resurrection [m4], materialisation BLOCKED, readiness RESTORE_FAILED (test_inconsistent_deletion_journal_blocks_materialisation_and_readiness)",
+      "command": "live: missing tombstone (stale deletion epoch) -> recovery gate FAILED, deletion_resurrection [m4], materialisation BLOCKED, readiness RESTORE_FAILED, no operation class admitted (test_inconsistent_deletion_journal_blocks_materialisation_and_readiness)",
       "requirement_id": "NFR-067",
       "result": {
         "failed": 0,
         "not_executed": 0,
         "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RESTORE-SCOPE-MISMATCH-BLOCKS-MATERIALISATION",
+      "command": "live VF-003: cross-tenant scope, compartment, marking and GCS-binding mismatches of one item in the restored real Qdrant -> receipt FAILED, materialisation BLOCKED, quarantined [m1], other gates PASS, readiness RESTORE_FAILED, no class admitted (test_restore_scope_mismatch_blocks_materialisation)",
+      "requirement_id": "NFR-067",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 4,
         "skipped": 0
       },
       "status": "PASS"
@@ -463,7 +554,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-RELEASE-DRIFT-BLOCKS-READINESS-AND-MUTATIVE-COMMANDS",
-      "command": "live: profile drift detected within the scan interval -> RELEASE_DRIFT, mutative denied (release_mismatch) (test_release_drift_blocks_readiness_and_mutative_commands)",
+      "command": "live: after a positive control (all classes admitted) profile drift is detected within the scan interval -> RELEASE_DRIFT, mutative/high-impact/dispatch denied (release_mismatch), reads still admitted (test_release_drift_blocks_readiness_and_mutative_commands)",
       "requirement_id": "NFR-080",
       "result": {
         "failed": 0,
@@ -474,8 +565,8 @@
       "status": "PASS"
     },
     {
-      "case_id": "OCOR-DEV-0049-DEFAULT-DENY-ADMITS-ONLY-ALLOWLISTED-INTRA-SITE-FLOWS",
-      "command": "live: internal site network; all ten allowlisted flows connect; 1.1.1.1:443, public DNS, direct bootstrap container, non-allowlisted ports denied; positive control proves host egress exists (test_default_deny_admits_only_allowlisted_intra_site_flows)",
+      "case_id": "OCOR-DEV-0049-DEFAULT-DENY-ADMITS-ONLY-ALLOWLISTED-DESTINATION-PORT-PAIRS",
+      "command": "live VF-002: internal site network, ten distinct destination addresses; the 10 allowed host/port pairs connect and the other 90 host x port combinations (incl. postgresql:8181, qdrant:5432) are refused; 1.1.1.1:443, public DNS, direct bootstrap container, non-allowlisted ports denied; positive control proves host egress exists (test_default_deny_admits_only_allowlisted_destination_port_pairs)",
       "requirement_id": "NFR-041",
       "result": {
         "failed": 0,
@@ -487,8 +578,20 @@
     },
     {
       "case_id": "OCOR-DEV-0049-OPEN-PUBLIC-EGRESS-BLOCKS-READINESS",
-      "command": "live: the agent on a network with public egress reports PUBLIC_EGRESS_OPEN (test_open_public_egress_blocks_readiness)",
+      "command": "live: the agent on a network with public egress reports PUBLIC_EGRESS_OPEN and, even after a human reopen, admits no operation class (isolation_breach) (test_open_public_egress_blocks_readiness)",
       "requirement_id": "NFR-041",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-SCANNER-FAILURE-DENIES-EVERY-ADMISSION-UNTIL-THE-SCAN-RECOVERS",
+      "command": "live VF-001: with an unreadable profile the scanner fails -> SCANNER_ERROR and every class denied (security_scan_unavailable); admission returns after the scan recovers (test_scanner_failure_denies_every_admission_until_the_scan_recovers)",
+      "requirement_id": "BR-003",
       "result": {
         "failed": 0,
         "not_executed": 0,
@@ -523,7 +626,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-HELM-PROFILE-ON-KUBERNETES-BACKS-UP-RESTORES-AND-GATES-READINESS",
-      "command": "kind (DEC-211): pod not Ready before restore; CronJob backup to the external vault; restore-drill Job PASSED; pod Ready; NetworkPolicy denies 1.1.1.1 and admits postgresql/opa; pod readiness drops with qdrant paused and recovers (test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness)",
+      "command": "kind (DEC-211): pod not Ready before restore; CronJob backup to the external vault; restore-drill Job PASSED; pod Ready; mutative admission 503 recovery_reopen_pending; NetworkPolicy admits postgresql:5432/opa:8181 and denies 1.1.1.1, postgresql:8181, qdrant:6334 and a decoy listening on 8181 at an unpinned address (reachable from the node: positive control); pod readiness drops with qdrant paused and recovers (test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness)",
       "requirement_id": "NFR-001",
       "result": {
         "failed": 0,
@@ -548,7 +651,9 @@
   ],
   "residual_risks": [
     "Memory backup/restore is exercised on a synthetic drill binding (ocor_poc_drill database and Qdrant collection) until the G5 memory stores exist (DEC-208 fence).",
-    "The Compose default-deny is realized by an internal network plus an allowlist relay; the kind NetworkPolicy enforcement depends on the kindnet implementation of the disposable cluster.",
+    "The Compose default-deny is realized by an internal network plus one relay per allowed flow (own address, own port); the kind NetworkPolicy enforcement depends on the kindnet implementation of the disposable cluster.",
+    "The stuck-scanner branch (SCAN_STALE) is proven at decision-logic level only: it cannot be provoked on the real process without also stopping its HTTP server.",
+    "The governed reopening authenticates the operator with the bootstrap operator token and records a named human; it is not bound to a Keycloak identity or dual control in the PoC ops plane.",
     "Fault injection uses docker pause (not stop) to avoid destroying tmpfs-backed bootstrap state and the SPIRE agent attestation."
   ],
   "result": "PASS",

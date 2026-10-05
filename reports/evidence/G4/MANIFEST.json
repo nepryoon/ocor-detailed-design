@@ -172,12 +172,12 @@
     },
     {
       "path": "OCOR-DEV-0049.json",
-      "sha256": "9e734198f68d7d47f329d2a5050aff03541ffdca06e8eda6f36bcd3f694d9216",
+      "sha256": "1bf7f689bbe939b06948a63f424796f81c2db95287499ae97e80da196ceacb39",
       "task_id": "OCOR-DEV-0049"
     },
     {
       "path": "OCOR-DEV-0049.log",
-      "sha256": "ba6e34c33339b82cfc6835574f882171e34f0cba31df221c973f35896607145a",
+      "sha256": "1d7e92eeef3c47e05d48898e7044ebffc06d3f47534b7d718418bdea59fce011",
       "task_id": "OCOR-DEV-0049-RAW"
     }
   ],
@@ -3299,8 +3299,44 @@
       "task_id": "OCOR-DEV-0049"
     },
     {
+      "case_id": "OCOR-DEV-0049-HELM-CHART-REFUSES-TO-RENDER-A-FLOW-WITHOUT-A-PINNED-ADDRESS",
+      "command": "VF-002: the chart refuses to render when an allowed flow has no pinned intra-site address (no CIDR-wide fallback) (test_helm_chart_refuses_to_render_a_flow_without_a_pinned_address)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-041",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-ADMISSION-BRANCHES-OF-THE-POSTURE",
+      "command": "VF-001 decision branches of the agent posture: scanner error, stale or missing scan, unverified restore and open egress admit nothing; gate passed without human reopen admits only reads; healthy + reopened admits all (test_admission_branches_of_the_posture)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RELAY-SERVES-EXACTLY-ONE-DECLARED-FLOW",
+      "command": "VF-002: a relay instance serves exactly one declared destination/port flow; empty, unknown or host:port selectors are refused (test_relay_serves_exactly_one_declared_flow)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-041",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-SCOPE-COMPARISON-BRANCHES",
+      "command": "VF-003 per-item comparison branches: tenant, canonical compartment set (duplicates, non-list), marking and GCS binding as contract digests equal to the authoritative metadata, representation/lifecycle drift; consistent item passes (test_scope_comparison_branches)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
       "case_id": "OCOR-DEV-0049-OPS-PROCESS-SERVES-HEALTH-AND-BLOCKS-READINESS-UNTIL-RESTORE-IS-TESTED",
-      "command": "live: the Compose ops process serves /livez 200 and /readyz 503 RESTORE_UNTESTED with all ten dependencies probed up; numeric p50/p95/p99 per dependency exported (test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested)",
+      "command": "live: the Compose ops process serves /livez 200 and /readyz 503 RESTORE_UNTESTED with all ten dependencies probed up; numeric p50/p95/p99 per dependency exported; VF-001: every operation class denied (restore_not_verified) (test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "FR-156",
@@ -3318,7 +3354,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-ISOLATED-RESTORE-REPLAYS-TOMBSTONES-AND-PASSES-THE-RECOVERY-GATE",
-      "command": "live: restore on an internal network, tombstones evt-del-m2/evt-del-m4 replayed with original ids before retrieval, all eight recovery-gate checks pass, plaintext erased, signed receipt (test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate)",
+      "command": "live: restore on an internal network, tombstones evt-del-m2/evt-del-m4 replayed with original ids before retrieval, restored index read from the isolated network matches the authoritative tenant/compartments/marking/GCS of every live item, all eight recovery-gate checks pass, plaintext erased, signed receipt (test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-067",
@@ -3335,8 +3371,17 @@
       "task_id": "OCOR-DEV-0049"
     },
     {
+      "case_id": "OCOR-DEV-0049-MUTATIVE-PATH-REOPENS-ONLY-BY-A-HUMAN-BOUND-TO-THE-PASSED-RECEIPT",
+      "command": "live VF-001: after the gate only reads are admitted; reopen refused for wrong token (401), missing human (400), other receipt (409); human reopen bound to the receipt digest admits all six classes (test_mutative_path_reopens_only_by_a_human_bound_to_the_passed_receipt)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
       "case_id": "OCOR-DEV-0049-RESTORE-REPLAY-IS-DETERMINISTIC",
-      "command": "live: a second restore of the same recovery point yields the same replay digest (test_restore_replay_is_deterministic)",
+      "command": "live: a second restore of the same recovery point yields the same replay digest; the new receipt voids the previous human authorization (old digest 409) until a new reopen (test_restore_replay_is_deterministic)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-065",
@@ -3354,7 +3399,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-TAMPERED-RESTORE-RECEIPT-BLOCKS-READINESS",
-      "command": "live: an altered restore receipt makes readiness RESTORE_RECEIPT_INVALID (test_tampered_restore_receipt_blocks_readiness)",
+      "command": "live: an altered restore receipt makes readiness RESTORE_RECEIPT_INVALID, denies every operation class and refuses reopening (409) (test_tampered_restore_receipt_blocks_readiness)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-043",
@@ -3363,7 +3408,16 @@
     },
     {
       "case_id": "OCOR-DEV-0049-INCONSISTENT-DELETION-JOURNAL-BLOCKS-MATERIALISATION-AND-READINESS",
-      "command": "live: missing tombstone (stale deletion epoch) -> recovery gate FAILED, deletion_resurrection [m4], materialisation BLOCKED, readiness RESTORE_FAILED (test_inconsistent_deletion_journal_blocks_materialisation_and_readiness)",
+      "command": "live: missing tombstone (stale deletion epoch) -> recovery gate FAILED, deletion_resurrection [m4], materialisation BLOCKED, readiness RESTORE_FAILED, no operation class admitted (test_inconsistent_deletion_journal_blocks_materialisation_and_readiness)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RESTORE-SCOPE-MISMATCH-BLOCKS-MATERIALISATION",
+      "command": "live VF-003: cross-tenant scope, compartment, marking and GCS-binding mismatches of one item in the restored real Qdrant -> receipt FAILED, materialisation BLOCKED, quarantined [m1], other gates PASS, readiness RESTORE_FAILED, no class admitted (test_restore_scope_mismatch_blocks_materialisation)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-067",
@@ -3399,7 +3453,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-RELEASE-DRIFT-BLOCKS-READINESS-AND-MUTATIVE-COMMANDS",
-      "command": "live: profile drift detected within the scan interval -> RELEASE_DRIFT, mutative denied (release_mismatch) (test_release_drift_blocks_readiness_and_mutative_commands)",
+      "command": "live: after a positive control (all classes admitted) profile drift is detected within the scan interval -> RELEASE_DRIFT, mutative/high-impact/dispatch denied (release_mismatch), reads still admitted (test_release_drift_blocks_readiness_and_mutative_commands)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-080",
@@ -3407,8 +3461,8 @@
       "task_id": "OCOR-DEV-0049"
     },
     {
-      "case_id": "OCOR-DEV-0049-DEFAULT-DENY-ADMITS-ONLY-ALLOWLISTED-INTRA-SITE-FLOWS",
-      "command": "live: internal site network; all ten allowlisted flows connect; 1.1.1.1:443, public DNS, direct bootstrap container, non-allowlisted ports denied; positive control proves host egress exists (test_default_deny_admits_only_allowlisted_intra_site_flows)",
+      "case_id": "OCOR-DEV-0049-DEFAULT-DENY-ADMITS-ONLY-ALLOWLISTED-DESTINATION-PORT-PAIRS",
+      "command": "live VF-002: internal site network, ten distinct destination addresses; the 10 allowed host/port pairs connect and the other 90 host x port combinations (incl. postgresql:8181, qdrant:5432) are refused; 1.1.1.1:443, public DNS, direct bootstrap container, non-allowlisted ports denied; positive control proves host egress exists (test_default_deny_admits_only_allowlisted_destination_port_pairs)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-041",
@@ -3417,10 +3471,19 @@
     },
     {
       "case_id": "OCOR-DEV-0049-OPEN-PUBLIC-EGRESS-BLOCKS-READINESS",
-      "command": "live: the agent on a network with public egress reports PUBLIC_EGRESS_OPEN (test_open_public_egress_blocks_readiness)",
+      "command": "live: the agent on a network with public egress reports PUBLIC_EGRESS_OPEN and, even after a human reopen, admits no operation class (isolation_breach) (test_open_public_egress_blocks_readiness)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-041",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-SCANNER-FAILURE-DENIES-EVERY-ADMISSION-UNTIL-THE-SCAN-RECOVERS",
+      "command": "live VF-001: with an unreadable profile the scanner fails -> SCANNER_ERROR and every class denied (security_scan_unavailable); admission returns after the scan recovers (test_scanner_failure_denies_every_admission_until_the_scan_recovers)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "BR-003",
       "status": "PASS",
       "task_id": "OCOR-DEV-0049"
     },
@@ -3444,7 +3507,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-HELM-PROFILE-ON-KUBERNETES-BACKS-UP-RESTORES-AND-GATES-READINESS",
-      "command": "kind (DEC-211): pod not Ready before restore; CronJob backup to the external vault; restore-drill Job PASSED; pod Ready; NetworkPolicy denies 1.1.1.1 and admits postgresql/opa; pod readiness drops with qdrant paused and recovers (test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness)",
+      "command": "kind (DEC-211): pod not Ready before restore; CronJob backup to the external vault; restore-drill Job PASSED; pod Ready; mutative admission 503 recovery_reopen_pending; NetworkPolicy admits postgresql:5432/opa:8181 and denies 1.1.1.1, postgresql:8181, qdrant:6334 and a decoy listening on 8181 at an unpinned address (reachable from the node: positive control); pod readiness drops with qdrant paused and recovers (test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-001",
