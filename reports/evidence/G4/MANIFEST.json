@@ -162,12 +162,12 @@
     },
     {
       "path": "OCOR-DEV-0048.json",
-      "sha256": "63bd998296a50e8dbeb59fd21fe9e022ad5b82f7778696ab51f494434aa06803",
+      "sha256": "2dcabd351cfd9a263fa637518142df43b3d33d768e3c2568539d2a21f0ef87f9",
       "task_id": "OCOR-DEV-0048"
     },
     {
       "path": "OCOR-DEV-0048.log",
-      "sha256": "eead2daf44aa48f44d7cf09d38d3e768f69d1469d3ec0e67c9e67061ce6ec5a7",
+      "sha256": "905dc2257833205dd07d26fc60111479c32e0072e1550835684881fff8a676a1",
       "task_id": "OCOR-DEV-0048-RAW"
     }
   ],
@@ -2871,6 +2871,348 @@
       "evidence_path": "OCOR-DEV-0048.json",
       "raw_output_path": "OCOR-DEV-0048.log",
       "requirement_id": "FR-133",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-BUNDLE-OFFSET-EQUIVALENT-STABLE",
+      "command": "VF-001 positive: _canonical_utc expresses every policy instant in UTC whole seconds, so an offset-equivalent bundle (same instant re-expressed with a +02:00 offset) yields a byte-identical signed payload, install_policy() accepts it and returns the deterministic urn:sha256 content digest (test_offset_equivalent_bundle_signing_is_stable)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-130",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-BUNDLE-OFFSET-SHIFTED-REJECTED",
+      "command": "VF-001 negative: reinterpreting the signed wall clock under a -02:00 offset silently moves the expiry two hours into the future; canonical UTC signing re-canonicalises the payload and rejects it with POLICY_BUNDLE_SIGNATURE_INVALID (test_offset_shifted_bundle_rejected)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-130",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-DELEGATED-REQUEST-VALID-PERMIT",
+      "command": "VF-002 positive: OpaPolicyDecisionProvider.evaluate consumes a valid signed delegation grant on the mandatory request path against real OPA and returns a PERMIT whose PolicyDecision verifies against the request (test_valid_delegated_request_on_real_backends)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-DELEGATED-REQUEST-ABSENT-GRANT",
+      "command": "VF-002 negative: a delegated request evaluated on real OPA without the signed grant fails closed with IDENTITY_BINDING_MISMATCH instead of defaulting to permit (test_delegated_request_without_grant_fails_closed)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-DELEGATED-REQUEST-EXPIRED",
+      "command": "VF-002 negative: an expired signed delegation consumed on the mandatory request path is rejected with DELEGATION_EXPIRED (test_delegated_request_expired_fails_closed)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-DELEGATED-REQUEST-REVOKED",
+      "command": "VF-002 negative: a signed delegation whose revocation state is configured on the provider is rejected at the boundary with DELEGATION_REVOKED (test_delegated_request_revoked_fails_closed)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-DELEGATED-REQUEST-OUT-OF-SCOPE",
+      "command": "VF-002 negative: a signed grant whose resource scope does not cover the requested resource is rejected with DELEGATION_SCOPE_MISMATCH (test_delegated_request_out_of_scope_fails_closed)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-DELEGATED-REQUEST-OUT-OF-PURPOSE",
+      "command": "VF-002 negative: a signed grant whose permitted purposes exclude the request purpose is rejected with DELEGATION_PURPOSE_MISMATCH (test_delegated_request_out_of_purpose_fails_closed)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-DELEGATED-REQUEST-ALTERED-CHAIN",
+      "command": "VF-002 negative: an altered actor chain (attacker delegator substituted for the delegator) on the same delegated request is rejected with DELEGATION_BINDING_MISMATCH (test_delegated_request_altered_chain_fails_closed)",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-SIGNED_ACT_CLAIM_AUTHENTICATES_THE_ACTOR_CHAIN_REPAIR6_ACT0_EXPECTED0",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_signed_act_claim_authenticates_the_actor_chain[repair6_act0-expected0]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-129",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-SIGNED_ACT_CLAIM_AUTHENTICATES_THE_ACTOR_CHAIN_REPAIR6_ACT1_EXPECTED1",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_signed_act_claim_authenticates_the_actor_chain[repair6_act1-expected1]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-129",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-MALFORMED_ACT_CLAIM_IS_REJECTED_REPAIR6_ACT0",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_malformed_act_claim_is_rejected[repair6_act0]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-129",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-MALFORMED_ACT_CLAIM_IS_REJECTED_REPAIR6_ACT1",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_malformed_act_claim_is_rejected[repair6_act1]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-129",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-MALFORMED_ACT_CLAIM_IS_REJECTED_REPAIR6_ACT2",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_malformed_act_claim_is_rejected[repair6_act2]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-129",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-MALFORMED_ACT_CLAIM_IS_REJECTED_REPAIR6_ACT3",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_malformed_act_claim_is_rejected[repair6_act3]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-129",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-MALFORMED_ACT_CLAIM_IS_REJECTED_REPAIR6_ACT4",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_malformed_act_claim_is_rejected[repair6_act4]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-129",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-MALFORMED_ACT_CLAIM_IS_REJECTED_REPAIR6_ACT5",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_malformed_act_claim_is_rejected[repair6_act5]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-129",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-MALFORMED_ACT_CLAIM_IS_REJECTED_REPAIR6_ACT6",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_malformed_act_claim_is_rejected[repair6_act6]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-129",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-ACT_CLAIM_DOES_NOT_REPLACE_THE_GRANT_REPAIR6_ACT0",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_act_claim_does_not_replace_the_grant[repair6_act0]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-ACT_PRINCIPAL_GRANT_IS_FULLY_VERIFIED_REPAIR6_ACT0_OVERRIDES0_DELEGATION_EXPIRED",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_act_principal_grant_is_fully_verified[repair6_act0-overrides0-DELEGATION_EXPIRED]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-ACT_PRINCIPAL_GRANT_IS_FULLY_VERIFIED_REPAIR6_ACT0_OVERRIDES1_DELEGATION_EXPIRED",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_act_principal_grant_is_fully_verified[repair6_act0-overrides1-DELEGATION_EXPIRED]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-ACT_PRINCIPAL_GRANT_IS_FULLY_VERIFIED_REPAIR6_ACT0_OVERRIDES2_DELEGATION_SCOPE_MISMATCH",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_act_principal_grant_is_fully_verified[repair6_act0-overrides2-DELEGATION_SCOPE_MISMATCH]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-ACT_PRINCIPAL_GRANT_IS_FULLY_VERIFIED_REPAIR6_ACT0_OVERRIDES3_DELEGATION_PURPOSE_MISMATCH",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_act_principal_grant_is_fully_verified[repair6_act0-overrides3-DELEGATION_PURPOSE_MISMATCH]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-ACT_PRINCIPAL_GRANT_IS_FULLY_VERIFIED_REPAIR6_ACT0_OVERRIDES4_DELEGATION_CAPABILITY_MISMATCH",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_act_principal_grant_is_fully_verified[repair6_act0-overrides4-DELEGATION_CAPABILITY_MISMATCH]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-ACT_PRINCIPAL_GRANT_IS_FULLY_VERIFIED_REPAIR6_ACT0_OVERRIDES5_DELEGATION_CEILING_EXCEEDED",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_act_principal_grant_is_fully_verified[repair6_act0-overrides5-DELEGATION_CEILING_EXCEEDED]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-ACT_PRINCIPAL_GRANT_IS_FULLY_VERIFIED_REPAIR6_ACT0_OVERRIDES6_IDENTITY_BINDING_MISMATCH",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_act_principal_grant_is_fully_verified[repair6_act0-overrides6-IDENTITY_BINDING_MISMATCH]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-ACT_PRINCIPAL_GRANT_IS_FULLY_VERIFIED_REPAIR6_ACT0_OVERRIDES7_DELEGATION_KEY_BINDING_MISMATCH",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_act_principal_grant_is_fully_verified[repair6_act0-overrides7-DELEGATION_KEY_BINDING_MISMATCH]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-AUTHENTICATED_ACTORS_ARE_THE_EXACT_CHAIN_TAIL_REPAIR6_ACT0_NONE",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_authenticated_actors_are_the_exact_chain_tail[repair6_act0-None]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-AUTHENTICATED_ACTORS_ARE_THE_EXACT_CHAIN_TAIL_REPAIR6_ACT1_NONE",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_authenticated_actors_are_the_exact_chain_tail[repair6_act1-None]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-AUTHENTICATED_ACTORS_ARE_THE_EXACT_CHAIN_TAIL_REPAIR6_ACT2_IDENTITY_BINDING_MISMATCH",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_authenticated_actors_are_the_exact_chain_tail[repair6_act2-IDENTITY_BINDING_MISMATCH]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-NON_DELEGATED_PRINCIPAL_NEEDS_EXACTLY_ITS_OWN_CHAIN",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_non_delegated_principal_needs_exactly_its_own_chain",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-128",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-DELEGATED_SESSION_CANNOT_LEASE_A_SECRET_WITHOUT_A_GRANT_REPAIR6_ACT0",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_delegated_session_cannot_lease_a_secret_without_a_grant[repair6_act0]",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-133",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-ACCESS_TOKEN_VERIFICATION_BRANCHES",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_access_token_verification_branches",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-129",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-CREDENTIAL_REFERENCE_BRANCHES",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_credential_reference_branches",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-129",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-TOKEN_WITHOUT_SUBJECT_IS_REJECTED",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_token_without_subject_is_rejected",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-129",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-FORGED_SVID_CHAIN_IS_REJECTED",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_forged_svid_chain_is_rejected",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "NFR-042",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-BOUNDARY_RECHECKS_THE_PRINCIPAL_BINDING",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_boundary_rechecks_the_principal_binding",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-130",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR6-POLICY_EVALUATION_ERROR_FAILS_CLOSED",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair6_policy_evaluation_error_fails_closed",
+      "evidence_path": "OCOR-DEV-0048.json",
+      "raw_output_path": "OCOR-DEV-0048.log",
+      "requirement_id": "FR-130",
       "status": "PASS",
       "task_id": "OCOR-DEV-0048"
     }
