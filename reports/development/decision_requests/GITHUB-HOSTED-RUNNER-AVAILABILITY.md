@@ -20,3 +20,9 @@ Nessun terzo rerun nelle medesime condizioni, nessun bypass, `--admin`, esclusio
 ## Impatto
 
 PR #170 aperta, state sync non mergiato; `origin/main` resta 25ee8e3bea7cf5e88630df06cb44a2fc35159494. Bloccata solo l’integrazione soggetta a questi check. La riparazione 0049 resta a Claude Code, ciclo 4 da 02ac643eb3c770361f2f1b67eb0f4ab2bc049097, verifier Codex. Lo stop `TERMINAL_BLOCKED` del loop deriva dalla decisione OCOR-DEV-0049-REPAIR-CLAUDE-AUTO; 0050 resta pronto. E1/E2/Verified, inputs e tutti i claim NO-GO invariati.
+
+## 2026-10-06 — Aggiornamento al verdetto ciclo 4
+
+HEAD precedente PR #170 `c1efbfd7f348036673f9c34419f62b3edfdace78`: solo contract SUCCESS, gli altri check richiesti CANCELLED. Confermata l’annotazione hosted-runner indisponibile del check RCCAD con zero step. Osservazione raw `~/.ocor-codex/state-sync-0049-cycle4/ci-before.json`, SHA-256 `316cba9f1f97d697d2643e934c9c0b354adae04baa24e9a5658c3cfe9d5fbe8b`; annotazioni `ci-before-annotations.json`, SHA-256 `09671db917abb658e0e25d2db8d13070debb441f3d7c2bd1dcb3e78731d3dfa0`. Nessun nuovo rerun.
+
+La riparazione ciclo 4 ha prodotto NO_GO (`OCOR-DEV-0049-aefabf91777d-4`); l’ultimo ciclo 5 resta autorizzato a Claude Code da `aefabf91777d311b95cad0c60de0ffa61357ea19`, verifier Codex. Lo state sync dei cicli 3/4 resta su PR #170; il suo eventuale merge richiede i check verdi sull’HEAD finale. Nessuna variazione di capacità/risorse a pagamento o workflow.
