@@ -8,9 +8,11 @@
 #
 # Network posture (ADD §6.1 default-deny): every profile workload sits on the
 # `site` network, which is `internal` (no route outside the host bridge). The
-# only path to the foundation services is `ocor-relay`, which forwards exactly
-# the `isolation.allowedFlows` of the profile and nothing else. Restore drills
-# run on a second internal network, `restore`, with ephemeral stores only.
+# only paths to the foundation services are the `ocor-relay-<host>` instances,
+# one per entry of `isolation.allowedFlows`: each owns the alias of its
+# destination on `site` and listens only on that destination's port, so every
+# destination/port pair outside the allowlist is refused. Restore drills run on
+# a second internal network, `restore`, with ephemeral stores only.
 #
 # `configs.ocor-ops-agent` is the single source of the ops agent program that
 # the Helm chart also mounts (templates/configmap.yaml reads it from this file).
@@ -32,32 +34,79 @@ x-ops: &ops
     OCOR_OPS_OPERATOR_TOKEN: ${OCOR_OPS_OPERATOR_TOKEN:?required}
     PYTHONDONTWRITEBYTECODE: "1"
   networks: [site]
-  depends_on:
-    ocor-relay: {condition: service_healthy}
+  depends_on: &relays
+    ocor-relay-terminusdb: {condition: service_healthy}
+    ocor-relay-typedb: {condition: service_healthy}
+    ocor-relay-fuseki: {condition: service_healthy}
+    ocor-relay-opa: {condition: service_healthy}
+    ocor-relay-keycloak: {condition: service_healthy}
+    ocor-relay-openbao: {condition: service_healthy}
+    ocor-relay-postgresql: {condition: service_healthy}
+    ocor-relay-kafka: {condition: service_healthy}
+    ocor-relay-qdrant: {condition: service_healthy}
+    ocor-relay-spire-server: {condition: service_healthy}
+
+x-relay: &relay
+  image: python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2
+  profiles: [observability, safe-degraded, backup, restore-drill, full]
+  init: true
+  restart: "no"
+  user: "${OCOR_OPS_UID:-1000}:${OCOR_OPS_GID:-1000}"
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+  configs:
+    - {source: ocor-ops-agent, target: /opt/ocor/ocor_ops_agent.py}
+    - {source: ocor-poc-profile, target: /etc/ocor/profile.json}
+  command: [python3, /opt/ocor/ocor_ops_agent.py, relay, --profile, /etc/ocor/profile.json,
+            --upstream-template, "${OCOR_BOOTSTRAP_PROJECT:-ocor-bootstrap}-{host}-1"]
+  healthcheck:
+    test: [CMD, python3, /opt/ocor/ocor_ops_agent.py, relay-probe, --profile, /etc/ocor/profile.json]
+    interval: 2s
+    timeout: 3s
+    retries: 15
 
 services:
-  ocor-relay:
-    image: python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2
-    profiles: [observability, safe-degraded, backup, restore-drill, full]
-    init: true
-    restart: "no"
-    user: "${OCOR_OPS_UID:-1000}:${OCOR_OPS_GID:-1000}"
-    security_opt: ["no-new-privileges:true"]
-    cap_drop: [ALL]
-    configs:
-      - {source: ocor-ops-agent, target: /opt/ocor/ocor_ops_agent.py}
-      - {source: ocor-poc-profile, target: /etc/ocor/profile.json}
-    command: [python3, /opt/ocor/ocor_ops_agent.py, relay, --profile, /etc/ocor/profile.json,
-              --upstream-template, "${OCOR_BOOTSTRAP_PROJECT:-ocor-bootstrap}-{host}-1"]
-    healthcheck:
-      test: [CMD, python3, -c, "import socket; socket.create_connection(('127.0.0.1', 8181), 2).close()"]
-      interval: 2s
-      timeout: 2s
-      retries: 15
-    networks:
-      bootstrap: {}
-      site:
-        aliases: [terminusdb, typedb, fuseki, opa, keycloak, openbao, postgresql, kafka, qdrant, spire-server]
+  # One relay per allowed flow; the alias on `site` is the destination name.
+  ocor-relay-terminusdb:
+    <<: *relay
+    environment: {OCOR_RELAY_FLOW_HOST: terminusdb}
+    networks: {bootstrap: {}, site: {aliases: [terminusdb]}}
+  ocor-relay-typedb:
+    <<: *relay
+    environment: {OCOR_RELAY_FLOW_HOST: typedb}
+    networks: {bootstrap: {}, site: {aliases: [typedb]}}
+  ocor-relay-fuseki:
+    <<: *relay
+    environment: {OCOR_RELAY_FLOW_HOST: fuseki}
+    networks: {bootstrap: {}, site: {aliases: [fuseki]}}
+  ocor-relay-opa:
+    <<: *relay
+    environment: {OCOR_RELAY_FLOW_HOST: opa}
+    networks: {bootstrap: {}, site: {aliases: [opa]}}
+  ocor-relay-keycloak:
+    <<: *relay
+    environment: {OCOR_RELAY_FLOW_HOST: keycloak}
+    networks: {bootstrap: {}, site: {aliases: [keycloak]}}
+  ocor-relay-openbao:
+    <<: *relay
+    environment: {OCOR_RELAY_FLOW_HOST: openbao}
+    networks: {bootstrap: {}, site: {aliases: [openbao]}}
+  ocor-relay-postgresql:
+    <<: *relay
+    environment: {OCOR_RELAY_FLOW_HOST: postgresql}
+    networks: {bootstrap: {}, site: {aliases: [postgresql]}}
+  ocor-relay-kafka:
+    <<: *relay
+    environment: {OCOR_RELAY_FLOW_HOST: kafka}
+    networks: {bootstrap: {}, site: {aliases: [kafka]}}
+  ocor-relay-qdrant:
+    <<: *relay
+    environment: {OCOR_RELAY_FLOW_HOST: qdrant}
+    networks: {bootstrap: {}, site: {aliases: [qdrant]}}
+  ocor-relay-spire-server:
+    <<: *relay
+    environment: {OCOR_RELAY_FLOW_HOST: spire-server}
+    networks: {bootstrap: {}, site: {aliases: [spire-server]}}
 
   ocor-ops:
     <<: *ops
@@ -99,7 +148,7 @@ services:
     cap_drop: [ALL]
     networks: [site]
     depends_on:
-      ocor-relay: {condition: service_healthy}
+      <<: *relays
       ocor-staging-init: {condition: service_completed_successfully}
     configs:
       - {source: ocor-table-digest, target: /opt/ocor/table-digest.sql}
@@ -118,7 +167,7 @@ services:
           psql -d "$$db" -At -f /opt/ocor/table-digest.sql > "$$out/$$db.digest"
         done
         if psql -d ocor -Atc "select 1 from pg_database where datname='$$MEMORY_DB'" | grep -q 1; then
-          psql -d "$$MEMORY_DB" -c "\copy (select item_id, tenant_id, compartment, representation_version, lifecycle_epoch, lifecycle_state, coalesce(deletion_epoch::text, '') as deletion_epoch, content_ref, classification_marking_ref from memory_item order by item_id) to '$$out/memory-items.csv' csv header"
+          psql -d "$$MEMORY_DB" -c "\copy (select item_id, tenant_id, compartments, representation_version, lifecycle_epoch, lifecycle_state, coalesce(deletion_epoch::text, '') as deletion_epoch, content_ref, classification_marking_ref, governed_context_digest from memory_item order by item_id) to '$$out/memory-items.csv' csv header"
           psql -d "$$MEMORY_DB" -c "\copy (select event_id, item_id, deletion_epoch from memory_deletion_journal order by deletion_epoch, event_id) to '$$out/memory-deletion-journal.csv' csv header"
         fi
         ls -l "$$out"
@@ -132,7 +181,7 @@ services:
     cap_drop: [ALL]
     networks: [site]
     depends_on:
-      ocor-relay: {condition: service_healthy}
+      <<: *relays
       ocor-staging-init: {condition: service_completed_successfully}
     volumes: ["backup-staging:/staging"]
     entrypoint: [sh, -ec]
@@ -151,7 +200,7 @@ services:
     <<: *ops
     profiles: [backup, full]
     depends_on:
-      ocor-relay: {condition: service_healthy}
+      <<: *relays
       ocor-keys-init: {condition: service_completed_successfully}
       ocor-backup-capture-postgresql: {condition: service_completed_successfully}
       ocor-backup-capture-kafka: {condition: service_completed_successfully}
@@ -165,7 +214,7 @@ services:
     <<: *ops
     profiles: [restore-drill]
     depends_on:
-      ocor-relay: {condition: service_healthy}
+      <<: *relays
       ocor-staging-init: {condition: service_completed_successfully}
     command: [python3, /opt/ocor/ocor_ops_agent.py, restore-prepare, --profile, /etc/ocor/profile.json,
               --vault, /vault, --staging, /restore]
@@ -239,7 +288,7 @@ services:
     profiles: [restore-drill]
     networks: [site, restore]
     depends_on:
-      ocor-relay: {condition: service_healthy}
+      <<: *relays
       ocor-restore-load-postgresql: {condition: service_completed_successfully}
       ocor-restore-qdrant: {condition: service_healthy}
     command: [python3, /opt/ocor/ocor_ops_agent.py, restore-finalize, --profile, /etc/ocor/profile.json,
@@ -281,7 +330,8 @@ configs:
 
         validate  fail-closed profile validation (LLD 5.2: invalid pin/config blocks startup)
         serve     persistent health/readiness/metrics/traces/posture endpoint (ADD 6.3)
-        relay     intra-site allowlist relay for the Compose default-deny network (ADD 6.1)
+        relay     relay of ONE allowed destination/port flow of the Compose default-deny network (ADD 6.1)
+        relay-probe       health probe of a relay instance
         init-keys provision the OpenBao transit keys used for backup encryption/signature
         seal      build an encrypted, signed, content-addressed recovery point (ADD 6.4)
         restore-prepare   verify signature/digests and decrypt a recovery point (ADD 6.5 1-3)
@@ -299,6 +349,7 @@ configs:
       import http.client
       import json
       import os
+      import re
       import socket
       import ssl
       import struct
@@ -385,6 +436,8 @@ configs:
           "edge_partition": {"read_analyze_simulate_on_pinned_snapshot", "explicit_staleness", "no_high_impact"},
           "emergency_stop": {"new_mutative_capabilities_denied_within_10_seconds"},
       }
+      OPERATION_CLASSES = {"read", "governed_new", "mutative", "high_impact", "dispatch", "exact_consistency_read"}
+      GOVERNED_WRITE_CLASSES = {"governed_new", "mutative", "high_impact", "dispatch"}
       # Operation classes denied by each observed fault (ADD v1.3 6.3; LLD v1.1 5.3).
       FAULT_DENIES: dict[str, set[str]] = {
           "idp_or_policy_engine_unavailable": {"governed_new", "mutative", "high_impact", "dispatch"},
@@ -394,9 +447,19 @@ configs:
           "projection_lag_or_failure": {"high_impact", "exact_consistency_read"},
           "emergency_stop": {"mutative", "high_impact", "dispatch"},
           "release_mismatch": {"mutative", "high_impact", "dispatch"},
+          # Fail-closed conditions of the ops plane itself (LLD v1.1 5.3-5.4; ADD v1.3 6.1, 6.5):
+          # without a fresh security scan, a verified restore or an isolated network no
+          # posture can be established, so no traffic is admitted at all.
+          "security_scan_unavailable": set(OPERATION_CLASSES),
+          "restore_not_verified": set(OPERATION_CLASSES),
+          "isolation_breach": set(OPERATION_CLASSES),
+          # Recovery gate passed but the human authorization of ADD 6.5 step 10, bound to
+          # the current signed receipt, is missing: the mutative path stays closed.
+          "recovery_reopen_pending": set(GOVERNED_WRITE_CLASSES),
       }
-      OPERATION_CLASSES = {"read", "governed_new", "mutative", "high_impact", "dispatch", "exact_consistency_read"}
       NOT_OBSERVABLE_BY_OPS = ["action_adapter_timeout", "edge_partition"]
+      # `$defs/digest` of the approved governed-memory-item / governed-context contracts.
+      CONTRACT_DIGEST = re.compile(r"^urn:sha256:[0-9a-f]{64}$")
 
 
       class ConfigError(Exception):
@@ -844,33 +907,35 @@ configs:
           return manifest
 
 
-      def latest_valid_receipt(transit: Transit, profile: dict[str, Any], vault: Path) -> tuple[str, dict[str, Any] | None]:
-          """Return (reason_code, receipt). READY only with a signed PASSED receipt bound to
-          a signed recovery point (negative criterion: untested restore blocks readiness)."""
+      def latest_valid_receipt(transit: Transit, profile: dict[str, Any],
+                               vault: Path) -> tuple[str, dict[str, Any] | None, str | None]:
+          """Return (reason_code, receipt, receipt_digest). READY only with a signed PASSED
+          receipt bound to a signed recovery point (negative criterion: untested restore
+          blocks readiness). The digest identifies the receipt a human reopening binds to."""
           root = vault / "restore-receipts"
           files = sorted(root.glob("*.json")) if root.exists() else []
           if not files:
-              return "RESTORE_UNTESTED", None
+              return "RESTORE_UNTESTED", None, None
           path = files[-1]
           raw = path.read_bytes()
           sig_path = path.with_suffix(".sig")
           if not sig_path.exists() or not transit.verify(profile["backup"]["keys"]["signing"], raw,
                                                          sig_path.read_text().strip()):
-              return "RESTORE_RECEIPT_INVALID", None
+              return "RESTORE_RECEIPT_INVALID", None, None
           receipt: dict[str, Any] = json.loads(raw)
           if receipt.get("outcome") != "PASSED":
-              return "RESTORE_FAILED", receipt
+              return "RESTORE_FAILED", receipt, None
           max_age = profile["restore"]["receiptMaxAgeHours"] * 3600
           if now() - float(receipt.get("completed_at_epoch", 0)) > max_age:
-              return "RESTORE_RECEIPT_EXPIRED", receipt
+              return "RESTORE_RECEIPT_EXPIRED", receipt, None
           rp_dir = vault / "recovery-points" / str(receipt.get("recovery_point"))
           try:
               manifest = verify_manifest(transit, profile, rp_dir)
           except (OSError, ValueError):
-              return "RESTORE_RECEIPT_UNBOUND", receipt
+              return "RESTORE_RECEIPT_UNBOUND", receipt, None
           if sha256(canonical(manifest)) != receipt.get("manifest_digest"):
-              return "RESTORE_RECEIPT_UNBOUND", receipt
-          return "RESTORE_TESTED", receipt
+              return "RESTORE_RECEIPT_UNBOUND", receipt, None
+          return "RESTORE_TESTED", receipt, sha256(raw)
 
 
       # --------------------------------------------------------------------------- serve
@@ -893,7 +958,24 @@ configs:
           last_scan: float = 0.0
           ready: bool = False
           ready_reasons: list[str] = field(default_factory=lambda: ["NOT_YET_SCANNED"])
+          scanner_error: str | None = None
+          max_scan_age: float = 60.0
+          receipt_digest: str | None = None
+          reopen: dict[str, Any] | None = None
           lock: threading.Lock = field(default_factory=threading.Lock)
+
+          def scan_fresh(self) -> bool:
+              return self.scanner_error is None and self.last_scan > 0 and now() - self.last_scan <= self.max_scan_age
+
+          def readiness(self) -> tuple[bool, list[str]]:
+              if self.scanner_error is not None:
+                  return False, ["SCANNER_ERROR"]
+              if self.last_scan > 0 and not self.scan_fresh():
+                  return False, ["SCAN_STALE"]
+              return self.ready, list(self.ready_reasons)
+
+          def reopen_authorized(self) -> bool:
+              return self.reopen is not None and self.reopen.get("receipt_digest") == self.receipt_digest
 
           def faults(self) -> list[str]:
               out = set()
@@ -905,11 +987,20 @@ configs:
                   out.add("emergency_stop")
               if self.drift:
                   out.add("release_mismatch")
+              if not self.scan_fresh():
+                  out.add("security_scan_unavailable")
+              if self.restore_reason != "RESTORE_TESTED" or self.receipt_digest is None:
+                  out.add("restore_not_verified")
+              elif not self.reopen_authorized():
+                  out.add("recovery_reopen_pending")
+              if self.egress_violations:
+                  out.add("isolation_breach")
               return sorted(out)
 
           def posture(self) -> dict[str, Any]:
               faults = self.faults()
               denied = sorted(set().union(*(FAULT_DENIES[f] for f in faults)) if faults else set())
+              ready, reasons = self.readiness()
               return {
                   "faults": faults, "denied_operation_classes": denied,
                   "admitted_operation_classes": sorted(OPERATION_CLASSES - set(denied)),
@@ -917,7 +1008,9 @@ configs:
                   and "projection_lag_or_failure" not in faults,
                   "consistency": "PROJECTION_NOT_READY" if "projection_lag_or_failure" in faults else "AVAILABLE",
                   "stop_epoch": self.stop_epoch, "not_observable_by_ops_plane": NOT_OBSERVABLE_BY_OPS,
-                  "ready": self.ready, "ready_reasons": self.ready_reasons, "last_scan": iso(self.last_scan),
+                  "ready": ready, "ready_reasons": reasons, "last_scan": iso(self.last_scan),
+                  "restore": {"reason_code": self.restore_reason, "receipt_digest": self.receipt_digest},
+                  "reopen": {"authorized": self.reopen_authorized(), "authorization": self.reopen},
               }
 
 
@@ -973,10 +1066,11 @@ configs:
           drift = current != state.config_digest
           t.inc("ocor_config_drift_scans_total")
           t.gauge("ocor_config_drift_detected", 1.0 if drift else 0.0)
-          restore_reason = "RESTORE_UNTESTED"
+          restore_reason, receipt_digest = "RESTORE_UNTESTED", None
           if state.vault is not None:
               try:
-                  restore_reason, receipt = latest_valid_receipt(transit_from_env(prof), prof, state.vault)
+                  restore_reason, receipt, receipt_digest = latest_valid_receipt(transit_from_env(prof), prof,
+                                                                                 state.vault)
                   if receipt and restore_reason == "RESTORE_TESTED":
                       t.gauge("ocor_restore_receipt_age_seconds", now() - float(receipt["completed_at_epoch"]))
                   points = recovery_points(state.vault)
@@ -986,7 +1080,7 @@ configs:
                       t.gauge("ocor_recovery_point_age_seconds", age)
                       t.gauge("ocor_recovery_point_within_rpo", 1.0 if age <= prof["backup"]["rpoMinutes"] * 60 else 0.0)
               except (OSError, ValueError, ConfigError, KeyError):
-                  restore_reason = "RESTORE_VERIFICATION_UNAVAILABLE"
+                  restore_reason, receipt_digest = "RESTORE_VERIFICATION_UNAVAILABLE", None
           t.gauge("ocor_restore_tested", 1.0 if restore_reason == "RESTORE_TESTED" else 0.0)
           pd = policy_digest(prof)
           reasons: list[str] = []
@@ -994,6 +1088,10 @@ configs:
               state.egress_violations = violations
               state.drift = drift
               state.restore_reason = restore_reason
+              state.receipt_digest = receipt_digest
+              if state.reopen is not None and state.reopen.get("receipt_digest") != receipt_digest:
+                  state.reopen = None  # an authorization never outlives the receipt it was bound to
+              state.scanner_error = None
               if pd is not None:
                   t.policy_digest = pd
               for dep in prof["health"]["dependencies"]:
@@ -1012,15 +1110,24 @@ configs:
           t.gauge("ocor_readiness_ready", 1.0 if not reasons else 0.0)
           for r in reasons:
               t.inc("ocor_readiness_denials_total", reason_code=r.split(":")[0])
-          for f in state.faults():
-              t.gauge("ocor_safe_degraded_fault_active", 1.0, fault=f)
-          with t.lock:
-              for key in list(t.gauges):
-                  if key[0] == "ocor_safe_degraded_fault_active" and dict(key[1]).get("fault") not in state.faults():
-                      t.gauges[key] = 0.0
+          publish_faults(state)
           if was_reasons != state.ready_reasons:
               t.span("readiness_scan", correlation, trace, None, start, "OK" if not reasons else "DENY",
                      "READY" if not reasons else reasons[0].split(":")[0], ready_reasons=state.ready_reasons)
+
+
+      def publish_faults(state: State) -> None:
+          with state.lock:
+              active = state.faults()
+              reopened = state.reopen_authorized()
+          t = state.telemetry
+          for f in active:
+              t.gauge("ocor_safe_degraded_fault_active", 1.0, fault=f)
+          t.gauge("ocor_recovery_reopen_authorized", 1.0 if reopened else 0.0)
+          with t.lock:
+              for key in list(t.gauges):
+                  if key[0] == "ocor_safe_degraded_fault_active" and dict(key[1]).get("fault") not in active:
+                      t.gauges[key] = 0.0
 
 
       class Handler(BaseHTTPRequestHandler):
@@ -1046,8 +1153,9 @@ configs:
                   self._json(200, {"status": "ALIVE", "component": COMPONENT})
               elif path == "/readyz":
                   with st.lock:
-                      body = {"ready": st.ready, "reasons": st.ready_reasons, "last_scan": iso(st.last_scan)}
-                  self._json(200 if body["ready"] else 503, body)
+                      ready, reasons = st.readiness()
+                      body = {"ready": ready, "reasons": reasons, "last_scan": iso(st.last_scan)}
+                  self._json(200 if ready else 503, body)
               elif path == "/metrics":
                   self._send(200, st.telemetry.render().encode(), "text/plain; version=0.0.4")
               elif path == "/traces":
@@ -1084,7 +1192,7 @@ configs:
               token = os.environ.get("OCOR_OPS_OPERATOR_TOKEN", "")
               presented = self.headers.get("Authorization", "").removeprefix("Bearer ")
               correlation = self.headers.get("X-Correlation-Id") or new_id()
-              if self.path not in ("/emergency-stop", "/emergency-stop/clear"):
+              if self.path not in ("/emergency-stop", "/emergency-stop/clear", "/reopen"):
                   self._json(404, {"error": "NOT_FOUND"})
                   return
               if not token or not presented or not hmac_equal(token, presented):
@@ -1093,6 +1201,9 @@ configs:
                   self._json(401, {"error": "OPERATOR_UNAUTHENTICATED"})
                   return
               start = now()
+              if self.path == "/reopen":
+                  self._reopen(correlation, start)
+                  return
               with st.lock:
                   if self.path == "/emergency-stop":
                       st.stop_epoch += 1
@@ -1107,6 +1218,39 @@ configs:
               st.telemetry.inc("ocor_operator_commands_total", command=self.path.strip("/"), decision="ACCEPT")
               st.telemetry.span("operator_command", correlation, new_id(), None, start, "OK", reason, stop_epoch=epoch)
               self._json(200, {"reason_code": reason, "stop_epoch": epoch, "correlation_id": correlation})
+
+          def _reopen(self, correlation: str, start: float) -> None:
+              """Governed reopening (ADD v1.3 6.5 step 10, LLD v1.1 5.4): a named human
+              authorizes the mutative path for exactly the signed receipt that passed the
+              recovery gate; any other state is refused and nothing is reopened."""
+              st = self.state
+              try:
+                  length = int(self.headers.get("Content-Length") or 0)
+                  body = json.loads(self.rfile.read(min(length, 65536)) or b"{}") if length else {}
+              except ValueError:
+                  body = None
+              if not isinstance(body, dict):
+                  body = {}
+              wanted, human = body.get("receipt_digest"), body.get("authorized_by")
+              with st.lock:
+                  current, restore_reason = st.receipt_digest, st.restore_reason
+                  if not isinstance(human, str) or not human.strip():
+                      code, reason = 400, "REOPEN_REFUSED:HUMAN_AUTHORIZER_REQUIRED"
+                  elif restore_reason != "RESTORE_TESTED" or current is None:
+                      code, reason = 409, f"REOPEN_REFUSED:{restore_reason}"
+                  elif not isinstance(wanted, str) or not hmac_equal(wanted, current):
+                      code, reason = 409, "REOPEN_REFUSED:RECEIPT_MISMATCH"
+                  else:
+                      st.reopen = {"receipt_digest": current, "authorized_by": human.strip(),
+                                   "authorized_at": iso(), "correlation_id": correlation}
+                      code, reason = 200, "MUTATIVE_PATH_REOPENED_BY_HUMAN"
+              decision = "ACCEPT" if code == 200 else "DENY"
+              st.telemetry.inc("ocor_operator_commands_total", command="reopen", decision=decision)
+              st.telemetry.span("operator_command", correlation, new_id(), None, start, "OK" if code == 200 else "DENY",
+                                reason.split(":")[0], command="reopen", receipt_digest=current,
+                                detail=reason.partition(":")[2] or None)
+              publish_faults(st)
+              self._json(code, {"reason_code": reason, "receipt_digest": current, "correlation_id": correlation})
 
 
       def hmac_equal(a: str, b: str) -> bool:
@@ -1123,17 +1267,25 @@ configs:
           telemetry.log("startup", "PROFILE_VALID", new_id(), profile_digest=digest)
           interval = min(profile["observability"]["probeIntervalSeconds"],
                          profile["observability"]["driftScanIntervalSeconds"])
+          # Worst-case duration of one scan (every probe timing out, egress probes, OPA and
+          # OpenBao calls) plus two intervals: an older result means the scanner is stuck.
+          timeout = float(profile["health"].get("probeTimeoutSeconds", 3))
+          state.max_scan_age = 2 * interval + timeout * (len(profile["health"]["dependencies"]) + 2) + 2.0 * len(
+              profile["isolation"]["egressDenyProbes"]) + 90.0
 
           def loop() -> None:
               while True:
                   try:
                       scan(state)
-                  except Exception as exc:  # fail closed: never report READY on scanner failure
+                  except Exception as exc:  # fail closed: never report READY or admit on scanner failure
                       with state.lock:
                           state.ready = False
                           state.ready_reasons = ["SCANNER_ERROR"]
+                          state.scanner_error = type(exc).__name__
+                      telemetry.inc("ocor_readiness_denials_total", reason_code="SCANNER_ERROR")
                       telemetry.log("readiness_scan", "SCANNER_ERROR", new_id(), level="ERROR",
                                     error_type=type(exc).__name__)
+                      publish_faults(state)
                   time.sleep(interval)
 
           threading.Thread(target=loop, daemon=True).start()
@@ -1147,11 +1299,29 @@ configs:
       # --------------------------------------------------------------------------- relay
 
 
+      def relay_flow(profile: dict[str, Any], flow_host: str | None) -> dict[str, Any]:
+          """The single allowed flow one relay instance serves. Each destination has its own
+          relay (own address on the site network) listening only on its own port, so a
+          destination name can never reach the port of another destination (ADD 6.1)."""
+          host = flow_host or os.environ.get("OCOR_RELAY_FLOW_HOST", "")
+          flows = [f for f in profile["isolation"]["allowedFlows"] if f["host"] == host]
+          if len(flows) != 1:
+              raise ConfigError(f"relay flow host {host!r} must match exactly one allowed flow")
+          return dict(flows[0])
+
+
+      def cmd_relay_probe(args: argparse.Namespace) -> int:
+          profile, _ = load_profile(Path(args.profile))
+          flow = relay_flow(profile, args.flow_host)
+          socket.create_connection(("127.0.0.1", int(flow["port"])), 2).close()
+          return 0
+
+
       def cmd_relay(args: argparse.Namespace) -> int:
           import asyncio
 
           profile, _ = load_profile(Path(args.profile))
-          flows = profile["isolation"]["allowedFlows"]
+          flows = [relay_flow(profile, args.flow_host)]
 
           async def pipe(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
               try:
@@ -1419,6 +1589,43 @@ configs:
           return str(uuid.uuid5(uuid.NAMESPACE_URL, f"ocor-memory:{item_id}"))
 
 
+      def _compartments(value: Any) -> list[str] | None:
+          """Canonical compartment set (ADD v1.3 3.0: set equivalence after canonical sort);
+          None when the value is missing, ambiguous or not a set of non-empty strings."""
+          if isinstance(value, str):
+              try:
+                  value = json.loads(value)
+              except ValueError:
+                  return None
+          if not isinstance(value, list) or not value or not all(isinstance(c, str) and c for c in value):
+              return None
+          if len(set(value)) != len(value):
+              return None
+          return sorted(value)
+
+
+      def scope_violations(payload: dict[str, Any], meta: dict[str, str]) -> dict[str, list[str]]:
+          """Compare one restored projection item with its authoritative metadata row.
+          Every field is fail-closed: missing, malformed or different is a violation."""
+          out: dict[str, list[str]] = {"tenant": [], "compartments": [], "marking": [], "gcs": [], "version": []}
+          tenant = meta.get("tenant_id") or ""
+          if not tenant or payload.get("tenant_id") != tenant:
+              out["tenant"].append("tenant_id")
+          expected = _compartments(meta.get("compartments"))
+          if expected is None or _compartments(payload.get("compartments")) != expected:
+              out["compartments"].append("compartments")
+          marking = meta.get("classification_marking_ref") or ""
+          if not CONTRACT_DIGEST.match(marking) or payload.get("classification_marking_ref") != marking:
+              out["marking"].append("classification_marking_ref")
+          gcs = meta.get("governed_context_digest") or ""
+          if not CONTRACT_DIGEST.match(gcs) or payload.get("governed_context_digest") != gcs:
+              out["gcs"].append("governed_context_digest")
+          for key in ("representation_version", "lifecycle_epoch"):
+              if str(payload.get(key)) != str(meta.get(key)):
+                  out["version"].append(key)
+          return out
+
+
       def cmd_restore_finalize(args: argparse.Namespace) -> int:
           profile, digest = load_profile(Path(args.profile))
           t = Telemetry(profile["profile"]["release"], digest)
@@ -1489,20 +1696,37 @@ configs:
               stale = journal_max < meta_max or journal_max != mem["journalCheckpoints"]["max_deletion_epoch"]
               orphans = sorted(set(present) - live_meta - deleted_meta)
               dupes = sorted({x for x in present if present.count(x) > 1})
+              # Per-item isolation scope of the restored projection against the authoritative
+              # metadata: tenant, compartments, marking and GCS binding (LLD 5.4 recovery gate).
+              meta_by_id = {r["item_id"]: r for r in items}
+              violations: dict[str, dict[str, list[str]]] = {}
+              for pt in points:
+                  payload = pt.get("payload") or {}
+                  row = meta_by_id.get(str(payload.get("item_id")))
+                  if row is not None:
+                      found = {k: v for k, v in scope_violations(payload, row).items() if v}
+                      if found:
+                          violations[str(payload.get("item_id"))] = found
+              def failing(*kinds: str) -> list[str]:
+                  return sorted(i for i, v in violations.items() if any(k in v for k in kinds))
               gate["deletion_resurrection"] = {"pass": not resurrected, "detail": resurrected}
               gate["projection_drift_or_stale_deletion_epoch"] = {
-                  "pass": not stale and set(present) == live_meta,
+                  "pass": not stale and set(present) == live_meta and not failing("version"),
                   "detail": {"journal_max": journal_max, "metadata_max": meta_max,
-                             "missing_live": sorted(live_meta - set(present))}}
+                             "missing_live": sorted(live_meta - set(present)),
+                             "version_drift": failing("version")}}
               gate["orphan_duplicate"] = {"pass": not orphans and not dupes, "detail": {"orphans": orphans, "dupes": dupes}}
-              gate["marking"] = {"pass": all(pt["payload"].get("classification_marking_ref") for pt in points),
-                                 "detail": "every restored item carries a marking ref"}
-              gate["gcs"] = {"pass": all(pt["payload"].get("governed_context_digest") and pt["payload"].get("tenant_id")
-                                         for pt in points), "detail": "governed context scope bound on every item"}
+              gate["marking"] = {"pass": not failing("marking"), "detail": {"marking_mismatch": failing("marking")}}
+              gate["gcs"] = {"pass": not failing("tenant", "compartments", "gcs"),
+                             "detail": {"tenant_mismatch": failing("tenant"),
+                                        "compartment_mismatch": failing("compartments"),
+                                        "gcs_digest_mismatch": failing("gcs")}}
+              quarantined = sorted(violations)
               gate["watermark"] = {"pass": len(present) == len(live_meta),
                                    "detail": {"index_items": len(present), "live_metadata_items": len(live_meta)}}
               replay_digest = sha256(canonical(sorted(present)))
           else:
+              quarantined = []
               step(RESTORE_STEPS[5], "NOT_APPLICABLE", "no memory store present in this recovery point")
               for name in ("deletion_resurrection", "projection_drift_or_stale_deletion_epoch", "orphan_duplicate",
                            "marking", "gcs", "watermark"):
@@ -1519,7 +1743,7 @@ configs:
               "schema": "ocor.poc.restore-receipt/1", "recovery_point": manifest["recovery_point"],
               "manifest_digest": sha256(canonical(manifest)), "outcome": "PASSED" if passed else "FAILED",
               "recovery_gate": {name: gate[name] for name in RECOVERY_GATE}, "steps": steps,
-              "replayed_event_ids": replayed, "replay_digest": replay_digest,
+              "replayed_event_ids": replayed, "replay_digest": replay_digest, "quarantined_items": quarantined,
               "retrieval_reopened": False, "materialisation": "ALLOWED_PENDING_HUMAN" if passed else "BLOCKED",
               "isolated_network": True, "completed_at": iso(completed), "completed_at_epoch": completed,
               "duration_seconds": round(completed - start, 3), "rto_hours_target": profile["backup"]["rtoHours"],
@@ -1546,7 +1770,8 @@ configs:
       def main(argv: list[str] | None = None) -> int:
           parser = argparse.ArgumentParser(prog="ocor-ops")
           sub = parser.add_subparsers(dest="command", required=True)
-          for name in ("validate", "serve", "relay", "init-keys", "seal", "restore-prepare", "restore-finalize"):
+          for name in ("validate", "serve", "relay", "relay-probe", "init-keys", "seal", "restore-prepare",
+                       "restore-finalize"):
               sp = sub.add_parser(name)
               sp.add_argument("--profile", required=True)
               if name == "serve":
@@ -1554,6 +1779,8 @@ configs:
                   sp.add_argument("--vault")
               if name == "relay":
                   sp.add_argument("--upstream-template", default="{host}")
+              if name in ("relay", "relay-probe"):
+                  sp.add_argument("--flow-host")
               if name in ("seal", "restore-prepare", "restore-finalize"):
                   sp.add_argument("--vault", required=True)
                   sp.add_argument("--staging", required=True)
@@ -1563,7 +1790,8 @@ configs:
                   sp.add_argument("--restore-qdrant", required=True)
           args = parser.parse_args(argv)
           handlers: dict[str, Callable[[argparse.Namespace], int]] = {
-              "serve": cmd_serve, "relay": cmd_relay, "init-keys": cmd_init_keys, "seal": cmd_seal,
+              "serve": cmd_serve, "relay": cmd_relay, "relay-probe": cmd_relay_probe, "init-keys": cmd_init_keys,
+              "seal": cmd_seal,
               "restore-prepare": cmd_restore_prepare, "restore-finalize": cmd_restore_finalize,
           }
           try:

@@ -236,7 +236,7 @@ operational:
     schedule: "*/15 * * * *"
   restoreDrill:
     enabled: false
-  # Intra-site endpoints of the mandatory dependencies (hostname -> IP) and the
-  # CIDR the default-deny NetworkPolicy admits for them.
+  # Intra-site endpoints of the mandatory dependencies (hostname -> IP). The
+  # default-deny NetworkPolicy admits exactly one address/port pair per entry of
+  # `ocor.isolation.allowedFlows` (rendering fails when an address is missing).
   hostAliases: []
-  dependencyCidr: ""

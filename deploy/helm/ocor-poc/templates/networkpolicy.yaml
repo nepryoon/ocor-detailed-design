@@ -34,11 +34,18 @@ spec:
       ports:
         - {protocol: UDP, port: 53}
         - {protocol: TCP, port: 53}
-    {{- with .Values.operational.dependencyCidr }}
+    {{- /* One rule per allowed flow: the destination address AND its port only, so no
+           destination can be reached on the port of another (ADD v1.3 §6.1). */}}
+    {{- range $flow := .Values.ocor.isolation.allowedFlows }}
+    {{- $ip := "" }}
+    {{- range $.Values.operational.hostAliases }}
+    {{- if has $flow.host .hostnames }}{{ $ip = .ip }}{{ end }}
+    {{- end }}
+    {{- if not $ip }}
+    {{- fail (printf "operational.hostAliases is required: no intra-site address for allowed flow %s:%v" $flow.host $flow.port) }}
+    {{- end }}
     - to:
-        - ipBlock: {cidr: {{ . }}}
+        - ipBlock: {cidr: {{ printf "%s/32" $ip }}}
       ports:
-        {{- range $.Values.ocor.isolation.allowedFlows }}
-        - {protocol: TCP, port: {{ .port }}}
-        {{- end }}
+        - {protocol: TCP, port: {{ $flow.port }}}
     {{- end }}

@@ -2,9 +2,10 @@
 backup/replay and bounded safe-degraded modes (ADD v1.3 Part I §6, Part II §2.13;
 LLD v1.1 §5).
 
-Repair cycle 2 (implementer: Claude Code; verifier: Codex). Every criterion is
-proven on behaviour of real processes on the digest-pinned stack, never on
-configuration booleans or string searches:
+Repair cycle 3 (implementer: Claude Code; verifier: Codex; PO decision
+OCOR-DEV-0049-REPAIR-CLAUDE-AUTO). Every criterion is proven on behaviour of real
+processes on the digest-pinned stack, never on configuration booleans or string
+searches:
 
 * the ops agent (single source: `configs.ocor-ops-agent` of
   `deploy/helm/ocor-poc/compose.profiles.yaml`, mounted by the Helm chart from
@@ -12,7 +13,15 @@ configuration booleans or string searches:
   invalid profile, serves `/livez` `/readyz` `/metrics` `/traces` `/posture`
   `/admit`, and probes every mandatory dependency semantically;
 * readiness is observed to block on a paused dependency, an untested or
-  tampered restore, release drift and an open public egress path;
+  tampered restore, release drift and an open public egress path; the
+  admission decisions of every operation class are observed in the same
+  states (scanner failure, unverified restore and open egress admit nothing;
+  a passed recovery gate reopens the mutative path only on a human
+  authorization bound to that signed receipt);
+* every destination/port pair outside the allowlist is refused (one relay per
+  destination on Compose, one address/port rule per flow on Helm);
+* the recovery gate compares tenant, compartments, marking and GCS binding of
+  every restored projection item with the authoritative metadata;
 * backups are produced from the real PostgreSQL/Kafka/Qdrant/OPA backends,
   encrypted and signed by OpenBao transit, written immutably to a vault outside
   the workload fault domain, restored on an isolated network with tombstone
@@ -29,6 +38,7 @@ requirement and no G6 qualification are claimed.
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import os
 import re
@@ -64,6 +74,8 @@ RECOVERY_GATE = [
     "sample_semantic_digest",
 ]
 EXIT_CONFIG, EXIT_BACKPRESSURE, EXIT_VERIFY, EXIT_GATE = 78, 75, 65, 66
+OPERATION_CLASSES = ["read", "exact_consistency_read", "governed_new", "mutative", "high_impact", "dispatch"]
+GOVERNED_WRITE_CLASSES = ["governed_new", "mutative", "high_impact", "dispatch"]
 
 
 # --------------------------------------------------------------------------- sources
@@ -236,13 +248,22 @@ def test_boundary_values_are_accepted(agent_dir, path, value):
     assert run_agent(agent_dir, "validate", profile=profile).returncode == 0
 
 
-def helm_template(*sets: str, expect_ok: bool = True) -> list[dict]:
-    args = [tool("helm"), "template", "ocor-poc", str(CHART_DIR),
+HOST_ALIASES = [{"ip": f"172.30.0.{n + 2}", "hostnames": [name]} for n, name in enumerate(BOOTSTRAP_SERVICES)]
+
+
+def helm_template(*sets: str, expect_ok: bool = True, host_aliases: list[dict] | None = None) -> list[dict]:
+    values = Path(os.environ.get("TMPDIR", "/tmp")) / f"ocor-0049-values-{uuid.uuid4().hex}.yaml"
+    values.write_text(yaml.safe_dump({"operational": {
+        "hostAliases": HOST_ALIASES if host_aliases is None else host_aliases}}), encoding="utf-8")
+    args = [tool("helm"), "template", "ocor-poc", str(CHART_DIR), "-f", str(values),
             "--set", "operational.secretName=ocor-poc-ops", "--set", "operational.vault.existingClaim=ocor-poc-vault",
-            "--set", "operational.restoreDrill.enabled=true", "--set", "operational.dependencyCidr=172.16.0.0/12"]
+            "--set", "operational.restoreDrill.enabled=true"]
     for item in sets:
         args += ["--set", item]
-    result = subprocess.run(args, capture_output=True, text=True, check=False)
+    try:
+        result = subprocess.run(args, capture_output=True, text=True, check=False)
+    finally:
+        values.unlink()
     if not expect_ok:
         return [{"returncode": result.returncode, "stderr": result.stderr}]
     assert result.returncode == 0, result.stderr
@@ -273,8 +294,13 @@ def test_helm_chart_renders_operational_workloads():
     deny = docs[("NetworkPolicy", "ocor-poc-default-deny")]["spec"]
     assert deny == {"podSelector": {}, "policyTypes": ["Ingress", "Egress"]}
     allow = docs[("NetworkPolicy", "ocor-poc-intra-site")]["spec"]
-    ports = {p["port"] for rule in allow["egress"][1:] for p in rule["ports"]}
-    assert ports == {f["port"] for f in helm_profile()["isolation"]["allowedFlows"]}
+    # Exactly one (address, port) pair per allowed flow: no address is admitted on the
+    # port of another destination (verdict OCOR-DEV-0049-7fd4f7728801-2 VF-002).
+    address = {name: alias["ip"] for alias in HOST_ALIASES for name in alias["hostnames"]}
+    pairs = [(rule["to"][0]["ipBlock"]["cidr"], p["port"]) for rule in allow["egress"][1:] for p in rule["ports"]]
+    assert all(len(rule["to"]) == 1 and len(rule["ports"]) == 1 for rule in allow["egress"][1:])
+    assert sorted(pairs) == sorted((f"{address[f['host']]}/32", f["port"])
+                                   for f in helm_profile()["isolation"]["allowedFlows"])
     drill = docs[("Job", "ocor-poc-restore-drill-1")]["spec"]["template"]["spec"]
     assert [c["name"] for c in drill["initContainers"]] == [
         "restore-prepare", "restore-postgresql", "restore-qdrant", "restore-load-postgresql"]
@@ -285,6 +311,111 @@ def test_helm_chart_refuses_to_render_without_secret_or_external_vault(missing):
     result = helm_template(missing, expect_ok=False)[0]
     assert result["returncode"] != 0
     assert "required" in result["stderr"]
+
+
+def test_helm_chart_refuses_to_render_a_flow_without_a_pinned_address():
+    partial = [alias for alias in HOST_ALIASES if alias["hostnames"] != ["qdrant"]]
+    result = helm_template(expect_ok=False, host_aliases=partial)[0]
+    assert result["returncode"] != 0
+    assert "no intra-site address for allowed flow qdrant:6333" in result["stderr"]
+
+
+# --------------------------------------------------------------------------- decision logic
+
+
+@pytest.fixture(scope="session")
+def agent_module(agent_dir):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("ocor_ops_agent_under_test", agent_dir / "ocor_ops_agent.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module  # dataclasses resolve annotations through sys.modules
+    spec.loader.exec_module(module)
+    return module
+
+
+def _healthy_state(agent):
+    profile = helm_profile()
+    state = agent.State(profile, "digest", Path("/nonexistent"), None, agent.Telemetry("r", "digest"))
+    state.dep_up = {d["name"]: True for d in profile["health"]["dependencies"]}
+    state.restore_reason, state.receipt_digest = "RESTORE_TESTED", "r1"
+    state.reopen = {"receipt_digest": "r1", "authorized_by": "operator"}
+    state.last_scan, state.ready, state.ready_reasons = agent.now(), True, ["READY"]
+    return state
+
+
+def test_admission_branches_of_the_posture(agent_module):
+    """Every fail-closed condition of the ops plane, with its positive counterpart
+    (the same branches are exercised on the live stack below)."""
+    agent = agent_module
+    state = _healthy_state(agent)
+    assert state.faults() == [] and state.posture()["admitted_operation_classes"] == sorted(OPERATION_CLASSES)
+    assert state.readiness() == (True, ["READY"])
+    cases = {
+        "security_scan_unavailable": lambda s: setattr(s, "scanner_error", "ValueError"),
+        "restore_not_verified": lambda s: setattr(s, "restore_reason", "RESTORE_UNTESTED"),
+        "isolation_breach": lambda s: setattr(s, "egress_violations", ["1.1.1.1:443"]),
+    }
+    for fault, mutate in cases.items():
+        st = _healthy_state(agent)
+        mutate(st)
+        assert fault in st.faults(), fault
+        assert st.posture()["admitted_operation_classes"] == [], fault
+    st = _healthy_state(agent)
+    st.reopen = {"receipt_digest": "older-receipt", "authorized_by": "operator"}
+    assert st.faults() == ["recovery_reopen_pending"]
+    assert st.posture()["admitted_operation_classes"] == ["exact_consistency_read", "read"]
+    st = _healthy_state(agent)
+    st.last_scan = agent.now() - st.max_scan_age - 1  # scanner thread stuck
+    assert st.readiness() == (False, ["SCAN_STALE"])
+    assert st.faults() == ["security_scan_unavailable"]
+    st = _healthy_state(agent)
+    st.last_scan = 0.0  # never scanned
+    assert "security_scan_unavailable" in st.faults()
+
+
+def test_relay_serves_exactly_one_declared_flow(agent_module):
+    profile = helm_profile()
+    assert agent_module.relay_flow(profile, "opa") == {"host": "opa", "port": 8181}
+    for bad in ("", "unknown", "opa:8181"):
+        with pytest.raises(agent_module.ConfigError):
+            agent_module.relay_flow(profile, bad)
+
+
+def _drill_digest(*parts: str) -> str:
+    return "urn:sha256:" + hashlib.sha256("\x1f".join(parts).encode()).hexdigest()
+
+
+@pytest.mark.parametrize("field,value,gate,detail", [
+    ("tenant_id", "tenant-b", "gcs", "tenant_mismatch"),
+    ("compartments", ["c2"], "gcs", "compartment_mismatch"),
+    ("compartments", ["c1", "c1"], "gcs", "compartment_mismatch"),
+    ("compartments", "c1", "gcs", "compartment_mismatch"),
+    ("classification_marking_ref", "SYNTHETIC-UNCLASSIFIED", "marking", "marking_mismatch"),
+    ("governed_context_digest", None, "gcs", "gcs_digest_mismatch"),
+    ("lifecycle_epoch", 4, "projection_drift_or_stale_deletion_epoch", "version_drift"),
+])
+def test_scope_comparison_branches(agent_module, field, value, gate, detail):
+    meta = {"item_id": "m1", "tenant_id": "tenant-a", "compartments": '["c1"]',
+            "classification_marking_ref": _drill_digest("marking", "SYNTHETIC-UNCLASSIFIED"),
+            "governed_context_digest": _drill_digest("gcs", "tenant-a", "c1"),
+            "representation_version": "2", "lifecycle_epoch": "3"}
+    payload = {"item_id": "m1", "tenant_id": "tenant-a", "compartments": ["c1"],
+               "classification_marking_ref": meta["classification_marking_ref"],
+               "governed_context_digest": meta["governed_context_digest"],
+               "representation_version": 2, "lifecycle_epoch": 3}
+    assert not any(agent_module.scope_violations(payload, meta).values()), "consistent item passes"
+    tampered = dict(payload, **{field: value})
+    found = {k for k, v in agent_module.scope_violations(tampered, meta).items() if v}
+    expected = {"tenant_mismatch": "tenant", "compartment_mismatch": "compartments", "marking_mismatch": "marking",
+                "gcs_digest_mismatch": "gcs", "version_drift": "version"}[detail]
+    assert found == {expected}
+    # Equal but malformed authoritative values are not a binding: the contract digest is required.
+    bad = "gcd-tenant-a-c1"
+    assert agent_module.scope_violations(dict(payload, governed_context_digest=bad),
+                                         dict(meta, governed_context_digest=bad))["gcs"]
+    assert agent_module.scope_violations(dict(payload, classification_marking_ref="SYNTHETIC"),
+                                         dict(meta, classification_marking_ref="SYNTHETIC"))["marking"]
 
 
 # --------------------------------------------------------------------------- live environment
@@ -354,15 +485,28 @@ class Stack:
                             extra_files=extra_files).stdout
         return result.returncode, result.stdout + result.stderr + logs
 
+    def run_stage_detached(self, project: str, profile: str, service: str, vault: Path | None = None,
+                           extra_files: tuple[Path, ...] = ()) -> tuple[int, str]:
+        """Like run_stage, but the restored stores stay up for direct observation."""
+        result = self.compose(project, "--profile", profile, "up", "-d", service, vault=vault, extra_files=extra_files)
+        assert result.returncode == 0, result.stdout + result.stderr
+        waited = subprocess.run(["docker", "wait", f"{project}-{service}-1"], capture_output=True, text=True,
+                                check=True, timeout=600)
+        logs = self.compose(project, "--profile", profile, "logs", "--no-color", vault=vault,
+                            extra_files=extra_files).stdout
+        return int(waited.stdout.strip()), result.stdout + result.stderr + logs
+
     def down(self, project: str, profile: str = "full") -> None:
         self.compose(project, "--profile", "full", "--profile", "restore-drill", "down", "-v", "--remove-orphans")
 
 
-def http_from(container: str, url: str, method: str = "GET", headers: dict | None = None) -> tuple[int, str]:
+def http_from(container: str, url: str, method: str = "GET", headers: dict | None = None,
+              data: dict | None = None) -> tuple[int, str]:
     """Issue an HTTP request from inside a container (the profile networks are internal)."""
+    payload = None if data is None else json.dumps(data).encode()
     code = (
         "import json,sys,urllib.request,urllib.error\n"
-        f"r=urllib.request.Request({url!r},method={method!r},headers={json.dumps(headers or {})})\n"
+        f"r=urllib.request.Request({url!r},method={method!r},headers={json.dumps(headers or {})},data={payload!r})\n"
         "try:\n"
         "    resp=urllib.request.urlopen(r,timeout=10); print(resp.status); print(resp.read().decode())\n"
         "except urllib.error.HTTPError as e:\n"
@@ -423,6 +567,67 @@ def metrics(container: str) -> dict[str, float]:
     return out
 
 
+OPS_URL = "http://ocor-ops:8080"
+
+
+def admit(container: str, operation_class: str, base: str = OPS_URL) -> tuple[int, dict]:
+    status, body = http_from(container, f"{base}/admit?class={operation_class}")
+    return status, json.loads(body)
+
+
+def assert_admission(container: str, admitted: list[str], fault: str | None = None, base: str = OPS_URL) -> None:
+    """Observe the decision of every operation class: `admitted` must be ADMIT, every
+    other class must be DENY and, when given, carry `fault` in its reason code."""
+    for operation_class in OPERATION_CLASSES:
+        status, body = admit(container, operation_class, base)
+        if operation_class in admitted:
+            assert (status, body["decision"]) == (200, "ADMIT"), (operation_class, body)
+        else:
+            assert (status, body["decision"]) == (503, "DENY"), (operation_class, body)
+            assert fault is None or fault in body["reason_code"], (operation_class, fault, body)
+
+
+def posture(container: str, base: str = OPS_URL) -> dict:
+    status, body = http_from(container, f"{base}/posture")
+    assert status == 200
+    return json.loads(body)
+
+
+def receipt_digest(vault: Path) -> str:
+    """Independent oracle: the SHA-256 of the latest signed receipt file."""
+    return hashlib.sha256(sorted((vault / "restore-receipts").glob("*.json"))[-1].read_bytes()).hexdigest()
+
+
+def reopen(container: str, token: str, digest: str | None, human: str | None = "drill-operator",
+           base: str = OPS_URL) -> tuple[int, dict]:
+    body = {k: v for k, v in (("receipt_digest", digest), ("authorized_by", human)) if v is not None}
+    status, text = http_from(container, f"{base}/reopen", "POST",
+                             {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}, body)
+    return status, json.loads(text)
+
+
+def governed_reopen(stack, container: str, vault: Path, base: str = OPS_URL) -> None:
+    """Human reopening of the mutative path bound to the receipt that passed the gate."""
+    digest = receipt_digest(vault)
+    wait_for(lambda: posture(container, base)["restore"]["receipt_digest"] == digest, 30,
+             message="agent must have verified the current receipt")
+    status, body = reopen(container, stack.operator_token, digest, base=base)
+    assert (status, body["reason_code"]) == (200, "MUTATIVE_PATH_REOPENED_BY_HUMAN"), body
+
+
+def restored_payloads(project: str) -> dict[str, dict]:
+    """Read the restored index directly from the isolated restore network."""
+    code = ("import json,urllib.request\n"
+            "r=urllib.request.Request('http://ocor-restore-qdrant:6333/collections/ocor_poc_drill_memory/points/scroll',"
+            "method='POST',headers={'Content-Type':'application/json'},"
+            "data=json.dumps({'limit':256,'with_payload':True}).encode())\n"
+            "print(json.dumps([p['payload'] for p in json.load(urllib.request.urlopen(r,timeout=10))['result']['points']]))")
+    result = subprocess.run(["docker", "run", "--rm", "--network", f"{project}_restore", OPS_IMAGE, "python3", "-c",
+                             code], capture_output=True, text=True, check=False, timeout=120)
+    assert result.returncode == 0, result.stderr
+    return {p["item_id"]: p for p in json.loads(result.stdout)}
+
+
 # --------------------------------------------------------------------------- drill fixture
 
 
@@ -444,6 +649,18 @@ def memory_point_id(item_id: str) -> str:
     return str(uuid.uuid5(uuid.NAMESPACE_URL, f"ocor-memory:{item_id}"))
 
 
+DRILL_MARKING = _drill_digest("marking", "SYNTHETIC-UNCLASSIFIED")
+
+
+def drill_scope(n: int) -> tuple[str, str]:
+    return ("tenant-a", "c1") if n % 2 else ("tenant-b", "c2")
+
+
+def drill_gcs(tenant: str, compartment: str) -> str:
+    """GCS digest bound at admission (contract `urn:sha256:` form) for a drill item."""
+    return _drill_digest("gcs", tenant, compartment, DRILL_MARKING)
+
+
 def load_drill_fixture(env: dict[str, str], consistent: bool, items: int = 5) -> None:
     """Synthetic memory drill: m2/m4 are deleted in metadata while the index still
     holds them at the cut. `consistent=False` drops the m4 tombstone from the
@@ -455,17 +672,19 @@ def load_drill_fixture(env: dict[str, str], consistent: bool, items: int = 5) ->
         conn.execute("create database ocor_poc_drill")
     with psycopg.connect(postgres_dsn(env, "ocor_poc_drill"), autocommit=True) as conn:
         conn.execute(
-            "create table memory_item(item_id text primary key, tenant_id text not null, compartment text not null,"
+            "create table memory_item(item_id text primary key, tenant_id text not null, compartments text not null,"
             " representation_version int not null, lifecycle_epoch int not null, lifecycle_state text not null,"
-            " deletion_epoch bigint, content_ref text not null, classification_marking_ref text not null)")
+            " deletion_epoch bigint, content_ref text not null, classification_marking_ref text not null,"
+            " governed_context_digest text not null)")
         conn.execute("create table memory_deletion_journal(event_id text primary key, item_id text not null,"
                      " deletion_epoch bigint not null)")
         for n in range(1, items + 1):
             item = f"m{n}"
             deleted = {"m2": 6, "m4": 7}.get(item)
-            conn.execute("insert into memory_item values (%s,%s,%s,2,3,%s,%s,%s,'SYNTHETIC-UNCLASSIFIED')",
-                         (item, "tenant-a" if n % 2 else "tenant-b", "c1" if n % 2 else "c2",
-                          "deleted" if deleted else "active", deleted, f"cas:sha256:{item}"))
+            tenant, compartment = drill_scope(n)
+            conn.execute("insert into memory_item values (%s,%s,%s,2,3,%s,%s,%s,%s,%s)",
+                         (item, tenant, json.dumps([compartment]), "deleted" if deleted else "active", deleted,
+                          f"cas:sha256:{item}", DRILL_MARKING, drill_gcs(tenant, compartment)))
         conn.execute("insert into memory_deletion_journal values ('evt-del-m2','m2',6)")
         if consistent:
             conn.execute("insert into memory_deletion_journal values ('evt-del-m4','m4',7)")
@@ -474,11 +693,11 @@ def load_drill_fixture(env: dict[str, str], consistent: bool, items: int = 5) ->
     assert qdrant_call("PUT", collection, {"vectors": {"size": 4, "distance": "Cosine"}}).get("status") == "ok"
     points = []
     for n in range(1, items + 1):
-        tenant, compartment = ("tenant-a", "c1") if n % 2 else ("tenant-b", "c2")
+        tenant, compartment = drill_scope(n)
         points.append({"id": memory_point_id(f"m{n}"), "vector": [0.1 * n, 0.2, 0.3, 0.4],
-                       "payload": {"item_id": f"m{n}", "tenant_id": tenant, "compartment": compartment,
-                                   "classification_marking_ref": "SYNTHETIC-UNCLASSIFIED",
-                                   "governed_context_digest": f"gcd-{tenant}-{compartment}",
+                       "payload": {"item_id": f"m{n}", "tenant_id": tenant, "compartments": [compartment],
+                                   "classification_marking_ref": DRILL_MARKING,
+                                   "governed_context_digest": drill_gcs(tenant, compartment),
                                    "representation_version": 2, "lifecycle_epoch": 3}})
     assert qdrant_call("PUT", collection + "/points?wait=true", {"points": points}).get("status") == "ok"
 
@@ -524,12 +743,11 @@ def stack(tmp_path_factory):
     st = Stack(env, vault, work)
     st.ops_project = f"ocor-poc-ops-{uuid.uuid4().hex[:6]}"
     st.ops = f"{st.ops_project}-ocor-ops-1"
-    st.relay = f"{st.ops_project}-ocor-relay-1"
     load_drill_fixture(env, consistent=True)
     try:
         result = st.compose(st.ops_project, "--profile", "observability", "up", "-d")
         assert result.returncode == 0, result.stderr
-        wait_for(lambda: http_from(st.relay, "http://ocor-ops:8080/livez")[0] == 200, 60,
+        wait_for(lambda: http_from(st.ops, "http://ocor-ops:8080/livez")[0] == 200, 60,
                  message="ops agent did not start listening")
         yield st
     finally:
@@ -540,18 +758,23 @@ def stack(tmp_path_factory):
 
 
 def test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested(stack):
-    status, body = http_from(stack.relay, "http://ocor-ops:8080/livez")
+    status, body = http_from(stack.ops, "http://ocor-ops:8080/livez")
     assert (status, json.loads(body)["status"]) == (200, "ALIVE")
-    status, ready = wait_for(lambda: scanned(r := readyz(stack.relay)) and r, 30)
+    status, ready = wait_for(lambda: scanned(r := readyz(stack.ops)) and r, 30)
     assert status == 503
     assert ready["reasons"] == ["RESTORE_UNTESTED"], "all ten dependencies must be up; only the restore is missing"
-    m = metrics(stack.relay)
+    m = metrics(stack.ops)
     for dependency in BOOTSTRAP_SERVICES:
         assert m[f'ocor_dependency_up{{dependency="{dependency}"}}'] == 1.0
         for q in ("0.5", "0.95", "0.99"):
             assert m[f'ocor_dependency_probe_duration_seconds{{dependency="{dependency}",quantile="{q}"}}'] > 0
     assert m["ocor_readiness_ready"] == 0.0
     assert m["ocor_egress_public_reachable"] == 0.0
+    # Untested restore: the recovery gate has not passed, so no traffic is admitted
+    # (verdict OCOR-DEV-0049-7fd4f7728801-2 VF-001); the posture names the condition.
+    assert_admission(stack.ops, admitted=[], fault="restore_not_verified")
+    assert "restore_not_verified" in posture(stack.ops)["faults"]
+    assert m['ocor_safe_degraded_fault_active{fault="restore_not_verified"}'] == 1.0
     mounted = subprocess.run(["docker", "exec", stack.ops, "cat", "/etc/ocor/profile.json"],
                              capture_output=True, text=True, check=True).stdout
     assert json.loads(mounted) == helm_profile(), "the running process consumes the governed profile"
@@ -603,8 +826,17 @@ def transit_verify(env: dict[str, str], data: bytes, signature: str) -> bool:
 
 def test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate(stack):
     project = f"ocor-poc-restore-{uuid.uuid4().hex[:6]}"
-    code, logs = stack.run_stage(project, "restore-drill", "ocor-restore-finalize")
+    code, logs = stack.run_stage_detached(project, "restore-drill", "ocor-restore-finalize")
     assert code == 0, logs
+    # Positive case of the per-item scope oracle: the restored index carries exactly the
+    # tenant, compartments, marking and GCS binding of the authoritative metadata.
+    restored = restored_payloads(project)
+    assert sorted(restored) == ["m1", "m3", "m5"], "tombstoned m2/m4 are not resurrected"
+    for item, payload in restored.items():
+        tenant, compartment = drill_scope(int(item[1:]))
+        assert (payload["tenant_id"], payload["compartments"], payload["classification_marking_ref"],
+                payload["governed_context_digest"]) == (tenant, [compartment], DRILL_MARKING,
+                                                       drill_gcs(tenant, compartment)), payload
     networks = json.loads(subprocess.run(["docker", "network", "inspect", f"{project}_restore"],
                                          capture_output=True, text=True, check=True).stdout)
     assert networks[0]["Internal"] is True
@@ -620,6 +852,7 @@ def test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate(stack)
     assert receipt["outcome"] == "PASSED"
     assert receipt["replayed_event_ids"] == ["evt-del-m2", "evt-del-m4"], "original ids, journal order"
     assert all(receipt["recovery_gate"][name]["pass"] for name in RECOVERY_GATE)
+    assert receipt["quarantined_items"] == []
     assert receipt["retrieval_reopened"] is False
     assert receipt["isolated_network"] is True
     steps = [s["step"] for s in receipt["steps"]]
@@ -629,10 +862,10 @@ def test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate(stack)
 
 
 def test_readiness_turns_ready_only_with_a_signed_passed_restore_receipt(stack):
-    status, ready = wait_for(lambda: (r := readyz(stack.relay))[0] == 200 and r, 30,
+    status, ready = wait_for(lambda: (r := readyz(stack.ops))[0] == 200 and r, 30,
                              message="readiness must turn READY after the tested restore")
     assert ready["reasons"] == ["READY"]
-    m = metrics(stack.relay)
+    m = metrics(stack.ops)
     assert m["ocor_restore_tested"] == 1.0
     assert m["ocor_recovery_point_within_rpo"] == 1.0
     health = wait_for(lambda: subprocess.run(["docker", "inspect", "-f", "{{.State.Health.Status}}", stack.ops],
@@ -640,12 +873,44 @@ def test_readiness_turns_ready_only_with_a_signed_passed_restore_receipt(stack):
     assert health
 
 
+def test_mutative_path_reopens_only_by_a_human_bound_to_the_passed_receipt(stack):
+    """ADD v1.3 §6.5 step 10: after the recovery gate, reads reopen but the mutative
+    path stays closed until a named human authorizes it for that exact receipt."""
+    assert_admission(stack.ops, admitted=["exact_consistency_read", "read"], fault="recovery_reopen_pending")
+    digest = receipt_digest(stack.vault)
+    assert posture(stack.ops)["restore"] == {"reason_code": "RESTORE_TESTED", "receipt_digest": digest}
+    status, _ = reopen(stack.ops, "wrong-token", digest)
+    assert status == 401
+    status, body = reopen(stack.ops, stack.operator_token, digest, human=None)
+    assert (status, body["reason_code"]) == (400, "REOPEN_REFUSED:HUMAN_AUTHORIZER_REQUIRED")
+    status, body = reopen(stack.ops, stack.operator_token, "0" * 64)
+    assert (status, body["reason_code"]) == (409, "REOPEN_REFUSED:RECEIPT_MISMATCH")
+    assert_admission(stack.ops, admitted=["exact_consistency_read", "read"], fault="recovery_reopen_pending")
+    status, body = reopen(stack.ops, stack.operator_token, digest)
+    assert (status, body["reason_code"], body["receipt_digest"]) == (200, "MUTATIVE_PATH_REOPENED_BY_HUMAN", digest)
+    assert_admission(stack.ops, admitted=OPERATION_CLASSES)
+    state = posture(stack.ops)
+    assert state["faults"] == [] and state["reopen"]["authorization"]["authorized_by"] == "drill-operator"
+    assert metrics(stack.ops)["ocor_recovery_reopen_authorized"] == 1.0
+
+
 def test_restore_replay_is_deterministic(stack):
+    previous = receipt_digest(stack.vault)
     project = f"ocor-poc-restore-{uuid.uuid4().hex[:6]}"
     code, logs = stack.run_stage(project, "restore-drill", "ocor-restore-finalize")
     stack.down(project)
     assert code == 0, logs
     assert latest_receipt(stack.vault)["replay_digest"] == stack.replay_digest
+    # A new receipt supersedes the one the human authorized: the mutative path closes
+    # again and the old authorization cannot be replayed.
+    current = receipt_digest(stack.vault)
+    assert current != previous
+    wait_for(lambda: posture(stack.ops)["restore"]["receipt_digest"] == current, 30)
+    assert_admission(stack.ops, admitted=["exact_consistency_read", "read"], fault="recovery_reopen_pending")
+    status, body = reopen(stack.ops, stack.operator_token, previous)
+    assert (status, body["reason_code"]) == (409, "REOPEN_REFUSED:RECEIPT_MISMATCH")
+    governed_reopen(stack, stack.ops, stack.vault)
+    assert_admission(stack.ops, admitted=OPERATION_CLASSES)
 
 
 def _copy_vault(stack, name: str) -> Path:
@@ -693,6 +958,9 @@ def _standalone_ops(stack, vault: Path, network: str, profile_path: Path | None 
     return name
 
 
+LOCAL_OPS = "http://127.0.0.1:8080"
+
+
 def _standalone_readyz(name: str) -> tuple[int, dict]:
     status, body = http_from(name, "http://127.0.0.1:8080/readyz")
     return status, json.loads(body)
@@ -706,6 +974,10 @@ def test_tampered_restore_receipt_blocks_readiness(stack):
     try:
         _, ready = wait_for(lambda: scanned(r := _standalone_readyz(name)) and r, 30)
         assert ready["reasons"] == ["RESTORE_RECEIPT_INVALID"]
+        assert_admission(name, admitted=[], fault="restore_not_verified", base=LOCAL_OPS)
+        status, body = reopen(name, stack.operator_token, receipt_digest(vault), base=LOCAL_OPS)
+        assert (status, body["reason_code"]) == (409, "REOPEN_REFUSED:RESTORE_RECEIPT_INVALID")
+        assert_admission(name, admitted=[], fault="restore_not_verified", base=LOCAL_OPS)
     finally:
         subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
 
@@ -735,6 +1007,68 @@ def test_inconsistent_deletion_journal_blocks_materialisation_and_readiness(stac
         try:
             _, ready = wait_for(lambda: scanned(r := _standalone_readyz(name)) and r, 30)
             assert ready["reasons"] == ["RESTORE_FAILED"]
+            assert_admission(name, admitted=[], fault="restore_not_verified", base=LOCAL_OPS)
+        finally:
+            subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+    finally:
+        load_drill_fixture(stack.env, consistent=True)
+
+
+SCOPE_MUTATIONS = [
+    # case id, payload change of item m1 (authoritative metadata: tenant-a / [c1]), failing gate, detail keys
+    ("cross_tenant_scope", {"tenant_id": "tenant-b", "compartments": ["c2"],
+                            "governed_context_digest": drill_gcs("tenant-b", "c2")},
+     "gcs", ["compartment_mismatch", "gcs_digest_mismatch", "tenant_mismatch"]),
+    ("compartment_only", {"compartments": ["c2"]}, "gcs", ["compartment_mismatch"]),
+    ("marking_only", {"classification_marking_ref": _drill_digest("marking", "OTHER")}, "marking",
+     ["marking_mismatch"]),
+    ("gcs_binding_only", {"governed_context_digest": drill_gcs("tenant-a", "c9")}, "gcs", ["gcs_digest_mismatch"]),
+]
+
+
+@pytest.mark.parametrize("case,change,gate,details", SCOPE_MUTATIONS, ids=[c[0] for c in SCOPE_MUTATIONS])
+def test_restore_scope_mismatch_blocks_materialisation(stack, case, change, gate, details):
+    """Verdict OCOR-DEV-0049-7fd4f7728801-2 VF-003: an item of the restored projection
+    whose tenant, compartments, marking or GCS binding differs from the authoritative
+    metadata fails the recovery gate, blocks materialisation and readiness."""
+    vault = stack.work / f"vault-scope-{case}"
+    vault.mkdir()
+    load_drill_fixture(stack.env, consistent=True)
+    try:
+        result = qdrant_call("POST", "/collections/ocor_poc_drill_memory/points/payload?wait=true",
+                             {"payload": change, "points": [memory_point_id("m1")]})
+        assert result.get("status") == "ok", result
+        project = f"ocor-poc-backup-{uuid.uuid4().hex[:6]}"
+        code, logs = stack.run_stage(project, "backup", "ocor-backup-seal", vault=vault)
+        stack.down(project)
+        assert code == 0, logs
+        project = f"ocor-poc-restore-{uuid.uuid4().hex[:6]}"
+        code, logs = stack.run_stage_detached(project, "restore-drill", "ocor-restore-finalize", vault=vault)
+        try:
+            assert code == EXIT_GATE, logs
+            # Observed on the restored service itself: the mismatch is really there, and only on m1.
+            restored = restored_payloads(project)
+            assert all(restored["m1"][k] == v for k, v in change.items()), restored["m1"]
+            for item in ("m3", "m5"):
+                tenant, compartment = drill_scope(int(item[1:]))
+                assert restored[item]["governed_context_digest"] == drill_gcs(tenant, compartment)
+        finally:
+            stack.down(project)
+        receipt = latest_receipt(vault)
+        assert (receipt["outcome"], receipt["materialisation"]) == ("FAILED", "BLOCKED")
+        assert receipt["quarantined_items"] == ["m1"]
+        assert receipt["recovery_gate"][gate]["pass"] is False
+        failing = sorted(k for k, v in receipt["recovery_gate"][gate]["detail"].items() if v)
+        assert failing == details and all(receipt["recovery_gate"][gate]["detail"][k] == ["m1"] for k in details)
+        others = [name for name in RECOVERY_GATE if name != gate]
+        assert all(receipt["recovery_gate"][name]["pass"] for name in others), receipt["recovery_gate"]
+        step = next(s for s in receipt["steps"] if s["step"] == "require_human_authorization_to_reopen_mutative")
+        assert step["status"] == "BLOCKED"
+        name = _standalone_ops(stack, vault, f"{stack.ops_project}_site")
+        try:
+            _, ready = wait_for(lambda: scanned(r := _standalone_readyz(name)) and r, 30)
+            assert ready["reasons"] == ["RESTORE_FAILED"]
+            assert_admission(name, admitted=[], fault="restore_not_verified", base=LOCAL_OPS)
         finally:
             subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
     finally:
@@ -769,57 +1103,57 @@ FAULTS = [
 @pytest.mark.parametrize("victim,fault,denied,admitted", FAULTS, ids=[f[0] for f in FAULTS])
 def test_dependency_fault_blocks_readiness_and_degrades_posture(stack, victim, fault, denied, admitted):
     container = f"ocor-bootstrap-{victim}-1"
-    wait_for(lambda: readyz(stack.relay)[0] == 200, 60, message="precondition: READY before the fault")
-    before = metrics(stack.relay).get(
+    wait_for(lambda: readyz(stack.ops)[0] == 200, 60, message="precondition: READY before the fault")
+    before = metrics(stack.ops).get(
         f'ocor_dependency_probe_errors_total{{dependency="{victim}",reason_code="DEPENDENCY_DOWN"}}', 0.0)
     subprocess.run(["docker", "pause", container], check=True, capture_output=True)
     try:
-        status, ready = wait_for(lambda: (r := readyz(stack.relay))[0] == 503 and r, 30,
+        status, ready = wait_for(lambda: (r := readyz(stack.ops))[0] == 503 and r, 30,
                                  message=f"readiness must block while {victim} is paused")
         assert f"DEPENDENCY_DOWN:{victim}" in ready["reasons"]
-        _, posture = http_from(stack.relay, "http://ocor-ops:8080/posture")
+        _, posture = http_from(stack.ops, "http://ocor-ops:8080/posture")
         posture = json.loads(posture)
         assert fault in posture["faults"]
         if denied:
-            code, body = http_from(stack.relay, f"http://ocor-ops:8080/admit?class={denied}")
+            code, body = http_from(stack.ops, f"http://ocor-ops:8080/admit?class={denied}")
             assert (code, json.loads(body)["decision"]) == (503, "DENY")
-        code, body = http_from(stack.relay, f"http://ocor-ops:8080/admit?class={admitted}")
+        code, body = http_from(stack.ops, f"http://ocor-ops:8080/admit?class={admitted}")
         assert (code, json.loads(body)["decision"]) == (200, "ADMIT")
         if victim == "kafka":
             assert posture["projection_freshness_claim"] is False
         if victim == "qdrant":
             assert posture["consistency"] == "PROJECTION_NOT_READY"
-        m = metrics(stack.relay)
+        m = metrics(stack.ops)
         assert m[f'ocor_dependency_up{{dependency="{victim}"}}'] == 0.0
         assert m[f'ocor_dependency_probe_errors_total{{dependency="{victim}",reason_code="DEPENDENCY_DOWN"}}'] > before
         assert m[f'ocor_safe_degraded_fault_active{{fault="{fault}"}}'] == 1.0
-        _, traces = http_from(stack.relay, "http://ocor-ops:8080/traces")
+        _, traces = http_from(stack.ops, "http://ocor-ops:8080/traces")
         spans = [s for s in json.loads(traces)["spans"] if s.get("dependency") == victim
                  and s["reason_code"] == "DEPENDENCY_DOWN"]
         assert spans and spans[-1]["fault_class"] == fault and spans[-1]["causation_id"]
     finally:
         subprocess.run(["docker", "unpause", container], check=False, capture_output=True)
-    wait_for(lambda: readyz(stack.relay)[0] == 200, 60, message=f"readiness must recover after {victim}")
-    _, posture = http_from(stack.relay, "http://ocor-ops:8080/posture")
+    wait_for(lambda: readyz(stack.ops)[0] == 200, 60, message=f"readiness must recover after {victim}")
+    _, posture = http_from(stack.ops, "http://ocor-ops:8080/posture")
     assert json.loads(posture)["faults"] == []
 
 
 def test_emergency_stop_denies_mutative_capabilities_within_10_seconds(stack):
-    code, _ = http_from(stack.relay, "http://ocor-ops:8080/emergency-stop", "POST",
+    code, _ = http_from(stack.ops, "http://ocor-ops:8080/emergency-stop", "POST",
                         {"Authorization": "Bearer wrong-token"})
     assert code == 401
-    assert http_from(stack.relay, "http://ocor-ops:8080/admit?class=mutative")[0] == 200
+    assert http_from(stack.ops, "http://ocor-ops:8080/admit?class=mutative")[0] == 200
     started = time.monotonic()
-    code, body = http_from(stack.relay, "http://ocor-ops:8080/emergency-stop", "POST",
+    code, body = http_from(stack.ops, "http://ocor-ops:8080/emergency-stop", "POST",
                            {"Authorization": f"Bearer {stack.operator_token}"})
     assert code == 200 and json.loads(body)["reason_code"] == "EMERGENCY_STOP_ACTIVE"
-    wait_for(lambda: http_from(stack.relay, "http://ocor-ops:8080/admit?class=mutative")[0] == 503, 10, 0.2)
+    wait_for(lambda: http_from(stack.ops, "http://ocor-ops:8080/admit?class=mutative")[0] == 503, 10, 0.2)
     assert time.monotonic() - started <= 10.0
-    assert http_from(stack.relay, "http://ocor-ops:8080/admit?class=read")[0] == 200
-    code, body = http_from(stack.relay, "http://ocor-ops:8080/emergency-stop/clear", "POST",
+    assert http_from(stack.ops, "http://ocor-ops:8080/admit?class=read")[0] == 200
+    code, body = http_from(stack.ops, "http://ocor-ops:8080/emergency-stop/clear", "POST",
                            {"Authorization": f"Bearer {stack.operator_token}"})
     assert code == 200 and json.loads(body)["reason_code"] == "EMERGENCY_STOP_CLEARED_BY_HUMAN"
-    assert http_from(stack.relay, "http://ocor-ops:8080/admit?class=mutative")[0] == 200
+    assert http_from(stack.ops, "http://ocor-ops:8080/admit?class=mutative")[0] == 200
 
 
 def test_release_drift_blocks_readiness_and_mutative_commands(stack):
@@ -831,24 +1165,63 @@ def test_release_drift_blocks_readiness_and_mutative_commands(stack):
     name = _standalone_ops(stack, stack.vault, f"{stack.ops_project}_site", profile_path=path)
     try:
         wait_for(lambda: _standalone_readyz(name)[0] == 200, 30, message="standalone ops must be READY")
+        governed_reopen(stack, name, stack.vault, base=LOCAL_OPS)
+        assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)  # positive control
         changed = deepcopy(profile)
         changed["profile"]["release"] = "ocor-poc-unapproved"
         path.write_text(json.dumps(changed), encoding="utf-8")
         _, ready = wait_for(lambda: (r := _standalone_readyz(name))[0] == 503 and r, 10,
                             message="drift must be detected within the scan interval")
         assert ready["reasons"] == ["RELEASE_DRIFT"]
-        code, body = http_from(name, "http://127.0.0.1:8080/admit?class=mutative")
-        assert code == 503 and "release_mismatch" in json.loads(body)["reason_code"]
+        # Release mismatch blocks mutative commands; authorized reads stay admitted.
+        assert_admission(name, admitted=["exact_consistency_read", "governed_new", "read"], fault="release_mismatch",
+                         base=LOCAL_OPS)
     finally:
         subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
 
 
-def test_default_deny_admits_only_allowlisted_intra_site_flows(stack):
+def connect_matrix(container: str, pairs: list[tuple[str, int]]) -> dict[str, str]:
+    code = (
+        "import json,socket\n"
+        f"pairs={pairs!r}\nout={{}}\n"
+        "for h,p in pairs:\n"
+        "    try:\n"
+        "        socket.create_connection((h,p),4).close(); out[f'{h}:{p}']='CONNECTED'\n"
+        "    except socket.gaierror:\n"
+        "        out[f'{h}:{p}']='DNS_DENIED'\n"
+        "    except OSError as e:\n"
+        "        out[f'{h}:{p}']='DENIED:'+type(e).__name__\n"
+        "print(json.dumps(out))\n"
+    )
+    result = subprocess.run(["docker", "exec", container, "python3", "-c", code], capture_output=True, text=True,
+                            check=False, timeout=600)
+    assert result.returncode == 0, result.stderr
+    return json.loads(result.stdout)
+
+
+def test_default_deny_admits_only_allowlisted_destination_port_pairs(stack):
+    """Verdict OCOR-DEV-0049-7fd4f7728801-2 VF-002: every allowed (host, port) pair
+    connects and every other combination of the same hosts and ports is refused,
+    including postgresql:8181 which previously reached the real OPA."""
     inspect = json.loads(subprocess.run(["docker", "network", "inspect", f"{stack.ops_project}_site"],
                                         capture_output=True, text=True, check=True).stdout)
     assert inspect[0]["Internal"] is True
-    for flow in helm_profile()["isolation"]["allowedFlows"]:
-        assert connect_from(stack.ops, flow["host"], flow["port"]) == "CONNECTED", flow
+    flows = [(f["host"], f["port"]) for f in helm_profile()["isolation"]["allowedFlows"]]
+    hosts, ports = [h for h, _ in flows], [p for _, p in flows]
+    resolved = subprocess.run(["docker", "exec", stack.ops, "python3", "-c",
+                               f"import socket,json; print(json.dumps([socket.gethostbyname(h) for h in {hosts!r}]))"],
+                              capture_output=True, text=True, check=True).stdout
+    assert len(set(json.loads(resolved))) == len(hosts), "every destination has its own address"
+    matrix = connect_matrix(stack.ops, [(h, p) for h in hosts for p in ports])
+    for host in hosts:
+        for port in ports:
+            outcome = matrix[f"{host}:{port}"]
+            if (host, port) in flows:
+                assert outcome == "CONNECTED", (host, port)
+            else:
+                assert outcome.startswith("DENIED"), (host, port, outcome)
+    assert matrix["opa:8181"] == "CONNECTED" and matrix["postgresql:8181"].startswith("DENIED")
+    assert matrix["qdrant:5432"].startswith("DENIED") and matrix["postgresql:5432"] == "CONNECTED"
     assert connect_from(stack.ops, "1.1.1.1", 443).startswith("DENIED")
     assert connect_from(stack.ops, "registry.npmjs.org", 443) == "DNS_DENIED"
     assert connect_from(stack.ops, "ocor-bootstrap-postgresql-1", 5432) == "DNS_DENIED"
@@ -868,6 +1241,35 @@ def test_open_public_egress_blocks_readiness(stack):
     try:
         _, ready = wait_for(lambda: scanned(r := _standalone_readyz(name)) and r, 30)
         assert ready["reasons"] == ["PUBLIC_EGRESS_OPEN"], "dependencies are up; only egress must block"
+        governed_reopen(stack, name, stack.vault, base=LOCAL_OPS)  # even a reopened path stays closed
+        assert_admission(name, admitted=[], fault="isolation_breach", base=LOCAL_OPS)
+    finally:
+        subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+
+
+def test_scanner_failure_denies_every_admission_until_the_scan_recovers(stack):
+    """Verdict OCOR-DEV-0049-7fd4f7728801-2 VF-001: with the security scan failing
+    (unreadable profile) no operation class is admitted; admission returns once the
+    scan succeeds again."""
+    profile = deepcopy(helm_profile())
+    profile["observability"]["driftScanIntervalSeconds"] = 2
+    profile["observability"]["probeIntervalSeconds"] = 2
+    path = stack.work / "scanner-profile.json"
+    original = json.dumps(profile)
+    path.write_text(original, encoding="utf-8")
+    name = _standalone_ops(stack, stack.vault, f"{stack.ops_project}_site", profile_path=path)
+    try:
+        wait_for(lambda: _standalone_readyz(name)[0] == 200, 30, message="standalone ops must be READY")
+        governed_reopen(stack, name, stack.vault, base=LOCAL_OPS)
+        assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)  # positive control
+        path.write_text("{broken", encoding="utf-8")
+        _, ready = wait_for(lambda: (r := _standalone_readyz(name))[1]["reasons"] == ["SCANNER_ERROR"] and r, 15,
+                            message="scanner failure must be detected")
+        assert_admission(name, admitted=[], fault="security_scan_unavailable", base=LOCAL_OPS)
+        assert "security_scan_unavailable" in posture(name, LOCAL_OPS)["faults"]
+        path.write_text(original, encoding="utf-8")
+        wait_for(lambda: _standalone_readyz(name)[0] == 200, 15, message="readiness must recover with the scan")
+        assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)
     finally:
         subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
 
@@ -961,7 +1363,6 @@ def kind(stack):
         match = re.fullmatch(r"ocor-bootstrap-(.+)-1", container["Name"])
         if match and match.group(1) in BOOTSTRAP_SERVICES:
             aliases[match.group(1)] = container["IPv4Address"].split("/")[0]
-    cidr = bootstrap["IPAM"]["Config"][0]["Subnet"]
     kubectl("create", "namespace", namespace)
     kubectl("-n", namespace, "create", "secret", "generic", "ocor-poc-ops",
             f"--from-literal=OCOR_OPENBAO_TOKEN={stack.env['OCOR_LOCAL_OPENBAO_TOKEN']}",
@@ -981,7 +1382,7 @@ def kind(stack):
     values = stack.work / f"values-{run}.yaml"
     values.write_text(yaml.safe_dump({"operational": {
         "secretName": "ocor-poc-ops", "vault": {"existingClaim": "ocor-poc-vault"},
-        "runAsUser": os.getuid(), "dependencyCidr": cidr,
+        "runAsUser": os.getuid(),
         "hostAliases": [{"ip": ip, "hostnames": [name]} for name, ip in sorted(aliases.items())]}}))
     ctx = {"namespace": namespace, "vault": vault, "values": values, "release": "ocor-poc"}
     try:
@@ -1053,10 +1454,34 @@ def test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness(kind):
     assert receipt["outcome"] == "PASSED" and receipt["replayed_event_ids"] == ["evt-del-m2", "evt-del-m4"]
     ops = pod_name(ns, "ops")
     wait_for(lambda: pod_ready(ns, "ops"), 60, 2, "ops pod Ready after a tested restore")
-    egress = pod_python(ns, ops, "import socket\nfor t in [('1.1.1.1',443),('postgresql',5432),('opa',8181)]:\n"
-                        "    try: socket.create_connection(t,4).close(); print(t[0],'CONNECTED')\n"
-                        "    except OSError as e: print(t[0],'DENIED')")
-    assert egress.splitlines() == ["1.1.1.1 DENIED", "postgresql CONNECTED", "opa CONNECTED"], egress
+    # Governed reopening on the Helm profile: gate passed, mutative path still closed.
+    admission = pod_python(ns, ops, "import urllib.request,urllib.error\ntry: urllib.request.urlopen("
+                           "'http://127.0.0.1:8080/admit?class=mutative',timeout=5)\nexcept urllib.error.HTTPError as e: "
+                           "print(e.code, e.read().decode())")
+    assert admission.startswith("503") and "recovery_reopen_pending" in admission, admission
+    # Pair enforcement: a decoy on the dependency network listens on an allowlisted port
+    # (8181) at an address that is not the one pinned for that port. It must be
+    # unreachable from the pod, while the same connection succeeds from the kind node
+    # without the NetworkPolicy (positive control) and opa:8181 stays reachable.
+    decoy = f"ocor-poc-decoy-{uuid.uuid4().hex[:6]}"
+    subprocess.run(["docker", "run", "-d", "--name", decoy, "--network", BOOTSTRAP_NETWORK, OPS_IMAGE, "python3", "-m",
+                    "http.server", "8181"], capture_output=True, check=True)
+    try:
+        decoy_ip = subprocess.run(["docker", "inspect", "-f", "{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}",
+                                   decoy], capture_output=True, text=True, check=True).stdout.strip()
+        control = wait_for(lambda: subprocess.run(
+            ["docker", "exec", f"{KIND_CLUSTER}-control-plane", "bash", "-c",
+             f"exec 3<>/dev/tcp/{decoy_ip}/8181 && echo CONNECTED"], capture_output=True, text=True,
+            check=False).stdout.strip() == "CONNECTED", 30, 1, "decoy reachable from the node (positive control)")
+        assert control
+        egress = pod_python(ns, ops, "import socket\nfor t in [('1.1.1.1',443),('postgresql',5432),('opa',8181),"
+                            f"('{decoy_ip}',8181),('postgresql',8181),('qdrant',6334)]:\n"
+                            "    try: socket.create_connection(t,4).close(); print(t[0],t[1],'CONNECTED')\n"
+                            "    except OSError as e: print(t[0],t[1],'DENIED')")
+    finally:
+        subprocess.run(["docker", "rm", "-f", decoy], capture_output=True, check=False)
+    assert egress.splitlines() == ["1.1.1.1 443 DENIED", "postgresql 5432 CONNECTED", "opa 8181 CONNECTED",
+                                   f"{decoy_ip} 8181 DENIED", "postgresql 8181 DENIED", "qdrant 6334 DENIED"], egress
     subprocess.run(["docker", "pause", "ocor-bootstrap-qdrant-1"], check=True, capture_output=True)
     try:
         wait_for(lambda: not pod_ready(ns, "ops"), 60, 2, "pod readiness must drop while qdrant is paused")
