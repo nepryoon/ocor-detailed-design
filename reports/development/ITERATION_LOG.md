@@ -4282,3 +4282,28 @@
   (`OCOR-DEV-0049`…`OCOR-DEV-0069`) è bloccato transitivamente su `OCOR-DEV-0048`
   (`BLOCKED_REPAIR_BUDGET_EXHAUSTED`); le decisioni PO non bloccanti `RVW-03`/`INFO-A`/`INFO-C`
   restano aperte.
+
+## 2026-10-05 — OCOR-DEV-0048: ciclo 7 GO_FOR_EVIDENCE_SEAL → evidenza sigillata e mergiata (decisione OCOR-DEV-0048-REPAIR-CLAUDE-AUTO)
+
+- La decisione PO `OCOR-DEV-0048-REPAIR-CLAUDE-AUTO` (2026-10-04) supersede il divieto terminale
+  del ciclo 5 autorizzando fino a TRE ulteriori cicli di riparazione (implementatore Claude Code
+  /Anthropic, verifier Codex/OpenAI, fornitori diversi in processi separati).
+- Ciclo 6: verdetto indipendente `OCOR-DEV-0048-feb83b0c3a68-6` (head `feb83b0c3a684929a09b8684e8a334cb86c77efc`)
+  `NO_GO` con 1 finding `high` — `VF-001`: il ramo HTTP non-200 di `evaluate()` perde la
+  correlazione della richiesta.
+- Ciclo 7: corretto `VF-001` del ciclo 6 mantenendo la correlazione richiesta nel ramo OPA non-200;
+  verdetto indipendente `OCOR-DEV-0048-618875eff62a-7` (head `618875eff62a43c524180596f680cafb0b4a1d02`)
+  `GO_FOR_EVIDENCE_SEAL` con 0 finding. I 196 casi real-backend restano qualificanti (nessun mock
+  del boundary).
+- Evidenza G4 sigillata (`status: SEALED`, `result: PASS`, `repair_cycle: 7`) e mergiata in
+  PR #163 con 13 check verdi sull'HEAD esatto `61b7dcdb190426aefb6212e62a7408613d3ca506`
+  (merge `45e4a6f66209af3136d79980c00c41d79fb9ae8a`).
+- PR #164 mergiata in precedenza: scope della campagna runtime di `validation-closure` escluso il
+  guard `SPIRE conditional-infrastructure` (nessun indebolimento dei gate; i 196 casi real-backend
+  restano eseguiti). Il controllo `validation-closure` di PR #163 e' passato SUCCESS.
+- Stato: `OCOR-DEV-0048` in `completed_evidence_tasks`; downstream `OCOR-DEV-0049` e `OCOR-DEV-0050`
+  pronti (hard_dependencies soddisfatte); prossima azione `OCOR-DEV-0049:implementation`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`; `inputs/` invariato. Le decisioni PO non bloccanti
+  `RVW-03`/`INFO-A`/`INFO-C` restano `OPEN_PO_DECISION_REQUIRED`.
+- `EXECUTION_STATE.json`, `MODEL_HANDOFF.json` riallineati (0048 sigillato e mergiato).
