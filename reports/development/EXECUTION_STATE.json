@@ -1,10 +1,10 @@
 {
   "active_iteration": {
-    "branch": "governed/ci-0048-real-backend-registration",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__CI_0048_REAL_BACKEND_REGISTRATION",
+    "branch": "governed/state-sync-ocor-dev-0049-escalation",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_0049_ESCALATION",
     "decision_id": "DEC-210",
-    "phase": "CI_0048_REAL_BACKEND_REGISTRATION",
-    "worktree": ".ocor/worktrees/ci-0048-real-backend-registration"
+    "phase": "OCOR_DEV_0049_ESCALATION",
+    "worktree": ".ocor/worktrees/state-sync-ocor-dev-0049-escalation"
   },
   "backlog_escalations": {
     "OCOR-DEV-0048": {
@@ -267,9 +267,76 @@
           "verdict": "GO_FOR_EVIDENCE_SEAL"
         }
       ]
+    },
+    "OCOR-DEV-0049": {
+      "cycles_exhausted": 2,
+      "escalation_record": "reports/development/OCOR_DEV_0049_ESCALATION.md",
+      "final_findings": [
+        {
+          "id": "VF-001",
+          "severity": "high",
+          "summary": "Admission not fail-closed: with scanner unavailable or restore untested/failed, /admit?class=mutative|dispatch still returns 200 ADMIT; Handler.do_GET uses only denied_operation_classes, scanner error and unverified restore never enter State.faults (compose.profiles.yaml:1069). Violates LLD 5.3-5.4 fail-closed and recovery gate before reopening."
+        },
+        {
+          "id": "VF-002",
+          "severity": "high",
+          "summary": "Network default-deny not enforced: all service names are aliases of one relay listening 0.0.0.0 on every allowed port and selecting upstream by port only, so GET postgresql:8181 reaches the real OPA despite postgresql:8181 being absent from isolation.allowedFlows (compose.profiles.yaml:1180). Contradicts ADD 6.1 / LLD 5.1 default-deny."
+        },
+        {
+          "id": "VF-003",
+          "severity": "high",
+          "summary": "Restore GCS gate does not verify per-item tenant/compartment binding: authoritative PostgreSQL metadata tenant-a/c1 vs restored Qdrant payload tenant-b/c2 yields outcome PASSED and recovery_gate.gcs.pass=true (compose.profiles.yaml:1500). LLD 5.4 and ADD Part II 2.13 projection-drift block do not detect the isolation mismatch."
+        }
+      ],
+      "minimal_unblock_action": "VF-001: block governed/mutative/dispatch admissions when the security control is unavailable or restore is unverified/failed, apply governed reopening, keep explicitly authorized degradations; add operational positive/negative cases for SCANNER_ERROR, RESTORE_UNTESTED, invalid/failed receipt and open egress. VF-002: enforce declared destination/port pairs with distinct addresses/proxies and no common listener; verify opa:8181 allowed and postgresql:8181, qdrant:5432 denied. VF-003: compare per-item tenant/compartment against authoritative metadata and revalidate marking/GCS binding; any mismatch must yield receipt FAILED and materialisation BLOCKED; add per-item coherent/mismatch tests observing both receipt and restored service state.",
+      "po_decision_required": true,
+      "status": "BLOCKED_REPAIR_BUDGET_EXHAUSTED",
+      "verdicts": [
+        {
+          "findings": [
+            "VF-001",
+            "VF-002",
+            "VF-003"
+          ],
+          "head_sha": "884f7b1160b1802c0b00faede1ae00743459d7f5",
+          "repair_cycle": 0,
+          "request_id": "OCOR-DEV-0049-884f7b1160b1-0",
+          "review_type": "TASK_EVIDENCE",
+          "verdict": "NO_GO"
+        },
+        {
+          "findings": [
+            "VF-001",
+            "VF-002",
+            "VF-003",
+            "VF-004",
+            "VF-005",
+            "VF-006"
+          ],
+          "head_sha": "2c5a574a5f3a127ffd9857601bfa9e593b69e604",
+          "repair_cycle": 1,
+          "request_id": "OCOR-DEV-0049-2c5a574a5f3a-1",
+          "review_type": "TASK_EVIDENCE",
+          "verdict": "NO_GO"
+        },
+        {
+          "findings": [
+            "VF-001",
+            "VF-002",
+            "VF-003"
+          ],
+          "head_sha": "7fd4f77288010b98330f74a4da455fa1b6e9e321",
+          "implementer": "Claude Code (Anthropic)",
+          "repair_cycle": 2,
+          "request_id": "OCOR-DEV-0049-7fd4f7728801-2",
+          "review_type": "TASK_EVIDENCE",
+          "verdict": "NO_GO",
+          "verifier": "Codex (OpenAI)"
+        }
+      ]
     }
   },
-  "baseline_commit": "45e4a6f66209af3136d79980c00c41d79fb9ae8a",
+  "baseline_commit": "bb43d6373cd1b7cc6c1f4363725a02139df5f046",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -342,6 +409,20 @@
       "non_blocking": false,
       "scope": "CI-0048-REAL-BACKEND (2026-10-05): PR #164 excluded test_ocor_dev_0048.py from validation-closure CI (--ignore) as a temporary measure. Remediation: provision the full ocor-bootstrap stack in CI (SPIRE server/agent + bootstrap credentials + digest-pinned images from infra/services.lock.json), run test_ocor_dev_0048.py with zero skips, remove the --ignore. Mandatory dependency of every G6 task (OCOR-DEV-0060..0066); does not block OCOR-DEV-0049 or G5.",
       "status": "OPEN"
+    },
+    {
+      "blocked_tasks": [
+        "OCOR-DEV-0059",
+        "OCOR-DEV-0060",
+        "OCOR-DEV-0063",
+        "OCOR-DEV-0064",
+        "OCOR-DEV-0066"
+      ],
+      "escalation_record": "reports/development/OCOR_DEV_0049_ESCALATION.md",
+      "id": "OCOR-DEV-0049",
+      "non_blocking": false,
+      "scope": "Repair budget exhausted (2 cycles) with NO_GO verdict OCOR-DEV-0049-7fd4f7728801-2 (3 high findings VF-001..VF-003). Requires explicit PO authorization for a third repair cycle (RCCAD 8).",
+      "status": "BLOCKED_REPAIR_BUDGET_EXHAUSTED"
     }
   ],
   "claims": {
@@ -488,7 +569,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0049:implementation \u2014 lowest-numbered ready task after OCOR-DEV-0048 GO_FOR_EVIDENCE_SEAL (cycle 7) was sealed and merged (PR #163, 45e4a6f66209af3136d79980c00c41d79fb9ae8a). OCOR-DEV-0050 is also ready (hard_dependencies satisfied). Non-blocking PO decisions RVW-03, INFO-A, INFO-C remain OPEN_PO_DECISION_REQUIRED.",
+  "next_executable_action": "OCOR-DEV-REM-0017:implementation \u2014 prossima azione dopo l'escalation di OCOR-DEV-0049 (NO_GO ciclo 2, budget ordinario di 2 riparazioni esaurito). OCOR-DEV-0050 resta pronto (hard_dependencies soddisfatte, non dipende da 0049). OCOR-DEV-0049 e downstream 0059/0060/0063/0064/0066 bloccati su BLOCKED_REPAIR_BUDGET_EXHAUSTED. Decisioni PO non bloccanti RVW-03/INFO-A/INFO-C restano OPEN_PO_DECISION_REQUIRED.",
   "remediation_status": {
     "CI-0048_REAL_BACKEND": {
       "deviation_pr": 164,
@@ -707,5 +788,5 @@
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-10-05T10:04:04Z"
+  "updated_at": "2026-10-05T17:03:22Z"
 }
