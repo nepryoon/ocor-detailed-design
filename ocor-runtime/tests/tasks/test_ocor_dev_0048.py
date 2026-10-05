@@ -555,6 +555,7 @@ def principals(admin_token: str) -> None:
                 "enabled": True,
                 "firstName": "Analyst",
                 "lastName": "One",
+                "email": f"{USERNAME}@ocor.test",
                 "emailVerified": True,
             }
         )
@@ -570,6 +571,16 @@ def principals(admin_token: str) -> None:
         )
         users = json.loads(body)
     uid = users[0]["id"]
+    if not users[0].get("email"):
+        # The Keycloak 26 default user profile requires an email: without it a
+        # freshly provisioned realm answers "Account is not fully set up".
+        status, body = _http(
+            "PUT",
+            f"{KC}/admin/realms/{REALM}/users/{uid}",
+            headers={**headers, "Content-Type": "application/json"},
+            body=json.dumps({**users[0], "email": f"{USERNAME}@ocor.test", "emailVerified": True}),
+        )
+        assert status == 204, f"set synthetic email: HTTP {status} {body}"
     payload = json.dumps({"type": "password", "value": USER_PWD, "temporary": False})
     status, body = _http(
         "PUT",
@@ -2872,3 +2883,408 @@ def test_repair5_secret_lease_is_bound_to_the_authenticated_principal(
     expired = replace(principal, expires_at=_now() + timedelta(seconds=1))
     _wait_past(expired.expires_at)
     _expect("IDENTITY_EXPIRED", lambda: provider.lease(own, principal=expired))
+
+
+# --------------------------------------------------------------------------- #
+# REPAIR-6: a signed OIDC ``act`` claim authenticates actors, never a grant
+# --------------------------------------------------------------------------- #
+
+
+def _keycloak_admin_headers(env: dict[str, str]) -> dict[str, str]:
+    import urllib.parse
+    status, body = _http("POST", KC + "/realms/master/protocol/openid-connect/token",
+                         headers={"Content-Type": "application/x-www-form-urlencoded"},
+                         body=urllib.parse.urlencode({
+                             "client_id": "admin-cli", "username": "ocor-admin",
+                             "password": env["OCOR_LOCAL_KEYCLOAK_PASSWORD"],
+                             "grant_type": "password"}))
+    assert status == 200, body
+    return {"Authorization": "Bearer " + json.loads(body)["access_token"],
+            "Content-Type": "application/json"}
+
+
+def _analyst_subject(headers: dict[str, str]) -> str:
+    status, body = _http("GET", f"{KC}/admin/realms/{REALM}/users?username={USERNAME}",
+                         headers=headers)
+    assert status == 200, body
+    return str(json.loads(body)[0]["id"])
+
+
+@pytest.fixture
+def repair6_act(env, principals, mtls, request):
+    """A real Keycloak client whose access tokens carry a signed ``act`` claim.
+
+    ``request.param`` is ``(claim_value, json_type)``; ``{sub}`` in the value
+    is replaced by the analyst's own subject.  Keycloak signs the token, so
+    the claim reaches the provider exactly as an RFC 8693 actor claim would.
+    """
+    value, json_type = request.param
+    headers = _keycloak_admin_headers(env)
+    value = value.replace("{sub}", _analyst_subject(headers))
+    client_id = "repair6-" + uuid.uuid4().hex
+    payload = {"clientId": client_id, "enabled": True, "publicClient": True,
+               "directAccessGrantsEnabled": True, "protocol": "openid-connect",
+               "protocolMappers": [{
+                   "name": "repair6-act", "protocol": "openid-connect",
+                   "protocolMapper": "oidc-hardcoded-claim-mapper",
+                   "config": {"claim.name": "act", "claim.value": value,
+                              "jsonType.label": json_type, "access.token.claim": "true"}}]}
+    status, body = _http("POST", f"{KC}/admin/realms/{REALM}/clients", headers=headers,
+                         body=json.dumps(payload))
+    assert status == 201, body
+    status, body = _http("GET", f"{KC}/admin/realms/{REALM}/clients?clientId={client_id}",
+                         headers=headers)
+    assert status == 200, body
+    uid = json.loads(body)[0]["id"]
+    try:
+        yield KeycloakIdentityProvider(str(mtls["keycloak"]), REALM, client_id,
+                                       password_resolver=lambda _: USER_PWD,
+                                       ssl_context=mtls["ssl_context"])
+    finally:
+        headers = _keycloak_admin_headers(env)
+        assert _http("DELETE", f"{KC}/admin/realms/{REALM}/clients/{uid}",
+                     headers=headers)[0] == 204
+
+
+def _authenticate(provider: KeycloakIdentityProvider) -> AuthenticatedPrincipal:
+    return provider.authenticate(IdentityRequest(
+        "urn:ocor:credential-ref:" + USERNAME, "account", str(uuid.uuid4())))
+
+
+_ACT_DELEGATOR = ('{"sub": "delegator-1"}', "JSON")
+_ACT_INTERMEDIARY = ('{"sub": "intermediary-1"}', "JSON")
+_ACT_NESTED = ('{"sub": "intermediary-1", "act": {"sub": "delegator-1"}}', "JSON")
+
+
+def _delegated_opa(mtls: dict[str, object], principal_id: str) -> tuple[
+        OpaPolicyDecisionProvider, str]:
+    provider = OpaPolicyDecisionProvider(
+        str(mtls["opa"]), POLICY_ID, signer_public_key=(_SIGNER_N, _SIGNER_E),
+        delegation_signer_public_key=(_SIGNER_N, _SIGNER_E), ssl_context=mtls["ssl_context"])
+    return provider, _install_policy(provider, _rego(principal_id))
+
+
+@pytest.mark.parametrize("repair6_act,expected", [
+    (_ACT_DELEGATOR, ("delegator-1",)),
+    (_ACT_NESTED, ("delegator-1", "intermediary-1")),
+], indirect=["repair6_act"])
+def test_repair6_signed_act_claim_authenticates_the_actor_chain(repair6_act, expected):
+    principal = _authenticate(repair6_act)
+    assert principal.actor_chain == expected + (principal.principal_id,)
+
+
+@pytest.mark.parametrize("repair6_act", [
+    ('"delegator-1"', "String"),
+    ('{"client_id": "delegator-1"}', "JSON"),
+    ('{"sub": ""}', "JSON"),
+    ('{"sub": 7}', "JSON"),
+    ('{"sub": "{sub}"}', "JSON"),
+    ('{"sub": "delegator-1", "act": {"sub": "delegator-1"}}', "JSON"),
+    ('{"sub": "delegator-1", "act": "intermediary-1"}', "JSON"),
+], indirect=True)
+def test_repair6_malformed_act_claim_is_rejected(repair6_act):
+    # The reason must be the signed actor claim itself, never a transport or
+    # grant failure that would also surface as IDENTITY_REJECTED.
+    error = _expect("IDENTITY_REJECTED", lambda: _authenticate(repair6_act))
+    assert "actor claim" in str(error), str(error)
+
+
+@pytest.mark.parametrize("repair6_act", [_ACT_DELEGATOR], indirect=True)
+def test_repair6_act_claim_does_not_replace_the_grant(repair6_act, mtls):
+    principal = _authenticate(repair6_act)
+    provider, digest = _delegated_opa(mtls, principal.principal_id)
+    grant = _sign_delegation(delegatee_id=principal.principal_id)
+    request = _delegated_policy_request(principal, digest, grant)
+    assert request.governed_context.actor_chain == principal.actor_chain
+    # Positive: the authenticated actors plus the complete signed grant.
+    decision = provider.evaluate(request, delegation=grant, capability=_CAPABILITY)
+    assert decision.effect is PolicyEffect.PERMIT
+    decision.verify(request, at=_now())
+    # Negative: the same signed act claim without the grant, with or without
+    # a declared capability, and with the authenticated actor omitted.
+    _expect("DELEGATION_REQUIRED", lambda: provider.evaluate(request))
+    _expect("DELEGATION_REQUIRED", lambda: provider.evaluate(request, capability=_CAPABILITY))
+    _expect("DELEGATION_REQUIRED", lambda: provider.evaluate(_policy_request(principal, digest)))
+    _expect("DELEGATION_INVALID", lambda: provider.evaluate(request, delegation=()))
+    _expect("DELEGATION_INVALID", lambda: provider.evaluate(request, delegation=grant))
+    # Revocation: presenting the revoked grant and omitting it are both denied.
+    provider.apply_revocation(_sign_revocation(grant.grant_id))
+    _expect("DELEGATION_REVOKED",
+            lambda: provider.evaluate(request, delegation=grant, capability=_CAPABILITY))
+    _expect("DELEGATION_REQUIRED", lambda: provider.evaluate(request))
+
+
+@pytest.mark.parametrize("overrides,reason", [
+    ({"not_before": _now() - timedelta(minutes=10), "expires_at": _now() - timedelta(minutes=1)},
+     "DELEGATION_EXPIRED"),
+    ({"not_before": _now() + timedelta(minutes=10), "expires_at": _now() + timedelta(hours=1)},
+     "DELEGATION_EXPIRED"),
+    ({"resource_scope": "urn:ocor:target:other-site"}, "DELEGATION_SCOPE_MISMATCH"),
+    ({"permitted_purposes": ("write-site-1",)}, "DELEGATION_PURPOSE_MISMATCH"),
+    ({"capability_id": "urn:ocor:capability:other"}, "DELEGATION_CAPABILITY_MISMATCH"),
+    ({"effect_ceiling": OperationClass.R0_READ, "risk_ceiling": RiskClass.R0_INFORMATIONAL,
+      "_capability": OperationClass.R1_DERIVE}, "DELEGATION_CEILING_EXCEEDED"),
+    ({"delegator_id": "delegator-2"}, "IDENTITY_BINDING_MISMATCH"),
+    ({"confirmation_key_thumbprint": "urn:sha256:" + "a" * 64},
+     "DELEGATION_KEY_BINDING_MISMATCH"),
+])
+@pytest.mark.parametrize("repair6_act", [_ACT_DELEGATOR], indirect=True)
+def test_repair6_act_principal_grant_is_fully_verified(repair6_act, mtls, overrides, reason):
+    principal = _authenticate(repair6_act)
+    provider, digest = _delegated_opa(mtls, principal.principal_id)
+    fields = dict(overrides)
+    effect = fields.pop("_capability", None)
+    capability = _CAPABILITY if effect is None else replace(_CAPABILITY, effect_class=effect)
+    grant = _sign_delegation(delegatee_id=principal.principal_id, **fields)  # type: ignore[arg-type]
+    request = _delegated_policy_request(principal, digest, grant)
+    _expect(reason, lambda: provider.evaluate(request, delegation=grant, capability=capability))
+
+
+@pytest.mark.parametrize("repair6_act,expected", [
+    (_ACT_INTERMEDIARY, None),
+    (_ACT_NESTED, None),
+    (_ACT_DELEGATOR, "IDENTITY_BINDING_MISMATCH"),
+], indirect=["repair6_act"])
+def test_repair6_authenticated_actors_are_the_exact_chain_tail(repair6_act, mtls, expected):
+    principal = _authenticate(repair6_act)
+    provider, digest = _delegated_opa(mtls, principal.principal_id)
+    chain = _grant_chain(principal, digest)
+    request = _delegated_policy_request(principal, digest, chain)
+    assert request.governed_context.actor_chain == (
+        "delegator-1", "intermediary-1", principal.principal_id)
+    if expected is None:
+        decision = provider.evaluate(request, delegation=chain, capability=_CAPABILITY)
+        assert decision.effect is PolicyEffect.PERMIT
+    else:
+        _expect(expected,
+                lambda: provider.evaluate(request, delegation=chain, capability=_CAPABILITY))
+    # Dropping the root grant can never shorten the authenticated chain.
+    child = _sign_delegation(delegatee_id=principal.principal_id, delegator_id="intermediary-1",
+                             policy_bundle_digest=digest)
+    short = _delegated_policy_request(principal, digest, child)
+    reason = "IDENTITY_BINDING_MISMATCH" if len(principal.actor_chain) > 2 or (
+        principal.actor_chain[0] != "intermediary-1") else None
+    if reason is None:
+        assert provider.evaluate(short, delegation=child, capability=_CAPABILITY).effect is (
+            PolicyEffect.PERMIT)
+    else:
+        _expect(reason, lambda: provider.evaluate(short, delegation=child, capability=_CAPABILITY))
+    _expect("DELEGATION_REQUIRED", lambda: provider.evaluate(request))
+
+
+def test_repair6_non_delegated_principal_needs_exactly_its_own_chain(
+    principal: AuthenticatedPrincipal, opa: tuple[OpaPolicyDecisionProvider, str],
+):
+    provider, digest = opa
+    assert principal.actor_chain == (principal.principal_id,)
+    assert provider.evaluate(_policy_request(principal, digest)).effect is PolicyEffect.PERMIT
+    for chain in (("delegator-1", principal.principal_id), (principal.principal_id, "x-1"),
+                  ("delegator-1",)):
+        gcs = replace(_gcs(principal, digest), actor_chain=chain)
+        request = PolicyRequest(principal=principal, action="read",
+                                resource="urn:ocor:target:site-1", governed_context=gcs,
+                                governed_context_digest=gcs.digest(), at=_now())
+        _expect("IDENTITY_BINDING_MISMATCH", lambda: provider.evaluate(request))
+
+
+@pytest.mark.parametrize("repair6_act", [_ACT_DELEGATOR], indirect=True)
+def test_repair6_delegated_session_cannot_lease_a_secret_without_a_grant(
+    repair6_act, principal: AuthenticatedPrincipal, env: dict[str, str], mtls: dict[str, object],
+):
+    delegated = _authenticate(repair6_act)
+    assert delegated.principal_id == principal.principal_id
+    name = "repair6-lease-" + uuid.uuid4().hex
+    _seed_secret(env, principal.principal_id, name, {"value": "own"})
+    provider = OpenBaoSecretProvider(str(mtls["openbao"]), env["OCOR_LOCAL_OPENBAO_TOKEN"],
+                                     ssl_context=mtls["ssl_context"])
+    request = SecretRequest("urn:ocor:secret-ref:" + name, principal.principal_id,
+                            "read-site-1", "urn:sha256:" + "1" * 64, _now())
+    provider.lease(request, principal=principal).verify(request, at=_now())
+    _expect("DELEGATION_REQUIRED", lambda: provider.lease(request, principal=delegated))
+
+
+# --------------------------------------------------------------------------- #
+# REPAIR-6 path audit: every remaining authentication, evaluation and SVID
+# branch is exercised with real Keycloak, OPA and SPIRE material.
+# --------------------------------------------------------------------------- #
+
+
+def _b64url(data: bytes) -> str:
+    return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+
+
+def _b64url_json(segment: str) -> dict[str, object]:
+    return json.loads(base64.urlsafe_b64decode(segment + "=" * (-len(segment) % 4)))
+
+
+def _control_plane_keycloak(mtls: dict[str, object], client_id: str = CLIENT_ID):
+    return KeycloakIdentityProvider(str(mtls["keycloak"]), REALM, client_id,
+                                    password_resolver=lambda _: USER_PWD,
+                                    ssl_context=mtls["ssl_context"])
+
+
+def test_repair6_access_token_verification_branches(principals, mtls):
+    provider = _control_plane_keycloak(mtls)
+    configuration = provider._oidc_configuration()
+    issuer = str(configuration["issuer"])
+    jwks = provider._jwks(provider._secure_endpoint(str(configuration["jwks_uri"])))
+    token = provider._password_grant(
+        provider._secure_endpoint(str(configuration["token_endpoint"])), USERNAME, USER_PWD)
+    claims = provider._verify_access_token(token, jwks, issuer, "account")
+    assert isinstance(claims["sub"], str) and "act" not in claims
+    header, payload, signature = token.split(".")
+    head, body = _b64url_json(header), _b64url_json(payload)
+    forged = {
+        "malformed JWT": header + "." + payload,
+        "unsupported JWT algorithm": _b64url(json.dumps({**head, "alg": "none"}).encode())
+        + "." + payload + "." + signature,
+        "unknown signing key": _b64url(json.dumps({**head, "kid": "forged-kid"}).encode())
+        + "." + payload + "." + signature,
+        # An actor claim cannot be added to a signed token after issuance.
+        "JWT signature check failed": header + "."
+        + _b64url(json.dumps({**body, "act": {"sub": "delegator-1"}}).encode())
+        + "." + signature,
+    }
+    for message, value in forged.items():
+        error = _expect("IDENTITY_REJECTED",
+                        lambda value=value: provider._verify_access_token(
+                            value, jwks, issuer, "account"))
+        assert message in str(error), str(error)
+    error = _expect("IDENTITY_REJECTED",
+                    lambda: provider._verify_access_token(token, jwks, issuer + "-x", "account"))
+    assert "issuer mismatch" in str(error)
+    error = _expect("IDENTITY_REJECTED",
+                    lambda: provider._verify_access_token(token, jwks, issuer, "other-audience"))
+    assert "audience mismatch" in str(error)
+
+
+def test_repair6_credential_reference_branches(principals, mtls):
+    provider = _control_plane_keycloak(mtls)
+    principal = provider.authenticate(IdentityRequest(
+        "urn:ocor:credential-ref:" + USERNAME, "account", str(uuid.uuid4())))
+    assert principal.actor_chain == (principal.principal_id,)
+    empty = IdentityRequest("urn:ocor:credential-ref:", "account", str(uuid.uuid4()))
+    error = _expect("IDENTITY_REJECTED", lambda: provider.authenticate(empty))
+    assert "empty credential reference" in str(error)
+    foreign = IdentityRequest("urn:ocor:credential-ref:" + USERNAME, "account",
+                              str(uuid.uuid4()))
+    object.__setattr__(foreign, "credential_ref", "urn:other:" + USERNAME)
+    error = _expect("IDENTITY_REJECTED", lambda: provider.authenticate(foreign))
+    assert "unknown credential reference" in str(error)
+
+
+@pytest.fixture
+def repair6_subjectless_client(env, principals, mtls):
+    """A real client whose tokens carry the audience but no ``sub`` claim."""
+    headers = _keycloak_admin_headers(env)
+    client_id = "repair6-nosub-" + uuid.uuid4().hex
+    payload = {"clientId": client_id, "enabled": True, "publicClient": True,
+               "directAccessGrantsEnabled": True, "protocol": "openid-connect",
+               "protocolMappers": [{
+                   "name": "repair6-audience", "protocol": "openid-connect",
+                   "protocolMapper": "oidc-audience-mapper",
+                   "config": {"included.custom.audience": "account",
+                              "access.token.claim": "true"}}]}
+    status, body = _http("POST", f"{KC}/admin/realms/{REALM}/clients", headers=headers,
+                         body=json.dumps(payload))
+    assert status == 201, body
+    status, body = _http("GET", f"{KC}/admin/realms/{REALM}/clients?clientId={client_id}",
+                         headers=headers)
+    uid = json.loads(body)[0]["id"]
+    try:
+        status, body = _http("GET", f"{KC}/admin/realms/{REALM}/clients/{uid}/default-client-scopes",
+                             headers=headers)
+        assert status == 200, body
+        for scope in json.loads(body):
+            assert _http("DELETE", f"{KC}/admin/realms/{REALM}/clients/{uid}/"
+                         f"default-client-scopes/{scope['id']}", headers=headers)[0] == 204
+        yield _control_plane_keycloak(mtls, client_id)
+    finally:
+        assert _http("DELETE", f"{KC}/admin/realms/{REALM}/clients/{uid}",
+                     headers=_keycloak_admin_headers(env))[0] == 204
+
+
+def test_repair6_token_without_subject_is_rejected(repair6_subjectless_client, mtls):
+    provider = repair6_subjectless_client
+    configuration = provider._oidc_configuration()
+    token = provider._password_grant(
+        provider._secure_endpoint(str(configuration["token_endpoint"])), USERNAME, USER_PWD)
+    jwks = provider._jwks(provider._secure_endpoint(str(configuration["jwks_uri"])))
+    claims = provider._verify_access_token(token, jwks, str(configuration["issuer"]), "account")
+    assert "sub" not in claims  # the real token verifies: only the subject is missing
+    error = _expect("IDENTITY_REJECTED", lambda: _authenticate(provider))
+    assert "missing subject claim" in str(error)
+    assert _authenticate(_control_plane_keycloak(mtls)).principal_id
+
+
+def test_repair6_forged_svid_chain_is_rejected(env):
+    from ocor_runtime.security.control_plane import (
+        _parse_certificate,
+        _verify_certificate_signature,
+    )
+    provider = SpireWorkloadIdentityProvider(
+        agent_container=SPIRE_AGENT_CONTAINER, socket_path=SPIRE_SOCKET,
+        expected_spiffe_id=EXPECTED_SPIFFE_ID)
+    assert provider.current().spiffe_id == EXPECTED_SPIFFE_ID
+    svid = provider._fetch_svid()
+    chain = _split_der_chain(_b64_decode(str(svid["x509_svid"])))
+    certificates = [_parse_certificate(der) for der in chain + [_b64_decode(str(svid["bundle"]))]]
+    for child, issuer in zip(certificates, certificates[1:]):
+        _verify_certificate_signature(child, issuer)
+    leaf, intermediate, root = certificates[0], certificates[1], certificates[-1]
+    tampered_tbs = bytearray(leaf["tbs_der"])  # type: ignore[arg-type]
+    tampered_tbs[-1] ^= 0x01
+    for forged, issuer in (
+        ({**leaf, "tbs_der": bytes(tampered_tbs)}, intermediate),
+        ({**leaf, "sigalg_oid": b"\x2a\x03"}, intermediate),
+        (leaf, root),
+        (intermediate, leaf),
+    ):
+        _expect("SVID_CHAIN_INVALID",
+                lambda forged=forged, issuer=issuer: _verify_certificate_signature(forged, issuer))
+
+
+def test_repair6_boundary_rechecks_the_principal_binding(
+    principal: AuthenticatedPrincipal, opa: tuple[OpaPolicyDecisionProvider, str],
+):
+    provider, digest = opa
+    request = _policy_request(principal, digest)
+    assert provider.evaluate(request).effect is PolicyEffect.PERMIT
+    other = replace(request.governed_context, effective_principal_id="someone-else",
+                    actor_chain=("someone-else",))
+    forged = replace(request)
+    object.__setattr__(forged, "governed_context", other)
+    object.__setattr__(forged, "governed_context_digest", other.digest())
+    _expect("PRINCIPAL_BINDING_MISMATCH", lambda: provider.evaluate(forged))
+
+
+_CONFLICTING_REGO = (
+    "package ocor.control_plane\n\n"
+    'allow := true if { input.action == "read" }\n\n'
+    'allow := false if { input.resource == "urn:ocor:target:site-1" }\n'
+)
+
+
+def test_repair6_policy_evaluation_error_fails_closed(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object],
+):
+    provider = OpaPolicyDecisionProvider(str(mtls["opa"]), POLICY_ID,
+                                         signer_public_key=(_SIGNER_N, _SIGNER_E),
+                                         ssl_context=mtls["ssl_context"])
+    digest = _install_policy(provider, _CONFLICTING_REGO)
+    gcs = _gcs(principal, digest)
+
+    def request(action: str, resource: str) -> PolicyRequest:
+        return PolicyRequest(principal=principal, action=action, resource=resource,
+                             governed_context=gcs, governed_context_digest=gcs.digest(),
+                             at=_now())
+
+    assert provider.evaluate(request("read", "urn:ocor:target:site-2")).effect is (
+        PolicyEffect.PERMIT)
+    assert provider.evaluate(request("write", "urn:ocor:target:site-1")).effect is (
+        PolicyEffect.DENY)
+    # Both complete-rule definitions apply: real OPA answers an evaluation
+    # error, which is a denial and never a permit.
+    error = _expect("POLICY_UNAVAILABLE",
+                    lambda: provider.evaluate(request("read", "urn:ocor:target:site-1")))
+    assert "policy eval HTTP 500" in str(error)

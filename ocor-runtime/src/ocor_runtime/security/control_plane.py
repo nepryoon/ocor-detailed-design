@@ -972,6 +972,38 @@ def verify_signed_delegation_revocation(
         )
 
 
+_ABSENT = object()
+
+
+def _signed_actor_chain(
+    actor: object, principal_id: str, correlation_id: str | None
+) -> list[str]:
+    """Derive the authenticated actor chain from a verified ``act`` claim.
+
+    Actors are expressed only by the signed RFC 8693 ``act`` claim, whose
+    nested ``act`` names the prior actor; neither ``azp`` nor
+    ``preferred_username`` is ever an actor.  The chain is ordered from the
+    earliest actor to the principal.  A present but malformed, empty,
+    self-referencing or repeating claim is rejected rather than ignored, so a
+    token can never be read as less delegated than it is signed to be.  The
+    chain authenticates the actors only: a delegated request still needs the
+    complete signed grant chain at the policy boundary.
+    """
+    chain = [principal_id]
+    claims: object = {"act": actor} if actor is not _ABSENT else {}
+    while isinstance(claims, dict) and "act" in claims:
+        actor = claims["act"]
+        actor_id = actor.get("sub") if isinstance(actor, dict) else None
+        if not isinstance(actor_id, str) or not actor_id or actor_id in chain:
+            raise SecurityControlError(
+                "IDENTITY_REJECTED",
+                f"{_correlation(correlation_id)} malformed or cyclic actor claim",
+            )
+        chain.insert(0, actor_id)
+        claims = actor
+    return chain
+
+
 # --------------------------------------------------------------------------- #
 # Providers
 # --------------------------------------------------------------------------- #
@@ -1157,14 +1189,9 @@ class KeycloakIdentityProvider:
         if not isinstance(subject, str) or not subject:
             raise SecurityControlError("IDENTITY_REJECTED", "missing subject claim")
         principal_id = subject
-        actor_chain = [principal_id]
-        # Delegation is expressed only by a verified ``act`` claim (RFC 8693
-        # token exchange); neither ``azp`` nor ``preferred_username`` is ever a
-        # delegation proof, so neither is added to the actor chain.
-        actor = claims.get("act")
-        if isinstance(actor, dict) and isinstance(actor.get("sub"), str):
-            if actor["sub"] not in actor_chain:
-                actor_chain.insert(0, str(actor["sub"]))
+        actor_chain = _signed_actor_chain(
+            claims.get("act", _ABSENT), principal_id, correlation_id
+        )
         session_id = str(
             claims.get("session_state")
             or claims.get("sid")
@@ -1791,21 +1818,43 @@ class OpaPolicyDecisionProvider:
                 f"correlation_id={correlation_id} governed policy pin does not match "
                 "the installed bundle",
             )
-        # Binding 2: the governed actor_chain must be derived from the
-        # authenticated principal's own chain -- an unverified delegator is
-        # never introduced by the request alone.  A multi-hop chain is only
-        # accepted with the complete signed grant chain that delegates it.
+        # Binding 2: the governed actor_chain is compared exactly, never as a
+        # set.  Authenticated actors (a signed OIDC ``act`` claim) prove who
+        # acts; they never replace the grant.  Any request with more than one
+        # actor -- declared in the governed context or authenticated on the
+        # token -- is delegated and is accepted only with the complete signed
+        # grant chain, whose tail must be exactly the authenticated actors.
         chain = tuple(request.governed_context.actor_chain)
+        authenticated = tuple(request.principal.actor_chain)
+        principal_id = request.principal.principal_id
+        if request.governed_context.effective_principal_id != principal_id:
+            raise SecurityControlError(
+                "PRINCIPAL_BINDING_MISMATCH",
+                f"correlation_id={correlation_id} authenticated principal differs from GCS",
+            )
         grants: tuple[SignedDelegation, ...] = ()
         chain_digest: str | None = None
         if delegation is None:
-            if not set(chain).issubset(set(request.principal.actor_chain)):
+            if authenticated != (principal_id,):
+                raise SecurityControlError(
+                    "DELEGATION_REQUIRED",
+                    f"correlation_id={correlation_id} authenticated actors require the "
+                    "signed delegation grant chain",
+                )
+            if chain != (principal_id,):
                 raise SecurityControlError(
                     "IDENTITY_BINDING_MISMATCH",
                     f"correlation_id={correlation_id} actor_chain is not bound to the "
                     "authenticated principal",
                 )
         else:
+            if (len(authenticated) > len(chain)
+                    or chain[len(chain) - len(authenticated):] != authenticated):
+                raise SecurityControlError(
+                    "IDENTITY_BINDING_MISMATCH",
+                    f"correlation_id={correlation_id} actor_chain omits or reorders the "
+                    "authenticated actors",
+                )
             grants = (delegation,) if isinstance(delegation, SignedDelegation) else tuple(
                 delegation)
             chain_digest, _ = self._verify_grant_chain(
@@ -2155,6 +2204,12 @@ class OpenBaoSecretProvider:
         if request.principal_id != principal.principal_id:
             raise SecurityControlError(
                 "SECRET_BINDING_MISMATCH", "secret request is not bound to the authenticated principal"
+            )
+        # A session whose token names other actors is delegated: the lease
+        # port carries no grant chain, so a delegated session never leases.
+        if tuple(principal.actor_chain) != (principal.principal_id,):
+            raise SecurityControlError(
+                "DELEGATION_REQUIRED", "a delegated session cannot lease without a verified grant"
             )
         # Transport authority first (an expired SVID is reported as such),
         # then the principal's own window; any other context is refused by
