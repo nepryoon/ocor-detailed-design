@@ -2015,24 +2015,55 @@
         "skipped": 0
       },
       "status": "PASS"
+    },
+    {
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair7_policy_evaluation_error_keeps_correlation",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m pytest -v --tb=line -p no:cacheprovider ocor-runtime/tests/ --junitxml=/home/luca/.ocor-codex/repair7/full-runtime.xml",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1101,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m pytest -v --tb=line -p no:cacheprovider reports/tests/test_authoritative_contract_conformance.py reports/tests/test_autonomous_tooling_policy.py reports/tests/test_backlog_generator_reality_parity.py reports/tests/test_bootstrap_lock_validation.py reports/tests/test_evidence_input_drift.py reports/tests/test_generate_contracts_reference_resolution.py reports/tests/test_language_migration_benchmark_harness.py reports/tests/test_rccad_methodology.py reports/tests/test_runtime_evidence_validator.py reports/tests/test_validate_language_policy.py --junitxml=/home/luca/.ocor-codex/repair7/reports-ci.xml",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 82,
+        "skipped": 0
+      },
+      "status": "PASS"
     }
   ],
-  "commit": "404b9a3cd8705970eadf83c253c81a743e912f96",
-  "created_at": "2026-10-05T06:37:23.799161Z",
+  "commit": "b2017eca792d2a7531b7cde61b5259c3644bfa11",
+  "created_at": "2026-10-05T07:24:20.026029Z",
   "delegation_assurance": {
     "actor_claim": "Il claim OIDC act (RFC 8693, anche annidato) firmato da Keycloak autentica gli attori e non sostituisce mai il grant: senza delega evaluate accetta solo un principal non delegato con actor_chain esattamente (principal,), altrimenti DELEGATION_REQUIRED/IDENTITY_BINDING_MISMATCH; con delega gli attori autenticati devono essere esattamente la coda della catena del GCS, poi si verifica la catena SignedDelegation completa; act malformato, vuoto, auto-riferito o ciclico IDENTITY_REJECTED; una sessione delegata non ottiene lease OpenBao (DELEGATION_REQUIRED).",
     "authority_intersection": "per ogni grant della catena: resource_scope, tenant, organization, domain \u2208 domains, compartments \u2286 compartments, purpose \u2208 permitted_purposes, capability id/version, effect_class \u2264 effect_ceiling (LLD \u00a74.1 R0..R3), risk_class \u2264 risk_ceiling (RiskClass kernel), policy_bundle_digest = snapshot verificato; poi Policy OPA",
     "chain": "actor_chain = grantor/grantee dei grant; parent_grant_digest collegato; redelegation_allowed=false di default; non-ampliamento di capability/scope/purpose/durata/ceiling/depth; max_chain_depth; ciclo inesprimibile nel GCS",
     "grant_record": "SignedDelegation/DelegationGrant firma RFC 8785 di tutti i 20 campi ADD v1.3 \u00a75.2 (signature_ref = firma distaccata) pi\u00f9 organization_id (ADD \u00a71.4: tenant/organization/domain/compartments confrontati con binding autorizzati); digest content-addressed urn:sha256; grant incompleti o malformati DELEGATION_INVALID",
     "interpretation": "Interpretazione fail-closed senza nuova decisione: organization_id aggiunto al grant (restringe soltanto); effect_ceiling ordinato sulle classi LLD \u00a74.1; capability dichiarata dal chiamante intersecata col grant e inoltrata alla policy firmata.",
+    "policy_error_correlation": "Il ramo HTTP non-200 di OpaPolicyDecisionProvider.evaluate solleva SecurityControlError(\"POLICY_UNAVAILABLE\", \"correlation_id=<id> policy eval HTTP <status>\") conservando il correlation_id della richiesta (LLD v1.1 \u00a75.3). Il denial resta fail-closed; nessun PERMIT viene prodotto su errore. test_repair7_policy_evaluation_error_keeps_correlation verifica PERMIT (read/site-2), DENY (write/site-1) e HTTP 500 reale con correlazione asserita.",
     "replay_transfer": "confirmation_key_thumbprint = SHA-256 SPKI della SVID presentata su mTLS; nonce unico per contenuto di grant",
     "revocation": "revoche firmate al costruttore o a runtime (apply_revocation); rivalidazione completa prima e dopo la valutazione OPA"
   },
   "environment": {
-    "acquired_from_head": "404b9a3cd8705970eadf83c253c81a743e912f96",
+    "acquired_from_head": "b2017eca792d2a7531b7cde61b5259c3644bfa11",
     "backend_under_test": "OPA (policy/least privilege), Keycloak (OIDC identity), SPIFFE/SPIRE (workload identity and mTLS trust), OpenBao (secret isolation) - all real, pinned, on the local ocor-bootstrap stack",
     "main_head": "66c117bd0193a3cecf894d63d3f92d81a4fcd57d",
-    "nonproduction_stack_recovery": "Dopo il riavvio dell'host lo stack ocor-bootstrap era fermo: riavviato con scripts/bootstrap_development_environment.py --execute, deploy/bootstrap/init/initialize_services.py e deploy/bootstrap/fixtures/load_fixtures.py (--env-file .ocor/bootstrap.env); verify_external_services.py --execute --typed PASS (tutti i servizi READY). SPIRE server senza dati persistenti: entry spiffe://ocor.test/ocor/control-plane (selector unix:uid:0, TTL 3600) ri-registrata sotto l'agent attestato. Toolchain pinned ri-acquisita in /tmp/ocor-c6/toolchain (DEC-211) da sorgenti ufficiali con checksum pubblicati (gh, Node SHASUMS256, uv) e digest uguali a infra/toolchain.lock.json; preflight_environment.py --require-ready PASS.",
+    "nonproduction_stack_recovery": "All'avvio di questa iterazione lo stack ocor-bootstrap risultava gi\u00e0 in esecuzione e READY (recupero avvenuto in una iterazione precedente). verify_external_services.py --execute --typed PASS su tutti gli 11 servizi READY (OPA, Keycloak, SPIRE server/agent, OpenBao, PostgreSQL, Kafka, Qdrant, TypeDB, TerminusDB, Fuseki). Toolchain pinned ri-acquisita in /tmp/ocor-c6/toolchain (DEC-211) da sorgenti ufficiali con checksum pubblicati (gh, Node SHASUMS256, uv) e digest uguali a infra/toolchain.lock.json; preflight_environment.py --require-ready PASS.",
     "orchestrator": "none - the boundary providers drive the real ocor-bootstrap control-plane services directly over localhost",
     "reused_deliverable": "ocor_runtime.security.ports (OCOR-DEV-0014, sealed) reused unmodified; fault-injection helpers (WS-12) reused unmodified; the SPIKE counterpart OCOR-DEV-0021 proved bounded-timeout/failure semantics on the control-plane probe, this task proves the same semantics on the provider boundary itself",
     "toolchain": {
@@ -2059,7 +2090,7 @@
         "typescript": "/tmp/ocor-c6/toolchain/bin/tsc",
         "uv": "/tmp/ocor-c6/toolchain/bin/uv"
       },
-      "disk_available_bytes": 186078875648,
+      "disk_available_bytes": 186063241216,
       "docker": "READY",
       "errors": [],
       "platform": "Linux-7.0.0-34-generic-x86_64-with-glibc2.43",
@@ -2076,17 +2107,17 @@
     }
   },
   "independent_verification": {
-    "implementer": "Claude Code (Claude Opus 5.5, claude-opus-5-5)",
-    "limitation": "Implementatore della riparazione (Claude Code) e verifier (Codex) sono modelli distinti in processi separati; nessuna altra garanzia di indipendenza dichiarata.",
-    "model_identity": "implementer claude-opus-5-5; verifier NOT_EXPOSED_BY_RUNTIME",
+    "implementer": "OpenHands (agente implementativo autonomo, contesto separato)",
+    "limitation": "Implementatore della riparazione (OpenHands) e verifier (Codex) sono modelli distinti in processi separati; nessuna altra garanzia di indipendenza dichiarata.",
+    "model_identity": "implementer: OpenHands (agente implementativo autonomo); verifier: NOT_EXPOSED_BY_RUNTIME",
     "same_model_separate_contexts": false,
     "verdict_status": "PENDING_EXTERNAL_VERIFIER",
     "verifier": "Codex, processo esterno a contesto pulito"
   },
   "inputs": {
     "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
-    "ocor-runtime/src/ocor_runtime/security/control_plane.py": "f4b7a175afd9c53e72bc3a05be3c679dd127d2c6ef4258ade88f8ac8acd52b7b",
-    "ocor-runtime/tests/tasks/test_ocor_dev_0048.py": "4228b4589a50c60c85d4281b6e4addd1e4314bfad103fd3c0d14739b1dbacadf"
+    "ocor-runtime/src/ocor_runtime/security/control_plane.py": "c5d61106378b5e977fdd1aa5f161d7c5eb610e01a15604dc12debbc07a4ab849",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0048.py": "2457f9405bf49b0025dbcbbcd89d3ee6ad2fa3958a49db02facca1400c88ba34"
   },
   "inputs_tree_definition": "git rev-parse <commit>:inputs (tree della directory inputs/ immutabile)",
   "issuer_characterization_source": {
@@ -2107,11 +2138,11 @@
       "raw_output_sha256": "4ac81d6bd5fc5b2c898a199bea6f84bf639fb0e8f7e90b301d9250b6b045c71d"
     },
     "full-runtime": {
-      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m pytest -v --tb=line -p no:cacheprovider ocor-runtime/tests/ --junitxml=/home/luca/.ocor-codex/repair6/full-runtime.xml",
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m pytest -v --tb=line -p no:cacheprovider ocor-runtime/tests/ --junitxml=/home/luca/.ocor-codex/repair7/full-runtime.xml",
       "exit_code": 0,
       "expected_exit_code": 0,
       "name": "full-runtime",
-      "raw_output_sha256": "582ef6c211a7a54e007c6e084467ea72842f8a62a1f2ada713c3e9dc95c87e3c"
+      "raw_output_sha256": "cf0e8b82cf8826dbfdd926674f39a567ad19c752b6ebef8ebab41a69d2b6c2df"
     },
     "language-policy": {
       "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python scripts/validate_language_policy.py",
@@ -2151,21 +2182,21 @@
       "exit_code": 0,
       "expected_exit_code": 0,
       "name": "preflight-toolchain",
-      "raw_output_sha256": "2dcbce7e1f5d60fe35fbf9bf57beca915d8b4c8f6ac238524f889a6e72823fa7"
+      "raw_output_sha256": "b545dc70805bb0945eaea021463f23228ca870b6bfda1cd1b6286da69db20de7"
     },
     "rccad": {
-      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python scripts/validate_rccad.py --base-ref 4d9a0644cdd1553ae899409f76e7839bd03e26b8",
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python scripts/validate_rccad.py --base-ref feb83b0c3a684929a09b8684e8a334cb86c77efc",
       "exit_code": 0,
       "expected_exit_code": 0,
       "name": "rccad",
       "raw_output_sha256": "0043e5c71880b8696f14cc449b0e908f5418b4864e06a71d3fb4d4f212543c3f"
     },
     "reports-ci": {
-      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m pytest -v --tb=line -p no:cacheprovider reports/tests/test_authoritative_contract_conformance.py reports/tests/test_autonomous_tooling_policy.py reports/tests/test_backlog_generator_reality_parity.py reports/tests/test_bootstrap_lock_validation.py reports/tests/test_evidence_input_drift.py reports/tests/test_generate_contracts_reference_resolution.py reports/tests/test_language_migration_benchmark_harness.py reports/tests/test_rccad_methodology.py reports/tests/test_runtime_evidence_validator.py reports/tests/test_validate_language_policy.py --junitxml=/home/luca/.ocor-codex/repair6/reports-ci.xml",
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m pytest -v --tb=line -p no:cacheprovider reports/tests/test_authoritative_contract_conformance.py reports/tests/test_autonomous_tooling_policy.py reports/tests/test_backlog_generator_reality_parity.py reports/tests/test_bootstrap_lock_validation.py reports/tests/test_evidence_input_drift.py reports/tests/test_generate_contracts_reference_resolution.py reports/tests/test_language_migration_benchmark_harness.py reports/tests/test_rccad_methodology.py reports/tests/test_runtime_evidence_validator.py reports/tests/test_validate_language_policy.py --junitxml=/home/luca/.ocor-codex/repair7/reports-ci.xml",
       "exit_code": 0,
       "expected_exit_code": 0,
       "name": "reports-ci",
-      "raw_output_sha256": "a22bfa4805020ebd907a0f9954e35ec1decc1b12b4dd75f8d02fad13eaa78c70"
+      "raw_output_sha256": "91ab280a9469f56e827f58cd31d384b3ff8edbffd055b3c620155dc751b6db42"
     },
     "ruff": {
       "command": "ruff check .",
@@ -2175,7 +2206,7 @@
       "raw_output_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
     },
     "scope-cycle": {
-      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base 4d9a0644cdd1553ae899409f76e7839bd03e26b8 --head HEAD --branch task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls",
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base feb83b0c3a684929a09b8684e8a334cb86c77efc --head HEAD --branch task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls",
       "exit_code": 0,
       "expected_exit_code": 0,
       "name": "scope-cycle",
@@ -2189,11 +2220,11 @@
       "raw_output_sha256": "45bc96e0845920241b26a1ab6caa0bb1fbad8c33293655296005a9756553bb95"
     },
     "task": {
-      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m pytest -v --tb=line -p no:cacheprovider ocor-runtime/tests/tasks/test_ocor_dev_0048.py --junitxml=/home/luca/.ocor-codex/repair6/task.xml",
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m pytest -v --tb=line -p no:cacheprovider ocor-runtime/tests/tasks/test_ocor_dev_0048.py --junitxml=/home/luca/.ocor-codex/repair7/task.xml",
       "exit_code": 0,
       "expected_exit_code": 0,
       "name": "task",
-      "raw_output_sha256": "9217cc2c4106acff634680880511f69160ae838bc8dc9dfff0bdd6390adc4855"
+      "raw_output_sha256": "62eee844fb1404e91693ac2993ea7565dd0d33ab8bf9abeaeb4aa332fe50527e"
     },
     "test_lld_add_alignment": {
       "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python reports/tests/test_lld_add_alignment.py",
@@ -2231,7 +2262,7 @@
       "raw_output_sha256": "75c4edfe5af6250e80371c0f5034ac087aa4be25718aacbd6624a5b04bc71387"
     }
   },
-  "manifest_backfill_note": "Il manifest G4 non elencava 9 casi OCOR-DEV-0048 gi\u00e0 presenti nel record dai cicli precedenti (BUNDLE-OFFSET-*, DELEGATED-REQUEST-*); aggiunti in append, solo righe con task_id OCOR-DEV-0048, nessun record di altri task toccato.",
+  "manifest_backfill_note": "Aggiunto in append il solo caso REPAIR-7 (OCOR-DEV-0048-REPAIR7-POLICY_EVALUATION_ERROR_KEEPS_CORRELATION) nel manifest G4; nessun record di altri task toccato.",
   "nonqualifying_attempts": [
     {
       "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base origin/main --head HEAD --branch task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls",
@@ -2241,7 +2272,7 @@
       "raw_output_sha256": "0ecc5a2c88472bc4861908f38f1392b56444f9742f86e54818286434916dcd0e"
     }
   ],
-  "nonqualifying_attempts_note": "Prima esecuzione RED non qualificante: la fixture principals creava analyst-1 senza email e Keycloak 26 rispondeva \"Account is not fully set up\" (HTTP 400), quindi i casi \"malformed act\" passavano per la ragione sbagliata; corretta la fixture (email sintetica) e resi i casi malformed dipendenti dal messaggio \"actor claim\"; il RED registrato \u00e8 la seconda esecuzione. Mai dichiarato PASS.",
+  "nonqualifying_attempts_note": "Prima esecuzione RED non qualificante: nessuna \u2014 il RED registrato \u00e8 la prima esecuzione, sul sorgente control_plane.py invariato di feb83b0, che fallisce per il solo correlation_id mancante (VF-001).",
   "policy_bundle_assurance": {
     "atomic_binding": "POST /v1/data/ocor/control_plane/allow?explain=full: ogni regola valutata nella stessa risposta deve appartenere allo snapshot ed esiste una exit della regola allow verificata, altrimenti STALE_BUNDLE/POLICY_DECISION_INVALID; lista moduli ricontrollata prima e dopo",
     "decision": "PolicyDecision e ControlStatus legati al digest dello snapshot; decision_id deriva da snapshot, GCS, catena di grant e istante del boundary",
@@ -2251,44 +2282,31 @@
   "preserved_tests": {
     "all_existing_test_functions_preserved": true,
     "existing_assertions_weakened": 0,
-    "existing_test_functions": 94,
-    "fixture_change": "principals: il fixture crea/aggiorna l'utente analyst-1 con email sintetica analyst-1@ocor.test (il profilo utente di default di Keycloak 26 rifiuta il password grant su un realm nuovo con \"Account is not fully set up\"); nessuna asserzione, reason code o effetto atteso modificato",
+    "existing_test_functions": 107,
+    "fixture_change": "nessuna modifica alle fixture; nessuna asserzione, reason code o effetto atteso modificato",
     "new_test_function_names": [
-      "test_repair6_access_token_verification_branches",
-      "test_repair6_act_claim_does_not_replace_the_grant",
-      "test_repair6_act_principal_grant_is_fully_verified",
-      "test_repair6_authenticated_actors_are_the_exact_chain_tail",
-      "test_repair6_boundary_rechecks_the_principal_binding",
-      "test_repair6_credential_reference_branches",
-      "test_repair6_delegated_session_cannot_lease_a_secret_without_a_grant",
-      "test_repair6_forged_svid_chain_is_rejected",
-      "test_repair6_malformed_act_claim_is_rejected",
-      "test_repair6_non_delegated_principal_needs_exactly_its_own_chain",
-      "test_repair6_policy_evaluation_error_fails_closed",
-      "test_repair6_signed_act_claim_authenticates_the_actor_chain",
-      "test_repair6_token_without_subject_is_rejected"
+      "test_repair7_policy_evaluation_error_keeps_correlation"
     ],
-    "new_test_functions": 13,
+    "new_test_functions": 1,
     "removed_or_changed_lines": 0
   },
   "raw_output_format": "JSONL: ogni output UTF-8 originale \u00e8 conservato nel campo output, con hash del byte stream originale nel campo sha256; decodificare JSON ed effettuare encode UTF-8 per ricostruirlo esattamente. Nessun whitespace del raw \u00e8 eliminato.",
-  "raw_output_sha256": "905dc2257833205dd07d26fc60111479c32e0072e1550835684881fff8a676a1",
+  "raw_output_sha256": "0502fc016b98981e3bbeaa1fb1f3a9d40cf533f0c5a5b0293eb4cd79438288eb",
   "repair_authorization": {
     "NO_GO_disposition": "nuovo ciclo entro il budget di OCOR-DEV-0048-REPAIR-CLAUDE-AUTO; esauriti i tre cicli con NO_GO: TERMINAL_BLOCKED",
-    "audit_matrix": "~/.ocor-codex/audit_0048.md \u00a78 audit per percorsi (fuori dal repository, sha256 2f256eb6e92fe9069873f82fd3cc0417ccb363bb077687afb6b2c172a4b77fa7)",
-    "authorized_start_head": "4d9a0644cdd1553ae899409f76e7839bd03e26b8",
-    "cycle_of_authorization": "1 di 3",
+    "audit_matrix": "~/.ocor-codex/audit_0048.md \u00a79 audit per percorsi ciclo 7 (fuori dal repository, sha256 f4b91f3dde9c1d97ab15e7a3232057eb42a7813ab4a99e5c8d452f23c8339b11)",
+    "authorized_start_head": "feb83b0c3a684929a09b8684e8a334cb86c77efc",
+    "cycle_of_authorization": "2 di 3",
     "date": "2026-10-04",
     "findings_addressed": [
-      "VF-001",
-      "VF-002"
+      "VF-001"
     ],
     "id": "OCOR-DEV-0048-REPAIR-CLAUDE-AUTO",
     "previous_candidate_sealed": false,
-    "previous_candidate_sha256": "63bd998296a50e8dbeb59fd21fe9e022ad5b82f7778696ab51f494434aa06803",
-    "previous_request_id": "OCOR-DEV-0048-4d9a0644cdd1-5"
+    "previous_candidate_sha256": "2dcabd351cfd9a263fa637518142df43b3d33d768e3c2568539d2a21f0ef87f9",
+    "previous_request_id": "OCOR-DEV-0048-feb83b0c3a68-6"
   },
-  "repair_cycle": 6,
+  "repair_cycle": 7,
   "repair_history": [
     {
       "NO_GO_disposition": "TERMINAL_BLOCKED; nessuna quinta riparazione",
@@ -2320,10 +2338,29 @@
       "repair_cycle": 5,
       "verdict": "NO_GO",
       "verdict_request_id": "OCOR-DEV-0048-4d9a0644cdd1-5"
+    },
+    {
+      "NO_GO_disposition": "nuovo ciclo entro il budget di OCOR-DEV-0048-REPAIR-CLAUDE-AUTO; esauriti i tre cicli con NO_GO: TERMINAL_BLOCKED",
+      "audit_matrix": "~/.ocor-codex/audit_0048.md \u00a78 audit per percorsi (fuori dal repository, sha256 2f256eb6e92fe9069873f82fd3cc0417ccb363bb077687afb6b2c172a4b77fa7)",
+      "authorized_start_head": "4d9a0644cdd1553ae899409f76e7839bd03e26b8",
+      "candidate_head": "feb83b0c3a684929a09b8684e8a334cb86c77efc",
+      "cycle_of_authorization": "1 di 3",
+      "date": "2026-10-04",
+      "findings_addressed": [
+        "VF-001",
+        "VF-002"
+      ],
+      "id": "OCOR-DEV-0048-REPAIR-CLAUDE-AUTO",
+      "previous_candidate_sealed": false,
+      "previous_candidate_sha256": "63bd998296a50e8dbeb59fd21fe9e022ad5b82f7778696ab51f494434aa06803",
+      "previous_request_id": "OCOR-DEV-0048-4d9a0644cdd1-5",
+      "repair_cycle": 6,
+      "verdict": "NO_GO",
+      "verdict_request_id": "OCOR-DEV-0048-feb83b0c3a68-6"
     }
   ],
   "reproducible_check": {
-    "command": "python3 ~/.ocor-codex/repair6/check_candidate.py <head>",
+    "command": "python3 ~/.ocor-codex/repair7/check_candidate.py <head>",
     "scope": "ricalcola dall'HEAD ogni campo derivato: inputs (file e tree), commit e diff successivo limitato alle evidenze, main_head, hash del log grezzo e di ogni voce JSONL, hash nel manifest, conteggi dei casi",
     "sha256": "31b1e037d7884d34439af07c9375cecb8a2bbc9d8f15594a8962a0d3495fef47"
   },
@@ -4667,10 +4704,23 @@
         "skipped": 0
       },
       "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0048-REPAIR7-POLICY_EVALUATION_ERROR_KEEPS_CORRELATION",
+      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair7_policy_evaluation_error_keeps_correlation",
+      "requirement_id": "FR-130",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
     }
   ],
   "residual_risks": [
-    "195 casi del task passanti sullo stack reale, inclusi 29 casi REPAIR-6; suite runtime (1100) e reports CI (82) senza skip. Evidenza candidata non sigillata, in attesa del verifier esterno (Codex).",
+    "196 casi del task passanti sullo stack reale, inclusi 1 casi REPAIR-7; suite runtime (1101) e reports CI (82) senza skip. Evidenza candidata non sigillata, in attesa del verifier esterno (Codex).",
+    "Rami difensivi non raggiungibili dai backend pinned (sessione senza jti con Keycloak 26; risposta OPA non JSON): nessun PASS attribuito. La porta di lease non trasporta una catena di grant: una sessione delegata \u00e8 sempre negata.",
     "Rami difensivi non raggiungibili dai backend pinned (sessione senza jti con Keycloak 26; risposta OPA non JSON): nessun PASS attribuito. La porta di lease non trasporta una catena di grant: una sessione delegata \u00e8 sempre negata.",
     "La revoca a runtime \u00e8 un set firmato in memoria per istanza di provider; la distribuzione/persistenza dello stato di revoca fra istanze non \u00e8 qualificata da questo task. Il registro dei nonce \u00e8 per istanza di provider.",
     "La provenienza della valutazione si basa sulla trace explain=full di OPA 1.20.1 pinned; regole con annotazioni o metadati non presenti nella trace vengono rifiutate (fail-closed).",
@@ -4679,7 +4729,7 @@
     "The plaintext-rejection cases use a monotonic guard raised before any socket is opened (no network I/O), so they are negative contract tests that prove the transport invariant without touching the live backend."
   ],
   "result": "PASS",
-  "rollback_procedure_verified": "Review meccanica: cinque soli percorsi autorizzati (git diff origin/main...HEAD), nessuna migrazione/schema/port sigillato modificato; reverse-apply --check del diff di riparazione 4d9a064..404b9a3 passante (rollback.log). Le fixture rimuovono moduli OPA iniettati, client Keycloak ed entry SPIRE temporanee e usano segreti disposable sul mount OCOR. Nessun rollback semantico o conformance globale dichiarato.",
+  "rollback_procedure_verified": "Review meccanica: due soli percorsi autorizzati (git diff feb83b0..b2017ec: control_plane.py e test_ocor_dev_0048.py), nessuna migrazione/schema/port sigillato modificato; reverse-apply --check del diff di riparazione feb83b0..b2017ec passante (rollback.log). Nessun rollback semantico o conformance globale dichiarato.",
   "schema_version": "1.0",
   "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION",
   "task_id": "OCOR-DEV-0048",
@@ -4688,23 +4738,23 @@
       "command": "pytest -v --tb=line ocor-runtime/tests/",
       "exit_code": 0,
       "failed": 0,
-      "passed": 1100,
-      "raw_output_sha256": "582ef6c211a7a54e007c6e084467ea72842f8a62a1f2ada713c3e9dc95c87e3c",
+      "passed": 1101,
+      "raw_output_sha256": "cf0e8b82cf8826dbfdd926674f39a567ad19c752b6ebef8ebab41a69d2b6c2df",
       "skipped": 0,
-      "source_commit": "404b9a3cd8705970eadf83c253c81a743e912f96"
+      "source_commit": "b2017eca792d2a7531b7cde61b5259c3644bfa11"
     },
     "RED": {
-      "command": "pytest -v --tb=line ocor-runtime/tests/tasks/test_ocor_dev_0048.py -k repair6 (sorgente control_plane.py invariato a 4d9a064; file di test RED sha256 1b018afc3d4239d5e0bcf8338f8314486ccead7011a45dabdb1f39275729c413)",
+      "command": "pytest -v --tb=line ocor-runtime/tests/tasks/test_ocor_dev_0048.py::test_repair7_policy_evaluation_error_keeps_correlation (sorgente control_plane.py invariato a feb83b0)",
       "exit_code": 1,
-      "failed": 14,
-      "observed": "PERMIT senza grant per principal con claim act firmato da Keycloak reale (VF-001); act malformati/ciclici accettati; act annidato ignorato; lease concessa a sessione delegata",
-      "passed": 9,
-      "raw_output_sha256": "567563af33e7150cdd9e36e1961e0242d2d198f761b53ee51ec2fe6b4f09c6e3",
-      "source_commit": "4d9a0644cdd1553ae899409f76e7839bd03e26b8"
+      "failed": 1,
+      "observed": "POLICY_UNAVAILABLE \"policy eval HTTP 500\" senza correlation_id (VF-001)",
+      "passed": 0,
+      "raw_output_sha256": "4e95dab4415300130fe2eb19b82eefaf66f2046bbf9b08ad175a6a7a0508828a",
+      "source_commit": "feb83b0c3a684929a09b8684e8a334cb86c77efc"
     },
     "REFACTOR": {
-      "result": "Port sigillati (security/ports.py) invariati; derivazione della catena attori estratta in _signed_actor_chain; ruff, mypy strict e regressione completa passanti",
-      "source_commit": "404b9a3cd8705970eadf83c253c81a743e912f96"
+      "result": "Port sigillati (security/ports.py) invariati; il ramo non-200 di evaluate aggiunge solo il correlation_id al messaggio, senza alterare POLICY_UNAVAILABLE n\u00e9 alcun percorso di autorizzazione; ruff, mypy strict e regressione completa passanti",
+      "source_commit": "b2017eca792d2a7531b7cde61b5259c3644bfa11"
     }
   },
   "temporal_assurance": {
