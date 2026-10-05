@@ -15,7 +15,7 @@ permissions:
 jobs:
   validation-closure:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     services:
       postgres:
         image: postgres:16-alpine
@@ -66,6 +66,8 @@ jobs:
           pull_with_retry openpolicyagent/opa@sha256:39daf255ae7f25d81103f03a0c18308a50b7b5bb67907bed6166f70e24a970ff
           pull_with_retry quay.io/keycloak/keycloak@sha256:9d1f1b2b7261ff53c66cb1092dfcdc34a5fb77e81f9e6a6e75b8b6a795de8067
           pull_with_retry quay.io/openbao/openbao@sha256:11fd73a2102cda9c55d5d881a8c3210303146a7ec1e8ac76f526e175c6d24641
+          pull_with_retry ghcr.io/spiffe/spire-server@sha256:4082f30d3e0ddc4000a171392c4ea174345ee44d161ee917c70b97b2ecfba141
+          pull_with_retry ghcr.io/spiffe/spire-agent@sha256:41b0dcd8b258a69db9e2768292a060766fb76fd866e4bc925849981ea1b825ff
 
       - name: Start real TypeDB
         run: |
@@ -93,6 +95,51 @@ jobs:
           timeout 90 bash -c 'until curl -sf http://127.0.0.1:8181/health >/dev/null; do sleep 2; done'
           timeout 90 bash -c 'until curl -sf http://127.0.0.1:8200/v1/sys/health >/dev/null; do sleep 2; done'
           timeout 120 bash -c 'until curl -sf http://127.0.0.1:8080/realms/master/.well-known/openid-configuration >/dev/null; do sleep 3; done'
+
+      - name: Bootstrap SPIRE server and agent (two-phase, digest-pinned)
+        run: |
+          set -euo pipefail
+          mkdir -p .ocor/spire
+          openssl req -x509 -newkey rsa:3072 -nodes -days 2 \
+            -keyout .ocor/spire/ca.key -out .ocor/spire/ca.crt \
+            -subj "/C=IT/O=OCOR Test/CN=OCOR SPIRE Test CA" >/dev/null 2>&1
+          chmod 600 .ocor/spire/ca.key
+          cat > .ocor/bootstrap.env <<EOF
+          OCOR_LOCAL_KEYCLOAK_PASSWORD=ci-only-password
+          OCOR_LOCAL_OPENBAO_TOKEN=ci-only-token
+          OCOR_LOCAL_POSTGRES_PASSWORD=ocor
+          OCOR_LOCAL_TERMINUSDB_PASSWORD=ocor
+          OCOR_SPIRE_BOOTSTRAP_DIR=$(pwd)/.ocor/spire
+          OCOR_SPIRE_JOIN_TOKEN=bootstrap-pending
+          EOF
+          chmod 600 .ocor/bootstrap.env
+
+          docker compose --env-file .ocor/bootstrap.env -f deploy/bootstrap/compose.yaml \
+            up --detach --wait --wait-timeout 180 spire-server
+
+          TOKEN=$(docker compose --env-file .ocor/bootstrap.env -f deploy/bootstrap/compose.yaml \
+            exec -T spire-server /opt/spire/bin/spire-server token generate \
+            -socketPath /run/spire/sockets/server.sock -ttl 600 -output json \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["value"])')
+          sed -i "s|^OCOR_SPIRE_JOIN_TOKEN=.*|OCOR_SPIRE_JOIN_TOKEN=${TOKEN}|" .ocor/bootstrap.env
+
+          docker compose --env-file .ocor/bootstrap.env -f deploy/bootstrap/compose.yaml \
+            up --detach --wait --wait-timeout 180 spire-agent
+
+          timeout 90 bash -c 'until docker exec ocor-bootstrap-spire-agent-1 \
+            /opt/spire/bin/spire-agent healthcheck -socketPath /run/spire/sockets/agent.sock; do sleep 2; done'
+
+          PARENT_ID=$(docker exec ocor-bootstrap-spire-server-1 /opt/spire/bin/spire-server \
+            agent list -socketPath /run/spire/sockets/server.sock -output json \
+            | python3 -c "import json,sys; a=max(json.load(sys.stdin)['agents'], key=lambda i: int(i.get('x509svid_expires_at', 0))); i=a['id']; print('spiffe://' + i['trust_domain'] + i['path'])")
+          docker exec ocor-bootstrap-spire-server-1 /opt/spire/bin/spire-server entry create \
+            -socketPath /run/spire/sockets/server.sock \
+            -parentID "${PARENT_ID}" \
+            -spiffeID spiffe://ocor.test/ocor/control-plane \
+            -selector unix:uid:0
+
+          timeout 90 bash -c 'until docker exec ocor-bootstrap-spire-agent-1 \
+            /opt/spire/bin/spire-agent api fetch x509 -socketPath /run/spire/sockets/agent.sock >/dev/null 2>&1; do sleep 2; done'
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -150,14 +197,11 @@ jobs:
           set -euo pipefail
           PY=.venv/bin/python
           # OCOR-DEV-0048 is a CONDITIONAL_INFRASTRUCTURE_GUARD (TEST-INFRA-005 in
-          # reports/development/METHOD_COMPLIANCE.json). Its provider tests require the
-          # full ocor-bootstrap stack (SPIRE/SPIFFE workload identity + bootstrap
-          # credentials), which this ADD v1.2 validation-closure CI does not provision.
-          # The qualifying evidence is the sealed local-stack G4 run, not this CI, so the
-          # test is excluded from the runtime-slice campaign. This keeps the fail-closed
-          # "zero skip" invariant (VAL-ACT-003) meaningful for the tests this CI can
-          # actually qualify.
-          "$PY" -m pytest -v --cov=src --cov-report=term-missing --cov-report=json:../reports/tests/runtime_coverage_post_approval.json --junitxml=../reports/tests/runtime_junit_post_approval.xml --ignore=tests/tasks/test_ocor_dev_0048.py tests/ | tee ../reports/tests/post_remediation_runtime.log
+          # reports/development/METHOD_COMPLIANCE.json). The SPIRE/SPIFFE workload
+          # identity stack (bootstrap credentials + digest-pinned server and agent) is
+          # provisioned above, so the real-backend provider tests run here with zero skip
+          # (OCOR-DEV-REM-0017) instead of relying on the sealed local-stack G4 run.
+          "$PY" -m pytest -v --cov=src --cov-report=term-missing --cov-report=json:../reports/tests/runtime_coverage_post_approval.json --junitxml=../reports/tests/runtime_junit_post_approval.xml tests/ | tee ../reports/tests/post_remediation_runtime.log
           "$PY" -m pytest -v --junitxml=../reports/tests/ba_junit_post_approval.xml tests/backend_assumptions/ | tee ../reports/tests/post_remediation_ba.log
           "$PY" -m pytest -v --junitxml=../reports/tests/ev_junit_post_approval.xml tests/acceptance_ev/ | tee ../reports/tests/post_remediation_ev.log
           "$PY" -m pytest -v --junitxml=../reports/tests/postgres_junit_post_approval.xml tests/integration/test_postgres_outbox_live.py | tee ../reports/tests/post_remediation_postgres.log
