@@ -1,6 +1,7 @@
 # Escalation record — OCOR-DEV-0049 (repair budget exhausted)
 
-- **Status**: `BLOCKED_REPAIR_BUDGET_EXHAUSTED`
+- **Status corrente**: `AWAITING_AUTHORIZED_CLAUDE_REPAIR`
+- **Disposition storica ciclo 2**: `BLOCKED_REPAIR_BUDGET_EXHAUSTED`, superseded dalla decisione PO `OCOR-DEV-0049-REPAIR-CLAUDE-AUTO` (2026-10-05).
 - **Task**: `OCOR-DEV-0049` — Implement PoC deployment observability backup and safe degradation
 - **Change set**: `governed/state-sync-ocor-dev-0049-escalation`
 - **Fonte**: OCOR-RCCAD v1.0 §8 (harness) — al massimo 2 cicli di riparazione materialmente
@@ -100,3 +101,37 @@ prossima azione.
 Invarato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance` `NOT_ESTABLISHED`,
 `PoC`/`Production` `NO-GO`. `inputs/` invariato. L'evidenza di `OCOR-DEV-0049` resta
 `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
+
+## 2026-10-05 — Decisione PO e verdetto ciclo 3
+
+La decisione `OCOR-DEV-0049-REPAIR-CLAUDE-AUTO` supera l’escalation della PR #168 e autorizza fino a tre ulteriori riparazioni (cicli 3, 4, 5), esclusivamente Claude Code (Anthropic), con verifier Codex (OpenAI). Il budget ordinario resta 2 per gli altri task. Il testo precedente descrive la disposition storica del ciclo 2; non è il blocco corrente.
+
+Verdetto `OCOR-DEV-0049-02ac643eb3c7-3`, HEAD `02ac643eb3c770361f2f1b67eb0f4ab2bc049097`, creato `2026-10-05T20:09:14.995625Z`: **NO_GO**. SHA-256 del file esterno: `2c860eb6e1bcbeb809125754058bcbda62c7a53cc5f2cedf16d17e650f781f60`. Il task remoto coincide con l’HEAD verificato. Nessun controllo `not_executed` nel verdetto.
+
+### VF-001 — ciclo 3 (`high`, BLOCKER)
+
+Riferimento: `deploy/helm/ocor-poc/compose.profiles.yaml:938`.
+
+latest_valid_receipt verifica firma e digest del manifest, ma non collega manifest.release/profile_digest al profilo corrente. Riproduzione sul codice dell'HEAD richiesto e su OpenBao reale: python3 /tmp/ocor-verify-OCOR-DEV-0049-02ac643eb3c7-3/run.py receipt-pinned ocor-runtime/.venv/bin/python /tmp/ocor-verify-OCOR-DEV-0049-02ac643eb3c7-3/reproduce_receipt.py (worktree detached e ambiente ripristinati secondo il mandato). Il controllo con release ocor-poc-0.2.0 passa. Cambiando solo la release del profilo in ocor-poc-independent-unrestored-release, mantenendo la receipt firmata e il manifest di ocor-poc-0.2.0, /readyz restituisce 200 READY, POST /reopen 200 e /admit?class=mutative 200 ADMIT. Digest corrente e digest del manifest differiscono (e2985ec8... contro d28a8daa...). Prova: /tmp/ocor-verify-OCOR-DEV-0049-02ac643eb3c7-3/logs/receipt-pinned.log, SHA-256 b023cc2e2db8e87dea42e7da85b262072ade4c2af8c9eb0bf9d1f3b851597615. Viola il criterio negativo del task sul restore non testato e la release fence di ADD §6.3/§6.5 e FR-156; il test di drift attuale copre solo il cambiamento del file dopo startup.
+
+Azione richiesta a Claude Code: Prima di assegnare RESTORE_TESTED, verificare che la recovery point e la receipt siano compatibili e vincolate alla release, al digest del profilo e ai pin correnti; un mismatch deve negare readiness e riapertura e mantenere DENY per le operazioni governate. Aggiungere casi live positivi/negativi di riavvio con receipt della release/profilo precedente in entrambi i carrier e rigenerare l'evidenza candidata sul nuovo HEAD, senza cambiare inputs o claim fence.
+
+### VF-002 — ciclo 3 (`high`, BLOCKER)
+
+Riferimento: `deploy/helm/ocor-poc/compose.profiles.yaml:926`.
+
+Il consumer usa soltanto receipt.outcome == PASSED e non controlla i risultati della recovery_gate. Nello stesso riproduttore indipendente, dopo il controllo positivo, una copia della receipt viene resa internamente incoerente: outcome resta PASSED ma recovery_gate.gcs.pass è false e tenant_mismatch contiene m1. La copia è firmata nuovamente dal vero OpenBao transit con la chiave del PoC autorizzato: il test controlla la semantica del consumer di una receipt firmata, senza mock o bypass della firma. Il manifest firmato e il relativo digest restano corretti. /readyz, POST /reopen e /admit?class=mutative restituiscono ancora 200, e la mutazione è ADMIT. Prova: /tmp/ocor-verify-OCOR-DEV-0049-02ac643eb3c7-3/logs/receipt-pinned.log (SHA-256 b023cc2e2db8e87dea42e7da85b262072ade4c2af8c9eb0bf9d1f3b851597615); comando come VF-001. LLD §5.4 richiede GCS/marking e gli altri controlli del recovery gate prima di riaprire traffico; una firma autentica non rende coerente un record con gate fallito. La suite del task non include questo caso negativo del consumer.
+
+Azione richiesta a Claude Code: Validare struttura, versione e coerenza della receipt firmata prima di usarla: tutti i controlli obbligatori della recovery_gate devono essere presenti e avere pass strettamente true; gate mancanti, falsi o malformati devono produrre un reason code specifico, readiness negata, /reopen rifiutato e admission DENY. Aggiungere controlli live con receipt validamente firmate positive e negative per ciascun gate, preservando il fence G4/G6 già approvato e rigenerando soltanto l'evidenza candidata.
+
+### VF-003 — ciclo 3 (`medium`, BLOCKER)
+
+Riferimento: `ocor-runtime/tests/tasks/test_ocor_dev_0049.py:1446`.
+
+Il test qualificante Helm assume che il catalogo contenga esattamente un recovery point dopo il backup manuale, mentre il CronJob resta attivo con schedule */15 * * * *. Nella suite completa sull'HEAD richiesto il job manuale è completato ma l'asserzione len(...) == 1 fallisce con due recovery point reali, rp-20261005T194504Z-35d8c606 e rp-20261005T194509Z-c8eb6135, al confine delle 19:45 UTC. La configurazione consente un backup pianificato durante il test: il requisito sul catalogo totale dipende dall'orario, non dal successo del job sotto verifica. Prova: /tmp/ocor-verify-OCOR-DEV-0049-02ac643eb3c7-3/logs/full-suite.log, SHA-256 43c00284efb1fc965d7c452d804bcabee2113228b138b12da2882f979c0fbc0d; JUnit /tmp/ocor-verify-OCOR-DEV-0049-02ac643eb3c7-3/full-suite.xml. La run mirata aveva passato lo stesso test fuori da tale intersezione. I quattro fallimenti separati per DEPENDENCY_DOWN:fuseki sono diagnosticati e trattati come OOM dello stack, non come questo finding. Riproduzione: avviare la suite Helm sullo stack reale in modo che il backup manuale si sovrapponga a un tick del CronJob, conservando lo schedule approvato. La seconda suite completa, dopo il ripristino di Fuseki e fuori dalla sovrapposizione osservata, ha 1192 PASS e zero skip (full-suite-retry.log, SHA-256 3d8ee16d82ef2d96f136b6966637434151b5fce07095aab105e44bd217c0e832): ciò non elimina la race riprodotta nella prima run.
+
+Azione richiesta a Claude Code: Correlare il recovery point, il manifest e la receipt al job effettivamente verificato, senza assumere la cardinalità totale del catalogo; mantenere il controllo del vault esterno e delle firme. Aggiungere un caso operativo con backup pianificato e manuale concorrenti e verificare entrambi i manifest, senza skip, ignore o quarantine. La campagna qualificante deve essere riproducibile anche al confine del tick CronJob.
+
+Restano **due** cicli autorizzati: prossimo `repair_cycle=4`, poi al massimo 5. Aggiornare `~/.ocor-codex/audit_0049.md`, correggere tutti i finding del verdetto più recente senza riscrivere ciò che è già accettato, riacquisire ogni campo candidato dall’HEAD finale e richiedere verifica Codex. Esauriti i tre ulteriori cicli con `NO_GO`: escalation e `TERMINAL_BLOCKED`.
+
+Il loop implementato da Codex esegue soltanto questa sincronizzazione; termina con `TERMINAL_BLOCKED` e `next_action` «ciclo di riparazione Claude Code su OCOR-DEV-0049», come imposto dalla decisione, pur restando pronto 0050 e aperta REM-0017. Non è una dichiarazione di indisponibilità dell’intero backlog. PR #169 concorrente non modificata; REM-0017 resta prioritario dopo la fase 0049 e obbligatorio prima di G6. Evidenza 0049 candidata, non sigillata; `inputs/`, E1/E2/Verified e claim fence invariati.
