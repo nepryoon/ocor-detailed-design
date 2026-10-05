@@ -172,12 +172,12 @@
     },
     {
       "path": "OCOR-DEV-0049.json",
-      "sha256": "1bf7f689bbe939b06948a63f424796f81c2db95287499ae97e80da196ceacb39",
+      "sha256": "7fcb6690d1c9c20f4de009faf8869a7667bd8d22596435b1afd30599c7b25ed7",
       "task_id": "OCOR-DEV-0049"
     },
     {
       "path": "OCOR-DEV-0049.log",
-      "sha256": "1d7e92eeef3c47e05d48898e7044ebffc06d3f47534b7d718418bdea59fce011",
+      "sha256": "f8213ce6c891a78bb3d818ca43043c49b597037081e72bd8cb434dd595d5db53",
       "task_id": "OCOR-DEV-0049-RAW"
     }
   ],
@@ -3335,6 +3335,33 @@
       "task_id": "OCOR-DEV-0049"
     },
     {
+      "case_id": "OCOR-DEV-0049-RECEIPT-COHERENCE-BRANCHES",
+      "command": "VF-002 decision branches: 29 incoherent PASSED receipts (each of the 8 gates false, verifier gcs tenant mismatch, gate missing/extra/non-object, pass 'true'/1, steps out of order or FAILED/BLOCKED/NOT_EXECUTED where execution is required, quarantine, materialisation, reopened retrieval, non-isolated, old schema, missing outcome, future/boolean epoch, malformed manifest digest); coherent receipt passes (test_receipt_coherence_branches)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RECEIPT-THAT-IS-NOT-AN-OBJECT-IS-INCOHERENT",
+      "command": "VF-002: a signed receipt that is not a JSON object (list, string, null, number) is incoherent (test_receipt_that_is_not_an_object_is_incoherent)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RELEASE-BINDING-BRANCHES",
+      "command": "VF-001 decision branches: binding equal to the running release/profile/pins passes; other release, other pin set, other profile digest, missing or partial binding are refused; binding checked against an independent oracle (test_release_binding_branches)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "FR-156",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
       "case_id": "OCOR-DEV-0049-OPS-PROCESS-SERVES-HEALTH-AND-BLOCKS-READINESS-UNTIL-RESTORE-IS-TESTED",
       "command": "live: the Compose ops process serves /livez 200 and /readyz 503 RESTORE_UNTESTED with all ten dependencies probed up; numeric p50/p95/p99 per dependency exported; VF-001: every operation class denied (restore_not_verified) (test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested)",
       "evidence_path": "OCOR-DEV-0049.json",
@@ -3407,6 +3434,51 @@
       "task_id": "OCOR-DEV-0049"
     },
     {
+      "case_id": "OCOR-DEV-0049-CUSTODIAN-SIGNED-COHERENT-RECEIPT-IS-ACCEPTED",
+      "command": "live VF-002 positive control: a receipt signed by the test through the real OpenBao custodian and coherent in every check is verified, READY, reopened (200) and admits all six classes (test_custodian_signed_coherent_receipt_is_accepted)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-CUSTODIAN-SIGNED-INCOHERENT-RECEIPT-BLOCKS-READINESS-REOPEN-AND-ADMISSION",
+      "command": "live VF-002: 29 custodian-signed incoherent PASSED receipts (incl. the verifier's gcs tenant mismatch [m1]) -> RESTORE_RECEIPT_INCONSISTENT with the failing check named, readiness 503, /reopen 409, no class admitted; removing each restores READY (test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RESTART-UNDER-ANOTHER-RELEASE-PROFILE-OR-PINS-BLOCKS-READINESS-REOPEN-AND-ADMISS",
+      "command": "live VF-001: agent restarted with another release (verifier repro), image pin set or profile digest over the tested vault -> RESTORE_RELEASE/PINS/PROFILE_MISMATCH, readiness 503, /reopen 409, no class admitted (test_restart_under_another_release_profile_or_pins_blocks_readiness_reopen_and_admission)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "FR-156",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RESTART-UNDER-THE-TESTED-RELEASE-IS-READY-AND-REOPENABLE",
+      "command": "live VF-001 positive: restart with the exact tested release/profile/pins verifies the same receipt, READY, human reopen admits all six classes (test_restart_under_the_tested_release_is_ready_and_reopenable)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "FR-156",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEW-RELEASE-IS-READY-ONLY-AFTER-ITS-OWN-BACKUP-AND-TESTED-RESTORE",
+      "command": "live VF-001 end to end: under a new release the old receipt is refused and restore-prepare refuses the old recovery point (exit 65 RELEASE_MISMATCH, no receipt); after a backup and a passed recovery gate of the new release the same process turns READY, receipt/manifest bound to the new release, reopen admits all classes (test_new_release_is_ready_only_after_its_own_backup_and_tested_restore)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "FR-156",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
       "case_id": "OCOR-DEV-0049-INCONSISTENT-DELETION-JOURNAL-BLOCKS-MATERIALISATION-AND-READINESS",
       "command": "live: missing tombstone (stale deletion epoch) -> recovery gate FAILED, deletion_resurrection [m4], materialisation BLOCKED, readiness RESTORE_FAILED, no operation class admitted (test_inconsistent_deletion_journal_blocks_materialisation_and_readiness)",
       "evidence_path": "OCOR-DEV-0049.json",
@@ -3453,7 +3525,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-RELEASE-DRIFT-BLOCKS-READINESS-AND-MUTATIVE-COMMANDS",
-      "command": "live: after a positive control (all classes admitted) profile drift is detected within the scan interval -> RELEASE_DRIFT, mutative/high-impact/dispatch denied (release_mismatch), reads still admitted (test_release_drift_blocks_readiness_and_mutative_commands)",
+      "command": "live: on a vault restored under the same 2 s-scan profile, after a positive control (all classes admitted) profile drift is detected within the scan interval -> RELEASE_DRIFT, mutative/high-impact/dispatch denied (release_mismatch), reads still admitted (test_release_drift_blocks_readiness_and_mutative_commands)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-080",
@@ -3480,7 +3552,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-SCANNER-FAILURE-DENIES-EVERY-ADMISSION-UNTIL-THE-SCAN-RECOVERS",
-      "command": "live VF-001: with an unreadable profile the scanner fails -> SCANNER_ERROR and every class denied (security_scan_unavailable); admission returns after the scan recovers (test_scanner_failure_denies_every_admission_until_the_scan_recovers)",
+      "command": "live (vault restored under the same 2 s-scan profile): with an unreadable profile the scanner fails -> SCANNER_ERROR and every class denied (security_scan_unavailable); admission returns after the scan recovers (test_scanner_failure_denies_every_admission_until_the_scan_recovers)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "BR-003",
@@ -3507,7 +3579,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-HELM-PROFILE-ON-KUBERNETES-BACKS-UP-RESTORES-AND-GATES-READINESS",
-      "command": "kind (DEC-211): pod not Ready before restore; CronJob backup to the external vault; restore-drill Job PASSED; pod Ready; mutative admission 503 recovery_reopen_pending; NetworkPolicy admits postgresql:5432/opa:8181 and denies 1.1.1.1, postgresql:8181, qdrant:6334 and a decoy listening on 8181 at an unpinned address (reachable from the node: positive control); pod readiness drops with qdrant paused and recovers (test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness)",
+      "command": "kind (DEC-211): pod not Ready before restore; VF-003: manual backup started at the real */15 CronJob tick overlaps the scheduled run, each job's own recovery point verified (manifest digest, OpenBao signature, release binding) without catalogue cardinality; restore-drill Job bound to the manual recovery point PASSED (receipt recovery_point/manifest_digest correlated); pod Ready; mutative admission 503 recovery_reopen_pending; VF-002: custodian-signed receipt with failed gcs check -> pod NotReady, RESTORE_RECEIPT_INCONSISTENT, reopen 409, mutative DENY, recovery after removal; NetworkPolicy admits postgresql:5432/opa:8181 and denies 1.1.1.1, postgresql:8181, qdrant:6334 and a decoy listening on 8181 at an unpinned address (reachable from the node: positive control); pod readiness drops with qdrant paused and recovers; VF-001: restarted pod of the same release Ready; upgrade to another release -> new pod NotReady RESTORE_RELEASE_MISMATCH, reopen 409, six classes DENY; after its own backup and bound restore drill the new release pod is Ready (test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-001",

@@ -23,7 +23,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 91,
+        "passed": 162,
         "skipped": 0
       },
       "status": "PASS"
@@ -133,7 +133,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1192,
+        "passed": 1263,
         "skipped": 0
       },
       "status": "PASS"
@@ -161,10 +161,10 @@
       "status": "PASS"
     }
   ],
-  "commit": "76f20cabe93a64e66ac5d80e7d83802a32250da7",
-  "created_at": "2026-10-05T19:14:21.027695+00:00",
+  "commit": "81b3da942e88bb284f8855d3905a411bcb4e355f",
+  "created_at": "2026-10-05T22:48:50.930064+00:00",
   "environment": {
-    "acquired_from_head": "76f20cabe93a64e66ac5d80e7d83802a32250da7",
+    "acquired_from_head": "81b3da942e88bb284f8855d3905a411bcb4e355f",
     "backend_under_test": "the ocor-ops agent process (deploy/helm/ocor-poc/compose.profiles.yaml configs.ocor-ops-agent) on python:3.11@sha256:c722..., against the real digest-pinned ocor-bootstrap services; OpenBao transit for encryption/signature; ephemeral pinned PostgreSQL/Qdrant for isolated restore",
     "bootstrap_containers": {
       "ocor-bootstrap-fuseki-1": "ocor/jena-fuseki:6.2.0 sha256:a1eb484a7d056a897c7bc832fb735b06136fc876aa90da3055d9882bc1b8d9e3",
@@ -182,8 +182,8 @@
     "docker_compose": "5.5.1",
     "docker_server": "29.8.2",
     "environment_repairs": [
-      "ocor-bootstrap-fuseki-1 restarted after an OOM kill (exit 137, own 2G cgroup limit), then deploy/bootstrap/init/initialize_services.py, deploy/bootstrap/fixtures/load_fixtures.py and scripts/verify_external_services.py --execute --typed (all services READY)",
-      "leftover OCOR test containers (ocor-spike-0023-*, ocor-c5-backbone-*) from earlier sessions removed to free memory before the run; no non-OCOR container touched; no repository file changed"
+      "preflight: ocor-bootstrap-fuseki-1 found exited (137, OOM) and restarted before any qualifying run",
+      "during the qualifying task run (kind fixture creation, before the CronJob tick) ocor-bootstrap-fuseki-1 was OOM-killed by its own 2 GiB cgroup limit (OOMKilled=true, exit 137, 2026-10-05T21:59:29Z); restarted at the same pinned image, then deploy/bootstrap/init/initialize_services.py, deploy/bootstrap/fixtures/load_fixtures.py and scripts/verify_external_services.py --execute --typed (all services READY, raw log section 'environment repair'); no test failed or was retried, every test of the run passed"
     ],
     "host": "nepryoon",
     "kernel": "7.0.0-34-generic",
@@ -213,17 +213,17 @@
   },
   "inputs": {
     "deploy/helm/ocor-poc/Chart.yaml": "b6731d8de4effda2421dec13e73acc9f3207af1e95a140f5ef363879f3dd8e8b",
-    "deploy/helm/ocor-poc/compose.profiles.yaml": "ed18fb96d19e16e51331f1d1f6c82290341b5b3da9991c2d7122b504ae062335",
+    "deploy/helm/ocor-poc/compose.profiles.yaml": "451384e79c43a9a56cc98b62cc3a8997f4866af189dee9f3ae9939110e55b5b3",
     "deploy/helm/ocor-poc/templates/_helpers.tpl": "b14b4ee237b0af17b95fceb0fce7b5dd2627404aa3e2cc30f1b2c4c4fe7f6b33",
     "deploy/helm/ocor-poc/templates/backup-cronjob.yaml": "b7421f7d4e7b2b285ae836f74caf5aec32668b8c030c81f103bcec556b855036",
     "deploy/helm/ocor-poc/templates/configmap.yaml": "3932ca5a5e7ff2d3133493d61ba7af806fde9bface1c3f22b62dfa8277567c21",
     "deploy/helm/ocor-poc/templates/deployment.yaml": "8a6ad2301009a725620c81a1e3b76a085c4c47aad4c212840307f954e6a48573",
     "deploy/helm/ocor-poc/templates/networkpolicy.yaml": "c3bc596303e477a753f0a4e83fb91acae923c2f7ac08f46bd43565e0f7a2b386",
-    "deploy/helm/ocor-poc/templates/restore-drill-job.yaml": "53fb28f2725198252d789d55a7a8c74f3a794adc60cd1751eb2bc2632e12f56c",
+    "deploy/helm/ocor-poc/templates/restore-drill-job.yaml": "5214ede470e6f9308739416723303a4f5bfa2b3f2cf27062349f66fa8b605205",
     "deploy/helm/ocor-poc/templates/serviceaccount.yaml": "73f2993e162b886f7ad619956a7c187d540cf17f006cc002e9411f49fc349f9a",
-    "deploy/helm/ocor-poc/values.yaml": "a6b0ec9e3d65414ecfd8b4000949bf1ff6a3ab0bd29bed6ad78cf065ceb2c069",
+    "deploy/helm/ocor-poc/values.yaml": "658bcdf3eed81a4c751f03f57410601d8f01b97adb88dfab6789cf6b693fef48",
     "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
-    "ocor-runtime/tests/tasks/test_ocor_dev_0049.py": "8e4abd5662380156c3b310246a22fee1f9db6044939319598c3916aedcfb3055"
+    "ocor-runtime/tests/tasks/test_ocor_dev_0049.py": "d85800dd72bcea5118a711f2a7e2e7241b820b8db2d2c664ab179af44d87b56d"
   },
   "not_claimed": [
     "No requirement is Verified; G6 qualification (OCOR-DEV-0060..0066) is not anticipated.",
@@ -235,31 +235,32 @@
     "action_adapter_timeout and edge_partition faults are not observable by the ops plane at G4 and are reported as such in /posture.",
     "The Compose carrier has no scheduler: the 15-minute backup cadence is enforced by the Helm CronJob; with Compose it requires a host scheduler, and RPO compliance is exported as ocor_recovery_point_within_rpo."
   ],
-  "raw_output_sha256": "1d7e92eeef3c47e05d48898e7044ebffc06d3f47534b7d718418bdea59fce011",
+  "raw_output_sha256": "f8213ce6c891a78bb3d818ca43043c49b597037081e72bd8cb434dd595d5db53",
   "repair": {
     "audit_matrix": "~/.ocor-codex/audit_0049.md (outside the repository)",
     "closes": [
-      "OCOR-DEV-0049-7fd4f7728801-2 VF-001 (admission fail-closed + governed reopening)",
-      "OCOR-DEV-0049-7fd4f7728801-2 VF-002 (destination/port pair enforcement, Compose and Helm)",
-      "OCOR-DEV-0049-7fd4f7728801-2 VF-003 (per-item tenant/compartment/marking/GCS restore gate)"
+      "OCOR-DEV-0049-02ac643eb3c7-3 VF-001 (receipt and recovery point bound to the running release, profile digest and image pins; restore-prepare refuses another release)",
+      "OCOR-DEV-0049-02ac643eb3c7-3 VF-002 (coherence of custodian-signed receipts: every recovery-gate check strictly passed, steps, quarantine, materialisation, schema)",
+      "OCOR-DEV-0049-02ac643eb3c7-3 VF-003 (backup job correlated to its own recovery point, drill bound to it, manual run overlapping the real CronJob tick)"
     ],
-    "cycle": 3,
+    "cycle": 4,
     "implementer": "Claude Code (Anthropic)",
-    "po_decision": "OCOR-DEV-0049-REPAIR-CLAUDE-AUTO (2026-10-05; first of three authorized Claude Code cycles)",
+    "po_decision": "OCOR-DEV-0049-REPAIR-CLAUDE-AUTO (2026-10-05; second of three authorized Claude Code cycles)",
     "previously_closed": [
+      "OCOR-DEV-0049-7fd4f7728801-2 VF-001..VF-003",
       "OCOR-DEV-0049-2c5a574a5f3a-1 VF-001..VF-006",
       "OCOR-DEV-0049-884f7b1160b1-0 VF-001..VF-003"
     ],
     "red_fingerprint": {
-      "base": "7fd4f77288010b98330f74a4da455fa1b6e9e321",
-      "method": "new test module executed against the unrepaired agent/chart in a disposable detached worktree",
+      "base": "02ac643eb3c770361f2f1b67eb0f4ab2bc049097",
+      "method": "cycle-4 test module executed against the unrepaired agent/chart in a disposable detached worktree (unit branches, then the live chain on the real stack)",
       "observed": [
-        "test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested: ('read' ADMIT) assert (200, 'ADMIT') == (503, 'DENY') under RESTORE_UNTESTED",
-        "test_default_deny_admits_only_allowlisted_destination_port_pairs: every destination has its own address — 1 distinct IP for 10 aliases",
-        "test_admission_branches_of_the_posture / test_scope_comparison_branches: AttributeError (no fail-closed posture branches, no per-item scope comparison)",
-        "test_restore_scope_mismatch_blocks_materialisation[cross_tenant_scope]: failed at capture (fixture schema), not at the gate; the semantic RED is the verifier counterexample adversarial-restore.log"
+        "test_receipt_coherence_branches / test_release_binding_branches: AttributeError (no receipt coherence check, no release binding in the consumer)",
+        "live VF-002 at 02ac643: custodian-signed receipts with recovery_gate.gcs.pass=false + tenant_mismatch [m1], revision.pass=false, step 10 BLOCKED were accepted (posture never RESTORE_RECEIPT_INCONSISTENT, agent stayed READY)",
+        "live VF-001 at 02ac643: restart with another release / image pin / profile digest over the previous release's vault -> ['READY'] instead of RESTORE_RELEASE_MISMATCH / RESTORE_PINS_MISMATCH / RESTORE_PROFILE_MISMATCH",
+        "VF-003: the semantic RED is the verifier run full-suite.log (two recovery points at the 19:45 UTC tick vs len(...) == 1); the cycle-4 kind test no longer depends on catalogue cardinality and provokes the overlap deliberately"
       ],
-      "summary_sha256": "8227559a86cc6b75fd4de59468a4933219bea79854027718221e0e59f9c5a98b"
+      "summary_sha256": "3e96b7625d9e645a9574cd13cb3dd95367eae1be61a24817b8769260ae9150fc"
     },
     "verifier": "Codex (independent process, separate context)"
   },
@@ -397,6 +398,42 @@
       "status": "PASS"
     },
     {
+      "case_id": "OCOR-DEV-0049-RECEIPT-COHERENCE-BRANCHES",
+      "command": "VF-002 decision branches: 29 incoherent PASSED receipts (each of the 8 gates false, verifier gcs tenant mismatch, gate missing/extra/non-object, pass 'true'/1, steps out of order or FAILED/BLOCKED/NOT_EXECUTED where execution is required, quarantine, materialisation, reopened retrieval, non-isolated, old schema, missing outcome, future/boolean epoch, malformed manifest digest); coherent receipt passes (test_receipt_coherence_branches)",
+      "requirement_id": "NFR-067",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 29,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RECEIPT-THAT-IS-NOT-AN-OBJECT-IS-INCOHERENT",
+      "command": "VF-002: a signed receipt that is not a JSON object (list, string, null, number) is incoherent (test_receipt_that_is_not_an_object_is_incoherent)",
+      "requirement_id": "NFR-067",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 4,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RELEASE-BINDING-BRANCHES",
+      "command": "VF-001 decision branches: binding equal to the running release/profile/pins passes; other release, other pin set, other profile digest, missing or partial binding are refused; binding checked against an independent oracle (test_release_binding_branches)",
+      "requirement_id": "FR-156",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 3,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
       "case_id": "OCOR-DEV-0049-OPS-PROCESS-SERVES-HEALTH-AND-BLOCKS-READINESS-UNTIL-RESTORE-IS-TESTED",
       "command": "live: the Compose ops process serves /livez 200 and /readyz 503 RESTORE_UNTESTED with all ten dependencies probed up; numeric p50/p95/p99 per dependency exported; VF-001: every operation class denied (restore_not_verified) (test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested)",
       "requirement_id": "FR-156",
@@ -493,6 +530,66 @@
       "status": "PASS"
     },
     {
+      "case_id": "OCOR-DEV-0049-CUSTODIAN-SIGNED-COHERENT-RECEIPT-IS-ACCEPTED",
+      "command": "live VF-002 positive control: a receipt signed by the test through the real OpenBao custodian and coherent in every check is verified, READY, reopened (200) and admits all six classes (test_custodian_signed_coherent_receipt_is_accepted)",
+      "requirement_id": "NFR-067",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-CUSTODIAN-SIGNED-INCOHERENT-RECEIPT-BLOCKS-READINESS-REOPEN-AND-ADMISSION",
+      "command": "live VF-002: 29 custodian-signed incoherent PASSED receipts (incl. the verifier's gcs tenant mismatch [m1]) -> RESTORE_RECEIPT_INCONSISTENT with the failing check named, readiness 503, /reopen 409, no class admitted; removing each restores READY (test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission)",
+      "requirement_id": "NFR-067",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 29,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RESTART-UNDER-ANOTHER-RELEASE-PROFILE-OR-PINS-BLOCKS-READINESS-REOPEN-AND-ADMISS",
+      "command": "live VF-001: agent restarted with another release (verifier repro), image pin set or profile digest over the tested vault -> RESTORE_RELEASE/PINS/PROFILE_MISMATCH, readiness 503, /reopen 409, no class admitted (test_restart_under_another_release_profile_or_pins_blocks_readiness_reopen_and_admission)",
+      "requirement_id": "FR-156",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 3,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RESTART-UNDER-THE-TESTED-RELEASE-IS-READY-AND-REOPENABLE",
+      "command": "live VF-001 positive: restart with the exact tested release/profile/pins verifies the same receipt, READY, human reopen admits all six classes (test_restart_under_the_tested_release_is_ready_and_reopenable)",
+      "requirement_id": "FR-156",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEW-RELEASE-IS-READY-ONLY-AFTER-ITS-OWN-BACKUP-AND-TESTED-RESTORE",
+      "command": "live VF-001 end to end: under a new release the old receipt is refused and restore-prepare refuses the old recovery point (exit 65 RELEASE_MISMATCH, no receipt); after a backup and a passed recovery gate of the new release the same process turns READY, receipt/manifest bound to the new release, reopen admits all classes (test_new_release_is_ready_only_after_its_own_backup_and_tested_restore)",
+      "requirement_id": "FR-156",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
       "case_id": "OCOR-DEV-0049-INCONSISTENT-DELETION-JOURNAL-BLOCKS-MATERIALISATION-AND-READINESS",
       "command": "live: missing tombstone (stale deletion epoch) -> recovery gate FAILED, deletion_resurrection [m4], materialisation BLOCKED, readiness RESTORE_FAILED, no operation class admitted (test_inconsistent_deletion_journal_blocks_materialisation_and_readiness)",
       "requirement_id": "NFR-067",
@@ -554,7 +651,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-RELEASE-DRIFT-BLOCKS-READINESS-AND-MUTATIVE-COMMANDS",
-      "command": "live: after a positive control (all classes admitted) profile drift is detected within the scan interval -> RELEASE_DRIFT, mutative/high-impact/dispatch denied (release_mismatch), reads still admitted (test_release_drift_blocks_readiness_and_mutative_commands)",
+      "command": "live: on a vault restored under the same 2 s-scan profile, after a positive control (all classes admitted) profile drift is detected within the scan interval -> RELEASE_DRIFT, mutative/high-impact/dispatch denied (release_mismatch), reads still admitted (test_release_drift_blocks_readiness_and_mutative_commands)",
       "requirement_id": "NFR-080",
       "result": {
         "failed": 0,
@@ -590,7 +687,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-SCANNER-FAILURE-DENIES-EVERY-ADMISSION-UNTIL-THE-SCAN-RECOVERS",
-      "command": "live VF-001: with an unreadable profile the scanner fails -> SCANNER_ERROR and every class denied (security_scan_unavailable); admission returns after the scan recovers (test_scanner_failure_denies_every_admission_until_the_scan_recovers)",
+      "command": "live (vault restored under the same 2 s-scan profile): with an unreadable profile the scanner fails -> SCANNER_ERROR and every class denied (security_scan_unavailable); admission returns after the scan recovers (test_scanner_failure_denies_every_admission_until_the_scan_recovers)",
       "requirement_id": "BR-003",
       "result": {
         "failed": 0,
@@ -626,7 +723,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-HELM-PROFILE-ON-KUBERNETES-BACKS-UP-RESTORES-AND-GATES-READINESS",
-      "command": "kind (DEC-211): pod not Ready before restore; CronJob backup to the external vault; restore-drill Job PASSED; pod Ready; mutative admission 503 recovery_reopen_pending; NetworkPolicy admits postgresql:5432/opa:8181 and denies 1.1.1.1, postgresql:8181, qdrant:6334 and a decoy listening on 8181 at an unpinned address (reachable from the node: positive control); pod readiness drops with qdrant paused and recovers (test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness)",
+      "command": "kind (DEC-211): pod not Ready before restore; VF-003: manual backup started at the real */15 CronJob tick overlaps the scheduled run, each job's own recovery point verified (manifest digest, OpenBao signature, release binding) without catalogue cardinality; restore-drill Job bound to the manual recovery point PASSED (receipt recovery_point/manifest_digest correlated); pod Ready; mutative admission 503 recovery_reopen_pending; VF-002: custodian-signed receipt with failed gcs check -> pod NotReady, RESTORE_RECEIPT_INCONSISTENT, reopen 409, mutative DENY, recovery after removal; NetworkPolicy admits postgresql:5432/opa:8181 and denies 1.1.1.1, postgresql:8181, qdrant:6334 and a decoy listening on 8181 at an unpinned address (reachable from the node: positive control); pod readiness drops with qdrant paused and recovers; VF-001: restarted pod of the same release Ready; upgrade to another release -> new pod NotReady RESTORE_RELEASE_MISMATCH, reopen 409, six classes DENY; after its own backup and bound restore drill the new release pod is Ready (test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness)",
       "requirement_id": "NFR-001",
       "result": {
         "failed": 0,
@@ -654,7 +751,10 @@
     "The Compose default-deny is realized by an internal network plus one relay per allowed flow (own address, own port); the kind NetworkPolicy enforcement depends on the kindnet implementation of the disposable cluster.",
     "The stuck-scanner branch (SCAN_STALE) is proven at decision-logic level only: it cannot be provoked on the real process without also stopping its HTTP server.",
     "The governed reopening authenticates the operator with the bootstrap operator token and records a named human; it is not bound to a Keycloak identity or dual control in the PoC ops plane.",
-    "Fault injection uses docker pause (not stop) to avoid destroying tmpfs-backed bootstrap state and the SPIRE agent attestation."
+    "Fault injection uses docker pause (not stop) to avoid destroying tmpfs-backed bootstrap state and the SPIRE agent attestation.",
+    "kindnet programs the NetworkPolicy of a newly created pod asynchronously: in that window the agent itself observes and reports PUBLIC_EGRESS_OPEN and the pod stays NotReady (fail-closed); the Helm test waits for convergence before asserting that the release fence is the only remaining reason.",
+    "The release fence binds a tested restore to the FULL profile digest: any profile change, including operational tuning, requires a new backup and recovery-gate pass before readiness (most restrictive fail-closed reading, recorded).",
+    "The 168 h receipt expiry branch is proven at decision-logic level only (not provoked live)."
   ],
   "result": "PASS",
   "rollback_procedure_verified": "Mechanically reviewed and exercised in the tests: every Compose stage is torn down with `down -v --remove-orphans` and the kind namespace/PV/cluster are deleted by the fixture; reverting the task is a revert commit of deploy/helm/ocor-poc/ and the test module (no change to deploy/bootstrap, infra locks or sealed records); the OpenBao transit mount ocor-poc-transit can be disabled; vault recovery points are immutable history and are not deleted.",

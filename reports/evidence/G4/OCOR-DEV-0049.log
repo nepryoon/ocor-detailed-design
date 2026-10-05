@@ -1,4 +1,4 @@
-=== OCOR-DEV-0049 — repair cycle 3 (implementer: Claude Code; verifier: Codex) — code commit 76f20cabe93a64e66ac5d80e7d83802a32250da7 ===
+=== OCOR-DEV-0049 — repair cycle 4 (implementer: Claude Code; verifier: Codex) — code commit 81b3da942e88bb284f8855d3905a411bcb4e355f ===
 
 === normative integrity ===
 $ sha256sum -c inputs/normative/SHA256SUMS
@@ -12,188 +12,248 @@ inputs/normative/OCOR_Requirement_Register_v0.9.md: OK
 inputs/normative/OCOR_Requirement_Traceability_Index_v0.9.md: OK
 [exit_code=0]
 
-=== RED fingerprint at 7fd4f77 (new tests vs unrepaired agent/chart; summary lines) ===
-E           Failed: ocor-bootstrap env file not found: the real stack is mandatory qualifying evidence
-E           Failed: ocor-bootstrap env file not found: the real stack is mandatory qualifying evidence
-E           Failed: ocor-bootstrap env file not found: the real stack is mandatory qualifying evidence
-E       AttributeError: 'State' object has no attribute 'readiness'
-E       AttributeError: module 'ocor_ops_agent_under_test' has no attribute 'scope_violations'
-E       AttributeError: module 'ocor_ops_agent_under_test' has no attribute 'scope_violations'
-E       AttributeError: module 'ocor_ops_agent_under_test' has no attribute 'scope_violations'
-E       AttributeError: module 'ocor_ops_agent_under_test' has no attribute 'scope_violations'
-E       AttributeError: module 'ocor_ops_agent_under_test' has no attribute 'scope_violations'
-E       AttributeError: module 'ocor_ops_agent_under_test' has no attribute 'scope_violations'
-E       AttributeError: module 'ocor_ops_agent_under_test' has no attribute 'scope_violations'
-FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_admission_branches_of_the_posture
-FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[tenant_id-tenant-b-gcs-tenant_mismatch]
-FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[compartments-value1-gcs-compartment_mismatch]
-FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[compartments-value2-gcs-compartment_mismatch]
-FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[compartments-c1-gcs-compartment_mismatch]
-FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[classification_marking_ref-SYNTHETIC-UNCLASSIFIED-marking-marking_mismatch]
-FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[governed_context_digest-None-gcs-gcs_digest_mismatch]
-FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[lifecycle_epoch-4-projection_drift_or_stale_deletion_epoch-version_drift]
-ERROR ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested
-ERROR ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restore_scope_mismatch_blocks_materialisation[cross_tenant_scope]
-ERROR ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_default_deny_admits_only_allowlisted_destination_port_pairs
-8 failed, 80 deselected, 3 errors in 0.40s
-E               AssertionError: ('read', {'correlation_id': '2d829d63f66443a08b45d0125503d9a5', 'decision': 'ADMIT', 'reason_code': 'ADMITTED', 'stop_epoch': 0})
-E               assert (200, 'ADMIT') == (503, 'DENY')
-E                 
-E                 At index 0 diff: 200 != 503
-E                 Use -v to get more diff
-E           AssertionError: Attaching to ocor-backup-seal-1
-E              Volume ocor-poc-backup-112db2_restore-staging Creating 
-E              Volume ocor-poc-backup-112db2_restore-staging Creating 
-E              Network ocor-poc-backup-112db2_site Creating 
-E              Volume ocor-poc-backup-112db2_backup-staging Creating 
-E              Volume ocor-poc-backup-112db2_backup-staging Creating 
-E              Network ocor-poc-backup-112db2_site Creating 
-E              Volume ocor-poc-backup-112db2_restore-staging Created 
-E              Volume ocor-poc-backup-112db2_restore-staging Created 
-E              Volume ocor-poc-backup-112db2_backup-staging Created 
-E              Volume ocor-poc-backup-112db2_backup-staging Created 
-E              Container ocor-poc-backup-112db2-ocor-staging-init-1 Creating 
-E              Network ocor-poc-backup-112db2_site Created 
-E              Network ocor-poc-backup-112db2_site Created 
-E              Container ocor-poc-backup-112db2-ocor-relay-1 Creating 
-E              Container ocor-poc-backup-112db2-ocor-staging-init-1 Created 
-E              Container ocor-poc-backup-112db2-ocor-relay-1 Created 
-E              Container ocor-poc-backup-112db2-ocor-backup-capture-kafka-1 Creating 
-E              Container ocor-poc-backup-112db2-ocor-keys-init-1 Creating 
-E              Container ocor-poc-backup-112db2-ocor-backup-capture-postgresql-1 Creating 
-E              Container ocor-poc-backup-112db2-ocor-backup-capture-kafka-1 Created 
-E              Container ocor-poc-backup-112db2-ocor-keys-init-1 Created 
-E              Container ocor-poc-backup-112db2-ocor-backup-capture-postgresql-1 Created 
-E              Container ocor-poc-backup-112db2-ocor-backup-seal-1 Creating 
-E              Container ocor-poc-backup-112db2-ocor-backup-seal-1 Created 
-E             ocor-backup-capture-postgresql-1  | ERROR:  column "compartment" does not exist
-E             ocor-backup-capture-postgresql-1  | HINT:  Perhaps you meant to reference the column "memory_item.compartments".
-        including postgresql:8181 which previously reached the real OPA."""
-FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restore_scope_mismatch_blocks_materialisation[cross_tenant_scope]
-FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_default_deny_admits_only_allowlisted_destination_port_pairs
-2 failed, 89 deselected in 9.45s
-E       AssertionError: every destination has its own address
-E       assert 1 == 10
-E        +  where 1 = len({'172.20.0.2'})
-E        +    where {'172.20.0.2'} = set(['172.20.0.2', '172.20.0.2', '172.20.0.2', '172.20.0.2', '172.20.0.2', '172.20.0.2', ...])
-E        +      where ['172.20.0.2', '172.20.0.2', '172.20.0.2', '172.20.0.2', '172.20.0.2', '172.20.0.2', ...] = <function loads at 0x71b6cc0c1620>('["172.20.0.2", "172.20.0.2", "172.20.0.2", "172.20.0.2", "172.20.0.2", "172.20.0.2", "172.20.0.2", "172.20.0.2", "172.20.0.2", "172.20.0.2"]\n')
-E        +        where <function loads at 0x71b6cc0c1620> = json.loads
-E        +  and   10 = len(['terminusdb', 'typedb', 'fuseki', 'opa', 'keycloak', 'openbao', ...])
+=== RED fingerprint at 02ac643 (cycle-4 tests vs unrepaired agent/chart; summary lines) ===
+## RED (unit) — cycle-4 test module vs unrepaired agent at 02ac643 (detached worktree): raw sha256 6291115732e1a98f436186c01ede3fac9cc6980708aa3cdf6ebf7a67697ef307
+__________ test_receipt_coherence_branches[canonical_restore_failed] ___________
+case = 'canonical_restore_failed'
+____________ test_receipt_coherence_branches[optional_step_failed] _____________
+case = 'optional_step_failed'
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_revision_false]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_watermark_false]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_orphan_duplicate_false]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_marking_false]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_gcs_false]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_deletion_resurrection_false]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_projection_drift_or_stale_deletion_epoch_false]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_sample_semantic_digest_false]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[verifier_gcs_tenant_mismatch]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_missing]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_pass_string]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_pass_one]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_entry_not_object]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_unexpected]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_not_object]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[human_step_blocked]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[canonical_restore_failed]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[signature_check_not_executed]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[optional_step_failed]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[steps_reordered]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[quarantined_items]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[materialisation_blocked]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[retrieval_already_reopened]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[not_isolated]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[schema_v1]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[outcome_missing]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[future_dated]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[epoch_not_number]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[manifest_digest_malformed]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_release_binding_branches[release]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_release_binding_branches[pins]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_release_binding_branches[profile]
+32 failed, 90 deselected, 1 error in 1.10s
+## RED (live) — same module, chain on the real stack at 02ac643: raw sha256 cfa1354d42f8e1c9bff734f4c50100a47f1fc72c8c573ef380841b60b5571feb
+        receipt claiming PASSED with a failed, missing or malformed check denies readiness,
+E       Failed: timed out after 30s: verifier_gcs_tenant_mismatch (last=False)
+        receipt claiming PASSED with a failed, missing or malformed check denies readiness,
+E       Failed: timed out after 30s: gate_revision_false (last=False)
+        receipt claiming PASSED with a failed, missing or malformed check denies readiness,
+E       Failed: timed out after 30s: human_step_blocked (last=False)
+E           assert ['READY'] == ['RESTORE_RELEASE_MISMATCH']
+E           assert ['READY'] == ['RESTORE_PINS_MISMATCH']
+E           assert ['READY'] == ['RESTORE_PROFILE_MISMATCH']
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[verifier_gcs_tenant_mismatch]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_revision_false]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[human_step_blocked]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restart_under_another_release_profile_or_pins_blocks_readiness_reopen_and_admission[release]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restart_under_another_release_profile_or_pins_blocks_readiness_reopen_and_admission[pins]
+FAILED ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restart_under_another_release_profile_or_pins_blocks_readiness_reopen_and_admission[profile]
+6 failed, 4 passed in 132.49s (0:02:12)
 
 === qualifying task run (validation_command, verbose; Compose stack + disposable kind cluster) ===
-## OCOR-DEV-0049 qualifying run — HEAD 76f20cabe93a64e66ac5d80e7d83802a32250da7 — 2026-10-05T18:51:46Z
-## command: uv run --project ocor-runtime --frozen pytest -v -ra ocor-runtime/tests/tasks/test_ocor_dev_0049.py --junitxml=/tmp/ocor0049c3/q/task.xml
+## OCOR-DEV-0049 qualifying run — HEAD 81b3da942e88bb284f8855d3905a411bcb4e355f — 2026-10-05T21:48:37Z
+## command: uv run --project ocor-runtime --frozen pytest -v -ra ocor-runtime/tests/tasks/test_ocor_dev_0049.py --junitxml=/tmp/ocor0049c4/q/task.xml
 ============================= test session starts ==============================
 platform linux -- Python 3.12.11, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python
 rootdir: /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime
 configfile: pyproject.toml
 plugins: cov-7.1.0
-collecting ... collected 91 items
+collecting ... collected 162 items
 
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_agent_is_a_single_source_shared_by_compose_and_helm PASSED [  1%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_agent_source_passes_ruff_and_mypy_strict PASSED [  2%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_valid_profile_is_accepted_by_the_startup_gate PASSED [  3%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[public network dependency] PASSED [  4%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[public egress allowed] PASSED [  5%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[no egress probes] PASSED [  6%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[public allowed flow] PASSED [  7%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[empty allowed flows] PASSED [  8%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[image pin by tag] PASSED [  9%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[no image pins] PASSED [ 10%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[namespace not per subsystem] PASSED [ 12%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[service account not per subsystem] PASSED [ 13%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[one synthetic compartment] PASSED [ 14%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[exporters not local] PASSED [ 15%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[drift scan 0] PASSED [ 16%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[drift scan negative] PASSED [ 17%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[drift scan 61] PASSED [ 18%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[probe interval 61] PASSED [ 19%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[metric set incomplete] PASSED [ 20%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[trace fields incomplete] PASSED [ 21%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[classified payload logged] PASSED [ 23%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[RPO 16] PASSED [ 24%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[RPO negative] PASSED [ 25%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[RTO 5] PASSED [ 26%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[RTO negative] PASSED [ 27%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[backup unencrypted] PASSED [ 28%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[backup unsigned] PASSED [ 29%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[restore untested] PASSED [ 30%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[same key for encryption and signature] PASSED [ 31%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[authority class missing] PASSED [ 32%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[memory deletion epochs unbound] PASSED [ 34%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[tombstone replay out of order] PASSED [ 35%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[replay pins empty] PASSED [ 36%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[recovery gate incomplete] PASSED [ 37%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[restore not isolated] PASSED [ 38%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[resource limit zero] PASSED [ 39%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[semantic downgrade] PASSED [ 40%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[emergency stop fault missing] PASSED [ 41%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[health dependencies empty] PASSED [ 42%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[mandatory dependency missing] PASSED [ 43%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[dependency not mandatory] PASSED [ 45%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[dependency without probe] PASSED [ 46%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[dependency outside allowlist] PASSED [ 47%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_boundary_values_are_accepted[backup.rpoMinutes-15] PASSED [ 48%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_boundary_values_are_accepted[backup.rpoMinutes-1] PASSED [ 49%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_boundary_values_are_accepted[backup.rtoHours-4] PASSED [ 50%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_boundary_values_are_accepted[observability.driftScanIntervalSeconds-60] PASSED [ 51%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_boundary_values_are_accepted[observability.driftScanIntervalSeconds-1] PASSED [ 52%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_renders_operational_workloads PASSED [ 53%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_refuses_to_render_without_secret_or_external_vault[operational.secretName=] PASSED [ 54%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_refuses_to_render_without_secret_or_external_vault[operational.vault.existingClaim=] PASSED [ 56%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_refuses_to_render_a_flow_without_a_pinned_address PASSED [ 57%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_admission_branches_of_the_posture PASSED [ 58%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_relay_serves_exactly_one_declared_flow PASSED [ 59%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[tenant_id-tenant-b-gcs-tenant_mismatch] PASSED [ 60%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[compartments-value1-gcs-compartment_mismatch] PASSED [ 61%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[compartments-value2-gcs-compartment_mismatch] PASSED [ 62%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[compartments-c1-gcs-compartment_mismatch] PASSED [ 63%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[classification_marking_ref-SYNTHETIC-UNCLASSIFIED-marking-marking_mismatch] PASSED [ 64%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[governed_context_digest-None-gcs-gcs_digest_mismatch] PASSED [ 65%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[lifecycle_epoch-4-projection_drift_or_stale_deletion_epoch-version_drift] PASSED [ 67%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested PASSED [ 68%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_backup_seals_an_encrypted_signed_immutable_recovery_point PASSED [ 69%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate PASSED [ 70%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_readiness_turns_ready_only_with_a_signed_passed_restore_receipt PASSED [ 71%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_mutative_path_reopens_only_by_a_human_bound_to_the_passed_receipt PASSED [ 72%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restore_replay_is_deterministic PASSED [ 73%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_tampered_recovery_point_is_rejected_before_restore[object-CIPHERTEXT_DIGEST_MISMATCH] PASSED [ 74%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_tampered_recovery_point_is_rejected_before_restore[manifest-SIGNATURE_INVALID] PASSED [ 75%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_tampered_restore_receipt_blocks_readiness PASSED [ 76%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_inconsistent_deletion_journal_blocks_materialisation_and_readiness PASSED [ 78%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restore_scope_mismatch_blocks_materialisation[cross_tenant_scope] PASSED [ 79%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restore_scope_mismatch_blocks_materialisation[compartment_only] PASSED [ 80%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restore_scope_mismatch_blocks_materialisation[marking_only] PASSED [ 81%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restore_scope_mismatch_blocks_materialisation[gcs_binding_only] PASSED [ 82%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_quota_exceeded_backpressures_without_semantic_downgrade[itemCount-2-5] PASSED [ 83%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_quota_exceeded_backpressures_without_semantic_downgrade[embeddingDimensions-3-4] PASSED [ 84%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_dependency_fault_blocks_readiness_and_degrades_posture[qdrant] PASSED [ 85%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_dependency_fault_blocks_readiness_and_degrades_posture[opa] PASSED [ 86%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_dependency_fault_blocks_readiness_and_degrades_posture[postgresql] PASSED [ 87%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_dependency_fault_blocks_readiness_and_degrades_posture[kafka] PASSED [ 89%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_dependency_fault_blocks_readiness_and_degrades_posture[spire-server] PASSED [ 90%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_emergency_stop_denies_mutative_capabilities_within_10_seconds PASSED [ 91%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_release_drift_blocks_readiness_and_mutative_commands PASSED [ 92%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_default_deny_admits_only_allowlisted_destination_port_pairs PASSED [ 93%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_open_public_egress_blocks_readiness PASSED [ 94%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scanner_failure_denies_every_admission_until_the_scan_recovers PASSED [ 95%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_public_network_dependency_prevents_the_process_from_starting PASSED [ 96%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_logs_and_traces_carry_governed_fields_and_no_secrets PASSED [ 97%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness PASSED [ 98%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_agent_is_a_single_source_shared_by_compose_and_helm PASSED [  0%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_agent_source_passes_ruff_and_mypy_strict PASSED [  1%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_valid_profile_is_accepted_by_the_startup_gate PASSED [  1%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[public network dependency] PASSED [  2%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[public egress allowed] PASSED [  3%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[no egress probes] PASSED [  3%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[public allowed flow] PASSED [  4%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[empty allowed flows] PASSED [  4%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[image pin by tag] PASSED [  5%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[no image pins] PASSED [  6%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[namespace not per subsystem] PASSED [  6%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[service account not per subsystem] PASSED [  7%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[one synthetic compartment] PASSED [  8%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[exporters not local] PASSED [  8%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[drift scan 0] PASSED [  9%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[drift scan negative] PASSED [  9%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[drift scan 61] PASSED [ 10%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[probe interval 61] PASSED [ 11%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[metric set incomplete] PASSED [ 11%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[trace fields incomplete] PASSED [ 12%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[classified payload logged] PASSED [ 12%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[RPO 16] PASSED [ 13%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[RPO negative] PASSED [ 14%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[RTO 5] PASSED [ 14%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[RTO negative] PASSED [ 15%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[backup unencrypted] PASSED [ 16%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[backup unsigned] PASSED [ 16%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[restore untested] PASSED [ 17%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[same key for encryption and signature] PASSED [ 17%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[authority class missing] PASSED [ 18%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[memory deletion epochs unbound] PASSED [ 19%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[tombstone replay out of order] PASSED [ 19%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[replay pins empty] PASSED [ 20%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[recovery gate incomplete] PASSED [ 20%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[restore not isolated] PASSED [ 21%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[resource limit zero] PASSED [ 22%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[semantic downgrade] PASSED [ 22%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[emergency stop fault missing] PASSED [ 23%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[health dependencies empty] PASSED [ 24%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[mandatory dependency missing] PASSED [ 24%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[dependency not mandatory] PASSED [ 25%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[dependency without probe] PASSED [ 25%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_invalid_profile_blocks_startup[dependency outside allowlist] PASSED [ 26%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_boundary_values_are_accepted[backup.rpoMinutes-15] PASSED [ 27%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_boundary_values_are_accepted[backup.rpoMinutes-1] PASSED [ 27%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_boundary_values_are_accepted[backup.rtoHours-4] PASSED [ 28%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_boundary_values_are_accepted[observability.driftScanIntervalSeconds-60] PASSED [ 29%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_boundary_values_are_accepted[observability.driftScanIntervalSeconds-1] PASSED [ 29%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_renders_operational_workloads PASSED [ 30%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_refuses_to_render_without_secret_or_external_vault[operational.secretName=] PASSED [ 30%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_refuses_to_render_without_secret_or_external_vault[operational.vault.existingClaim=] PASSED [ 31%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_refuses_to_render_a_flow_without_a_pinned_address PASSED [ 32%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_admission_branches_of_the_posture PASSED [ 32%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_relay_serves_exactly_one_declared_flow PASSED [ 33%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[tenant_id-tenant-b-gcs-tenant_mismatch] PASSED [ 33%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[compartments-value1-gcs-compartment_mismatch] PASSED [ 34%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[compartments-value2-gcs-compartment_mismatch] PASSED [ 35%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[compartments-c1-gcs-compartment_mismatch] PASSED [ 35%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[classification_marking_ref-SYNTHETIC-UNCLASSIFIED-marking-marking_mismatch] PASSED [ 36%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[governed_context_digest-None-gcs-gcs_digest_mismatch] PASSED [ 37%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scope_comparison_branches[lifecycle_epoch-4-projection_drift_or_stale_deletion_epoch-version_drift] PASSED [ 37%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_revision_false] PASSED [ 38%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_watermark_false] PASSED [ 38%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_orphan_duplicate_false] PASSED [ 39%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_marking_false] PASSED [ 40%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_gcs_false] PASSED [ 40%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_deletion_resurrection_false] PASSED [ 41%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_projection_drift_or_stale_deletion_epoch_false] PASSED [ 41%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_sample_semantic_digest_false] PASSED [ 42%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[verifier_gcs_tenant_mismatch] PASSED [ 43%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_missing] PASSED [ 43%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_pass_string] PASSED [ 44%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_pass_one] PASSED [ 45%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_entry_not_object] PASSED [ 45%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_unexpected] PASSED [ 46%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[gate_not_object] PASSED [ 46%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[human_step_blocked] PASSED [ 47%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[canonical_restore_failed] PASSED [ 48%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[signature_check_not_executed] PASSED [ 48%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[optional_step_failed] PASSED [ 49%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[steps_reordered] PASSED [ 50%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[quarantined_items] PASSED [ 50%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[materialisation_blocked] PASSED [ 51%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[retrieval_already_reopened] PASSED [ 51%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[not_isolated] PASSED [ 52%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[schema_v1] PASSED [ 53%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[outcome_missing] PASSED [ 53%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[future_dated] PASSED [ 54%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[epoch_not_number] PASSED [ 54%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_coherence_branches[manifest_digest_malformed] PASSED [ 55%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_that_is_not_an_object_is_incoherent[value0] PASSED [ 56%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_that_is_not_an_object_is_incoherent[PASSED] PASSED [ 56%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_that_is_not_an_object_is_incoherent[None] PASSED [ 57%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_receipt_that_is_not_an_object_is_incoherent[1] PASSED [ 58%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_release_binding_branches[release] PASSED [ 58%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_release_binding_branches[pins] PASSED [ 59%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_release_binding_branches[profile] PASSED [ 59%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested PASSED [ 60%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_backup_seals_an_encrypted_signed_immutable_recovery_point PASSED [ 61%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate PASSED [ 61%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_readiness_turns_ready_only_with_a_signed_passed_restore_receipt PASSED [ 62%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_mutative_path_reopens_only_by_a_human_bound_to_the_passed_receipt PASSED [ 62%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restore_replay_is_deterministic PASSED [ 63%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_tampered_recovery_point_is_rejected_before_restore[object-CIPHERTEXT_DIGEST_MISMATCH] PASSED [ 64%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_tampered_recovery_point_is_rejected_before_restore[manifest-SIGNATURE_INVALID] PASSED [ 64%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_tampered_restore_receipt_blocks_readiness PASSED [ 65%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_coherent_receipt_is_accepted PASSED [ 66%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_revision_false] PASSED [ 66%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_watermark_false] PASSED [ 67%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_orphan_duplicate_false] PASSED [ 67%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_marking_false] PASSED [ 68%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_gcs_false] PASSED [ 69%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_deletion_resurrection_false] PASSED [ 69%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_projection_drift_or_stale_deletion_epoch_false] PASSED [ 70%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_sample_semantic_digest_false] PASSED [ 70%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[verifier_gcs_tenant_mismatch] PASSED [ 71%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_missing] PASSED [ 72%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_pass_string] PASSED [ 72%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_pass_one] PASSED [ 73%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_entry_not_object] PASSED [ 74%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_unexpected] PASSED [ 74%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[gate_not_object] PASSED [ 75%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[human_step_blocked] PASSED [ 75%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[canonical_restore_failed] PASSED [ 76%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[signature_check_not_executed] PASSED [ 77%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[optional_step_failed] PASSED [ 77%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[steps_reordered] PASSED [ 78%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[quarantined_items] PASSED [ 79%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[materialisation_blocked] PASSED [ 79%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[retrieval_already_reopened] PASSED [ 80%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[not_isolated] PASSED [ 80%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[schema_v1] PASSED [ 81%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[outcome_missing] PASSED [ 82%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[future_dated] PASSED [ 82%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[epoch_not_number] PASSED [ 83%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission[manifest_digest_malformed] PASSED [ 83%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restart_under_another_release_profile_or_pins_blocks_readiness_reopen_and_admission[release] PASSED [ 84%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restart_under_another_release_profile_or_pins_blocks_readiness_reopen_and_admission[pins] PASSED [ 85%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restart_under_another_release_profile_or_pins_blocks_readiness_reopen_and_admission[profile] PASSED [ 85%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restart_under_the_tested_release_is_ready_and_reopenable PASSED [ 86%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_new_release_is_ready_only_after_its_own_backup_and_tested_restore PASSED [ 87%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_inconsistent_deletion_journal_blocks_materialisation_and_readiness PASSED [ 87%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restore_scope_mismatch_blocks_materialisation[cross_tenant_scope] PASSED [ 88%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restore_scope_mismatch_blocks_materialisation[compartment_only] PASSED [ 88%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restore_scope_mismatch_blocks_materialisation[marking_only] PASSED [ 89%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_restore_scope_mismatch_blocks_materialisation[gcs_binding_only] PASSED [ 90%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_quota_exceeded_backpressures_without_semantic_downgrade[itemCount-2-5] PASSED [ 90%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_quota_exceeded_backpressures_without_semantic_downgrade[embeddingDimensions-3-4] PASSED [ 91%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_dependency_fault_blocks_readiness_and_degrades_posture[qdrant] PASSED [ 91%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_dependency_fault_blocks_readiness_and_degrades_posture[opa] PASSED [ 92%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_dependency_fault_blocks_readiness_and_degrades_posture[postgresql] PASSED [ 93%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_dependency_fault_blocks_readiness_and_degrades_posture[kafka] PASSED [ 93%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_dependency_fault_blocks_readiness_and_degrades_posture[spire-server] PASSED [ 94%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_emergency_stop_denies_mutative_capabilities_within_10_seconds PASSED [ 95%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_release_drift_blocks_readiness_and_mutative_commands PASSED [ 95%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_default_deny_admits_only_allowlisted_destination_port_pairs PASSED [ 96%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_open_public_egress_blocks_readiness PASSED [ 96%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_scanner_failure_denies_every_admission_until_the_scan_recovers PASSED [ 97%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_public_network_dependency_prevents_the_process_from_starting PASSED [ 98%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_logs_and_traces_carry_governed_fields_and_no_secrets PASSED [ 98%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness PASSED [ 99%]
 ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_missing_environment_fails_instead_of_skipping PASSED [100%]
 
----------------- generated xml file: /tmp/ocor0049c3/q/task.xml ----------------
-======================== 91 passed in 491.33s (0:08:11) ========================
+---------------- generated xml file: /tmp/ocor0049c4/q/task.xml ----------------
+======================= 162 passed in 1774.89s (0:29:34) =======================
 ## exit_code=0
 
 === embedded ops agent: ruff + mypy --strict ===
-$ /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python -c "import yaml,pathlib; pathlib.Path('/tmp/ocor0049c3/q/ocor_ops_agent.py').write_text(yaml.safe_load(open('deploy/helm/ocor-poc/compose.profiles.yaml'))['configs']['ocor-ops-agent']['content'])" && ruff check --config pyproject.toml /tmp/ocor0049c3/q/ocor_ops_agent.py && cd /tmp/ocor0049c3/q && /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python -m mypy --strict --python-version 3.11 --no-incremental ocor_ops_agent.py
+$ /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python -c "import yaml,pathlib; pathlib.Path('/tmp/ocor0049c4/q/ocor_ops_agent.py').write_text(yaml.safe_load(open('deploy/helm/ocor-poc/compose.profiles.yaml'))['configs']['ocor-ops-agent']['content'])" && ruff check --config pyproject.toml /tmp/ocor0049c4/q/ocor_ops_agent.py && cd /tmp/ocor0049c4/q && /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python -m mypy --strict --python-version 3.11 --no-incremental ocor_ops_agent.py
 All checks passed!
 Success: no issues found in 1 source file
 [exit_code=0]
 
 === helm lint ===
-$ cat /tmp/ocor0049c3/q/helm-values.yaml && helm lint deploy/helm/ocor-poc -f /tmp/ocor0049c3/q/helm-values.yaml
+$ cat /tmp/ocor0049c4/q/helm-values.yaml && helm lint deploy/helm/ocor-poc -f /tmp/ocor0049c4/q/helm-values.yaml
 operational:
   hostAliases:
   - hostnames:
@@ -295,48 +355,287 @@ $ /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-ru
 {"verdict": "PASS", "counts": {"PASS": 37, "NOT_EXECUTED": 2}, "tasks": 84, "requirements": 285, "waves": 29, "critical_days": 161}
 [exit_code=0]
 
+=== environment repair during the qualifying run (Fuseki OOM restart: init, fixtures, typed service verification) ===
+{
+  "status": "PASS",
+  "steps": [
+    {
+      "detail": {
+        "key_count": 2
+      },
+      "result": "ALREADY_INITIALIZED",
+      "step": "spire_trust"
+    },
+    {
+      "detail": {
+        "realm": "ocor"
+      },
+      "result": "ALREADY_INITIALIZED",
+      "step": "keycloak_realm"
+    },
+    {
+      "detail": {
+        "policy_id": "ocor_bootstrap"
+      },
+      "result": "ALREADY_INITIALIZED",
+      "step": "opa_policy"
+    },
+    {
+      "detail": {
+        "mount": "ocor"
+      },
+      "result": "ALREADY_INITIALIZED",
+      "step": "openbao_paths"
+    },
+    {
+      "detail": {
+        "terminusdb": "ALREADY_INITIALIZED",
+        "typedb": "ALREADY_INITIALIZED"
+      },
+      "result": "ALREADY_INITIALIZED",
+      "step": "graph_databases"
+    }
+  ]
+}
+[exit=0]
+{
+  "fixtures": [
+    {
+      "operation_count": 0,
+      "result": "ALREADY_INITIALIZED",
+      "source_sha256": "d6abac258578d1901040c45ebf7ebd814b943b913707f92830b8973b47b62238",
+      "target": "terminusdb",
+      "verification_sha256": "78ba64946b47e9ebc8ff7724373319c308918295093ce951a192ec533ae05203"
+    },
+    {
+      "operation_count": 0,
+      "result": "ALREADY_INITIALIZED",
+      "source_sha256": "089b0f227e11507329595af7a33ad354ba51f20c2a36dde258b052e437963882",
+      "target": "typedb",
+      "verification_sha256": "78ba64946b47e9ebc8ff7724373319c308918295093ce951a192ec533ae05203"
+    }
+  ],
+  "status": "PASS"
+}
+[exit=0]
+{
+  "services": [
+    {
+      "detail": {
+        "info_status": 200,
+        "ok_status": 200,
+        "unauthenticated_access": "FAIL_CLOSED"
+      },
+      "service": "terminusdb",
+      "status": "READY"
+    },
+    {
+      "detail": {
+        "lock": {
+          "image": "typedb/typedb@sha256:7555df2fffd5354553143facbfc81a58ce7036e4cc8b3b50bc7139faff4a721f",
+          "license": "MPL-2.0",
+          "source": "https://hub.docker.com/r/typedb/typedb",
+          "version": "3.12.3"
+        },
+        "protocol": {
+          "distribution": "TypeDB CE",
+          "grpc_tcp": "READY",
+          "health_status": 204,
+          "unauthenticated_database_access": "FAIL_CLOSED",
+          "version": "3.12.3"
+        },
+        "result": "PASS",
+        "runtime": {
+          "configured_image": "typedb/typedb@sha256:7555df2fffd5354553143facbfc81a58ce7036e4cc8b3b50bc7139faff4a721f",
+          "health": "healthy",
+          "ports": {
+            "1729/tcp": "1729",
+            "8000/tcp": "8000"
+          }
+        },
+        "schema_version": "1.0",
+        "service": "typedb"
+      },
+      "service": "typedb",
+      "status": "READY"
+    },
+    {
+      "detail": {
+        "absent_dataset_check": "FAIL_CLOSED",
+        "absent_dataset_status": 404,
+        "malformed_request_status": 200,
+        "ping_status": 200
+      },
+      "service": "fuseki",
+      "status": "READY"
+    },
+    {
+      "detail": {
+        "errors": [],
+        "services": {
+          "keycloak": {
+            "health": "healthy",
+            "host_ips": [
+              "127.0.0.1"
+            ],
+            "image": "quay.io/keycloak/keycloak@sha256:9d1f1b2b7261ff53c66cb1092dfcdc34a5fb77e81f9e6a6e75b8b6a795de8067",
+            "paused": false,
+            "running": true
+          },
+          "opa": {
+            "health": "healthy",
+            "host_ips": [
+              "127.0.0.1"
+            ],
+            "image": "openpolicyagent/opa@sha256:39daf255ae7f25d81103f03a0c18308a50b7b5bb67907bed6166f70e24a970ff",
+            "paused": false,
+            "running": true
+          }
+        },
+        "status": "PASS"
+      },
+      "service": "opa-keycloak",
+      "status": "READY"
+    },
+    {
+      "detail": {
+        "api": {
+          "auth": {
+            "authorized_system_api": "PASS",
+            "invalid_token": "FAIL_CLOSED"
+          },
+          "health": {
+            "initialized": true,
+            "seal_state": "UNSEALED",
+            "standby": false,
+            "version": "2.6.2"
+          }
+        },
+        "lock": {
+          "image": "quay.io/openbao/openbao@sha256:11fd73a2102cda9c55d5d881a8c3210303146a7ec1e8ac76f526e175c6d24641",
+          "license": "MPL-2.0",
+          "source": "https://quay.io/repository/openbao/openbao",
+          "version": "2.6.2"
+        },
+        "result": "PASS",
+        "runtime": {
+          "configured_image": "quay.io/openbao/openbao@sha256:11fd73a2102cda9c55d5d881a8c3210303146a7ec1e8ac76f526e175c6d24641",
+          "health": "healthy",
+          "host_binding": "127.0.0.1:8200",
+          "no_new_privileges": true
+        },
+        "schema_version": "1.0",
+        "service": "openbao"
+      },
+      "service": "openbao",
+      "status": "READY"
+    },
+    {
+      "detail": {
+        "fault": {},
+        "identity": {},
+        "invalid_token": {},
+        "recovery": {},
+        "result": "PASS",
+        "runtime": {
+          "spire-agent": {
+            "host_ports": 0,
+            "image": "ghcr.io/spiffe/spire-agent@sha256:41b0dcd8b258a69db9e2768292a060766fb76fd866e4bc925849981ea1b825ff",
+            "running": true
+          },
+          "spire-server": {
+            "host_ports": 0,
+            "image": "ghcr.io/spiffe/spire-server@sha256:4082f30d3e0ddc4000a171392c4ea174345ee44d161ee917c70b97b2ecfba141",
+            "running": true
+          }
+        },
+        "schema_version": "1.0",
+        "service": "spiffe-spire",
+        "trust_domain": "ocor.test",
+        "versions": {
+          "spire-agent": "1.15.3",
+          "spire-server": "1.15.3"
+        }
+      },
+      "service": "spiffe-spire",
+      "status": "READY"
+    },
+    {
+      "detail": {
+        "pg_isready": "/var/run/postgresql:5432 - accepting connections",
+        "unauthenticated_access": "FAIL_CLOSED",
+        "wrong_password_exit_code": 2
+      },
+      "service": "postgresql",
+      "status": "READY"
+    },
+    {
+      "detail": {
+        "absent_topic_check": "FAIL_CLOSED",
+        "describe_absent_topic_exit_code": 1,
+        "list_topics_exit_code": 0
+      },
+      "service": "kafka",
+      "status": "READY"
+    },
+    {
+      "detail": {
+        "absent_collection_check": "FAIL_CLOSED",
+        "absent_collection_status": 404,
+        "root_status": 200,
+        "version": "1.15.1"
+      },
+      "service": "qdrant",
+      "status": "READY"
+    }
+  ],
+  "status": "PASS"
+}
+[exit=0]
+
 === full runtime suite with OCOR_LIVE_POSTGRES_DSN on the real stack ===
-## full suite HEAD 76f20cabe93a64e66ac5d80e7d83802a32250da7 2026-10-05T18:59:59Z; node v20.20.2; PATH prefix /tmp/ocor-c6/toolchain/bin (pinned isolated toolchain)
+## full suite HEAD 81b3da942e88bb284f8855d3905a411bcb4e355f 2026-10-05T22:18:15Z; node v20.20.2; PATH prefix /tmp/ocor-c6/toolchain/bin (pinned isolated toolchain)
 $ OCOR_LIVE_POSTGRES_DSN=<ocor-bootstrap-postgres> uv run --frozen pytest -q -ra tests/  (cwd ocor-runtime)
-........................................................................ [  6%]
-........................................................................ [ 12%]
-........................................................................ [ 18%]
-........................................................................ [ 24%]
-........................................................................ [ 30%]
-........................................................................ [ 36%]
-........................................................................ [ 42%]
-........................................................................ [ 48%]
-........................................................................ [ 54%]
-........................................................................ [ 60%]
-........................................................................ [ 66%]
-........................................................................ [ 72%]
-........................................................................ [ 78%]
-........................................................................ [ 84%]
-........................................................................ [ 90%]
+........................................................................ [  5%]
+........................................................................ [ 11%]
+........................................................................ [ 17%]
+........................................................................ [ 22%]
+........................................................................ [ 28%]
+........................................................................ [ 34%]
+........................................................................ [ 39%]
+........................................................................ [ 45%]
+........................................................................ [ 51%]
+........................................................................ [ 57%]
+........................................................................ [ 62%]
+........................................................................ [ 68%]
+........................................................................ [ 74%]
+........................................................................ [ 79%]
+........................................................................ [ 85%]
+........................................................................ [ 91%]
 ........................................................................ [ 96%]
-........................................                                 [100%]
-1192 passed in 840.61s (0:14:00)
+.......................................                                  [100%]
+1263 passed in 1804.19s (0:30:04)
 ## exit_code=0
 
 === reports/tests suites linked in CI ===
 $ ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_generate_contracts_reference_resolution.py
 .............                                                            [100%]
-13 passed in 3.34s
+13 passed in 2.92s
 $ ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests/sdk/test_typescript_sdk_conformance.py
 ....                                                                     [100%]
-4 passed in 0.51s
+4 passed in 0.43s
 $ ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_backlog_generator_reality_parity.py
 .....                                                                    [100%]
-5 passed in 0.05s
+5 passed in 0.04s
 $ ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_runtime_evidence_validator.py
 ..............                                                           [100%]
-14 passed in 0.36s
+14 passed in 0.34s
 $ ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_evidence_input_drift.py
 .....                                                                    [100%]
-5 passed in 0.14s
+5 passed in 0.15s
 $ ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_language_migration_benchmark_harness.py
 ...........                                                              [100%]
-11 passed in 0.96s
+11 passed in 0.81s
 ## done
 
 === approved-schema harness scripts/verify.py (summary) ===
@@ -365,7 +664,7 @@ referto JSON: reports/verify_report.json
 
 === environment ===
 {
-  "acquired_from_head": "76f20cabe93a64e66ac5d80e7d83802a32250da7",
+  "acquired_from_head": "81b3da942e88bb284f8855d3905a411bcb4e355f",
   "bootstrap_containers": {
     "ocor-bootstrap-fuseki-1": "ocor/jena-fuseki:6.2.0 sha256:a1eb484a7d056a897c7bc832fb735b06136fc876aa90da3055d9882bc1b8d9e3",
     "ocor-bootstrap-kafka-1": "confluentinc/cp-kafka@sha256:24cdd3a7fa89d2bed150560ebea81ff1943badfa61e51d66bb541a6b0d7fb047 sha256:24cdd3a7fa89d2bed150560ebea81ff1943badfa61e51d66bb541a6b0d7fb047",
@@ -382,8 +681,8 @@ referto JSON: reports/verify_report.json
   "docker_compose": "5.5.1",
   "docker_server": "29.8.2",
   "environment_repairs": [
-    "ocor-bootstrap-fuseki-1 restarted after an OOM kill (exit 137, own 2G cgroup limit), then deploy/bootstrap/init/initialize_services.py, deploy/bootstrap/fixtures/load_fixtures.py and scripts/verify_external_services.py --execute --typed (all services READY)",
-    "leftover OCOR test containers (ocor-spike-0023-*, ocor-c5-backbone-*) from earlier sessions removed to free memory before the run; no non-OCOR container touched; no repository file changed"
+    "preflight: ocor-bootstrap-fuseki-1 found exited (137, OOM) and restarted before any qualifying run",
+    "during the qualifying task run (kind fixture creation, before the CronJob tick) ocor-bootstrap-fuseki-1 was OOM-killed by its own 2 GiB cgroup limit (OOMKilled=true, exit 137, 2026-10-05T21:59:29Z); restarted at the same pinned image, then deploy/bootstrap/init/initialize_services.py, deploy/bootstrap/fixtures/load_fixtures.py and scripts/verify_external_services.py --execute --typed (all services READY, raw log section 'environment repair'); no test failed or was retried, every test of the run passed"
   ],
   "host": "nepryoon",
   "kernel": "7.0.0-34-generic",
