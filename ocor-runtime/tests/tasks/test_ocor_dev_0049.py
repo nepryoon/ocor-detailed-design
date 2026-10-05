@@ -64,7 +64,6 @@ RECOVERY_GATE = [
     "sample_semantic_digest",
 ]
 EXIT_CONFIG, EXIT_BACKPRESSURE, EXIT_VERIFY, EXIT_GATE = 78, 75, 65, 66
-TOOLS = ROOT / ".ocor" / "tools" / "bin"
 
 
 # --------------------------------------------------------------------------- sources
@@ -107,9 +106,12 @@ def run_agent(agent_dir: Path, *args: str, profile: dict | None = None,
 
 
 def tool(name: str) -> str:
-    candidate = TOOLS / name
-    if candidate.exists():
-        return str(candidate)
+    # DEC-211 tools (helm, kind, kubectl) are acquired with verified checksums into
+    # the untracked `.ocor/tools/bin` of the checkout (a worktree walks up to it).
+    for parent in (ROOT, *Path(__file__).resolve().parents):
+        candidate = parent / ".ocor" / "tools" / "bin" / name
+        if candidate.exists():
+            return str(candidate)
     found = shutil.which(name)
     if not found:
         pytest.fail(f"mandatory tool {name} is unavailable (DEC-211 provisioning required); not a skip")
