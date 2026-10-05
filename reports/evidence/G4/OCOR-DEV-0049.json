@@ -23,7 +23,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 23,
+        "passed": 48,
         "skipped": 0
       },
       "status": "PASS"
@@ -62,7 +62,7 @@
       "status": "PASS"
     },
     {
-      "command": "ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base origin/main --head HEAD --branch task/OCOR-DEV-0049-poc-deployment-observability-backup-safe-degradation (8 changed paths; immutable surfaces untouched)",
+      "command": "ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base origin/main --head HEAD --branch task/OCOR-DEV-0049-poc-deployment-observability-backup-safe-degradation (immutable surfaces untouched)",
       "exit_code": 0,
       "result": {
         "failed": 0,
@@ -84,7 +84,7 @@
       "status": "PASS"
     },
     {
-      "command": "ocor-runtime/.venv/bin/python scripts/validate_evidence_input_drift.py --root . (R3; 63 tasks, 0 drift)",
+      "command": "ocor-runtime/.venv/bin/python scripts/validate_evidence_input_drift.py --root . (R3)",
       "exit_code": 0,
       "result": {
         "failed": 0,
@@ -95,12 +95,12 @@
       "status": "PASS"
     },
     {
-      "command": "PATH=/tmp/ocor-c6/toolchain/bin:$PATH OCOR_LIVE_POSTGRES_DSN=<ocor-bootstrap-postgres> ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests/ (toolchain Node 20.20.2; real ocor-bootstrap PostgreSQL; 1124 passed)",
+      "command": "PATH=/tmp/ocor-c6/toolchain/bin:$PATH OCOR_LIVE_POSTGRES_DSN=<ocor-bootstrap-postgres> ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests/ (toolchain Node 20.20.2; real ocor-bootstrap PostgreSQL; 1149 passed)",
       "exit_code": 0,
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1124,
+        "passed": 1149,
         "skipped": 0
       },
       "status": "PASS"
@@ -128,22 +128,25 @@
       "status": "PASS"
     }
   ],
-  "commit": "74bd4178e468d9adb64d9ff0961a0fb7ee30a004",
-  "created_at": "2026-10-05T11:56:08Z",
+  "commit": "6f2efefe7493e88e5deb3f2366fb288f843f0e57",
+  "created_at": "2026-10-05T14:19:46.510026+00:00",
   "environment": {
-    "backend_under_test": "deploy/helm/ocor-poc/ (Chart.yaml, values.yaml, compose.profiles.yaml, templates/profile-contract.yaml) merged against deploy/bootstrap/compose.yaml (the real ocor-bootstrap stack model); foundation service images validated as digest-pinned/content-addressed against infra/services.lock.json.",
+    "backend_under_test": "deploy/helm/ocor-poc/ (Chart.yaml, values.yaml, compose.profiles.yaml, templates/) merged against deploy/bootstrap/compose.yaml (the real ocor-bootstrap stack model); foundation service images validated as digest-pinned/content-addressed against infra/services.lock.json.",
     "orchestrator": "none -- the PoC deployment profile is a machine-readable contract (YAML) carried identically by the Helm chart (deploy/helm/ocor-poc/values.yaml) and the Compose overlay (deploy/helm/ocor-poc/compose.profiles.yaml); the test module parses and validates the contract against the normative oracle and the real bootstrap Compose model, with no runtime orchestrator involved.",
     "reused_deliverable": "deploy/bootstrap/compose.yaml and infra/services.lock.json are reused read-only; this task adds a new deploy/helm/ocor-poc/ tree and its test module without modifying any existing sealed file."
   },
   "inputs": {
     "deploy/helm/ocor-poc/Chart.yaml": "8d167451227954598666cbf63409c197c5f48c96ac49f9632bdf25291ba6387f",
-    "deploy/helm/ocor-poc/compose.profiles.yaml": "6cd43db8a338d2980420efe5460487f10f0e6852b46080026e380a65f0b61c15",
+    "deploy/helm/ocor-poc/compose.profiles.yaml": "11665399c558fc6447ab189dbb2270e6ccfe4d0283127860c08e06c17035d1a1",
+    "deploy/helm/ocor-poc/templates/backup-cronjob.yaml": "b7c549af3598022f1f44928e644a629810ff2d93cccfbb6b59e26b253ccc8024",
+    "deploy/helm/ocor-poc/templates/networkpolicy.yaml": "93f4d3963d0cafcb95ddcd7a32c1f22fb10865d90f83940eb65ccce94a381d3f",
     "deploy/helm/ocor-poc/templates/profile-contract.yaml": "ebd2d53230a81ca72bd9ff1835ffb82029a5b8bcae79f6a04b68f35e94f97943",
-    "deploy/helm/ocor-poc/values.yaml": "950b2230a10a956f92631f5041bc482eb4ee348e266332a00315aa6690b14959",
+    "deploy/helm/ocor-poc/templates/readiness-gate.yaml": "5458994fa31738879dcc3cb92de8a10426001a524537b0cd43925eb0daa18051",
+    "deploy/helm/ocor-poc/values.yaml": "452b1a91ea72543b39c23eb1ff9a2709acf651bbd6c136c0b941e7e4786203dd",
     "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
-    "ocor-runtime/tests/tasks/test_ocor_dev_0049.py": "6ee2f288ec29c8bb4d5a8f2606ae8fd2a83edb6bf0ff6c45ac4e171bd529fbee"
+    "ocor-runtime/tests/tasks/test_ocor_dev_0049.py": "c5b7ff3606911e9d32bebbc0971607deeeb902774bd7479f483fcd3885357e60"
   },
-  "raw_output_sha256": "39034614db14fb104dbb8881cfd0b5e7c0b024715eee0d2b1d4ff5175a3d10b3",
+  "raw_output_sha256": "dab77e7355489745f28cebce2edeb00e3739031f135e6314d6771168b28c947f",
   "requirement_results": [
     {
       "case_id": "OCOR-DEV-0049-HELM-CHART-WELL-FORMED",
@@ -428,7 +431,307 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1124,
+        "passed": 1149,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-HELM-CHART-REAL-RESOURCES",
+      "command": "the chart renders real operational resources (ConfigMap, NetworkPolicy, readiness-gate Deployment+Service, backup CronJob), not a bare ConfigMap",
+      "requirement_id": "NFR-001",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-MEMORY-RESTORE-TOMBSTONE-ORDER",
+      "command": "restore replays memory deletion tombstones before rebuilding the projection and reopening retrieval",
+      "requirement_id": "NFR-065",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-MEMORY-BACKUP-MANIFEST-FIELDS",
+      "command": "the memory backup manifest binds all required fields and is bound to the same recovery point",
+      "requirement_id": "NFR-067",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-POC-RESOURCE-LIMITS",
+      "command": "PoC resource limits are present, positive, and forbid semantic downgrade on quota exceed",
+      "requirement_id": "NFR-001",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-COMPOSE-REAL-OPERATIONAL-SERVICES",
+      "command": "the overlay defines the readiness gate, local telemetry and backup services with digest-pinned images and health-gated dependencies",
+      "requirement_id": "NFR-001",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-COMPOSE-PROFILES-CHANGE-TOPOLOGY",
+      "command": "Compose profiles actually activate/deactivate services so the effective topology differs by profile",
+      "requirement_id": "NFR-001",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-READINESS-GATE-BLOCKS-WITHOUT-DEPS",
+      "command": "the readiness gate alone (without its mandatory dependencies) is refused as not-ready by Docker Compose",
+      "requirement_id": "NFR-080",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-LIVE-FOUNDATION-BACKENDS-REACHABLE",
+      "command": "live integration: the real bootstrap backends probed by the readiness gate are reachable on their published ports",
+      "requirement_id": "NFR-080",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-READINESS-GATE-DETECTS-STOPPED-DEP",
+      "command": "live fault injection: stopping a mandatory backend darkens its port (readiness would block) and it recovers",
+      "requirement_id": "NFR-080",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-PUBLIC-RUNTIME-DEPENDENCY",
+      "command": "a public-network runtime dependency is rejected: no public-network runtime dependency",
+      "requirement_id": "NFR-041",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-DRIFT-SCAN-NEGATIVE",
+      "command": "a negative drift scan interval is rejected: drift scan interval must be in [1, 60]",
+      "requirement_id": "NFR-080",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-EXPORTERS-NOT-LOCAL",
+      "command": "non-local exporters are rejected: exporters must stay local",
+      "requirement_id": "NFR-042",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-RPO-NEGATIVE",
+      "command": "a negative RPO is rejected",
+      "requirement_id": "NFR-065",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-RTO-NEGATIVE",
+      "command": "a negative RTO is rejected",
+      "requirement_id": "NFR-065",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-MEMORY-MANIFEST-FIELD-MISSING",
+      "command": "a missing memory manifest field is rejected: memory manifest field deletionEpochs",
+      "requirement_id": "NFR-067",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-MEMORY-MANIFEST-UNBOUND",
+      "command": "an unbound memory manifest is rejected: memory must be bound to the same recovery point",
+      "requirement_id": "NFR-067",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-RESOURCE-LIMIT-MISSING",
+      "command": "a missing resource limit key is rejected: resource limit retentionHorizonDays",
+      "requirement_id": "NFR-001",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-RESOURCE-LIMIT-ZERO",
+      "command": "a zero resource limit is rejected: resource limit topK",
+      "requirement_id": "NFR-001",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-QUOTA-SEMANTIC-DOWNGRADE",
+      "command": "semantic downgrade on quota exceed is rejected",
+      "requirement_id": "NFR-080",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-TOMBSTONE-REPLAY-OUT-OF-ORDER",
+      "command": "out-of-order tombstone replay is rejected: restore steps incomplete or out of order",
+      "requirement_id": "NFR-065",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-REPLAY-PINS-EMPTY",
+      "command": "empty replay pins are rejected: replay pins incomplete",
+      "requirement_id": "NFR-065",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-HEALTH-SERVICES-EMPTY",
+      "command": "an empty health services list is rejected: health.services must be non-empty",
+      "requirement_id": "NFR-080",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-HEALTH-SERVICE-SUBSET",
+      "command": "a health service subset is rejected: health must cover all real foundation services",
+      "requirement_id": "NFR-080",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-NAMESPACE-NOT-PER-SUBSYSTEM",
+      "command": "a disabled per-subsystem namespace is rejected: namespace per subsystem",
+      "requirement_id": "NFR-041",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-SERVICE-ACCOUNT-NOT-PER-SUBSYSTEM",
+      "command": "a disabled per-subsystem service account is rejected: service account per subsystem",
+      "requirement_id": "NFR-041",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1,
         "skipped": 0
       },
       "status": "PASS"
@@ -436,7 +739,7 @@
   ],
   "residual_risks": [
     "Observability and backup backends remain Candidate Implementation behind logical contracts (ADD v1.3 \u00a76.1); no image digest is fabricated here \u2014 the task proves the contract is complete and fail-closed, not that the backends run end-to-end.",
-    "The profile contract is machine-checkable today, but runtime observability/backup/recovery is not yet exercised end-to-end; that is the G6 verification work (OCOR-DEV-0065/0066)."
+    "Live foundation-backend reachability and readiness-gate fault injection are now exercised against the real ocor-bootstrap stack (zero skip); end-to-end observability/backup/recovery remains the G6 verification work (OCOR-DEV-0065/0066)."
   ],
   "result": "PASS",
   "rollback_procedure_verified": "deploy/helm/ocor-poc/ is additive only (new files under deploy/helm/ocor-poc/ plus a new test module); reverting is a plain deletion of that tree and removal of its MANIFEST/evidence entries, with zero change to deploy/bootstrap/compose.yaml, infra/services.lock.json or any existing sealed file.",

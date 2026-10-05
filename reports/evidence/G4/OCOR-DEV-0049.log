@@ -1,6 +1,5 @@
 === OCOR-DEV-0049 — PoC deployment profile (helm + compose) — qualifying run ===
 
-
 === sha256sum normative integrity ===
 $ sha256sum -c inputs/normative/SHA256SUMS
 inputs/normative/OCOR_Architectural_Design_Document_v1.1.md: OK
@@ -22,33 +21,58 @@ cachedir: .pytest_cache
 rootdir: /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime
 configfile: pyproject.toml
 plugins: cov-7.1.0
-collecting ... collected 23 items
+collecting ... collected 48 items
 
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_is_present_and_well_formed PASSED [  4%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_renders_the_profile_contract_as_a_configmap PASSED [  8%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_values_contract_is_complete PASSED [ 13%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_overlay_contract_does_not_drift_from_helm_values PASSED [ 17%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_profiles_are_the_four_governed_modes PASSED [ 21%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_overlay_is_a_valid_compose_model PASSED [ 26%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_overlay_merges_with_the_real_bootstrap_stack PASSED [ 30%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_foundation_services_behind_the_profile_are_content_addressed_and_healthy PASSED [ 34%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[public egress enabled] PASSED [ 39%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[single synthetic compartment] PASSED [ 43%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[Root CA inside fault domain] PASSED [ 47%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[digest pinning disabled] PASSED [ 52%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[C6 shares causal batch pool] PASSED [ 56%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[drift scan exceeds 60s] PASSED [ 60%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[classified payload logged] PASSED [ 65%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[trace field missing] PASSED [ 69%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[authority class missing] PASSED [ 73%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[untested backup] PASSED [ 78%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[restore not isolated] PASSED [ 82%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[recovery gate missing] PASSED [ 86%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[safe-degraded fault missing] PASSED [ 91%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[health probe missing] PASSED [ 95%]
-ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_overlay_rejects_contract_that_drifts_from_helm PASSED [100%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_is_present_and_well_formed PASSED [  2%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_renders_the_profile_contract_as_a_configmap PASSED [  4%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_renders_real_operational_resources PASSED [  6%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_values_contract_is_complete PASSED [  8%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_memory_restore_replays_deletion_tombstones_before_reopening_retrieval PASSED [ 10%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_memory_backup_manifest_binds_all_required_fields PASSED [ 12%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_poc_resource_limits_are_present_and_positive PASSED [ 14%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_overlay_contract_does_not_drift_from_helm_values PASSED [ 16%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_profiles_are_the_four_governed_modes PASSED [ 18%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_overlay_is_a_valid_compose_model PASSED [ 20%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_overlay_defines_real_operational_services PASSED [ 22%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_overlay_profiles_change_effective_topology PASSED [ 25%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_overlay_merges_with_the_real_bootstrap_stack PASSED [ 27%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_readiness_gate_blocks_without_its_mandatory_dependencies PASSED [ 29%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_foundation_services_behind_the_profile_are_content_addressed_and_healthy PASSED [ 31%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[public egress enabled] PASSED [ 33%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[single synthetic compartment] PASSED [ 35%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[Root CA inside fault domain] PASSED [ 37%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[digest pinning disabled] PASSED [ 39%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[public runtime dependency] PASSED [ 41%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[C6 shares causal batch pool] PASSED [ 43%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[drift scan exceeds 60s] PASSED [ 45%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[drift scan negative] PASSED [ 47%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[exporters not local] PASSED [ 50%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[classified payload logged] PASSED [ 52%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[trace field missing] PASSED [ 54%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[authority class missing] PASSED [ 56%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[untested backup] PASSED [ 58%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[rpo negative] PASSED [ 60%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[rto negative] PASSED [ 62%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[memory manifest field missing] PASSED [ 64%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[memory manifest unbound] PASSED [ 66%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[resource limit missing] PASSED [ 68%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[resource limit zero] PASSED [ 70%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[quota semantic downgrade] PASSED [ 72%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[restore not isolated] PASSED [ 75%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[tombstone replay out of order] PASSED [ 77%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[recovery gate missing] PASSED [ 79%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[replay pins empty] PASSED [ 81%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[safe-degraded fault missing] PASSED [ 83%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[health services empty] PASSED [ 85%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[health service subset] PASSED [ 87%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[health probe missing] PASSED [ 89%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[namespace not per subsystem] PASSED [ 91%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[service account not per subsystem] PASSED [ 93%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_overlay_rejects_contract_that_drifts_from_helm PASSED [ 95%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_live_foundation_backends_are_reachable PASSED [ 97%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_readiness_gate_detects_a_stopped_dependency PASSED [100%]
 
-============================== 23 passed in 0.53s ==============================
+============================== 48 passed in 1.18s ==============================
 [exit_code=0]
 
 
@@ -59,32 +83,32 @@ All checks passed!
 
 
 === mypy --strict (DEC-212 Phase 2.1: ocor-runtime/src and scripts) ===
-$ /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python -m mypy
+$ ocor-runtime/.venv/bin/python -m mypy
 Success: no issues found in 69 source files
 [exit_code=0]
 
 
 === validate_language_policy (DEC-212) ===
-$ /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python scripts/validate_language_policy.py
+$ ocor-runtime/.venv/bin/python scripts/validate_language_policy.py
 PASS: no tracked file uses a monitored extension outside its authorized area
 [exit_code=0]
 
 
 === validate_ocor_change_scope (task branch) ===
-$ /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base origin/main --head HEAD --branch task/OCOR-DEV-0049-poc-deployment-observability-backup-safe-degradation
-PASS: 8 changed path(s); immutable surfaces untouched; task ledger stable
+$ ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base origin/main --head HEAD --branch task/OCOR-DEV-0049-poc-deployment-observability-backup-safe-degradation
+PASS: 11 changed path(s); immutable surfaces untouched; task ledger stable
 [exit_code=0]
 
 
 === tooling-bootstrap CI-wired reports/tests suites ===
-$ PATH=/tmp/ocor-c6/toolchain/bin:$PATH /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_generate_contracts_reference_resolution.py reports/tests/test_backlog_generator_reality_parity.py reports/tests/test_runtime_evidence_validator.py reports/tests/test_evidence_input_drift.py reports/tests/test_language_migration_benchmark_harness.py ocor-runtime/tests/sdk/test_typescript_sdk_conformance.py
+$ PATH=/tmp/ocor-c6/toolchain/bin:$PATH ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_generate_contracts_reference_resolution.py reports/tests/test_backlog_generator_reality_parity.py reports/tests/test_runtime_evidence_validator.py reports/tests/test_evidence_input_drift.py reports/tests/test_language_migration_benchmark_harness.py ocor-runtime/tests/sdk/test_typescript_sdk_conformance.py
 ....................................................                     [100%]
-52 passed in 5.30s
+52 passed in 4.64s
 [exit_code=0]
 
 
 === validate_evidence_input_drift (R3) ===
-$ /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python scripts/validate_evidence_input_drift.py --root .
+$ ocor-runtime/.venv/bin/python scripts/validate_evidence_input_drift.py --root .
 {
   "checked_inputs": 167,
   "checked_tasks": 63,
@@ -100,21 +124,21 @@ $ /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-ru
 $ PATH=/tmp/ocor-c6/toolchain/bin:$PATH OCOR_LIVE_POSTGRES_DSN=<ocor-bootstrap-postgres> ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests/
 ........................................................................ [  6%]
 ........................................................................ [ 12%]
-........................................................................ [ 19%]
+........................................................................ [ 18%]
 ........................................................................ [ 25%]
-........................................................................ [ 32%]
-........................................................................ [ 38%]
-........................................................................ [ 44%]
-........................................................................ [ 51%]
-........................................................................ [ 57%]
-........................................................................ [ 64%]
-........................................................................ [ 70%]
-........................................................................ [ 76%]
-........................................................................ [ 83%]
-........................................................................ [ 89%]
-........................................................................ [ 96%]
-............................................                             [100%]
-1124 passed in 359.80s (0:05:59)
+........................................................................ [ 31%]
+........................................................................ [ 37%]
+........................................................................ [ 43%]
+........................................................................ [ 50%]
+........................................................................ [ 56%]
+........................................................................ [ 62%]
+........................................................................ [ 68%]
+........................................................................ [ 75%]
+........................................................................ [ 81%]
+........................................................................ [ 87%]
+........................................................................ [ 93%]
+.....................................................................    [100%]
+1149 passed in 384.63s (0:06:24)
 [exit_code=0]
 
 

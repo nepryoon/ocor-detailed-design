@@ -172,12 +172,12 @@
     },
     {
       "path": "OCOR-DEV-0049.json",
-      "sha256": "554e717c107dd6da38cf288552f7a45de762b9aac259a148ff054f11ffe4bc95",
+      "sha256": "8af55a0561cac5441036c1b6af64bfac7c3b0b2f73a1574dc8617a56be527d68",
       "task_id": "OCOR-DEV-0049"
     },
     {
       "path": "OCOR-DEV-0049.log",
-      "sha256": "39034614db14fb104dbb8881cfd0b5e7c0b024715eee0d2b1d4ff5175a3d10b3",
+      "sha256": "dab77e7355489745f28cebce2edeb00e3739031f135e6314d6771168b28c947f",
       "task_id": "OCOR-DEV-0049-RAW"
     }
   ],
@@ -3448,6 +3448,231 @@
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-HELM-CHART-REAL-RESOURCES",
+      "command": "the chart renders real operational resources (ConfigMap, NetworkPolicy, readiness-gate Deployment+Service, backup CronJob), not a bare ConfigMap",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-001",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-MEMORY-RESTORE-TOMBSTONE-ORDER",
+      "command": "restore replays memory deletion tombstones before rebuilding the projection and reopening retrieval",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-065",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-MEMORY-BACKUP-MANIFEST-FIELDS",
+      "command": "the memory backup manifest binds all required fields and is bound to the same recovery point",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-POC-RESOURCE-LIMITS",
+      "command": "PoC resource limits are present, positive, and forbid semantic downgrade on quota exceed",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-001",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-COMPOSE-REAL-OPERATIONAL-SERVICES",
+      "command": "the overlay defines the readiness gate, local telemetry and backup services with digest-pinned images and health-gated dependencies",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-001",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-COMPOSE-PROFILES-CHANGE-TOPOLOGY",
+      "command": "Compose profiles actually activate/deactivate services so the effective topology differs by profile",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-001",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-READINESS-GATE-BLOCKS-WITHOUT-DEPS",
+      "command": "the readiness gate alone (without its mandatory dependencies) is refused as not-ready by Docker Compose",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-080",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-LIVE-FOUNDATION-BACKENDS-REACHABLE",
+      "command": "live integration: the real bootstrap backends probed by the readiness gate are reachable on their published ports",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-080",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-READINESS-GATE-DETECTS-STOPPED-DEP",
+      "command": "live fault injection: stopping a mandatory backend darkens its port (readiness would block) and it recovers",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-080",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-PUBLIC-RUNTIME-DEPENDENCY",
+      "command": "a public-network runtime dependency is rejected: no public-network runtime dependency",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-041",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-DRIFT-SCAN-NEGATIVE",
+      "command": "a negative drift scan interval is rejected: drift scan interval must be in [1, 60]",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-080",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-EXPORTERS-NOT-LOCAL",
+      "command": "non-local exporters are rejected: exporters must stay local",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-042",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-RPO-NEGATIVE",
+      "command": "a negative RPO is rejected",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-065",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-RTO-NEGATIVE",
+      "command": "a negative RTO is rejected",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-065",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-MEMORY-MANIFEST-FIELD-MISSING",
+      "command": "a missing memory manifest field is rejected: memory manifest field deletionEpochs",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-MEMORY-MANIFEST-UNBOUND",
+      "command": "an unbound memory manifest is rejected: memory must be bound to the same recovery point",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-RESOURCE-LIMIT-MISSING",
+      "command": "a missing resource limit key is rejected: resource limit retentionHorizonDays",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-001",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-RESOURCE-LIMIT-ZERO",
+      "command": "a zero resource limit is rejected: resource limit topK",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-001",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-QUOTA-SEMANTIC-DOWNGRADE",
+      "command": "semantic downgrade on quota exceed is rejected",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-080",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-TOMBSTONE-REPLAY-OUT-OF-ORDER",
+      "command": "out-of-order tombstone replay is rejected: restore steps incomplete or out of order",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-065",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-REPLAY-PINS-EMPTY",
+      "command": "empty replay pins are rejected: replay pins incomplete",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-065",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-HEALTH-SERVICES-EMPTY",
+      "command": "an empty health services list is rejected: health.services must be non-empty",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-080",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-HEALTH-SERVICE-SUBSET",
+      "command": "a health service subset is rejected: health must cover all real foundation services",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-080",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-NAMESPACE-NOT-PER-SUBSYSTEM",
+      "command": "a disabled per-subsystem namespace is rejected: namespace per subsystem",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-041",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-SERVICE-ACCOUNT-NOT-PER-SUBSYSTEM",
+      "command": "a disabled per-subsystem service account is rejected: service account per subsystem",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-041",
       "status": "PASS",
       "task_id": "OCOR-DEV-0049"
     }
