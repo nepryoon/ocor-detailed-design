@@ -440,6 +440,7 @@ def main() -> int:
         "reports/development/RECONCILIATION_2026-09-03_DEC-211.md",
         "reports/development/RECONCILIATION_2026-09-12_STATE.md",
         "reports/development/OCOR_DEV_0048_ESCALATION.md",
+        "reports/development/OCOR_DEV_0049_ESCALATION.md",
         "reports/development/TERMINAL_BLOCKED_REPORT.json",
         "reports/development/TOOLING_STATE.json",
         "reports/evidence/G0/MANIFEST.json",

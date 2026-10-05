@@ -4,8 +4,8 @@
     "La candidatura richiede verdetto sullo stesso head_sha e futura integrazione governata. I report terminali storici restano conservati."
   ],
   "base_sha": "45e4a6f66209af3136d79980c00c41d79fb9ae8a",
-  "baseline_commit": "45e4a6f66209af3136d79980c00c41d79fb9ae8a",
-  "branch": "governed/ci-0048-real-backend-registration",
+  "baseline_commit": "bb43d6373cd1b7cc6c1f4363725a02139df5f046",
+  "branch": "governed/state-sync-ocor-dev-0049-escalation",
   "candidate_evidence": {
     "base_sha": "feb83b0c3a684929a09b8684e8a334cb86c77efc",
     "branch": "task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls",
@@ -919,8 +919,8 @@
     "reports/evidence/G4/OCOR-DEV-0047.json",
     "reports/evidence/G4/OCOR-DEV-0047.log"
   ],
-  "exact_next_action": "OCOR-DEV-0049:implementation \u2014 lowest-numbered ready task (hard_dependencies satisfied; OCOR-DEV-0050 also ready). OCOR-DEV-REM-0017 is a mandatory dependency of every G6 task (OCOR-DEV-0060..0066) but does not block OCOR-DEV-0049 or G5. Non-blocking PO decisions RVW-03, INFO-A, INFO-C remain OPEN_PO_DECISION_REQUIRED.",
-  "head_sha": "618875eff62a43c524180596f680cafb0b4a1d02",
+  "exact_next_action": "OCOR-DEV-REM-0017:implementation \u2014 prossima azione dopo l'escalation di OCOR-DEV-0049 (NO_GO ciclo 2, budget ordinario di 2 riparazioni esaurito; implementatore ciclo 2 Claude Code, verifier Codex). OCOR-DEV-0050 resta pronto. OCOR-DEV-0049 e downstream 0059/0060/0063/0064/0066 bloccati su BLOCKED_REPAIR_BUDGET_EXHAUSTED. Decisioni PO non bloccanti RVW-03/INFO-A/INFO-C restano OPEN_PO_DECISION_REQUIRED.",
+  "head_sha": "bb43d6373cd1b7cc6c1f4363725a02139df5f046",
   "independent_verification": {
     "head_sha": "618875eff62a43c524180596f680cafb0b4a1d02",
     "implementer": "Claude Code (Anthropic)",
@@ -931,6 +931,23 @@
     "verifier": "Codex (OpenAI), processo esterno a contesto pulito"
   },
   "migration_rollback_result": "Review meccanica: cinque soli percorsi autorizzati, nessuna migrazione/schema/port sigillato modificato. git diff origin/main...HEAD limita il task a source/test, JSON/log e manifest G4; reverse-apply --check del commit di riparazione passante. Le fixture rimuovono i client temporanei Keycloak e le entry SPIRE, recuperano i container nei finally e usano segreti disposable su OCOR. Nessun rollback semantico o conformance globale dichiarato.",
+  "ocor_dev_0049_escalation": {
+    "escalation_record": "reports/development/OCOR_DEV_0049_ESCALATION.md",
+    "final_verdict": {
+      "head_sha": "7fd4f77288010b98330f74a4da455fa1b6e9e321",
+      "repair_cycle": 2,
+      "request_id": "OCOR-DEV-0049-7fd4f7728801-2",
+      "verdict": "NO_GO"
+    },
+    "findings": [
+      "VF-001",
+      "VF-002",
+      "VF-003"
+    ],
+    "implementer": "Claude Code (Anthropic)",
+    "status": "BLOCKED_REPAIR_BUDGET_EXHAUSTED",
+    "verifier": "Codex (OpenAI)"
+  },
   "raw_evidence_hashes": {
     "candidate_json": "25a8cd65065e74d2087a15afd7a54416baaef905bdd0af21d2744300395f31a4",
     "candidate_log": "0502fc016b98981e3bbeaa1fb1f3a9d40cf533f0c5a5b0293eb4cd79438288eb"
@@ -976,7 +993,7 @@
   ],
   "schema_version": "1.0",
   "security_observability_notes": "Clock UTC del boundary, validit\u00e0 intersecate, correlazione presente; nessun secret nei log candidati o in Git. E1/E2/Verified e tutti i claim invariati.",
-  "task_id": "OCOR-DEV-0048",
+  "task_id": "OCOR-DEV-0049",
   "test_results": {
     "full_runtime": {
       "command": "pytest -v --tb=line ocor-runtime/tests/",
@@ -1000,7 +1017,9 @@
       "skipped": 0
     }
   },
-  "unresolved_blockers": [],
-  "updated_at": "2026-10-05T10:04:04Z",
-  "worktree": ".ocor/worktrees/state-sync-ocor-dev-0048-sealed"
+  "unresolved_blockers": [
+    "OCOR-DEV-0049"
+  ],
+  "updated_at": "2026-10-05T17:03:44Z",
+  "worktree": ".ocor/worktrees/state-sync-ocor-dev-0049-escalation"
 }

@@ -4336,3 +4336,37 @@
   (PASS 37/0/2 NOT_EXECUTED).
 - Prossima azione: `OCOR-DEV-0049:implementation` (task più basso pronto; `OCOR-DEV-0050` anche
   pronto).
+
+## 2026-10-05 — OCOR-DEV-0049: verdetto ciclo 2 NO_GO → escalation (budget ordinario esaurito)
+
+- Il verifier indipendente ha prodotto il verdetto `OCOR-DEV-0049-7fd4f7728801-2` (head
+  `7fd4f77288010b98330f74a4da455fa1b6e9e321`, `repair_cycle: 2`, `TASK_EVIDENCE`): `NO_GO` con 3
+  finding bloccanti `high`, diversi dai cicli precedenti.
+  - `VF-001` (`compose.profiles.yaml:1069`): ammissione non fail-closed — con scanner indisponibile
+    o restore non verificato, `/admit?class=mutative|dispatch` risponde `200 ADMIT`; `Handler.do_GET`
+    usa solo `denied_operation_classes`, `scanner error` e restore non verificato non entrano in
+    `State.faults` (viola LLD §5.3–5.4).
+  - `VF-002` (`compose.profiles.yaml:1180`): default-deny di rete non enforce — tutti i nomi dei
+    servizi sono alias dello stesso relay (`0.0.0.0` per ogni porta ammessa, upstream scelto dalla
+    sola porta): `GET postgresql:8181` raggiunge il vero OPA pur essendo assente da
+    `isolation.allowedFlows` (viola ADD §6.1 / LLD §5.1).
+  - `VF-003` (`compose.profiles.yaml:1500`): il gate GCS di restore non verifica il binding
+    tenant/compartment per item — metadati autorevoli `tenant-a/c1` vs payload ripristinato
+    `tenant-b/c2` producono `outcome PASSED` e `recovery_gate.gcs.pass=true` (viola LLD §5.4 e
+    ADD Part II §2.13).
+- Budget ordinario di 2 cicli di riparazione esaurito (decisione PO `OCOR-DEV-0049-IMPLEMENTER-CLAUDE`:
+  il ciclo 2 è l'ultimo; implementatore Claude Code/Anthropic, verifier Codex/OpenAI, fornitori
+  diversi in processi separati). OpenHands non ripara `OCOR-DEV-0049`: esegue escalation.
+- Escalation registrata in `reports/development/OCOR_DEV_0049_ESCALATION.md`; `OCOR-DEV-0049`
+  marcato `BLOCKED_REPAIR_BUDGET_EXHAUSTED`. Task bloccati transitivamente: `OCOR-DEV-0059`,
+  `OCOR-DEV-0060`, `OCOR-DEV-0063`, `OCOR-DEV-0064`, `OCOR-DEV-0066`. `OCOR-DEV-0050` resta pronto
+  (hard_dependencies soddisfatte, non dipende da 0049).
+- Prossima azione: `OCOR-DEV-REM-0017:implementation` (decisione PO `REM-0017-PRIORITY`), poi
+  `OCOR-DEV-0050`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`; `inputs/` invariato. L'evidenza di `OCOR-DEV-0049`
+  resta `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata). Nessuna modifica a codice di
+  runtime, test o workflow: solo `reports/development/` (stato + escalation) e l'allowlist del
+  validator di piano (`scripts/validate_ocor_development_plan.py`, +1 voce
+  `reports/development/OCOR_DEV_0049_ESCALATION.md`) con il relativo self-hash settle in
+  `reports/planning/`.
