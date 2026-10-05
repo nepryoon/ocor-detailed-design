@@ -460,6 +460,14 @@ configs:
       NOT_OBSERVABLE_BY_OPS = ["action_adapter_timeout", "edge_partition"]
       # `$defs/digest` of the approved governed-memory-item / governed-context contracts.
       CONTRACT_DIGEST = re.compile(r"^urn:sha256:[0-9a-f]{64}$")
+      MANIFEST_SCHEMA = "ocor.poc.recovery-point/1"
+      RECEIPT_SCHEMA = "ocor.poc.restore-receipt/2"
+      SHA256_HEX = re.compile(r"^[0-9a-f]{64}$")
+      # Restore steps a PASSED receipt must report as executed (ADD v1.3 6.5 1-5, 7); the
+      # others may only be NOT_EXECUTED/NOT_APPLICABLE, and step 10 must await the human.
+      STEPS_EXECUTED_WHEN_PASSED = {0, 1, 2, 3, 4, 7}
+      STEP_STATUSES_WHEN_PASSED = {"EXECUTED", "NOT_EXECUTED", "NOT_APPLICABLE"}
+      RECEIPT_CLOCK_SKEW_SECONDS = 300.0
 
 
       class ConfigError(Exception):
@@ -901,41 +909,139 @@ configs:
           signature = (rp_dir / "manifest.sig").read_text().strip()
           if not transit.verify(profile["backup"]["keys"]["signing"], raw, signature):
               raise ValueError("SIGNATURE_INVALID")
-          manifest: dict[str, Any] = json.loads(raw)
+          manifest = json.loads(raw)
+          if not isinstance(manifest, dict) or manifest.get("schema") != MANIFEST_SCHEMA:
+              raise ValueError("MANIFEST_SCHEMA_INVALID")
           if manifest.get("recovery_point") != rp_dir.name:
               raise ValueError("RECOVERY_POINT_MISMATCH")
           return manifest
 
 
-      def latest_valid_receipt(transit: Transit, profile: dict[str, Any],
-                               vault: Path) -> tuple[str, dict[str, Any] | None, str | None]:
-          """Return (reason_code, receipt, receipt_digest). READY only with a signed PASSED
-          receipt bound to a signed recovery point (negative criterion: untested restore
-          blocks readiness). The digest identifies the receipt a human reopening binds to."""
+      def release_binding(profile: dict[str, Any], profile_digest: str) -> dict[str, str]:
+          """Release, profile digest and image pins a recovery point or receipt is bound to
+          (ADD v1.3 6.3/6.5 release fence; FR-156 compatibility before switch)."""
+          return {"release": str(profile["profile"]["release"]), "profile_digest": profile_digest,
+                  "image_pins_digest": sha256(canonical(profile["images"]["pins"]))}
+
+
+      def manifest_binding(manifest: dict[str, Any]) -> dict[str, Any]:
+          return {"release": manifest.get("release"), "profile_digest": manifest.get("profile_digest"),
+                  "image_pins_digest": sha256(canonical(manifest.get("image_pins")))}
+
+
+      def binding_mismatch(binding: Any, profile: dict[str, Any], profile_digest: str) -> str | None:
+          """None when `binding` is exactly the current release binding, else the reason
+          code of the first difference (missing or malformed counts as a difference)."""
+          expected = release_binding(profile, profile_digest)
+          if not isinstance(binding, dict) or binding.get("release") != expected["release"]:
+              return "RELEASE_MISMATCH"
+          if binding.get("image_pins_digest") != expected["image_pins_digest"]:
+              return "PINS_MISMATCH"
+          if binding.get("profile_digest") != expected["profile_digest"]:
+              return "PROFILE_MISMATCH"
+          return None
+
+
+      def receipt_inconsistencies(receipt: Any, profile: dict[str, Any]) -> list[str]:
+          """Structural and semantic coherence of a signed receipt claiming PASSED: a valid
+          signature does not make a record with a failed or missing check coherent (LLD v1.1
+          5.4: every recovery gate check passes before traffic reopens). Empty means coherent."""
+          if not isinstance(receipt, dict):
+              return ["receipt:not_an_object"]
+          out: list[str] = []
+          if receipt.get("schema") != RECEIPT_SCHEMA:
+              out.append("schema")
+          if receipt.get("outcome") != "PASSED":
+              out.append("outcome")
+          if not isinstance(receipt.get("recovery_point"), str) or not receipt["recovery_point"]:
+              out.append("recovery_point")
+          if not isinstance(receipt.get("manifest_digest"), str) or not SHA256_HEX.match(receipt["manifest_digest"]):
+              out.append("manifest_digest")
+          gate = receipt.get("recovery_gate")
+          required = list(profile["restore"]["recoveryGate"])
+          if not isinstance(gate, dict):
+              out.append("recovery_gate")
+          else:
+              out.extend(f"gate:{name}:unexpected" for name in sorted(set(gate) - set(required)))
+              for name in required:
+                  entry = gate.get(name)
+                  if not isinstance(entry, dict) or entry.get("pass") is not True:
+                      out.append(f"gate:{name}")
+          steps = receipt.get("steps")
+          expected_steps = list(profile["restore"]["steps"])
+          if (not isinstance(steps, list) or not all(isinstance(s, dict) for s in steps)
+                  or [s.get("step") for s in steps] != expected_steps):
+              out.append("steps")
+          else:
+              for index, entry in enumerate(steps):
+                  status = entry.get("status")
+                  if index == len(steps) - 1:
+                      ok = status == "PENDING_HUMAN_AUTHORIZATION"
+                  elif index in STEPS_EXECUTED_WHEN_PASSED:
+                      ok = status == "EXECUTED"
+                  else:
+                      ok = status in STEP_STATUSES_WHEN_PASSED
+                  if not ok:
+                      out.append(f"step:{entry.get('step')}")
+          if receipt.get("quarantined_items") != []:
+              out.append("quarantined_items")
+          if receipt.get("materialisation") != "ALLOWED_PENDING_HUMAN":
+              out.append("materialisation")
+          if receipt.get("retrieval_reopened") is not False:
+              out.append("retrieval_reopened")
+          if receipt.get("isolated_network") is not True:
+              out.append("isolated_network")
+          completed = receipt.get("completed_at_epoch")
+          if (not isinstance(completed, (int, float)) or isinstance(completed, bool)
+                  or completed > now() + RECEIPT_CLOCK_SKEW_SECONDS):
+              out.append("completed_at_epoch")
+          return out
+
+
+      def latest_valid_receipt(transit: Transit, profile: dict[str, Any], profile_digest: str,
+                               vault: Path) -> tuple[str, dict[str, Any] | None, str | None, list[str]]:
+          """Return (reason_code, receipt, receipt_digest, detail). READY only with a signed,
+          coherent PASSED receipt bound to a signed recovery point of the CURRENT release,
+          profile and image pins (negative criterion: untested restore blocks readiness).
+          The digest identifies the receipt a human reopening binds to."""
           root = vault / "restore-receipts"
           files = sorted(root.glob("*.json")) if root.exists() else []
           if not files:
-              return "RESTORE_UNTESTED", None, None
+              return "RESTORE_UNTESTED", None, None, []
           path = files[-1]
           raw = path.read_bytes()
           sig_path = path.with_suffix(".sig")
           if not sig_path.exists() or not transit.verify(profile["backup"]["keys"]["signing"], raw,
                                                          sig_path.read_text().strip()):
-              return "RESTORE_RECEIPT_INVALID", None, None
-          receipt: dict[str, Any] = json.loads(raw)
-          if receipt.get("outcome") != "PASSED":
-              return "RESTORE_FAILED", receipt, None
+              return "RESTORE_RECEIPT_INVALID", None, None, []
+          try:
+              receipt = json.loads(raw)
+          except ValueError:
+              return "RESTORE_RECEIPT_INCONSISTENT", None, None, ["receipt:not_json"]
+          if isinstance(receipt, dict) and receipt.get("outcome") == "FAILED":
+              return "RESTORE_FAILED", receipt, None, []
+          problems = receipt_inconsistencies(receipt, profile)
+          if problems:
+              return "RESTORE_RECEIPT_INCONSISTENT", receipt if isinstance(receipt, dict) else None, None, problems
           max_age = profile["restore"]["receiptMaxAgeHours"] * 3600
-          if now() - float(receipt.get("completed_at_epoch", 0)) > max_age:
-              return "RESTORE_RECEIPT_EXPIRED", receipt, None
-          rp_dir = vault / "recovery-points" / str(receipt.get("recovery_point"))
+          if now() - float(receipt["completed_at_epoch"]) > max_age:
+              return "RESTORE_RECEIPT_EXPIRED", receipt, None, []
+          rp_dir = vault / "recovery-points" / receipt["recovery_point"]
           try:
               manifest = verify_manifest(transit, profile, rp_dir)
-          except (OSError, ValueError):
-              return "RESTORE_RECEIPT_UNBOUND", receipt, None
-          if sha256(canonical(manifest)) != receipt.get("manifest_digest"):
-              return "RESTORE_RECEIPT_UNBOUND", receipt, None
-          return "RESTORE_TESTED", receipt, sha256(raw)
+          except (OSError, ValueError) as exc:
+              return "RESTORE_RECEIPT_UNBOUND", receipt, None, [str(exc) if isinstance(exc, ValueError)
+                                                                else type(exc).__name__]
+          if sha256(canonical(manifest)) != receipt["manifest_digest"]:
+              return "RESTORE_RECEIPT_UNBOUND", receipt, None, ["manifest_digest"]
+          # Release fence: the tested restore must belong to the running release, profile and
+          # pins, both for the recovery point and for the restore that produced the receipt.
+          for subject, binding in (("recovery_point", manifest_binding(manifest)),
+                                   ("receipt", receipt.get("release_binding"))):
+              mismatch = binding_mismatch(binding, profile, profile_digest)
+              if mismatch is not None:
+                  return f"RESTORE_{mismatch}", receipt, None, [subject]
+          return "RESTORE_TESTED", receipt, sha256(raw), []
 
 
       # --------------------------------------------------------------------------- serve
@@ -961,6 +1067,7 @@ configs:
           scanner_error: str | None = None
           max_scan_age: float = 60.0
           receipt_digest: str | None = None
+          restore_detail: list[str] = field(default_factory=list)
           reopen: dict[str, Any] | None = None
           lock: threading.Lock = field(default_factory=threading.Lock)
 
@@ -1009,7 +1116,8 @@ configs:
                   "consistency": "PROJECTION_NOT_READY" if "projection_lag_or_failure" in faults else "AVAILABLE",
                   "stop_epoch": self.stop_epoch, "not_observable_by_ops_plane": NOT_OBSERVABLE_BY_OPS,
                   "ready": ready, "ready_reasons": reasons, "last_scan": iso(self.last_scan),
-                  "restore": {"reason_code": self.restore_reason, "receipt_digest": self.receipt_digest},
+                  "restore": {"reason_code": self.restore_reason, "receipt_digest": self.receipt_digest,
+                              "detail": list(self.restore_detail)},
                   "reopen": {"authorized": self.reopen_authorized(), "authorization": self.reopen},
               }
 
@@ -1067,10 +1175,11 @@ configs:
           t.inc("ocor_config_drift_scans_total")
           t.gauge("ocor_config_drift_detected", 1.0 if drift else 0.0)
           restore_reason, receipt_digest = "RESTORE_UNTESTED", None
+          restore_detail: list[str] = []
           if state.vault is not None:
               try:
-                  restore_reason, receipt, receipt_digest = latest_valid_receipt(transit_from_env(prof), prof,
-                                                                                 state.vault)
+                  restore_reason, receipt, receipt_digest, restore_detail = latest_valid_receipt(
+                      transit_from_env(prof), prof, state.config_digest, state.vault)
                   if receipt and restore_reason == "RESTORE_TESTED":
                       t.gauge("ocor_restore_receipt_age_seconds", now() - float(receipt["completed_at_epoch"]))
                   points = recovery_points(state.vault)
@@ -1079,8 +1188,9 @@ configs:
                       age = now() - float(manifest["created_at_epoch"])
                       t.gauge("ocor_recovery_point_age_seconds", age)
                       t.gauge("ocor_recovery_point_within_rpo", 1.0 if age <= prof["backup"]["rpoMinutes"] * 60 else 0.0)
-              except (OSError, ValueError, ConfigError, KeyError):
-                  restore_reason, receipt_digest = "RESTORE_VERIFICATION_UNAVAILABLE", None
+              except (OSError, ValueError, ConfigError, KeyError, TypeError) as exc:
+                  restore_reason, receipt_digest, restore_detail = ("RESTORE_VERIFICATION_UNAVAILABLE", None,
+                                                                    [type(exc).__name__])
           t.gauge("ocor_restore_tested", 1.0 if restore_reason == "RESTORE_TESTED" else 0.0)
           pd = policy_digest(prof)
           reasons: list[str] = []
@@ -1089,6 +1199,7 @@ configs:
               state.drift = drift
               state.restore_reason = restore_reason
               state.receipt_digest = receipt_digest
+              state.restore_detail = restore_detail
               if state.reopen is not None and state.reopen.get("receipt_digest") != receipt_digest:
                   state.reopen = None  # an authorization never outlives the receipt it was bound to
               state.scanner_error = None
@@ -1473,7 +1584,7 @@ configs:
           journal_max = max((int(r["deletion_epoch"]) for r in journal), default=0)
           metadata_max = max((int(r["deletion_epoch"]) for r in items if r.get("deletion_epoch")), default=0)
           manifest = {
-              "schema": "ocor.poc.recovery-point/1",
+              "schema": MANIFEST_SCHEMA,
               "recovery_point": rp_id, "created_at": iso(created), "created_at_epoch": created,
               "profile_digest": digest, "release": profile["profile"]["release"],
               "rpo_minutes": profile["backup"]["rpoMinutes"],
@@ -1541,6 +1652,12 @@ configs:
           try:
               rp_dir = select_recovery_point(vault, args.recovery_point)
               manifest = verify_manifest(transit, profile, rp_dir)
+              # Compatibility before restore (FR-156; ADD v1.3 6.5 step 4 restores the
+              # pinned release): a recovery point of another release/profile/pin set is
+              # not restored under this one.
+              mismatch = binding_mismatch(manifest_binding(manifest), profile, digest)
+              if mismatch is not None:
+                  raise ValueError(mismatch)
               for entry in manifest["artifacts"]:
                   blob = (rp_dir / "objects" / f"{entry['ciphertext_sha256']}.enc").read_bytes()
                   if sha256(blob) != entry["ciphertext_sha256"]:
@@ -1740,7 +1857,8 @@ configs:
                "retrieval/mutative reopening requires human authorization")
           completed = now()
           receipt = {
-              "schema": "ocor.poc.restore-receipt/1", "recovery_point": manifest["recovery_point"],
+              "schema": RECEIPT_SCHEMA, "recovery_point": manifest["recovery_point"],
+              "release_binding": release_binding(profile, digest),
               "manifest_digest": sha256(canonical(manifest)), "outcome": "PASSED" if passed else "FAILED",
               "recovery_gate": {name: gate[name] for name in RECOVERY_GATE}, "steps": steps,
               "replayed_event_ids": replayed, "replay_digest": replay_digest, "quarantined_items": quarantined,

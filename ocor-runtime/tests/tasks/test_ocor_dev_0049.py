@@ -2,8 +2,8 @@
 backup/replay and bounded safe-degraded modes (ADD v1.3 Part I §6, Part II §2.13;
 LLD v1.1 §5).
 
-Repair cycle 3 (implementer: Claude Code; verifier: Codex; PO decision
-OCOR-DEV-0049-REPAIR-CLAUDE-AUTO). Every criterion is proven on behaviour of real
+Repair cycle 4 (implementer: Claude Code; verifier: Codex; PO decision
+OCOR-DEV-0049-REPAIR-CLAUDE-AUTO, second of three authorized cycles). Every criterion is proven on behaviour of real
 processes on the digest-pinned stack, never on configuration booleans or string
 searches:
 
@@ -22,6 +22,14 @@ searches:
   destination on Compose, one address/port rule per flow on Helm);
 * the recovery gate compares tenant, compartments, marking and GCS binding of
   every restored projection item with the authoritative metadata;
+* a restore counts as tested only through a receipt that is signed by the real
+  custodian AND coherent (every recovery-gate check strictly passed, step
+  statuses, quarantine, materialisation) AND bound, with its recovery point, to
+  the running release, profile digest and image pins; a restart or upgrade to
+  another release/profile/pin set is denied until its own backup and restore;
+* each backup job is correlated with the recovery point it wrote (also when a
+  manual run overlaps the scheduled CronJob tick) and the restore drill is
+  bound to that recovery point;
 * backups are produced from the real PostgreSQL/Kafka/Qdrant/OPA backends,
   encrypted and signed by OpenBao transit, written immutably to a vault outside
   the workload fault domain, restored on an isolated network with tombstone
@@ -38,6 +46,7 @@ requirement and no G6 qualification are claimed.
 from __future__ import annotations
 
 import base64
+import calendar
 import hashlib
 import json
 import os
@@ -304,6 +313,11 @@ def test_helm_chart_renders_operational_workloads():
     drill = docs[("Job", "ocor-poc-restore-drill-1")]["spec"]["template"]["spec"]
     assert [c["name"] for c in drill["initContainers"]] == [
         "restore-prepare", "restore-postgresql", "restore-qdrant", "restore-load-postgresql"]
+    assert "--recovery-point" not in drill["initContainers"][0]["command"], "default: latest recovery point"
+    pinned = {(d["kind"], d["metadata"]["name"]): d for d in helm_template(
+        "operational.restoreDrill.recoveryPoint=rp-20261005T194504Z-35d8c606")}
+    command = pinned[("Job", "ocor-poc-restore-drill-1")]["spec"]["template"]["spec"]["initContainers"][0]["command"]
+    assert command[-2:] == ["--recovery-point", "rp-20261005T194504Z-35d8c606"], "drill bound to one recovery point"
 
 
 @pytest.mark.parametrize("missing", ["operational.secretName=", "operational.vault.existingClaim="])
@@ -416,6 +430,114 @@ def test_scope_comparison_branches(agent_module, field, value, gate, detail):
                                          dict(meta, governed_context_digest=bad))["gcs"]
     assert agent_module.scope_violations(dict(payload, classification_marking_ref="SYNTHETIC"),
                                          dict(meta, classification_marking_ref="SYNTHETIC"))["marking"]
+
+
+def canonical_bytes(obj) -> bytes:
+    return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+
+
+def profile_digest(profile: dict) -> str:
+    return hashlib.sha256(canonical_bytes(profile)).hexdigest()
+
+
+def coherent_receipt(profile: dict) -> dict:
+    """The shape restore-finalize writes for a PASSED drill (oracle independent of the agent)."""
+    statuses = {0: "EXECUTED", 1: "EXECUTED", 2: "EXECUTED", 3: "EXECUTED", 4: "EXECUTED", 5: "EXECUTED",
+                6: "NOT_EXECUTED", 7: "EXECUTED", 8: "NOT_APPLICABLE", 9: "NOT_EXECUTED",
+                10: "PENDING_HUMAN_AUTHORIZATION"}
+    return {
+        "schema": "ocor.poc.restore-receipt/2", "recovery_point": "rp-20261005T000000Z-00000000",
+        "manifest_digest": "a" * 64, "outcome": "PASSED",
+        "release_binding": {"release": profile["profile"]["release"], "profile_digest": profile_digest(profile),
+                            "image_pins_digest": hashlib.sha256(canonical_bytes(profile["images"]["pins"])).hexdigest()},
+        "recovery_gate": {name: {"pass": True, "detail": []} for name in RECOVERY_GATE},
+        "steps": [{"step": s, "status": statuses[i], "detail": ""} for i, s in enumerate(profile["restore"]["steps"])],
+        "replayed_event_ids": ["evt-del-m2", "evt-del-m4"], "replay_digest": "b" * 64, "quarantined_items": [],
+        "retrieval_reopened": False, "materialisation": "ALLOWED_PENDING_HUMAN", "isolated_network": True,
+        "completed_at": "2026-10-05T00:00:00Z", "completed_at_epoch": time.time() - 60, "duration_seconds": 1.0,
+        "rto_hours_target": 4, "correlation_id": "c",
+    }
+
+
+def _gate_fails(name: str, detail=None):
+    def mutate(receipt: dict) -> None:
+        receipt["recovery_gate"][name]["pass"] = False
+        if detail is not None:
+            receipt["recovery_gate"][name]["detail"] = detail
+    return mutate
+
+
+def _step_status(index: int, status: str):
+    def mutate(receipt: dict) -> None:
+        receipt["steps"][index]["status"] = status
+    return mutate
+
+
+VERIFIER_GCS_DETAIL = {"tenant_mismatch": ["m1"], "compartment_mismatch": [], "gcs_digest_mismatch": []}
+# Verdict OCOR-DEV-0049-02ac643eb3c7-3 VF-002: receipts signed by the real custodian
+# that nevertheless report a failed, missing or malformed check, or an incoherent state.
+RECEIPT_MUTATIONS = [
+    *[(f"gate_{name}_false", _gate_fails(name), f"gate:{name}") for name in RECOVERY_GATE],
+    ("verifier_gcs_tenant_mismatch", _gate_fails("gcs", VERIFIER_GCS_DETAIL), "gate:gcs"),
+    ("gate_missing", lambda r: r["recovery_gate"].pop("marking"), "gate:marking"),
+    ("gate_pass_string", _set("recovery_gate.revision.pass", "true"), "gate:revision"),
+    ("gate_pass_one", _set("recovery_gate.watermark.pass", 1), "gate:watermark"),
+    ("gate_entry_not_object", _set("recovery_gate.orphan_duplicate", True), "gate:orphan_duplicate"),
+    ("gate_unexpected", _set("recovery_gate.extra", {"pass": True}), "gate:extra:unexpected"),
+    ("gate_not_object", _set("recovery_gate", []), "recovery_gate"),
+    ("human_step_blocked", _step_status(10, "BLOCKED"), "step:require_human_authorization_to_reopen_mutative"),
+    ("canonical_restore_failed", _step_status(4, "FAILED"),
+     "step:restore_canonical_event_action_audit_same_cut"),
+    ("signature_check_not_executed", _step_status(2, "NOT_EXECUTED"),
+     "step:verify_trust_manifest_digest_signatures_dual_control"),
+    ("optional_step_failed", _step_status(6, "FAILED"), "step:rebuild_logic_projection_and_w3c_boundary"),
+    ("steps_reordered", lambda r: r["steps"].reverse(), "steps"),
+    ("quarantined_items", _set("quarantined_items", ["m1"]), "quarantined_items"),
+    ("materialisation_blocked", _set("materialisation", "BLOCKED"), "materialisation"),
+    ("retrieval_already_reopened", _set("retrieval_reopened", True), "retrieval_reopened"),
+    ("not_isolated", _set("isolated_network", False), "isolated_network"),
+    ("schema_v1", _set("schema", "ocor.poc.restore-receipt/1"), "schema"),
+    ("outcome_missing", lambda r: r.pop("outcome"), "outcome"),
+    ("future_dated", _set("completed_at_epoch", 4102444800.0), "completed_at_epoch"),
+    ("epoch_not_number", _set("completed_at_epoch", True), "completed_at_epoch"),
+    ("manifest_digest_malformed", _set("manifest_digest", "abc"), "manifest_digest"),
+]
+
+
+@pytest.mark.parametrize("case,mutate,expected", RECEIPT_MUTATIONS, ids=[c[0] for c in RECEIPT_MUTATIONS])
+def test_receipt_coherence_branches(agent_module, case, mutate, expected):
+    profile = helm_profile()
+    receipt = coherent_receipt(profile)
+    assert agent_module.receipt_inconsistencies(receipt, profile) == [], "coherent PASSED receipt"
+    mutate(receipt)
+    assert expected in agent_module.receipt_inconsistencies(receipt, profile), case
+
+
+@pytest.mark.parametrize("value", [[], "PASSED", None, 1])
+def test_receipt_that_is_not_an_object_is_incoherent(agent_module, value):
+    assert agent_module.receipt_inconsistencies(value, helm_profile()) == ["receipt:not_an_object"]
+
+
+# Verdict OCOR-DEV-0049-02ac643eb3c7-3 VF-001: a tested restore belongs to one release,
+# profile digest and pin set; any other running configuration is not covered by it.
+BINDING_MUTATIONS = [
+    ("release", _set("profile.release", "ocor-poc-independent-unrestored-release"), "RELEASE_MISMATCH"),
+    ("pins", _set("images.pins.ops", "python@sha256:" + "0" * 64), "PINS_MISMATCH"),
+    ("profile", _set("observability.probeIntervalSeconds", 4), "PROFILE_MISMATCH"),
+]
+
+
+@pytest.mark.parametrize("case,mutate,expected", BINDING_MUTATIONS, ids=[c[0] for c in BINDING_MUTATIONS])
+def test_release_binding_branches(agent_module, case, mutate, expected):
+    profile = helm_profile()
+    binding = agent_module.release_binding(profile, profile_digest(profile))
+    assert binding == coherent_receipt(profile)["release_binding"], "independent oracle of the binding"
+    assert agent_module.binding_mismatch(binding, profile, profile_digest(profile)) is None
+    running = deepcopy(profile)
+    mutate(running)
+    assert agent_module.binding_mismatch(binding, running, profile_digest(running)) == expected
+    for missing in (None, {}, {"release": binding["release"]}):
+        assert agent_module.binding_mismatch(missing, profile, profile_digest(profile)) is not None
 
 
 # --------------------------------------------------------------------------- live environment
@@ -878,7 +1000,7 @@ def test_mutative_path_reopens_only_by_a_human_bound_to_the_passed_receipt(stack
     path stays closed until a named human authorizes it for that exact receipt."""
     assert_admission(stack.ops, admitted=["exact_consistency_read", "read"], fault="recovery_reopen_pending")
     digest = receipt_digest(stack.vault)
-    assert posture(stack.ops)["restore"] == {"reason_code": "RESTORE_TESTED", "receipt_digest": digest}
+    assert posture(stack.ops)["restore"] == {"reason_code": "RESTORE_TESTED", "receipt_digest": digest, "detail": []}
     status, _ = reopen(stack.ops, "wrong-token", digest)
     assert status == 401
     status, body = reopen(stack.ops, stack.operator_token, digest, human=None)
@@ -980,6 +1102,202 @@ def test_tampered_restore_receipt_blocks_readiness(stack):
         assert_admission(name, admitted=[], fault="restore_not_verified", base=LOCAL_OPS)
     finally:
         subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+
+
+def transit_sign(env: dict[str, str], data: bytes) -> str:
+    """Sign with the REAL custodian key (OpenBao transit), exactly as restore-finalize does."""
+    request = urllib.request.Request(
+        "http://127.0.0.1:8200/v1/ocor-poc-transit/sign/ocor-poc-backup-sign", method="POST",
+        data=json.dumps({"input": base64.b64encode(data).decode()}).encode(),
+        headers={"X-Vault-Token": env["OCOR_LOCAL_OPENBAO_TOKEN"]})
+    return str(json.loads(urllib.request.urlopen(request, timeout=10).read())["data"]["signature"])
+
+
+def write_signed_receipt(env: dict[str, str], vault: Path, receipt: dict, name: str) -> tuple[list[Path], str]:
+    """Write `receipt` as the newest receipt of `vault`, validly signed; return its files and digest."""
+    raw = canonical_bytes(receipt)
+    root = vault / "restore-receipts"
+    files = [root / f"99991231T235959Z-{name}.json", root / f"99991231T235959Z-{name}.sig"]
+    files[0].write_bytes(raw)
+    files[1].write_text(transit_sign(env, raw), encoding="utf-8")
+    assert transit_verify(env, raw, files[1].read_text()), "precondition: the custodian signature is valid"
+    return files, hashlib.sha256(raw).hexdigest()
+
+
+@pytest.fixture(scope="module")
+def coherence_ops(stack):
+    """One running agent on a copy of the tested vault, used to observe the decision on
+    validly signed receipts of every coherence branch (VF-002)."""
+    vault = _copy_vault(stack, "coherence")
+    authentic = latest_receipt(vault)
+    name = _standalone_ops(stack, vault, f"{stack.ops_project}_site")
+    try:
+        wait_for(lambda: _standalone_readyz(name)[0] == 200, 60, message="authentic receipt must be accepted")
+        yield {"name": name, "vault": vault, "authentic": authentic,
+               "authentic_digest": receipt_digest(vault)}
+    finally:
+        subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+
+
+def test_custodian_signed_coherent_receipt_is_accepted(stack, coherence_ops):
+    """Positive control of VF-002: a receipt signed by the test through the real custodian,
+    coherent in every check, is accepted and reopenable (so the negatives below fail for
+    their incoherence, not for the signature path)."""
+    name, vault = coherence_ops["name"], coherence_ops["vault"]
+    receipt = deepcopy(coherence_ops["authentic"])
+    receipt["correlation_id"] = "positive-control"
+    files, digest = write_signed_receipt(stack.env, vault, receipt, "positive")
+    try:
+        wait_for(lambda: posture(name, LOCAL_OPS)["restore"]["receipt_digest"] == digest, 30,
+                 message="the custodian-signed coherent receipt must be the verified one")
+        assert _standalone_readyz(name)[1]["reasons"] == ["READY"]
+        status, body = reopen(name, stack.operator_token, digest, base=LOCAL_OPS)
+        assert (status, body["reason_code"]) == (200, "MUTATIVE_PATH_REOPENED_BY_HUMAN"), body
+        assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)
+    finally:
+        for f in files:
+            f.unlink()
+    wait_for(lambda: posture(name, LOCAL_OPS)["restore"]["receipt_digest"] == coherence_ops["authentic_digest"], 30)
+
+
+@pytest.mark.parametrize("case,mutate,expected", RECEIPT_MUTATIONS, ids=[c[0] for c in RECEIPT_MUTATIONS])
+def test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission(
+        stack, coherence_ops, case, mutate, expected):
+    """Verdict OCOR-DEV-0049-02ac643eb3c7-3 VF-002 on the live agent: a validly signed
+    receipt claiming PASSED with a failed, missing or malformed check denies readiness,
+    refuses /reopen and admits nothing; removing it restores the accepted state."""
+    name, vault = coherence_ops["name"], coherence_ops["vault"]
+    receipt = deepcopy(coherence_ops["authentic"])
+    mutate(receipt)
+    files, digest = write_signed_receipt(stack.env, vault, receipt, case.replace("_", "-"))
+    try:
+        state = wait_for(lambda: (p := posture(name, LOCAL_OPS))["restore"]["reason_code"]
+                         == "RESTORE_RECEIPT_INCONSISTENT" and p, 30, message=case)
+        assert expected in state["restore"]["detail"], state["restore"]
+        assert state["restore"]["receipt_digest"] is None
+        _, ready = wait_for(lambda: (r := _standalone_readyz(name))[0] == 503 and r, 15)
+        assert ready["reasons"] == ["RESTORE_RECEIPT_INCONSISTENT"]
+        status, body = reopen(name, stack.operator_token, digest, base=LOCAL_OPS)
+        assert (status, body["reason_code"]) == (409, "REOPEN_REFUSED:RESTORE_RECEIPT_INCONSISTENT"), body
+        assert_admission(name, admitted=[], fault="restore_not_verified", base=LOCAL_OPS)
+    finally:
+        for f in files:
+            f.unlink()
+    # Positive counterpart: the authentic coherent receipt is verified again.
+    wait_for(lambda: posture(name, LOCAL_OPS)["restore"]["receipt_digest"] == coherence_ops["authentic_digest"], 30)
+    assert wait_for(lambda: _standalone_readyz(name)[0] == 200, 15)
+
+
+@pytest.mark.parametrize("case,mutate,expected", BINDING_MUTATIONS, ids=[c[0] for c in BINDING_MUTATIONS])
+def test_restart_under_another_release_profile_or_pins_blocks_readiness_reopen_and_admission(
+        stack, case, mutate, expected):
+    """Verdict OCOR-DEV-0049-02ac643eb3c7-3 VF-001: the agent restarted with a different
+    release, pin set or profile keeps the signed receipt and recovery point of the
+    previous one; that restore was not tested for it, so readiness, /reopen and every
+    governed admission are denied."""
+    profile = deepcopy(helm_profile())
+    mutate(profile)
+    path = stack.work / f"restart-{case}.json"
+    path.write_text(json.dumps(profile), encoding="utf-8")
+    digest = receipt_digest(stack.vault)
+    name = _standalone_ops(stack, stack.vault, f"{stack.ops_project}_site", profile_path=path)
+    try:
+        _, ready = wait_for(lambda: scanned(r := _standalone_readyz(name)) and r, 60)
+        assert ready["reasons"] == [f"RESTORE_{expected}"], "dependencies are up; only the release fence blocks"
+        state = posture(name, LOCAL_OPS)
+        assert state["restore"] == {"reason_code": f"RESTORE_{expected}", "receipt_digest": None,
+                                    "detail": ["recovery_point"]}
+        status, body = reopen(name, stack.operator_token, digest, base=LOCAL_OPS)
+        assert (status, body["reason_code"]) == (409, f"REOPEN_REFUSED:RESTORE_{expected}"), body
+        assert_admission(name, admitted=[], fault="restore_not_verified", base=LOCAL_OPS)
+    finally:
+        subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+
+
+def test_restart_under_the_tested_release_is_ready_and_reopenable(stack):
+    """Positive counterpart of VF-001: a restart with exactly the release, profile and pins
+    of the tested restore verifies the same receipt and can be reopened."""
+    path = stack.work / "restart-same.json"
+    path.write_text(json.dumps(helm_profile()), encoding="utf-8")
+    name = _standalone_ops(stack, stack.vault, f"{stack.ops_project}_site", profile_path=path)
+    try:
+        wait_for(lambda: _standalone_readyz(name)[0] == 200, 60, message="same release must be READY")
+        assert posture(name, LOCAL_OPS)["restore"] == {"reason_code": "RESTORE_TESTED",
+                                                       "receipt_digest": receipt_digest(stack.vault), "detail": []}
+        governed_reopen(stack, name, stack.vault, base=LOCAL_OPS)
+        assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)
+    finally:
+        subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+
+
+def test_new_release_is_ready_only_after_its_own_backup_and_tested_restore(stack):
+    """Release fence end to end on Compose: under a new release the old receipt is refused,
+    the old recovery point is not restored (compatibility before restore), and only a
+    backup and recovery-gate pass of the new release make the same process READY."""
+    load_drill_fixture(stack.env, consistent=True)
+    vault = _copy_vault(stack, "new-release")
+    mutate = _set("profile.release", "ocor-poc-0.2.1-drill")
+    profile = deepcopy(helm_profile())
+    mutate(profile)
+    path = stack.work / "new-release.json"
+    path.write_text(json.dumps(profile), encoding="utf-8")
+    override = profile_override(stack.work, mutate)
+    receipts_before = sorted((vault / "restore-receipts").glob("*.json"))
+    name = _standalone_ops(stack, vault, f"{stack.ops_project}_site", profile_path=path)
+    try:
+        _, ready = wait_for(lambda: scanned(r := _standalone_readyz(name)) and r, 60)
+        assert ready["reasons"] == ["RESTORE_RELEASE_MISMATCH"]
+        project = f"ocor-poc-restore-{uuid.uuid4().hex[:6]}"
+        code, logs = stack.run_stage(project, "restore-drill", "ocor-restore-prepare", vault=vault,
+                                     extra_files=(override,))
+        stack.down(project)
+        assert code == EXIT_VERIFY and "RELEASE_MISMATCH" in logs, logs
+        assert sorted((vault / "restore-receipts").glob("*.json")) == receipts_before, "nothing restored"
+        project = f"ocor-poc-backup-{uuid.uuid4().hex[:6]}"
+        code, logs = stack.run_stage(project, "backup", "ocor-backup-seal", vault=vault, extra_files=(override,))
+        stack.down(project)
+        assert code == 0, logs
+        project = f"ocor-poc-restore-{uuid.uuid4().hex[:6]}"
+        code, logs = stack.run_stage(project, "restore-drill", "ocor-restore-finalize", vault=vault,
+                                     extra_files=(override,))
+        stack.down(project)
+        assert code == 0, logs
+        receipt = latest_receipt(vault)
+        assert receipt["outcome"] == "PASSED"
+        assert receipt["release_binding"] == {
+            "release": "ocor-poc-0.2.1-drill", "profile_digest": profile_digest(profile),
+            "image_pins_digest": hashlib.sha256(canonical_bytes(profile["images"]["pins"])).hexdigest()}
+        manifest = json.loads((vault / "recovery-points" / receipt["recovery_point"] / "manifest.json").read_bytes())
+        assert (manifest["release"], manifest["profile_digest"]) == ("ocor-poc-0.2.1-drill", profile_digest(profile))
+        wait_for(lambda: _standalone_readyz(name)[0] == 200, 60, message="READY after the new release's own restore")
+        governed_reopen(stack, name, vault, base=LOCAL_OPS)
+        assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)
+    finally:
+        subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+
+
+@pytest.fixture(scope="module")
+def tuned(stack):
+    """A profile with 2 s scan intervals and its OWN tested restore: the release fence
+    binds a receipt to the exact profile digest, so a faster-scanning agent needs a
+    recovery point and a recovery-gate pass sealed under that profile."""
+    def fast_scan(p: dict) -> None:
+        p["observability"]["probeIntervalSeconds"] = 2
+        p["observability"]["driftScanIntervalSeconds"] = 2
+
+    profile = deepcopy(helm_profile())
+    fast_scan(profile)
+    override = profile_override(stack.work, fast_scan)
+    vault = stack.work / "vault-tuned"
+    vault.mkdir()
+    load_drill_fixture(stack.env, consistent=True)
+    for stage, service in (("backup", "ocor-backup-seal"), ("restore-drill", "ocor-restore-finalize")):
+        project = f"ocor-poc-tuned-{uuid.uuid4().hex[:6]}"
+        code, logs = stack.run_stage(project, stage, service, vault=vault, extra_files=(override,))
+        stack.down(project)
+        assert code == 0, logs
+    assert latest_receipt(vault)["release_binding"]["profile_digest"] == profile_digest(profile)
+    return {"profile": profile, "vault": vault}
 
 
 def test_inconsistent_deletion_journal_blocks_materialisation_and_readiness(stack):
@@ -1156,16 +1474,14 @@ def test_emergency_stop_denies_mutative_capabilities_within_10_seconds(stack):
     assert http_from(stack.ops, "http://ocor-ops:8080/admit?class=mutative")[0] == 200
 
 
-def test_release_drift_blocks_readiness_and_mutative_commands(stack):
-    profile = deepcopy(helm_profile())
-    profile["observability"]["driftScanIntervalSeconds"] = 2
-    profile["observability"]["probeIntervalSeconds"] = 2
+def test_release_drift_blocks_readiness_and_mutative_commands(stack, tuned):
+    profile = deepcopy(tuned["profile"])
     path = stack.work / "drift-profile.json"
     path.write_text(json.dumps(profile), encoding="utf-8")
-    name = _standalone_ops(stack, stack.vault, f"{stack.ops_project}_site", profile_path=path)
+    name = _standalone_ops(stack, tuned["vault"], f"{stack.ops_project}_site", profile_path=path)
     try:
         wait_for(lambda: _standalone_readyz(name)[0] == 200, 30, message="standalone ops must be READY")
-        governed_reopen(stack, name, stack.vault, base=LOCAL_OPS)
+        governed_reopen(stack, name, tuned["vault"], base=LOCAL_OPS)
         assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)  # positive control
         changed = deepcopy(profile)
         changed["profile"]["release"] = "ocor-poc-unapproved"
@@ -1247,20 +1563,18 @@ def test_open_public_egress_blocks_readiness(stack):
         subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
 
 
-def test_scanner_failure_denies_every_admission_until_the_scan_recovers(stack):
+def test_scanner_failure_denies_every_admission_until_the_scan_recovers(stack, tuned):
     """Verdict OCOR-DEV-0049-7fd4f7728801-2 VF-001: with the security scan failing
     (unreadable profile) no operation class is admitted; admission returns once the
     scan succeeds again."""
-    profile = deepcopy(helm_profile())
-    profile["observability"]["driftScanIntervalSeconds"] = 2
-    profile["observability"]["probeIntervalSeconds"] = 2
+    profile = deepcopy(tuned["profile"])
     path = stack.work / "scanner-profile.json"
     original = json.dumps(profile)
     path.write_text(original, encoding="utf-8")
-    name = _standalone_ops(stack, stack.vault, f"{stack.ops_project}_site", profile_path=path)
+    name = _standalone_ops(stack, tuned["vault"], f"{stack.ops_project}_site", profile_path=path)
     try:
         wait_for(lambda: _standalone_readyz(name)[0] == 200, 30, message="standalone ops must be READY")
-        governed_reopen(stack, name, stack.vault, base=LOCAL_OPS)
+        governed_reopen(stack, name, tuned["vault"], base=LOCAL_OPS)
         assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)  # positive control
         path.write_text("{broken", encoding="utf-8")
         _, ready = wait_for(lambda: (r := _standalone_readyz(name))[1]["reasons"] == ["SCANNER_ERROR"] and r, 15,
@@ -1429,8 +1743,87 @@ def run_job(ns: str, args: list[str], name: str, timeout: int = 600) -> tuple[st
     pytest.fail(f"job {name} did not finish")
 
 
-def test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness(kind):
+def pods(ns: str, component: str) -> list[str]:
+    out = kubectl("-n", ns, "get", "pod", "-l", f"app.kubernetes.io/component={component}",
+                  "-o", "jsonpath={.items[*].metadata.name}", check=False).stdout
+    return out.split()
+
+
+def named_pod_ready(ns: str, pod: str) -> bool:
+    return kubectl("-n", ns, "get", "pod", pod, "-o", "jsonpath={.status.conditions[?(@.type=='Ready')].status}",
+                   check=False).stdout == "True"
+
+
+def pod_http(ns: str, pod: str, path: str, method: str = "GET", headers: dict | None = None,
+             data: dict | None = None) -> tuple[int, dict]:
+    payload = None if data is None else json.dumps(data).encode()
+    out = pod_python(ns, pod, (
+        "import json,urllib.request,urllib.error\n"
+        f"r=urllib.request.Request('http://127.0.0.1:8080{path}',method={method!r},"
+        f"headers={json.dumps(headers or {})},data={payload!r})\n"
+        "try:\n    resp=urllib.request.urlopen(r,timeout=5); print(resp.status); print(resp.read().decode())\n"
+        "except urllib.error.HTTPError as e:\n    print(e.code); print(e.read().decode())\n"
+        "except OSError as e:\n    print(0); print(json.dumps({'error': type(e).__name__, 'reasons': ['UNREACHABLE']}))\n"))
+    status, _, body = out.partition("\n")
+    return int(status), json.loads(body)
+
+
+def wait_job(ns: str, name: str, timeout: int = 600) -> tuple[dict, str]:
+    def finished():
+        result = kubectl("-n", ns, "get", "job", name, "-o", "json", check=False)
+        if result.returncode != 0:
+            return None
+        status = json.loads(result.stdout)["status"]
+        return status if status.get("succeeded") == 1 or status.get("failed") == 1 else None
+    status = wait_for(finished, timeout, 3, f"job {name} must finish")
+    return status, kubectl("-n", ns, "logs", f"job/{name}", "--all-containers=true", check=False).stdout
+
+
+def sealed_point(logs: str) -> dict:
+    """The recovery point the seal of THIS job wrote (its own stdout record)."""
+    found = [json.loads(line) for line in logs.splitlines() if line.startswith("{")
+             and set(json.loads(line)) == {"recovery_point", "manifest_sha256"}]
+    assert len(found) == 1, logs
+    return found[0]
+
+
+def k8s_time(value: str) -> float:
+    return float(calendar.timegm(time.strptime(value, "%Y-%m-%dT%H:%M:%SZ")))
+
+
+def assert_sealed(stack, vault: Path, sealed: dict, profile: dict) -> dict:
+    """Correlate a job's recovery point with the external vault: content address of the
+    manifest, custodian signature and release binding of the profile it ran with."""
+    rp = vault / "recovery-points" / sealed["recovery_point"]
+    raw = (rp / "manifest.json").read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == sealed["manifest_sha256"]
+    assert transit_verify(stack.env, raw, (rp / "manifest.sig").read_text())
+    manifest = json.loads(raw)
+    assert manifest["recovery_point"] == sealed["recovery_point"]
+    assert (manifest["release"], manifest["profile_digest"], manifest["image_pins"]) == (
+        profile["profile"]["release"], profile_digest(profile), profile["images"]["pins"])
+    return manifest
+
+
+def helm_upgrade(kind, *sets: str) -> int:
+    args = [tool("helm"), "--kube-context", f"kind-{KIND_CLUSTER}", "upgrade", "ocor-poc", str(CHART_DIR),
+            "-n", kind["namespace"], "-f", str(kind["values"])]
+    for item in sets:
+        args += ["--set", item]
+    result = subprocess.run(args, capture_output=True, text=True, check=False, timeout=300)
+    assert result.returncode == 0, result.stderr
+    status = subprocess.run([tool("helm"), "--kube-context", f"kind-{KIND_CLUSTER}", "status", "ocor-poc", "-n",
+                             kind["namespace"], "-o", "json"], capture_output=True, text=True, check=True)
+    return int(json.loads(status.stdout)["version"])
+
+
+CRON_PERIOD_SECONDS = 15 * 60
+MANUAL_LEAD_SECONDS = 3
+
+
+def test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness(kind, stack):
     ns, vault = kind["namespace"], kind["vault"]
+    profile = helm_profile()
     ops = wait_for(lambda: pod_name(kind["namespace"], "ops"), 120, 2, "ops pod scheduled")
     wait_for(lambda: kubectl("-n", ns, "get", "pod", ops, "-o", "jsonpath={.status.phase}",
                              check=False).stdout == "Running", 300, 3, "ops pod running")
@@ -1440,25 +1833,67 @@ def test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness(kind):
                        "'http://127.0.0.1:8080/readyz',timeout=5)\nexcept urllib.error.HTTPError as e: "
                        "print(e.code, e.read().decode())")
     assert probe.startswith("503") and "RESTORE_UNTESTED" in probe, probe
-    status, logs = run_job(ns, ["create", "job", "ocor-poc-backup-manual", "--from=cronjob/ocor-poc-backup"],
-                           "ocor-poc-backup-manual")
-    assert status.startswith("1/"), logs
-    assert len(list((vault / "recovery-points").iterdir())) == 1, "backup written to the external vault"
-    result = subprocess.run([tool("helm"), "--kube-context", f"kind-{KIND_CLUSTER}", "upgrade", "ocor-poc",
-                             str(CHART_DIR), "-n", ns, "-f", str(kind["values"]), "--set",
-                             "operational.restoreDrill.enabled=true"], capture_output=True, text=True, check=False)
-    assert result.returncode == 0, result.stderr
-    status, logs = run_job(ns, ["get", "job", "ocor-poc-restore-drill-2"], "ocor-poc-restore-drill-2")
-    assert status.startswith("1/"), logs
+
+    # Verdict OCOR-DEV-0049-02ac643eb3c7-3 VF-003: a manual backup launched at the tick of
+    # the approved schedule runs concurrently with the scheduled one; each job's recovery
+    # point is identified from its own output, never from the catalogue cardinality.
+    assert kubectl("-n", ns, "get", "cronjob", "ocor-poc-backup", "-o",
+                   "jsonpath={.spec.schedule}").stdout == "*/15 * * * *", "approved schedule unchanged"
+    tick = (time.time() // CRON_PERIOD_SECONDS + 1) * CRON_PERIOD_SECONDS
+    if tick - time.time() < MANUAL_LEAD_SECONDS + 5:
+        tick += CRON_PERIOD_SECONDS
+    time.sleep(max(0.0, tick - MANUAL_LEAD_SECONDS - time.time()))
+    kubectl("-n", ns, "create", "job", "ocor-poc-backup-manual", "--from=cronjob/ocor-poc-backup")
+    scheduled = f"ocor-poc-backup-{int(tick // 60)}"  # CronJob controller naming: scheduled minute
+    wait_for(lambda: kubectl("-n", ns, "get", "job", scheduled, check=False).returncode == 0, 180, 2,
+             "the CronJob must start its scheduled run at the tick")
+    runs = {job: wait_job(ns, job) for job in ("ocor-poc-backup-manual", scheduled)}
+    for job, (status, logs) in runs.items():
+        assert status.get("succeeded") == 1, (job, logs)
+    manual_status, scheduled_status = runs["ocor-poc-backup-manual"][0], runs[scheduled][0]
+    assert k8s_time(manual_status["startTime"]) <= k8s_time(scheduled_status["completionTime"])
+    assert k8s_time(scheduled_status["startTime"]) <= k8s_time(manual_status["completionTime"]), "runs overlap"
+    sealed = {job: sealed_point(logs) for job, (_, logs) in runs.items()}
+    assert sealed["ocor-poc-backup-manual"]["recovery_point"] != sealed[scheduled]["recovery_point"]
+    for job in runs:
+        assert_sealed(stack, vault, sealed[job], profile)
+    manual = sealed["ocor-poc-backup-manual"]
+
+    # Restore drill bound to the recovery point of the verified (manual) job.
+    revision = helm_upgrade(kind, "operational.restoreDrill.enabled=true",
+                            f"operational.restoreDrill.recoveryPoint={manual['recovery_point']}")
+    status, logs = wait_job(ns, f"ocor-poc-restore-drill-{revision}")
+    assert status.get("succeeded") == 1, logs
     receipt = latest_receipt(vault)
     assert receipt["outcome"] == "PASSED" and receipt["replayed_event_ids"] == ["evt-del-m2", "evt-del-m4"]
+    assert (receipt["recovery_point"], receipt["manifest_digest"]) == (manual["recovery_point"],
+                                                                      manual["manifest_sha256"])
+    assert receipt["release_binding"]["release"] == profile["profile"]["release"]
     ops = pod_name(ns, "ops")
     wait_for(lambda: pod_ready(ns, "ops"), 60, 2, "ops pod Ready after a tested restore")
     # Governed reopening on the Helm profile: gate passed, mutative path still closed.
-    admission = pod_python(ns, ops, "import urllib.request,urllib.error\ntry: urllib.request.urlopen("
-                           "'http://127.0.0.1:8080/admit?class=mutative',timeout=5)\nexcept urllib.error.HTTPError as e: "
-                           "print(e.code, e.read().decode())")
-    assert admission.startswith("503") and "recovery_reopen_pending" in admission, admission
+    status, body = pod_http(ns, ops, "/admit?class=mutative")
+    assert status == 503 and "recovery_reopen_pending" in body["reason_code"], body
+
+    # VF-002 on Helm: a custodian-signed receipt with a failed gcs check is refused.
+    incoherent = deepcopy(receipt)
+    _gate_fails("gcs", VERIFIER_GCS_DETAIL)(incoherent)
+    files, digest = write_signed_receipt(stack.env, vault, incoherent, "helm-gcs")
+    try:
+        wait_for(lambda: not pod_ready(ns, "ops"), 60, 2, "incoherent receipt must drop readiness")
+        status, body = pod_http(ns, ops, "/readyz")
+        assert (status, body["reasons"]) == (503, ["RESTORE_RECEIPT_INCONSISTENT"]), body
+        status, body = pod_http(ns, ops, "/reopen", "POST", {"Authorization": f"Bearer {stack.operator_token}",
+                                                             "Content-Type": "application/json"},
+                                {"receipt_digest": digest, "authorized_by": "drill-operator"})
+        assert (status, body["reason_code"]) == (409, "REOPEN_REFUSED:RESTORE_RECEIPT_INCONSISTENT"), body
+        status, body = pod_http(ns, ops, "/admit?class=mutative")
+        assert status == 503 and "restore_not_verified" in body["reason_code"], body
+    finally:
+        for f in files:
+            f.unlink()
+    wait_for(lambda: pod_ready(ns, "ops"), 60, 2, "authentic receipt verified again")
+
     # Pair enforcement: a decoy on the dependency network listens on an allowlisted port
     # (8181) at an address that is not the one pinned for that port. It must be
     # unreachable from the pod, while the same connection succeeds from the kind node
@@ -1488,6 +1923,52 @@ def test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness(kind):
     finally:
         subprocess.run(["docker", "unpause", "ocor-bootstrap-qdrant-1"], check=False, capture_output=True)
     wait_for(lambda: pod_ready(ns, "ops"), 90, 2, "pod readiness must recover")
+
+    # VF-001 on Helm, positive: a restarted pod of the SAME release verifies the receipt.
+    kubectl("-n", ns, "delete", "pod", ops, "--wait=true", timeout=180)
+    ops = wait_for(lambda: [p for p in pods(ns, "ops") if p != ops], 120, 2, "replacement pod")[0]
+    wait_for(lambda: named_pod_ready(ns, ops), 120, 2, "restarted pod Ready with the receipt of its release")
+
+    # VF-001 on Helm, negative: an upgrade to another release keeps the vault of the
+    # previous one; the new pod must not become Ready, reopen or admit governed work.
+    next_release = "ocor-poc-0.2.1-helm"
+    following = deepcopy(profile)
+    following["profile"]["release"] = next_release
+    previous = set(pods(ns, "ops"))
+    helm_upgrade(kind, f"ocor.profile.release={next_release}")
+    upgraded = wait_for(lambda: [p for p in pods(ns, "ops") if p not in previous], 120, 2, "pod of the new release")[0]
+    wait_for(lambda: kubectl("-n", ns, "get", "pod", upgraded, "-o", "jsonpath={.status.phase}",
+                             check=False).stdout == "Running", 300, 3, "new release pod running")
+    # kindnet programs the NetworkPolicy for a new pod asynchronously: the agent reports the
+    # open-egress window itself (PUBLIC_EGRESS_OPEN, fail-closed) until it converges; the
+    # release fence must then remain the only reason the new pod is not Ready.
+    status, body = wait_for(lambda: (r := pod_http(ns, upgraded, "/readyz"))[1]["reasons"] == [
+        "RESTORE_RELEASE_MISMATCH"] and r, 120, 2, "release fence of the new release pod")
+    assert status == 503 and not named_pod_ready(ns, upgraded)
+    status, body = pod_http(ns, upgraded, "/reopen", "POST", {"Authorization": f"Bearer {stack.operator_token}",
+                                                              "Content-Type": "application/json"},
+                            {"receipt_digest": receipt_digest(vault), "authorized_by": "drill-operator"})
+    assert (status, body["reason_code"]) == (409, "REOPEN_REFUSED:RESTORE_RELEASE_MISMATCH"), body
+    for operation_class in OPERATION_CLASSES:
+        status, body = pod_http(ns, upgraded, f"/admit?class={operation_class}")
+        assert status == 503 and "restore_not_verified" in body["reason_code"], (operation_class, body)
+
+    # ... and becomes Ready only after a backup and a tested restore of its own release.
+    status, logs = run_job(ns, ["create", "job", "ocor-poc-backup-next", "--from=cronjob/ocor-poc-backup"],
+                           "ocor-poc-backup-next")
+    assert status.startswith("1/"), logs
+    sealed_next = sealed_point(logs)
+    assert_sealed(stack, vault, sealed_next, following)
+    revision = helm_upgrade(kind, f"ocor.profile.release={next_release}", "operational.restoreDrill.enabled=true",
+                            f"operational.restoreDrill.recoveryPoint={sealed_next['recovery_point']}")
+    status, logs = wait_job(ns, f"ocor-poc-restore-drill-{revision}")
+    assert status.get("succeeded") == 1, logs
+    receipt = latest_receipt(vault)
+    assert (receipt["outcome"], receipt["recovery_point"], receipt["release_binding"]["release"]) == (
+        "PASSED", sealed_next["recovery_point"], next_release)
+    wait_for(lambda: named_pod_ready(ns, upgraded), 120, 2, "new release Ready after its own tested restore")
+    status, body = pod_http(ns, upgraded, "/readyz")
+    assert (status, body["reasons"]) == (200, ["READY"]), body
 
 
 # --------------------------------------------------------------------------- VF-006

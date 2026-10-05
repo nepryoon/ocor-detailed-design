@@ -27,7 +27,8 @@ spec:
         - name: restore-prepare
           image: {{ .Values.operational.image }}
           command: [python3, /opt/ocor/ocor_ops_agent.py, restore-prepare, --profile, /etc/ocor/profile.json,
-                    --vault, /vault, --staging, /restore]
+                    --vault, /vault, --staging, /restore
+                    {{- with .Values.operational.restoreDrill.recoveryPoint }}, --recovery-point, {{ . | quote }}{{ end }}]
           env:
             {{- include "ocor-poc.opsEnv" . | nindent 12 }}
           {{- include "ocor-poc.containerSecurity" . | nindent 10 }}
