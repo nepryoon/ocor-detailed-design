@@ -1,0 +1,148 @@
+=== OCOR-DEV-0049 — PoC deployment profile (helm + compose) — qualifying run ===
+
+
+=== sha256sum normative integrity ===
+$ sha256sum -c inputs/normative/SHA256SUMS
+inputs/normative/OCOR_Architectural_Design_Document_v1.1.md: OK
+inputs/normative/OCOR_CAP_ELM_Requirement_Crosswalk_v0.9.md: OK
+inputs/normative/OCOR_DEC_197_plus_Draft_v0.1.md: OK
+inputs/normative/OCOR_Decision_Register_v1.0.md: OK
+inputs/normative/OCOR_Decision_Traceability_Index_v1.0.md: OK
+inputs/normative/OCOR_Registers_v0.9.md: OK
+inputs/normative/OCOR_Requirement_Register_v0.9.md: OK
+inputs/normative/OCOR_Requirement_Traceability_Index_v0.9.md: OK
+[exit_code=0]
+
+
+=== qualifying pytest (task validation_command, verbose) ===
+$ uv run --project ocor-runtime --frozen pytest -v ocor-runtime/tests/tasks/test_ocor_dev_0049.py
+============================= test session starts ==============================
+platform linux -- Python 3.12.11, pytest-9.1.1, pluggy-1.6.0 -- /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 23 items
+
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_is_present_and_well_formed PASSED [  4%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_chart_renders_the_profile_contract_as_a_configmap PASSED [  8%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_helm_values_contract_is_complete PASSED [ 13%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_overlay_contract_does_not_drift_from_helm_values PASSED [ 17%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_profiles_are_the_four_governed_modes PASSED [ 21%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_overlay_is_a_valid_compose_model PASSED [ 26%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_overlay_merges_with_the_real_bootstrap_stack PASSED [ 30%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_foundation_services_behind_the_profile_are_content_addressed_and_healthy PASSED [ 34%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[public egress enabled] PASSED [ 39%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[single synthetic compartment] PASSED [ 43%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[Root CA inside fault domain] PASSED [ 47%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[digest pinning disabled] PASSED [ 52%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[C6 shares causal batch pool] PASSED [ 56%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[drift scan exceeds 60s] PASSED [ 60%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[classified payload logged] PASSED [ 65%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[trace field missing] PASSED [ 69%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[authority class missing] PASSED [ 73%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[untested backup] PASSED [ 78%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[restore not isolated] PASSED [ 82%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[recovery gate missing] PASSED [ 86%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[safe-degraded fault missing] PASSED [ 91%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_contract_rejects_incomplete_profile[health probe missing] PASSED [ 95%]
+ocor-runtime/tests/tasks/test_ocor_dev_0049.py::test_compose_overlay_rejects_contract_that_drifts_from_helm PASSED [100%]
+
+============================== 23 passed in 0.53s ==============================
+[exit_code=0]
+
+
+=== ruff check . (DEC-212 Phase 2.1) ===
+$ ruff check .
+All checks passed!
+[exit_code=0]
+
+
+=== mypy --strict (DEC-212 Phase 2.1: ocor-runtime/src and scripts) ===
+$ /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python -m mypy
+Success: no issues found in 69 source files
+[exit_code=0]
+
+
+=== validate_language_policy (DEC-212) ===
+$ /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python scripts/validate_language_policy.py
+PASS: no tracked file uses a monitored extension outside its authorized area
+[exit_code=0]
+
+
+=== validate_ocor_change_scope (task branch) ===
+$ /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base origin/main --head HEAD --branch task/OCOR-DEV-0049-poc-deployment-observability-backup-safe-degradation
+PASS: 8 changed path(s); immutable surfaces untouched; task ledger stable
+[exit_code=0]
+
+
+=== tooling-bootstrap CI-wired reports/tests suites ===
+$ PATH=/tmp/ocor-c6/toolchain/bin:$PATH /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python -m pytest -q reports/tests/test_generate_contracts_reference_resolution.py reports/tests/test_backlog_generator_reality_parity.py reports/tests/test_runtime_evidence_validator.py reports/tests/test_evidence_input_drift.py reports/tests/test_language_migration_benchmark_harness.py ocor-runtime/tests/sdk/test_typescript_sdk_conformance.py
+....................................................                     [100%]
+52 passed in 5.30s
+[exit_code=0]
+
+
+=== validate_evidence_input_drift (R3) ===
+$ /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python scripts/validate_evidence_input_drift.py --root .
+{
+  "checked_inputs": 167,
+  "checked_tasks": 63,
+  "drifted_inputs": 0,
+  "drifted_tasks": [],
+  "findings": [],
+  "status": "PASS"
+}
+[exit_code=0]
+
+
+=== full regression: pytest -q ocor-runtime/tests/ (toolchain Node 20.20.2, OCOR_LIVE_POSTGRES_DSN on real stack) ===
+$ PATH=/tmp/ocor-c6/toolchain/bin:$PATH OCOR_LIVE_POSTGRES_DSN=<ocor-bootstrap-postgres> ocor-runtime/.venv/bin/python -m pytest -q ocor-runtime/tests/
+........................................................................ [  6%]
+........................................................................ [ 12%]
+........................................................................ [ 19%]
+........................................................................ [ 25%]
+........................................................................ [ 32%]
+........................................................................ [ 38%]
+........................................................................ [ 44%]
+........................................................................ [ 51%]
+........................................................................ [ 57%]
+........................................................................ [ 64%]
+........................................................................ [ 70%]
+........................................................................ [ 76%]
+........................................................................ [ 83%]
+........................................................................ [ 89%]
+........................................................................ [ 96%]
+............................................                             [100%]
+1124 passed in 359.80s (0:05:59)
+[exit_code=0]
+
+
+=== validate_rccad (RCCAD) ===
+$ ocor-runtime/.venv/bin/python scripts/validate_rccad.py --base-ref origin/main
+{
+  "checked_artifacts": 22,
+  "dynamic_assurance": "CI_REQUIRED",
+  "findings": [],
+  "fitness_results": {
+    "AFF-001": "PASS_STATIC_PRECHECK",
+    "AFF-002": "PASS_STATIC_PRECHECK",
+    "AFF-003": "PASS_STATIC_PRECHECK",
+    "AFF-004": "PASS_STATIC_PRECHECK",
+    "AFF-005": "PASS_STATIC_PRECHECK",
+    "AFF-006": "PASS_STATIC_PRECHECK",
+    "AFF-007": "PASS_STATIC_PRECHECK",
+    "AFF-008": "PASS_STATIC_PRECHECK",
+    "AFF-009": "PASS_STATIC_PRECHECK",
+    "AFF-010": "PASS_STATIC_PRECHECK"
+  },
+  "methodology_sha256": "231ce3325537de85890b16e97f138bd6a4263fc1e240094ed26499af9aeeb6cd",
+  "status": "PASS_LOCAL_PRECHECK"
+}
+[exit_code=0]
+
+
+=== validate_runtime_evidence (task validation_command) ===
+$ python3 scripts/validate_runtime_evidence.py --task OCOR-DEV-0049 --non-skipped --manifest reports/evidence/G4/MANIFEST.json
+PASS: qualifying task evidence for OCOR-DEV-0049
+[exit_code=0]

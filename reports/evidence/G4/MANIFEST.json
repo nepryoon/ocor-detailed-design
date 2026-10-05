@@ -169,6 +169,16 @@
       "path": "OCOR-DEV-0048.log",
       "sha256": "0502fc016b98981e3bbeaa1fb1f3a9d40cf533f0c5a5b0293eb4cd79438288eb",
       "task_id": "OCOR-DEV-0048-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0049.json",
+      "sha256": "554e717c107dd6da38cf288552f7a45de762b9aac259a148ff054f11ffe4bc95",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "path": "OCOR-DEV-0049.log",
+      "sha256": "39034614db14fb104dbb8881cfd0b5e7c0b024715eee0d2b1d4ff5175a3d10b3",
+      "task_id": "OCOR-DEV-0049-RAW"
     }
   ],
   "created_at": "2026-10-02T09:48:04Z",
@@ -3224,6 +3234,222 @@
       "requirement_id": "FR-130",
       "status": "PASS",
       "task_id": "OCOR-DEV-0048"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-HELM-CHART-WELL-FORMED",
+      "command": "the Helm chart (Chart.yaml) is present and well-formed (apiVersion v2, name ocor-poc, type application)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-001",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-CHART-RENDERS-PROFILE-CONFIGMAP",
+      "command": "profile-contract.yaml renders the whole `ocor` values tree verbatim into a ConfigMap via toYaml, not a hand-copied subset",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-001",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-HELM-CONTRACT-COMPLETE",
+      "command": "the complete helm values contract passes the fail-closed oracle with zero violations (profile, isolation, images, resource classes, observability, backup, restore, safe-degraded, health)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-COMPOSE-NO-DRIFT-FROM-HELM",
+      "command": "the compose overlay contract carries the same keys and values as the helm contract (minus the profiles selector), proving the two carriers do not drift",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-001",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-FOUR-GOVERNED-MODES",
+      "command": "the compose overlay declares exactly the four governed profile modes: observability, backup, safe-degraded, full",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-001",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-COMPOSE-OVERLAY-VALID-MODEL",
+      "command": "docker compose config accepts the overlay as a valid Compose model",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-001",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-COMPOSE-MERGES-WITH-BOOTSTRAP",
+      "command": "the overlay merges cleanly with the real ocor-bootstrap compose.yaml under the bootstrap environment",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-FOUNDATION-SERVICES-CONTENT-ADDRESSED-HEALTHY",
+      "command": "every foundation service image is digest-pinned or content-addressed against infra/services.lock.json, with restart=no and a real healthcheck or healthy dependency",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "FR-156",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-PUBLIC-EGRESS",
+      "command": "enabling public egress is rejected: public egress must be denied",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-041",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-SINGLE-COMPARTMENT",
+      "command": "a single synthetic compartment is rejected: at least two synthetic compartments required",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-041",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-ROOT-CA-IN-DOMAIN",
+      "command": "placing the Root CA inside the cluster fault domain is rejected: Root CA must sit outside",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-041",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-DIGEST-PINNING-DISABLED",
+      "command": "disabling image digest pinning is rejected: images must be digest-pinned",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "FR-156",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-C6-SHARES-POOL",
+      "command": "letting C6/control/audit share the causal batch pool is rejected",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-041",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-DRIFT-SCAN-EXCEEDS-60S",
+      "command": "a drift scan interval above 60s is rejected: drift scan interval must be <= 60s",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-080",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-CLASSIFIED-PAYLOAD-LOGGED",
+      "command": "logging classified payload is rejected: classified payload must be excluded",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-042",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-TRACE-FIELD-MISSING",
+      "command": "an incomplete trace field set is rejected: trace fields incomplete",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-043",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-AUTHORITY-CLASS-MISSING",
+      "command": "an incomplete backup authority class set is rejected: authority classes incomplete",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-UNTESTED-BACKUP",
+      "command": "an untested backup is rejected: backup.tested must be true",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-RESTORE-NOT-ISOLATED",
+      "command": "a restore outside an isolated network is rejected: restore must run in an isolated network",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-065",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-RECOVERY-GATE-MISSING",
+      "command": "an incomplete recovery gate is rejected: recovery gate incomplete",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-065",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-SAFE-DEGRADED-FAULT-MISSING",
+      "command": "a missing safe-degraded fault entry is rejected: safe-degraded fault table incomplete",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-080",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-HEALTH-PROBE-MISSING",
+      "command": "a service without both liveness and readiness probes is rejected: health probe missing",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-080",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NEG-RPO-DRIFT",
+      "command": "an RPO above 15 minutes (20) is rejected: RPO must be <= 15 minutes",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-065",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-REGRESSION",
+      "command": "full local pytest regression over ocor-runtime/tests/ with OCOR_LIVE_POSTGRES_DSN on the real ocor-bootstrap PostgreSQL instance, zero failures",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
     }
   ],
   "schema_version": "1.0"
