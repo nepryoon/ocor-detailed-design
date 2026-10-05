@@ -1,304 +1,1582 @@
-# OCOR PoC single-site profile — Compose overlay.
-# The `x-ocor-profile` contract is byte-for-byte identical in VALUE to the Helm
-# `ocor` tree (values.yaml); the extra `profiles` key selects the governed modes.
-# The `services:` section is the operational wiring: real digest-pinned images,
-# real readiness gates on the real bootstrap ports, local telemetry and an
-# authority-aware backup job. Observability/backup backends remain Candidate
-# Implementation behind logical contracts (ADD v1.3 §6.1).
-name: ocor-poc-profile
+# OCOR PoC single-site profile — Compose carrier (ADD v1.3 §6, Part II §2.13; LLD v1.1 §5).
+# Standalone project attached to the running ocor-bootstrap stack. Usage:
+#   docker compose -p ocor-poc -f deploy/helm/ocor-poc/compose.profiles.yaml \
+#     --env-file <bootstrap env> --profile <observability|safe-degraded|backup|restore-drill|full> up
+# Required environment: OCOR_LOCAL_OPENBAO_TOKEN, OCOR_LOCAL_POSTGRES_PASSWORD,
+# OCOR_OPS_OPERATOR_TOKEN and OCOR_BACKUP_VAULT_DIR (a host directory outside the
+# project, so the vault survives `down -v` of the workload fault domain).
+#
+# Network posture (ADD §6.1 default-deny): every profile workload sits on the
+# `site` network, which is `internal` (no route outside the host bridge). The
+# only path to the foundation services is `ocor-relay`, which forwards exactly
+# the `isolation.allowedFlows` of the profile and nothing else. Restore drills
+# run on a second internal network, `restore`, with ephemeral stores only.
+#
+# `configs.ocor-ops-agent` is the single source of the ops agent program that
+# the Helm chart also mounts (templates/configmap.yaml reads it from this file).
+name: ocor-poc
 
-x-ocor-profile:
-  profiles: [observability, backup, safe-degraded, full]
-  profile:
-    id: poc
-    singleSite: true
-    deploymentTarget: "Design Target / Candidate Implementation"
-  isolation:
-    networkPolicyDefaultDeny: true
-    egressPublicNetwork: false
-    zeroSaaSAndCallHome: true
-    namespacePerSubsystem: true
-    serviceAccountPerSubsystem: true
-    syntheticCompartmentsMin: 2
-    rootCaOutsideClusterFaultDomain: true
-    backupVaultOutsideClusterFaultDomain: true
-  images:
-    digestPinned: true
-    signatureVerifiedBeforeAdmission: true
-    registry: "local"
-    publicNetworkDependencyAtRuntime: false
-  resourceClasses: [CONTROL, INTERACTIVE, BATCH, AUDIT]
-  resourceIsolation:
-    c6ControlAuditSharesCausalBatchPool: false
-  observability:
-    exportersLocal: true
-    driftScanIntervalSeconds: 60
-    releaseMismatchBlocksMutativeCommand: true
-    metrics:
-      exporter: prometheus
-      set:
-        - latency_p50_p95_p99_per_contract
-        - error_deny_approval_expiry_rate
-        - projection_lag_watermark_checksum
-        - commit_outbox_retry
-        - constraint_violation
-        - action_fsm_saga_execution_unknown
-        - audit_gap
-        - queue_run_time_budget
-        - model_seed_scenario_ttl
-        - configuration_schema_release_drift
-    logs:
-      fields: [correlation_id, component, operation, release, policy_digest, reason_code]
-      keepClassificationMarking: true
-      excludeClassifiedPayload: true
-    traces:
-      fields:
-        - trace_id
-        - correlation_id
-        - causation_id
-        - governed_context_digest
-        - effective_principal_id
-        - actor_chain
-        - tenant_id
-        - organization_id
-        - domain_id
-        - compartments
-        - classification_marking_ref
-        - purpose
-        - policy_bundle_digest
-        - ontology_release_digest
-        - canonical_commit
-        - projection_watermark
-        - policy_decision_id
-        - scenario_id
-        - model_digest
-        - action_state
-  backup:
-    rpoMinutes: 15
-    rtoHours: 4
-    encrypted: true
-    signed: true
-    immutable: true
-    contentAddressed: true
-    authorityAware: true
-    offClusterFaultDomain: true
-    tested: true
-    recoveryPoint: poc-recovery-point-v1
-    authorityClasses:
-      - definition
-      - canonical
-      - event
-      - action
-      - governance
-      - audit
-      - model_scenario
-      - projection
-      - key_custody
-    memory:
-      metadataRef: memory-metadata
-      contentRefs: true
-      representationVersions: true
-      lifecycleEpochs: true
-      deletionEpochs: true
-      journalCheckpoints: true
-      auditRefs: true
-      boundToSameRecoveryPoint: true
-  restore:
-    isolatedNetwork: true
-    steps:
-      - containment_and_emergency_stop
-      - select_signed_recovery_point_within_rpo
-      - verify_trust_manifest_digest_signatures_dual_control
-      - restore_oaC_ir_policy_config_model_manifests
-      - restore_canonical_event_action_audit_same_cut
-      - replay_memory_deletion_tombstones_before_reopen_retrieval
-      - rebuild_logic_projection_and_w3c_boundary
-      - reconcile_outbox_offset_checksum_saga_receipt
-      - assign_execution_unknown_to_unprovable_effects
-      - run_conformance_security_mission_thread_replay
-      - require_human_authorization_to_reopen_mutative
-    replay:
-      usesOriginalEventIds: true
-      emitsNoExternalEffects: true
-      pins: [ontology_release, compiler_logic_bundle, canonical_commit, event_schema, model_digest, policy_digest, seed, assumptions, ordering]
-    recoveryGate:
-      - revision
-      - watermark
-      - orphan_duplicate
-      - marking
-      - gcs
-      - deletion_resurrection
-      - projection_drift_or_stale_deletion_epoch
-      - sample_semantic_digest
-  resourceLimits:
-    itemCount: 100000
-    payloadSizeBytes: 1048576
-    embeddingDimensions: 1536
-    topK: 100
-    consolidationConcurrency: 4
-    indexSizeBytes: 1073741824
-    retentionHorizonDays: 30
-    quotaBehavior:
-      onExceed: quota_backpressure
-      semanticDowngrade: false
-  safeDegraded:
-    faults:
-      - fault: idp_or_policy_engine_unavailable
-        behavior: [no_new_governed_operations, authorized_reads_only_if_policy_snapshot_valid]
-      - fault: canonical_writer_unavailable
-        behavior: [events_durably_queued, no_canonical_commit_confirmation, mutations_suspended]
-      - fault: broker_unavailable
-        behavior: [outbox_retained_relayed_later, no_projection_freshness_claim]
-      - fault: projection_lag_or_failure
-        behavior: [PROJECTION_NOT_READY_or_STALE_CONTEXT, high_impact_blocked]
-      - fault: audit_append_unavailable
-        behavior: [no_new_mutative_command]
-      - fault: action_adapter_timeout
-        behavior: [EXECUTION_UNKNOWN, status_inquiry_or_reconciliation_only, no_blind_retry]
-      - fault: edge_partition
-        behavior: [read_analyze_simulate_on_pinned_snapshot, explicit_staleness, no_high_impact]
-      - fault: emergency_stop
-        behavior: [new_mutative_capabilities_denied_within_10_seconds]
-  health:
-    probeTypes: [liveness, readiness]
-    services:
-      - name: terminusdb
-        port: 6363
-        liveness: {type: tcp, period_seconds: 5}
-        readiness: {type: tcp, period_seconds: 5}
-      - name: typedb
-        port: 1729
-        liveness: {type: tcp, period_seconds: 10}
-        readiness: {type: tcp, period_seconds: 10}
-      - name: fuseki
-        port: 3030
-        liveness: {type: http_get, path: "/$/ping", period_seconds: 5}
-        readiness: {type: http_get, path: "/$/ping", period_seconds: 5}
-      - name: opa
-        port: 8181
-        liveness: {type: exec, command: ["/opa", "eval", "true"], period_seconds: 5}
-        readiness: {type: exec, command: ["/opa", "eval", "true"], period_seconds: 5}
-      - name: keycloak
-        port: 8080
-        liveness: {type: tcp, target_port: 9000, period_seconds: 10}
-        readiness: {type: tcp, target_port: 9000, period_seconds: 10}
-      - name: openbao
-        port: 8200
-        liveness: {type: exec, command: ["bao", "status"], period_seconds: 5}
-        readiness: {type: exec, command: ["bao", "status"], period_seconds: 5}
-      - name: postgresql
-        port: 5432
-        liveness: {type: exec, command: ["pg_isready", "-U", "ocor", "-d", "ocor"], period_seconds: 5}
-        readiness: {type: exec, command: ["pg_isready", "-U", "ocor", "-d", "ocor"], period_seconds: 5}
-      - name: kafka
-        port: 29092
-        liveness: {type: exec, command: ["kafka-topics", "--bootstrap-server", "127.0.0.1:29092", "--list"], period_seconds: 10}
-        readiness: {type: exec, command: ["kafka-topics", "--bootstrap-server", "127.0.0.1:29092", "--list"], period_seconds: 10}
-      - name: qdrant
-        port: 6333
-        liveness: {type: tcp, period_seconds: 5}
-        readiness: {type: tcp, period_seconds: 5}
-      - name: spire-server
-        port: 8081
-        liveness: {type: exec, command: ["spire-server", "healthcheck"], period_seconds: 5}
-        readiness: {type: exec, command: ["spire-server", "healthcheck"], period_seconds: 5}
-
-x-service-policy: &service-policy
-  restart: "no"
+x-ops: &ops
+  image: python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2
   init: true
+  restart: "no"
+  user: "${OCOR_OPS_UID:-1000}:${OCOR_OPS_GID:-1000}"
   security_opt: ["no-new-privileges:true"]
-  networks: [ocor-bootstrap]
+  cap_drop: [ALL]
+  tmpfs: ["/tmp"]
+  configs:
+    - {source: ocor-ops-agent, target: /opt/ocor/ocor_ops_agent.py}
+    - {source: ocor-poc-profile, target: /etc/ocor/profile.json}
+  environment:
+    OCOR_OPENBAO_TOKEN: ${OCOR_LOCAL_OPENBAO_TOKEN:?required}
+    OCOR_OPS_OPERATOR_TOKEN: ${OCOR_OPS_OPERATOR_TOKEN:?required}
+    PYTHONDONTWRITEBYTECODE: "1"
+  networks: [site]
+  depends_on:
+    ocor-relay: {condition: service_healthy}
 
 services:
-  # Readiness gate: only reports READY once every mandatory foundation service
-  # is healthy AND its port is reachable on the real bootstrap network. Removing
-  # one dependency makes the gate exit non-zero (readiness blocked).
-  ocor-readiness-gate:
-    <<: *service-policy
+  ocor-relay:
     image: python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2
-    profiles: [safe-degraded, full]
-    depends_on:
-      terminusdb: {condition: service_healthy}
-      typedb: {condition: service_healthy}
-      fuseki: {condition: service_healthy}
-      opa: {condition: service_healthy}
-      keycloak: {condition: service_healthy}
-      openbao: {condition: service_healthy}
-      postgresql: {condition: service_healthy}
-      kafka: {condition: service_healthy}
-      qdrant: {condition: service_healthy}
-      spire-server: {condition: service_healthy}
-      spire-agent: {condition: service_started}
-    command:
-      - python3
-      - -c
-      - |
-        import socket, sys
-        targets = [("terminusdb", 6363), ("typedb", 1729), ("fuseki", 3030),
-                   ("opa", 8181), ("keycloak", 8080), ("openbao", 8200),
-                   ("postgresql", 5432), ("kafka", 29092), ("qdrant", 6333)]
-        missing = []
-        for host, port in targets:
-            try:
-                socket.create_connection((host, port), 3).close()
-            except OSError:
-                missing.append(f"{host}:{port}")
-        if missing:
-            print("NOT_READY missing=" + ",".join(missing), flush=True)
-            sys.exit(1)
-        print("READY all mandatory dependencies reachable", flush=True)
+    profiles: [observability, safe-degraded, backup, restore-drill, full]
+    init: true
+    restart: "no"
+    user: "${OCOR_OPS_UID:-1000}:${OCOR_OPS_GID:-1000}"
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    configs:
+      - {source: ocor-ops-agent, target: /opt/ocor/ocor_ops_agent.py}
+      - {source: ocor-poc-profile, target: /etc/ocor/profile.json}
+    command: [python3, /opt/ocor/ocor_ops_agent.py, relay, --profile, /etc/ocor/profile.json,
+              --upstream-template, "${OCOR_BOOTSTRAP_PROJECT:-ocor-bootstrap}-{host}-1"]
+    healthcheck:
+      test: [CMD, python3, -c, "import socket; socket.create_connection(('127.0.0.1', 8181), 2).close()"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+    networks:
+      bootstrap: {}
+      site:
+        aliases: [terminusdb, typedb, fuseki, opa, keycloak, openbao, postgresql, kafka, qdrant, spire-server]
 
-  # Local telemetry: Candidate Implementation behind the logical exporter
-  # contract (ADD v1.3 §6.3 exportersLocal). Emits the governed log/metric
-  # field names to stdout; no classified payload, no public egress.
-  ocor-telemetry:
-    <<: *service-policy
-    image: python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2
-    profiles: [observability, full]
-    command:
-      - python3
-      - -c
-      - |
-        import json
-        record = {
-            "correlation_id": "local-telemetry-poc",
-            "component": "ocor-telemetry",
-            "operation": "exporters_local_probe",
-            "release": "candidate",
-            "policy_digest": "logical-contract",
-            "reason_code": "READY",
-            "metrics": ["latency_p50_p95_p99_per_contract", "error_deny_approval_expiry_rate",
-                        "projection_lag_watermark_checksum", "commit_outbox_retry",
-                        "constraint_violation", "action_fsm_saga_execution_unknown",
-                        "audit_gap", "queue_run_time_budget", "model_seed_scenario_ttl",
-                        "configuration_schema_release_drift"],
-        }
-        print(json.dumps(record, sort_keys=True), flush=True)
-
-  # Authority-aware backup: concrete example over the PostgreSQL audit/workflow
-  # backend (one of the 9 authority classes). The full multi-store manifest is
-  # carried by the `x-ocor-profile.backup` contract, not fabricated here.
-  ocor-backup:
-    <<: *service-policy
-    image: postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
-    profiles: [backup, full]
-    environment:
-      PGPASSWORD: ${OCOR_LOCAL_POSTGRES_PASSWORD:-synthetic-postgres}
-    depends_on:
-      postgresql: {condition: service_healthy}
+  ocor-ops:
+    <<: *ops
+    profiles: [observability, safe-degraded, full]
+    command: [python3, /opt/ocor/ocor_ops_agent.py, serve, --profile, /etc/ocor/profile.json,
+              --listen, "0.0.0.0:8080", --vault, /vault]
     volumes:
-      - ocor-backup-vault:/backup
-    command:
-      - sh
-      - -c
-      - |
-        set -e
-        pg_dump -h postgresql -U ocor -d ocor -F c -f /backup/ocor-audit-$$(date +%s).dump
-        ls -l /backup
+      - "${OCOR_BACKUP_VAULT_DIR:?required}:/vault:ro"
+    healthcheck:
+      test: [CMD, python3, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/readyz', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
 
-volumes:
-  ocor-backup-vault: {}
+  ocor-keys-init:
+    <<: *ops
+    profiles: [backup, full]
+    command: [python3, /opt/ocor/ocor_ops_agent.py, init-keys, --profile, /etc/ocor/profile.json]
+
+  ocor-staging-init:
+    image: python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2
+    profiles: [backup, restore-drill, full]
+    restart: "no"
+    user: "0:0"
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER]
+    network_mode: none
+    volumes: ["backup-staging:/staging", "restore-staging:/restore"]
+    command: [python3, -c, "import os; [(os.chmod(p, 0o700), os.chown(p, ${OCOR_OPS_UID:-1000}, ${OCOR_OPS_GID:-1000})) for p in ('/staging', '/restore')]"]
+
+  ocor-backup-capture-postgresql:
+    image: postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
+    profiles: [backup, full]
+    restart: "no"
+    user: "${OCOR_OPS_UID:-1000}:${OCOR_OPS_GID:-1000}"
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    networks: [site]
+    depends_on:
+      ocor-relay: {condition: service_healthy}
+      ocor-staging-init: {condition: service_completed_successfully}
+    configs:
+      - {source: ocor-table-digest, target: /opt/ocor/table-digest.sql}
+    environment:
+      PGHOST: postgresql
+      PGUSER: ocor
+      PGPASSWORD: ${OCOR_LOCAL_POSTGRES_PASSWORD:?required}
+      MEMORY_DB: ocor_poc_drill
+    volumes: ["backup-staging:/staging"]
+    entrypoint: [sh, -ec]
+    command:
+      - |
+        out=/staging/postgresql; rm -rf "$$out"; mkdir -p "$$out"
+        for db in $$(psql -d ocor -Atc "select datname from pg_database where not datistemplate and datallowconn order by 1"); do
+          pg_dump -d "$$db" -Fc -f "$$out/$$db.dump"
+          psql -d "$$db" -At -f /opt/ocor/table-digest.sql > "$$out/$$db.digest"
+        done
+        if psql -d ocor -Atc "select 1 from pg_database where datname='$$MEMORY_DB'" | grep -q 1; then
+          psql -d "$$MEMORY_DB" -c "\copy (select item_id, tenant_id, compartment, representation_version, lifecycle_epoch, lifecycle_state, coalesce(deletion_epoch::text, '') as deletion_epoch, content_ref, classification_marking_ref from memory_item order by item_id) to '$$out/memory-items.csv' csv header"
+          psql -d "$$MEMORY_DB" -c "\copy (select event_id, item_id, deletion_epoch from memory_deletion_journal order by deletion_epoch, event_id) to '$$out/memory-deletion-journal.csv' csv header"
+        fi
+        ls -l "$$out"
+
+  ocor-backup-capture-kafka:
+    image: confluentinc/cp-kafka@sha256:24cdd3a7fa89d2bed150560ebea81ff1943badfa61e51d66bb541a6b0d7fb047
+    profiles: [backup, full]
+    restart: "no"
+    user: "${OCOR_OPS_UID:-1000}:${OCOR_OPS_GID:-1000}"
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    networks: [site]
+    depends_on:
+      ocor-relay: {condition: service_healthy}
+      ocor-staging-init: {condition: service_completed_successfully}
+    volumes: ["backup-staging:/staging"]
+    entrypoint: [sh, -ec]
+    command:
+      - |
+        mkdir -p /staging/kafka
+        topics=$$(kafka-topics --bootstrap-server kafka:29092 --list --exclude-internal)
+        if [ -n "$$topics" ]; then
+          kafka-get-offsets --bootstrap-server kafka:29092 --exclude-internal-topics > /staging/kafka/offsets.txt
+        else
+          echo "# event journal checkpoint: no topics at this cut" > /staging/kafka/offsets.txt
+        fi
+        wc -l /staging/kafka/offsets.txt
+
+  ocor-backup-seal:
+    <<: *ops
+    profiles: [backup, full]
+    depends_on:
+      ocor-relay: {condition: service_healthy}
+      ocor-keys-init: {condition: service_completed_successfully}
+      ocor-backup-capture-postgresql: {condition: service_completed_successfully}
+      ocor-backup-capture-kafka: {condition: service_completed_successfully}
+    command: [python3, /opt/ocor/ocor_ops_agent.py, seal, --profile, /etc/ocor/profile.json,
+              --vault, /vault, --staging, /staging]
+    volumes:
+      - "${OCOR_BACKUP_VAULT_DIR:?required}:/vault"
+      - "backup-staging:/staging"
+
+  ocor-restore-prepare:
+    <<: *ops
+    profiles: [restore-drill]
+    depends_on:
+      ocor-relay: {condition: service_healthy}
+      ocor-staging-init: {condition: service_completed_successfully}
+    command: [python3, /opt/ocor/ocor_ops_agent.py, restore-prepare, --profile, /etc/ocor/profile.json,
+              --vault, /vault, --staging, /restore]
+    volumes:
+      - "${OCOR_BACKUP_VAULT_DIR:?required}:/vault:ro"
+      - "restore-staging:/restore"
+
+  ocor-restore-postgresql:
+    image: postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
+    profiles: [restore-drill]
+    restart: "no"
+    security_opt: ["no-new-privileges:true"]
+    networks: [restore]
+    environment:
+      POSTGRES_DB: ocor
+      POSTGRES_USER: ocor
+      # Ephemeral store reachable only on the internal `restore` network.
+      POSTGRES_HOST_AUTH_METHOD: trust
+    tmpfs: ["/var/lib/postgresql/data:size=512m,mode=0700"]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U ocor -d ocor"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  ocor-restore-qdrant:
+    image: qdrant/qdrant@sha256:d122138f76868edba68d36cb0833139c1d1761f00f09e48e61f8314196e6a4c6
+    profiles: [restore-drill]
+    restart: "no"
+    security_opt: ["no-new-privileges:true"]
+    networks: [restore]
+    tmpfs: ["/qdrant/storage:size=512m,mode=0750", "/qdrant/snapshots:size=256m,mode=0750"]
+    healthcheck:
+      test: [CMD-SHELL, "grep -qi ':18BD ' /proc/net/tcp"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  ocor-restore-load-postgresql:
+    image: postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
+    profiles: [restore-drill]
+    restart: "no"
+    user: "${OCOR_OPS_UID:-1000}:${OCOR_OPS_GID:-1000}"
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: [ALL]
+    networks: [restore]
+    depends_on:
+      ocor-restore-prepare: {condition: service_completed_successfully}
+      ocor-restore-postgresql: {condition: service_healthy}
+    configs:
+      - {source: ocor-table-digest, target: /opt/ocor/table-digest.sql}
+    environment:
+      PGHOST: ocor-restore-postgresql
+      PGUSER: ocor
+    volumes: ["restore-staging:/restore"]
+    entrypoint: [sh, -ec]
+    command:
+      - |
+        mkdir -p /restore/restored
+        for f in /restore/postgresql/*.dump; do
+          db=$$(basename "$$f" .dump)
+          dropdb --maintenance-db=template1 --if-exists --force "$$db"
+          createdb --maintenance-db=template1 "$$db"
+          pg_restore --no-owner --no-privileges --exit-on-error -d "$$db" "$$f"
+          psql -d "$$db" -At -f /opt/ocor/table-digest.sql > "/restore/restored/$$db.digest"
+        done
+        ls -l /restore/restored
+
+  ocor-restore-finalize:
+    <<: *ops
+    profiles: [restore-drill]
+    networks: [site, restore]
+    depends_on:
+      ocor-relay: {condition: service_healthy}
+      ocor-restore-load-postgresql: {condition: service_completed_successfully}
+      ocor-restore-qdrant: {condition: service_healthy}
+    command: [python3, /opt/ocor/ocor_ops_agent.py, restore-finalize, --profile, /etc/ocor/profile.json,
+              --vault, /vault, --staging, /restore, --restore-qdrant, "ocor-restore-qdrant:6333"]
+    volumes:
+      - "${OCOR_BACKUP_VAULT_DIR:?required}:/vault"
+      - "restore-staging:/restore"
 
 networks:
-  ocor-bootstrap:
-    name: ocor-bootstrap
+  bootstrap:
+    external: true
+    name: ${OCOR_BOOTSTRAP_NETWORK:-ocor-bootstrap_ocor-bootstrap}
+  site:
+    internal: true
+  restore:
+    internal: true
+
+volumes:
+  # Project-scoped staging; the seal/finalize steps erase the plaintext they consumed.
+  backup-staging: {}
+  restore-staging: {}
+
+configs:
+  ocor-table-digest:
+    content: |
+      select format('select %L, count(*), coalesce(md5(string_agg(t::text, E''\n'' order by t::text)), '''') from %I.%I t', n.nspname || '.' || c.relname, n.nspname, c.relname)
+      from pg_class c join pg_namespace n on n.oid = c.relnamespace
+      where c.relkind = 'r' and n.nspname not in ('pg_catalog', 'information_schema') and n.nspname not like 'pg_toast%'
+      order by 1 \gexec
+  ocor-poc-profile:
+    content: |
+      {"backup":{"authorityAware":true,"authorityClasses":["definition","canonical","event","action","governance","audit","model_scenario","projection","key_custody"],"contentAddressed":true,"encrypted":true,"immutable":true,"keys":{"encryption":"ocor-poc-backup-enc","signing":"ocor-poc-backup-sign","transitMount":"ocor-poc-transit"},"memory":{"auditRefs":true,"boundToSameRecoveryPoint":true,"contentRefs":true,"deletionEpochs":true,"journalCheckpoints":true,"lifecycleEpochs":true,"metadataRef":"memory-metadata","representationVersions":true,"sources":{"database":"ocor_poc_drill","indexCollection":"ocor_poc_drill_memory","journalTable":"memory_deletion_journal","metadataTable":"memory_item"}},"offClusterFaultDomain":true,"rpoMinutes":15,"rtoHours":4,"signed":true,"tested":true},"health":{"dependencies":[{"faultClass":"canonical_writer_unavailable","host":"terminusdb","mandatory":true,"name":"terminusdb","port":6363,"probe":{"expectStatus":[200],"kind":"http","path":"/api/ok"}},{"faultClass":"projection_lag_or_failure","host":"typedb","mandatory":true,"name":"typedb","port":8000,"probe":{"expectStatus":[200,204],"kind":"http","path":"/health"}},{"faultClass":"projection_lag_or_failure","host":"fuseki","mandatory":true,"name":"fuseki","port":3030,"probe":{"expectStatus":[200],"kind":"http","path":"/$$/ping"}},{"faultClass":"idp_or_policy_engine_unavailable","host":"opa","mandatory":true,"name":"opa","port":8181,"probe":{"expectStatus":[200],"kind":"http","path":"/health"}},{"faultClass":"idp_or_policy_engine_unavailable","host":"keycloak","mandatory":true,"name":"keycloak","port":9000,"probe":{"expectBody":"\"status\": \"UP\"","expectStatus":[200],"kind":"http","path":"/health/ready"}},{"faultClass":"idp_or_policy_engine_unavailable","host":"openbao","mandatory":true,"name":"openbao","port":8200,"probe":{"expectStatus":[200],"kind":"http","path":"/v1/sys/health"}},{"additionalFaultClasses":["canonical_writer_unavailable"],"faultClass":"audit_append_unavailable","host":"postgresql","mandatory":true,"name":"postgresql","port":5432,"probe":{"database":"ocor","kind":"postgres_startup","user":"ocor"}},{"faultClass":"broker_unavailable","host":"kafka","mandatory":true,"name":"kafka","port":29092,"probe":{"kind":"kafka_api_versions"}},{"faultClass":"projection_lag_or_failure","host":"qdrant","mandatory":true,"name":"qdrant","port":6333,"probe":{"expectStatus":[200],"kind":"http","path":"/readyz"}},{"faultClass":"idp_or_policy_engine_unavailable","host":"spire-server","mandatory":true,"name":"spire-server","port":8081,"probe":{"kind":"tls_spiffe"}}],"probeTimeoutSeconds":3,"probeTypes":["liveness","readiness"]},"images":{"digestPinned":true,"pins":{"kafka":"confluentinc/cp-kafka@sha256:24cdd3a7fa89d2bed150560ebea81ff1943badfa61e51d66bb541a6b0d7fb047","ops":"python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2","postgresql":"postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20","qdrant":"qdrant/qdrant@sha256:d122138f76868edba68d36cb0833139c1d1761f00f09e48e61f8314196e6a4c6"},"publicNetworkDependencyAtRuntime":false,"registry":"local","signatureVerifiedBeforeAdmission":true},"isolation":{"allowedFlows":[{"host":"terminusdb","port":6363},{"host":"typedb","port":8000},{"host":"fuseki","port":3030},{"host":"opa","port":8181},{"host":"keycloak","port":9000},{"host":"openbao","port":8200},{"host":"postgresql","port":5432},{"host":"kafka","port":29092},{"host":"qdrant","port":6333},{"host":"spire-server","port":8081}],"backupVaultOutsideClusterFaultDomain":true,"egressDenyProbes":["1.1.1.1:443","registry.npmjs.org:443"],"egressPublicNetwork":false,"namespacePerSubsystem":true,"networkPolicyDefaultDeny":true,"rootCaOutsideClusterFaultDomain":true,"serviceAccountPerSubsystem":true,"syntheticCompartmentsMin":2,"zeroSaaSAndCallHome":true},"observability":{"driftScanIntervalSeconds":60,"exportersLocal":true,"logs":{"excludeClassifiedPayload":true,"fields":["correlation_id","component","operation","release","policy_digest","reason_code"],"keepClassificationMarking":true},"metrics":{"exporter":"prometheus","set":["latency_p50_p95_p99_per_contract","error_deny_approval_expiry_rate","projection_lag_watermark_checksum","commit_outbox_retry","constraint_violation","action_fsm_saga_execution_unknown","audit_gap","queue_run_time_budget","model_seed_scenario_ttl","configuration_schema_release_drift"]},"probeIntervalSeconds":5,"releaseMismatchBlocksMutativeCommand":true,"traces":{"fields":["trace_id","correlation_id","causation_id","governed_context_digest","effective_principal_id","actor_chain","tenant_id","organization_id","domain_id","compartments","classification_marking_ref","purpose","policy_bundle_digest","ontology_release_digest","canonical_commit","projection_watermark","policy_decision_id","scenario_id","model_digest","action_state"]}},"profile":{"deploymentTarget":"Design Target / Candidate Implementation","id":"poc","release":"ocor-poc-0.2.0","singleSite":true},"resourceClasses":["CONTROL","INTERACTIVE","BATCH","AUDIT"],"resourceIsolation":{"c6ControlAuditSharesCausalBatchPool":false},"resourceLimits":{"consolidationConcurrency":4,"embeddingDimensions":1536,"indexSizeBytes":1073741824,"itemCount":100000,"payloadSizeBytes":1048576,"quotaBehavior":{"onExceed":"quota_backpressure","semanticDowngrade":false},"retentionHorizonDays":30,"topK":100},"restore":{"isolatedNetwork":true,"receiptMaxAgeHours":168,"recoveryGate":["revision","watermark","orphan_duplicate","marking","gcs","deletion_resurrection","projection_drift_or_stale_deletion_epoch","sample_semantic_digest"],"replay":{"emitsNoExternalEffects":true,"pins":["ontology_release","compiler_logic_bundle","canonical_commit","event_schema","model_digest","policy_digest","seed","assumptions","ordering"],"seed":49,"usesOriginalEventIds":true},"steps":["containment_and_emergency_stop","select_signed_recovery_point_within_rpo","verify_trust_manifest_digest_signatures_dual_control","restore_oaC_ir_policy_config_model_manifests","restore_canonical_event_action_audit_same_cut","replay_memory_deletion_tombstones_before_reopen_retrieval","rebuild_logic_projection_and_w3c_boundary","reconcile_outbox_offset_checksum_saga_receipt","assign_execution_unknown_to_unprovable_effects","run_conformance_security_mission_thread_replay","require_human_authorization_to_reopen_mutative"]},"safeDegraded":{"faults":[{"behavior":["no_new_governed_operations","authorized_reads_only_if_policy_snapshot_valid"],"fault":"idp_or_policy_engine_unavailable"},{"behavior":["events_durably_queued","no_canonical_commit_confirmation","mutations_suspended"],"fault":"canonical_writer_unavailable"},{"behavior":["outbox_retained_relayed_later","no_projection_freshness_claim"],"fault":"broker_unavailable"},{"behavior":["PROJECTION_NOT_READY_or_STALE_CONTEXT","high_impact_blocked"],"fault":"projection_lag_or_failure"},{"behavior":["no_new_mutative_command"],"fault":"audit_append_unavailable"},{"behavior":["EXECUTION_UNKNOWN","status_inquiry_or_reconciliation_only","no_blind_retry"],"fault":"action_adapter_timeout"},{"behavior":["read_analyze_simulate_on_pinned_snapshot","explicit_staleness","no_high_impact"],"fault":"edge_partition"},{"behavior":["new_mutative_capabilities_denied_within_10_seconds"],"fault":"emergency_stop"}]}}
+  ocor-ops-agent:
+    content: |
+      """OCOR PoC operations agent (OCOR-DEV-0049; ADD v1.3 Part I 6, Part II 2.13; LLD v1.1 5).
+
+      Standard-library only; runs unchanged in the digest-pinned python:3.11 image of the
+      Compose and Helm profiles. Subcommands:
+
+        validate  fail-closed profile validation (LLD 5.2: invalid pin/config blocks startup)
+        serve     persistent health/readiness/metrics/traces/posture endpoint (ADD 6.3)
+        relay     intra-site allowlist relay for the Compose default-deny network (ADD 6.1)
+        init-keys provision the OpenBao transit keys used for backup encryption/signature
+        seal      build an encrypted, signed, content-addressed recovery point (ADD 6.4)
+        restore-prepare   verify signature/digests and decrypt a recovery point (ADD 6.5 1-3)
+        restore-finalize  restore the memory index, replay tombstones, run the recovery gate
+                          and write a signed restore receipt (ADD 6.5 4-10, Part II 2.13)
+      """
+
+      from __future__ import annotations
+
+      import argparse
+      import base64
+      import csv
+      import hashlib
+      import hmac
+      import http.client
+      import json
+      import os
+      import socket
+      import ssl
+      import struct
+      import sys
+      import threading
+      import time
+      import urllib.error
+      import urllib.request
+      import uuid
+      from collections.abc import Callable
+      from dataclasses import dataclass, field
+      from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+      from pathlib import Path
+      from typing import Any
+
+      COMPONENT = "ocor-ops"
+      EXIT_CONFIG = 78
+      EXIT_BACKPRESSURE = 75
+      EXIT_VERIFY = 65
+      EXIT_GATE = 66
+      MARKING = "SYNTHETIC-UNCLASSIFIED"
+
+      RESOURCE_CLASSES = ["CONTROL", "INTERACTIVE", "BATCH", "AUDIT"]
+      METRIC_SET = {
+          "latency_p50_p95_p99_per_contract", "error_deny_approval_expiry_rate",
+          "projection_lag_watermark_checksum", "commit_outbox_retry", "constraint_violation",
+          "action_fsm_saga_execution_unknown", "audit_gap", "queue_run_time_budget",
+          "model_seed_scenario_ttl", "configuration_schema_release_drift",
+      }
+      LOG_FIELDS = {"correlation_id", "component", "operation", "release", "policy_digest", "reason_code"}
+      TRACE_FIELDS = [
+          "trace_id", "correlation_id", "causation_id", "governed_context_digest",
+          "effective_principal_id", "actor_chain", "tenant_id", "organization_id", "domain_id",
+          "compartments", "classification_marking_ref", "purpose", "policy_bundle_digest",
+          "ontology_release_digest", "canonical_commit", "projection_watermark",
+          "policy_decision_id", "scenario_id", "model_digest", "action_state",
+      ]
+      AUTHORITY_CLASSES = {
+          "definition", "canonical", "event", "action", "governance", "audit",
+          "model_scenario", "projection", "key_custody",
+      }
+      RESTORE_STEPS = [
+          "containment_and_emergency_stop",
+          "select_signed_recovery_point_within_rpo",
+          "verify_trust_manifest_digest_signatures_dual_control",
+          "restore_oaC_ir_policy_config_model_manifests",
+          "restore_canonical_event_action_audit_same_cut",
+          "replay_memory_deletion_tombstones_before_reopen_retrieval",
+          "rebuild_logic_projection_and_w3c_boundary",
+          "reconcile_outbox_offset_checksum_saga_receipt",
+          "assign_execution_unknown_to_unprovable_effects",
+          "run_conformance_security_mission_thread_replay",
+          "require_human_authorization_to_reopen_mutative",
+      ]
+      RECOVERY_GATE = [
+          "revision", "watermark", "orphan_duplicate", "marking", "gcs",
+          "deletion_resurrection", "projection_drift_or_stale_deletion_epoch",
+          "sample_semantic_digest",
+      ]
+      REPLAY_PINS = {
+          "ontology_release", "compiler_logic_bundle", "canonical_commit", "event_schema",
+          "model_digest", "policy_digest", "seed", "assumptions", "ordering",
+      }
+      MEMORY_MANIFEST_KEYS = [
+          "metadataRef", "contentRefs", "representationVersions", "lifecycleEpochs",
+          "deletionEpochs", "journalCheckpoints", "auditRefs", "boundToSameRecoveryPoint",
+      ]
+      RESOURCE_LIMIT_KEYS = [
+          "itemCount", "payloadSizeBytes", "embeddingDimensions", "topK",
+          "consolidationConcurrency", "indexSizeBytes", "retentionHorizonDays",
+      ]
+      MANDATORY_DEPENDENCIES = {
+          "terminusdb", "typedb", "fuseki", "opa", "keycloak", "openbao",
+          "postgresql", "kafka", "qdrant", "spire-server",
+      }
+      PROBE_KINDS = {"http", "postgres_startup", "kafka_api_versions", "tls_spiffe"}
+      SAFE_DEGRADED_FAULTS: dict[str, set[str]] = {
+          "idp_or_policy_engine_unavailable": {"no_new_governed_operations", "authorized_reads_only_if_policy_snapshot_valid"},
+          "canonical_writer_unavailable": {"events_durably_queued", "no_canonical_commit_confirmation", "mutations_suspended"},
+          "broker_unavailable": {"outbox_retained_relayed_later", "no_projection_freshness_claim"},
+          "projection_lag_or_failure": {"PROJECTION_NOT_READY_or_STALE_CONTEXT", "high_impact_blocked"},
+          "audit_append_unavailable": {"no_new_mutative_command"},
+          "action_adapter_timeout": {"EXECUTION_UNKNOWN", "status_inquiry_or_reconciliation_only", "no_blind_retry"},
+          "edge_partition": {"read_analyze_simulate_on_pinned_snapshot", "explicit_staleness", "no_high_impact"},
+          "emergency_stop": {"new_mutative_capabilities_denied_within_10_seconds"},
+      }
+      # Operation classes denied by each observed fault (ADD v1.3 6.3; LLD v1.1 5.3).
+      FAULT_DENIES: dict[str, set[str]] = {
+          "idp_or_policy_engine_unavailable": {"governed_new", "mutative", "high_impact", "dispatch"},
+          "canonical_writer_unavailable": {"mutative", "high_impact", "dispatch"},
+          "audit_append_unavailable": {"mutative", "high_impact", "dispatch"},
+          "broker_unavailable": set(),
+          "projection_lag_or_failure": {"high_impact", "exact_consistency_read"},
+          "emergency_stop": {"mutative", "high_impact", "dispatch"},
+          "release_mismatch": {"mutative", "high_impact", "dispatch"},
+      }
+      OPERATION_CLASSES = {"read", "governed_new", "mutative", "high_impact", "dispatch", "exact_consistency_read"}
+      NOT_OBSERVABLE_BY_OPS = ["action_adapter_timeout", "edge_partition"]
+
+
+      class ConfigError(Exception):
+          pass
+
+
+      def now() -> float:
+          return time.time()
+
+
+      def iso(ts: float | None = None) -> str:
+          return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now() if ts is None else ts))
+
+
+      def canonical(obj: Any) -> bytes:
+          return json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+
+
+      def sha256(data: bytes) -> str:
+          return hashlib.sha256(data).hexdigest()
+
+
+      def new_id() -> str:
+          return uuid.uuid4().hex
+
+
+      # --------------------------------------------------------------------------- profile
+
+
+      def _positive_int(value: object) -> bool:
+          return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+
+      def _is_private_host(host: str) -> bool:
+          if "." not in host:
+              return True  # single-label intra-site service name
+          parts = host.split(".")
+          if len(parts) == 4 and all(p.isdigit() for p in parts):
+              a, b = int(parts[0]), int(parts[1])
+              return a == 10 or (a == 172 and 16 <= b <= 31) or (a == 192 and b == 168) or a == 127
+          return host.endswith(".svc") or host.endswith(".cluster.local") or host.endswith(".internal")
+
+
+      def validate_profile(p: dict[str, Any]) -> list[str]:
+          """Return fail-closed violations of the PoC profile; empty means startable."""
+          errors: list[str] = []
+
+          def req(cond: bool, msg: str) -> None:
+              if not cond:
+                  errors.append(msg)
+
+          prof = p.get("profile", {})
+          req(prof.get("id") == "poc", "profile.id must be poc")
+          req(prof.get("singleSite") is True, "profile.singleSite must be true")
+          req(isinstance(prof.get("release"), str) and bool(prof.get("release")), "profile.release required")
+
+          iso_ = p.get("isolation", {})
+          for key in ("networkPolicyDefaultDeny", "zeroSaaSAndCallHome", "namespacePerSubsystem",
+                      "serviceAccountPerSubsystem", "rootCaOutsideClusterFaultDomain",
+                      "backupVaultOutsideClusterFaultDomain"):
+              req(iso_.get(key) is True, f"isolation.{key} must be true")
+          req(iso_.get("egressPublicNetwork") is False, "public egress must be denied")
+          req(isinstance(iso_.get("syntheticCompartmentsMin"), int) and iso_["syntheticCompartmentsMin"] >= 2,
+              "at least two synthetic compartments required")
+          probes = iso_.get("egressDenyProbes", [])
+          req(isinstance(probes, list) and len(probes) >= 1, "egress deny probes required")
+          flows = iso_.get("allowedFlows", [])
+          req(isinstance(flows, list) and len(flows) >= 1, "allowedFlows must be non-empty")
+          flow_set = set()
+          for f in flows if isinstance(flows, list) else []:
+              host, port = f.get("host", ""), f.get("port")
+              req(isinstance(host, str) and _is_private_host(host) and _positive_int(port) and port <= 65535,
+                  f"allowed flow must be intra-site: {f}")
+              flow_set.add((host, port))
+          ports = [f.get("port") for f in flows] if isinstance(flows, list) else []
+          req(len(ports) == len(set(ports)), "allowed flow ports must be unique")
+
+          img = p.get("images", {})
+          req(img.get("digestPinned") is True, "images must be digest-pinned")
+          req(img.get("signatureVerifiedBeforeAdmission") is True, "image signature verification required")
+          req(img.get("publicNetworkDependencyAtRuntime") is False, "public-network runtime dependency blocks startup")
+          pins = img.get("pins", {})
+          req(isinstance(pins, dict) and len(pins) >= 1, "image pins required")
+          for name, ref in (pins.items() if isinstance(pins, dict) else []):
+              req(isinstance(ref, str) and "@sha256:" in ref and len(ref.split("@sha256:")[1]) == 64,
+                  f"image pin {name} must be digest-pinned")
+
+          req(p.get("resourceClasses") == RESOURCE_CLASSES, "resourceClasses must be CONTROL/INTERACTIVE/BATCH/AUDIT")
+          req(p.get("resourceIsolation", {}).get("c6ControlAuditSharesCausalBatchPool") is False,
+              "C6/control/audit must not share the causal batch pool")
+
+          obs = p.get("observability", {})
+          req(_positive_int(obs.get("driftScanIntervalSeconds")) and obs["driftScanIntervalSeconds"] <= 60,
+              "drift scan interval must be in [1, 60]s")
+          req(_positive_int(obs.get("probeIntervalSeconds")) and obs["probeIntervalSeconds"] <= 60,
+              "probe interval must be in [1, 60]s")
+          req(obs.get("releaseMismatchBlocksMutativeCommand") is True, "release mismatch must block mutative commands")
+          req(obs.get("exportersLocal") is True, "exporters must stay local")
+          met = obs.get("metrics", {})
+          req(met.get("exporter") == "prometheus", "prometheus exporter required")
+          req(set(met.get("set", [])) == METRIC_SET, "metric set incomplete")
+          logs = obs.get("logs", {})
+          req(set(logs.get("fields", [])) == LOG_FIELDS, "log fields incomplete")
+          req(logs.get("keepClassificationMarking") is True, "classification/marking must be kept")
+          req(logs.get("excludeClassifiedPayload") is True, "classified payload must be excluded")
+          req(list(obs.get("traces", {}).get("fields", [])) == TRACE_FIELDS, "trace fields incomplete")
+
+          bk = p.get("backup", {})
+          for key in ("encrypted", "signed", "immutable", "contentAddressed", "authorityAware",
+                      "offClusterFaultDomain", "tested"):
+              req(bk.get(key) is True, f"backup.{key} must be true")
+          req(_positive_int(bk.get("rpoMinutes")) and bk["rpoMinutes"] <= 15, "RPO must be in [1, 15] minutes")
+          req(_positive_int(bk.get("rtoHours")) and bk["rtoHours"] <= 4, "RTO must be in [1, 4] hours")
+          req(set(bk.get("authorityClasses", [])) == AUTHORITY_CLASSES, "authority classes incomplete")
+          keys = bk.get("keys", {})
+          req(isinstance(keys.get("transitMount"), str) and bool(keys.get("transitMount")), "backup transit mount required")
+          req(isinstance(keys.get("encryption"), str) and isinstance(keys.get("signing"), str)
+              and keys.get("encryption") != keys.get("signing"), "separate encryption and signing keys required")
+          mem = bk.get("memory", {})
+          req(set(mem.keys()) >= set(MEMORY_MANIFEST_KEYS), "memory backup manifest incomplete")
+          req(isinstance(mem.get("metadataRef"), str) and bool(mem.get("metadataRef")), "memory metadata ref required")
+          for key in MEMORY_MANIFEST_KEYS[1:]:
+              req(mem.get(key) is True, f"memory manifest field {key} must be bound")
+
+          rs = p.get("restore", {})
+          req(rs.get("isolatedNetwork") is True, "restore must run in an isolated network")
+          req(list(rs.get("steps", [])) == RESTORE_STEPS,
+              "restore steps incomplete or out of order (deletion tombstones must replay before reopening retrieval)")
+          rp = rs.get("replay", {})
+          req(rp.get("usesOriginalEventIds") is True, "replay must use original event ids")
+          req(rp.get("emitsNoExternalEffects") is True, "replay must not emit external effects")
+          req(set(rp.get("pins", [])) == REPLAY_PINS, "replay pins incomplete")
+          req(list(rs.get("recoveryGate", [])) == RECOVERY_GATE, "recovery gate incomplete")
+          req(_positive_int(rs.get("receiptMaxAgeHours")), "restore receipt max age required")
+
+          lim = p.get("resourceLimits", {})
+          req(set(lim.keys()) >= set(RESOURCE_LIMIT_KEYS), "PoC resource limits incomplete")
+          for key in RESOURCE_LIMIT_KEYS:
+              req(_positive_int(lim.get(key)), f"resource limit {key} must be positive")
+          qb = lim.get("quotaBehavior", {})
+          req(qb.get("onExceed") == "quota_backpressure", "quota behavior must be backpressure")
+          req(qb.get("semanticDowngrade") is False, "quota/backpressure must never produce semantic downgrade")
+
+          faults: dict[str, set[str]] = {}
+          for entry in p.get("safeDegraded", {}).get("faults", []):
+              faults[entry.get("fault")] = set(entry.get("behavior", []))
+          req(set(faults) == set(SAFE_DEGRADED_FAULTS), "safe-degraded fault table incomplete")
+          for name, behavior in SAFE_DEGRADED_FAULTS.items():
+              req(faults.get(name) == behavior, f"safe-degraded behavior for {name} incomplete")
+
+          hl = p.get("health", {})
+          req(set(hl.get("probeTypes", [])) == {"liveness", "readiness"}, "liveness+readiness probes required")
+          deps = hl.get("dependencies", [])
+          req(isinstance(deps, list) and len(deps) >= 1, "health.dependencies must be non-empty")
+          names = [d.get("name") for d in deps] if isinstance(deps, list) else []
+          req(set(names) == MANDATORY_DEPENDENCIES and len(names) == len(set(names)),
+              "health dependencies must cover every mandatory foundation service exactly once")
+          for d in deps if isinstance(deps, list) else []:
+              nm = d.get("name")
+              req(d.get("mandatory") is True, f"dependency {nm} must be mandatory")
+              req(d.get("probe", {}).get("kind") in PROBE_KINDS, f"health probe missing for {nm}")
+              req(isinstance(d.get("host"), str) and _positive_int(d.get("port")), f"health endpoint missing for {nm}")
+              req((d.get("host"), d.get("port")) in flow_set, f"dependency {nm} endpoint not in allowedFlows")
+              req(d.get("faultClass") in FAULT_DENIES, f"dependency {nm} fault class unknown")
+          return errors
+
+
+      def load_profile(path: Path) -> tuple[dict[str, Any], str]:
+          raw = path.read_bytes()
+          try:
+              profile = json.loads(raw)
+          except ValueError as exc:
+              raise ConfigError(f"profile is not JSON: {exc}") from exc
+          if not isinstance(profile, dict):
+              raise ConfigError("profile must be an object")
+          errors = validate_profile(profile)
+          if errors:
+              raise ConfigError("; ".join(errors))
+          return profile, sha256(canonical(profile))
+
+
+      # --------------------------------------------------------------------------- telemetry
+
+
+      class Telemetry:
+          """Local Prometheus exporter state, structured logs and trace spans (ADD 6.3)."""
+
+          def __init__(self, release: str, config_digest: str) -> None:
+              self.release = release
+              self.config_digest = config_digest
+              self.policy_digest: str | None = None
+              self.lock = threading.Lock()
+              self.counters: dict[tuple[str, tuple[tuple[str, str], ...]], float] = {}
+              self.gauges: dict[tuple[str, tuple[tuple[str, str], ...]], float] = {}
+              self.samples: dict[str, list[float]] = {}
+              self.spans: list[dict[str, Any]] = []
+
+          def log(self, operation: str, reason_code: str, correlation_id: str, level: str = "INFO",
+                  **extra: Any) -> None:
+              record = {
+                  "ts": iso(), "level": level, "component": COMPONENT, "operation": operation,
+                  "release": self.release, "config_digest": self.config_digest,
+                  "policy_digest": self.policy_digest, "reason_code": reason_code,
+                  "correlation_id": correlation_id, "classification_marking_ref": MARKING,
+              }
+              record.update(extra)
+              sys.stdout.write(json.dumps(record, sort_keys=True) + "\n")
+              sys.stdout.flush()
+
+          def inc(self, name: str, value: float = 1.0, **labels: str) -> None:
+              key = (name, tuple(sorted(labels.items())))
+              with self.lock:
+                  self.counters[key] = self.counters.get(key, 0.0) + value
+
+          def gauge(self, name: str, value: float, **labels: str) -> None:
+              with self.lock:
+                  self.gauges[(name, tuple(sorted(labels.items())))] = value
+
+          def observe(self, dependency: str, seconds: float) -> None:
+              with self.lock:
+                  bucket = self.samples.setdefault(dependency, [])
+                  bucket.append(seconds)
+                  del bucket[:-512]
+                  self.counters[("ocor_dependency_probe_duration_seconds_count", (("dependency", dependency),))] = (
+                      self.counters.get(("ocor_dependency_probe_duration_seconds_count", (("dependency", dependency),)), 0.0) + 1)
+                  self.counters[("ocor_dependency_probe_duration_seconds_sum", (("dependency", dependency),))] = (
+                      self.counters.get(("ocor_dependency_probe_duration_seconds_sum", (("dependency", dependency),)), 0.0) + seconds)
+
+          def span(self, operation: str, correlation_id: str, trace_id: str, causation_id: str | None,
+                   start: float, status: str, reason_code: str, **attrs: Any) -> str:
+              span_id = new_id()[:16]
+              record: dict[str, Any] = {name: None for name in TRACE_FIELDS}
+              record.update({
+                  "trace_id": trace_id, "span_id": span_id, "correlation_id": correlation_id,
+                  "causation_id": causation_id, "classification_marking_ref": MARKING,
+                  "policy_bundle_digest": self.policy_digest, "component": COMPONENT,
+                  "operation": operation, "release": self.release, "status": status,
+                  "reason_code": reason_code, "start": iso(start), "duration_seconds": round(now() - start, 6),
+                  "unavailable_fields": "not produced by the ops plane at G4; emitted by C1-C8 boundaries",
+              })
+              record.update(attrs)
+              with self.lock:
+                  self.spans.append(record)
+                  del self.spans[:-1000]
+              self.log("span", reason_code, correlation_id, span=record)
+              return span_id
+
+          def render(self) -> str:
+              lines: list[str] = []
+              with self.lock:
+                  for (name, labels), value in sorted(self.counters.items()):
+                      lines.append(f"{name}{_labels(labels)} {value}")
+                  for (name, labels), value in sorted(self.gauges.items()):
+                      lines.append(f"{name}{_labels(labels)} {value}")
+                  for dep, values in sorted(self.samples.items()):
+                      ordered = sorted(values)
+                      for q in (0.5, 0.95, 0.99):
+                          idx = min(len(ordered) - 1, int(round(q * (len(ordered) - 1))))
+                          lines.append(
+                              f'ocor_dependency_probe_duration_seconds{{dependency="{dep}",quantile="{q}"}} {ordered[idx]}')
+              return "\n".join(lines) + "\n"
+
+
+      def _labels(labels: tuple[tuple[str, str], ...]) -> str:
+          if not labels:
+              return ""
+          return "{" + ",".join(f'{k}="{v}"' for k, v in labels) + "}"
+
+
+      # --------------------------------------------------------------------------- probes
+
+
+      def http_status(host: str, port: int, path: str, timeout: float) -> tuple[int, bytes]:
+          conn = http.client.HTTPConnection(host, port, timeout=timeout)
+          try:
+              conn.request("GET", path)
+              resp = conn.getresponse()
+              return resp.status, resp.read(4096)
+          finally:
+              conn.close()
+
+
+      def probe_postgres(host: str, port: int, timeout: float, user: str, database: str) -> None:
+          params = f"user\0{user}\0database\0{database}\0\0".encode()
+          packet = struct.pack("!ii", 8 + len(params), 196608) + params
+          with socket.create_connection((host, port), timeout) as s:
+              s.settimeout(timeout)
+              s.sendall(packet)
+              kind = s.recv(1)
+              if kind != b"R":
+                  raise OSError(f"postgres startup refused: {kind!r}")
+
+
+      def probe_kafka(host: str, port: int, timeout: float) -> None:
+          client = b"ocor-ops"
+          body = struct.pack("!hhih", 18, 0, 7349, len(client)) + client
+          with socket.create_connection((host, port), timeout) as s:
+              s.settimeout(timeout)
+              s.sendall(struct.pack("!i", len(body)) + body)
+              head = b""
+              while len(head) < 10:
+                  chunk = s.recv(10 - len(head))
+                  if not chunk:
+                      raise OSError("kafka closed connection")
+                  head += chunk
+              _, corr, err = struct.unpack("!iih", head)
+              if corr != 7349 or err != 0:
+                  raise OSError(f"kafka ApiVersions error={err}")
+
+
+      def probe_tls_spiffe(host: str, port: int, timeout: float) -> None:
+          ctx = ssl.create_default_context()
+          ctx.check_hostname = False
+          ctx.verify_mode = ssl.CERT_NONE
+          ctx.set_alpn_protocols(["h2"])
+          with socket.create_connection((host, port), timeout) as raw, ctx.wrap_socket(raw) as tls:
+              der = tls.getpeercert(binary_form=True) or b""
+              if b"spiffe://" not in der:
+                  raise OSError("peer certificate carries no SPIFFE ID")
+
+
+      def run_probe(dep: dict[str, Any], timeout: float) -> None:
+          probe, host, port = dep["probe"], dep["host"], dep["port"]
+          kind = probe["kind"]
+          if kind == "http":
+              status, body = http_status(host, port, probe["path"], timeout)
+              if status not in probe.get("expectStatus", [200]):
+                  raise OSError(f"http status {status}")
+              needle = probe.get("expectBody")
+              if needle and needle.encode() not in body:
+                  raise OSError("http body mismatch")
+          elif kind == "postgres_startup":
+              probe_postgres(host, port, timeout, probe.get("user", "ocor"), probe.get("database", "ocor"))
+          elif kind == "kafka_api_versions":
+              probe_kafka(host, port, timeout)
+          elif kind == "tls_spiffe":
+              probe_tls_spiffe(host, port, timeout)
+          else:
+              raise OSError(f"unknown probe kind {kind}")
+
+
+      def egress_open(target: str, timeout: float) -> bool:
+          host, _, port = target.rpartition(":")
+          try:
+              socket.create_connection((host, int(port)), timeout).close()
+              return True
+          except OSError:
+              return False
+
+
+      # --------------------------------------------------------------------------- OpenBao transit
+
+
+      @dataclass
+      class Transit:
+          addr: str
+          token: str
+          mount: str
+
+          def call(self, method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+              data = None if body is None else json.dumps(body).encode()
+              req = urllib.request.Request(f"{self.addr}/v1/{path}", data=data, method=method,
+                                           headers={"X-Vault-Token": self.token, "Content-Type": "application/json"})
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as resp:
+                      raw = resp.read()
+              except urllib.error.HTTPError as exc:
+                  raise OSError(f"openbao {method} {path.split('/')[0]} -> {exc.code}") from None
+              return json.loads(raw) if raw else {}
+
+          def ensure_keys(self, enc: str, sign: str) -> None:
+              mounts = self.call("GET", "sys/mounts")
+              if f"{self.mount}/" not in mounts.get("data", mounts):
+                  self.call("POST", f"sys/mounts/{self.mount}", {"type": "transit"})
+              self.call("POST", f"{self.mount}/keys/{enc}", {"type": "aes256-gcm96"})
+              self.call("POST", f"{self.mount}/keys/{sign}", {"type": "ed25519"})
+
+          def encrypt(self, key: str, data: bytes) -> list[str]:
+              chunks = [data[i:i + 1048576] for i in range(0, len(data), 1048576)] or [b""]
+              return [self.call("POST", f"{self.mount}/encrypt/{key}",
+                                {"plaintext": base64.b64encode(c).decode()})["data"]["ciphertext"] for c in chunks]
+
+          def decrypt(self, key: str, chunks: list[str]) -> bytes:
+              return b"".join(base64.b64decode(self.call("POST", f"{self.mount}/decrypt/{key}",
+                                                         {"ciphertext": c})["data"]["plaintext"]) for c in chunks)
+
+          def sign(self, key: str, data: bytes) -> str:
+              return str(self.call("POST", f"{self.mount}/sign/{key}",
+                                   {"input": base64.b64encode(data).decode()})["data"]["signature"])
+
+          def verify(self, key: str, data: bytes, signature: str) -> bool:
+              try:
+                  out = self.call("POST", f"{self.mount}/verify/{key}",
+                                  {"input": base64.b64encode(data).decode(), "signature": signature})
+              except OSError:
+                  return False
+              return bool(out.get("data", {}).get("valid"))
+
+          def public_key(self, key: str) -> dict[str, Any]:
+              keys = self.call("GET", f"{self.mount}/keys/{key}")["data"]["keys"]
+              return {str(k): v.get("public_key") for k, v in keys.items()}
+
+
+      def transit_from_env(profile: dict[str, Any]) -> Transit:
+          token = os.environ.get("OCOR_OPENBAO_TOKEN", "")
+          if not token:
+              raise ConfigError("OCOR_OPENBAO_TOKEN is required")
+          addr = os.environ.get("OCOR_OPENBAO_ADDR", "http://openbao:8200")
+          return Transit(addr, token, profile["backup"]["keys"]["transitMount"])
+
+
+      # --------------------------------------------------------------------------- vault
+
+
+      def write_immutable(path: Path, data: bytes) -> None:
+          path.parent.mkdir(parents=True, exist_ok=True)
+          fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o444)
+          with os.fdopen(fd, "wb") as fh:
+              fh.write(data)
+
+
+      def erase_tree(root: Path) -> None:
+          """Remove staged plaintext once it has been sealed or restored."""
+          for path in sorted(root.rglob("*"), reverse=True):
+              if path.is_file() or path.is_symlink():
+                  path.unlink()
+              elif path.is_dir():
+                  path.rmdir()
+
+
+      def recovery_points(vault: Path) -> list[Path]:
+          root = vault / "recovery-points"
+          return sorted((p for p in root.iterdir() if (p / "manifest.json").exists()), key=lambda p: p.name) \
+              if root.exists() else []
+
+
+      def verify_manifest(transit: Transit, profile: dict[str, Any], rp_dir: Path) -> dict[str, Any]:
+          raw = (rp_dir / "manifest.json").read_bytes()
+          signature = (rp_dir / "manifest.sig").read_text().strip()
+          if not transit.verify(profile["backup"]["keys"]["signing"], raw, signature):
+              raise ValueError("SIGNATURE_INVALID")
+          manifest: dict[str, Any] = json.loads(raw)
+          if manifest.get("recovery_point") != rp_dir.name:
+              raise ValueError("RECOVERY_POINT_MISMATCH")
+          return manifest
+
+
+      def latest_valid_receipt(transit: Transit, profile: dict[str, Any], vault: Path) -> tuple[str, dict[str, Any] | None]:
+          """Return (reason_code, receipt). READY only with a signed PASSED receipt bound to
+          a signed recovery point (negative criterion: untested restore blocks readiness)."""
+          root = vault / "restore-receipts"
+          files = sorted(root.glob("*.json")) if root.exists() else []
+          if not files:
+              return "RESTORE_UNTESTED", None
+          path = files[-1]
+          raw = path.read_bytes()
+          sig_path = path.with_suffix(".sig")
+          if not sig_path.exists() or not transit.verify(profile["backup"]["keys"]["signing"], raw,
+                                                         sig_path.read_text().strip()):
+              return "RESTORE_RECEIPT_INVALID", None
+          receipt: dict[str, Any] = json.loads(raw)
+          if receipt.get("outcome") != "PASSED":
+              return "RESTORE_FAILED", receipt
+          max_age = profile["restore"]["receiptMaxAgeHours"] * 3600
+          if now() - float(receipt.get("completed_at_epoch", 0)) > max_age:
+              return "RESTORE_RECEIPT_EXPIRED", receipt
+          rp_dir = vault / "recovery-points" / str(receipt.get("recovery_point"))
+          try:
+              manifest = verify_manifest(transit, profile, rp_dir)
+          except (OSError, ValueError):
+              return "RESTORE_RECEIPT_UNBOUND", receipt
+          if sha256(canonical(manifest)) != receipt.get("manifest_digest"):
+              return "RESTORE_RECEIPT_UNBOUND", receipt
+          return "RESTORE_TESTED", receipt
+
+
+      # --------------------------------------------------------------------------- serve
+
+
+      @dataclass
+      class State:
+          profile: dict[str, Any]
+          config_digest: str
+          profile_path: Path
+          vault: Path | None
+          telemetry: Telemetry
+          dep_up: dict[str, bool] = field(default_factory=dict)
+          dep_reason: dict[str, str] = field(default_factory=dict)
+          egress_violations: list[str] = field(default_factory=list)
+          restore_reason: str = "RESTORE_UNTESTED"
+          drift: bool = False
+          stop_epoch: int = 0
+          stopped_at: float | None = None
+          last_scan: float = 0.0
+          ready: bool = False
+          ready_reasons: list[str] = field(default_factory=lambda: ["NOT_YET_SCANNED"])
+          lock: threading.Lock = field(default_factory=threading.Lock)
+
+          def faults(self) -> list[str]:
+              out = set()
+              for dep in self.profile["health"]["dependencies"]:
+                  if not self.dep_up.get(dep["name"], False):
+                      out.add(dep["faultClass"])
+                      out.update(dep.get("additionalFaultClasses", []))
+              if self.stopped_at is not None:
+                  out.add("emergency_stop")
+              if self.drift:
+                  out.add("release_mismatch")
+              return sorted(out)
+
+          def posture(self) -> dict[str, Any]:
+              faults = self.faults()
+              denied = sorted(set().union(*(FAULT_DENIES[f] for f in faults)) if faults else set())
+              return {
+                  "faults": faults, "denied_operation_classes": denied,
+                  "admitted_operation_classes": sorted(OPERATION_CLASSES - set(denied)),
+                  "projection_freshness_claim": "broker_unavailable" not in faults
+                  and "projection_lag_or_failure" not in faults,
+                  "consistency": "PROJECTION_NOT_READY" if "projection_lag_or_failure" in faults else "AVAILABLE",
+                  "stop_epoch": self.stop_epoch, "not_observable_by_ops_plane": NOT_OBSERVABLE_BY_OPS,
+                  "ready": self.ready, "ready_reasons": self.ready_reasons, "last_scan": iso(self.last_scan),
+              }
+
+
+      def policy_digest(profile: dict[str, Any]) -> str | None:
+          opa = next(d for d in profile["health"]["dependencies"] if d["name"] == "opa")
+          try:
+              status, body = http_status(opa["host"], opa["port"], "/v1/policies", 3.0)
+          except OSError:
+              return None
+          if status != 200:
+              return None
+          try:
+              result = json.loads(body if len(body) < 4096 else b"{}").get("result", [])
+          except ValueError:
+              return None
+          return sha256(canonical(sorted((str(p.get("id")), sha256(str(p.get("raw", "")).encode())) for p in result)))
+
+
+      def scan(state: State) -> None:
+          t = state.telemetry
+          prof = state.profile
+          correlation = new_id()
+          trace = new_id()
+          start = now()
+          root_span = new_id()[:16]
+          timeout = float(prof["health"].get("probeTimeoutSeconds", 3))
+          for dep in prof["health"]["dependencies"]:
+              s = now()
+              reason = "DEPENDENCY_UP"
+              detail = ""
+              try:
+                  run_probe(dep, timeout)
+                  up = True
+              except (OSError, ValueError, ssl.SSLError) as exc:
+                  up = False
+                  reason = "DEPENDENCY_DOWN"
+                  t.inc("ocor_dependency_probe_errors_total", dependency=dep["name"], reason_code=reason)
+                  detail = type(exc).__name__
+              elapsed = now() - s
+              t.observe(dep["name"], elapsed)
+              t.gauge("ocor_dependency_up", 1.0 if up else 0.0, dependency=dep["name"])
+              previous = state.dep_up.get(dep["name"])
+              with state.lock:
+                  state.dep_up[dep["name"]] = up
+                  state.dep_reason[dep["name"]] = reason
+              if previous is not up:
+                  t.span("dependency_probe", correlation, trace, root_span, s, "OK" if up else "ERROR", reason,
+                         dependency=dep["name"], fault_class=None if up else dep["faultClass"],
+                         error_type=None if up else detail)
+          violations = [tgt for tgt in prof["isolation"]["egressDenyProbes"] if egress_open(tgt, 2.0)]
+          t.gauge("ocor_egress_public_reachable", float(len(violations)))
+          current = sha256(canonical(json.loads(state.profile_path.read_bytes())))
+          drift = current != state.config_digest
+          t.inc("ocor_config_drift_scans_total")
+          t.gauge("ocor_config_drift_detected", 1.0 if drift else 0.0)
+          restore_reason = "RESTORE_UNTESTED"
+          if state.vault is not None:
+              try:
+                  restore_reason, receipt = latest_valid_receipt(transit_from_env(prof), prof, state.vault)
+                  if receipt and restore_reason == "RESTORE_TESTED":
+                      t.gauge("ocor_restore_receipt_age_seconds", now() - float(receipt["completed_at_epoch"]))
+                  points = recovery_points(state.vault)
+                  if points:
+                      manifest = json.loads((points[-1] / "manifest.json").read_bytes())
+                      age = now() - float(manifest["created_at_epoch"])
+                      t.gauge("ocor_recovery_point_age_seconds", age)
+                      t.gauge("ocor_recovery_point_within_rpo", 1.0 if age <= prof["backup"]["rpoMinutes"] * 60 else 0.0)
+              except (OSError, ValueError, ConfigError, KeyError):
+                  restore_reason = "RESTORE_VERIFICATION_UNAVAILABLE"
+          t.gauge("ocor_restore_tested", 1.0 if restore_reason == "RESTORE_TESTED" else 0.0)
+          pd = policy_digest(prof)
+          reasons: list[str] = []
+          with state.lock:
+              state.egress_violations = violations
+              state.drift = drift
+              state.restore_reason = restore_reason
+              if pd is not None:
+                  t.policy_digest = pd
+              for dep in prof["health"]["dependencies"]:
+                  if not state.dep_up.get(dep["name"]):
+                      reasons.append(f"DEPENDENCY_DOWN:{dep['name']}")
+              if violations:
+                  reasons.append("PUBLIC_EGRESS_OPEN")
+              if drift:
+                  reasons.append("RELEASE_DRIFT")
+              if restore_reason != "RESTORE_TESTED":
+                  reasons.append(restore_reason)
+              was_reasons = list(state.ready_reasons)
+              state.ready = not reasons
+              state.ready_reasons = reasons or ["READY"]
+              state.last_scan = now()
+          t.gauge("ocor_readiness_ready", 1.0 if not reasons else 0.0)
+          for r in reasons:
+              t.inc("ocor_readiness_denials_total", reason_code=r.split(":")[0])
+          for f in state.faults():
+              t.gauge("ocor_safe_degraded_fault_active", 1.0, fault=f)
+          with t.lock:
+              for key in list(t.gauges):
+                  if key[0] == "ocor_safe_degraded_fault_active" and dict(key[1]).get("fault") not in state.faults():
+                      t.gauges[key] = 0.0
+          if was_reasons != state.ready_reasons:
+              t.span("readiness_scan", correlation, trace, None, start, "OK" if not reasons else "DENY",
+                     "READY" if not reasons else reasons[0].split(":")[0], ready_reasons=state.ready_reasons)
+
+
+      class Handler(BaseHTTPRequestHandler):
+          state: State
+
+          def log_message(self, format: str, *args: Any) -> None:  # noqa: A002
+              return
+
+          def _send(self, code: int, body: bytes, ctype: str = "application/json") -> None:
+              self.send_response(code)
+              self.send_header("Content-Type", ctype)
+              self.send_header("Content-Length", str(len(body)))
+              self.end_headers()
+              self.wfile.write(body)
+
+          def _json(self, code: int, obj: Any) -> None:
+              self._send(code, json.dumps(obj, sort_keys=True).encode())
+
+          def do_GET(self) -> None:  # noqa: N802
+              st = self.state
+              path = self.path.split("?")[0]
+              if path == "/livez":
+                  self._json(200, {"status": "ALIVE", "component": COMPONENT})
+              elif path == "/readyz":
+                  with st.lock:
+                      body = {"ready": st.ready, "reasons": st.ready_reasons, "last_scan": iso(st.last_scan)}
+                  self._json(200 if body["ready"] else 503, body)
+              elif path == "/metrics":
+                  self._send(200, st.telemetry.render().encode(), "text/plain; version=0.0.4")
+              elif path == "/traces":
+                  with st.telemetry.lock:
+                      spans = list(st.telemetry.spans[-200:])
+                  self._json(200, {"spans": spans})
+              elif path == "/posture":
+                  with st.lock:
+                      self._json(200, st.posture())
+              elif path == "/admit":
+                  query = dict(kv.split("=", 1) for kv in self.path.partition("?")[2].split("&") if "=" in kv)
+                  op = query.get("class", "")
+                  correlation = self.headers.get("X-Correlation-Id") or new_id()
+                  start = now()
+                  with st.lock:
+                      posture = st.posture()
+                  if op not in OPERATION_CLASSES:
+                      code, decision, reason = 400, "DENY", "UNKNOWN_OPERATION_CLASS"
+                  elif op in posture["denied_operation_classes"]:
+                      code, decision, reason = 503, "DENY", "SAFE_DEGRADED:" + ",".join(posture["faults"])
+                  else:
+                      code, decision, reason = 200, "ADMIT", "ADMITTED"
+                  st.telemetry.inc("ocor_admission_decisions_total", operation_class=op if op in OPERATION_CLASSES
+                                   else "unknown", decision=decision)
+                  st.telemetry.span("admission", correlation, new_id(), None, start, decision, reason.split(":")[0],
+                                    operation_class=op)
+                  self._json(code, {"decision": decision, "reason_code": reason, "correlation_id": correlation,
+                                    "stop_epoch": posture["stop_epoch"]})
+              else:
+                  self._json(404, {"error": "NOT_FOUND"})
+
+          def do_POST(self) -> None:  # noqa: N802
+              st = self.state
+              token = os.environ.get("OCOR_OPS_OPERATOR_TOKEN", "")
+              presented = self.headers.get("Authorization", "").removeprefix("Bearer ")
+              correlation = self.headers.get("X-Correlation-Id") or new_id()
+              if self.path not in ("/emergency-stop", "/emergency-stop/clear"):
+                  self._json(404, {"error": "NOT_FOUND"})
+                  return
+              if not token or not presented or not hmac_equal(token, presented):
+                  st.telemetry.inc("ocor_operator_commands_total", command=self.path.strip("/"), decision="DENY")
+                  st.telemetry.log("operator_command", "OPERATOR_UNAUTHENTICATED", correlation, level="WARN")
+                  self._json(401, {"error": "OPERATOR_UNAUTHENTICATED"})
+                  return
+              start = now()
+              with st.lock:
+                  if self.path == "/emergency-stop":
+                      st.stop_epoch += 1
+                      st.stopped_at = now()
+                      reason = "EMERGENCY_STOP_ACTIVE"
+                  else:
+                      st.stopped_at = None
+                      reason = "EMERGENCY_STOP_CLEARED_BY_HUMAN"
+                  epoch = st.stop_epoch
+              st.telemetry.gauge("ocor_emergency_stop_active", 1.0 if reason == "EMERGENCY_STOP_ACTIVE" else 0.0)
+              st.telemetry.gauge("ocor_stop_epoch", float(epoch))
+              st.telemetry.inc("ocor_operator_commands_total", command=self.path.strip("/"), decision="ACCEPT")
+              st.telemetry.span("operator_command", correlation, new_id(), None, start, "OK", reason, stop_epoch=epoch)
+              self._json(200, {"reason_code": reason, "stop_epoch": epoch, "correlation_id": correlation})
+
+
+      def hmac_equal(a: str, b: str) -> bool:
+          return hmac.compare_digest(a.encode(), b.encode())
+
+
+      def cmd_serve(args: argparse.Namespace) -> int:
+          profile, digest = load_profile(Path(args.profile))
+          telemetry = Telemetry(profile["profile"]["release"], digest)
+          vault = Path(args.vault) if args.vault else None
+          state = State(profile, digest, Path(args.profile), vault, telemetry)
+          telemetry.gauge("ocor_emergency_stop_active", 0.0)
+          telemetry.gauge("ocor_stop_epoch", 0.0)
+          telemetry.log("startup", "PROFILE_VALID", new_id(), profile_digest=digest)
+          interval = min(profile["observability"]["probeIntervalSeconds"],
+                         profile["observability"]["driftScanIntervalSeconds"])
+
+          def loop() -> None:
+              while True:
+                  try:
+                      scan(state)
+                  except Exception as exc:  # fail closed: never report READY on scanner failure
+                      with state.lock:
+                          state.ready = False
+                          state.ready_reasons = ["SCANNER_ERROR"]
+                      telemetry.log("readiness_scan", "SCANNER_ERROR", new_id(), level="ERROR",
+                                    error_type=type(exc).__name__)
+                  time.sleep(interval)
+
+          threading.Thread(target=loop, daemon=True).start()
+          host, _, port = args.listen.rpartition(":")
+          Handler.state = state
+          server = ThreadingHTTPServer((host, int(port)), Handler)
+          server.serve_forever()
+          return 0
+
+
+      # --------------------------------------------------------------------------- relay
+
+
+      def cmd_relay(args: argparse.Namespace) -> int:
+          import asyncio
+
+          profile, _ = load_profile(Path(args.profile))
+          flows = profile["isolation"]["allowedFlows"]
+
+          async def pipe(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+              try:
+                  while data := await reader.read(65536):
+                      writer.write(data)
+                      await writer.drain()
+              except (OSError, asyncio.IncompleteReadError):
+                  pass
+              finally:
+                  writer.close()
+
+          def handler(upstream_host: str, port: int) -> Callable[[asyncio.StreamReader, asyncio.StreamWriter], Any]:
+              async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+                  try:
+                      ur, uw = await asyncio.wait_for(asyncio.open_connection(upstream_host, port), 5)
+                  except (OSError, asyncio.TimeoutError):
+                      writer.close()
+                      return
+                  await asyncio.gather(pipe(reader, uw), pipe(ur, writer))
+              return handle
+
+          async def main() -> None:
+              servers = []
+              for flow in flows:
+                  upstream = args.upstream_template.format(host=flow["host"])
+                  servers.append(await asyncio.start_server(handler(upstream, flow["port"]), "0.0.0.0", flow["port"]))
+              sys.stdout.write(json.dumps({"component": COMPONENT, "operation": "relay_start",
+                                           "reason_code": "ALLOWLIST_ACTIVE",
+                                           "flows": [f"{f['host']}:{f['port']}" for f in flows]}) + "\n")
+              sys.stdout.flush()
+              await asyncio.gather(*(s.serve_forever() for s in servers))
+
+          asyncio.run(main())
+          return 0
+
+
+      # --------------------------------------------------------------------------- backup
+
+
+      def http_bytes(method: str, url: str, data: bytes | None = None, ctype: str = "application/json",
+                 timeout: float = 60) -> bytes:
+          req = urllib.request.Request(url, data=data, method=method, headers={"Content-Type": ctype})
+          with urllib.request.urlopen(req, timeout=timeout) as resp:
+              return bytes(resp.read())
+
+
+      def read_csv(path: Path) -> list[dict[str, str]]:
+          if not path.exists():
+              return []
+          with path.open(newline="") as fh:
+              return list(csv.DictReader(fh))
+
+
+      def read_digests(path: Path) -> dict[str, list[str]]:
+          out: dict[str, list[str]] = {}
+          for line in path.read_text().splitlines():
+              if line.strip():
+                  name, count, digest = line.split("|")
+                  out[name] = [count, digest]
+          return out
+
+
+      def cmd_init_keys(args: argparse.Namespace) -> int:
+          profile, _ = load_profile(Path(args.profile))
+          keys = profile["backup"]["keys"]
+          transit_from_env(profile).ensure_keys(keys["encryption"], keys["signing"])
+          sys.stdout.write(json.dumps({"component": COMPONENT, "operation": "init_keys", "reason_code": "KEYS_READY",
+                                       "mount": keys["transitMount"]}) + "\n")
+          return 0
+
+
+      def cmd_seal(args: argparse.Namespace) -> int:
+          profile, digest = load_profile(Path(args.profile))
+          t = Telemetry(profile["profile"]["release"], digest)
+          correlation, trace, start = new_id(), new_id(), now()
+          staging, vault = Path(args.staging), Path(args.vault)
+          keys = profile["backup"]["keys"]
+          limits = profile["resourceLimits"]
+          mem_cfg = profile["backup"]["memory"]["sources"]
+          transit = transit_from_env(profile)
+          deps = {d["name"]: d for d in profile["health"]["dependencies"]}
+          pg_dir = staging / "postgresql"
+          if not pg_dir.exists() or not list(pg_dir.glob("*.dump")):
+              t.log("backup_seal", "CAPTURE_MISSING", correlation, level="ERROR")
+              return EXIT_VERIFY
+          artifacts: list[tuple[str, str, bytes]] = []
+          for dump in sorted(pg_dir.glob("*.dump")):
+              artifacts.append(("canonical", f"postgresql/{dump.name}", dump.read_bytes()))
+              artifacts.append(("audit", f"postgresql/{dump.stem}.digest", (pg_dir / f"{dump.stem}.digest").read_bytes()))
+          kafka = staging / "kafka" / "offsets.txt"
+          if not kafka.exists():
+              t.log("backup_seal", "EVENT_CHECKPOINT_MISSING", correlation, level="ERROR")
+              return EXIT_VERIFY
+          artifacts.append(("event", "kafka/offsets.txt", kafka.read_bytes()))
+          # Memory metadata, deletion journal and index snapshot at the same cut (Part II 2.13).
+          items = read_csv(pg_dir / "memory-items.csv")
+          journal = read_csv(pg_dir / "memory-deletion-journal.csv")
+          q = deps["qdrant"]
+          base = f"http://{q['host']}:{q['port']}"
+          collection = mem_cfg["indexCollection"]
+          index_bytes = b""
+          memory_present = (pg_dir / "memory-items.csv").exists()
+          if memory_present:
+              if len(items) > limits["itemCount"]:
+                  t.inc("ocor_backup_runs_total", outcome="backpressure")
+                  t.log("backup_seal", "QUOTA_BACKPRESSURE", correlation, level="WARN", limit="itemCount",
+                        observed=len(items), semantic_downgrade=False)
+                  return EXIT_BACKPRESSURE
+              info = json.loads(http_bytes("GET", f"{base}/collections/{collection}"))["result"]
+              dims = int(info["config"]["params"]["vectors"]["size"])
+              if dims > limits["embeddingDimensions"]:
+                  t.inc("ocor_backup_runs_total", outcome="backpressure")
+                  t.log("backup_seal", "QUOTA_BACKPRESSURE", correlation, level="WARN", limit="embeddingDimensions",
+                        observed=dims, semantic_downgrade=False)
+                  return EXIT_BACKPRESSURE
+              snap = json.loads(http_bytes("POST", f"{base}/collections/{collection}/snapshots?wait=true", b"{}"))
+              name = snap["result"]["name"]
+              index_bytes = http_bytes("GET", f"{base}/collections/{collection}/snapshots/{name}")
+              http_bytes("DELETE", f"{base}/collections/{collection}/snapshots/{name}")
+              if len(index_bytes) > limits["indexSizeBytes"]:
+                  t.inc("ocor_backup_runs_total", outcome="backpressure")
+                  t.log("backup_seal", "QUOTA_BACKPRESSURE", correlation, level="WARN", limit="indexSizeBytes",
+                        observed=len(index_bytes), semantic_downgrade=False)
+                  return EXIT_BACKPRESSURE
+              artifacts.append(("projection", f"qdrant/{collection}.snapshot", index_bytes))
+              artifacts.append(("canonical", "memory/memory-items.csv", (pg_dir / "memory-items.csv").read_bytes()))
+              artifacts.append(("audit", "memory/memory-deletion-journal.csv",
+                                (pg_dir / "memory-deletion-journal.csv").read_bytes()))
+          o = deps["opa"]
+          status, _ = http_status(o["host"], o["port"], "/health", 5)
+          policies = http_bytes("GET", f"http://{o['host']}:{o['port']}/v1/policies")
+          artifacts.append(("governance", "opa/policies.json", policies))
+          artifacts.append(("definition", "profile/profile.json", Path(args.profile).read_bytes()))
+          artifacts.append(("key_custody", "keys/public-keys.json",
+                            canonical({"signing": transit.public_key(keys["signing"]),
+                                       "encryption_key": keys["encryption"], "mount": keys["transitMount"],
+                                       "escrow": "OpenBao transit; key material never leaves the key custodian"})))
+          created = now()
+          rp_id = time.strftime("rp-%Y%m%dT%H%M%SZ-", time.gmtime(created)) + new_id()[:8]
+          rp_dir = vault / "recovery-points" / rp_id
+          entries: list[dict[str, Any]] = []
+          for cls, name, data in artifacts:
+              chunks = transit.encrypt(keys["encryption"], data)
+              blob = canonical({"chunks": chunks, "key": keys["encryption"]})
+              cdigest = sha256(blob)
+              write_immutable(rp_dir / "objects" / f"{cdigest}.enc", blob)
+              entries.append({"authority_class": cls, "name": name, "plaintext_sha256": sha256(data),
+                              "ciphertext_sha256": cdigest, "bytes": len(data)})
+          journal_max = max((int(r["deletion_epoch"]) for r in journal), default=0)
+          metadata_max = max((int(r["deletion_epoch"]) for r in items if r.get("deletion_epoch")), default=0)
+          manifest = {
+              "schema": "ocor.poc.recovery-point/1",
+              "recovery_point": rp_id, "created_at": iso(created), "created_at_epoch": created,
+              "profile_digest": digest, "release": profile["profile"]["release"],
+              "rpo_minutes": profile["backup"]["rpoMinutes"],
+              "encryption": {"mount": keys["transitMount"], "key": keys["encryption"], "algorithm": "aes256-gcm96"},
+              "signature": {"key": keys["signing"], "algorithm": "ed25519"},
+              "artifacts": entries,
+              "authority_classes_present": sorted({str(e["authority_class"]) for e in entries}),
+              "authority_classes_without_store": {
+                  cls: "NO_STORE_DEPLOYED_AT_G4" for cls in sorted(
+                      set(profile["backup"]["authorityClasses"]) - {str(e["authority_class"]) for e in entries})},
+              "memory": {
+                  "status": "PRESENT" if memory_present else "NO_MEMORY_STORE_PRESENT",
+                  "metadataRef": "memory/memory-items.csv" if memory_present else None,
+                  "contentRefs": sorted({r["content_ref"] for r in items}),
+                  "representationVersions": sorted({int(r["representation_version"]) for r in items}),
+                  "lifecycleEpochs": sorted({int(r["lifecycle_epoch"]) for r in items}),
+                  "deletionEpochs": {"journal_max": journal_max, "metadata_max": metadata_max},
+                  "journalCheckpoints": {"entries": len(journal), "max_deletion_epoch": journal_max,
+                                         "last_event_id": journal[-1]["event_id"] if journal else None},
+                  "auditRefs": [e["ciphertext_sha256"] for e in entries if e["authority_class"] == "audit"],
+                  "indexCollection": collection if memory_present else None,
+                  "boundToSameRecoveryPoint": True,
+              },
+              "replay_pins": {
+                  "policy_digest": sha256(policies), "event_schema": sha256(kafka.read_bytes()),
+                  "ordering": "deletion_epoch,event_id", "seed": profile["restore"]["replay"].get("seed"),
+                  "ontology_release": None, "compiler_logic_bundle": None, "canonical_commit": None,
+                  "model_digest": None, "assumptions": None,
+                  "unpinned_reason": "ontology/compiler/model/canonical-commit authorities are not deployed at G4",
+              },
+              "image_pins": profile["images"]["pins"],
+              "opa_health_status": status,
+          }
+          raw = canonical(manifest)
+          write_immutable(rp_dir / "manifest.json", raw)
+          write_immutable(rp_dir / "manifest.sig", transit.sign(keys["signing"], raw).encode())
+          os.chmod(rp_dir / "objects", 0o555)
+          os.chmod(rp_dir, 0o555)
+          erase_tree(staging)
+          t.inc("ocor_backup_runs_total", outcome="sealed")
+          t.span("backup_seal", correlation, trace, None, start, "OK", "RECOVERY_POINT_SEALED",
+                 recovery_point=rp_id, artifacts=len(entries), bytes=sum(e["bytes"] for e in entries))
+          sys.stdout.write(json.dumps({"recovery_point": rp_id, "manifest_sha256": sha256(raw)}) + "\n")
+          return 0
+
+
+      # --------------------------------------------------------------------------- restore
+
+
+      def select_recovery_point(vault: Path, wanted: str | None) -> Path:
+          points = recovery_points(vault)
+          if wanted:
+              points = [p for p in points if p.name == wanted]
+          if not points:
+              raise ValueError("NO_RECOVERY_POINT")
+          return points[-1]
+
+
+      def cmd_restore_prepare(args: argparse.Namespace) -> int:
+          profile, digest = load_profile(Path(args.profile))
+          t = Telemetry(profile["profile"]["release"], digest)
+          correlation, trace, start = new_id(), new_id(), now()
+          vault, out = Path(args.vault), Path(args.staging)
+          transit = transit_from_env(profile)
+          try:
+              rp_dir = select_recovery_point(vault, args.recovery_point)
+              manifest = verify_manifest(transit, profile, rp_dir)
+              for entry in manifest["artifacts"]:
+                  blob = (rp_dir / "objects" / f"{entry['ciphertext_sha256']}.enc").read_bytes()
+                  if sha256(blob) != entry["ciphertext_sha256"]:
+                      raise ValueError("CIPHERTEXT_DIGEST_MISMATCH")
+                  data = transit.decrypt(manifest["encryption"]["key"], json.loads(blob)["chunks"])
+                  if sha256(data) != entry["plaintext_sha256"]:
+                      raise ValueError("PLAINTEXT_DIGEST_MISMATCH")
+                  target = out / entry["name"]
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  target.write_bytes(data)
+          except (ValueError, OSError, KeyError) as exc:
+              reason = str(exc) if isinstance(exc, ValueError) else f"VERIFY_ERROR:{type(exc).__name__}"
+              t.inc("ocor_restore_runs_total", outcome="rejected")
+              t.span("restore_prepare", correlation, trace, None, start, "ERROR", reason.split(":")[0])
+              sys.stderr.write(json.dumps({"reason_code": reason}) + "\n")
+              return EXIT_VERIFY
+          (out / "manifest.json").write_bytes(canonical(manifest))
+          t.span("restore_prepare", correlation, trace, None, start, "OK", "RECOVERY_POINT_VERIFIED",
+                 recovery_point=rp_dir.name)
+          sys.stdout.write(json.dumps({"recovery_point": rp_dir.name, "reason_code": "RECOVERY_POINT_VERIFIED"}) + "\n")
+          return 0
+
+
+      def _points(base: str, collection: str) -> list[dict[str, Any]]:
+          out: list[dict[str, Any]] = []
+          offset: Any = None
+          while True:
+              body: dict[str, Any] = {"limit": 256, "with_payload": True, "with_vector": False}
+              if offset is not None:
+                  body["offset"] = offset
+              res = json.loads(http_bytes("POST", f"{base}/collections/{collection}/points/scroll", canonical(body)))["result"]
+              out.extend(res["points"])
+              offset = res.get("next_page_offset")
+              if offset is None:
+                  return out
+
+
+      def _multipart(name: str, data: bytes) -> tuple[bytes, str]:
+          boundary = "ocor" + new_id()
+          head = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"snapshot\"; filename=\"{name}\"\r\n"
+                  "Content-Type: application/octet-stream\r\n\r\n").encode()
+          return head + data + f"\r\n--{boundary}--\r\n".encode(), f"multipart/form-data; boundary={boundary}"
+
+
+      def _uuid_for(item_id: str) -> str:
+          return str(uuid.uuid5(uuid.NAMESPACE_URL, f"ocor-memory:{item_id}"))
+
+
+      def cmd_restore_finalize(args: argparse.Namespace) -> int:
+          profile, digest = load_profile(Path(args.profile))
+          t = Telemetry(profile["profile"]["release"], digest)
+          correlation, trace, start = new_id(), new_id(), now()
+          staging, vault = Path(args.staging), Path(args.vault)
+          keys = profile["backup"]["keys"]
+          transit = transit_from_env(profile)
+          manifest = json.loads((staging / "manifest.json").read_bytes())
+          gate: dict[str, dict[str, Any]] = {}
+          steps: list[dict[str, str]] = []
+
+          def step(name: str, status: str, detail: str) -> None:
+              steps.append({"step": name, "status": status, "detail": detail})
+
+          step(RESTORE_STEPS[0], "EXECUTED", "restore runs on an isolated network; mutative path closed until receipt")
+          step(RESTORE_STEPS[1], "EXECUTED", manifest["recovery_point"])
+          step(RESTORE_STEPS[2], "EXECUTED", "manifest ed25519 signature and per-object digests verified (single custodian)")
+          step(RESTORE_STEPS[3], "EXECUTED", "profile, OPA policies and key references restored from manifest")
+          # Canonical/audit stores: digests of the isolated PostgreSQL after pg_restore.
+          revision_ok, digest_ok, detail = True, True, []
+          for entry in manifest["artifacts"]:
+              if entry["name"].endswith(".digest"):
+                  db = Path(entry["name"]).stem
+                  expected = read_digests(staging / entry["name"])
+                  restored_path = staging / "restored" / f"{db}.digest"
+                  if not restored_path.exists():
+                      revision_ok = digest_ok = False
+                      detail.append(f"{db}:not_restored")
+                      continue
+                  restored = read_digests(restored_path)
+                  if {k: v[0] for k, v in expected.items()} != {k: v[0] for k, v in restored.items()}:
+                      revision_ok = False
+                      detail.append(f"{db}:row_counts_differ")
+                  if expected != restored:
+                      digest_ok = False
+                      detail.append(f"{db}:semantic_digest_differs")
+          step(RESTORE_STEPS[4], "EXECUTED" if revision_ok else "FAILED", ",".join(detail) or "same cut restored")
+          gate["revision"] = {"pass": revision_ok, "detail": detail}
+          gate["sample_semantic_digest"] = {"pass": digest_ok, "detail": detail}
+
+          mem = manifest["memory"]
+          base = f"http://{args.restore_qdrant}"
+          replayed: list[str] = []
+          replay_digest = None
+          if mem["status"] == "PRESENT":
+              collection = mem["indexCollection"]
+              snap = (staging / "qdrant" / f"{collection}.snapshot").read_bytes()
+              body, ctype = _multipart(f"{collection}.snapshot", snap)
+              http_bytes("POST", f"{base}/collections/{collection}/snapshots/upload?priority=snapshot&wait=true",
+                     body, ctype, timeout=120)
+              items = read_csv(staging / "memory" / "memory-items.csv")
+              journal = sorted(read_csv(staging / "memory" / "memory-deletion-journal.csv"),
+                               key=lambda r: (int(r["deletion_epoch"]), r["event_id"]))
+              # Replay tombstones BEFORE retrieval reopens, with original event ids, no external effects.
+              for tomb in journal:
+                  http_bytes("POST", f"{base}/collections/{collection}/points/delete?wait=true",
+                         canonical({"points": [_uuid_for(tomb["item_id"])]}))
+                  replayed.append(tomb["event_id"])
+              step(RESTORE_STEPS[5], "EXECUTED", f"{len(replayed)} tombstones replayed with original event ids")
+              points = _points(base, collection)
+              present = [str(pt["payload"].get("item_id")) for pt in points]
+              deleted_meta = {r["item_id"] for r in items if r["lifecycle_state"] == "deleted"}
+              tombstoned = {r["item_id"] for r in journal}
+              live_meta = {r["item_id"] for r in items if r["lifecycle_state"] != "deleted"}
+              resurrected = sorted((deleted_meta | tombstoned) & set(present))
+              journal_max = max((int(r["deletion_epoch"]) for r in journal), default=0)
+              meta_max = max((int(r["deletion_epoch"]) for r in items if r.get("deletion_epoch")), default=0)
+              stale = journal_max < meta_max or journal_max != mem["journalCheckpoints"]["max_deletion_epoch"]
+              orphans = sorted(set(present) - live_meta - deleted_meta)
+              dupes = sorted({x for x in present if present.count(x) > 1})
+              gate["deletion_resurrection"] = {"pass": not resurrected, "detail": resurrected}
+              gate["projection_drift_or_stale_deletion_epoch"] = {
+                  "pass": not stale and set(present) == live_meta,
+                  "detail": {"journal_max": journal_max, "metadata_max": meta_max,
+                             "missing_live": sorted(live_meta - set(present))}}
+              gate["orphan_duplicate"] = {"pass": not orphans and not dupes, "detail": {"orphans": orphans, "dupes": dupes}}
+              gate["marking"] = {"pass": all(pt["payload"].get("classification_marking_ref") for pt in points),
+                                 "detail": "every restored item carries a marking ref"}
+              gate["gcs"] = {"pass": all(pt["payload"].get("governed_context_digest") and pt["payload"].get("tenant_id")
+                                         for pt in points), "detail": "governed context scope bound on every item"}
+              gate["watermark"] = {"pass": len(present) == len(live_meta),
+                                   "detail": {"index_items": len(present), "live_metadata_items": len(live_meta)}}
+              replay_digest = sha256(canonical(sorted(present)))
+          else:
+              step(RESTORE_STEPS[5], "NOT_APPLICABLE", "no memory store present in this recovery point")
+              for name in ("deletion_resurrection", "projection_drift_or_stale_deletion_epoch", "orphan_duplicate",
+                           "marking", "gcs", "watermark"):
+                  gate[name] = {"pass": True, "detail": "no memory store present"}
+          step(RESTORE_STEPS[6], "NOT_EXECUTED", "LogicProjection/W3CBoundary rebuild belongs to C4 qualification")
+          step(RESTORE_STEPS[7], "EXECUTED", "kafka offsets checkpoint and outbox tables verified by digest")
+          step(RESTORE_STEPS[8], "NOT_APPLICABLE", "no external effects in flight in the drill")
+          step(RESTORE_STEPS[9], "NOT_EXECUTED", "mission-thread replay is a G6 qualification, not claimed here")
+          passed = all(g["pass"] for g in gate.values())
+          step(RESTORE_STEPS[10], "PENDING_HUMAN_AUTHORIZATION" if passed else "BLOCKED",
+               "retrieval/mutative reopening requires human authorization")
+          completed = now()
+          receipt = {
+              "schema": "ocor.poc.restore-receipt/1", "recovery_point": manifest["recovery_point"],
+              "manifest_digest": sha256(canonical(manifest)), "outcome": "PASSED" if passed else "FAILED",
+              "recovery_gate": {name: gate[name] for name in RECOVERY_GATE}, "steps": steps,
+              "replayed_event_ids": replayed, "replay_digest": replay_digest,
+              "retrieval_reopened": False, "materialisation": "ALLOWED_PENDING_HUMAN" if passed else "BLOCKED",
+              "isolated_network": True, "completed_at": iso(completed), "completed_at_epoch": completed,
+              "duration_seconds": round(completed - start, 3), "rto_hours_target": profile["backup"]["rtoHours"],
+              "correlation_id": correlation,
+          }
+          raw = canonical(receipt)
+          name = time.strftime("%Y%m%dT%H%M%SZ-", time.gmtime(completed)) + new_id()[:8]
+          write_immutable(vault / "restore-receipts" / f"{name}.json", raw)
+          write_immutable(vault / "restore-receipts" / f"{name}.sig", transit.sign(keys["signing"], raw).encode())
+          erase_tree(staging)
+          t.inc("ocor_restore_runs_total", outcome=receipt["outcome"].lower())
+          failed = [n for n in RECOVERY_GATE if not gate[n]["pass"]]
+          t.span("restore_finalize", correlation, trace, None, start, "OK" if passed else "ERROR",
+                 "RECOVERY_GATE_PASSED" if passed else "RECOVERY_GATE_FAILED", failed_checks=failed,
+                 recovery_point=manifest["recovery_point"])
+          sys.stdout.write(json.dumps({"receipt": name, "outcome": receipt["outcome"], "failed": failed,
+                                       "replay_digest": replay_digest}) + "\n")
+          return 0 if passed else EXIT_GATE
+
+
+      # --------------------------------------------------------------------------- main
+
+
+      def main(argv: list[str] | None = None) -> int:
+          parser = argparse.ArgumentParser(prog="ocor-ops")
+          sub = parser.add_subparsers(dest="command", required=True)
+          for name in ("validate", "serve", "relay", "init-keys", "seal", "restore-prepare", "restore-finalize"):
+              sp = sub.add_parser(name)
+              sp.add_argument("--profile", required=True)
+              if name == "serve":
+                  sp.add_argument("--listen", default="0.0.0.0:8080")
+                  sp.add_argument("--vault")
+              if name == "relay":
+                  sp.add_argument("--upstream-template", default="{host}")
+              if name in ("seal", "restore-prepare", "restore-finalize"):
+                  sp.add_argument("--vault", required=True)
+                  sp.add_argument("--staging", required=True)
+              if name == "restore-prepare":
+                  sp.add_argument("--recovery-point")
+              if name == "restore-finalize":
+                  sp.add_argument("--restore-qdrant", required=True)
+          args = parser.parse_args(argv)
+          handlers: dict[str, Callable[[argparse.Namespace], int]] = {
+              "serve": cmd_serve, "relay": cmd_relay, "init-keys": cmd_init_keys, "seal": cmd_seal,
+              "restore-prepare": cmd_restore_prepare, "restore-finalize": cmd_restore_finalize,
+          }
+          try:
+              if args.command == "validate":
+                  load_profile(Path(args.profile))
+                  sys.stdout.write(json.dumps({"reason_code": "PROFILE_VALID"}) + "\n")
+                  return 0
+              return handlers[args.command](args)
+          except ConfigError as exc:
+              sys.stderr.write(json.dumps({"component": COMPONENT, "reason_code": "PROFILE_INVALID",
+                                           "errors": str(exc).split("; ")}) + "\n")
+              return EXIT_CONFIG
+
+
+      if __name__ == "__main__":
+          sys.exit(main())
