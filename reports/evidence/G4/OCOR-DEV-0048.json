@@ -2108,11 +2108,17 @@
   },
   "independent_verification": {
     "implementer": "OpenHands (agente implementativo autonomo, contesto separato)",
+    "independence_limits": "Processo e contesto separati; verifier Codex/OpenAI. Il mandato attribuisce le riparazioni a Claude Code/Anthropic (fornitori diversi); il record candidato corrente nomina OpenHands senza esporre il modello o fornitore sottostante. L'identit\u00e0 del modello dell'implementatore non \u00e8 verificabile dalle fonti ammesse; non \u00e8 asserita una garanzia ulteriore di indipendenza.",
     "limitation": "Implementatore della riparazione (OpenHands) e verifier (Codex) sono modelli distinti in processi separati; nessuna altra garanzia di indipendenza dichiarata.",
-    "model_identity": "implementer: OpenHands (agente implementativo autonomo); verifier: NOT_EXPOSED_BY_RUNTIME",
+    "model_identity": "implementer: OpenHands (agente implementativo autonomo); verifier: GPT-6 (famiglia dichiarata dal runtime; variante esatta non esposta)",
     "same_model_separate_contexts": false,
-    "verdict_status": "PENDING_EXTERNAL_VERIFIER",
-    "verifier": "Codex, processo esterno a contesto pulito"
+    "verdict_created_at": "2026-10-05T07:52:09.425911Z",
+    "verdict_head_sha": "618875eff62a43c524180596f680cafb0b4a1d02",
+    "verdict_request_id": "OCOR-DEV-0048-618875eff62a-7",
+    "verdict_status": "GO_FOR_EVIDENCE_SEAL",
+    "verifier": "Codex, processo esterno a contesto pulito",
+    "verifier_model": "GPT-6 (famiglia dichiarata dal runtime; variante esatta non esposta)",
+    "verifier_process": "codex exec --ephemeral, contesto pulito"
   },
   "inputs": {
     "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
@@ -2357,6 +2363,22 @@
       "repair_cycle": 6,
       "verdict": "NO_GO",
       "verdict_request_id": "OCOR-DEV-0048-feb83b0c3a68-6"
+    },
+    {
+      "authorized_start_head": "feb83b0c3a684929a09b8684e8a334cb86c77efc",
+      "candidate_head": "618875eff62a43c524180596f680cafb0b4a1d02",
+      "cycle_of_authorization": "2 di 3",
+      "date": "2026-10-05",
+      "findings_addressed": [
+        "VF-001"
+      ],
+      "id": "OCOR-DEV-0048-REPAIR-CLAUDE-AUTO",
+      "previous_candidate_sealed": false,
+      "previous_candidate_sha256": "2dcabd351cfd9a263fa637518142df43b3d33d768e3c2568539d2a21f0ef87f9",
+      "previous_request_id": "OCOR-DEV-0048-feb83b0c3a68-6",
+      "repair_cycle": 7,
+      "verdict": "GO_FOR_EVIDENCE_SEAL",
+      "verdict_request_id": "OCOR-DEV-0048-618875eff62a-7"
     }
   ],
   "reproducible_check": {
@@ -4719,7 +4741,7 @@
     }
   ],
   "residual_risks": [
-    "196 casi del task passanti sullo stack reale, inclusi 1 casi REPAIR-7; suite runtime (1101) e reports CI (82) senza skip. Evidenza candidata non sigillata, in attesa del verifier esterno (Codex).",
+    "196 casi del task passanti sullo stack reale, inclusi 1 casi REPAIR-7; suite runtime (1101) e reports CI (82) senza skip. Verdetto indipendente GO_FOR_EVIDENCE_SEAL (OCOR-DEV-0048-618875eff62a-7): zero finding; evidenza sigillata content-addressed.",
     "Rami difensivi non raggiungibili dai backend pinned (sessione senza jti con Keycloak 26; risposta OPA non JSON): nessun PASS attribuito. La porta di lease non trasporta una catena di grant: una sessione delegata \u00e8 sempre negata.",
     "Rami difensivi non raggiungibili dai backend pinned (sessione senza jti con Keycloak 26; risposta OPA non JSON): nessun PASS attribuito. La porta di lease non trasporta una catena di grant: una sessione delegata \u00e8 sempre negata.",
     "La revoca a runtime \u00e8 un set firmato in memoria per istanza di provider; la distribuzione/persistenza dello stato di revoca fra istanze non \u00e8 qualificata da questo task. Il registro dei nonce \u00e8 per istanza di provider.",
@@ -4731,7 +4753,7 @@
   "result": "PASS",
   "rollback_procedure_verified": "Review meccanica: due soli percorsi autorizzati (git diff feb83b0..b2017ec: control_plane.py e test_ocor_dev_0048.py), nessuna migrazione/schema/port sigillato modificato; reverse-apply --check del diff di riparazione feb83b0..b2017ec passante (rollback.log). Nessun rollback semantico o conformance globale dichiarato.",
   "schema_version": "1.0",
-  "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION",
+  "status": "SEALED",
   "task_id": "OCOR-DEV-0048",
   "tdd": {
     "GREEN": {
