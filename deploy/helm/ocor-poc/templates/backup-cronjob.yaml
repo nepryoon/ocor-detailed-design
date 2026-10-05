@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-backup
+  labels:
+    app.kubernetes.io/name: {{ .Chart.Name }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/component: backup
+spec:
+  schedule: {{ .Values.operational.backup.schedule | quote }}
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: {{ .Values.operational.backup.image }}
+              env:
+                - name: PGPASSWORD
+                  value: {{ .Values.operational.backup.pgPassword | default "synthetic-postgres" | quote }}
+              command: [sh, -c, "pg_dump -h postgresql -U ocor -d ocor -F c -f /backup/ocor-audit-$(date +%s).dump && ls -l /backup"]
+              volumeMounts:
+                - name: backup-vault
+                  mountPath: /backup
+          volumes:
+            - name: backup-vault
+              emptyDir: {}

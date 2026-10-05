@@ -1,17 +1,18 @@
 # OCOR PoC single-site profile — Compose overlay.
-# Contract identical to values.yaml `ocor`; observability/backup
-# backends are Candidate Implementation behind logical contracts.
+# The `x-ocor-profile` contract is byte-for-byte identical in VALUE to the Helm
+# `ocor` tree (values.yaml); the extra `profiles` key selects the governed modes.
+# The `services:` section is the operational wiring: real digest-pinned images,
+# real readiness gates on the real bootstrap ports, local telemetry and an
+# authority-aware backup job. Observability/backup backends remain Candidate
+# Implementation behind logical contracts (ADD v1.3 §6.1).
 name: ocor-poc-profile
+
 x-ocor-profile:
-  profiles:
-  - observability
-  - backup
-  - safe-degraded
-  - full
+  profiles: [observability, backup, safe-degraded, full]
   profile:
     id: poc
     singleSite: true
-    deploymentTarget: Design Target / Candidate Implementation
+    deploymentTarget: "Design Target / Candidate Implementation"
   isolation:
     networkPolicyDefaultDeny: true
     egressPublicNetwork: false
@@ -24,13 +25,9 @@ x-ocor-profile:
   images:
     digestPinned: true
     signatureVerifiedBeforeAdmission: true
-    registry: local
+    registry: "local"
     publicNetworkDependencyAtRuntime: false
-  resourceClasses:
-  - CONTROL
-  - INTERACTIVE
-  - BATCH
-  - AUDIT
+  resourceClasses: [CONTROL, INTERACTIVE, BATCH, AUDIT]
   resourceIsolation:
     c6ControlAuditSharesCausalBatchPool: false
   observability:
@@ -40,48 +37,42 @@ x-ocor-profile:
     metrics:
       exporter: prometheus
       set:
-      - latency_p50_p95_p99_per_contract
-      - error_deny_approval_expiry_rate
-      - projection_lag_watermark_checksum
-      - commit_outbox_retry
-      - constraint_violation
-      - action_fsm_saga_execution_unknown
-      - audit_gap
-      - queue_run_time_budget
-      - model_seed_scenario_ttl
-      - configuration_schema_release_drift
+        - latency_p50_p95_p99_per_contract
+        - error_deny_approval_expiry_rate
+        - projection_lag_watermark_checksum
+        - commit_outbox_retry
+        - constraint_violation
+        - action_fsm_saga_execution_unknown
+        - audit_gap
+        - queue_run_time_budget
+        - model_seed_scenario_ttl
+        - configuration_schema_release_drift
     logs:
-      fields:
-      - correlation_id
-      - component
-      - operation
-      - release
-      - policy_digest
-      - reason_code
+      fields: [correlation_id, component, operation, release, policy_digest, reason_code]
       keepClassificationMarking: true
       excludeClassifiedPayload: true
     traces:
       fields:
-      - trace_id
-      - correlation_id
-      - causation_id
-      - governed_context_digest
-      - effective_principal_id
-      - actor_chain
-      - tenant_id
-      - organization_id
-      - domain_id
-      - compartments
-      - classification_marking_ref
-      - purpose
-      - policy_bundle_digest
-      - ontology_release_digest
-      - canonical_commit
-      - projection_watermark
-      - policy_decision_id
-      - scenario_id
-      - model_digest
-      - action_state
+        - trace_id
+        - correlation_id
+        - causation_id
+        - governed_context_digest
+        - effective_principal_id
+        - actor_chain
+        - tenant_id
+        - organization_id
+        - domain_id
+        - compartments
+        - classification_marking_ref
+        - purpose
+        - policy_bundle_digest
+        - ontology_release_digest
+        - canonical_commit
+        - projection_watermark
+        - policy_decision_id
+        - scenario_id
+        - model_digest
+        - action_state
   backup:
     rpoMinutes: 15
     rtoHours: 4
@@ -92,129 +83,222 @@ x-ocor-profile:
     authorityAware: true
     offClusterFaultDomain: true
     tested: true
+    recoveryPoint: poc-recovery-point-v1
     authorityClasses:
-    - definition
-    - canonical
-    - event
-    - action
-    - governance
-    - audit
-    - model_scenario
-    - projection
-    - key_custody
+      - definition
+      - canonical
+      - event
+      - action
+      - governance
+      - audit
+      - model_scenario
+      - projection
+      - key_custody
+    memory:
+      metadataRef: memory-metadata
+      contentRefs: true
+      representationVersions: true
+      lifecycleEpochs: true
+      deletionEpochs: true
+      journalCheckpoints: true
+      auditRefs: true
+      boundToSameRecoveryPoint: true
   restore:
     isolatedNetwork: true
     steps:
-    - containment_and_emergency_stop
-    - select_signed_recovery_point_within_rpo
-    - verify_trust_manifest_digest_signatures_dual_control
-    - restore_oaC_ir_policy_config_model_manifests
-    - restore_canonical_event_action_audit_same_cut
-    - rebuild_logic_projection_and_w3c_boundary
-    - reconcile_outbox_offset_checksum_saga_receipt
-    - assign_execution_unknown_to_unprovable_effects
-    - run_conformance_security_mission_thread_replay
-    - require_human_authorization_to_reopen_mutative
+      - containment_and_emergency_stop
+      - select_signed_recovery_point_within_rpo
+      - verify_trust_manifest_digest_signatures_dual_control
+      - restore_oaC_ir_policy_config_model_manifests
+      - restore_canonical_event_action_audit_same_cut
+      - replay_memory_deletion_tombstones_before_reopen_retrieval
+      - rebuild_logic_projection_and_w3c_boundary
+      - reconcile_outbox_offset_checksum_saga_receipt
+      - assign_execution_unknown_to_unprovable_effects
+      - run_conformance_security_mission_thread_replay
+      - require_human_authorization_to_reopen_mutative
     replay:
       usesOriginalEventIds: true
       emitsNoExternalEffects: true
-      pins:
-      - ontology_release
-      - compiler_logic_bundle
-      - canonical_commit
-      - event_schema
-      - model_digest
-      - policy_digest
-      - seed
-      - assumptions
-      - ordering
+      pins: [ontology_release, compiler_logic_bundle, canonical_commit, event_schema, model_digest, policy_digest, seed, assumptions, ordering]
     recoveryGate:
-    - revision
-    - watermark
-    - orphan_duplicate
-    - marking
-    - gcs
-    - deletion_resurrection
-    - sample_semantic_digest
+      - revision
+      - watermark
+      - orphan_duplicate
+      - marking
+      - gcs
+      - deletion_resurrection
+      - projection_drift_or_stale_deletion_epoch
+      - sample_semantic_digest
+  resourceLimits:
+    itemCount: 100000
+    payloadSizeBytes: 1048576
+    embeddingDimensions: 1536
+    topK: 100
+    consolidationConcurrency: 4
+    indexSizeBytes: 1073741824
+    retentionHorizonDays: 30
+    quotaBehavior:
+      onExceed: quota_backpressure
+      semanticDowngrade: false
   safeDegraded:
     faults:
-    - fault: idp_or_policy_engine_unavailable
-      behavior:
-      - no_new_governed_operations
-      - authorized_reads_only_if_policy_snapshot_valid
-    - fault: canonical_writer_unavailable
-      behavior:
-      - events_durably_queued
-      - no_canonical_commit_confirmation
-      - mutations_suspended
-    - fault: broker_unavailable
-      behavior:
-      - outbox_retained_relayed_later
-      - no_projection_freshness_claim
-    - fault: projection_lag_or_failure
-      behavior:
-      - PROJECTION_NOT_READY_or_STALE_CONTEXT
-      - high_impact_blocked
-    - fault: audit_append_unavailable
-      behavior:
-      - no_new_mutative_command
-    - fault: action_adapter_timeout
-      behavior:
-      - EXECUTION_UNKNOWN
-      - status_inquiry_or_reconciliation_only
-      - no_blind_retry
-    - fault: edge_partition
-      behavior:
-      - read_analyze_simulate_on_pinned_snapshot
-      - explicit_staleness
-      - no_high_impact
-    - fault: emergency_stop
-      behavior:
-      - new_mutative_capabilities_denied_within_10_seconds
+      - fault: idp_or_policy_engine_unavailable
+        behavior: [no_new_governed_operations, authorized_reads_only_if_policy_snapshot_valid]
+      - fault: canonical_writer_unavailable
+        behavior: [events_durably_queued, no_canonical_commit_confirmation, mutations_suspended]
+      - fault: broker_unavailable
+        behavior: [outbox_retained_relayed_later, no_projection_freshness_claim]
+      - fault: projection_lag_or_failure
+        behavior: [PROJECTION_NOT_READY_or_STALE_CONTEXT, high_impact_blocked]
+      - fault: audit_append_unavailable
+        behavior: [no_new_mutative_command]
+      - fault: action_adapter_timeout
+        behavior: [EXECUTION_UNKNOWN, status_inquiry_or_reconciliation_only, no_blind_retry]
+      - fault: edge_partition
+        behavior: [read_analyze_simulate_on_pinned_snapshot, explicit_staleness, no_high_impact]
+      - fault: emergency_stop
+        behavior: [new_mutative_capabilities_denied_within_10_seconds]
   health:
-    probeTypes:
-    - liveness
-    - readiness
+    probeTypes: [liveness, readiness]
     services:
-    - name: gateway
-      liveness:
-        http_get: /healthz
-        period_seconds: 10
-      readiness:
-        http_get: /readyz
-        period_seconds: 10
-    - name: canonical-state
-      liveness:
-        http_get: /healthz
-        period_seconds: 10
-      readiness:
-        http_get: /readyz
-        period_seconds: 10
-    - name: action-engine
-      liveness:
-        http_get: /healthz
-        period_seconds: 10
-      readiness:
-        http_get: /readyz
-        period_seconds: 10
-    - name: policy-engine
-      liveness:
-        http_get: /healthz
-        period_seconds: 10
-      readiness:
-        http_get: /readyz
-        period_seconds: 10
-    - name: identity
-      liveness:
-        http_get: /healthz
-        period_seconds: 10
-      readiness:
-        http_get: /readyz
-        period_seconds: 10
-    - name: audit
-      liveness:
-        http_get: /healthz
-        period_seconds: 10
-      readiness:
-        http_get: /readyz
-        period_seconds: 10
+      - name: terminusdb
+        port: 6363
+        liveness: {type: tcp, period_seconds: 5}
+        readiness: {type: tcp, period_seconds: 5}
+      - name: typedb
+        port: 1729
+        liveness: {type: tcp, period_seconds: 10}
+        readiness: {type: tcp, period_seconds: 10}
+      - name: fuseki
+        port: 3030
+        liveness: {type: http_get, path: "/$/ping", period_seconds: 5}
+        readiness: {type: http_get, path: "/$/ping", period_seconds: 5}
+      - name: opa
+        port: 8181
+        liveness: {type: exec, command: ["/opa", "eval", "true"], period_seconds: 5}
+        readiness: {type: exec, command: ["/opa", "eval", "true"], period_seconds: 5}
+      - name: keycloak
+        port: 8080
+        liveness: {type: tcp, target_port: 9000, period_seconds: 10}
+        readiness: {type: tcp, target_port: 9000, period_seconds: 10}
+      - name: openbao
+        port: 8200
+        liveness: {type: exec, command: ["bao", "status"], period_seconds: 5}
+        readiness: {type: exec, command: ["bao", "status"], period_seconds: 5}
+      - name: postgresql
+        port: 5432
+        liveness: {type: exec, command: ["pg_isready", "-U", "ocor", "-d", "ocor"], period_seconds: 5}
+        readiness: {type: exec, command: ["pg_isready", "-U", "ocor", "-d", "ocor"], period_seconds: 5}
+      - name: kafka
+        port: 29092
+        liveness: {type: exec, command: ["kafka-topics", "--bootstrap-server", "127.0.0.1:29092", "--list"], period_seconds: 10}
+        readiness: {type: exec, command: ["kafka-topics", "--bootstrap-server", "127.0.0.1:29092", "--list"], period_seconds: 10}
+      - name: qdrant
+        port: 6333
+        liveness: {type: tcp, period_seconds: 5}
+        readiness: {type: tcp, period_seconds: 5}
+      - name: spire-server
+        port: 8081
+        liveness: {type: exec, command: ["spire-server", "healthcheck"], period_seconds: 5}
+        readiness: {type: exec, command: ["spire-server", "healthcheck"], period_seconds: 5}
+
+x-service-policy: &service-policy
+  restart: "no"
+  init: true
+  security_opt: ["no-new-privileges:true"]
+  networks: [ocor-bootstrap]
+
+services:
+  # Readiness gate: only reports READY once every mandatory foundation service
+  # is healthy AND its port is reachable on the real bootstrap network. Removing
+  # one dependency makes the gate exit non-zero (readiness blocked).
+  ocor-readiness-gate:
+    <<: *service-policy
+    image: python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2
+    profiles: [safe-degraded, full]
+    depends_on:
+      terminusdb: {condition: service_healthy}
+      typedb: {condition: service_healthy}
+      fuseki: {condition: service_healthy}
+      opa: {condition: service_healthy}
+      keycloak: {condition: service_healthy}
+      openbao: {condition: service_healthy}
+      postgresql: {condition: service_healthy}
+      kafka: {condition: service_healthy}
+      qdrant: {condition: service_healthy}
+      spire-server: {condition: service_healthy}
+      spire-agent: {condition: service_started}
+    command:
+      - python3
+      - -c
+      - |
+        import socket, sys
+        targets = [("terminusdb", 6363), ("typedb", 1729), ("fuseki", 3030),
+                   ("opa", 8181), ("keycloak", 8080), ("openbao", 8200),
+                   ("postgresql", 5432), ("kafka", 29092), ("qdrant", 6333)]
+        missing = []
+        for host, port in targets:
+            try:
+                socket.create_connection((host, port), 3).close()
+            except OSError:
+                missing.append(f"{host}:{port}")
+        if missing:
+            print("NOT_READY missing=" + ",".join(missing), flush=True)
+            sys.exit(1)
+        print("READY all mandatory dependencies reachable", flush=True)
+
+  # Local telemetry: Candidate Implementation behind the logical exporter
+  # contract (ADD v1.3 §6.3 exportersLocal). Emits the governed log/metric
+  # field names to stdout; no classified payload, no public egress.
+  ocor-telemetry:
+    <<: *service-policy
+    image: python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2
+    profiles: [observability, full]
+    command:
+      - python3
+      - -c
+      - |
+        import json
+        record = {
+            "correlation_id": "local-telemetry-poc",
+            "component": "ocor-telemetry",
+            "operation": "exporters_local_probe",
+            "release": "candidate",
+            "policy_digest": "logical-contract",
+            "reason_code": "READY",
+            "metrics": ["latency_p50_p95_p99_per_contract", "error_deny_approval_expiry_rate",
+                        "projection_lag_watermark_checksum", "commit_outbox_retry",
+                        "constraint_violation", "action_fsm_saga_execution_unknown",
+                        "audit_gap", "queue_run_time_budget", "model_seed_scenario_ttl",
+                        "configuration_schema_release_drift"],
+        }
+        print(json.dumps(record, sort_keys=True), flush=True)
+
+  # Authority-aware backup: concrete example over the PostgreSQL audit/workflow
+  # backend (one of the 9 authority classes). The full multi-store manifest is
+  # carried by the `x-ocor-profile.backup` contract, not fabricated here.
+  ocor-backup:
+    <<: *service-policy
+    image: postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
+    profiles: [backup, full]
+    environment:
+      PGPASSWORD: ${OCOR_LOCAL_POSTGRES_PASSWORD:-synthetic-postgres}
+    depends_on:
+      postgresql: {condition: service_healthy}
+    volumes:
+      - ocor-backup-vault:/backup
+    command:
+      - sh
+      - -c
+      - |
+        set -e
+        pg_dump -h postgresql -U ocor -d ocor -F c -f /backup/ocor-audit-$$(date +%s).dump
+        ls -l /backup
+
+volumes:
+  ocor-backup-vault: {}
+
+networks:
+  ocor-bootstrap:
+    name: ocor-bootstrap

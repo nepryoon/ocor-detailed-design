@@ -81,6 +81,7 @@ ocor:
     authorityAware: true
     offClusterFaultDomain: true
     tested: true
+    recoveryPoint: poc-recovery-point-v1
     authorityClasses:
       - definition
       - canonical
@@ -91,6 +92,19 @@ ocor:
       - model_scenario
       - projection
       - key_custody
+    # ADD v1.3 Part II §2.13 + LLD v1.1 §5.4: the backup manifest binds the
+    # memory metadata, content refs, representation versions, lifecycle and
+    # deletion epochs, journal checkpoints and audit refs to the same recovery
+    # point as the rest of the authority stores.
+    memory:
+      metadataRef: memory-metadata
+      contentRefs: true
+      representationVersions: true
+      lifecycleEpochs: true
+      deletionEpochs: true
+      journalCheckpoints: true
+      auditRefs: true
+      boundToSameRecoveryPoint: true
 
   restore:
     isolatedNetwork: true
@@ -100,6 +114,7 @@ ocor:
       - verify_trust_manifest_digest_signatures_dual_control
       - restore_oaC_ir_policy_config_model_manifests
       - restore_canonical_event_action_audit_same_cut
+      - replay_memory_deletion_tombstones_before_reopen_retrieval
       - rebuild_logic_projection_and_w3c_boundary
       - reconcile_outbox_offset_checksum_saga_receipt
       - assign_execution_unknown_to_unprovable_effects
@@ -116,7 +131,22 @@ ocor:
       - marking
       - gcs
       - deletion_resurrection
+      - projection_drift_or_stale_deletion_epoch
       - sample_semantic_digest
+
+  # ADD v1.3 Part II §2.13: PoC resource limits are configuration values.
+  # Exceeding them produces quota/backpressure, never semantic downgrade.
+  resourceLimits:
+    itemCount: 100000
+    payloadSizeBytes: 1048576
+    embeddingDimensions: 1536
+    topK: 100
+    consolidationConcurrency: 4
+    indexSizeBytes: 1073741824
+    retentionHorizonDays: 30
+    quotaBehavior:
+      onExceed: quota_backpressure
+      semanticDowngrade: false
 
   safeDegraded:
     faults:
@@ -140,21 +170,60 @@ ocor:
   health:
     probeTypes: [liveness, readiness]
     services:
-      - name: gateway
-        liveness: {http_get: /healthz, period_seconds: 10}
-        readiness: {http_get: /readyz, period_seconds: 10}
-      - name: canonical-state
-        liveness: {http_get: /healthz, period_seconds: 10}
-        readiness: {http_get: /readyz, period_seconds: 10}
-      - name: action-engine
-        liveness: {http_get: /healthz, period_seconds: 10}
-        readiness: {http_get: /readyz, period_seconds: 10}
-      - name: policy-engine
-        liveness: {http_get: /healthz, period_seconds: 10}
-        readiness: {http_get: /readyz, period_seconds: 10}
-      - name: identity
-        liveness: {http_get: /healthz, period_seconds: 10}
-        readiness: {http_get: /readyz, period_seconds: 10}
-      - name: audit
-        liveness: {http_get: /healthz, period_seconds: 10}
-        readiness: {http_get: /readyz, period_seconds: 10}
+      - name: terminusdb
+        port: 6363
+        liveness: {type: tcp, period_seconds: 5}
+        readiness: {type: tcp, period_seconds: 5}
+      - name: typedb
+        port: 1729
+        liveness: {type: tcp, period_seconds: 10}
+        readiness: {type: tcp, period_seconds: 10}
+      - name: fuseki
+        port: 3030
+        liveness: {type: http_get, path: "/$/ping", period_seconds: 5}
+        readiness: {type: http_get, path: "/$/ping", period_seconds: 5}
+      - name: opa
+        port: 8181
+        liveness: {type: exec, command: ["/opa", "eval", "true"], period_seconds: 5}
+        readiness: {type: exec, command: ["/opa", "eval", "true"], period_seconds: 5}
+      - name: keycloak
+        port: 8080
+        liveness: {type: tcp, target_port: 9000, period_seconds: 10}
+        readiness: {type: tcp, target_port: 9000, period_seconds: 10}
+      - name: openbao
+        port: 8200
+        liveness: {type: exec, command: ["bao", "status"], period_seconds: 5}
+        readiness: {type: exec, command: ["bao", "status"], period_seconds: 5}
+      - name: postgresql
+        port: 5432
+        liveness: {type: exec, command: ["pg_isready", "-U", "ocor", "-d", "ocor"], period_seconds: 5}
+        readiness: {type: exec, command: ["pg_isready", "-U", "ocor", "-d", "ocor"], period_seconds: 5}
+      - name: kafka
+        port: 29092
+        liveness: {type: exec, command: ["kafka-topics", "--bootstrap-server", "127.0.0.1:29092", "--list"], period_seconds: 10}
+        readiness: {type: exec, command: ["kafka-topics", "--bootstrap-server", "127.0.0.1:29092", "--list"], period_seconds: 10}
+      - name: qdrant
+        port: 6333
+        liveness: {type: tcp, period_seconds: 5}
+        readiness: {type: tcp, period_seconds: 5}
+      - name: spire-server
+        port: 8081
+        liveness: {type: exec, command: ["spire-server", "healthcheck"], period_seconds: 5}
+        readiness: {type: exec, command: ["spire-server", "healthcheck"], period_seconds: 5}
+
+# Operational wiring rendered by the Helm chart (Deployment/Service/NetworkPolicy/
+# CronJob) and mirrored by the Compose overlay's `services:` section. Images are
+# digest-pinned; none is fabricated (each digest is already present in the
+# repository: deploy/local/compose.yaml, devcontainer.json, deploy/bootstrap).
+operational:
+  readinessGate:
+    image: python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2
+    profiles: [safe-degraded, full]
+    replicas: 1
+  telemetry:
+    image: python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2
+    profiles: [observability, full]
+  backup:
+    image: postgres:16@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
+    profiles: [backup, full]
+    schedule: "0 2 * * *"
