@@ -1,13 +1,10 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0048-sealed",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_0048_SEALED",
+    "branch": "governed/ci-0048-real-backend-registration",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__CI_0048_REAL_BACKEND_REGISTRATION",
     "decision_id": "DEC-210",
-    "phase": "OCOR_DEV_0048_SEALED_STATE_SYNC",
-    "task_branch": "task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls",
-    "task_head_sha": "618875eff62a43c524180596f680cafb0b4a1d02",
-    "task_worktree": ".ocor/worktrees/ocor-dev-0048",
-    "worktree": ".ocor/worktrees/state-sync-ocor-dev-0048-sealed"
+    "phase": "CI_0048_REAL_BACKEND_REGISTRATION",
+    "worktree": ".ocor/worktrees/ci-0048-real-backend-registration"
   },
   "backlog_escalations": {
     "OCOR-DEV-0048": {
@@ -330,6 +327,21 @@
       "resolution": "PO decision 2026-10-02 Option 1: no infra/toolchain.lock.json variation. Use node 20.20.2 and typescript@7.0.2 (bin/tsc) in an isolated DEC-211 environment for the implementer's local gates; the lock and its validation/verification controls remain unchanged. Independent verification already confirms the entries match in isolation (cycle-2: 8/9 toolchain entries).",
       "scope": "typescript (tsc) 7.0.2 not installed on this machine and host node v24.21.0 differs from lock 20.20.2. The independent verifier provisions both in isolation (cycle-2 confirmed 8/9 toolchain entries match after isolated acquisition), so this does NOT block REM-0015/0016 verification; it is a host-toolchain alignment question for the implementer's local gates.",
       "status": "RESOLVED"
+    },
+    {
+      "blocked_tasks": [
+        "OCOR-DEV-0060",
+        "OCOR-DEV-0061",
+        "OCOR-DEV-0062",
+        "OCOR-DEV-0063",
+        "OCOR-DEV-0064",
+        "OCOR-DEV-0065",
+        "OCOR-DEV-0066"
+      ],
+      "id": "OCOR-DEV-REM-0017",
+      "non_blocking": false,
+      "scope": "CI-0048-REAL-BACKEND (2026-10-05): PR #164 excluded test_ocor_dev_0048.py from validation-closure CI (--ignore) as a temporary measure. Remediation: provision the full ocor-bootstrap stack in CI (SPIRE server/agent + bootstrap credentials + digest-pinned images from infra/services.lock.json), run test_ocor_dev_0048.py with zero skips, remove the --ignore. Mandatory dependency of every G6 task (OCOR-DEV-0060..0066); does not block OCOR-DEV-0049 or G5.",
+      "status": "OPEN"
     }
   ],
   "claims": {
@@ -478,6 +490,26 @@
   },
   "next_executable_action": "OCOR-DEV-0049:implementation \u2014 lowest-numbered ready task after OCOR-DEV-0048 GO_FOR_EVIDENCE_SEAL (cycle 7) was sealed and merged (PR #163, 45e4a6f66209af3136d79980c00c41d79fb9ae8a). OCOR-DEV-0050 is also ready (hard_dependencies satisfied). Non-blocking PO decisions RVW-03, INFO-A, INFO-C remain OPEN_PO_DECISION_REQUIRED.",
   "remediation_status": {
+    "CI-0048_REAL_BACKEND": {
+      "deviation_pr": 164,
+      "deviation_registered_in": "reports/development/METHOD_COMPLIANCE.json",
+      "g6_dependency": [
+        "OCOR-DEV-0060",
+        "OCOR-DEV-0061",
+        "OCOR-DEV-0062",
+        "OCOR-DEV-0063",
+        "OCOR-DEV-0064",
+        "OCOR-DEV-0065",
+        "OCOR-DEV-0066"
+      ],
+      "notes": [
+        "PR #164 excluded ocor-runtime/tests/tasks/test_ocor_dev_0048.py from the validation-closure CI (--ignore); accepted by the Product Owner ONLY as a temporary measure.",
+        "OCOR-DEV-REM-0017 opened: provision the full ocor-bootstrap stack in CI (SPIRE server/agent + bootstrap credentials + digest-pinned images from infra/services.lock.json), run test_ocor_dev_0048.py with zero skips, remove the --ignore.",
+        "Standing rule (2026-10-05): never exclude, deselect or mark tests to pass a check, and never remove skipped from counts. If a check fails for missing CI infrastructure, write a decision request and continue with other ready work."
+      ],
+      "rem_opened": "OCOR-DEV-REM-0017",
+      "status": "REM_OPENED"
+    },
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
       "merge_commit": "8f4d2aa168018e950ad3b85f1a6a78af81fb2fb6",
@@ -675,5 +707,5 @@
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "status": "ACTIVE",
-  "updated_at": "2026-10-05T09:13:56Z"
+  "updated_at": "2026-10-05T10:04:04Z"
 }

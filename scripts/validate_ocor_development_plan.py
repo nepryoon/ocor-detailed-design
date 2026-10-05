@@ -433,6 +433,7 @@ def main() -> int:
         "reports/assurance/OCOR-DEV-REM-0016-RCCAD/OCOR-DEV-REM-0016.json",
         "reports/assurance/OCOR-DEV-REM-0016-RCCAD/OCOR-DEV-REM-0016.log",
         "reports/assurance/OCOR-DEV-REM-0016-RCCAD/MANIFEST.json",
+        "reports/assurance/OCOR-DEV-REM-0017-RCCAD/README.md",
         "reports/review/OCOR_FULL_CODE_REVIEW_2026-09-15.md",
         "reports/development/METHOD_COMPLIANCE.json",
         "reports/development/MODEL_HANDOFF.json",

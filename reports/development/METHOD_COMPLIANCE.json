@@ -4,6 +4,16 @@
   "change_set": "RCCAD-TERMINAL-BLOCKED-STATE",
   "decision_id": "DEC-210",
   "definition_of_done": "BLOCKED_EXTERNAL_SERVICES_50_TASKS_REMAIN",
+  "deviations": [
+    {
+      "detail": "validation-closure CI excludes ocor-runtime/tests/tasks/test_ocor_dev_0048.py via --ignore because the ADD v1.2 validation-closure CI does not provision the full ocor-bootstrap stack (SPIRE/SPIFFE workload identity + bootstrap credentials) required by the CONDITIONAL_INFRASTRUCTURE_GUARD TEST-INFRA-005. Accepted by the Product Owner ONLY as a temporary measure (decision CI-0048-REAL-BACKEND, 2026-10-05).",
+      "id": "CI-0048-REAL-BACKEND",
+      "path": ".github/workflows/ocor-validation-closure.yml",
+      "pr": 164,
+      "remediation": "OCOR-DEV-REM-0017",
+      "status": "OPEN_TEMPORARY_REMEDIATION"
+    }
+  ],
   "evidence_fence": {
     "E1": 0,
     "E2": 0

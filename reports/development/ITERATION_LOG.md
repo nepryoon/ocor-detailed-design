@@ -4307,3 +4307,32 @@
   `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`; `inputs/` invariato. Le decisioni PO non bloccanti
   `RVW-03`/`INFO-A`/`INFO-C` restano `OPEN_PO_DECISION_REQUIRED`.
 - `EXECUTION_STATE.json`, `MODEL_HANDOFF.json` riallineati (0048 sigillato e mergiato).
+
+## 2026-10-05 — CI-0048-REAL-BACKEND: registrazione deviazione PR #164 e apertura OCOR-DEV-REM-0017
+
+- Decisione PO `CI-0048-REAL-BACKEND` (2026-10-05): la PR #164 ha escluso
+  `ocor-runtime/tests/tasks/test_ocor_dev_0048.py` dal job `validation-closure` (`--ignore`);
+  accettata SOLO come misura temporanea, da non estendere ad altri file/job e da annullare con la
+  remediation qui sotto.
+- Registrata la deviazione PR #164 in `reports/development/METHOD_COMPLIANCE.json`
+  (campo `deviations`, id `CI-0048-REAL-BACKEND`, remediation `OCOR-DEV-REM-0017`).
+- Aperto il task di remediation `OCOR-DEV-REM-0017` (primo `REM-*` libero verificato con grep
+  sull'intero repository): eseguire in CI lo stack `ocor-bootstrap` completo (SPIRE server/agent,
+  credenziali di bootstrap, immagini digest-pinned da `infra/services.lock.json`), far girare
+  `test_ocor_dev_0048.py` con zero skip e rimuovere l'`--ignore`. Record in
+  `reports/assurance/OCOR-DEV-REM-0017-RCCAD/README.md` (status `OPEN`).
+- Vincolo registrato: `OCOR-DEV-REM-0017` è dipendenza obbligatoria di ogni task G6
+  (`OCOR-DEV-0060`…`OCOR-DEV-0066`), non blocca `OCOR-DEV-0049` né i task G5
+  (`EXECUTION_STATE.json` → `blockers`, `blocked_tasks` = task G6).
+- Regola permanente: vietato escludere, deselezionare o marcare test per far passare un check e
+  togliere `skipped` dai conteggi; se un check fallisce per infrastruttura mancante in CI, scrivere
+  una decision request e proseguire con altro lavoro pronto.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`; `inputs/` invariato. Nessuna modifica a codice di
+  prodotto o workflow; nessun indebolimento di gate. Aggiornata SOLO l'allowlist dei nuovi file del
+  validator di piano (`scripts/validate_ocor_development_plan.py`: +1 voce
+  `reports/assurance/OCOR-DEV-REM-0017-RCCAD/README.md`, R3) con self-hash settle in
+  `reports/planning/OCOR_PLAN_RUN_STATE.json` e `reports/planning/OCOR_PLANNING_VALIDATION_REPORT.md`
+  (PASS 37/0/2 NOT_EXECUTED).
+- Prossima azione: `OCOR-DEV-0049:implementation` (task più basso pronto; `OCOR-DEV-0050` anche
+  pronto).
