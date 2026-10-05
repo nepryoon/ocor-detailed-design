@@ -1,9 +1,33 @@
 {
   "assumptions_requiring_revalidation": [
-    "The effective model name and reasoning effort are not exposed by the runtime."
+    "Stesso modello per implementatore e verifier in contesti separati; nessuna diversit\u00e0 di modello dichiarata. Model/effort esatti NOT_EXPOSED_BY_RUNTIME.",
+    "La candidatura richiede verdetto sullo stesso head_sha e futura integrazione governata. I report terminali storici restano conservati."
   ],
-  "baseline_commit": "7d833606756203f28c50913871f6ae6d66c790ee",
-  "branch": "governed/state-sync-r3c-wire-drift-validator",
+  "base_sha": "c6cbcd3282161aafd404e73bec49acffb1ffb011",
+  "baseline_commit": "97f1081ec825356f276073d093bf20f51e47ba25",
+  "branch": "governed/state-sync-ocor-dev-0048-repair-cycle-5",
+  "candidate_evidence": {
+    "base_sha": "c6cbcd3282161aafd404e73bec49acffb1ffb011",
+    "branch": "task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls",
+    "head_sha": "4d9a0644cdd1553ae899409f76e7839bd03e26b8",
+    "paths": [
+      "reports/evidence/G4/OCOR-DEV-0048.json",
+      "reports/evidence/G4/OCOR-DEV-0048.log",
+      "reports/evidence/G4/MANIFEST.json"
+    ],
+    "raw_output_sha256": "eead2daf44aa48f44d7cf09d38d3e768f69d1469d3ec0e67c9e67061ce6ec5a7",
+    "request_id": "OCOR-DEV-0048-4d9a0644cdd1-5",
+    "source_commit": "46854e06ee3cc139c2042ba4373f08ea80e3a6fa",
+    "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION",
+    "worktree": ".ocor/worktrees/ocor-dev-0048"
+  },
+  "changed_paths": [
+    "ocor-runtime/src/ocor_runtime/security/control_plane.py",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0048.py",
+    "reports/evidence/G4/MANIFEST.json",
+    "reports/evidence/G4/OCOR-DEV-0048.json",
+    "reports/evidence/G4/OCOR-DEV-0048.log"
+  ],
   "commands_run": [
     {
       "command": "PR #54 merged (Phase 0 reconciliation)",
@@ -606,6 +630,77 @@
     {
       "command": "state sync for R3 step (c): update EXECUTION_STATE/MODEL_HANDOFF/ITERATION_LOG (baseline_commit, latest_ci_evidence, next_executable_action, R3 status COMPLETE)",
       "result": "PENDING_MERGE_STATE_SYNC_R3C"
+    },
+    {
+      "command": "Process cycle-2 NO_GO verdict for OCOR-DEV-0048 (eda08db30ca2-2): escalate per RCCAD 8",
+      "result": "ESCALATED_BLOCKED_REPAIR_BUDGET_EXHAUSTED_2_cycles_exhausted_cycle0_8_findings_cycle1_7_findings_cycle2_VF-001_timezone_offset_bypass_VF-002_delegation_not_wired_into_keycloak_opa_boundary"
+    },
+    {
+      "command": "ocor-runtime/.venv/bin/python -m pytest -q -ra ocor-runtime/tests/tasks/test_ocor_dev_0048.py (real ocor-bootstrap stack)",
+      "result": "50 passed in 21.12s (VF-001 canonical-UTC window + VF-002 delegation grant/revocation at the policy boundary)"
+    },
+    {
+      "command": "python scripts/validate_runtime_evidence.py --task OCOR-DEV-0048 --non-skipped --manifest reports/evidence/G4/MANIFEST.json",
+      "result": "PASS: qualifying task evidence for OCOR-DEV-0048"
+    },
+    {
+      "command": "ruff check . && ocor-runtime/.venv/bin/python -m mypy ocor-runtime/src/ocor_runtime/security/control_plane.py (strict)",
+      "result": "PASS (ruff 0.13.1 clean; mypy strict clean)"
+    },
+    {
+      "command": "scripts/validate_rccad.py --base-ref origin/main; validate_language_policy.py; validate_ocor_change_scope.py; validate_evidence_input_drift.py; sha256sum -c inputs/normative/SHA256SUMS",
+      "result": "PASS_LOCAL_PRECHECK; PASS; PASS; PASS; 8/8 PASS"
+    },
+    {
+      "command": "git push origin HEAD (task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls)",
+      "result": "PUSH_eda08db..7f2fff5"
+    },
+    {
+      "command": "wrote ~/.ocor-codex/verify_request.json",
+      "result": "REQUEST_OCOR-DEV-0048-7f2fff555621-3_TASK_EVIDENCE_repair_cycle_3"
+    },
+    {
+      "command": "read ~/.ocor-codex/verdicts/OCOR-DEV-0048-7f2fff555621-3.json",
+      "result": "NO_GO: 2 blocking high findings (VF-001 delegation window re-validated against request.at -> expired delegation still PERMIT; VF-002 valid_until fixed at 300s not bounded by delegation expiry -> decision outlives Authority). Full suite 955 passed on real stack, ruff/mypy clean, real OPA/Keycloak/OpenBao/SPIRE healthy. Per PO decision no further repair."
+    },
+    {
+      "command": "governed/state-sync-toolchain-lock-typescript-resolved: close TOOLCHAIN-LOCK-TYPESCRIPT decision request as RESOLVED (PO decision 2026-10-02 Option 1)",
+      "result": "DECISION_REQUEST_RESOLVED_NO_LOCK_VARIATION_isolated_node_20.20.2_typescript_7.0.2_for_local_gates"
+    },
+    {
+      "command": "governed/state-sync-terminal-blocked-report-cycle3: refresh TERMINAL_BLOCKED_REPORT.json + EXECUTION_STATE/MODEL_HANDOFF/ITERATION_LOG state sync",
+      "result": "PASS_validators_green; baseline_commit -> 7cac163; latest_ci_evidence -> PR #159; loop terminates TERMINAL_BLOCKED"
+    },
+    "git worktree add --detach /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048-repair4-red 7f2fff555621424c8c89764aba16810f038ef509 => exit 0",
+    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m pytest -v --tb=line ocor-runtime/tests/tasks/test_ocor_dev_0048.py -k repair4 --junitxml=/home/luca/.ocor-codex/repair4/red-final.xml => exit 1",
+    "git restore ocor-runtime/tests/tasks/test_ocor_dev_0048.py => exit 0",
+    "git worktree remove /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048-repair4-red => exit 0",
+    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m pytest -v --tb=line ocor-runtime/tests/ --junitxml=/home/luca/.ocor-codex/repair4/full-runtime.xml => exit 0",
+    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m pytest -v --tb=line reports/tests/test_authoritative_contract_conformance.py reports/tests/test_autonomous_tooling_policy.py reports/tests/test_backlog_generator_reality_parity.py reports/tests/test_bootstrap_lock_validation.py reports/tests/test_evidence_input_drift.py reports/tests/test_generate_contracts_reference_resolution.py reports/tests/test_language_migration_benchmark_harness.py reports/tests/test_rccad_methodology.py reports/tests/test_runtime_evidence_validator.py reports/tests/test_validate_language_policy.py --junitxml=/home/luca/.ocor-codex/repair4/reports-ci.xml => exit 0",
+    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python reports/tests/test_lld_add_alignment.py => exit 0",
+    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python reports/tests/test_v12_approval_readiness.py => exit 0",
+    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python reports/tests/test_v12_candidate.py => exit 0",
+    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python reports/tests/test_v12_release_gate.py => exit 0",
+    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python reports/tests/test_v12_semantics.py => exit 0",
+    "ruff check . => exit 0",
+    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m mypy => exit 0",
+    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python scripts/preflight_environment.py --require-ready => exit 0",
+    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python scripts/verify.py --json => exit 0",
+    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python scripts/validate_evidence_input_drift.py => exit 0",
+    "sha256sum -c inputs/normative/SHA256SUMS => exit 0",
+    "validate_rccad.py: PASS_LOCAL_PRECHECK; validate_language_policy.py: PASS; validate_ocor_change_scope.py: PASS sull'intero diff task; validate_runtime_evidence.py --non-skipped: PASS",
+    "validate_ocor_development_plan.py --authorized-extension --base-ref exact committed HEAD: PASS, due strumenti opzionali NOT_EXECUTED; output planning ripristinati",
+    {
+      "command": "verifier esterno OCOR-DEV-0048-c6cbcd328216-4 (loop)",
+      "result": "VERIFIER_ERROR_after_3_attempts_rc=1_moderation_flag('possible_cybersecurity_risk'); request re-issued once per RCCAD \u00a76; stale /tmp verifier worktree removed to enable clean retry"
+    },
+    {
+      "command": "verifier esterno OCOR-DEV-0048-c6cbcd328216-4 (loop)",
+      "result": "NO_GO: 2 finding bloccanti high (VF-001 SignedDelegation non firma tenant/domini/compartimenti richiesti da ADD v1.3 \u00a75.2; VF-002 modulo OPA non firmato iniettato -> PERMIT con digest stantio anzich\u00e9 STALE_BUNDLE). Per decisione OCOR-DEV-0048-REPAIR-4-CODEX nessuna quinta riparazione: TERMINAL_BLOCKED."
+    },
+    {
+      "command": "verifier esterno OCOR-DEV-0048-4d9a0644cdd1-5 (loop)",
+      "result": "NO_GO: 2 finding bloccanti (VF-001 high: claim act firmato non sostituisce la catena del DelegationGrant \u2014 omissione grant/capability produce PERMIT; VF-002 medium: digest inputs_tree dell'evidenza candidata errato). Per decisione OCOR-DEV-0048-REPAIR-5-CLAUDE nessuna sesta riparazione senza nuova decisione: TERMINAL_BLOCKED."
     }
   ],
   "completed_tasks": [
@@ -721,9 +816,13 @@
     "R3 step (b) part 2: PR #145 merged (168665f). 20 remaining G1/G2/G4 drifted evidence records requalified at HEAD with content-addressed *.requalified.json/.log records carrying explicit 'supersedes' links; surgical MANIFEST.json insertion; original sealed records never modified; planning self-hash re-aligned. Post-merge drift validator GREEN (0/165 inputs, 0/62 tasks).",
     "OCOR-DEV-REM-0015: PR #149 merged (54ec7d13d7e954b4264efdb2d4965b6f8957b2a7). All 13 checks green on the exact head 0f98a5d0f29801e0a2c7aabe1f0dbbe999d5447d. validate_rccad.py NUL-delimited git diff path handling (finding VF-002); sealed content-addressed evidence record.",
     "OCOR-DEV-REM-0016: PR #151 merged (5e1e601431a2ecab15869cdfb4775a39c145cc4f). All 13 checks green on the exact head 8174019fe803b24f0fc00dc8a7efe8a727a1a87c. Content-addressed evidence records for REM-0010/0011/0012 (finding VF-003); fail-closed validate_runtime_evidence.py; sealed content-addressed evidence record.",
-    "R3 step (c): PR #153 merged (7d833606756203f28c50913871f6ae6d66c790ee). scripts/validate_evidence_input_drift.py wired as blocking CI gate (ocor-tooling-bootstrap.yml) and preflight step (AGENTS.md); all 13 checks green on the exact head af61453cfae010dd8b68c82692cb42fbc3e9e678; drift validator GREEN at HEAD (0/165 inputs, 0/62 tasks)."
+    "R3 step (c): PR #153 merged (7d833606756203f28c50913871f6ae6d66c790ee). scripts/validate_evidence_input_drift.py wired as blocking CI gate (ocor-tooling-bootstrap.yml) and preflight step (AGENTS.md); all 13 checks green on the exact head af61453cfae010dd8b68c82692cb42fbc3e9e678; drift validator GREEN at HEAD (0/165 inputs, 0/62 tasks).",
+    "OCOR-DEV-0048 escalation: cycle-2 independent verification (head eda08db30ca20c722a1cc11d25e4b34d7c590227) returned NO_GO with 2 blocking high findings (VF-001 timezone-offset bypass of signed-delegation/bundle window; VF-002 delegation not wired into Keycloak->OPA boundary). 2 repair cycles exhausted -> escalated BLOCKED_REPAIR_BUDGET_EXHAUSTED per RCCAD 8; task and all transitive dependents (OCOR-DEV-0049..0069) blocked pending PO disposition. Evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed).",
+    "Terminal state sync: refreshed reports/development/TERMINAL_BLOCKED_REPORT.json to the cycle-3 terminal state (OCOR-DEV-0048 BLOCKED_REPAIR_BUDGET_EXHAUSTED after cycle-3 NO_GO OCOR-DEV-0048-7f2fff555621-3); baseline_commit -> 7cac163; latest_ci_evidence -> PR #159 (6 green workflow runs, head c94c072e, merge 7cac163e). No executable work remains; loop terminates TERMINAL_BLOCKED.",
+    "Terminal state sync (cycle 5): OCOR-DEV-0048 verified NO_GO (OCOR-DEV-0048-4d9a0644cdd1-5) after the Claude Code repair cycle 5 (implementer Claude Code/Anthropic, verifier Codex/OpenAI); refreshed TERMINAL_BLOCKED_REPORT.json to the cycle-5 terminal state (BLOCKED_REPAIR_BUDGET_EXHAUSTED); baseline_commit -> 97f1081; latest_ci_evidence -> PR #161. No executable work remains; loop terminates TERMINAL_BLOCKED."
   ],
-  "current_task": "R3 step (c) complete: evidence input drift validator wired as blocking CI gate and preflight step (PR #153 merged). Next: OCOR-DEV-0048 implementation phase.",
+  "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
+  "current_task": "OCOR-DEV-0048 ciclo 5: verdetto indipendente NO_GO (OCOR-DEV-0048-4d9a0644cdd1-5) con 2 finding (VF-001 high: claim act firmato non sostituisce la catena del grant; VF-002 medium: digest inputs_tree errato). Per decisione PO OCOR-DEV-0048-REPAIR-5-CLAUDE nessuna sesta riparazione senza nuova decisione: task terminale BLOCKED_REPAIR_BUDGET_EXHAUSTED, downstream OCOR-DEV-0049..0069 transitivamente bloccato, loop TERMINAL_BLOCKED.",
   "evidence_paths": [
     "reports/development/RECONCILIATION_2026-09-12_STATE.md",
     "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
@@ -813,10 +912,89 @@
     "reports/evidence/G4/OCOR-DEV-0047.json",
     "reports/evidence/G4/OCOR-DEV-0047.log"
   ],
-  "exact_next_action": "OCOR-DEV-0048 implementation phase: read spike OCOR-DEV-0021 and reused ports in full; write executable acceptance/negative criteria before code; TDD RED->GREEN->REFACTOR with real backends (OPA, Keycloak, SPIFFE/SPIRE, OpenBao, mTLS) on the local ocor-bootstrap stack; run full local gates; commit/push evidence candidate and request independent verification.",
-  "schema_version": "1.0",
-  "unresolved_blockers": [
-    "TOOLCHAIN-LOCK-TYPESCRIPT"
+  "exact_next_action": "None: loop terminates TERMINAL_BLOCKED. OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED after cycle-5 NO_GO (OCOR-DEV-0048-4d9a0644cdd1-5, PO decision OCOR-DEV-0048-REPAIR-5-CLAUDE); the residual backlog OCOR-DEV-0049..0069 is transitively blocked. Non-blocking PO decisions RVW-03/INFO-A/INFO-C remain OPEN_PO_DECISION_REQUIRED.",
+  "head_sha": "4d9a0644cdd1553ae899409f76e7839bd03e26b8",
+  "independent_verification": {
+    "implementer": "Claude Code (Claude Opus 5.5, claude-opus-5-5)",
+    "limitation": "Implementatore della riparazione (Claude Code) e verifier (Codex) sono modelli di fornitori diversi in processi separati; nessuna altra garanzia di indipendenza dichiarata.",
+    "model_identity": "implementer claude-opus-5-5; verifier NOT_EXPOSED_BY_RUNTIME",
+    "reasoning_effort": "NOT_EXPOSED_BY_RUNTIME",
+    "same_model_separate_contexts": false,
+    "verdict_status": "NO_GO",
+    "verifier": "Codex, processo esterno a contesto pulito"
+  },
+  "migration_rollback_result": "Review meccanica: cinque soli percorsi autorizzati, nessuna migrazione/schema/port sigillato modificato. git diff origin/main...HEAD limita il task a source/test, JSON/log e manifest G4; reverse-apply --check del commit di riparazione passante. Le fixture rimuovono i client temporanei Keycloak e le entry SPIRE, recuperano i container nei finally e usano segreti disposable su OCOR. Nessun rollback semantico o conformance globale dichiarato.",
+  "raw_evidence_hashes": {
+    "candidate_json": "63bd998296a50e8dbeb59fd21fe9e022ad5b82f7778696ab51f494434aa06803",
+    "candidate_log": "eead2daf44aa48f44d7cf09d38d3e768f69d1469d3ec0e67c9e67061ce6ec5a7"
+  },
+  "repair_authorization": {
+    "NO_GO_disposition": "TERMINAL_BLOCKED; nessuna ulteriore riparazione senza nuova decisione del Product Owner",
+    "audit_matrix": "~/.ocor-codex/audit_0048.md (fuori dal repository)",
+    "authorized_start_head": "c6cbcd3282161aafd404e73bec49acffb1ffb011",
+    "date": "2026-10-04",
+    "id": "OCOR-DEV-0048-REPAIR-5-CLAUDE",
+    "scope": "Audit completo ADD v1.3 \u00a75.1/\u00a75.2 e LLD + riparazione unica vincoli firmati DelegationGrant e binding atomico OPA\u2192snapshot bundle; implementatore Claude Code, verifier Codex"
+  },
+  "requirement_ids": [
+    "BR-003",
+    "BR-007",
+    "BR-013",
+    "BR-016",
+    "FR-020",
+    "FR-021",
+    "FR-067",
+    "FR-103",
+    "FR-110",
+    "FR-117",
+    "FR-128",
+    "FR-143",
+    "FR-153",
+    "FR-160",
+    "NFR-010",
+    "NFR-019",
+    "NFR-026",
+    "NFR-031",
+    "NFR-049",
+    "NFR-052",
+    "NFR-056",
+    "NFR-063",
+    "NFR-064",
+    "NFR-073",
+    "NFR-074",
+    "NFR-086",
+    "NFR-087",
+    "NFR-089"
   ],
-  "worktree": null
+  "schema_version": "1.0",
+  "security_observability_notes": "Clock UTC del boundary, validit\u00e0 intersecate, correlazione presente; nessun secret nei log candidati o in Git. E1/E2/Verified e tutti i claim invariati.",
+  "task_id": "OCOR-DEV-0048",
+  "test_results": {
+    "full_runtime": {
+      "command": "pytest -v --tb=line ocor-runtime/tests/",
+      "exit_code": 0,
+      "failed": 0,
+      "passed": 1071,
+      "raw_output_sha256": "796fe2b59c424a1e93256629d801219789665f3cf6b7870843f4911b8d7e2bc3",
+      "skipped": 0,
+      "source_commit": "46854e06ee3cc139c2042ba4373f08ea80e3a6fa"
+    },
+    "reports_ci": {
+      "failed": 0,
+      "not_executed": 0,
+      "passed": 82,
+      "skipped": 0
+    },
+    "task": {
+      "failed": 0,
+      "not_executed": 0,
+      "passed": 166,
+      "skipped": 0
+    }
+  },
+  "unresolved_blockers": [
+    "OCOR-DEV-0048"
+  ],
+  "updated_at": "2026-10-04T13:49:11Z",
+  "worktree": ".ocor/worktrees/ocor-dev-0048-repair5-state"
 }

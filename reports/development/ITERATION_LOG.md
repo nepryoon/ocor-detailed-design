@@ -4052,3 +4052,233 @@
   SPIFFE/SPIRE, OpenBao, mTLS); leggere per intero lo spike `OCOR-DEV-0021` e i port riusati, poi TDD
   RED→GREEN→REFACTOR con criteri eseguibili prima del codice. `RVW-03`/`INFO-A`/`INFO-C` e
   `TOOLCHAIN-LOCK-TYPESCRIPT` restano riservati al Product Owner (non bloccanti).
+
+## 2026-10-02 — Governed: OCOR-DEV-0048 escalation (repair budget exhausted) + state sync
+
+- Change set `governed/state-sync-ocor-dev-0048-escalation` (docs/state), basato sull'HEAD di `main` =
+  `5e2a0909e842fa0cc550a5b6b2da23ad42b8fa63` (merge commit di PR #155, `governed/ocor-dev-0048-conditional-backend-guard`,
+  che registra `test_ocor_dev_0048.py` come guard infrastrutturale condizionale).
+- **Escalation di `OCOR-DEV-0048`** ai sensi di RCCAD §8 (harness): il task a backend reale (OPA, Keycloak,
+  SPIFFE/SPIRE, OpenBao, mTLS) ha esaurito il budget di 2 cicli di riparazione materialmente diversi. Tre verdetti
+  indipendenti `NO_GO`:
+  - ciclo 0 `OCOR-DEV-0048-587e4a8485c4-0` (head `587e4a84…`): 8 finding (`VF-001`…`VF-008`);
+  - ciclo 1 `OCOR-DEV-0048-de9e7cd429f6-1` (head `de9e7cd4…`): 7 finding (`VF-001`…`VF-007`);
+  - ciclo 2 `OCOR-DEV-0048-eda08db30ca2-2` (head `eda08db3…`): 2 finding bloccanti `high`.
+- Finding finali (ciclo 2): `VF-001` — bypass della finestra temporale via offset timezone (serializzazione firmata
+  `strftime` con `Z` senza conversione UTC mentre i guard confrontano istanti offset-aware; `DELEGATION_EXPIRED`
+  diventa `ACCEPTED` alterando solo `tzinfo`; contraddice ADD v1.3 §§5.1–5.2). `VF-002` — delega non cablata nel
+  percorso Keycloak→OPA (`verify_signed_delegation` invocato da nessun provider; i 7 test di delega esercitano solo
+  l'helper in isolamento; contraddice ADD v1.3 §5.2 regole 4–5 e il primo `acceptance_criteria`).
+- Record di escalation: `reports/development/OCOR_DEV_0048_ESCALATION.md`. `OCOR-DEV-0048` marcato
+  `BLOCKED_REPAIR_BUDGET_EXHAUSTED`; tutti i 21 task residui (`OCOR-DEV-0049`…`OCOR-DEV-0069`) bloccati
+  transitivamente. Azione minima di sblocco: correggere `VF-001` (UTC canonico con identica precisione per
+  firma+enforcement) e `VF-002` (cablaggio della validazione di grant/revoca nel percorso dei provider autorizzati)
+  e richiedere una terza verifica indipendente — eccede il budget di 2 cicli, richiede l'autorizzazione del Product
+  Owner o una disposition governata alternativa.
+- `EXECUTION_STATE.json`: `baseline_commit` → `5e2a0909…`; nuovo blocker `OCOR-DEV-0048`; nuova sezione
+  `backlog_escalations`; `current_gate` → `G4_WAVE_15_BLOCKED_OCOR_DEV_0048_ESCALATED`; `next_executable_action`
+  → stato terminale `TERMINAL_BLOCKED`.
+- `MODEL_HANDOFF.json` riallineato (branch, worktree, `current_task`, `exact_next_action`; `unresolved_blockers`
+  = [`TOOLCHAIN-LOCK-TYPESCRIPT`, `OCOR-DEV-0048`]).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance` `NOT_ESTABLISHED`,
+  `PoC`/`Production` `NO-GO`. `inputs/` invariato.
+- Prossima azione: nessuna — `TERMINAL_BLOCKED` in attesa della disposition del Product Owner.
+
+## 2026-10-02 — Governed: OCOR-DEV-0048 repair cycle 3 (PO decision OCOR-DEV-0048-REPAIR-3) + state sync
+
+- Change set `governed/state-sync-ocor-dev-0048-repair-cycle-3`, basato sull'HEAD di `main` =
+  `4452d70ecc170eefd44a328ffa897380cca0a761` (merge di PR #156, escalation state sync).
+- **Decisione del Product Owner** `OCOR-DEV-0048-REPAIR-3` (2026-10-02): autorizzato UN SOLO terzo ciclo di
+  riparazione per `OCOR-DEV-0048`, in deroga puntuale al budget di 2 cicli (RCCAD §8); il budget resta 2 per
+  ogni altro task. Ambito esclusivamente `VF-001` e `VF-002` del verdetto `OCOR-DEV-0048-eda08db30ca2-2`.
+- **Branch task**: `task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls`, a partire da head
+  `eda08db30ca20c722a1cc11d25e4b34d7c590227`; nessuna riscrittura di ciò che è già stato accettato. Head
+  riparato: `7f2fff555621424c8c89764aba16810f038ef509` (2 commit).
+- **VF-001**: istanti canonici UTC con identica precisione per firma ed enforcement; aggiunti 2 casi di
+  finestra (`BUNDLE-OFFSET-EQUIVALENT-STABLE`, `BUNDLE-OFFSET-SHIFTED-REJECTED`).
+- **VF-002**: `verify_signed_delegation` e stato di revoca consumati da `OpaPolicyDecisionProvider.evaluate`;
+  aggiunti 7 casi sulla stessa operazione (`DELEGATED-REQUEST-{VALID-PERMIT, ABSENT-GRANT, EXPIRED, REVOKED,
+  OUT-OF-SCOPE, OUT-OF-PURPOSE, ALTERED-CHAIN}`) sui backend reali, senza mock del boundary.
+- Gate locali verdi: `50 passed` su `test_ocor_dev_0048.py` (stack `ocor-bootstrap` reale), `ruff check` e
+  `mypy --strict` puliti, `validate_runtime_evidence.py` `PASS`, `validate_rccad.py` `PASS_LOCAL_PRECHECK`,
+  `validate_language_policy.py`, `validate_ocor_change_scope.py` e `validate_evidence_input_drift.py` verdi,
+  `sha256sum` normativo `PASS` (8/8).
+- Richiesta di verifica indipendente: `OCOR-DEV-0048-7f2fff555621-3` (`TASK_EVIDENCE`, `repair_cycle: 3`).
+- `EXECUTION_STATE.json`: `baseline_commit` → `4452d70e…`; blocker `OCOR-DEV-0048` →
+  `IN_PROGRESS_REPAIR_CYCLE_3_AWAITING_VERIFICATION`; `backlog_escalations.OCOR-DEV-0048` aggiornato con la
+  decisione PO e il ciclo 3; `current_gate` → `G4_WAVE_15_OCOR_DEV_0048_REPAIR_CYCLE_3_AWAITING_VERIFICATION`;
+  `next_executable_action` → attesa del verdetto indipendente.
+- `MODEL_HANDOFF.json` riallineato (branch, worktree, `current_task`, `exact_next_action`,
+  `unresolved_blockers`, `commands_run`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance` `NOT_ESTABLISHED`,
+  `PoC`/`Production` `NO-GO`. `inputs/` invariato. L'evidenza di `OCOR-DEV-0048` resta
+  `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
+- Prossima azione: attendere il verdetto `OCOR-DEV-0048-7f2fff555621-3`. Con `GO_FOR_EVIDENCE_SEAL`: sigillare
+  e integrare `OCOR-DEV-0048`; con `NO_GO`: nessuna ulteriore riparazione (decisione PO), escalation e
+  `TERMINAL_BLOCKED`.
+
+## 2026-10-02 — Governed: OCOR-DEV-0048 terminal (cycle-3 NO_GO, PO decision OCOR-DEV-0048-REPAIR-3) + state sync
+
+- Change set `governed/state-sync-ocor-dev-0048-terminal-no-go`, basato sull'HEAD di `main` =
+  `792842d91ae12d64756ff133f763c6ace6c7734f` (merge di PR #157, state sync del ciclo 3).
+- **Verdetto indipendente (ciclo 3)** `OCOR-DEV-0048-7f2fff555621-3` = `NO_GO`, 2 finding bloccanti `high`
+  diversi dai precedenti (suite completa `955 passed` sullo stack reale, backend reali healthy):
+  - `VF-001` — `control_plane.py:1212`: finestra della delega rivalidata con `request.at` invece del
+    tempo corrente del boundary; delega scaduta ⇒ `PERMIT` (contraddice ADD v1.3 §5.1, fail-closed/FR-128).
+  - `VF-002` — `control_plane.py:1259-1261`: `valid_until` fissato a 300s limitato solo dal bundle;
+    decisione delegata che sopravvive alla propria Authority (contraddice ADD v1.3 §5.1/§5.2, FR-128).
+- **Decisione del Product Owner** `OCOR-DEV-0048-REPAIR-3`: nessuna ulteriore riparazione dopo `NO_GO`.
+  `OCOR-DEV-0048` è terminale `BLOCKED_REPAIR_BUDGET_EXHAUSTED`; tutti i 21 task residui
+  (`OCOR-DEV-0049`…`OCOR-DEV-0069`) bloccati transitivamente.
+- `EXECUTION_STATE.json`: `baseline_commit` → `792842d91ae12d64756ff133f763c6ace6c7734f`; blocker
+  `OCOR-DEV-0048` → `BLOCKED_REPAIR_BUDGET_EXHAUSTED`; `backlog_escalations.OCOR-DEV-0048` con verdetto
+  ciclo 3 `NO_GO`, `final_findings_cycle_3` e `terminal_disposition`; `current_gate` →
+  `G4_WAVE_15_OCOR_DEV_0048_TERMINAL_BLOCKED`; `next_executable_action` → chiusura di
+  `TOOLCHAIN-LOCK-TYPESCRIPT` (decisione PO 2026-10-02, Opzione 1) e registrazione di
+  `TERMINAL_BLOCKED_REPORT.json`.
+- `MODEL_HANDOFF.json` riallineato (branch, worktree, `current_task`, `exact_next_action`,
+  `unresolved_blockers` = [`OCOR-DEV-0048`, `TOOLCHAIN-LOCK-TYPESCRIPT`], `commands_run`).
+- `OCOR_DEV_0048_ESCALATION.md`: aggiunto verdetto ciclo 3 `NO_GO` e stato finale `TERMINAL_BLOCKED`.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato. L'evidenza di `OCOR-DEV-0048`
+  resta `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
+- Prossima azione: chiudere `TOOLCHAIN-LOCK-TYPESCRIPT` come risolta (decisione PO 2026-10-02, Opzione 1)
+  in un change set `governed/` separato, poi `TERMINAL_BLOCKED_REPORT.json` e `TERMINAL_BLOCKED`.
+
+## 2026-10-02 — Governed: chiusura decision request TOOLCHAIN-LOCK-TYPESCRIPT (Opzione 1) + state sync
+
+- Change set `governed/state-sync-toolchain-lock-typescript-resolved`, basato sull'HEAD di `main` =
+  `f0f88d906e2c7cc5a57ec1c0c1bd616f63982e18` (merge di PR #158, terminal state sync di OCOR-DEV-0048).
+- **Decisione del Product Owner** `TOOLCHAIN-LOCK-TYPESCRIPT` (2026-10-02), **Opzione 1**: nessuna
+  variazione di `infra/toolchain.lock.json`; `node` 20.20.2 e `typescript@7.0.2` (`bin/tsc`) usati in
+  ambiente isolato (DEC-211) per i gate locali dell'implementatore; il lock e i suoi controlli di
+  validazione/verifica restano invariati.
+- `reports/development/decision_requests/TOOLCHAIN-LOCK-TYPESCRIPT.md` chiusa come `RESOLVED`, con
+  sezione di risoluzione che cita la decisione PO (Opzione 1, nessuna variazione del lock).
+- `EXECUTION_STATE.json`: `baseline_commit` → `f0f88d90…`; blocker `TOOLCHAIN-LOCK-TYPESCRIPT` →
+  `RESOLVED` con `resolution` (Opzione 1); `active_iteration` riallineato al nuovo branch; `updated_at`;
+  `next_executable_action` → registrazione/riallineamento di `TERMINAL_BLOCKED_REPORT.json` allo stato
+  terminale ciclo 3 e `TERMINAL_BLOCKED`.
+- `MODEL_HANDOFF.json` riallineato (branch, worktree, `current_task`, `exact_next_action`,
+  `unresolved_blockers` = [`OCOR-DEV-0048`], `commands_run`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato. Nessuna modifica a codice,
+  validator o workflow: solo `reports/development/` (decision request + stato + handoff + log).
+- Prossima azione: registrare/riallineare `reports/development/TERMINAL_BLOCKED_REPORT.json` allo stato
+  terminale ciclo 3 (`OCOR-DEV-0048` `BLOCKED_REPAIR_BUDGET_EXHAUSTED`) in un change set `governed/`,
+  poi terminare con `TERMINAL_BLOCKED`.
+
+## 2026-10-02 — Governed: refresh TERMINAL_BLOCKED_REPORT.json to cycle-3 terminal state + final state sync
+
+- Change set `governed/state-sync-terminal-blocked-report-cycle3`, basato sull'HEAD di `main` =
+  `7cac163e960cb86a3a780b42b65a96d518453791` (merge di PR #159, chiusura `TOOLCHAIN-LOCK-TYPESCRIPT`).
+- `reports/development/TERMINAL_BLOCKED_REPORT.json` riallineato allo stato terminale ciclo 3:
+  `baseline_commit` → `7cac163e96…`; `independent_verifier.identity` →
+  `OCOR-DEV-0048-7f2fff555621-3` (verdetto `NO_GO`, 2 finding `high`); `blocking_tasks[0].reason`
+  aggiornato ai finding del ciclo 3 (`VF-001` finestra della delega rivalidata con `request.at`
+  invece del tempo corrente del boundary; `VF-002` `valid_until` non limitato dalla scadenza della
+  delega); `supersedes` → report ciclo 2; `recorded_at` e
+  `local_controls.remote_ci_on_last_integrated_change` aggiornati (PR #159).
+  `terminal_state` resta `BLOCKED`; `claims` invariato (`E1=0`, `E2=0`,
+  `runtime_conformance` `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`).
+- `EXECUTION_STATE.json`: `baseline_commit` → `7cac163e96…`; `active_iteration` → nuovo branch;
+  `latest_ci_evidence` → PR #159 (6 run verde, head `c94c072e…`, merge `7cac163e…`);
+  `current_gate` → `TERMINAL_BLOCKED_REPORT_CYCLE3`; `next_executable_action` → `TERMINAL_BLOCKED`
+  (nessun lavoro eseguibile residuo); `updated_at`.
+- `MODEL_HANDOFF.json` riallineato (branch, worktree, `current_task`, `exact_next_action`,
+  `unresolved_blockers` = [`OCOR-DEV-0048`], `completed_tasks`, `commands_run`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`. `inputs/` invariato. Nessuna modifica a codice,
+  validator o workflow: solo `reports/development/` (report terminale + stato + handoff + log).
+- Prossima azione: nessuna — il ciclo termina con `TERMINAL_BLOCKED`. Tutto il residuo
+  (`OCOR-DEV-0049`…`OCOR-DEV-0069`) è bloccato transitivamente su `OCOR-DEV-0048`
+  (`BLOCKED_REPAIR_BUDGET_EXHAUSTED`); le decisioni PO non bloccanti `RVW-03`/`INFO-A`/`INFO-C`
+  restano aperte.
+
+## 2026-10-04 — OCOR-DEV-0048: quarto ciclo Codex, sola implementazione candidata
+
+- Decisione PO `OCOR-DEV-0048-REPAIR-4-CODEX` (2026-10-03): un solo quarto ciclo; supersede il divieto terminale precedente esclusivamente per questa riparazione. HEAD iniziale `7f2fff555621424c8c89764aba16810f038ef509`, baseline main `366a66d40a2b98c2df8f4c5d51ebcbbcb4c8e8fa`. Nessuna riscrittura della storia.
+- Branch task `task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls`, worktree `.ocor/worktrees/ocor-dev-0048`, HEAD candidato `c6cbcd3282161aafd404e73bec49acffb1ffb011`, source/test commit `5571086b3e0e3dc9ad128fd13682db4bc1f2455f`. Solo cinque percorsi del task. Stato/handoff/escalation su `governed/state-sync-ocor-dev-0048-repair-cycle-4` in worktree separato; nessun merge, nessuna PR, nessun altro task.
+- VF-001: rivalidazione corrente della delega e del Principal prima/dopo I/O; timestamp richiesta/parametro legacy non forniscono il clock. VF-002: `valid_until` limitato alla scadenza canonica UTC della delega.
+- Classe temporale: finestre bundle, token Keycloak, Principal, SVID e catene locale/peer verificate; intersezione delle autorità per ogni validità emessa. OpenBao emette al tempo del boundary e limita il lease a token/SVID/deletion time verificati. Port sigillati e lock invariati.
+- RED finale `23 failed / 3 passed` sulla base autorizzata con i nuovi test identici; GREEN `76 passed` sul task (26 nuovi casi), `981 passed` nella suite runtime completa con PostgreSQL reale, `82 passed` nei test reports CI. Zero skip qualificanti, nessun mock del boundary. Ritardi su risposte di backend reali; client Keycloak ed entry SPIRE temporanei rimossi nei finally.
+- Preflight: toolchain conforme per versione/digest, 11 servizi READY. CA disposable SPIRE scaduta rinnovata per due giorni con medesima chiave locale; ricreati solo SPIRE server/agent OCOR e riavviato Fuseki. Nessun lock/config tracciato modificato, nessuna risorsa non OCOR toccata.
+- Gate locali obbligatori verdi: ruff repo, mypy strict, RCCAD, language policy, task scope, runtime evidence non-skipped, drift (62 task/165 input/zero deriva), digest normativi 8/8, harness 14 PASS. Piano validato all'HEAD committato senza delta di planning, scope task verificato separatamente contro origin/main e base autorizzata; Markdown/Mermaid esterni opzionali `NOT_EXECUTED`, fallback deterministici eseguiti. Output generati non pertinenti ripristinati.
+- Primo run completo non qualificante: DSN configurato sulla porta errata 5432, invece della pubblicazione OCOR 55433; 4 fallimenti e 51 setup error. Corretto solo il DSN e rieseguita integralmente la suite. Il tentativo fallito è conservato nel raw candidato; nessun test/gate indebolito.
+- Implementatore della riparazione e verifier usano **lo stesso modello in contesti separati**; nessuna diversità di modello dichiarata. Identificatore esatto/effort `NOT_EXPOSED_BY_RUNTIME`. Verifier esterno non avviato e nessun verdetto scritto.
+- Richiesta `OCOR-DEV-0048-c6cbcd328216-4`, `repair_cycle: 4`, `TASK_EVIDENCE`; raw candidato `8945eb1c9031066c8e384bd6fccc00dd72c744f6aa21c31aa570903d91f82aed`. Evidenza `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION`, non sigillata.
+- Source di verità dei completati invariata (62 task); 0048 in attesa di verifica, downstream non avanzato. `E1=0`, `E2=0`, zero `Verified`, runtime conformance `NOT_ESTABLISHED`, PoC/Production `NO-GO`; `inputs/` invariato.
+- Prossima azione: Attendere esclusivamente il verifier esterno per OCOR-DEV-0048-c6cbcd328216-4, head c6cbcd3282161aafd404e73bec49acffb1ffb011. Nessuna verifica indipendente avviata dall'implementatore. Con GO_FOR_EVIDENCE_SEAL: futura sessione di integrazione; con NO_GO: TERMINAL_BLOCKED senza quinta riparazione, decisione OCOR-DEV-0048-REPAIR-4-CODEX.
+
+## 2026-10-04 — OCOR-DEV-0048: verifier esterno VERIFIER_ERROR, richiesta ripetuta una volta (§6)
+
+- Il verifier indipendente per `OCOR-DEV-0048-c6cbcd328216-4` (head `c6cbcd3282161aafd404e73bec49acffb1ffb011`, `repair_cycle: 4`, `TASK_EVIDENCE`) non ha prodotto un verdetto valido dopo 3 tentativi: `codex exec` è uscito con `rc=1` per un flag di moderazione del modello ("possible cybersecurity risk") sul contenuto di verifica avversariale dei backend di sicurezza (mTLS/SPIFFE/OpenBao). Il verdetto registrato è `VERIFIER_ERROR` (`~/.ocor-codex/verdicts/OCOR-DEV-0048-c6cbcd328216-4.json`).
+- Per OCOR-RCCAD §6 (`VERIFIER_ERROR`: ripetere la richiesta una volta) la richiesta di verifica è stata riemessa identica (stesso `head_sha`, `repair_cycle: 4`, `request_id`). Rimossa la worktree residua del verifier in `/tmp/ocor-verify-OCOR-DEV-0048-c6cbcd328216-4/wt` per consentire un retry pulito.
+- Nessuna modifica al codice, ai test, ai gate o all'evidenza candidata; nessun PR/merge. Il candidato resta `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillato). La disclosure same-model-in-separate-contexts è già nella richiesta.
+- Prossima azione: rieseguire il verifier a contesto pulito. Con `GO_FOR_EVIDENCE_SEAL`: integrazione in una sessione successiva; con `NO_GO` o nuovo `VERIFIER_ERROR`: `TERMINAL_BLOCKED` senza quinta riparazione (decisione `OCOR-DEV-0048-REPAIR-4-CODEX`).
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance` `NOT_ESTABLISHED`, PoC/Production `NO-GO`; `inputs/` invariato.
+
+## 2026-10-04 — OCOR-DEV-0048: verdetto ciclo 4 NO_GO → TERMINAL_BLOCKED (decisione OCOR-DEV-0048-REPAIR-4-CODEX)
+
+- Il verifier indipendente ha prodotto il verdetto `OCOR-DEV-0048-c6cbcd328216-4` (head
+  `c6cbcd3282161aafd404e73bec49acffb1ffb011`, `repair_cycle: 4`, `TASK_EVIDENCE`): `NO_GO` con 2
+  finding bloccanti `high`, diversi dai precedenti.
+  - `VF-001` (`security/control_plane.py:654`): `SignedDelegation` firma solo delegator/delegatee,
+    `resource_scopes`, `purpose` e finestra; non firma `tenant_id`/`domains`/`compartments` richiesti
+    da ADD v1.3 §5.2 (rr. 3169–3190). Le quattro varianti di scope cambiano il GCS ricalcolando il
+    digest, ma la stessa firma è accettata e produce `PERMIT` in tutti i casi; il controllo di policy
+    non applica i limiti che il grant omette.
+  - `VF-002` (`security/control_plane.py:1243`): `evaluate` verifica lista/digest dei moduli OPA prima
+    del POST e rivalida solo le finestre temporali (rr. 1330–1343); un proxy mTLS trasparente inietta
+    un modulo non firmato prima del POST reale, OPA restituisce `true` e il provider emette `PERMIT`
+    con il vecchio digest firmato anziché `STALE_BUNDLE` (viola «stale bundle fails closed» e il
+    version fence di ADD §5.1).
+- Per la decisione PO `OCOR-DEV-0048-REPAIR-4-CODEX` (2026-10-03): nessuna quinta riparazione,
+  `TERMINAL_BLOCKED`. Il verifier indica per una futura candidatura sotto nuovo mandato: rappresentare
+  e verificare i vincoli firmati del `DelegationGrant` (tenant, domini, compartimenti,
+  capability/effect/risk ceiling, binding a policy/workload) rifiutando grant incompleti; legare
+  atomicamente valutazione OPA e `PolicyDecision` allo snapshot/revisione verificato del bundle.
+- Stato: `OCOR-DEV-0048` `BLOCKED_REPAIR_BUDGET_EXHAUSTED` terminale; downstream
+  `OCOR-DEV-0049`…`OCOR-DEV-0069` transitivamente bloccato. Evidenza
+  `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
+- `EXECUTION_STATE.json`, `MODEL_HANDOFF.json` riallineati (ciclo 4 `NO_GO`, terminal disposition);
+  `TERMINAL_BLOCKED_REPORT.json` riallineato allo stato terminale ciclo 4.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`; `inputs/` invariato. Nessuna modifica a codice,
+  validator o workflow: solo `reports/development/` (report terminale + stato + handoff + log).
+- Prossima azione: nessuna — il ciclo termina con `TERMINAL_BLOCKED`. Tutto il residuo
+  (`OCOR-DEV-0049`…`OCOR-DEV-0069`) è bloccato transitivamente su `OCOR-DEV-0048`
+  (`BLOCKED_REPAIR_BUDGET_EXHAUSTED`); le decisioni PO non bloccanti `RVW-03`/`INFO-A`/`INFO-C`
+  restano aperte.
+
+
+## 2026-10-04 — OCOR-DEV-0048: verdetto ciclo 5 NO_GO → TERMINAL_BLOCKED (decisione OCOR-DEV-0048-REPAIR-5-CLAUDE)
+
+- Il verifier indipendente ha prodotto il verdetto `OCOR-DEV-0048-4d9a0644cdd1-5` (head
+  `4d9a0644cdd1553ae899409f76e7839bd03e26b8`, `repair_cycle: 5`, `TASK_EVIDENCE`): `NO_GO` con 2
+  finding bloccanti, uno `high` e uno `medium`.
+  - `VF-001` (`high`, `security/control_plane.py:1802`): `KeycloakIdentityProvider` include il claim
+    `act` firmato nella `principal.actor_chain`; nel ramo `delegation=None` `evaluate` controlla
+    soltanto un subset insiemistico e salta `_verify_grant_chain`. Con un token `act` realmente
+    firmato da Keycloak e la delega revocata, presentando grant/capability si ottiene
+    `DELEGATION_REVOKED`, ma omettendo entrambi si ottiene comunque `PERMIT`. Il claim autentica gli
+    attori ma non sostituisce scope, ceilings, binding e revoca del grant.
+  - `VF-002` (`medium`, `reports/evidence/G4/OCOR-DEV-0048.json:1775`): `inputs.inputs_tree` registra
+    `d9d827619d9c0215f5edbd4d372b1f0b52558f84` mentre l'HEAD verificato è
+    `60a73de8e47b38e94aeb0e2b8dedc689fab6eb35`; gli hash per-file, il commit sorgente, il manifest e i
+    24 raw log coincidono, ma il digest tree registrato è errato.
+- Per la decisione PO `OCOR-DEV-0048-REPAIR-5-CLAUDE` (2026-10-04): nessuna sesta riparazione senza
+  nuova decisione, `TERMINAL_BLOCKED`. Implementatore della riparazione Claude Code (Anthropic),
+  verifier Codex (OpenAI): modelli di fornitori diversi in processi separati.
+- Stato: `OCOR-DEV-0048` `BLOCKED_REPAIR_BUDGET_EXHAUSTED` terminale; downstream
+  `OCOR-DEV-0049`…`OCOR-DEV-0069` transitivamente bloccato. Evidenza
+  `CANDIDATE_PENDING_INDEPENDENT_VERIFICATION` (non sigillata).
+- `EXECUTION_STATE.json`, `MODEL_HANDOFF.json` riallineati (ciclo 5 `NO_GO`, terminal disposition);
+  `TERMINAL_BLOCKED_REPORT.json` riallineato allo stato terminale ciclo 5.
+- Claim fence invariato: `E1=0`, `E2=0`, zero requisiti `Verified`, `runtime_conformance`
+  `NOT_ESTABLISHED`, `PoC`/`Production` `NO-GO`; `inputs/` invariato. Nessuna modifica a codice,
+  validator o workflow: solo `reports/development/` (report terminale + stato + handoff + log).
+- Prossima azione: nessuna — il ciclo termina con `TERMINAL_BLOCKED`. Tutto il residuo
+  (`OCOR-DEV-0049`…`OCOR-DEV-0069`) è bloccato transitivamente su `OCOR-DEV-0048`
+  (`BLOCKED_REPAIR_BUDGET_EXHAUSTED`); le decisioni PO non bloccanti `RVW-03`/`INFO-A`/`INFO-C`
+  restano aperte.

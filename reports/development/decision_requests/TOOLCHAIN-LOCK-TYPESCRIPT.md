@@ -1,8 +1,22 @@
 # Decision request — TOOLCHAIN-LOCK-TYPESCRIPT (tsc 7.0.2 e node 20.20.2 vs 24.21.0)
 
-- **Status**: `OPEN_PO_DECISION_REQUIRED`
+- **Status**: `RESOLVED`
 - **Fonte**: change set `governed/toolchain-lock-residual-git` (risoluzione della parte `git` di
   `TOOLCHAIN-LOCK-RESIDUAL`, autorizzata dal Product Owner il 2026-10-01)
+
+## Risoluzione (2026-10-02) — Opzione 1
+
+Il Product Owner ha disposto (decisione `TOOLCHAIN-LOCK-TYPESCRIPT`, 2026-10-02) **l'Opzione 1**:
+nessuna variazione di `infra/toolchain.lock.json`. L'implementatore usa `node` 20.20.2 e
+`typescript@7.0.2` (`bin/tsc`) in un **ambiente isolato** (DEC-211) per i gate locali; il lock e
+i suoi controlli di validazione/verifica restano **invariati**. La verifica indipendente conferma
+già che le voci coincidono in isolamento (cycle-2: 8/9 voci della toolchain corrispondono dopo
+acquisizione isolata), quindi la divergenza riguarda soltanto l'ambiente host dell'implementatore
+e non blocca la verifica indipendente di `OCOR-DEV-REM-0015`/`REM-0016`.
+
+Il preflight locale `scripts/preflight_environment.py --require-ready` continua a segnalare
+`typescript` (`command unavailable`) e `node` (`version mismatch`) finché l'ambiente host non è
+allineato all'ambiente isolato; ciò non richiede alcuna variazione del lock né nuova decisione.
 
 ## Contesto
 
