@@ -1889,7 +1889,10 @@ class OpaPolicyDecisionProvider:
             ssl_context=self._ssl_context,
         )
         if status != 200:
-            raise SecurityControlError("POLICY_UNAVAILABLE", f"policy eval HTTP {status}")
+            raise SecurityControlError(
+                "POLICY_UNAVAILABLE",
+                f"correlation_id={correlation_id} policy eval HTTP {status}",
+            )
         try:
             response = json.loads(body.decode())
         except (ValueError, json.JSONDecodeError) as exc:

@@ -3288,3 +3288,35 @@ def test_repair6_policy_evaluation_error_fails_closed(
     error = _expect("POLICY_UNAVAILABLE",
                     lambda: provider.evaluate(request("read", "urn:ocor:target:site-1")))
     assert "policy eval HTTP 500" in str(error)
+
+
+def test_repair7_policy_evaluation_error_keeps_correlation(
+    principal: AuthenticatedPrincipal, mtls: dict[str, object],
+):
+    # VF-001 (repair cycle 7): the non-200 branch of evaluate() must keep the
+    # request correlation in the denial diagnostic (LLD v1.1 §5.3).  This is a
+    # separate positive/negative case on the real OPA boundary so the already
+    # accepted cycle-6 test bodies remain byte-for-byte unchanged.
+    provider = OpaPolicyDecisionProvider(str(mtls["opa"]), POLICY_ID,
+                                         signer_public_key=(_SIGNER_N, _SIGNER_E),
+                                         ssl_context=mtls["ssl_context"])
+    digest = _install_policy(provider, _CONFLICTING_REGO)
+    gcs = _gcs(principal, digest)
+
+    def request(action: str, resource: str) -> PolicyRequest:
+        return PolicyRequest(principal=principal, action=action, resource=resource,
+                             governed_context=gcs, governed_context_digest=gcs.digest(),
+                             at=_now())
+
+    # Positive control: the non-conflicting rule still yields a permit.
+    assert provider.evaluate(request("read", "urn:ocor:target:site-2")).effect is (
+        PolicyEffect.PERMIT)
+    # Negative control: a conflicting complete rule yields a denial, never a permit.
+    assert provider.evaluate(request("write", "urn:ocor:target:site-1")).effect is (
+        PolicyEffect.DENY)
+    # Both complete-rule definitions apply: real OPA answers HTTP 500, which is a
+    # denial whose diagnostic preserves the request correlation.
+    error = _expect("POLICY_UNAVAILABLE",
+                    lambda: provider.evaluate(request("read", "urn:ocor:target:site-1")))
+    assert "policy eval HTTP 500" in str(error)
+    assert gcs.correlation_id in str(error)
