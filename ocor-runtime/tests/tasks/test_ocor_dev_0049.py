@@ -1023,6 +1023,46 @@ class Stack:
         self.compose(project, "--profile", "full", "--profile", "restore-drill", "down", "-v", "--remove-orphans")
 
 
+STARTED_CONTAINERS: set[str] = set()  # every standalone container a test starts (stack hygiene)
+
+
+def _docker_ids(*args: str) -> list[str]:
+    result = subprocess.run(["docker", *args], capture_output=True, text=True, check=False, timeout=60)
+    return result.stdout.split()
+
+
+def leftover_resources(projects: set[str], containers: set[str]) -> list[str]:
+    """Containers, volumes and networks of this run that still exist (stack hygiene: none may)."""
+    found = []
+    for project in sorted(projects):
+        label = f"label=com.docker.compose.project={project}"
+        for kind, ids in (("container", _docker_ids("ps", "-aq", "--filter", label)),
+                          ("volume", _docker_ids("volume", "ls", "-q", "--filter", label)),
+                          ("network", _docker_ids("network", "ls", "-q", "--filter", label))):
+            found += [f"{kind} {i} of project {project}" for i in ids]
+    for name in sorted(containers):
+        found += [f"container {name}" for _ in _docker_ids("ps", "-aq", "--filter", f"name=^/{name}$")]
+    return found
+
+
+def remove_run_resources(stack: Stack) -> list[str]:
+    """Teardown of everything the run created, also after a failure; returns what was
+    left behind by the ordinary teardown (removed here, then reported as a defect)."""
+    for name in sorted(STARTED_CONTAINERS):
+        subprocess.run(["docker", "rm", "-f", "-v", name], capture_output=True, check=False)
+    for project in sorted(stack.projects):
+        stack.down(project)
+    leftover = leftover_resources(stack.projects, STARTED_CONTAINERS)
+    for project in sorted(stack.projects):
+        label = f"label=com.docker.compose.project={project}"
+        for ids, remove in ((_docker_ids("ps", "-aq", "--filter", label), ["rm", "-f", "-v"]),
+                            (_docker_ids("volume", "ls", "-q", "--filter", label), ["volume", "rm", "-f"]),
+                            (_docker_ids("network", "ls", "-q", "--filter", label), ["network", "rm"])):
+            if ids:
+                subprocess.run(["docker", *remove, *ids], capture_output=True, check=False)
+    return leftover
+
+
 def http_from(container: str, url: str, method: str = "GET", headers: dict | None = None,
               data: dict | None = None) -> tuple[int, str]:
     """Issue an HTTP request from inside a container (the profile networks are internal)."""
@@ -1274,10 +1314,11 @@ def stack(tmp_path_factory):
                  message="ops agent did not start listening")
         yield st
     finally:
-        for project in sorted(st.projects):
-            st.down(project)
+        leftover = remove_run_resources(st)
         drop_drill_fixture(env)
         make_writable(work)
+        assert not leftover, f"teardown left resources behind (stack hygiene defect): {leftover}"
+        assert not leftover_resources(st.projects, STARTED_CONTAINERS), "resources survived the forced removal"
 
 
 def test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested(stack):
@@ -1526,6 +1567,7 @@ def test_tampered_recovery_point_is_rejected_before_restore(stack, target, expec
 
 def _standalone_ops(stack, vault: Path, network: str, profile_path: Path | None = None) -> str:
     name = f"ocor-poc-probe-{uuid.uuid4().hex[:6]}"
+    STARTED_CONTAINERS.add(name)
     agent = stack.work / "agent.py"
     agent.write_text(agent_source(), encoding="utf-8")
     profile = profile_path or stack.work / "profile.json"
@@ -1565,7 +1607,7 @@ def test_tampered_restore_receipt_blocks_readiness(stack):
         assert (status, body["reason_code"]) == (409, "REOPEN_REFUSED:RESTORE_RECEIPT_INVALID")
         assert_admission(name, admitted=[], fault="restore_not_verified", base=LOCAL_OPS)
     finally:
-        subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+        subprocess.run(["docker", "rm", "-f", "-v", name], capture_output=True, check=False)
 
 
 def transit_sign(env: dict[str, str], data: bytes) -> str:
@@ -1602,7 +1644,7 @@ def coherence_ops(stack):
         yield {"name": name, "vault": vault, "authentic": authentic,
                "authentic_digest": receipt_digest(vault)}
     finally:
-        subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+        subprocess.run(["docker", "rm", "-f", "-v", name], capture_output=True, check=False)
 
 
 def test_custodian_signed_coherent_receipt_is_accepted(stack, coherence_ops):
@@ -1783,7 +1825,7 @@ def test_restart_under_another_release_profile_or_pins_blocks_readiness_reopen_a
         assert (status, body["reason_code"]) == (409, f"REOPEN_REFUSED:RESTORE_{expected}"), body
         assert_admission(name, admitted=[], fault="restore_not_verified", base=LOCAL_OPS)
     finally:
-        subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+        subprocess.run(["docker", "rm", "-f", "-v", name], capture_output=True, check=False)
 
 
 def test_restart_under_the_tested_release_is_ready_and_reopenable(stack):
@@ -1799,7 +1841,7 @@ def test_restart_under_the_tested_release_is_ready_and_reopenable(stack):
         governed_reopen(stack, name, stack.vault, base=LOCAL_OPS)
         assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)
     finally:
-        subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+        subprocess.run(["docker", "rm", "-f", "-v", name], capture_output=True, check=False)
 
 
 def test_new_release_is_ready_only_after_its_own_backup_and_tested_restore(stack):
@@ -1845,7 +1887,7 @@ def test_new_release_is_ready_only_after_its_own_backup_and_tested_restore(stack
         governed_reopen(stack, name, vault, base=LOCAL_OPS)
         assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)
     finally:
-        subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+        subprocess.run(["docker", "rm", "-f", "-v", name], capture_output=True, check=False)
 
 
 @pytest.fixture(scope="module")
@@ -1899,7 +1941,7 @@ def test_inconsistent_deletion_journal_blocks_materialisation_and_readiness(stac
             assert ready["reasons"] == ["RESTORE_FAILED"]
             assert_admission(name, admitted=[], fault="restore_not_verified", base=LOCAL_OPS)
         finally:
-            subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+            subprocess.run(["docker", "rm", "-f", "-v", name], capture_output=True, check=False)
     finally:
         load_drill_fixture(stack.env, consistent=True)
 
@@ -1960,7 +2002,7 @@ def test_restore_scope_mismatch_blocks_materialisation(stack, case, change, gate
             assert ready["reasons"] == ["RESTORE_FAILED"]
             assert_admission(name, admitted=[], fault="restore_not_verified", base=LOCAL_OPS)
         finally:
-            subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+            subprocess.run(["docker", "rm", "-f", "-v", name], capture_output=True, check=False)
     finally:
         load_drill_fixture(stack.env, consistent=True)
 
@@ -2065,7 +2107,7 @@ def test_release_drift_blocks_readiness_and_mutative_commands(stack, tuned):
         assert_admission(name, admitted=["exact_consistency_read", "governed_new", "read"], fault="release_mismatch",
                          base=LOCAL_OPS)
     finally:
-        subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+        subprocess.run(["docker", "rm", "-f", "-v", name], capture_output=True, check=False)
 
 
 def connect_matrix(container: str, pairs: list[tuple[str, int]]) -> dict[str, str]:
@@ -2132,7 +2174,7 @@ def test_open_public_egress_blocks_readiness(stack):
         governed_reopen(stack, name, stack.vault, base=LOCAL_OPS)  # even a reopened path stays closed
         assert_admission(name, admitted=[], fault="isolation_breach", base=LOCAL_OPS)
     finally:
-        subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+        subprocess.run(["docker", "rm", "-f", "-v", name], capture_output=True, check=False)
 
 
 def test_scanner_failure_denies_every_admission_until_the_scan_recovers(stack, tuned):
@@ -2157,7 +2199,7 @@ def test_scanner_failure_denies_every_admission_until_the_scan_recovers(stack, t
         wait_for(lambda: _standalone_readyz(name)[0] == 200, 15, message="readiness must recover with the scan")
         assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)
     finally:
-        subprocess.run(["docker", "rm", "-f", name], capture_output=True, check=False)
+        subprocess.run(["docker", "rm", "-f", "-v", name], capture_output=True, check=False)
 
 
 def test_public_network_dependency_prevents_the_process_from_starting(stack):
@@ -2584,6 +2626,7 @@ def test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness(kind, 
     # unreachable from the pod, while the same connection succeeds from the kind node
     # without the NetworkPolicy (positive control) and opa:8181 stays reachable.
     decoy = f"ocor-poc-decoy-{uuid.uuid4().hex[:6]}"
+    STARTED_CONTAINERS.add(decoy)
     subprocess.run(["docker", "run", "-d", "--name", decoy, "--network", BOOTSTRAP_NETWORK, OPS_IMAGE, "python3", "-m",
                     "http.server", "8181"], capture_output=True, check=True)
     try:
@@ -2599,7 +2642,7 @@ def test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness(kind, 
                             "    try: socket.create_connection(t,4).close(); print(t[0],t[1],'CONNECTED')\n"
                             "    except OSError as e: print(t[0],t[1],'DENIED')")
     finally:
-        subprocess.run(["docker", "rm", "-f", decoy], capture_output=True, check=False)
+        subprocess.run(["docker", "rm", "-f", "-v", decoy], capture_output=True, check=False)
     assert egress.splitlines() == ["1.1.1.1 443 DENIED", "postgresql 5432 CONNECTED", "opa 8181 CONNECTED",
                                    f"{decoy_ip} 8181 DENIED", "postgresql 8181 DENIED", "qdrant 6334 DENIED"], egress
     subprocess.run(["docker", "pause", "ocor-bootstrap-qdrant-1"], check=True, capture_output=True)
