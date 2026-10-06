@@ -172,12 +172,12 @@
     },
     {
       "path": "OCOR-DEV-0049.json",
-      "sha256": "7fcb6690d1c9c20f4de009faf8869a7667bd8d22596435b1afd30599c7b25ed7",
+      "sha256": "a2619191ca3b997756abb20d00a49651808ef8bc5da10ffe416a047454bd867a",
       "task_id": "OCOR-DEV-0049"
     },
     {
       "path": "OCOR-DEV-0049.log",
-      "sha256": "f8213ce6c891a78bb3d818ca43043c49b597037081e72bd8cb434dd595d5db53",
+      "sha256": "371c7e1fc25f421b20d2f752ef4f956979f11951ddeb82e497fe00442a22bb61",
       "task_id": "OCOR-DEV-0049-RAW"
     }
   ],
@@ -3264,7 +3264,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-INVALID-PROFILE-BLOCKS-STARTUP",
-      "command": "40 invalid profiles (public dependency/egress, tag-pinned image, empty dependency inventory, missing SPIRE, RPO/RTO/drift out of range, unencrypted/unsigned/untested backup, shared key, tombstone order, replay pins, recovery gate, semantic downgrade, ...) make the agent exit 78 with the specific cause (test_invalid_profile_blocks_startup)",
+      "command": "43 invalid profiles (public dependency/egress, tag-pinned, uppercase, short or suffixed image digest, empty dependency inventory, missing SPIRE, RPO/RTO/drift out of range, unencrypted/unsigned/untested backup, shared key, tombstone order, replay pins, recovery gate, semantic downgrade, ...) make the agent exit 78 with the specific cause (test_invalid_profile_blocks_startup)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "FR-156",
@@ -3308,6 +3308,33 @@
       "task_id": "OCOR-DEV-0049"
     },
     {
+      "case_id": "OCOR-DEV-0049-HELM-WORKLOAD-IMAGES-ARE-EXACTLY-THE-GOVERNED-PINS",
+      "command": "VF-001: every Deployment/CronJob/Job container image equals the governed pin of its role; with ocor.images.pins.ops or .postgresql overridden by another valid digest every container of that role runs it and profile.json declares it (the release binding covers the executed artifact) (test_helm_workload_images_are_exactly_the_governed_pins)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-041",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-HELM-REFUSES-IMAGES-OUTSIDE-THE-DIGEST-PINS",
+      "command": "VF-001: rendering refused for operational.image (tag, other digest, even equal to the pin), postgresImage/kafkaImage/qdrantImage overrides, tag-only pins of every role, uppercase digest and a tag-only extra pin (test_helm_refuses_images_outside_the_digest_pins)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-041",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-COMPOSE-WORKLOAD-IMAGES-ARE-EXACTLY-THE-GOVERNED-PINS",
+      "command": "VF-001: every Compose service image equals the governed pin of its role (21 services, 4 roles) (test_compose_workload_images_are_exactly_the_governed_pins)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-041",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
       "case_id": "OCOR-DEV-0049-ADMISSION-BRANCHES-OF-THE-POSTURE",
       "command": "VF-001 decision branches of the agent posture: scanner error, stale or missing scan, unverified restore and open egress admit nothing; gate passed without human reopen admits only reads; healthy + reopened admits all (test_admission_branches_of_the_posture)",
       "evidence_path": "OCOR-DEV-0049.json",
@@ -3336,10 +3363,46 @@
     },
     {
       "case_id": "OCOR-DEV-0049-RECEIPT-COHERENCE-BRANCHES",
-      "command": "VF-002 decision branches: 29 incoherent PASSED receipts (each of the 8 gates false, verifier gcs tenant mismatch, gate missing/extra/non-object, pass 'true'/1, steps out of order or FAILED/BLOCKED/NOT_EXECUTED where execution is required, quarantine, materialisation, reopened retrieval, non-isolated, old schema, missing outcome, future/boolean epoch, malformed manifest digest); coherent receipt passes (test_receipt_coherence_branches)",
+      "command": "VF-002/VF-003 decision branches: 57 incoherent PASSED receipts (each of the 8 gates false; pass=true contradicted by the typed detail: tenant/compartment/GCS-digest/marking mismatch, orphan, duplicate, resurrection, missing live item, version drift, stale deletion epoch, watermark count difference/negative/float, revision/semantic digest difference, missing/extra detail keys, extra entry field, mixed memory branch; gate missing/extra/non-object, pass 'true'/1, steps out of order or FAILED/BLOCKED/NOT_EXECUTED where execution is required, quarantine, materialisation, reopened retrieval, non-isolated, old schema, missing outcome, malformed manifest/replay digest, non-string replay ids, future/boolean/zero/negative epoch, ISO-incoherent time, negative duration); coherent receipt passes (test_receipt_coherence_branches)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-COHERENT-RECEIPT-VARIANTS-ARE-ACCEPTED",
+      "command": "VF-002/VF-003 positives: legitimately non-empty details (other consistent watermark, journal ahead of metadata) and an integral epoch are coherent (test_coherent_receipt_variants_are_accepted)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RECEIPT-WITHOUT-MEMORY-STORE-IS-COHERENT-ONLY-AS-A-WHOLE",
+      "command": "VF-002: a no-memory-store receipt is coherent only with all six memory gates 'no memory store present', step 5 NOT_APPLICABLE and no replay; mixed details or replayed ids refused (test_receipt_without_memory_store_is_coherent_only_as_a_whole)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-NON-FINITE-RECEIPT-NUMBERS-ARE-INCOHERENT",
+      "command": "VF-003: NaN/+inf/-inf/string/null completion time and NaN/inf duration are incoherent (test_non_finite_receipt_numbers_are_incoherent)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-STRICT-JSON-REJECTS-NON-STANDARD-NUMBERS",
+      "command": "VF-003: strict JSON rejects NaN, Infinity, -Infinity and overflowing numbers (1e400, -1e999), accepts finite numbers; canonical serialization refuses NaN (test_strict_json_rejects_non_standard_numbers)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-043",
       "status": "PASS",
       "task_id": "OCOR-DEV-0049"
     },
@@ -3362,6 +3425,33 @@
       "task_id": "OCOR-DEV-0049"
     },
     {
+      "case_id": "OCOR-DEV-0049-POLICY-INVENTORY-DIGEST-BRANCHES",
+      "command": "VF-004 parser branches (local endpoint, failure handling only): complete inventory digests equal the independent oracle (2 policies, >4096 bytes, empty, no Content-Length); over the bound (declared or not) TOO_LARGE, truncated TRUNCATED, non-JSON/NaN/non-list/no result/entry without id/raw not string/duplicate id MALFORMED, HTTP 500 UNAVAILABLE, all without digest (test_policy_inventory_digest_branches)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-POLICY-INVENTORY-DIGEST-ON-A-CLOSED-PORT",
+      "command": "VF-004: unreachable policy engine -> no digest, POLICY_INVENTORY_UNAVAILABLE; explicit bound 4 MiB (test_policy_inventory_digest_on_a_closed_port)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-INDEX-SNAPSHOT-DOWNLOAD-IS-BOUND-TO-ITS-OWN-CREATION",
+      "command": "seal snapshot download branches (scripted endpoint, failure handling only): own snapshot accepted; deleted or overwritten by a concurrent seal -> new snapshot then own accepted; never own or no checksum -> INDEX_SNAPSHOT_UNSTABLE; every created name cleaned up (test_index_snapshot_download_is_bound_to_its_own_creation)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-042",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
       "case_id": "OCOR-DEV-0049-OPS-PROCESS-SERVES-HEALTH-AND-BLOCKS-READINESS-UNTIL-RESTORE-IS-TESTED",
       "command": "live: the Compose ops process serves /livez 200 and /readyz 503 RESTORE_UNTESTED with all ten dependencies probed up; numeric p50/p95/p99 per dependency exported; VF-001: every operation class denied (restore_not_verified) (test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested)",
       "evidence_path": "OCOR-DEV-0049.json",
@@ -3373,6 +3463,24 @@
     {
       "case_id": "OCOR-DEV-0049-BACKUP-SEALS-AN-ENCRYPTED-SIGNED-IMMUTABLE-RECOVERY-POINT",
       "command": "live: authority-aware recovery point from real PostgreSQL/Kafka/Qdrant/OPA, OpenBao transit encryption, ed25519 signature verified by OpenBao, 0444 content-addressed objects, memory manifest fields bound, vault survives `down -v` (test_backup_seals_an_encrypted_signed_immutable_recovery_point)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-042",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-CAPTURE-FAILS-EXPLICITLY-WHEN-THE-DATABASE-IS-UNREACHABLE",
+      "command": "live: the Compose PostgreSQL capture service with a 3-attempt bound captures the real database (dumps + memory store) and, against an unreachable host, fails with CAPTURE_SOURCE_UNREACHABLE instead of producing an empty capture (test_capture_fails_explicitly_when_the_database_is_unreachable)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-042",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-CONCURRENT-SEALS-EACH-DOWNLOAD-THEIR-OWN-INDEX-SNAPSHOT",
+      "command": "live real Qdrant: precondition observed (concurrent snapshot creations share one file name); four concurrent seal downloads each return a snapshot verified against their own creation checksum and leave no snapshot behind (test_concurrent_seals_each_download_their_own_index_snapshot)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-042",
@@ -3444,7 +3552,34 @@
     },
     {
       "case_id": "OCOR-DEV-0049-CUSTODIAN-SIGNED-INCOHERENT-RECEIPT-BLOCKS-READINESS-REOPEN-AND-ADMISSION",
-      "command": "live VF-002: 29 custodian-signed incoherent PASSED receipts (incl. the verifier's gcs tenant mismatch [m1]) -> RESTORE_RECEIPT_INCONSISTENT with the failing check named, readiness 503, /reopen 409, no class admitted; removing each restores READY (test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission)",
+      "command": "live VF-002/VF-003: 57 custodian-signed incoherent PASSED receipts (incl. the verifier's gcs pass=true with tenant mismatch [m1]) -> RESTORE_RECEIPT_INCONSISTENT with the failing check named, readiness 503, /reopen 409, no class admitted; removing each restores READY (test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-CUSTODIAN-SIGNED-RECEIPT-WITH-COHERENT-DETAILS-IS-ACCEPTED",
+      "command": "live VF-002 positives: custodian-signed receipts with other consistent counts, journal ahead of metadata, integral epoch -> verified, READY, reopen 200, six classes admitted (test_custodian_signed_receipt_with_coherent_details_is_accepted)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-CUSTODIAN-SIGNED-RECEIPT-TIME-BRANCHES",
+      "command": "live VF-003 on custodian-signed receipts: recent and 167 h old -> READY, reopen 200, six classes admitted; NaN, Infinity, -Infinity, 1e400 -> RESTORE_RECEIPT_INCONSISTENT receipt:non_standard_json; future and ISO-incoherent -> INCONSISTENT; 169 h old -> RESTORE_RECEIPT_EXPIRED; each refused case: readiness 503, /reopen 409, no class admitted (test_custodian_signed_receipt_time_branches)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RECEIPT-MEMORY-BRANCH-MUST-MATCH-ITS-RECOVERY-POINT",
+      "command": "live VF-002: a custodian-signed receipt coherent as a no-memory drill for a recovery point that carries a memory store -> RESTORE_RECEIPT_INCONSISTENT memory:manifest_mismatch, readiness 503, /reopen 409, no class admitted (test_receipt_memory_branch_must_match_its_recovery_point)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-067",
@@ -3569,6 +3704,24 @@
       "task_id": "OCOR-DEV-0049"
     },
     {
+      "case_id": "OCOR-DEV-0049-POLICY-DIGEST-IN-LOGS-AND-TRACES-COVERS-THE-COMPLETE-OPA-INVENTORY",
+      "command": "live VF-004 on the real OPA: baseline digest == independent oracle; with a rule-free module the inventory exceeds 4096 bytes and posture, log record, span and /traces carry exactly the new oracle digest; with an inventory over 4 MiB posture/log/span carry no digest (POLICY_INVENTORY_TOO_LARGE, ERROR span, availability gauge 0, error counter); teardown restores the baseline; sha256([]) never appears (test_policy_digest_in_logs_and_traces_covers_the_complete_opa_inventory)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "BR-003",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-COMPOSE-CONTAINERS-RUN-THE-GOVERNED-PINS",
+      "command": "live VF-001 on Compose: every running profile container's configured image equals its governed pin and its image id equals the id of the pinned reference (test_compose_containers_run_the_governed_pins)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-041",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
       "case_id": "OCOR-DEV-0049-LOGS-AND-TRACES-CARRY-GOVERNED-FIELDS-AND-NO-SECRETS",
       "command": "live: every log record carries the six LLD §5.3 fields and marking; fault and READY events observed; policy digest from the real OPA; spans carry trace/span/correlation ids; no OpenBao/PostgreSQL/operator secret in any log (test_logs_and_traces_carry_governed_fields_and_no_secrets)",
       "evidence_path": "OCOR-DEV-0049.json",
@@ -3579,7 +3732,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-HELM-PROFILE-ON-KUBERNETES-BACKS-UP-RESTORES-AND-GATES-READINESS",
-      "command": "kind (DEC-211): pod not Ready before restore; VF-003: manual backup started at the real */15 CronJob tick overlaps the scheduled run, each job's own recovery point verified (manifest digest, OpenBao signature, release binding) without catalogue cardinality; restore-drill Job bound to the manual recovery point PASSED (receipt recovery_point/manifest_digest correlated); pod Ready; mutative admission 503 recovery_reopen_pending; VF-002: custodian-signed receipt with failed gcs check -> pod NotReady, RESTORE_RECEIPT_INCONSISTENT, reopen 409, mutative DENY, recovery after removal; NetworkPolicy admits postgresql:5432/opa:8181 and denies 1.1.1.1, postgresql:8181, qdrant:6334 and a decoy listening on 8181 at an unpinned address (reachable from the node: positive control); pod readiness drops with qdrant paused and recovers; VF-001: restarted pod of the same release Ready; upgrade to another release -> new pod NotReady RESTORE_RELEASE_MISMATCH, reopen 409, six classes DENY; after its own backup and bound restore drill the new release pod is Ready (test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness)",
+      "command": "kind (DEC-211): pod not Ready before restore; VF-003: manual backup started at the real */15 CronJob tick overlaps the scheduled run, each job's own recovery point verified (manifest digest, OpenBao signature, release binding) without catalogue cardinality; restore-drill Job bound to the manual recovery point PASSED (receipt recovery_point/manifest_digest correlated); pod Ready; mutative admission 503 recovery_reopen_pending; VF-002: custodian-signed receipt with failed gcs check -> pod NotReady, RESTORE_RECEIPT_INCONSISTENT, reopen 409, mutative DENY, recovery after removal; NetworkPolicy admits postgresql:5432/opa:8181 and denies 1.1.1.1, postgresql:8181, qdrant:6334 and a decoy listening on 8181 at an unpinned address (reachable from the node: positive control); pod readiness drops with qdrant paused and recovers; VF-001: restarted pod of the same release Ready; cycle-5 VF-001: helm upgrade with operational.image (tag or other digest) or a tag-only pin refused, revision/Deployment image/pod unchanged; upgrade to another real pin (python@sha256:27e044f7..., Python 3.11.17) runs that artifact (pod imageID, mounted profile pin) but is NotReady RESTORE_PINS_MISMATCH, reopen 409, six classes DENY; rollback to the governed pins leaves only the tested Ready pod; upgrade to another release -> new pod NotReady RESTORE_RELEASE_MISMATCH, reopen 409, six classes DENY; after its own backup and bound restore drill the new release pod is Ready (test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-001",
