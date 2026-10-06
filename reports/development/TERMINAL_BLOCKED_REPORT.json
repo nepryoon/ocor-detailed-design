@@ -1,16 +1,16 @@
 {
-  "baseline_commit": "97f1081ec825356f276073d093bf20f51e47ba25",
+  "baseline_commit": "d33ae207105648799ac11479cca5b9eb9bf619ca",
   "blocker_manifest": {
     "path": "reports/development/EXECUTION_STATE.json",
-    "sha256": "9c20810ae486f2ebbe7af6b31403e477ed237211fb956b57e103bf2838d74429"
+    "sha256": "aebdbec86941fd6d1fa6ec72924cafb5ce08d8316df01b5bed860e75454d507c"
   },
   "blocking_tasks": [
     {
-      "evidence": "reports/development/ITERATION_LOG.md",
-      "reason": "BLOCKED_REPAIR_BUDGET_EXHAUSTED: cycle-5 independent verification (OCOR-DEV-0048-4d9a0644cdd1-5) returned NO_GO with 2 blocking findings (VF-001 high: the signed act claim does not replace the DelegationGrant chain validation \u2014 omitting grant/capability yields PERMIT; VF-002 medium: evidence inputs_tree digest mismatch). Per PO decision OCOR-DEV-0048-REPAIR-5-CLAUDE (2026-10-04), no sixth repair is authorized.",
-      "service": "OPA, Keycloak, SPIFFE/SPIRE, OpenBao, mTLS",
-      "sha256": "f70e908d0f6a9b6ab49d918f17e1616010b08ee40727a64328df31a96ba3b3fe",
-      "task_id": "OCOR-DEV-0048"
+      "evidence": "reports/development/OCOR_DEV_0049_ESCALATION.md",
+      "reason": "BLOCKED_REPAIR_BUDGET_EXHAUSTED: ultimo ciclo 5 NO_GO, VF-001 high; nessuna sesta riparazione autorizzata.",
+      "service": "Qdrant pinned / backup snapshot concurrency",
+      "sha256": "5fb978aa527b94e54c85beef0e99733cf06000c553108b71a83a687dd6f9c502",
+      "task_id": "OCOR-DEV-0049"
     }
   ],
   "claims": {
@@ -21,33 +21,47 @@
     "production": "NO_GO",
     "runtime_conformance": "NOT_ESTABLISHED"
   },
-  "completed_evidence_tasks": 62,
-  "direct_ready_disposition": "ALL_REMAINING_TASKS_BLOCKED_TRANSITIVELY_ON_OCOR_DEV_0048",
-  "direct_ready_tasks": [],
-  "independent_reachable_tasks_after_excluding_blocked_roots": [],
+  "completed_evidence_tasks": 63,
+  "decision_requests": [
+    "reports/development/decision_requests/OCOR-DEV-0049-REPAIR-BUDGET.md"
+  ],
+  "direct_ready_disposition": "0049_BLOCKED_BY_BUDGET;_0050_READY;_REM_0017_PRIORITY;_LOOP_TERMINATES_PER_SPECIFIC_PO_DISPOSITION",
+  "direct_ready_tasks": [
+    "OCOR-DEV-0049",
+    "OCOR-DEV-0050"
+  ],
+  "independent_reachable_tasks_after_excluding_blocked_roots": [
+    "OCOR-DEV-0050"
+  ],
   "independent_verifier": {
-    "blocker": 0,
+    "blocker": 1,
     "high": 1,
-    "identity": "OCOR-DEV-0048-4d9a0644cdd1-5",
-    "low": 0,
-    "medium": 1,
-    "model_and_effort": "implementer Claude Code (claude-opus-5-5); verifier NOT_EXPOSED",
-    "verdict": "NO_GO"
+    "identity": "OCOR-DEV-0049-b40aa8a6908b-5",
+    "low": 1,
+    "medium": 0,
+    "model_and_effort": "Claude Code claude-opus-5-5; effort non attestato; stesso modello delle riparazioni in contesto separato",
+    "verdict": "NO_GO",
+    "verdict_file_sha256": "e1bc2e0662d7323ccf43bc082f13154df7baddbe22be6a6f630c264047abda1a"
   },
   "local_controls": {
-    "authoritative_runner_status": "NOT_EXECUTED",
-    "normative_sha256": "PASS",
-    "prescribed_root_harness": "PASS",
-    "remote_ci_on_last_integrated_change": "PASS_ALL_13_GREEN_ON_EXACT_HEAD_97f1081 (PR #161)"
+    "evidence_input_drift": "63 tasks / 167 inputs / 0 drift",
+    "local_gates": "RCCAD/static, scope, language, ruff, mypy PASS; piano 37 PASS / 2 NOT_EXECUTED",
+    "normative_sha256": "8/8 PASS",
+    "prescribed_root_harness": "14 PASS",
+    "remote_ci_on_current_state_sync": "PENDING_EXACT_FINAL_HEAD",
+    "runtime_this_iteration": "NOT_EXECUTED \u2014 state sync",
+    "services": "11 READY; risorse della sessione rimosse",
+    "toolchain": "9/9 PASS"
   },
-  "minimal_unblock_action": "Per PO decision OCOR-DEV-0048-REPAIR-5-CLAUDE (2026-10-04), no sixth repair is authorized: OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED and the backlog OCOR-DEV-0049..0069 is transitively blocked. Unblocking requires a new Product Owner decision reopening OCOR-DEV-0048 with a new mandate to require and verify the full SignedDelegation chain and CapabilityInvocation for every delegated request (the signed act claim must not replace grant scope/ceiling/binding/revocation) and to bind OPA evaluation atomically to the verified bundle snapshot.",
-  "open_pull_requests": 0,
-  "recorded_at": "2026-10-04T13:49:11Z",
-  "remaining_backlog_tasks": 22,
+  "minimal_unblock_action": "Nuovo mandato esplicito del Product Owner per qualsiasi ulteriore riparazione di 0049. Azione tecnica minima: VF-001 del ciclo 5, gestione bounded delle collisioni/5xx del POST Qdrant con fail-closed dopo esaurimento, teardown e positivi/negativi deterministici pi\u00f9 stack reale; rigenerazione evidenza con suite task/full verdi e zero skip, ambiente test+lint. Non eseguibile sotto il budget attuale.",
+  "next_executable_action": "OCOR-DEV-REM-0017:implementation \u2014 riprendere PR #169 senza esclusioni, ottenere verifica indipendente Claude Code e CI completa; poi OCOR-DEV-0050. Nessuna riparazione OCOR-DEV-0049 senza nuova decisione PO.",
+  "open_pull_requests": 2,
+  "recorded_at": "2026-10-06T16:25:55.683649+00:00",
+  "remaining_backlog_tasks": 21,
   "schema_version": "1.0",
   "supersedes": {
-    "prior_report": "reports/development/TERMINAL_BLOCKED_REPORT.json @ 2026-10-04T12:20:50Z (cycle-4 BLOCKED state, head c6cbcd328216)",
-    "reason": "This report supersedes the cycle-4 terminal-blocked report: after PO decision OCOR-DEV-0048-REPAIR-5-CLAUDE authorized one fifth repair cycle, cycle-5 independent verification (head 4d9a0644cdd1) returned NO_GO with 2 blocking findings. Per the PO decision, no further repair is authorized, so OCOR-DEV-0048 is terminal BLOCKED_REPAIR_BUDGET_EXHAUSTED."
+    "prior_report": "reports/development/TERMINAL_BLOCKED_REPORT.json @ 2026-10-04T13:49:11Z",
+    "reason": "Disposition terminale storica 0048 superseduta dal merge PR #163; il blocco corrente riguarda 0049 ultimo ciclo 5, non tutti i task."
   },
   "terminal_state": "BLOCKED"
 }

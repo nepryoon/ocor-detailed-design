@@ -1,6 +1,6 @@
 # Escalation record — OCOR-DEV-0049 (repair budget exhausted)
 
-- **Status corrente**: `AWAITING_AUTHORIZED_CLAUDE_REPAIR`
+- **Status corrente**: `BLOCKED_REPAIR_BUDGET_EXHAUSTED` (ciclo 5 concluso, NO_GO)
 - **Disposition storica ciclo 2**: `BLOCKED_REPAIR_BUDGET_EXHAUSTED`, superseded dalla decisione PO `OCOR-DEV-0049-REPAIR-CLAUDE-AUTO` (2026-10-05).
 - **Task**: `OCOR-DEV-0049` — Implement PoC deployment observability backup and safe degradation
 - **Change set**: `governed/state-sync-ocor-dev-0049-escalation`
@@ -191,3 +191,32 @@ Il loop esterno seleziona Claude Code tramite il marker locale `~/.ocor-codex/.v
 PR #170 già mergiata all’HEAD `1055be76acc43213f665cd2f2b4502d617267e9b`, 13 check richiesti SUCCESS; baseline dello state sync `d33ae207105648799ac11479cca5b9eb9bf619ca`. PR #169 concorrente resta invariata. Il ready set JSON è `0049`, `0050`; le decisioni PO impongono la conclusione della verifica 0049 e la priorità REM-0017 prima di 0050. Con `GO_FOR_EVIDENCE_SEAL`: integrazione, CI e merge esatto. Con `NO_GO`: escalation e `TERMINAL_BLOCKED`, nessun ciclo 6 autorizzato. Nessuna nuova decisione PO richiesta per questo fallback.
 
 Nessuna modifica a `inputs/`, runtime, test, workflow, lock o record sigillati. Suite completa del loop implementatore **NOT_EXECUTED**: unità esclusivamente documentale; il verifier dovrà rieseguire i controlli prescritti con igiene dello stack e limite 45 minuti. `E1=0`, `E2=0`, zero requisiti globalmente `Verified`, runtime conformance `NOT_ESTABLISHED`, PoC e Production `NO-GO`.
+
+## 2026-10-06 — Ciclo 5 concluso: NO_GO, budget esaurito
+
+Verdetto `OCOR-DEV-0049-b40aa8a6908b-5`, HEAD `b40aa8a6908b02d95cdf8138200f99f2e8aea8b1`, creato `2026-10-06T16:21:05Z`: **NO_GO**. SHA-256 del file esterno: `e1bc2e0662d7323ccf43bc082f13154df7baddbe22be6a6f630c264047abda1a`. HEAD remoto verificato identico. Implementatore riparazioni Claude Code; verifier effettivo Claude Code (`claude-opus-5-5`) tramite `OCOR-DEV-0049-VERIFIER-FALLBACK`; stesso modello in processo e contesto separati, implementazione originale di un altro modello. Implementatore del loop Codex. Il fallback atteso con suffisso `-claude-fallback-1` è stato concluso dal loop sul request_id originale; l’identità effettiva è quella nel verdetto, non quella storica nel candidato.
+
+### VF-001 — ciclo 5 (`high`, BLOCKER)
+
+Riferimento: `deploy/helm/ocor-poc/compose.profiles.yaml:1646`.
+
+snapshot_index esegue il POST /collections/{c}/snapshots?wait=true fuori da ogni gestione d'errore: solo 404 su GET/DELETE e' tollerato. Quando due seal concorrenti (run manuale sovrapposta al CronJob, scenario dichiarato nella docstring) collidono sullo stesso nome di snapshot al secondo, Qdrant reale risponde 500 ('failed to store snapshot archive ... File IO error: No such file', log ocor-bootstrap-qdrant-1 2026-10-06T15:41:07Z) e l'HTTPError propaga al chiamante: il seal fallisce. Riprodotto 3 volte in modo indipendente: suite task (1 failed/294 passed), suite completa (stesso test FAILED con HTTPError 500), probe dedicato 1/60 chiamate. Il test qualificante test_concurrent_seals_each_download_their_own_index_snapshot (ocor-runtime/tests/tasks/test_ocor_dev_0049.py:1404-1442) fallisce quindi sull'HEAD verificato, mentre l'evidenza dichiara 295 passed: il PASS registrato dipende dalla temporizzazione, non dal comportamento.
+
+Azione minima proposta, **non autorizzata come riparazione**: Rendere snapshot_index robusto alla collisione di creazione: trattare un 5xx del POST di creazione come tentativo ritentabile entro il loop limitato con jitter (o serializzare i seal con un lock/lease, o evitare la collisione di nome), mantenendo fail-closed dopo attempts esauriti (INDEX_SNAPSHOT_UNSTABLE) e la pulizia degli snapshot. Aggiungere un caso deterministico che forzi il 500 sul POST (oltre al test concorrente su Qdrant reale) e rigenerare l'evidenza dopo almeno una run task e una run completa verdi.
+
+### VF-002 — ciclo 5 (`low`, NON_BLOCKING)
+
+Riferimento: `ocor-runtime/tests/tasks/test_ocor_dev_0049.py:170-176`.
+
+test_agent_source_passes_ruff_and_mypy_strict invoca sys.executable -m mypy; il validation_command dichiarato per la suite completa ('uv run --frozen pytest -q -ra tests/' in ocor-runtime) risincronizza il venv senza l'extra lint e il test fallisce con 'No module named mypy'. Il sorgente dell'agente e' invece pulito (ruff e mypy --strict PASS in venv isolato con --extra lint).
+
+Azione minima proposta, **non autorizzata come riparazione**: Dichiarare nel validation_command/evidenza l'ambiente con --extra test --extra lint, oppure far fallire il test con un messaggio di precondizione esplicito; nessuna modifica al codice dell'agente richiesta.
+
+Controlli del verifier `NOT_EXECUTED` (nessun PASS attribuito):
+
+- Probe supplementare del verifier sulla coerenza ricevuta/recovery point (tombstone non riprodotti, deletion epoch sotto il checkpoint): run interrotta prima dei casi del probe (results.jsonl assente); non dichiarato superato. Non e' uno dei controlli obbligatori elencati, ma resta aperto per il prossimo ciclo.
+- Run CI su GitHub per l'HEAD verificato: non richiesta per OCOR-DEV-0049 (REM-0017-PRIORITY riguarda OCOR-DEV-REM-0017), non consultata.
+
+Esauriti i cicli aggiuntivi 3/4/5; nessun ciclo 6 autorizzato. Decision request `OCOR-DEV-0049-REPAIR-BUDGET` in `reports/development/decision_requests/OCOR-DEV-0049-REPAIR-BUDGET.md`. Nessuna riparazione, nuova richiesta di verifica, sigillatura o merge del task. Candidato b40aa8a preservato byte-identico.
+
+Il loop termina `TERMINAL_BLOCKED` per la disposizione puntuale del PO sul budget di 0049. Non significa che tutto il backlog sia bloccato: REM-0017 è la prossima unità operativa alla ripresa del loop, poi 0050. PR #169 preservata. Claim fence invariato (E1=0, E2=0, zero Verified, runtime NOT_ESTABLISHED, PoC/Production NO-GO).
