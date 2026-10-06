@@ -166,7 +166,14 @@ def test_agent_is_a_single_source_shared_by_compose_and_helm():
 
 
 def test_agent_source_passes_ruff_and_mypy_strict(agent_dir):
-    """The embedded program stays under the repository quality gates."""
+    """The embedded program stays under the repository quality gates. mypy belongs to the
+    `lint` extra: the declared environment is `uv run --project ocor-runtime --frozen
+    --extra test --extra lint`; without it the precondition fails explicitly (no skip)."""
+    import importlib.util
+
+    if importlib.util.find_spec("mypy") is None:
+        pytest.fail("precondition: mypy is not installed in this interpreter; run the suite in the declared "
+                    "environment `uv run --project ocor-runtime --frozen --extra test --extra lint pytest ...`")
     ruff = subprocess.run([tool("ruff"), "check", "--config", str(ROOT / "pyproject.toml"),
                            str(agent_dir / "ocor_ops_agent.py")], capture_output=True, text=True, check=False)
     assert ruff.returncode == 0, ruff.stdout + ruff.stderr
@@ -748,6 +755,72 @@ def test_receipt_that_is_not_an_object_is_incoherent(agent_module, value):
     assert agent_module.receipt_inconsistencies(value, helm_profile()) == ["receipt:not_an_object"]
 
 
+def _epochs(journal_max: int, metadata_max: int):
+    def mutate(receipt: dict) -> None:
+        detail = receipt["recovery_gate"]["projection_drift_or_stale_deletion_epoch"]["detail"]
+        detail.update(journal_max=journal_max, metadata_max=metadata_max)
+    return mutate
+
+
+def checkpoint_memory(entries: int = 2, max_epoch: int = 7, last: str | None = "evt-del-m4",
+                      metadata_max: int = 7) -> dict:
+    """The memory section the seal signs for the drill fixture (m2@6 and m4@7 tombstoned)."""
+    return {"status": "PRESENT", "journalCheckpoints": {"entries": entries, "max_deletion_epoch": max_epoch,
+                                                        "last_event_id": last},
+            "deletionEpochs": {"journal_max": max_epoch, "metadata_max": metadata_max}}
+
+
+# Not-executed check of verdict OCOR-DEV-0049-b40aa8a6908b-5: a signed receipt that is
+# structurally coherent on its own but does not match the checkpoint of the recovery
+# point it restored (tombstones not replayed, deletion epoch below/above the checkpoint).
+CHECKPOINT_MUTATIONS = [
+    ("tombstone_not_replayed", _set("replayed_event_ids", ["evt-del-m2"]), "memory:tombstones_not_replayed"),
+    ("no_tombstone_replayed", _set("replayed_event_ids", []), "memory:tombstones_not_replayed"),
+    ("last_tombstone_foreign", _set("replayed_event_ids", ["evt-del-m2", "evt-del-x9"]),
+     "memory:tombstones_not_replayed"),
+    ("tombstone_replayed_twice", _set("replayed_event_ids", ["evt-del-m4", "evt-del-m4"]),
+     "memory:tombstones_not_replayed"),
+    ("tombstone_not_in_checkpoint", _set("replayed_event_ids", ["evt-del-m2", "evt-del-m3", "evt-del-m4"]),
+     "memory:tombstones_not_replayed"),
+    ("deletion_epoch_below_checkpoint", _epochs(6, 6), "memory:deletion_epoch_checkpoint_mismatch"),
+    ("deletion_epoch_above_checkpoint", _epochs(9, 7), "memory:deletion_epoch_checkpoint_mismatch"),
+    ("metadata_epoch_below_recovery_point", _epochs(7, 5), "memory:metadata_epoch_mismatch"),
+]
+
+
+def test_receipt_matching_its_checkpoint_is_coherent(agent_module):
+    receipt = coherent_receipt(helm_profile())
+    assert agent_module.receipt_checkpoint_inconsistencies(receipt, checkpoint_memory()) == []
+    empty = deepcopy(receipt)
+    empty["replayed_event_ids"] = []
+    _epochs(0, 0)(empty)
+    assert agent_module.receipt_inconsistencies(empty, helm_profile()) == []
+    assert agent_module.receipt_checkpoint_inconsistencies(
+        empty, checkpoint_memory(entries=0, max_epoch=0, last=None, metadata_max=0)) == [], "empty journal"
+
+
+@pytest.mark.parametrize("case,mutate,expected", CHECKPOINT_MUTATIONS, ids=[c[0] for c in CHECKPOINT_MUTATIONS])
+def test_receipt_checkpoint_branches(agent_module, case, mutate, expected):
+    profile = helm_profile()
+    receipt = coherent_receipt(profile)
+    mutate(receipt)
+    assert agent_module.receipt_inconsistencies(receipt, profile) == [], "coherent on its own: only the checkpoint"
+    assert expected in agent_module.receipt_checkpoint_inconsistencies(receipt, checkpoint_memory()), case
+
+
+@pytest.mark.parametrize("memory,expected", [
+    ({"status": "PRESENT"}, ["memory:checkpoint_missing"]),
+    (dict(checkpoint_memory(), journalCheckpoints={"entries": True, "max_deletion_epoch": 7,
+                                                   "last_event_id": "evt-del-m4"}), ["memory:checkpoint_missing"]),
+    (checkpoint_memory(entries=0, max_epoch=0, last=None, metadata_max=0),
+     ["memory:tombstones_not_replayed", "memory:deletion_epoch_checkpoint_mismatch",
+      "memory:metadata_epoch_mismatch"]),
+], ids=["checkpoint_absent", "entries_not_a_count", "receipt_replays_beyond_an_empty_journal"])
+def test_receipt_checkpoint_manifest_branches(agent_module, memory, expected):
+    receipt = coherent_receipt(helm_profile())
+    assert agent_module.receipt_checkpoint_inconsistencies(receipt, memory) == expected
+
+
 # Verdict OCOR-DEV-0049-02ac643eb3c7-3 VF-001: a tested restore belongs to one release,
 # profile digest and pin set; any other running configuration is not covered by it.
 BINDING_MUTATIONS = [
@@ -879,7 +952,7 @@ class _SnapshotServer:
         import threading
 
         outer = self
-        self.script, self.created, self.deleted = list(script), 0, []
+        self.script, self.created, self.issued, self.deleted = list(script), 0, 0, []
 
         class Handler(BaseHTTPRequestHandler):
             def log_message(self, *args):
@@ -894,6 +967,10 @@ class _SnapshotServer:
             def do_POST(self):  # noqa: N802
                 step = outer.script[min(outer.created, len(outer.script) - 1)]
                 outer.created += 1
+                if "post_status" in step:  # creation failed: nothing to download or clean up
+                    self._reply(step["post_status"], b'{"status":{"error":"failed to store snapshot archive"}}')
+                    return
+                outer.issued += 1
                 result = {"name": "c-1-2026.snapshot"}
                 if step.get("checksum", True):
                     result["checksum"] = hashlib.sha256(step["advertised"]).hexdigest()
@@ -924,6 +1001,13 @@ SNAPSHOT_CASES = [
                                                  {"advertised": b"own", "served": b"own"}], b"own", None),
     ("never_own", [{"advertised": b"a", "served": b"other"}], None, "INDEX_SNAPSHOT_UNSTABLE"),
     ("no_checksum", [{"advertised": b"a", "served": b"a", "checksum": False}], None, "INDEX_SNAPSHOT_UNSTABLE"),
+    # Verdict OCOR-DEV-0049-b40aa8a6908b-5 VF-001: the concurrent seal makes the CREATION
+    # fail with a 5xx on real Qdrant; retried within the bound, fail-closed once exhausted.
+    ("creation_500_then_own", [{"post_status": 500}, {"advertised": b"own", "served": b"own"}], b"own", None),
+    ("creation_503_then_own", [{"post_status": 503}, {"advertised": b"own", "served": b"own"}], b"own", None),
+    ("creation_500_exhausted", [{"post_status": 500}], None, "INDEX_SNAPSHOT_UNSTABLE"),
+    ("creation_500_then_overwritten", [{"post_status": 500}, {"advertised": b"a", "served": b"other"}], None,
+     "INDEX_SNAPSHOT_UNSTABLE"),
 ]
 
 
@@ -938,7 +1022,23 @@ def test_index_snapshot_download_is_bound_to_its_own_creation(agent_module, case
                 agent_module.snapshot_index(server.base, "c", attempts=2)
     finally:
         server.close()
-    assert server.deleted, "every created snapshot name is cleaned up (404 of a concurrent cleanup tolerated)"
+    assert server.created == (1 if case == "own_snapshot" else 2), "bounded attempts, no retry after success"
+    assert len(server.deleted) == server.issued, \
+        "every created snapshot name is cleaned up (404 of a concurrent cleanup tolerated)"
+
+
+@pytest.mark.parametrize("status", [400, 404, 409])
+def test_index_snapshot_creation_client_error_is_not_retried(agent_module, status):
+    """Negative side of the 5xx retry: a 4xx on creation is a request/config defect, not the
+    concurrent-seal collision; it propagates on the first attempt (seal fails closed)."""
+    server = _SnapshotServer([{"post_status": status}, {"advertised": b"own", "served": b"own"}])
+    try:
+        with pytest.raises(urllib.error.HTTPError) as caught:
+            agent_module.snapshot_index(server.base, "c", attempts=2)
+    finally:
+        server.close()
+    assert caught.value.code == status
+    assert (server.created, server.issued, server.deleted) == (1, 0, [])
 
 
 # --------------------------------------------------------------------------- live environment
@@ -1438,8 +1538,9 @@ def test_concurrent_seals_each_download_their_own_index_snapshot(stack, agent_mo
                      "precondition: concurrent snapshots share a name")
     for name in set(names):
         urllib.request.urlopen(urllib.request.Request(f"{base}/{name}", method="DELETE"), timeout=30)
-    downloads = concurrently(lambda: agent_module.snapshot_index(QDRANT_HOST_URL, collection))
-    assert all(isinstance(d, bytes) and len(d) > 0 for d in downloads), downloads
+    for round_ in range(3):  # repeated: a timing-dependent pass is not a pass (VF-001 cycle 5)
+        downloads = concurrently(lambda: agent_module.snapshot_index(QDRANT_HOST_URL, collection))
+        assert all(isinstance(d, bytes) and len(d) > 0 for d in downloads), (round_, downloads)
     assert existing() == before, "every snapshot created by the seals is cleaned up"
 
 
@@ -1708,7 +1809,14 @@ def _observe_refused_receipt(stack, name: str, digest: str, reason: str, detail:
     assert_admission(name, admitted=[], fault="restore_not_verified", base=LOCAL_OPS)
 
 
-@pytest.mark.parametrize("case,mutate", RECEIPT_POSITIVE_VARIANTS, ids=[c[0] for c in RECEIPT_POSITIVE_VARIANTS])
+# On the live agent a receipt is also bound to the signed checkpoint of its recovery point
+# (journal at epoch 7): a journal "ahead" of it was not restored from that point and is the
+# `deletion_epoch_above_checkpoint` negative of CHECKPOINT_MUTATIONS, not a positive.
+RECEIPT_LIVE_POSITIVE_VARIANTS = [v for v in RECEIPT_POSITIVE_VARIANTS if v[0] != "journal_ahead_of_metadata"]
+
+
+@pytest.mark.parametrize("case,mutate", RECEIPT_LIVE_POSITIVE_VARIANTS,
+                         ids=[c[0] for c in RECEIPT_LIVE_POSITIVE_VARIANTS])
 def test_custodian_signed_receipt_with_coherent_details_is_accepted(stack, coherence_ops, case, mutate):
     """Positive side of VF-002 on the live agent: a validly signed receipt whose details are
     legitimately non-empty (other counts, journal ahead of metadata) is READY and reopenable."""
@@ -1800,6 +1908,27 @@ def test_receipt_memory_branch_must_match_its_recovery_point(stack, coherence_op
         for f in files:
             f.unlink()
     wait_for(lambda: posture(name, LOCAL_OPS)["restore"]["receipt_digest"] == coherence_ops["authentic_digest"], 30)
+
+
+@pytest.mark.parametrize("case,mutate,expected", CHECKPOINT_MUTATIONS, ids=[c[0] for c in CHECKPOINT_MUTATIONS])
+def test_custodian_signed_receipt_incoherent_with_its_checkpoint_is_refused(stack, coherence_ops, case, mutate,
+                                                                           expected):
+    """Live agent, real custodian signature: a receipt coherent on its own whose replayed
+    tombstones or deletion epochs differ from the signed checkpoint of its recovery point
+    denies readiness, /reopen and admission; removing it restores the authentic receipt
+    (positive control: the authentic receipt matches its checkpoint and is READY)."""
+    name, vault = coherence_ops["name"], coherence_ops["vault"]
+    receipt = deepcopy(coherence_ops["authentic"])
+    assert receipt["replayed_event_ids"] == ["evt-del-m2", "evt-del-m4"], "precondition: authentic replay"
+    mutate(receipt)
+    files, digest = write_signed_receipt(stack.env, vault, receipt, f"checkpoint-{case.replace('_', '-')}")
+    try:
+        _observe_refused_receipt(stack, name, digest, "RESTORE_RECEIPT_INCONSISTENT", expected)
+    finally:
+        for f in files:
+            f.unlink()
+    wait_for(lambda: posture(name, LOCAL_OPS)["restore"]["receipt_digest"] == coherence_ops["authentic_digest"], 30)
+    assert wait_for(lambda: _standalone_readyz(name)[0] == 200, 15)
 
 
 @pytest.mark.parametrize("case,mutate,expected", BINDING_MUTATIONS, ids=[c[0] for c in BINDING_MUTATIONS])

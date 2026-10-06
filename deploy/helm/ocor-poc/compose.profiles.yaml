@@ -1109,6 +1109,29 @@ configs:
           return out
 
 
+      def receipt_checkpoint_inconsistencies(receipt: dict[str, Any], memory: dict[str, Any]) -> list[str]:
+          """Coherence of a structurally coherent PASSED receipt with the memory store of the
+          signed recovery point it restored (Part II 2.13; ADD 6.5 step 6): every checkpointed
+          deletion tombstone was replayed exactly once with its original event id, and the
+          deletion epochs the gate measured are the checkpointed ones. An epoch below the
+          checkpoint means tombstones were not replayed (resurrection risk); one above it was
+          not restored from this recovery point. Empty means coherent."""
+          checkpoint, epochs = memory.get("journalCheckpoints"), memory.get("deletionEpochs")
+          if not isinstance(checkpoint, dict) or not isinstance(epochs, dict) or not _count(checkpoint.get("entries")):
+              return ["memory:checkpoint_missing"]
+          out: list[str] = []
+          replayed = receipt["replayed_event_ids"]
+          if (len(replayed) != checkpoint["entries"] or len(set(replayed)) != len(replayed)
+                  or (replayed[-1] if replayed else None) != checkpoint.get("last_event_id")):
+              out.append("memory:tombstones_not_replayed")
+          detail = receipt["recovery_gate"]["projection_drift_or_stale_deletion_epoch"]["detail"]
+          if not detail["journal_max"] == checkpoint.get("max_deletion_epoch") == epochs.get("journal_max"):
+              out.append("memory:deletion_epoch_checkpoint_mismatch")
+          if detail["metadata_max"] != epochs.get("metadata_max"):
+              out.append("memory:metadata_epoch_mismatch")
+          return out
+
+
       def latest_valid_receipt(transit: Transit, profile: dict[str, Any], profile_digest: str,
                                vault: Path) -> tuple[str, dict[str, Any] | None, str | None, list[str]]:
           """Return (reason_code, receipt, receipt_digest, detail). READY only with a signed,
@@ -1152,6 +1175,10 @@ configs:
           if (receipt["steps"][MEMORY_STEP]["status"] == "EXECUTED") is not manifest_memory:
               # The receipt's memory branch must be the one of the recovery point it restored.
               return "RESTORE_RECEIPT_INCONSISTENT", receipt, None, ["memory:manifest_mismatch"]
+          if manifest_memory and isinstance(memory, dict):
+              problems = receipt_checkpoint_inconsistencies(receipt, memory)
+              if problems:
+                  return "RESTORE_RECEIPT_INCONSISTENT", receipt, None, problems
           # Release fence: the tested restore must belong to the running release, profile and
           # pins, both for the recovery point and for the restore that produced the receipt.
           for subject, binding in (("recovery_point", manifest_binding(manifest)),
@@ -1640,10 +1667,20 @@ configs:
           resolution, so a concurrent seal (a manual run overlapping the scheduled one) can
           receive the same name and overwrite or delete the file; a download is accepted only
           when it matches the checksum returned for this creation, otherwise a new snapshot is
-          taken after a jittered pause (bounded). Every created name is cleaned up; a name
-          already removed by the other seal is a no-op."""
+          taken after a jittered pause (bounded). The same collision can make the CREATION
+          itself fail with a 5xx (Qdrant: "failed to store snapshot archive ... No such file"
+          when the other seal moved the shared temporary file); that is retried within the same
+          bound, a 4xx is not. Every created name is cleaned up; a name already removed by the
+          other seal is a no-op."""
           for attempt in range(attempts):
-              snap = strict_json(http_bytes("POST", f"{base}/collections/{collection}/snapshots?wait=true", b"{}"))
+              try:
+                  created = http_bytes("POST", f"{base}/collections/{collection}/snapshots?wait=true", b"{}")
+              except urllib.error.HTTPError as exc:
+                  if not 500 <= exc.code < 600:
+                      raise
+                  time.sleep(1.0 + attempt + secrets.randbelow(1000) / 1000)  # nothing was created
+                  continue
+              snap = strict_json(created)
               name, checksum = snap["result"]["name"], snap["result"].get("checksum")
               data = b""
               try:
