@@ -20,7 +20,7 @@ STACK-HYGIENE, è concluso ed esaurisce tutti i cicli autorizzati. Nessuna sesta
 
 Conservare subito il blocco di 0049; priorità operativa REM-0017 come già decisa. Un’eventuale
 ripresa di 0049 richiede decisione PO esplicita e verifica indipendente nuova, senza indebolire
-alcun criterio. Bloccati 0049 e transitivamente 0059, 0060, 0063, 0064, 0066. REM-0017 resta
+alcun criterio. Bloccati 0049 e transitivamente 0059 e tutti i task 0060–0069 (chiusura del DAG ricalcolata). REM-0017 resta
 prerequisito di tutto G6; 0050 resta pronto.
 
 Implementatore riparazioni: Claude Code (Anthropic). Verifier finale: Claude Code

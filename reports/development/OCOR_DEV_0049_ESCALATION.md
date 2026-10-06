@@ -220,3 +220,5 @@ Controlli del verifier `NOT_EXECUTED` (nessun PASS attribuito):
 Esauriti i cicli aggiuntivi 3/4/5; nessun ciclo 6 autorizzato. Decision request `OCOR-DEV-0049-REPAIR-BUDGET` in `reports/development/decision_requests/OCOR-DEV-0049-REPAIR-BUDGET.md`. Nessuna riparazione, nuova richiesta di verifica, sigillatura o merge del task. Candidato b40aa8a preservato byte-identico.
 
 Il loop termina `TERMINAL_BLOCKED` per la disposizione puntuale del PO sul budget di 0049. Non significa che tutto il backlog sia bloccato: REM-0017 è la prossima unità operativa alla ripresa del loop, poi 0050. PR #169 preservata. Claim fence invariato (E1=0, E2=0, zero Verified, runtime NOT_ESTABLISHED, PoC/Production NO-GO).
+
+Chiusura transitiva ricalcolata dal backlog: 0049, 0059 e tutti i task 0060–0069. La lista breve dei record precedenti era incompleta; 0050–0058 restano raggiungibili senza la chiusura di 0049. REM-0017 resta prioritario alla ripresa.
