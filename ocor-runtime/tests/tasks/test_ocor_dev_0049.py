@@ -1268,6 +1268,24 @@ def test_backup_seals_an_encrypted_signed_immutable_recovery_point(stack):
     assert transit_verify(stack.env, raw.replace(b"PRESENT", b"ABSENT_"), signature) is False
 
 
+def test_capture_fails_explicitly_when_the_database_is_unreachable(stack):
+    """The PostgreSQL capture waits a bounded number of attempts for its source and then
+    fails explicitly, never producing an empty capture (positive control: same service,
+    same bound, reachable database)."""
+    project = f"ocor-poc-capture-{uuid.uuid4().hex[:6]}"
+    try:
+        ok = stack.compose(project, "--profile", "backup", "run", "--rm", "-e", "OCOR_CAPTURE_WAIT_ATTEMPTS=3",
+                           "ocor-backup-capture-postgresql")
+        assert ok.returncode == 0, ok.stdout + ok.stderr
+        assert "ocor.dump" in ok.stdout and "memory-items.csv" in ok.stdout, ok.stdout
+        bad = stack.compose(project, "--profile", "backup", "run", "--rm", "-e", "OCOR_CAPTURE_WAIT_ATTEMPTS=3",
+                            "-e", "PGHOST=unreachable-postgresql", "ocor-backup-capture-postgresql")
+        assert bad.returncode != 0, bad.stdout + bad.stderr
+        assert "CAPTURE_SOURCE_UNREACHABLE: postgresql after 3 attempts" in bad.stdout + bad.stderr
+    finally:
+        stack.down(project)
+
+
 def transit_verify(env: dict[str, str], data: bytes, signature: str) -> bool:
     request = urllib.request.Request(
         "http://127.0.0.1:8200/v1/ocor-poc-transit/verify/ocor-poc-backup-sign", method="POST",
@@ -2301,7 +2319,24 @@ def wait_job(ns: str, name: str, timeout: int = 600) -> tuple[dict, str]:
         status = json.loads(result.stdout)["status"]
         return status if status.get("succeeded") == 1 or status.get("failed") == 1 else None
     status = wait_for(finished, timeout, 3, f"job {name} must finish")
-    return status, kubectl("-n", ns, "logs", f"job/{name}", "--all-containers=true", check=False).stdout
+    logs = kubectl("-n", ns, "logs", f"job/{name}", "--all-containers=true", check=False).stdout
+    if status.get("succeeded") != 1:
+        logs += job_diagnostics(ns, name)
+    return status, logs
+
+
+def job_diagnostics(ns: str, name: str) -> str:
+    """Per-container state, exit code and output of a failed job's pods, and the namespace
+    events (`logs job/x --all-containers` prints nothing when a container never started)."""
+    out = []
+    listed = kubectl("-n", ns, "get", "pod", "-l", f"job-name={name}", "-o", "json", check=False)
+    for pod in json.loads(listed.stdout or "{}").get("items", []):
+        pod_name = pod["metadata"]["name"]
+        for status in pod["status"].get("initContainerStatuses", []) + pod["status"].get("containerStatuses", []):
+            out.append(f"--- {pod_name}/{status['name']}: {json.dumps(status.get('state'), sort_keys=True)}")
+            out.append(kubectl("-n", ns, "logs", pod_name, "-c", status["name"], check=False).stdout)
+    out.append(kubectl("-n", ns, "get", "events", "--sort-by=.lastTimestamp", check=False).stdout[-4000:])
+    return "\n".join(out)
 
 
 def sealed_point(logs: str) -> dict:

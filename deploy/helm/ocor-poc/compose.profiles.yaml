@@ -162,11 +162,24 @@ services:
     command:
       - |
         out=/staging/postgresql; rm -rf "$$out"; mkdir -p "$$out"
-        for db in $$(psql -d ocor -Atc "select datname from pg_database where not datistemplate and datallowconn order by 1"); do
+        # Bounded wait for the database path (the network policy of a new pod can be
+        # programmed asynchronously); an unreachable database fails the capture explicitly.
+        attempts=$${OCOR_CAPTURE_WAIT_ATTEMPTS:-30}; n=0
+        until pg_isready -d ocor -t 2 >/dev/null; do
+          n=$$((n + 1))
+          [ "$$n" -lt "$$attempts" ] || { echo "CAPTURE_SOURCE_UNREACHABLE: postgresql after $$n attempts" >&2; exit 1; }
+          sleep 2
+        done
+        # Plain assignments, not a for-list or a pipeline: a failed query aborts under sh -e
+        # instead of yielding an empty capture or a silently skipped memory store.
+        dbs=$$(psql -d ocor -Atc "select datname from pg_database where not datistemplate and datallowconn order by 1")
+        [ -n "$$dbs" ] || { echo "CAPTURE_EMPTY: no database listed" >&2; exit 1; }
+        for db in $$dbs; do
           pg_dump -d "$$db" -Fc -f "$$out/$$db.dump"
           psql -d "$$db" -At -f /opt/ocor/table-digest.sql > "$$out/$$db.digest"
         done
-        if psql -d ocor -Atc "select 1 from pg_database where datname='$$MEMORY_DB'" | grep -q 1; then
+        memory=$$(psql -d ocor -Atc "select count(*) from pg_database where datname='$$MEMORY_DB'")
+        if [ "$$memory" = 1 ]; then
           psql -d "$$MEMORY_DB" -c "\copy (select item_id, tenant_id, compartments, representation_version, lifecycle_epoch, lifecycle_state, coalesce(deletion_epoch::text, '') as deletion_epoch, content_ref, classification_marking_ref, governed_context_digest from memory_item order by item_id) to '$$out/memory-items.csv' csv header"
           psql -d "$$MEMORY_DB" -c "\copy (select event_id, item_id, deletion_epoch from memory_deletion_journal order by deletion_epoch, event_id) to '$$out/memory-deletion-journal.csv' csv header"
         fi
