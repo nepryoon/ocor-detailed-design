@@ -45,3 +45,22 @@ securityContext:
 - name: PYTHONDONTWRITEBYTECODE
   value: "1"
 {{- end -}}
+
+{{- /*
+Workload image of a pinned role (ops, postgresql, kafka, qdrant), rendered only from
+`ocor.images.pins`: the executed artifact is the one the release binding covers.
+*/ -}}
+{{- define "ocor-poc.image" -}}
+{{- $root := index . 0 -}}
+{{- $role := index . 1 -}}
+{{- range $key := list "image" "postgresImage" "kafkaImage" "qdrantImage" -}}
+{{- if hasKey $root.Values.operational $key -}}
+{{- fail (printf "operational.%s is not accepted: workload images derive only from ocor.images.pins" $key) -}}
+{{- end -}}
+{{- end -}}
+{{- $ref := required (printf "ocor.images.pins.%s is required" $role) (index $root.Values.ocor.images.pins $role) -}}
+{{- if not (regexMatch "^[a-z0-9]+([._/:-][a-z0-9]+)*@sha256:[0-9a-f]{64}$" (toString $ref)) -}}
+{{- fail (printf "ocor.images.pins.%s must be digest-pinned (name@sha256:<64 hex>): %v" $role $ref) -}}
+{{- end -}}
+{{- $ref -}}
+{{- end -}}

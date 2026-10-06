@@ -25,7 +25,7 @@ spec:
       {{- include "ocor-poc.podSecurity" . | nindent 6 }}
       initContainers:
         - name: restore-prepare
-          image: {{ .Values.operational.image }}
+          image: {{ include "ocor-poc.image" (list . "ops") }}
           command: [python3, /opt/ocor/ocor_ops_agent.py, restore-prepare, --profile, /etc/ocor/profile.json,
                     --vault, /vault, --staging, /restore
                     {{- with .Values.operational.restoreDrill.recoveryPoint }}, --recovery-point, {{ . | quote }}{{ end }}]
@@ -39,7 +39,7 @@ spec:
             - {name: restore, mountPath: /restore}
             - {name: tmp, mountPath: /tmp}
         - name: restore-postgresql
-          image: {{ .Values.operational.postgresImage }}
+          image: {{ include "ocor-poc.image" (list . "postgresql") }}
           restartPolicy: Always
           args: [postgres, -c, listen_addresses=127.0.0.1]
           env:
@@ -55,7 +55,7 @@ spec:
             - {name: pgdata, mountPath: /pgdata}
             - {name: pgrun, mountPath: /var/run/postgresql}
         - name: restore-qdrant
-          image: {{ .Values.operational.qdrantImage }}
+          image: {{ include "ocor-poc.image" (list . "qdrant") }}
           restartPolicy: Always
           env:
             - {name: QDRANT__SERVICE__HOST, value: 127.0.0.1}
@@ -67,7 +67,7 @@ spec:
             - {name: qdrant, mountPath: /qdrant/storage}
             - {name: qdrant-snapshots, mountPath: /qdrant/snapshots}
         - name: restore-load-postgresql
-          image: {{ .Values.operational.postgresImage }}
+          image: {{ include "ocor-poc.image" (list . "postgresql") }}
           command: [sh, -ec, {{ $load | replace "$$" "$" | quote }}]
           env:
             - {name: PGHOST, value: 127.0.0.1}
@@ -79,7 +79,7 @@ spec:
             - {name: tmp, mountPath: /tmp}
       containers:
         - name: restore-finalize
-          image: {{ .Values.operational.image }}
+          image: {{ include "ocor-poc.image" (list . "ops") }}
           command: [python3, /opt/ocor/ocor_ops_agent.py, restore-finalize, --profile, /etc/ocor/profile.json,
                     --vault, /vault, --staging, /restore, --restore-qdrant, "127.0.0.1:6333"]
           env:

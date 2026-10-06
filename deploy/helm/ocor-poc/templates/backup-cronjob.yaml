@@ -28,7 +28,7 @@ spec:
           {{- include "ocor-poc.podSecurity" . | nindent 10 }}
           initContainers:
             - name: capture-postgresql
-              image: {{ .Values.operational.postgresImage }}
+              image: {{ include "ocor-poc.image" (list . "postgresql") }}
               command: [sh, -ec, {{ $capturePg | replace "$$" "$" | quote }}]
               env:
                 - {name: PGHOST, value: postgresql}
@@ -42,7 +42,7 @@ spec:
                 - {name: agent, mountPath: /opt/ocor/table-digest.sql, subPath: table-digest.sql, readOnly: true}
                 - {name: tmp, mountPath: /tmp}
             - name: capture-kafka
-              image: {{ .Values.operational.kafkaImage }}
+              image: {{ include "ocor-poc.image" (list . "kafka") }}
               command: [sh, -ec, {{ $captureKafka | replace "$$" "$" | quote }}]
               {{- include "ocor-poc.containerSecurity" . | nindent 14 }}
               volumeMounts:
@@ -50,7 +50,7 @@ spec:
                 - {name: tmp, mountPath: /tmp}
           containers:
             - name: seal
-              image: {{ .Values.operational.image }}
+              image: {{ include "ocor-poc.image" (list . "ops") }}
               command: [sh, -ec, "python3 /opt/ocor/ocor_ops_agent.py init-keys --profile /etc/ocor/profile.json && exec python3 /opt/ocor/ocor_ops_agent.py seal --profile /etc/ocor/profile.json --vault /vault --staging /staging"]
               env:
                 {{- include "ocor-poc.opsEnv" . | nindent 16 }}

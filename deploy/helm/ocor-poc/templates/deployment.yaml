@@ -24,7 +24,7 @@ spec:
       {{- include "ocor-poc.podSecurity" . | nindent 6 }}
       containers:
         - name: ops
-          image: {{ .Values.operational.image }}
+          image: {{ include "ocor-poc.image" (list . "ops") }}
           command: [python3, /opt/ocor/ocor_ops_agent.py, serve, --profile, /etc/ocor/profile.json,
                     --listen, "0.0.0.0:8080", --vault, /vault]
           ports:

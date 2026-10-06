@@ -2,8 +2,8 @@
 backup/replay and bounded safe-degraded modes (ADD v1.3 Part I §6, Part II §2.13;
 LLD v1.1 §5).
 
-Repair cycle 4 (implementer: Claude Code; verifier: Codex; PO decision
-OCOR-DEV-0049-REPAIR-CLAUDE-AUTO, second of three authorized cycles). Every criterion is proven on behaviour of real
+Repair cycle 5 (implementer: Claude Code; verifier: Codex; PO decision
+OCOR-DEV-0049-REPAIR-CLAUDE-AUTO, third of three authorized cycles). Every criterion is proven on behaviour of real
 processes on the digest-pinned stack, never on configuration booleans or string
 searches:
 
@@ -27,6 +27,18 @@ searches:
   statuses, quarantine, materialisation) AND bound, with its recovery point, to
   the running release, profile digest and image pins; a restart or upgrade to
   another release/profile/pin set is denied until its own backup and restore;
+* every workload image of both profiles is exactly a governed digest pin: the
+  Helm chart renders Deployment, backup and restore images only from
+  `ocor.images.pins` (the pins the release binding covers) and refuses tag-only
+  pins and any separate image override; an upgrade to other pins runs the new
+  artifact but is denied until its own tested restore;
+* a PASSED check whose typed detail reports a violation (tenant, compartment,
+  GCS, marking, orphan, duplicate, resurrection, drift, count difference) is
+  incoherent; signed records are parsed as strict JSON (no NaN/Infinity) and
+  every receipt time is finite, past, coherent with its ISO form and unexpired;
+* the policy digest in logs and traces is the digest of the COMPLETE OPA
+  inventory, read up to an explicit bound; an oversized, truncated or malformed
+  inventory yields no digest and an explicit reason code;
 * each backup job is correlated with the recovery point it wrote (also when a
   manual run overlaps the scheduled CronJob tick) and the restore drill is
   bound to that recovery point;
@@ -71,6 +83,9 @@ CHART_DIR = ROOT / "deploy" / "helm" / "ocor-poc"
 VALUES = CHART_DIR / "values.yaml"
 OVERLAY = CHART_DIR / "compose.profiles.yaml"
 OPS_IMAGE = "python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2"
+# A different, real Python artifact (verdict OCOR-DEV-0049-aefabf91777d-4 VF-001 probe:
+# Python 3.11.17, config cc5f2f88..., against 3.11.15 of the governed pin).
+OTHER_OPS_IMAGE = "python@sha256:27e044f7e01fea05c1760324d58fc5360a0767b9ef098e74ddaf8c70b8f46d26"
 BOOTSTRAP_NETWORK = "ocor-bootstrap_ocor-bootstrap"
 BOOTSTRAP_SERVICES = [
     "terminusdb", "typedb", "fuseki", "opa", "keycloak", "openbao",
@@ -200,6 +215,12 @@ NEGATIVE_PROFILES = [
     ("public allowed flow", _set("isolation.allowedFlows.0", {"host": "registry.npmjs.org", "port": 443}), "allowed flow must be intra-site"),
     ("empty allowed flows", _set("isolation.allowedFlows", []), "allowedFlows must be non-empty"),
     ("image pin by tag", _set("images.pins.ops", "python:3.11"), "image pin ops must be digest-pinned"),
+    ("image pin with uppercase digest", _set("images.pins.ops", "python@sha256:" + "A" * 64),
+     "image pin ops must be digest-pinned"),
+    ("image pin with short digest", _set("images.pins.kafka", "confluentinc/cp-kafka@sha256:" + "a" * 63),
+     "image pin kafka must be digest-pinned"),
+    ("image pin with digest and suffix", _set("images.pins.qdrant", "qdrant/qdrant@sha256:" + "a" * 64 + ":latest"),
+     "image pin qdrant must be digest-pinned"),
     ("no image pins", _set("images.pins", {}), "image pins required"),
     ("namespace not per subsystem", _set("isolation.namespacePerSubsystem", False), "namespacePerSubsystem"),
     ("service account not per subsystem", _set("isolation.serviceAccountPerSubsystem", False), "serviceAccountPerSubsystem"),
@@ -334,6 +355,82 @@ def test_helm_chart_refuses_to_render_a_flow_without_a_pinned_address():
     assert "no intra-site address for allowed flow qdrant:6333" in result["stderr"]
 
 
+# Verdict OCOR-DEV-0049-aefabf91777d-4 VF-001: the executed artifact of every workload is
+# the governed pin of its role, so the release binding covers what actually runs.
+HELM_IMAGE_ROLES = {
+    "ops": "ops", "seal": "ops", "restore-prepare": "ops", "restore-finalize": "ops",
+    "capture-postgresql": "postgresql", "restore-postgresql": "postgresql", "restore-load-postgresql": "postgresql",
+    "capture-kafka": "kafka", "restore-qdrant": "qdrant",
+}
+
+
+def workload_images(docs: list[dict]) -> dict[tuple[str, str], str]:
+    pod_specs = {"Deployment": lambda d: d["spec"]["template"]["spec"], "Job": lambda d: d["spec"]["template"]["spec"],
+                 "CronJob": lambda d: d["spec"]["jobTemplate"]["spec"]["template"]["spec"]}
+    out = {}
+    for doc in docs:
+        if doc["kind"] in pod_specs:
+            pod = pod_specs[doc["kind"]](doc)
+            for container in pod.get("initContainers", []) + pod["containers"]:
+                out[(doc["kind"], container["name"])] = container["image"]
+    return out
+
+
+@pytest.mark.parametrize("override", [None, ("ops", OTHER_OPS_IMAGE),
+                                      ("postgresql", "postgres@sha256:" + "1" * 64)], ids=["governed", "ops", "pg"])
+def test_helm_workload_images_are_exactly_the_governed_pins(override):
+    pins = dict(helm_profile()["images"]["pins"])
+    sets = ()
+    if override is not None:
+        pins[override[0]] = override[1]
+        sets = (f"ocor.images.pins.{override[0]}={override[1]}",)
+    docs = helm_template(*sets)
+    images = workload_images(docs)
+    assert sorted(name for _, name in images) == sorted(HELM_IMAGE_ROLES), images
+    for (kind, name), image in images.items():
+        assert image == pins[HELM_IMAGE_ROLES[name]], (kind, name, image)
+    configmap = next(d for d in docs if d["kind"] == "ConfigMap")
+    assert json.loads(configmap["data"]["profile.json"])["images"]["pins"] == pins, "binding covers the executed images"
+
+
+IMAGE_REFUSALS = [
+    ("operational.image=python:3.11", "operational.image is not accepted"),
+    (f"operational.image={OTHER_OPS_IMAGE}", "operational.image is not accepted"),
+    (f"operational.image={OPS_IMAGE}", "operational.image is not accepted"),
+    ("operational.postgresImage=postgres:latest", "operational.postgresImage is not accepted"),
+    ("operational.kafkaImage=confluentinc/cp-kafka:latest", "operational.kafkaImage is not accepted"),
+    ("operational.qdrantImage=qdrant/qdrant:latest", "operational.qdrantImage is not accepted"),
+    ("ocor.images.pins.ops=python:3.11", "ocor.images.pins.ops must be digest-pinned"),
+    ("ocor.images.pins.postgresql=postgres:latest", "ocor.images.pins.postgresql must be digest-pinned"),
+    ("ocor.images.pins.kafka=confluentinc/cp-kafka:latest", "ocor.images.pins.kafka must be digest-pinned"),
+    ("ocor.images.pins.qdrant=qdrant/qdrant:latest", "ocor.images.pins.qdrant must be digest-pinned"),
+    ("ocor.images.pins.ops=python@sha256:" + "A" * 64, "ocor.images.pins.ops must be digest-pinned"),
+    ("ocor.images.pins.extra=busybox:1", "ocor.images.pins.extra must be digest-pinned"),
+]
+
+
+@pytest.mark.parametrize("setting,message", IMAGE_REFUSALS, ids=[s for s, _ in IMAGE_REFUSALS])
+def test_helm_refuses_images_outside_the_digest_pins(setting, message):
+    result = helm_template(setting, expect_ok=False)[0]
+    assert result["returncode"] != 0
+    assert message in result["stderr"], result["stderr"]
+
+
+def compose_image_role(service: str) -> str:
+    for role in ("postgresql", "kafka", "qdrant"):
+        if service.startswith(("ocor-backup-capture-", "ocor-restore-")) and role in service:
+            return role
+    return "ops"
+
+
+def test_compose_workload_images_are_exactly_the_governed_pins():
+    pins = compose_profile()["images"]["pins"]
+    services = overlay()["services"]
+    assert {compose_image_role(name) for name in services} == set(pins)
+    for name, service in services.items():
+        assert service["image"] == pins[compose_image_role(name)], (name, service["image"])
+
+
 # --------------------------------------------------------------------------- decision logic
 
 
@@ -440,8 +537,29 @@ def profile_digest(profile: dict) -> str:
     return hashlib.sha256(canonical_bytes(profile)).hexdigest()
 
 
+def iso_utc(epoch: float) -> str:
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(epoch))
+
+
+def coherent_gate() -> dict:
+    """Recovery gate of a PASSED drill with a memory store, with the typed details
+    restore-finalize writes (counts and watermarks are legitimately non-empty)."""
+    return {
+        "revision": {"pass": True, "detail": []},
+        "watermark": {"pass": True, "detail": {"index_items": 3, "live_metadata_items": 3}},
+        "orphan_duplicate": {"pass": True, "detail": {"orphans": [], "dupes": []}},
+        "marking": {"pass": True, "detail": {"marking_mismatch": []}},
+        "gcs": {"pass": True, "detail": {"tenant_mismatch": [], "compartment_mismatch": [], "gcs_digest_mismatch": []}},
+        "deletion_resurrection": {"pass": True, "detail": []},
+        "projection_drift_or_stale_deletion_epoch": {
+            "pass": True, "detail": {"journal_max": 7, "metadata_max": 7, "missing_live": [], "version_drift": []}},
+        "sample_semantic_digest": {"pass": True, "detail": []},
+    }
+
+
 def coherent_receipt(profile: dict) -> dict:
     """The shape restore-finalize writes for a PASSED drill (oracle independent of the agent)."""
+    completed = float(int(time.time()) - 60)
     statuses = {0: "EXECUTED", 1: "EXECUTED", 2: "EXECUTED", 3: "EXECUTED", 4: "EXECUTED", 5: "EXECUTED",
                 6: "NOT_EXECUTED", 7: "EXECUTED", 8: "NOT_APPLICABLE", 9: "NOT_EXECUTED",
                 10: "PENDING_HUMAN_AUTHORIZATION"}
@@ -450,11 +568,11 @@ def coherent_receipt(profile: dict) -> dict:
         "manifest_digest": "a" * 64, "outcome": "PASSED",
         "release_binding": {"release": profile["profile"]["release"], "profile_digest": profile_digest(profile),
                             "image_pins_digest": hashlib.sha256(canonical_bytes(profile["images"]["pins"])).hexdigest()},
-        "recovery_gate": {name: {"pass": True, "detail": []} for name in RECOVERY_GATE},
+        "recovery_gate": coherent_gate(),
         "steps": [{"step": s, "status": statuses[i], "detail": ""} for i, s in enumerate(profile["restore"]["steps"])],
         "replayed_event_ids": ["evt-del-m2", "evt-del-m4"], "replay_digest": "b" * 64, "quarantined_items": [],
         "retrieval_reopened": False, "materialisation": "ALLOWED_PENDING_HUMAN", "isolated_network": True,
-        "completed_at": "2026-10-05T00:00:00Z", "completed_at_epoch": time.time() - 60, "duration_seconds": 1.0,
+        "completed_at": iso_utc(completed), "completed_at_epoch": completed, "duration_seconds": 1.0,
         "rto_hours_target": 4, "correlation_id": "c",
     }
 
@@ -464,6 +582,19 @@ def _gate_fails(name: str, detail=None):
         receipt["recovery_gate"][name]["pass"] = False
         if detail is not None:
             receipt["recovery_gate"][name]["detail"] = detail
+    return mutate
+
+
+def _gate_detail(name: str, detail):
+    """The check still claims pass=true, but its detail reports a violation (VF-002)."""
+    def mutate(receipt: dict) -> None:
+        receipt["recovery_gate"][name]["detail"] = detail
+    return mutate
+
+
+def _detail_key(name: str, key: str, value):
+    def mutate(receipt: dict) -> None:
+        receipt["recovery_gate"][name]["detail"][key] = value
     return mutate
 
 
@@ -501,6 +632,48 @@ RECEIPT_MUTATIONS = [
     ("future_dated", _set("completed_at_epoch", 4102444800.0), "completed_at_epoch"),
     ("epoch_not_number", _set("completed_at_epoch", True), "completed_at_epoch"),
     ("manifest_digest_malformed", _set("manifest_digest", "abc"), "manifest_digest"),
+    # Verdict OCOR-DEV-0049-aefabf91777d-4 VF-002: pass=true contradicted by its typed detail.
+    ("gcs_pass_with_tenant_mismatch", _detail_key("gcs", "tenant_mismatch", ["m1"]), "gate:gcs:detail"),
+    ("gcs_pass_with_compartment_mismatch", _detail_key("gcs", "compartment_mismatch", ["m3"]), "gate:gcs:detail"),
+    ("gcs_pass_with_gcs_digest_mismatch", _detail_key("gcs", "gcs_digest_mismatch", ["m5"]), "gate:gcs:detail"),
+    ("gcs_detail_key_missing", lambda r: r["recovery_gate"]["gcs"]["detail"].pop("tenant_mismatch"),
+     "gate:gcs:detail"),
+    ("gcs_detail_key_unexpected", _detail_key("gcs", "tenant_override", []), "gate:gcs:detail"),
+    ("gcs_detail_not_object", _gate_detail("gcs", "ok"), "gate:gcs:detail"),
+    ("gcs_detail_list_not_list", _detail_key("gcs", "tenant_mismatch", "m1"), "gate:gcs:detail"),
+    ("marking_pass_with_mismatch", _detail_key("marking", "marking_mismatch", ["m1"]), "gate:marking:detail"),
+    ("orphan_pass_with_orphan", _detail_key("orphan_duplicate", "orphans", ["m9"]), "gate:orphan_duplicate:detail"),
+    ("orphan_pass_with_duplicate", _detail_key("orphan_duplicate", "dupes", ["m1"]), "gate:orphan_duplicate:detail"),
+    ("resurrection_pass_with_item", _gate_detail("deletion_resurrection", ["m2"]),
+     "gate:deletion_resurrection:detail"),
+    ("drift_pass_with_missing_live", _detail_key("projection_drift_or_stale_deletion_epoch", "missing_live", ["m1"]),
+     "gate:projection_drift_or_stale_deletion_epoch:detail"),
+    ("drift_pass_with_version_drift", _detail_key("projection_drift_or_stale_deletion_epoch", "version_drift",
+                                                  ["m1"]), "gate:projection_drift_or_stale_deletion_epoch:detail"),
+    ("drift_pass_with_stale_epoch", _detail_key("projection_drift_or_stale_deletion_epoch", "journal_max", 6),
+     "gate:projection_drift_or_stale_deletion_epoch:detail"),
+    ("drift_pass_with_boolean_epoch", _detail_key("projection_drift_or_stale_deletion_epoch", "metadata_max", True),
+     "gate:projection_drift_or_stale_deletion_epoch:detail"),
+    ("watermark_pass_with_count_difference", _detail_key("watermark", "index_items", 2), "gate:watermark:detail"),
+    ("watermark_pass_with_negative_count", _gate_detail("watermark", {"index_items": -1, "live_metadata_items": -1}),
+     "gate:watermark:detail"),
+    ("watermark_pass_with_float_count", _gate_detail("watermark", {"index_items": 3.0, "live_metadata_items": 3.0}),
+     "gate:watermark:detail"),
+    ("revision_pass_with_row_count_difference", _gate_detail("revision", ["ocor:row_counts_differ"]),
+     "gate:revision:detail"),
+    ("semantic_digest_pass_with_difference", _gate_detail("sample_semantic_digest", ["ocor:semantic_digest_differs"]),
+     "gate:sample_semantic_digest:detail"),
+    ("gate_entry_extra_field", _set("recovery_gate.marking.override", True), "gate:marking:detail"),
+    ("memory_gate_claims_no_store", _gate_detail("gcs", "no memory store present"), "gate:gcs:detail"),
+    ("memory_step_not_executed", _step_status(5, "NOT_EXECUTED"),
+     "step:replay_memory_deletion_tombstones_before_reopen_retrieval"),
+    ("replay_digest_malformed", _set("replay_digest", "xyz"), "replay_digest"),
+    ("replayed_ids_not_strings", _set("replayed_event_ids", [1, 2]), "replayed_event_ids"),
+    # Verdict OCOR-DEV-0049-aefabf91777d-4 VF-003 (values representable in strict JSON).
+    ("epoch_zero", _set("completed_at_epoch", 0), "completed_at_epoch"),
+    ("epoch_negative", _set("completed_at_epoch", -60.0), "completed_at_epoch"),
+    ("completed_at_incoherent", _set("completed_at", "2026-01-01T00:00:00Z"), "completed_at"),
+    ("duration_negative", _set("duration_seconds", -1.0), "duration_seconds"),
 ]
 
 
@@ -511,6 +684,63 @@ def test_receipt_coherence_branches(agent_module, case, mutate, expected):
     assert agent_module.receipt_inconsistencies(receipt, profile) == [], "coherent PASSED receipt"
     mutate(receipt)
     assert expected in agent_module.receipt_inconsistencies(receipt, profile), case
+
+
+RECEIPT_POSITIVE_VARIANTS = [
+    ("authentic_counts", lambda r: None),
+    ("other_consistent_watermark", _gate_detail("watermark", {"index_items": 7, "live_metadata_items": 7})),
+    ("journal_ahead_of_metadata", _detail_key("projection_drift_or_stale_deletion_epoch", "journal_max", 9)),
+    ("integral_epoch", lambda r: r.__setitem__("completed_at_epoch", int(r["completed_at_epoch"]))),
+]
+
+
+@pytest.mark.parametrize("case,mutate", RECEIPT_POSITIVE_VARIANTS, ids=[c[0] for c in RECEIPT_POSITIVE_VARIANTS])
+def test_coherent_receipt_variants_are_accepted(agent_module, case, mutate):
+    """Positive side of VF-002/VF-003: legitimately non-empty details are not rejected."""
+    receipt = coherent_receipt(helm_profile())
+    mutate(receipt)
+    assert agent_module.receipt_inconsistencies(receipt, helm_profile()) == [], case
+
+
+def test_receipt_without_memory_store_is_coherent_only_as_a_whole(agent_module):
+    profile = helm_profile()
+    receipt = coherent_receipt(profile)
+    for name in ("watermark", "orphan_duplicate", "marking", "gcs", "deletion_resurrection",
+                 "projection_drift_or_stale_deletion_epoch"):
+        receipt["recovery_gate"][name]["detail"] = "no memory store present"
+    receipt["steps"][5]["status"] = "NOT_APPLICABLE"
+    receipt.update(replayed_event_ids=[], replay_digest=None)
+    assert agent_module.receipt_inconsistencies(receipt, profile) == []
+    mixed = deepcopy(receipt)
+    mixed["recovery_gate"]["gcs"]["detail"] = coherent_gate()["gcs"]["detail"]
+    assert agent_module.receipt_inconsistencies(mixed, profile) == ["gate:gcs:detail"]
+    replayed = dict(receipt, replayed_event_ids=["evt-del-m2"], replay_digest="b" * 64)
+    assert agent_module.receipt_inconsistencies(replayed, profile) == ["replayed_event_ids", "replay_digest"]
+
+
+@pytest.mark.parametrize("field,value,expected", [
+    ("completed_at_epoch", float("nan"), "completed_at_epoch"),
+    ("completed_at_epoch", float("inf"), "completed_at_epoch"),
+    ("completed_at_epoch", float("-inf"), "completed_at_epoch"),
+    ("completed_at_epoch", "1759700000", "completed_at_epoch"),
+    ("completed_at_epoch", None, "completed_at_epoch"),
+    ("duration_seconds", float("nan"), "duration_seconds"),
+    ("duration_seconds", float("inf"), "duration_seconds"),
+])
+def test_non_finite_receipt_numbers_are_incoherent(agent_module, field, value, expected):
+    receipt = coherent_receipt(helm_profile())
+    receipt[field] = value
+    assert expected in agent_module.receipt_inconsistencies(receipt, helm_profile())
+
+
+@pytest.mark.parametrize("text", ['{"a": NaN}', '{"a": Infinity}', '{"a": -Infinity}', '{"a": 1e400}',
+                                  '{"a": -1e999}'])
+def test_strict_json_rejects_non_standard_numbers(agent_module, text):
+    with pytest.raises(agent_module.NonStandardJSON):
+        agent_module.strict_json(text)
+    assert agent_module.strict_json('{"a": 1.5e3, "b": -2, "c": 0.0}') == {"a": 1500.0, "b": -2, "c": 0.0}
+    with pytest.raises(ValueError):
+        agent_module.canonical({"a": float("nan")})
 
 
 @pytest.mark.parametrize("value", [[], "PASSED", None, 1])
@@ -538,6 +768,106 @@ def test_release_binding_branches(agent_module, case, mutate, expected):
     assert agent_module.binding_mismatch(binding, running, profile_digest(running)) == expected
     for missing in (None, {}, {"release": binding["release"]}):
         assert agent_module.binding_mismatch(missing, profile, profile_digest(profile)) is not None
+
+
+def policy_oracle(inventory: list[dict]) -> str:
+    """Independent oracle of the policy digest: SHA-256 of the canonical sorted list of
+    [policy id, SHA-256 of its raw source] over the COMPLETE inventory."""
+    return hashlib.sha256(canonical_bytes(sorted(
+        [p["id"], hashlib.sha256(p["raw"].encode()).hexdigest()] for p in inventory))).hexdigest()
+
+
+EMPTY_SET_DIGEST = hashlib.sha256(b"[]").hexdigest()
+
+
+class _InventoryServer:
+    """Local HTTP endpoint serving a fixed OPA-like response: covers only the failure
+    handling of the response parser (the real OPA is exercised on the live stack)."""
+
+    def __init__(self, status: int, body: bytes, content_length: str | None = "auto") -> None:
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+        import threading
+
+        outer = self
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args):  # noqa: D401
+                return
+
+            def do_GET(self):  # noqa: N802
+                self.send_response(outer.status)
+                if outer.content_length == "auto":
+                    self.send_header("Content-Length", str(len(outer.body)))
+                elif outer.content_length is not None:
+                    self.send_header("Content-Length", outer.content_length)
+                self.end_headers()
+                self.wfile.write(outer.body)
+
+        self.status, self.body, self.content_length = status, body, content_length
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        self.port = self.server.server_address[1]
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    def close(self) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+
+
+def _inventory(count: int, raw_size: int) -> list[dict]:
+    return [{"id": f"pkg/p{n}.rego", "raw": f"package p{n}\n# " + "x" * raw_size} for n in range(count)]
+
+
+def _opa_body(inventory) -> bytes:
+    return json.dumps({"result": inventory}).encode()
+
+
+POLICY_INVENTORY_CASES = [
+    ("two_policies", 200, _opa_body(_inventory(2, 10)), "auto", "POLICY_DIGEST_OK"),
+    ("above_4096_bytes", 200, _opa_body(_inventory(3, 20000)), "auto", "POLICY_DIGEST_OK"),
+    ("empty_inventory", 200, _opa_body([]), "auto", "POLICY_DIGEST_OK"),
+    ("chunked_no_length", 200, _opa_body(_inventory(2, 9000)), None, "POLICY_DIGEST_OK"),
+    ("over_limit", 200, _opa_body(_inventory(2, 40000)), "auto", "POLICY_INVENTORY_TOO_LARGE"),
+    ("over_limit_undeclared", 200, _opa_body(_inventory(2, 40000)), None, "POLICY_INVENTORY_TOO_LARGE"),
+    ("truncated", 200, _opa_body(_inventory(2, 10))[:-5], "999", "POLICY_INVENTORY_TRUNCATED"),
+    ("not_json", 200, b"<html>", "auto", "POLICY_INVENTORY_MALFORMED"),
+    ("nan", 200, b'{"result": NaN}', "auto", "POLICY_INVENTORY_MALFORMED"),
+    ("result_not_list", 200, b'{"result": {}}', "auto", "POLICY_INVENTORY_MALFORMED"),
+    ("no_result", 200, b"{}", "auto", "POLICY_INVENTORY_MALFORMED"),
+    ("entry_without_id", 200, _opa_body([{"raw": "package a"}]), "auto", "POLICY_INVENTORY_MALFORMED"),
+    ("raw_not_string", 200, _opa_body([{"id": "a", "raw": 1}]), "auto", "POLICY_INVENTORY_MALFORMED"),
+    ("duplicate_id", 200, _opa_body([{"id": "a", "raw": "x"}, {"id": "a", "raw": "y"}]), "auto",
+     "POLICY_INVENTORY_MALFORMED"),
+    ("server_error", 500, b"{}", "auto", "POLICY_INVENTORY_UNAVAILABLE"),
+]
+POLICY_TEST_LIMIT = 64 * 1024
+
+
+@pytest.mark.parametrize("case,status,body,length,reason", POLICY_INVENTORY_CASES,
+                         ids=[c[0] for c in POLICY_INVENTORY_CASES])
+def test_policy_inventory_digest_branches(agent_module, case, status, body, length, reason):
+    """Verdict OCOR-DEV-0049-aefabf91777d-4 VF-004: the digest covers the complete
+    inventory or is not produced at all (never the digest of a truncated or empty set)."""
+    server = _InventoryServer(status, body, length)
+    try:
+        digest, got = agent_module.policy_inventory_digest("127.0.0.1", server.port, 5.0, limit=POLICY_TEST_LIMIT)
+    finally:
+        server.close()
+    assert got == reason, case
+    if reason == "POLICY_DIGEST_OK":
+        assert digest == policy_oracle(json.loads(body)["result"])
+        assert (digest == EMPTY_SET_DIGEST) is (json.loads(body)["result"] == [])
+    else:
+        assert digest is None
+
+
+def test_policy_inventory_digest_on_a_closed_port(agent_module):
+    import socket as _socket
+
+    with _socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    assert agent_module.policy_inventory_digest("127.0.0.1", port, 2.0) == (None, "POLICY_INVENTORY_UNAVAILABLE")
+    assert agent_module.POLICY_INVENTORY_MAX_BYTES == 4 * 1024 * 1024
 
 
 # --------------------------------------------------------------------------- live environment
@@ -1113,9 +1443,11 @@ def transit_sign(env: dict[str, str], data: bytes) -> str:
     return str(json.loads(urllib.request.urlopen(request, timeout=10).read())["data"]["signature"])
 
 
-def write_signed_receipt(env: dict[str, str], vault: Path, receipt: dict, name: str) -> tuple[list[Path], str]:
-    """Write `receipt` as the newest receipt of `vault`, validly signed; return its files and digest."""
-    raw = canonical_bytes(receipt)
+def write_signed_receipt(env: dict[str, str], vault: Path, receipt: dict, name: str,
+                         raw: bytes | None = None) -> tuple[list[Path], str]:
+    """Write `receipt` (or exactly `raw`) as the newest receipt of `vault`, validly signed;
+    return its files and digest."""
+    raw = canonical_bytes(receipt) if raw is None else raw
     root = vault / "restore-receipts"
     files = [root / f"99991231T235959Z-{name}.json", root / f"99991231T235959Z-{name}.sig"]
     files[0].write_bytes(raw)
@@ -1186,6 +1518,112 @@ def test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admissi
     # Positive counterpart: the authentic coherent receipt is verified again.
     wait_for(lambda: posture(name, LOCAL_OPS)["restore"]["receipt_digest"] == coherence_ops["authentic_digest"], 30)
     assert wait_for(lambda: _standalone_readyz(name)[0] == 200, 15)
+
+
+def _observe_refused_receipt(stack, name: str, digest: str, reason: str, detail: str | None) -> None:
+    state = wait_for(lambda: (p := posture(name, LOCAL_OPS))["restore"]["reason_code"] == reason and p, 30,
+                     message=reason)
+    assert detail is None or detail in state["restore"]["detail"], state["restore"]
+    assert state["restore"]["receipt_digest"] is None
+    _, ready = wait_for(lambda: (r := _standalone_readyz(name))[0] == 503 and r, 15)
+    assert ready["reasons"] == [reason]
+    status, body = reopen(name, stack.operator_token, digest, base=LOCAL_OPS)
+    assert (status, body["reason_code"]) == (409, f"REOPEN_REFUSED:{reason}"), body
+    assert_admission(name, admitted=[], fault="restore_not_verified", base=LOCAL_OPS)
+
+
+@pytest.mark.parametrize("case,mutate", RECEIPT_POSITIVE_VARIANTS, ids=[c[0] for c in RECEIPT_POSITIVE_VARIANTS])
+def test_custodian_signed_receipt_with_coherent_details_is_accepted(stack, coherence_ops, case, mutate):
+    """Positive side of VF-002 on the live agent: a validly signed receipt whose details are
+    legitimately non-empty (other counts, journal ahead of metadata) is READY and reopenable."""
+    name, vault = coherence_ops["name"], coherence_ops["vault"]
+    receipt = deepcopy(coherence_ops["authentic"])
+    mutate(receipt)
+    receipt["correlation_id"] = f"positive-{case}"
+    files, digest = write_signed_receipt(stack.env, vault, receipt, f"positive-{case.replace('_', '-')}")
+    try:
+        wait_for(lambda: posture(name, LOCAL_OPS)["restore"]["receipt_digest"] == digest, 30, message=case)
+        assert _standalone_readyz(name)[1]["reasons"] == ["READY"]
+        status, body = reopen(name, stack.operator_token, digest, base=LOCAL_OPS)
+        assert (status, body["reason_code"]) == (200, "MUTATIVE_PATH_REOPENED_BY_HUMAN"), body
+        assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)
+    finally:
+        for f in files:
+            f.unlink()
+    wait_for(lambda: posture(name, LOCAL_OPS)["restore"]["receipt_digest"] == coherence_ops["authentic_digest"], 30)
+
+
+EPOCH_TOKEN = 1234567890.25
+MAX_AGE_SECONDS = 168 * 3600
+# Verdict OCOR-DEV-0049-aefabf91777d-4 VF-003: (case, completed_at_epoch, raw JSON token
+# replacing it or None, ISO consistent, expected reason, expected detail).
+RECEIPT_TIME_CASES = [
+    ("valid_recent", lambda: time.time() - 3600, None, True, "RESTORE_TESTED", None),
+    ("nan", lambda: EPOCH_TOKEN, b"NaN", True, "RESTORE_RECEIPT_INCONSISTENT", "receipt:non_standard_json"),
+    ("infinity", lambda: EPOCH_TOKEN, b"Infinity", True, "RESTORE_RECEIPT_INCONSISTENT", "receipt:non_standard_json"),
+    ("minus_infinity", lambda: EPOCH_TOKEN, b"-Infinity", True, "RESTORE_RECEIPT_INCONSISTENT",
+     "receipt:non_standard_json"),
+    ("overflow_to_infinity", lambda: EPOCH_TOKEN, b"1e400", True, "RESTORE_RECEIPT_INCONSISTENT",
+     "receipt:non_standard_json"),
+    ("future", lambda: time.time() + 3600, None, True, "RESTORE_RECEIPT_INCONSISTENT", "completed_at_epoch"),
+    ("expired", lambda: time.time() - MAX_AGE_SECONDS - 3600, None, True, "RESTORE_RECEIPT_EXPIRED", None),
+    ("within_max_age", lambda: time.time() - MAX_AGE_SECONDS + 3600, None, True, "RESTORE_TESTED", None),
+    ("iso_incoherent", lambda: time.time() - 3600, None, False, "RESTORE_RECEIPT_INCONSISTENT", "completed_at"),
+]
+
+
+@pytest.mark.parametrize("case,epoch,token,coherent_iso,reason,detail", RECEIPT_TIME_CASES,
+                         ids=[c[0] for c in RECEIPT_TIME_CASES])
+def test_custodian_signed_receipt_time_branches(stack, coherence_ops, case, epoch, token, coherent_iso, reason,
+                                                detail):
+    """Every time branch of a validly signed receipt on the live agent: a finite, past,
+    unexpired time coherent with its ISO form is accepted; NaN/Infinity (non-standard JSON),
+    a future, expired or ISO-incoherent time denies readiness, /reopen and admission."""
+    name, vault = coherence_ops["name"], coherence_ops["vault"]
+    receipt = deepcopy(coherence_ops["authentic"])
+    value = float(int(epoch()))
+    receipt["completed_at_epoch"] = value
+    receipt["completed_at"] = iso_utc(value) if coherent_iso else iso_utc(value - 86400)
+    raw = canonical_bytes(receipt)
+    if token is not None:
+        marker = f'"completed_at_epoch":{json.dumps(value)}'.encode()
+        assert raw.count(marker) == 1
+        raw = raw.replace(marker, b'"completed_at_epoch":' + token)
+    files, digest = write_signed_receipt(stack.env, vault, receipt, f"time-{case.replace('_', '-')}", raw=raw)
+    try:
+        if reason == "RESTORE_TESTED":
+            wait_for(lambda: posture(name, LOCAL_OPS)["restore"]["receipt_digest"] == digest, 30, message=case)
+            assert _standalone_readyz(name)[1]["reasons"] == ["READY"]
+            status, body = reopen(name, stack.operator_token, digest, base=LOCAL_OPS)
+            assert (status, body["reason_code"]) == (200, "MUTATIVE_PATH_REOPENED_BY_HUMAN"), body
+            assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)
+        else:
+            _observe_refused_receipt(stack, name, digest, reason, detail)
+    finally:
+        for f in files:
+            f.unlink()
+    wait_for(lambda: posture(name, LOCAL_OPS)["restore"]["receipt_digest"] == coherence_ops["authentic_digest"], 30)
+    assert wait_for(lambda: _standalone_readyz(name)[0] == 200, 15)
+
+
+def test_receipt_memory_branch_must_match_its_recovery_point(stack, coherence_ops):
+    """A signed receipt that is internally coherent as a no-memory-store drill, for a
+    recovery point that DOES carry a memory store, skipped the tombstone replay and the
+    per-item gates: refused."""
+    name, vault = coherence_ops["name"], coherence_ops["vault"]
+    receipt = deepcopy(coherence_ops["authentic"])
+    for gate in ("watermark", "orphan_duplicate", "marking", "gcs", "deletion_resurrection",
+                 "projection_drift_or_stale_deletion_epoch"):
+        receipt["recovery_gate"][gate]["detail"] = "no memory store present"
+    receipt["steps"][5]["status"] = "NOT_APPLICABLE"
+    receipt.update(replayed_event_ids=[], replay_digest=None)
+    files, digest = write_signed_receipt(stack.env, vault, receipt, "memory-branch")
+    try:
+        _observe_refused_receipt(stack, name, digest, "RESTORE_RECEIPT_INCONSISTENT", "memory:manifest_mismatch")
+    finally:
+        for f in files:
+            f.unlink()
+    wait_for(lambda: posture(name, LOCAL_OPS)["restore"]["receipt_digest"] == coherence_ops["authentic_digest"], 30)
 
 
 @pytest.mark.parametrize("case,mutate,expected", BINDING_MUTATIONS, ids=[c[0] for c in BINDING_MUTATIONS])
@@ -1602,6 +2040,93 @@ def test_public_network_dependency_prevents_the_process_from_starting(stack):
     assert "public-network runtime dependency blocks startup" in result.stderr
 
 
+OPA_HOST_URL = "http://127.0.0.1:8181"
+
+
+def opa_inventory() -> tuple[list[dict], int]:
+    raw = urllib.request.urlopen(f"{OPA_HOST_URL}/v1/policies", timeout=60).read()
+    return json.loads(raw)["result"], len(raw)
+
+
+def opa_module(package: str, source: str | None) -> None:
+    """Install (or delete) one rule-free module in a package owned by this test: it adds
+    no rule, so no authorization decision of the stack changes."""
+    request = urllib.request.Request(f"{OPA_HOST_URL}/v1/policies/{package}", method="DELETE" if source is None
+                                     else "PUT", data=None if source is None else source.encode(),
+                                     headers={"Content-Type": "text/plain"})
+    assert urllib.request.urlopen(request, timeout=60).status == 200
+
+
+def policy_spans(container: str) -> list[dict]:
+    logs = subprocess.run(["docker", "logs", container], capture_output=True, text=True, check=True).stdout
+    return [r for r in (json.loads(line) for line in logs.splitlines() if line.startswith("{"))
+            if r.get("operation") == "span" and r["span"]["operation"] == "policy_inventory"]
+
+
+def test_policy_digest_in_logs_and_traces_covers_the_complete_opa_inventory(stack):
+    """Verdict OCOR-DEV-0049-aefabf91777d-4 VF-004 on the real OPA: the digest carried by
+    the log record and the trace span is the exact digest of the COMPLETE inventory, also
+    above the former 4096-byte cut; an inventory over the explicit bound yields no digest
+    (reason code, metric, span) and never the digest of an empty set."""
+    package = f"ocor_test_0049_inventory_{uuid.uuid4().hex[:8]}"
+    inventory, _ = opa_inventory()
+    base = policy_oracle(inventory)
+    assert inventory and base != EMPTY_SET_DIGEST
+    wait_for(lambda: posture(stack.ops)["policy"] == {"digest": base, "reason_code": "POLICY_DIGEST_OK"}, 30,
+             message="baseline policy digest")
+    try:
+        opa_module(package, f"package {package}\n" + "# rule-free padding line\n" * 1000)
+        inventory, size = opa_inventory()
+        grown = policy_oracle(inventory)
+        assert size > 4096 and len(inventory) >= 3 and grown not in (base, EMPTY_SET_DIGEST)
+        wait_for(lambda: posture(stack.ops)["policy"] == {"digest": grown, "reason_code": "POLICY_DIGEST_OK"}, 30,
+                 message="digest of the grown inventory")
+        record = wait_for(lambda: [r for r in policy_spans(stack.ops) if r["policy_digest"] == grown], 30)[-1]
+        assert record["span"]["policy_bundle_digest"] == grown and record["reason_code"] == "POLICY_DIGEST_OK"
+        status, body = http_from(stack.ops, "http://ocor-ops:8080/traces")
+        assert any(s["operation"] == "policy_inventory" and s["policy_bundle_digest"] == grown
+                   for s in json.loads(body)["spans"])
+        assert metrics(stack.ops)["ocor_policy_digest_available"] == 1.0
+
+        opa_module(package, f"package {package}\n" + ("# " + "x" * 1000 + "\n") * 2500)
+        _, size = opa_inventory()
+        assert size > 4 * 1024 * 1024, "precondition: inventory above the explicit bound"
+        wait_for(lambda: posture(stack.ops)["policy"] == {"digest": None,
+                                                          "reason_code": "POLICY_INVENTORY_TOO_LARGE"}, 30,
+                 message="oversized inventory yields no digest")
+        record = wait_for(lambda: [r for r in policy_spans(stack.ops)
+                                   if r["reason_code"] == "POLICY_INVENTORY_TOO_LARGE"], 30)[-1]
+        assert record["policy_digest"] is None and record["span"]["policy_bundle_digest"] is None
+        assert record["span"]["status"] == "ERROR"
+        m = metrics(stack.ops)
+        assert m["ocor_policy_digest_available"] == 0.0
+        assert m['ocor_policy_digest_errors_total{reason_code="POLICY_INVENTORY_TOO_LARGE"}'] >= 1.0
+    finally:
+        opa_module(package, None)
+    wait_for(lambda: posture(stack.ops)["policy"] == {"digest": base, "reason_code": "POLICY_DIGEST_OK"}, 30,
+             message="baseline digest after teardown")
+    logs = subprocess.run(["docker", "logs", stack.ops], capture_output=True, text=True, check=True).stdout
+    assert EMPTY_SET_DIGEST not in logs, "the digest of an empty inventory is never fabricated"
+
+
+def test_compose_containers_run_the_governed_pins(stack):
+    """VF-001 on Compose: every running workload container of the profile runs the image of
+    its governed pin (same image id as the digest-pinned reference)."""
+    pins = helm_profile()["images"]["pins"]
+    ps = stack.compose(stack.ops_project, "--profile", "observability", "ps", "--format", "json")
+    assert ps.returncode == 0, ps.stderr
+    rows = [json.loads(line) for line in ps.stdout.splitlines() if line.strip()]
+    assert {r["Service"] for r in rows} >= {"ocor-ops", "ocor-relay-opa"}
+    for row in rows:
+        config_image, image_id = subprocess.run(["docker", "inspect", "-f", "{{.Config.Image}} {{.Image}}",
+                                                 row["Name"]], capture_output=True, text=True,
+                                                check=True).stdout.split()
+        pin = pins[compose_image_role(row["Service"])]
+        assert config_image == pin, (row["Service"], config_image)
+        assert image_id == subprocess.run(["docker", "image", "inspect", "-f", "{{.Id}}", pin], capture_output=True,
+                                          text=True, check=True).stdout.strip()
+
+
 def test_logs_and_traces_carry_governed_fields_and_no_secrets(stack):
     logs = subprocess.run(["docker", "logs", stack.ops], capture_output=True, text=True, check=True).stdout
     records = [json.loads(line) for line in logs.splitlines() if line.startswith("{")]
@@ -1657,7 +2182,7 @@ def kind(stack):
         assert result.returncode == 0, result.stderr
     node = f"{KIND_CLUSTER}-control-plane"
     subprocess.run(["docker", "network", "connect", BOOTSTRAP_NETWORK, node], capture_output=True, check=False)
-    images = {v for k, v in yaml.safe_load(VALUES.read_text())["operational"].items() if k.endswith("mage")}
+    images = set(helm_profile()["images"]["pins"].values()) | {OTHER_OPS_IMAGE}
     for image in sorted(images):
         for attempt in range(3):
             if subprocess.run(["docker", "exec", node, "crictl", "inspecti", image], capture_output=True).returncode == 0:
@@ -1805,16 +2330,24 @@ def assert_sealed(stack, vault: Path, sealed: dict, profile: dict) -> dict:
     return manifest
 
 
-def helm_upgrade(kind, *sets: str) -> int:
+def helm_upgrade_run(kind, *sets: str) -> subprocess.CompletedProcess:
     args = [tool("helm"), "--kube-context", f"kind-{KIND_CLUSTER}", "upgrade", "ocor-poc", str(CHART_DIR),
             "-n", kind["namespace"], "-f", str(kind["values"])]
     for item in sets:
         args += ["--set", item]
-    result = subprocess.run(args, capture_output=True, text=True, check=False, timeout=300)
-    assert result.returncode == 0, result.stderr
+    return subprocess.run(args, capture_output=True, text=True, check=False, timeout=300)
+
+
+def helm_revision(kind) -> int:
     status = subprocess.run([tool("helm"), "--kube-context", f"kind-{KIND_CLUSTER}", "status", "ocor-poc", "-n",
                              kind["namespace"], "-o", "json"], capture_output=True, text=True, check=True)
     return int(json.loads(status.stdout)["version"])
+
+
+def helm_upgrade(kind, *sets: str) -> int:
+    result = helm_upgrade_run(kind, *sets)
+    assert result.returncode == 0, result.stderr
+    return helm_revision(kind)
 
 
 CRON_PERIOD_SECONDS = 15 * 60
@@ -1928,6 +2461,51 @@ def test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness(kind, 
     kubectl("-n", ns, "delete", "pod", ops, "--wait=true", timeout=180)
     ops = wait_for(lambda: [p for p in pods(ns, "ops") if p != ops], 120, 2, "replacement pod")[0]
     wait_for(lambda: named_pod_ready(ns, ops), 120, 2, "restarted pod Ready with the receipt of its release")
+
+    # Verdict OCOR-DEV-0049-aefabf91777d-4 VF-001 on Helm: an image outside the governed
+    # pins never reaches the cluster (rendering refused, release and pod unchanged) ...
+    def deployed_image() -> str:
+        return kubectl("-n", ns, "get", "deployment", "ocor-poc-ops", "-o",
+                       "jsonpath={.spec.template.spec.containers[0].image}").stdout
+    assert deployed_image() == profile["images"]["pins"]["ops"]
+    revision = helm_revision(kind)
+    for setting, message in (("operational.image=python:3.11", "operational.image is not accepted"),
+                             (f"operational.image={OTHER_OPS_IMAGE}", "operational.image is not accepted"),
+                             ("ocor.images.pins.ops=python:3.11", "ocor.images.pins.ops must be digest-pinned"),
+                             ("ocor.images.pins.postgresql=postgres:latest",
+                              "ocor.images.pins.postgresql must be digest-pinned")):
+        result = helm_upgrade_run(kind, setting)
+        assert result.returncode != 0 and message in result.stderr, (setting, result.stderr)
+    assert helm_revision(kind) == revision and deployed_image() == profile["images"]["pins"]["ops"]
+    assert pods(ns, "ops") == [ops] and named_pod_ready(ns, ops)
+    # ... and an upgrade to OTHER pins runs exactly that artifact, whose restore was never
+    # tested: the pod is not Ready, cannot be reopened and admits no governed work.
+    helm_upgrade(kind, f"ocor.images.pins.ops={OTHER_OPS_IMAGE}")
+    repinned = wait_for(lambda: [p for p in pods(ns, "ops") if p != ops], 120, 2, "pod of the new pins")[0]
+    wait_for(lambda: kubectl("-n", ns, "get", "pod", repinned, "-o", "jsonpath={.status.phase}",
+                             check=False).stdout == "Running", 600, 3, "repinned pod running")
+    image_id = kubectl("-n", ns, "get", "pod", repinned, "-o",
+                       "jsonpath={.status.containerStatuses[0].imageID}").stdout
+    assert image_id.endswith(OTHER_OPS_IMAGE.split("@")[1]), image_id
+    assert pod_python(ns, repinned, "import json;print(json.load(open('/etc/ocor/profile.json'))['images']"
+                      "['pins']['ops'])") == OTHER_OPS_IMAGE, "the binding covers the executed artifact"
+    status, body = wait_for(lambda: (r := pod_http(ns, repinned, "/readyz"))[1]["reasons"] == [
+        "RESTORE_PINS_MISMATCH"] and r, 120, 2, "pin fence of the repinned pod")
+    assert status == 503 and not named_pod_ready(ns, repinned)
+    status, body = pod_http(ns, repinned, "/reopen", "POST", {"Authorization": f"Bearer {stack.operator_token}",
+                                                              "Content-Type": "application/json"},
+                            {"receipt_digest": receipt_digest(vault), "authorized_by": "drill-operator"})
+    assert (status, body["reason_code"]) == (409, "REOPEN_REFUSED:RESTORE_PINS_MISMATCH"), body
+    for operation_class in OPERATION_CLASSES:
+        status, body = pod_http(ns, repinned, f"/admit?class={operation_class}")
+        assert status == 503 and "restore_not_verified" in body["reason_code"], (operation_class, body)
+    # Positive counterpart: back to the governed pins, the tested pod is the only one, Ready.
+    helm_upgrade(kind)
+    wait_for(lambda: pods(ns, "ops") == [ops], 180, 2, "repinned pod removed on rollback to the governed pins")
+    assert deployed_image() == profile["images"]["pins"]["ops"]
+    wait_for(lambda: named_pod_ready(ns, ops), 60, 2, "governed pod Ready")
+    status, body = pod_http(ns, ops, "/readyz")
+    assert (status, body["reasons"]) == (200, ["READY"]), body
 
     # VF-001 on Helm, negative: an upgrade to another release keeps the vault of the
     # previous one; the new pod must not become Ready, reopen or admit governed work.

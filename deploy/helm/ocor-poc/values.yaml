@@ -216,13 +216,13 @@ ocor:
       - {name: qdrant, host: qdrant, port: 6333, mandatory: true, faultClass: projection_lag_or_failure, probe: {kind: http, path: /readyz, expectStatus: [200]}}
       - {name: spire-server, host: spire-server, port: 8081, mandatory: true, faultClass: idp_or_policy_engine_unavailable, probe: {kind: tls_spiffe}}
 
-# Kubernetes wiring of the Helm profile. Images are the same digests as
-# `ocor.images.pins`; nothing is fetched from a public network at runtime.
+# Kubernetes wiring of the Helm profile. Every workload image (Deployment, backup
+# CronJob, restore Job) is rendered from `ocor.images.pins`, the pins the release
+# binding of recovery points and receipts covers: there is no separate image
+# setting, and rendering fails on a pin that is not `name@sha256:<64 hex>` or on
+# any `operational.*Image` override. Nothing is fetched from a public network at
+# runtime.
 operational:
-  image: python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2
-  postgresImage: postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20
-  kafkaImage: confluentinc/cp-kafka@sha256:24cdd3a7fa89d2bed150560ebea81ff1943badfa61e51d66bb541a6b0d7fb047
-  qdrantImage: qdrant/qdrant@sha256:d122138f76868edba68d36cb0833139c1d1761f00f09e48e61f8314196e6a4c6
   replicas: 1
   runAsUser: 1000
   # Secret holding OCOR_OPENBAO_TOKEN, OCOR_OPS_OPERATOR_TOKEN and PGPASSWORD;
