@@ -2246,7 +2246,7 @@ def test_policy_digest_in_logs_and_traces_covers_the_complete_opa_inventory(stac
     (reason code, metric, span) and never the digest of an empty set."""
     package = f"ocor_test_0049_inventory_{uuid.uuid4().hex[:8]}"
     inventory, _ = opa_inventory()
-    base = policy_oracle(inventory)
+    base, base_ids = policy_oracle(inventory), {p["id"] for p in inventory}
     assert inventory and base != EMPTY_SET_DIGEST
     wait_for(lambda: posture(stack.ops)["policy"] == {"digest": base, "reason_code": "POLICY_DIGEST_OK"}, 30,
              message="baseline policy digest")
@@ -2254,7 +2254,10 @@ def test_policy_digest_in_logs_and_traces_covers_the_complete_opa_inventory(stac
         opa_module(package, f"package {package}\n" + "# rule-free padding line\n" * 1000)
         inventory, size = opa_inventory()
         grown = policy_oracle(inventory)
-        assert size > 4096 and len(inventory) >= 3 and grown not in (base, EMPTY_SET_DIGEST)
+        # Precondition relative to the baseline (a freshly bootstrapped stack holds only the
+        # governed bootstrap policy): exactly the test module was added, above the former cut.
+        assert size > 4096 and {p["id"] for p in inventory} == base_ids | {package}
+        assert grown not in (base, EMPTY_SET_DIGEST)
         wait_for(lambda: posture(stack.ops)["policy"] == {"digest": grown, "reason_code": "POLICY_DIGEST_OK"}, 30,
                  message="digest of the grown inventory")
         record = wait_for(lambda: [r for r in policy_spans(stack.ops) if r["policy_digest"] == grown], 30)[-1]
