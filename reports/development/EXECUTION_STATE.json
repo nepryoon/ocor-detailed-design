@@ -1,10 +1,10 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0049-cycle3",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_0049_CYCLE4_STATE_SYNC",
+    "branch": "governed/state-sync-ocor-dev-0049-verifier-fallback",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_0049_VERIFIER_FALLBACK",
     "decision_id": "DEC-210",
-    "phase": "OCOR_DEV_0049_AUTHORIZED_REPAIR_HANDOFF_FINAL_STATE_SYNC_CI",
-    "worktree": ".ocor/worktrees/state-sync-ocor-dev-0049-cycle3"
+    "phase": "OCOR_DEV_0049_VERIFIER_ERROR_STATE_SYNC_AND_FALLBACK_HANDOFF",
+    "worktree": ".ocor/worktrees/state-sync-ocor-dev-0049-verifier-fallback"
   },
   "backlog_escalations": {
     "OCOR-DEV-0048": {
@@ -341,6 +341,17 @@
         "status": "BLOCKED_REPAIR_BUDGET_EXHAUSTED",
         "superseded_by": "OCOR-DEV-0049-REPAIR-CLAUDE-AUTO"
       },
+      "latest_verification_attempt": {
+        "created_at": "2026-10-06T10:03:44.913984+00:00",
+        "head_sha": "b40aa8a6908b02d95cdf8138200f99f2e8aea8b1",
+        "not_executed": [
+          "verifier: nessun verdetto valido dopo 3 tentativi"
+        ],
+        "repair_cycle": 5,
+        "request_id": "OCOR-DEV-0049-b40aa8a6908b-5",
+        "verdict": "VERIFIER_ERROR",
+        "verdict_file_sha256": "882ee290ade051a6827b0f26776afbe3064005fe9885e2fd65b1f5e4f9b9f109"
+      },
       "minimal_unblock_action": "Claude Code esegue il ciclo 5 (ultimo dei tre ulteriori cicli autorizzati) dall\u2019HEAD remoto aefabf91777d311b95cad0c60de0ffa61357ea19: corregge tutti i quattro finding del verdetto OCOR-DEV-0049-aefabf91777d-4, aggiorna ~/.ocor-codex/audit_0049.md per comportamenti, riacquisisce ogni campo dell\u2019evidenza dall\u2019HEAD finale e richiede verifica Codex. Codex implementatore del loop esegue solo state sync. Con ulteriore NO_GO: escalation senza altra riparazione.",
       "po_decision_repair_cycle_3_4_5": {
         "NO_GO_disposition": "Sincronizzare lo stato, TERMINAL_BLOCKED con next_action ciclo di riparazione Claude Code su OCOR-DEV-0049; esauriti i cicli: escalation senza nuova riparazione.",
@@ -396,7 +407,45 @@
         "verdict_file_sha256": "46e06aad29587d01f51b626ee94b394bbcb0cc2ffda721d15c108a4be346a626",
         "verifier": "Codex (OpenAI)"
       },
-      "status": "AWAITING_AUTHORIZED_CLAUDE_REPAIR",
+      "repair_cycle_5": {
+        "decision": "OCOR-DEV-0049-VERIFIER-FALLBACK (2026-10-06)",
+        "head_sha": "b40aa8a6908b02d95cdf8138200f99f2e8aea8b1",
+        "implementer": "Claude Code (Anthropic)",
+        "independence_limits": "Riparazioni OCOR-DEV-0049: Claude Code (Anthropic); verifier fallback: Claude Code (Anthropic), stesso modello in processo e contesto separati. Implementazione originale di un altro modello. Variante esatta non attestata dal runtime; nessuna diversit\u00e0 di modello dichiarata. Implementatore del loop: Codex (OpenAI).",
+        "loop_implementer": "Codex (OpenAI)",
+        "on_NO_GO": "Escalation e TERMINAL_BLOCKED; nessun ciclo 6 autorizzato.",
+        "previous_attempts": [
+          {
+            "cause": "provider moderation interruption",
+            "outcome": "VERIFIER_ERROR",
+            "path": "/home/luca/.ocor-codex/logs/20261006T110643-verifier-OCOR-DEV-0049-b40aa8a6908b-5.log",
+            "sha256": "970b3bf2ef9e9f3cdd40d8d8111980a4009dab2511e957e0cbff6908483c69b4"
+          },
+          {
+            "cause": "provider moderation interruption",
+            "outcome": "VERIFIER_ERROR",
+            "path": "/home/luca/.ocor-codex/logs/20261006T112508-verifier-OCOR-DEV-0049-b40aa8a6908b-5.log",
+            "sha256": "761419f121b40bda23ee0993cfe7b0da8033805b7b938715cfb610f8d432c19b"
+          },
+          {
+            "cause": "provider moderation interruption",
+            "outcome": "VERIFIER_ERROR",
+            "path": "/home/luca/.ocor-codex/logs/20261006T115111-verifier-OCOR-DEV-0049-b40aa8a6908b-5.log",
+            "sha256": "729732dc671a5115d56941bf294e6a0606913a3ba4b18acc4b39f0133c4bada8"
+          }
+        ],
+        "previous_request_id": "OCOR-DEV-0049-b40aa8a6908b-5",
+        "previous_verdict": "VERIFIER_ERROR",
+        "previous_verdict_file_sha256": "882ee290ade051a6827b0f26776afbe3064005fe9885e2fd65b1f5e4f9b9f109",
+        "repair_budget_remaining": 0,
+        "repair_cycle": 5,
+        "request_id": "OCOR-DEV-0049-b40aa8a6908b-5-claude-fallback-1",
+        "request_written_after_state_sync": true,
+        "same_model_separate_contexts": true,
+        "status": "AWAITING_INDEPENDENT_FALLBACK_VERIFICATION",
+        "verifier": "Claude Code (Anthropic)"
+      },
+      "status": "AWAITING_INDEPENDENT_FALLBACK_VERIFICATION",
       "verdicts": [
         {
           "findings": [
@@ -477,7 +526,7 @@
       ]
     }
   },
-  "baseline_commit": "25ee8e3bea7cf5e88630df06cb44a2fc35159494",
+  "baseline_commit": "d33ae207105648799ac11479cca5b9eb9bf619ca",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -554,7 +603,7 @@
       ],
       "concurrent_pr": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
-        "disposition": "Non modificata in questa unit\u00e0 di lavoro.",
+        "disposition": "PR concorrente osservata e non modificata; precede 0050 dopo la verifica/integrazione 0049.",
         "head_sha": "7562d3c48015f45a0b518fde622ca4304e9468ca",
         "number": 169,
         "observed_check": "validation-closure FAILURE",
@@ -576,9 +625,9 @@
       "escalation_record": "reports/development/OCOR_DEV_0049_ESCALATION.md",
       "id": "OCOR-DEV-0049",
       "non_blocking": false,
-      "po_decision": "OCOR-DEV-0049-REPAIR-CLAUDE-AUTO",
-      "scope": "Ciclo 4 NO_GO: VF-001/VF-002 high, VF-003/VF-004 medium. PO OCOR-DEV-0049-REPAIR-CLAUDE-AUTO: resta soltanto ciclo 5, esclusivamente Claude Code; verifier Codex. Nessuna nuova decisione PO richiesta.",
-      "status": "AWAITING_AUTHORIZED_CLAUDE_REPAIR"
+      "po_decision": "OCOR-DEV-0049-VERIFIER-FALLBACK",
+      "scope": "Candidato ciclo 5 pubblicato; verifica Codex interrotta tre volte dalla moderazione. Fallback Claude Code autorizzato il 2026-10-06, stesso modello del riparatore in processo e contesto separati. Nessuna ulteriore riparazione autorizzata.",
+      "status": "AWAITING_INDEPENDENT_FALLBACK_VERIFICATION"
     },
     {
       "blocked_tasks": [],
@@ -664,21 +713,29 @@
   ],
   "current_gate": "OCOR_DEV_0048_SEALED",
   "latest_ci_evidence": {
-    "candidate_commit": "bda5fb1294398c43f0ee37b915896e669c1745f0",
-    "conclusion": "PASS_ALL_13_GREEN_ON_EXACT_SOURCE_HEAD_PR170_FINAL_DOC_HEAD_RECHECK_REQUIRED",
+    "candidate_commit": "1055be76acc43213f665cd2f2b4502d617267e9b",
+    "conclusion": "PASS_ALL_13_GREEN_ON_EXACT_HEAD_MERGED",
+    "merge_commit": "d33ae207105648799ac11479cca5b9eb9bf619ca",
+    "passed": 13,
+    "pr": 170,
+    "raw_observation_sha256": "45e13c7ba9197d2edae6f32e6709293cd4b05059b66f87ddf4815e0be6e33bac",
+    "required_checks": 13,
     "run_ids": [
-      37391068857,
-      37391068870,
-      37391068871,
-      37391069169,
-      37391069581,
-      37391070279
+      37391955638,
+      37391955668,
+      37391955718,
+      37391955768,
+      37391956012,
+      37391956501
     ]
   },
   "loop_roles": {
     "OCOR-DEV-0049": {
+      "fallback_decision": "OCOR-DEV-0049-VERIFIER-FALLBACK (2026-10-06)",
       "implementer": "Claude Code (Anthropic)",
-      "verifier": "Codex (OpenAI)"
+      "independence_limits": "Riparazioni OCOR-DEV-0049: Claude Code (Anthropic); verifier fallback: Claude Code (Anthropic), stesso modello in processo e contesto separati. Implementazione originale di un altro modello. Variante esatta non attestata dal runtime; nessuna diversit\u00e0 di modello dichiarata. Implementatore del loop: Codex (OpenAI).",
+      "same_model_separate_contexts": true,
+      "verifier": "Claude Code (Anthropic) \u2014 fallback autorizzato"
     },
     "decision": "LOOP-ROLES (2026-10-05)",
     "default_task_implementer": "Codex (OpenAI)",
@@ -743,7 +800,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "ciclo di riparazione Claude Code su OCOR-DEV-0049",
+  "next_executable_action": "Verifica indipendente Claude Code del candidato OCOR-DEV-0049 b40aa8a6908b02d95cdf8138200f99f2e8aea8b1 (repair_cycle=5; fallback OCOR-DEV-0049-b40aa8a6908b-5-claude-fallback-1); poi integrazione su GO o escalation su NO_GO, quindi REM-0017 prima di 0050.",
   "remediation_status": {
     "CI-0048_REAL_BACKEND": {
       "deviation_pr": 164,
@@ -1281,5 +1338,5 @@
     }
   ],
   "status": "AWAITING_AUTHORIZED_CLAUDE_REPAIR",
-  "updated_at": "2026-10-06T00:03:28.126548Z"
+  "updated_at": "2026-10-06T10:10:49.469075Z"
 }
