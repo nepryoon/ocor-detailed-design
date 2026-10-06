@@ -870,6 +870,77 @@ def test_policy_inventory_digest_on_a_closed_port(agent_module):
     assert agent_module.POLICY_INVENTORY_MAX_BYTES == 4 * 1024 * 1024
 
 
+class _SnapshotServer:
+    """Local Qdrant-like snapshot endpoint scripted per creation (failure handling of the
+    seal's snapshot download only; the real Qdrant race is exercised on the live stack)."""
+
+    def __init__(self, script: list[dict]) -> None:
+        from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+        import threading
+
+        outer = self
+        self.script, self.created, self.deleted = list(script), 0, []
+
+        class Handler(BaseHTTPRequestHandler):
+            def log_message(self, *args):
+                return
+
+            def _reply(self, code: int, body: bytes) -> None:
+                self.send_response(code)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def do_POST(self):  # noqa: N802
+                step = outer.script[min(outer.created, len(outer.script) - 1)]
+                outer.created += 1
+                result = {"name": "c-1-2026.snapshot"}
+                if step.get("checksum", True):
+                    result["checksum"] = hashlib.sha256(step["advertised"]).hexdigest()
+                self._reply(200, json.dumps({"result": result}).encode())
+
+            def do_GET(self):  # noqa: N802
+                step = outer.script[min(outer.created - 1, len(outer.script) - 1)]
+                self._reply(404, b"") if step.get("served") is None else self._reply(200, step["served"])
+
+            def do_DELETE(self):  # noqa: N802
+                outer.deleted.append(self.path)
+                self._reply(404 if self.path in outer.deleted[:-1] else 200, b"{}")
+
+        self.server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+        self.base = f"http://127.0.0.1:{self.server.server_address[1]}"
+
+    def close(self) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+
+
+SNAPSHOT_CASES = [
+    ("own_snapshot", [{"advertised": b"own", "served": b"own"}], b"own", None),
+    ("deleted_by_concurrent_seal_then_own", [{"advertised": b"a", "served": None},
+                                             {"advertised": b"own", "served": b"own"}], b"own", None),
+    ("overwritten_by_concurrent_seal_then_own", [{"advertised": b"a", "served": b"other"},
+                                                 {"advertised": b"own", "served": b"own"}], b"own", None),
+    ("never_own", [{"advertised": b"a", "served": b"other"}], None, "INDEX_SNAPSHOT_UNSTABLE"),
+    ("no_checksum", [{"advertised": b"a", "served": b"a", "checksum": False}], None, "INDEX_SNAPSHOT_UNSTABLE"),
+]
+
+
+@pytest.mark.parametrize("case,script,expected,error", SNAPSHOT_CASES, ids=[c[0] for c in SNAPSHOT_CASES])
+def test_index_snapshot_download_is_bound_to_its_own_creation(agent_module, case, script, expected, error):
+    server = _SnapshotServer(script)
+    try:
+        if error is None:
+            assert agent_module.snapshot_index(server.base, "c", attempts=2) == expected
+        else:
+            with pytest.raises(ValueError, match=error):
+                agent_module.snapshot_index(server.base, "c", attempts=2)
+    finally:
+        server.close()
+    assert server.deleted, "every created snapshot name is cleaned up (404 of a concurrent cleanup tolerated)"
+
+
 # --------------------------------------------------------------------------- live environment
 
 
@@ -1284,6 +1355,51 @@ def test_capture_fails_explicitly_when_the_database_is_unreachable(stack):
         assert "CAPTURE_SOURCE_UNREACHABLE: postgresql after 3 attempts" in bad.stdout + bad.stderr
     finally:
         stack.down(project)
+
+
+QDRANT_HOST_URL = "http://127.0.0.1:16333"
+
+
+def test_concurrent_seals_each_download_their_own_index_snapshot(stack, agent_module):
+    """Real Qdrant: snapshots requested in the same second share ONE file name (the race
+    that failed the manual backup overlapping the scheduled CronJob run on kind); four
+    concurrent seal downloads nevertheless each return a snapshot verified against the
+    checksum of their own creation, and no snapshot is left behind."""
+    import threading
+
+    collection = helm_profile()["backup"]["memory"]["sources"]["indexCollection"]
+    base = f"{QDRANT_HOST_URL}/collections/{collection}/snapshots"
+
+    def concurrently(fn, n: int = 4) -> list:
+        barrier, out = threading.Barrier(n), [None] * n
+
+        def run(i: int) -> None:
+            barrier.wait()
+            try:
+                out[i] = fn()
+            except Exception as exc:  # recorded and asserted below
+                out[i] = exc
+        threads = [threading.Thread(target=run, args=(i,)) for i in range(n)]
+        [th.start() for th in threads]
+        [th.join() for th in threads]
+        return out
+
+    def naive_name() -> str:
+        request = urllib.request.Request(f"{base}?wait=true", data=b"{}", method="POST",
+                                         headers={"Content-Type": "application/json"})
+        return json.loads(urllib.request.urlopen(request, timeout=60).read())["result"]["name"]
+
+    def existing() -> list[str]:
+        return sorted(s["name"] for s in json.loads(urllib.request.urlopen(base, timeout=30).read())["result"])
+
+    before = existing()
+    names = wait_for(lambda: (n := concurrently(naive_name)) and len(set(n)) < len(n) and n, 60, 1,
+                     "precondition: concurrent snapshots share a name")
+    for name in set(names):
+        urllib.request.urlopen(urllib.request.Request(f"{base}/{name}", method="DELETE"), timeout=30)
+    downloads = concurrently(lambda: agent_module.snapshot_index(QDRANT_HOST_URL, collection))
+    assert all(isinstance(d, bytes) and len(d) > 0 for d in downloads), downloads
+    assert existing() == before, "every snapshot created by the seals is cleaned up"
 
 
 def transit_verify(env: dict[str, str], data: bytes, signature: str) -> bool:
@@ -2417,7 +2533,8 @@ def test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness(kind, 
              "the CronJob must start its scheduled run at the tick")
     runs = {job: wait_job(ns, job) for job in ("ocor-poc-backup-manual", scheduled)}
     for job, (status, logs) in runs.items():
-        assert status.get("succeeded") == 1, (job, logs)
+        if status.get("succeeded") != 1:
+            pytest.fail(f"backup job {job} failed: {json.dumps(status, sort_keys=True)}\n{logs}")
     manual_status, scheduled_status = runs["ocor-poc-backup-manual"][0], runs[scheduled][0]
     assert k8s_time(manual_status["startTime"]) <= k8s_time(scheduled_status["completionTime"])
     assert k8s_time(scheduled_status["startTime"]) <= k8s_time(manual_status["completionTime"]), "runs overlap"
