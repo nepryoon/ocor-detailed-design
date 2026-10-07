@@ -1,9 +1,9 @@
 {
   "active_iteration": {
     "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__REM_0017_BOOTSTRAP_REPAIR",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_REM_0017",
     "decision_id": "DEC-210",
-    "phase": "REM_0017_STACK_HYGIENE_RETRY_WIP",
+    "phase": "REM_0017_CANDIDATE_PENDING_INDEPENDENT_VERIFICATION",
     "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
   },
   "backlog_escalations": {
@@ -821,18 +821,18 @@
       "concurrent_pr": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
         "disposition": "Ripresa dopo assenza di attivit\u00e0 concorrente; WIP Codex, nessun merge n\u00e9 chiusura.",
-        "head_sha": "7562d3c48015f45a0b518fde622ca4304e9468ca",
+        "head_sha": "4658ad808d41dfdb0b75255837adfd3f9609d071",
         "number": 169,
-        "observed_check": "validation-closure FAILURE",
+        "observed_check": "SOURCE_CI_SUCCESS_FINAL_HEAD_CI_REQUIRED",
         "raw_observation_sha256": "3ed638428c6db868092ced1f6de819b610262d2c753f2ae88f603f657000f1da",
-        "run_id": 37350619188
+        "run_id": 37568937953
       },
       "id": "OCOR-DEV-REM-0017",
       "implementation_record": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/evidence.json",
       "non_blocking": false,
       "scope": "REM-0017-PRIORITY (2026-10-05): stack CI completo e zero skip per tutti i CONDITIONAL_INFRASTRUCTURE_GUARD (TEST-INFRA-005/006 e successivi), poi rimozione --ignore PR #164. Prossimo task dopo verifica/integrazione 0049, prima di 0050; G6 bloccato fino alla chiusura verificata.",
-      "status": "IN_PROGRESS_IMPLEMENTATION_WIP",
-      "test_infra_006_disposition": "NOT_EXECUTED; test assente su main, candidato 0049 rifiutato preservato; campagna CI separata da completare"
+      "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION",
+      "test_infra_006_disposition": "Campagna CI completa sul candidato immutabile d0ac80a; zero skip; NO_GO 0049 preservato; verifier REM Claude Code atteso."
     },
     {
       "blocked_tasks": [
@@ -1044,7 +1044,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-REM-0017:implementation \u2014 attendere retry FULL candidato d0ac80a (heap bootstrap 1 GiB verificata; run monitorato max 45m) e successiva FULL del branch REM; diagnosticare qualsiasi errore, acquisire CI completa dell\u2019HEAD corrente, raw/count/hash e teardown. Solo con gate qualificanti verdi richiedere verifier Claude Code sul finale. 0049 NO_GO, nessun ciclo 7; poi 0050.",
+  "next_executable_action": "Verifica indipendente Claude Code su HEAD finale; poi integrazione REM-0017 con tutti i check richiesti verdi sullo stesso HEAD, state sync e OCOR-DEV-0050. OCOR-DEV-0049 bloccato; nessun ciclo 7.",
   "ready_set_observation": {
     "blocked_transitively_on_0049": [
       "OCOR-DEV-0049",
@@ -1073,6 +1073,537 @@
   },
   "remediation_status": {
     "CI-0048_REAL_BACKEND": {
+      "candidate_source_commit": "4658ad808d41dfdb0b75255837adfd3f9609d071",
+      "ci_source": {
+        "artifacts": [
+          {
+            "created_at": "2026-10-07T05:01:15Z",
+            "expired": false,
+            "id": 11462325045,
+            "name": "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231",
+            "size_in_bytes": 126155
+          },
+          {
+            "created_at": "2026-10-07T04:43:36Z",
+            "expired": false,
+            "id": 11461202421,
+            "name": "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231",
+            "size_in_bytes": 55545
+          },
+          {
+            "created_at": "2026-10-07T04:37:24Z",
+            "expired": false,
+            "id": 11461116898,
+            "name": "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231",
+            "size_in_bytes": 93964
+          }
+        ],
+        "candidate_execution_attempt": 1,
+        "candidate_summary": {
+          "artifact": "ci-source-final-artifacts/ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/campaign_result.json",
+          "artifacts": {
+            "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/campaign_result.json": "4603621f5ac9ac4d0aa76b41f5b11468f290c04a4db626885eecfbf2d809a139",
+            "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/post_remediation_runtime.log": "a0426310f2ef02113135472b76ba9169a4c8e58bff8fd6e4867222f12262e4b7",
+            "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/runtime_coverage_post_approval.json": "b8103390d1d9beff82a9b0b9d01709f4d1bb7d5f0565e6a2f4f748886b8f0b19",
+            "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/runtime_junit_post_approval.xml": "04759254a5ae0fe4174e2a12940b29f1482b2618e0c955eac07dea0a54cb30b4",
+            "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_bootstrap.log": "01056f647605e1dbab9f753cc2ad3936d83da7d6215e6d063ad49c5b1202e855",
+            "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_candidate_teardown.log": "ed432870e48a30296e951f2755c7377985328d75c050cf6bebe1c05754034f06",
+            "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_qualification_tools.log": "2c12758b6ecaf1f0e8d89f1369173fa74e2f77f65d1cfea50bb68c481176bf3e"
+          },
+          "campaign": {
+            "candidate_head": "d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b",
+            "counts": {
+              "errors": 0,
+              "failures": 0,
+              "skipped": 0,
+              "tests": 1422
+            },
+            "duration_seconds": 2265.756724602,
+            "required_modules": [
+              "test_ocor_dev_0048",
+              "test_ocor_dev_0049"
+            ],
+            "status": "PASS"
+          },
+          "job": "conditional-infrastructure-0049",
+          "run_id": 37568937953,
+          "source_head": "4658ad808d41dfdb0b75255837adfd3f9609d071"
+        },
+        "conclusion": "success",
+        "counts": {
+          "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/runtime_junit_post_approval.xml": {
+            "errors": 0,
+            "failures": 0,
+            "skipped": 0,
+            "tests": 1422
+          },
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ba_junit_post_approval.xml": {
+            "errors": 0,
+            "failures": 0,
+            "skipped": 0,
+            "tests": 39
+          },
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ev_junit_post_approval.xml": {
+            "errors": 0,
+            "failures": 0,
+            "skipped": 0,
+            "tests": 35
+          },
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/guards_junit.xml": {
+            "errors": 0,
+            "failures": 0,
+            "skipped": 0,
+            "tests": 53
+          },
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/postgres_junit_post_approval.xml": {
+            "errors": 0,
+            "failures": 0,
+            "skipped": 0,
+            "tests": 5
+          },
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/runtime_junit_post_approval.xml": {
+            "errors": 0,
+            "failures": 0,
+            "skipped": 0,
+            "tests": 1101
+          }
+        },
+        "databaseId": 37568937953,
+        "head_sha": "4658ad808d41dfdb0b75255837adfd3f9609d071",
+        "jobs": [
+          {
+            "completedAt": "2026-10-07T05:01:18Z",
+            "conclusion": "success",
+            "databaseId": 112636163160,
+            "name": "validation-closure",
+            "startedAt": "2026-10-07T04:47:58Z",
+            "status": "completed",
+            "steps": [
+              {
+                "completedAt": "2026-10-07T04:48:00Z",
+                "conclusion": "success",
+                "name": "Set up job",
+                "number": 1,
+                "startedAt": "2026-10-07T04:47:59Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:48:00Z",
+                "conclusion": "success",
+                "name": "Reject missing or failed conditional infrastructure campaign",
+                "number": 2,
+                "startedAt": "2026-10-07T04:48:00Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:48:02Z",
+                "conclusion": "success",
+                "name": "Checkout exact revision",
+                "number": 3,
+                "startedAt": "2026-10-07T04:48:00Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:48:11Z",
+                "conclusion": "success",
+                "name": "Set up Python",
+                "number": 4,
+                "startedAt": "2026-10-07T04:48:02Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:48:16Z",
+                "conclusion": "success",
+                "name": "Set up pinned Node oracle",
+                "number": 5,
+                "startedAt": "2026-10-07T04:48:11Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:48:18Z",
+                "conclusion": "success",
+                "name": "Install uv",
+                "number": 6,
+                "startedAt": "2026-10-07T04:48:16Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:48:19Z",
+                "conclusion": "success",
+                "name": "Install and verify pinned ruff executable",
+                "number": 7,
+                "startedAt": "2026-10-07T04:48:18Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:48:21Z",
+                "conclusion": "success",
+                "name": "Synchronize locked runtime environment",
+                "number": 8,
+                "startedAt": "2026-10-07T04:48:19Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:48:22Z",
+                "conclusion": "success",
+                "name": "Build pinned TypeScript SDK and oracle",
+                "number": 9,
+                "startedAt": "2026-10-07T04:48:21Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:51:56Z",
+                "conclusion": "success",
+                "name": "Provision the full pinned disposable stack",
+                "number": 10,
+                "startedAt": "2026-10-07T04:48:22Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:51:56Z",
+                "conclusion": "success",
+                "name": "Verify immutable source and report manifests",
+                "number": 11,
+                "startedAt": "2026-10-07T04:51:56Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:51:58Z",
+                "conclusion": "success",
+                "name": "Run complete post-remediation document harness",
+                "number": 12,
+                "startedAt": "2026-10-07T04:51:56Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:51:59Z",
+                "conclusion": "success",
+                "name": "Run governed OpenAPI 3.1 validation",
+                "number": 13,
+                "startedAt": "2026-10-07T04:51:58Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T05:01:01Z",
+                "conclusion": "success",
+                "name": "Run complete runtime, BA, EV and live PostgreSQL campaigns",
+                "number": 14,
+                "startedAt": "2026-10-07T04:51:59Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T05:01:11Z",
+                "conclusion": "success",
+                "name": "Execute conditional report guards and campaign supervisor tests",
+                "number": 15,
+                "startedAt": "2026-10-07T05:01:01Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T05:01:11Z",
+                "conclusion": "success",
+                "name": "Build governed closure evidence",
+                "number": 16,
+                "startedAt": "2026-10-07T05:01:11Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T05:01:12Z",
+                "conclusion": "success",
+                "name": "Verify DEC-208 authoritative promotion",
+                "number": 17,
+                "startedAt": "2026-10-07T05:01:11Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T05:01:14Z",
+                "conclusion": "success",
+                "name": "Teardown this disposable stack",
+                "number": 18,
+                "startedAt": "2026-10-07T05:01:12Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T05:01:15Z",
+                "conclusion": "success",
+                "name": "Upload immutable evidence candidate",
+                "number": 19,
+                "startedAt": "2026-10-07T05:01:14Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T05:01:15Z",
+                "conclusion": "success",
+                "name": "Post Install uv",
+                "number": 35,
+                "startedAt": "2026-10-07T05:01:15Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T05:01:15Z",
+                "conclusion": "success",
+                "name": "Post Set up pinned Node oracle",
+                "number": 36,
+                "startedAt": "2026-10-07T05:01:15Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T05:01:15Z",
+                "conclusion": "success",
+                "name": "Post Set up Python",
+                "number": 37,
+                "startedAt": "2026-10-07T05:01:15Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T05:01:16Z",
+                "conclusion": "success",
+                "name": "Post Checkout exact revision",
+                "number": 38,
+                "startedAt": "2026-10-07T05:01:15Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T05:01:16Z",
+                "conclusion": "success",
+                "name": "Complete job",
+                "number": 39,
+                "startedAt": "2026-10-07T05:01:16Z",
+                "status": "completed"
+              }
+            ],
+            "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37568937953/job/112636163160"
+          },
+          {
+            "completedAt": "2026-10-07T04:37:28Z",
+            "conclusion": "success",
+            "databaseId": 112636163334,
+            "name": "conditional-infrastructure-0049",
+            "startedAt": "2026-10-07T03:55:44Z",
+            "status": "completed",
+            "steps": [
+              {
+                "completedAt": "2026-10-07T03:55:47Z",
+                "conclusion": "success",
+                "name": "Set up job",
+                "number": 1,
+                "startedAt": "2026-10-07T03:55:44Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T03:55:49Z",
+                "conclusion": "success",
+                "name": "Checkout exact revision",
+                "number": 2,
+                "startedAt": "2026-10-07T03:55:47Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T03:55:57Z",
+                "conclusion": "success",
+                "name": "Set up Python",
+                "number": 3,
+                "startedAt": "2026-10-07T03:55:49Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T03:56:07Z",
+                "conclusion": "success",
+                "name": "Set up pinned Node oracle",
+                "number": 4,
+                "startedAt": "2026-10-07T03:55:57Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T03:56:09Z",
+                "conclusion": "success",
+                "name": "Install uv",
+                "number": 5,
+                "startedAt": "2026-10-07T03:56:07Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T03:56:09Z",
+                "conclusion": "success",
+                "name": "Install and verify pinned ruff executable",
+                "number": 6,
+                "startedAt": "2026-10-07T03:56:09Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T03:56:10Z",
+                "conclusion": "success",
+                "name": "Synchronize locked runtime environment",
+                "number": 7,
+                "startedAt": "2026-10-07T03:56:09Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T03:56:12Z",
+                "conclusion": "success",
+                "name": "Checkout immutable TEST-INFRA-006 candidate (NO_GO preserved)",
+                "number": 8,
+                "startedAt": "2026-10-07T03:56:10Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T03:56:12Z",
+                "conclusion": "success",
+                "name": "Synchronize complete candidate environment",
+                "number": 9,
+                "startedAt": "2026-10-07T03:56:12Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T03:56:14Z",
+                "conclusion": "success",
+                "name": "Acquire official checksum-pinned Kubernetes qualification tools",
+                "number": 10,
+                "startedAt": "2026-10-07T03:56:12Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T03:56:15Z",
+                "conclusion": "success",
+                "name": "Build pinned TypeScript SDK and oracle",
+                "number": 11,
+                "startedAt": "2026-10-07T03:56:14Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T03:59:35Z",
+                "conclusion": "success",
+                "name": "Provision the full pinned disposable stack",
+                "number": 12,
+                "startedAt": "2026-10-07T03:56:15Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:37:21Z",
+                "conclusion": "success",
+                "name": "Run the immutable candidate FULL suite with TEST-INFRA-005 and 006",
+                "number": 13,
+                "startedAt": "2026-10-07T03:59:35Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:37:22Z",
+                "conclusion": "success",
+                "name": "Teardown candidate-owned resources and the disposable stack",
+                "number": 14,
+                "startedAt": "2026-10-07T04:37:21Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:37:24Z",
+                "conclusion": "success",
+                "name": "Upload candidate guard execution (not an evidence seal)",
+                "number": 15,
+                "startedAt": "2026-10-07T04:37:22Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:37:24Z",
+                "conclusion": "success",
+                "name": "Post Checkout immutable TEST-INFRA-006 candidate (NO_GO preserved)",
+                "number": 26,
+                "startedAt": "2026-10-07T04:37:24Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:37:24Z",
+                "conclusion": "success",
+                "name": "Post Install uv",
+                "number": 27,
+                "startedAt": "2026-10-07T04:37:24Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:37:24Z",
+                "conclusion": "success",
+                "name": "Post Set up pinned Node oracle",
+                "number": 28,
+                "startedAt": "2026-10-07T04:37:24Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:37:24Z",
+                "conclusion": "success",
+                "name": "Post Set up Python",
+                "number": 29,
+                "startedAt": "2026-10-07T04:37:24Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:37:24Z",
+                "conclusion": "success",
+                "name": "Post Checkout exact revision",
+                "number": 30,
+                "startedAt": "2026-10-07T04:37:24Z",
+                "status": "completed"
+              },
+              {
+                "completedAt": "2026-10-07T04:37:24Z",
+                "conclusion": "success",
+                "name": "Complete job",
+                "number": 31,
+                "startedAt": "2026-10-07T04:37:24Z",
+                "status": "completed"
+              }
+            ],
+            "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37568937953/job/112636163334"
+          }
+        ],
+        "main_execution_attempt": 2,
+        "raw_artifact_hashes": {
+          "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/campaign_result.json": "4603621f5ac9ac4d0aa76b41f5b11468f290c04a4db626885eecfbf2d809a139",
+          "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/post_remediation_runtime.log": "a0426310f2ef02113135472b76ba9169a4c8e58bff8fd6e4867222f12262e4b7",
+          "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/runtime_coverage_post_approval.json": "b8103390d1d9beff82a9b0b9d01709f4d1bb7d5f0565e6a2f4f748886b8f0b19",
+          "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/runtime_junit_post_approval.xml": "04759254a5ae0fe4174e2a12940b29f1482b2618e0c955eac07dea0a54cb30b4",
+          "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_bootstrap.log": "01056f647605e1dbab9f753cc2ad3936d83da7d6215e6d063ad49c5b1202e855",
+          "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_candidate_teardown.log": "ed432870e48a30296e951f2755c7377985328d75c050cf6bebe1c05754034f06",
+          "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_qualification_tools.log": "2c12758b6ecaf1f0e8d89f1369173fa74e2f77f65d1cfea50bb68c481176bf3e",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVAL_SHA256SUMS": "b163036c3c9864afeebb67dd821651d28cb4a857a8f0097eb66ce261b80e76ad",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/OCOR_ADD_v1.2_Validation_Closure_Report.md": "4a28948740a6e5dd3da82cf514d56fc46c416263e4e7f437c9feb621f1b81b62",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ba_junit_post_approval.xml": "df77be2e89f08bd3265f86113934aceb774231456d9690e5d8809c45cafb5917",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/campaign_result.json": "e96c5f281980b11a4bb51dfb6be2ef813c9fe852f2eb5ab9f4ed292519ff8189",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ci_bootstrap.log": "252d52158e69fcaf32e79dd7afc0309e419eba18770be566fc3df9ece1007d1a",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ci_guards.log": "b09709c9cbfad68f3fda61f233882d9e07541929de909300d8e5844ffb842eb9",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ci_teardown.log": "66ea214f0fb55a883d1e1f2d4951a93dcee2172224dc9fb214c0bf54f75fdd20",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/dec208_authoritative_promotion_results.json": "01e5c4b542df1f4addca66852d8a44afac54287b8892fd7b6f80a98ea192386f",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ev_junit_post_approval.xml": "e2661ac2554e12ac83efa260842853c96deb3ab042dee406c3ef7d01ac67f705",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/guards_junit.xml": "c51055677ea52157eb598f0086b1e37edf138ab3ed99fcff9da51e8773a799b4",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/openapi_31_validation_results.json": "afba0ec817629d23a3f21634645c200eaf7b788b976164a8f613cd1b9740e5f0",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_approval_readiness.log": "95342b0a46a93855bf18b556eed777488e10e9ff853e0d6d48fbc0252fb0c6ab",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_ba.log": "f8438b2b8a80b2be17be13434edd0918f2295577f7b95a991abd45c6e4ea8690",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_conformance.log": "f7218fcb4d6d9eb96455ae799fb40975d7bbb544280020e52aaae35203e52f65",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_ev.log": "8a44ab2b189ce2dd97531c048d6e6e5f308f3cddf8fd7091979f78b420dc8aa2",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_input_checksums.txt": "0a2036313a8b8deca46e664d2621879f4e0191c98eb287e2aeeb7171aae53c34",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_openapi.log": "ea6c5eca432eef64c81bf3a2c7f6df5e41347fd50f65dba5f93a6924806d5d85",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_postgres.log": "c45ea13b28227303d71a92f9025c49ceabac5edfd9b6855f8791b3d0da67c70c",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_release_gate.log": "cd3251a03a7080cb030294186be49bd11a3e38859337d40917f68423ef9837a8",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_report_checksums.txt": "df21ddc1f9d3566524d70f1ac5aa99f87e6ba80c18ea5a5f15862c62075cdd74",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_runtime.log": "8057af6e7119d1075b3f59942f0475ad15e00bdb64a6d85230bd0359a4d1095a",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_semantics.log": "75c4edfe5af6250e80371c0f5034ac087aa4be25718aacbd6624a5b04bc71387",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_verify.log": "88741587999ad9781672d95d7c76fcaed90ffa2da9732479c739844861133deb",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/postgres_junit_post_approval.xml": "8ec83fd23c7f9a0a2e991c1af2509a3a9844afbc5bf5abdcd33172a6499f4af4",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/runtime_coverage_post_approval.json": "7cc0c7326975ee4163603e0902672d567086cea2fc0e97f3af8e93230a146481",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/runtime_junit_post_approval.xml": "c7b02a0303f013901cbd0430aed849ce5d0e6a352663490c00951c9e7ad64842",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_approval_readiness_results.json": "a4ca71a012f64d0c9ff70575bc9dc00c83f30578a27bcf884b377cba9deaa17e",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_approval_readiness_results_post_approval.json": "a4ca71a012f64d0c9ff70575bc9dc00c83f30578a27bcf884b377cba9deaa17e",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_conformance_results.json": "624cf81d8da2ead26267e9d9340b3418ddd57c575ea37b533eb9535249d72898",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_conformance_results_post_approval.json": "624cf81d8da2ead26267e9d9340b3418ddd57c575ea37b533eb9535249d72898",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_release_gate_results.json": "ebe84785c29703072bfb395442cb5cfc0bc55211d59c353fb61f30c3ec1755a6",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_release_gate_results_post_approval.json": "ebe84785c29703072bfb395442cb5cfc0bc55211d59c353fb61f30c3ec1755a6",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_semantic_results.json": "95b502581415a76c292c2b294a195220d27045220c6cec147e4fad7be99bfdaf",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_semantic_results_post_approval.json": "95b502581415a76c292c2b294a195220d27045220c6cec147e4fad7be99bfdaf",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_verify_report_post_approval.json": "19dd0029f64393e2a11afb47977e0a7865fb728f7cb70773d65bfd5960fb8707",
+          "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/validation_closure_results.json": "9475e76264ece9fb7ba25e2f868b3c29d3b41b4de4071f06d15f00bb80236ef9"
+        },
+        "run_attempt": 2,
+        "selected_main_zip_sha256": "faa281712acc950b0febe8c221a4e5afb825bd33728e93cad0afb91129433cbe",
+        "selected_successful_main_artifact_id": 11462325045
+      },
       "deviation_pr": 164,
       "deviation_registered_in": "reports/development/METHOD_COMPLIANCE.json",
       "g6_dependency": [
@@ -1090,7 +1621,7 @@
         "Standing rule (2026-10-05): never exclude, deselect or mark tests to pass a check, and never remove skipped from counts. If a check fails for missing CI infrastructure, write a decision request and continue with other ready work."
       ],
       "rem_opened": "OCOR-DEV-REM-0017",
-      "status": "REM_OPENED"
+      "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION"
     },
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -1811,8 +2342,10 @@
   "terminal_loop_disposition": {
     "available_next_work": "OCOR-DEV-REM-0017, poi OCOR-DEV-0050",
     "loop_status": "CONTINUE",
-    "po_decisions_pending": [],
-    "reason": "OCOR-DEV-0049-REPAIR-6 supera l\u2019arresto puntuale: REM-0017 e 0050 eseguibili. Nessun ciclo 7."
+    "po_decisions_pending": [
+      "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE"
+    ],
+    "reason": "REM-0017 candidato alla verifica; 0050 e task G5 indipendenti restano eseguibili. 0049 NO_GO invariato."
   },
-  "updated_at": "2026-10-07T03:38:47.341865+00:00"
+  "updated_at": "2026-10-07T05:05:18.115617+00:00"
 }

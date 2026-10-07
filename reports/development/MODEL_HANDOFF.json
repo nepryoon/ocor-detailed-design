@@ -4,6 +4,7 @@
   "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
   "changed_paths": [
     ".github/workflows/ocor-validation-closure.yml",
+    "infra/qualification_tools.lock.json",
     "reports/assurance/OCOR-DEV-REM-0017-RCCAD/README.md",
     "reports/assurance/OCOR-DEV-REM-0017-RCCAD/evidence.json",
     "reports/assurance/OCOR-DEV-REM-0017-RCCAD/raw.log",
@@ -14,66 +15,957 @@
     "reports/planning/OCOR_PLAN_RUN_STATE.json",
     "reports/tests/test_qualifying_campaign_guard.py",
     "scripts/bootstrap_ci_environment.py",
+    "scripts/provision_qualification_tools.py",
     "scripts/run_qualifying_campaign.py",
     "scripts/validate_ocor_development_plan.py"
   ],
-  "ci_observations": [
+  "ci_source": {
+    "artifacts": [
+      {
+        "created_at": "2026-10-07T05:01:15Z",
+        "expired": false,
+        "id": 11462325045,
+        "name": "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231",
+        "size_in_bytes": 126155
+      },
+      {
+        "created_at": "2026-10-07T04:43:36Z",
+        "expired": false,
+        "id": 11461202421,
+        "name": "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231",
+        "size_in_bytes": 55545
+      },
+      {
+        "created_at": "2026-10-07T04:37:24Z",
+        "expired": false,
+        "id": 11461116898,
+        "name": "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231",
+        "size_in_bytes": 93964
+      }
+    ],
+    "candidate_execution_attempt": 1,
+    "candidate_summary": {
+      "artifact": "ci-source-final-artifacts/ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/campaign_result.json",
+      "artifacts": {
+        "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/campaign_result.json": "4603621f5ac9ac4d0aa76b41f5b11468f290c04a4db626885eecfbf2d809a139",
+        "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/post_remediation_runtime.log": "a0426310f2ef02113135472b76ba9169a4c8e58bff8fd6e4867222f12262e4b7",
+        "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/runtime_coverage_post_approval.json": "b8103390d1d9beff82a9b0b9d01709f4d1bb7d5f0565e6a2f4f748886b8f0b19",
+        "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/runtime_junit_post_approval.xml": "04759254a5ae0fe4174e2a12940b29f1482b2618e0c955eac07dea0a54cb30b4",
+        "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_bootstrap.log": "01056f647605e1dbab9f753cc2ad3936d83da7d6215e6d063ad49c5b1202e855",
+        "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_candidate_teardown.log": "ed432870e48a30296e951f2755c7377985328d75c050cf6bebe1c05754034f06",
+        "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_qualification_tools.log": "2c12758b6ecaf1f0e8d89f1369173fa74e2f77f65d1cfea50bb68c481176bf3e"
+      },
+      "campaign": {
+        "candidate_head": "d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b",
+        "counts": {
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "tests": 1422
+        },
+        "duration_seconds": 2265.756724602,
+        "required_modules": [
+          "test_ocor_dev_0048",
+          "test_ocor_dev_0049"
+        ],
+        "status": "PASS"
+      },
+      "job": "conditional-infrastructure-0049",
+      "run_id": 37568937953,
+      "source_head": "4658ad808d41dfdb0b75255837adfd3f9609d071"
+    },
+    "conclusion": "success",
+    "counts": {
+      "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/runtime_junit_post_approval.xml": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 1422
+      },
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ba_junit_post_approval.xml": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 39
+      },
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ev_junit_post_approval.xml": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 35
+      },
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/guards_junit.xml": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 53
+      },
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/postgres_junit_post_approval.xml": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 5
+      },
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/runtime_junit_post_approval.xml": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 1101
+      }
+    },
+    "databaseId": 37568937953,
+    "head_sha": "4658ad808d41dfdb0b75255837adfd3f9609d071",
+    "jobs": [
+      {
+        "completedAt": "2026-10-07T05:01:18Z",
+        "conclusion": "success",
+        "databaseId": 112636163160,
+        "name": "validation-closure",
+        "startedAt": "2026-10-07T04:47:58Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-07T04:48:00Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-07T04:47:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:48:00Z",
+            "conclusion": "success",
+            "name": "Reject missing or failed conditional infrastructure campaign",
+            "number": 2,
+            "startedAt": "2026-10-07T04:48:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:48:02Z",
+            "conclusion": "success",
+            "name": "Checkout exact revision",
+            "number": 3,
+            "startedAt": "2026-10-07T04:48:00Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:48:11Z",
+            "conclusion": "success",
+            "name": "Set up Python",
+            "number": 4,
+            "startedAt": "2026-10-07T04:48:02Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:48:16Z",
+            "conclusion": "success",
+            "name": "Set up pinned Node oracle",
+            "number": 5,
+            "startedAt": "2026-10-07T04:48:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:48:18Z",
+            "conclusion": "success",
+            "name": "Install uv",
+            "number": 6,
+            "startedAt": "2026-10-07T04:48:16Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:48:19Z",
+            "conclusion": "success",
+            "name": "Install and verify pinned ruff executable",
+            "number": 7,
+            "startedAt": "2026-10-07T04:48:18Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:48:21Z",
+            "conclusion": "success",
+            "name": "Synchronize locked runtime environment",
+            "number": 8,
+            "startedAt": "2026-10-07T04:48:19Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:48:22Z",
+            "conclusion": "success",
+            "name": "Build pinned TypeScript SDK and oracle",
+            "number": 9,
+            "startedAt": "2026-10-07T04:48:21Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:51:56Z",
+            "conclusion": "success",
+            "name": "Provision the full pinned disposable stack",
+            "number": 10,
+            "startedAt": "2026-10-07T04:48:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:51:56Z",
+            "conclusion": "success",
+            "name": "Verify immutable source and report manifests",
+            "number": 11,
+            "startedAt": "2026-10-07T04:51:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:51:58Z",
+            "conclusion": "success",
+            "name": "Run complete post-remediation document harness",
+            "number": 12,
+            "startedAt": "2026-10-07T04:51:56Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:51:59Z",
+            "conclusion": "success",
+            "name": "Run governed OpenAPI 3.1 validation",
+            "number": 13,
+            "startedAt": "2026-10-07T04:51:58Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T05:01:01Z",
+            "conclusion": "success",
+            "name": "Run complete runtime, BA, EV and live PostgreSQL campaigns",
+            "number": 14,
+            "startedAt": "2026-10-07T04:51:59Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T05:01:11Z",
+            "conclusion": "success",
+            "name": "Execute conditional report guards and campaign supervisor tests",
+            "number": 15,
+            "startedAt": "2026-10-07T05:01:01Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T05:01:11Z",
+            "conclusion": "success",
+            "name": "Build governed closure evidence",
+            "number": 16,
+            "startedAt": "2026-10-07T05:01:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T05:01:12Z",
+            "conclusion": "success",
+            "name": "Verify DEC-208 authoritative promotion",
+            "number": 17,
+            "startedAt": "2026-10-07T05:01:11Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T05:01:14Z",
+            "conclusion": "success",
+            "name": "Teardown this disposable stack",
+            "number": 18,
+            "startedAt": "2026-10-07T05:01:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T05:01:15Z",
+            "conclusion": "success",
+            "name": "Upload immutable evidence candidate",
+            "number": 19,
+            "startedAt": "2026-10-07T05:01:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T05:01:15Z",
+            "conclusion": "success",
+            "name": "Post Install uv",
+            "number": 35,
+            "startedAt": "2026-10-07T05:01:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T05:01:15Z",
+            "conclusion": "success",
+            "name": "Post Set up pinned Node oracle",
+            "number": 36,
+            "startedAt": "2026-10-07T05:01:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T05:01:15Z",
+            "conclusion": "success",
+            "name": "Post Set up Python",
+            "number": 37,
+            "startedAt": "2026-10-07T05:01:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T05:01:16Z",
+            "conclusion": "success",
+            "name": "Post Checkout exact revision",
+            "number": 38,
+            "startedAt": "2026-10-07T05:01:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T05:01:16Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 39,
+            "startedAt": "2026-10-07T05:01:16Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37568937953/job/112636163160"
+      },
+      {
+        "completedAt": "2026-10-07T04:37:28Z",
+        "conclusion": "success",
+        "databaseId": 112636163334,
+        "name": "conditional-infrastructure-0049",
+        "startedAt": "2026-10-07T03:55:44Z",
+        "status": "completed",
+        "steps": [
+          {
+            "completedAt": "2026-10-07T03:55:47Z",
+            "conclusion": "success",
+            "name": "Set up job",
+            "number": 1,
+            "startedAt": "2026-10-07T03:55:44Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T03:55:49Z",
+            "conclusion": "success",
+            "name": "Checkout exact revision",
+            "number": 2,
+            "startedAt": "2026-10-07T03:55:47Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T03:55:57Z",
+            "conclusion": "success",
+            "name": "Set up Python",
+            "number": 3,
+            "startedAt": "2026-10-07T03:55:49Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T03:56:07Z",
+            "conclusion": "success",
+            "name": "Set up pinned Node oracle",
+            "number": 4,
+            "startedAt": "2026-10-07T03:55:57Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T03:56:09Z",
+            "conclusion": "success",
+            "name": "Install uv",
+            "number": 5,
+            "startedAt": "2026-10-07T03:56:07Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T03:56:09Z",
+            "conclusion": "success",
+            "name": "Install and verify pinned ruff executable",
+            "number": 6,
+            "startedAt": "2026-10-07T03:56:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T03:56:10Z",
+            "conclusion": "success",
+            "name": "Synchronize locked runtime environment",
+            "number": 7,
+            "startedAt": "2026-10-07T03:56:09Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T03:56:12Z",
+            "conclusion": "success",
+            "name": "Checkout immutable TEST-INFRA-006 candidate (NO_GO preserved)",
+            "number": 8,
+            "startedAt": "2026-10-07T03:56:10Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T03:56:12Z",
+            "conclusion": "success",
+            "name": "Synchronize complete candidate environment",
+            "number": 9,
+            "startedAt": "2026-10-07T03:56:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T03:56:14Z",
+            "conclusion": "success",
+            "name": "Acquire official checksum-pinned Kubernetes qualification tools",
+            "number": 10,
+            "startedAt": "2026-10-07T03:56:12Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T03:56:15Z",
+            "conclusion": "success",
+            "name": "Build pinned TypeScript SDK and oracle",
+            "number": 11,
+            "startedAt": "2026-10-07T03:56:14Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T03:59:35Z",
+            "conclusion": "success",
+            "name": "Provision the full pinned disposable stack",
+            "number": 12,
+            "startedAt": "2026-10-07T03:56:15Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:37:21Z",
+            "conclusion": "success",
+            "name": "Run the immutable candidate FULL suite with TEST-INFRA-005 and 006",
+            "number": 13,
+            "startedAt": "2026-10-07T03:59:35Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:37:22Z",
+            "conclusion": "success",
+            "name": "Teardown candidate-owned resources and the disposable stack",
+            "number": 14,
+            "startedAt": "2026-10-07T04:37:21Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:37:24Z",
+            "conclusion": "success",
+            "name": "Upload candidate guard execution (not an evidence seal)",
+            "number": 15,
+            "startedAt": "2026-10-07T04:37:22Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:37:24Z",
+            "conclusion": "success",
+            "name": "Post Checkout immutable TEST-INFRA-006 candidate (NO_GO preserved)",
+            "number": 26,
+            "startedAt": "2026-10-07T04:37:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:37:24Z",
+            "conclusion": "success",
+            "name": "Post Install uv",
+            "number": 27,
+            "startedAt": "2026-10-07T04:37:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:37:24Z",
+            "conclusion": "success",
+            "name": "Post Set up pinned Node oracle",
+            "number": 28,
+            "startedAt": "2026-10-07T04:37:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:37:24Z",
+            "conclusion": "success",
+            "name": "Post Set up Python",
+            "number": 29,
+            "startedAt": "2026-10-07T04:37:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:37:24Z",
+            "conclusion": "success",
+            "name": "Post Checkout exact revision",
+            "number": 30,
+            "startedAt": "2026-10-07T04:37:24Z",
+            "status": "completed"
+          },
+          {
+            "completedAt": "2026-10-07T04:37:24Z",
+            "conclusion": "success",
+            "name": "Complete job",
+            "number": 31,
+            "startedAt": "2026-10-07T04:37:24Z",
+            "status": "completed"
+          }
+        ],
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37568937953/job/112636163334"
+      }
+    ],
+    "main_execution_attempt": 2,
+    "raw_artifact_hashes": {
+      "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/campaign_result.json": "4603621f5ac9ac4d0aa76b41f5b11468f290c04a4db626885eecfbf2d809a139",
+      "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/post_remediation_runtime.log": "a0426310f2ef02113135472b76ba9169a4c8e58bff8fd6e4867222f12262e4b7",
+      "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/runtime_coverage_post_approval.json": "b8103390d1d9beff82a9b0b9d01709f4d1bb7d5f0565e6a2f4f748886b8f0b19",
+      "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/runtime_junit_post_approval.xml": "04759254a5ae0fe4174e2a12940b29f1482b2618e0c955eac07dea0a54cb30b4",
+      "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_bootstrap.log": "01056f647605e1dbab9f753cc2ad3936d83da7d6215e6d063ad49c5b1202e855",
+      "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_candidate_teardown.log": "ed432870e48a30296e951f2755c7377985328d75c050cf6bebe1c05754034f06",
+      "ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_qualification_tools.log": "2c12758b6ecaf1f0e8d89f1369173fa74e2f77f65d1cfea50bb68c481176bf3e",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ocor-runtime/docs/governance_dossier/OCOR_ADD_v1.3_APPROVAL_SHA256SUMS": "b163036c3c9864afeebb67dd821651d28cb4a857a8f0097eb66ce261b80e76ad",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/OCOR_ADD_v1.2_Validation_Closure_Report.md": "4a28948740a6e5dd3da82cf514d56fc46c416263e4e7f437c9feb621f1b81b62",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ba_junit_post_approval.xml": "df77be2e89f08bd3265f86113934aceb774231456d9690e5d8809c45cafb5917",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/campaign_result.json": "e96c5f281980b11a4bb51dfb6be2ef813c9fe852f2eb5ab9f4ed292519ff8189",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ci_bootstrap.log": "252d52158e69fcaf32e79dd7afc0309e419eba18770be566fc3df9ece1007d1a",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ci_guards.log": "b09709c9cbfad68f3fda61f233882d9e07541929de909300d8e5844ffb842eb9",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ci_teardown.log": "66ea214f0fb55a883d1e1f2d4951a93dcee2172224dc9fb214c0bf54f75fdd20",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/dec208_authoritative_promotion_results.json": "01e5c4b542df1f4addca66852d8a44afac54287b8892fd7b6f80a98ea192386f",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ev_junit_post_approval.xml": "e2661ac2554e12ac83efa260842853c96deb3ab042dee406c3ef7d01ac67f705",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/guards_junit.xml": "c51055677ea52157eb598f0086b1e37edf138ab3ed99fcff9da51e8773a799b4",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/openapi_31_validation_results.json": "afba0ec817629d23a3f21634645c200eaf7b788b976164a8f613cd1b9740e5f0",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_approval_readiness.log": "95342b0a46a93855bf18b556eed777488e10e9ff853e0d6d48fbc0252fb0c6ab",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_ba.log": "f8438b2b8a80b2be17be13434edd0918f2295577f7b95a991abd45c6e4ea8690",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_conformance.log": "f7218fcb4d6d9eb96455ae799fb40975d7bbb544280020e52aaae35203e52f65",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_ev.log": "8a44ab2b189ce2dd97531c048d6e6e5f308f3cddf8fd7091979f78b420dc8aa2",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_input_checksums.txt": "0a2036313a8b8deca46e664d2621879f4e0191c98eb287e2aeeb7171aae53c34",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_openapi.log": "ea6c5eca432eef64c81bf3a2c7f6df5e41347fd50f65dba5f93a6924806d5d85",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_postgres.log": "c45ea13b28227303d71a92f9025c49ceabac5edfd9b6855f8791b3d0da67c70c",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_release_gate.log": "cd3251a03a7080cb030294186be49bd11a3e38859337d40917f68423ef9837a8",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_report_checksums.txt": "df21ddc1f9d3566524d70f1ac5aa99f87e6ba80c18ea5a5f15862c62075cdd74",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_runtime.log": "8057af6e7119d1075b3f59942f0475ad15e00bdb64a6d85230bd0359a4d1095a",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_semantics.log": "75c4edfe5af6250e80371c0f5034ac087aa4be25718aacbd6624a5b04bc71387",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_verify.log": "88741587999ad9781672d95d7c76fcaed90ffa2da9732479c739844861133deb",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/postgres_junit_post_approval.xml": "8ec83fd23c7f9a0a2e991c1af2509a3a9844afbc5bf5abdcd33172a6499f4af4",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/runtime_coverage_post_approval.json": "7cc0c7326975ee4163603e0902672d567086cea2fc0e97f3af8e93230a146481",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/runtime_junit_post_approval.xml": "c7b02a0303f013901cbd0430aed849ce5d0e6a352663490c00951c9e7ad64842",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_approval_readiness_results.json": "a4ca71a012f64d0c9ff70575bc9dc00c83f30578a27bcf884b377cba9deaa17e",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_approval_readiness_results_post_approval.json": "a4ca71a012f64d0c9ff70575bc9dc00c83f30578a27bcf884b377cba9deaa17e",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_conformance_results.json": "624cf81d8da2ead26267e9d9340b3418ddd57c575ea37b533eb9535249d72898",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_conformance_results_post_approval.json": "624cf81d8da2ead26267e9d9340b3418ddd57c575ea37b533eb9535249d72898",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_release_gate_results.json": "ebe84785c29703072bfb395442cb5cfc0bc55211d59c353fb61f30c3ec1755a6",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_release_gate_results_post_approval.json": "ebe84785c29703072bfb395442cb5cfc0bc55211d59c353fb61f30c3ec1755a6",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_semantic_results.json": "95b502581415a76c292c2b294a195220d27045220c6cec147e4fad7be99bfdaf",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_semantic_results_post_approval.json": "95b502581415a76c292c2b294a195220d27045220c6cec147e4fad7be99bfdaf",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_verify_report_post_approval.json": "19dd0029f64393e2a11afb47977e0a7865fb728f7cb70773d65bfd5960fb8707",
+      "ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/validation_closure_results.json": "9475e76264ece9fb7ba25e2f868b3c29d3b41b4de4071f06d15f00bb80236ef9"
+    },
+    "run_attempt": 2,
+    "selected_main_zip_sha256": "faa281712acc950b0febe8c221a4e5afb825bd33728e93cad0afb91129433cbe",
+    "selected_successful_main_artifact_id": 11462325045
+  },
+  "commands_run": [
     {
-      "artifact_id": 11458446486,
-      "check": "supply-chain",
-      "conclusion": "FAILURE",
-      "finding": "PRIVATE_KEY at test_qualifying_campaign_guard.py:72: literal dummy PEM header, not key material; same fixture constructed at runtime, scanner unchanged.",
-      "head_sha": "5c0b0a30c945e39ecd932ecf31e42c1b269e5381",
-      "run_id": 37564144092
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "scripts/validate_evidence_input_drift.py"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T03:37:52.438550+00:00",
+      "raw_output_sha256": "fde0744c001d45e69220b77ce6eeb918a314c56d5a31c6d053a72590011f509c",
+      "started_at": "2026-10-07T03:37:52.320945+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "scripts/validate_runtime_evidence.py",
+        "--task",
+        "OCOR-DEV-0048",
+        "--non-skipped",
+        "--manifest",
+        "reports/evidence/G4/MANIFEST.json"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T03:37:52.386908+00:00",
+      "raw_output_sha256": "d3c77291e1e9f43f2227111436059b7e30c08ea4306b7ddd910541c14b988490",
+      "started_at": "2026-10-07T03:37:52.321453+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "reports/tests/test_generate_contracts_reference_resolution.py",
+        "reports/tests/test_language_migration_benchmark_harness.py",
+        "reports/tests/test_qualifying_campaign_guard.py",
+        "--junitxml=/home/luca/.ocor-codex/rem0017-resume/guards-final.xml"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T03:37:57.248152+00:00",
+      "raw_output_sha256": "7693136eba9c995e6db0a9631cad60263ab42e605bde717b58fffff9ccec2910",
+      "started_at": "2026-10-07T03:37:52.322011+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "scripts/verify.py",
+        "--json"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T04:29:08.339658+00:00",
+      "raw_output_sha256": "61736e49983a32531b3c8362f960d943a8a7f7f437ca98e91c1f3c3f8762b413",
+      "started_at": "2026-10-07T04:29:07.924674+00:00"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "inputs/normative/SHA256SUMS"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T03:37:52.325986+00:00",
+      "raw_output_sha256": "0a2036313a8b8deca46e664d2621879f4e0191c98eb287e2aeeb7171aae53c34",
+      "started_at": "2026-10-07T03:37:52.321155+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "scripts/validate_language_policy.py"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T03:37:52.386553+00:00",
+      "raw_output_sha256": "ca6cb78dcbe21415365ecd6578a2eb0bf3d22bdcd7ddbae94e31fe19f67cd29d",
+      "started_at": "2026-10-07T03:37:52.320551+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "-m",
+        "mypy"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T03:37:52.636327+00:00",
+      "raw_output_sha256": "047be720f71ff6f55001ba8201472e4dca22eaa7f8ee244cbd28450c7224622f",
+      "started_at": "2026-10-07T03:37:52.319826+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "scripts/validate_rccad.py",
+        "--base-ref",
+        "origin/main"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T03:37:52.635224+00:00",
+      "raw_output_sha256": "0043e5c71880b8696f14cc449b0e908f5418b4864e06a71d3fb4d4f212543c3f",
+      "started_at": "2026-10-07T03:37:52.320148+00:00"
+    },
+    {
+      "command": [
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T03:37:52.335939+00:00",
+      "raw_output_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "started_at": "2026-10-07T03:37:52.319593+00:00"
+    },
+    {
+      "commands": [
+        {
+          "command": [
+            "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/.ocor/tools/bin/kind",
+            "delete",
+            "cluster",
+            "--name",
+            "ocor-poc"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+            "scripts/reset_test_environment.py",
+            "--execute"
+          ],
+          "exit_code": 0
+        }
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T04:27:46.013691+00:00",
+      "raw_output_sha256": "eed1d6aa3937f5622936b2284e495c396886640e3fb3f64ec2c708016bcfc847",
+      "residual": {
+        "containers": [],
+        "test_containers": [],
+        "volumes": []
+      },
+      "started_at": "2026-10-07T04:27:44.391680+00:00",
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "scripts/provision_qualification_tools.py"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T03:37:52.437045+00:00",
+      "raw_output_sha256": "6d9a11801d3dd9f9b0de6b9b8afd71cf9cd0f5e96257de2381d2bbac2b78d4a4",
+      "started_at": "2026-10-07T03:37:52.322535+00:00"
     }
   ],
-  "commands_run": [
-    "reset_test_environment.py --execute",
-    "bootstrap_ci_environment.py --execute --timeout 300",
-    "run_qualifying_campaign.py --execute --output-dir <external_logs>",
-    "pytest reports/tests/test_qualifying_campaign_guard.py",
-    "pytest report modules (4) e dieci script standalone, corretti dopo raccolta pytest non applicabile",
-    "ruff check .",
-    "mypy strict",
-    "validate_rccad.py --base-ref origin/main",
-    "validate_language_policy.py",
-    "validate_ocor_change_scope.py",
-    "validate_ocor_development_plan.py --authorized-extension --base-ref origin/main",
-    "validate_runtime_evidence.py --task OCOR-DEV-0048 --non-skipped",
-    "validate_evidence_input_drift.py",
-    "sha256sum -c inputs/normative/SHA256SUMS"
-  ],
   "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
-  "current_run_logs": "/home/luca/.ocor-codex/rem0017-resume",
-  "current_task": "OCOR-DEV-REM-0017:implementation \u2014 resource hygiene retry WIP",
+  "current_task": "OCOR-DEV-REM-0017:implementation",
   "evidence_paths": [
     "reports/assurance/OCOR-DEV-REM-0017-RCCAD/evidence.json",
     "reports/assurance/OCOR-DEV-REM-0017-RCCAD/raw.log"
   ],
-  "exact_next_action": "OCOR-DEV-REM-0017:implementation \u2014 attendere retry FULL candidato d0ac80a (heap bootstrap 1 GiB verificata; run monitorato max 45m) e successiva FULL del branch REM; diagnosticare qualsiasi errore, acquisire CI completa dell\u2019HEAD corrente, raw/count/hash e teardown. Solo con gate qualificanti verdi richiedere verifier Claude Code sul finale. 0049 NO_GO, nessun ciclo 7; poi 0050.",
-  "head_sha": "809f460d7faf1b51fcb72b534edad802489933c7",
-  "head_sha_role": "SOURCE_HEAD resource repair; retry and CI still running, no verification request",
+  "exact_next_action": "Verifica indipendente Claude Code su HEAD finale; poi integrazione REM-0017 con tutti i check richiesti verdi sullo stesso HEAD, state sync e OCOR-DEV-0050. OCOR-DEV-0049 bloccato; nessun ciclo 7.",
+  "final_metadata_gates": [
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "scripts/validate_evidence_input_drift.py"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T05:06:08.994004+00:00",
+      "raw_output_sha256": "fde0744c001d45e69220b77ce6eeb918a314c56d5a31c6d053a72590011f509c",
+      "started_at": "2026-10-07T05:06:08.929568+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "scripts/validate_runtime_evidence.py",
+        "--task",
+        "OCOR-DEV-0048",
+        "--non-skipped",
+        "--manifest",
+        "reports/evidence/G4/MANIFEST.json"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T05:06:08.962790+00:00",
+      "raw_output_sha256": "d3c77291e1e9f43f2227111436059b7e30c08ea4306b7ddd910541c14b988490",
+      "started_at": "2026-10-07T05:06:08.930430+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "reports/tests/test_generate_contracts_reference_resolution.py",
+        "reports/tests/test_language_migration_benchmark_harness.py",
+        "reports/tests/test_qualifying_campaign_guard.py",
+        "--junitxml=/home/luca/.ocor-codex/rem0017-resume/guards-final.xml"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T05:06:13.452856+00:00",
+      "raw_output_sha256": "bf660390bdf092916b7c3e8ff530fbcd16ff7a39e5268a50eec538f96158bd70",
+      "started_at": "2026-10-07T05:06:08.930627+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "scripts/verify.py",
+        "--json"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T04:29:08.339658+00:00",
+      "raw_output_sha256": "61736e49983a32531b3c8362f960d943a8a7f7f437ca98e91c1f3c3f8762b413",
+      "started_at": "2026-10-07T04:29:07.924674+00:00"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "inputs/normative/SHA256SUMS"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T05:06:08.934159+00:00",
+      "raw_output_sha256": "0a2036313a8b8deca46e664d2621879f4e0191c98eb287e2aeeb7171aae53c34",
+      "started_at": "2026-10-07T05:06:08.929979+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "scripts/validate_language_policy.py"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T05:06:08.994700+00:00",
+      "raw_output_sha256": "ca6cb78dcbe21415365ecd6578a2eb0bf3d22bdcd7ddbae94e31fe19f67cd29d",
+      "started_at": "2026-10-07T05:06:08.929318+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "-m",
+        "mypy"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T05:06:09.143695+00:00",
+      "raw_output_sha256": "047be720f71ff6f55001ba8201472e4dca22eaa7f8ee244cbd28450c7224622f",
+      "started_at": "2026-10-07T05:06:08.928820+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "scripts/validate_rccad.py",
+        "--base-ref",
+        "origin/main"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T05:06:09.194164+00:00",
+      "raw_output_sha256": "0043e5c71880b8696f14cc449b0e908f5418b4864e06a71d3fb4d4f212543c3f",
+      "started_at": "2026-10-07T05:06:08.929058+00:00"
+    },
+    {
+      "command": [
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T05:06:08.945607+00:00",
+      "raw_output_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "started_at": "2026-10-07T05:06:08.928591+00:00"
+    },
+    {
+      "commands": [
+        {
+          "command": [
+            "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/.ocor/tools/bin/kind",
+            "delete",
+            "cluster",
+            "--name",
+            "ocor-poc"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+            "scripts/reset_test_environment.py",
+            "--execute"
+          ],
+          "exit_code": 0
+        }
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T04:27:46.013691+00:00",
+      "raw_output_sha256": "eed1d6aa3937f5622936b2284e495c396886640e3fb3f64ec2c708016bcfc847",
+      "residual": {
+        "containers": [],
+        "test_containers": [],
+        "volumes": []
+      },
+      "started_at": "2026-10-07T04:27:44.391680+00:00",
+      "status": "PASS"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire/ocor-runtime/.venv/bin/python",
+        "scripts/provision_qualification_tools.py"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-10-07T05:06:09.045387+00:00",
+      "raw_output_sha256": "6d9a11801d3dd9f9b0de6b9b8afd71cf9cd0f5e96257de2381d2bbac2b78d4a4",
+      "started_at": "2026-10-07T05:06:08.930908+00:00"
+    }
+  ],
+  "head_sha": "4658ad808d41dfdb0b75255837adfd3f9609d071",
+  "head_sha_role": "SOURCE_COMMIT; request binds exact final evidence HEAD",
   "independent_verification": {
+    "different_providers": true,
     "implementer": "Codex (OpenAI)",
-    "status": "NOT_REQUESTED_WIP",
+    "separate_context": true,
+    "status": "REQUEST_TO_BE_WRITTEN_ON_FINAL_HEAD",
     "verifier": "Claude Code (Anthropic)"
   },
-  "migration_rollback_result": "Nessuna migrazione; nuovo revert del change set governato. Nessun merge WIP.",
-  "previous_handoff_ref": "33821f315138b90bdae7f940e5327b15f9a19948:reports/development/MODEL_HANDOFF.json",
+  "migration_rollback_result": "Nessuna migrazione; rollback attraverso un nuovo revert del change set, con teardown OCOR scoped.",
+  "previous_handoff_ref": "4658ad808d41dfdb0b75255837adfd3f9609d071:reports/development/MODEL_HANDOFF.json",
   "raw_evidence_hashes": {
-    "bootstrap-retry.log": "0edff81f6c192d038d206cfd9c0f24017214ca12db6d9003673be2e908f6e2d6",
-    "bootstrap.log": "5f29de1ac210d018b4e8716ecdcac41d95ed1510ec888a7ec08a0fc942d3a3c9",
-    "ca-permission-red.log": "8e0f31a77c4e5b198428e9009977c61562870db350992069909fbec61aa942c5",
-    "ci-reports-retry.log": "9fc346624cef95fa652b99cac3e5c847eb9d09ab2a2ce638d3a2714124872607",
-    "ci-reports.log": "d2931a73b8bd640607629659a01f1beb081f311c5567b1dfadcf15a36524282b",
-    "full-retry/post_remediation_runtime.log": "60c4e5945af5979db30d04041f073201f98a160604be7b02e9abaedd4dea4654",
-    "full/post_remediation_runtime.log": "fb3b08ab9d249c3ccc432a7d92ee46d3af367a4b7af42d9e78d4857177fa86f7",
-    "guard-final.log": "44d83ad137613939263c06a94cfab265f730215f63d49278ebe4449ac0d33999",
-    "guard-red.log": "a45577030844744cf223e12677305fc040b04e2058cec39c36e58c3a677e1a0d",
-    "manual-restart-red.log": "7b1cd4cca699afcc0661d2271104e9659445edb38bf5305deb391fd3c59510cb",
-    "redaction-red.log": "d2f14c9d955c89dc16b0805101c4d297e7927a28fa52ac2ed21f26acfe987730",
-    "report-guards.log": "af528285708f6f9834a391c0a2eefeb355f9147e1be3d8572e515e0d884aa7be",
-    "teardown-final.log": "42ea8cba40f0308db611385f069b5472c2747cf218065c673c63f1c28e692831"
+    "bootstrap-bounded.log": "f4993f68807c7b5255d57b9d1383a6aec42f201aab088098a1fc3ff817cfc133",
+    "bootstrap-final.log": "2b5db6fc30c2506d2b725d66e094e4f91f9c60cd7f3615ab5dbe9ee6801a722e",
+    "bootstrap-main.log": "ef25ce89ddabb41ae9604393b68f966fd8d32ae5c280d3d80c9eea6bed3391cb",
+    "bootstrap-retry.log": "b50dae13900e0d23a9789629439e9b23bc78ee6708ab00b0053e1aed228c766c",
+    "bootstrap.log": "58251f4f794292c6fa77e35588780c5826f817dbbf122a2877c659fab6bddaf6",
+    "candidate-full/campaign_result.json": "aab6fe720b54fb7c60d3a2a74d8ee879cf998533921362f260a8a24d57819075",
+    "candidate-full/post_remediation_runtime.log": "f14770a49c77aa4c1645628226fcf4a1e3daf36ea14d87c787723400d444e485",
+    "candidate-full/runtime_junit_post_approval.xml": "bbcf9539b14143ba11f4399a7360ff6d6cc194b4ecaab4c4c711a9c1b2ab9118",
+    "candidate-guard-red.log": "6ca31bfb531156c18a9277d7fd922e8985fa827507ef25a772108316ddbde22b",
+    "candidate-result.json": "a690d69db3b0745f991d82ac178e40a326accfd1ccba00aba77867cb1f9a08e5",
+    "ci-4658ad8-attempt1-summary.json": "e02e34b19032dfaa688964caca7a858035f1d7d6f3a29d6d252b59bf1460af94",
+    "ci-4658ad8-failed.log": "2482d134966e4a9831338ab4af9b15582c5b3081388ddc0929893c09b89d66b2",
+    "ci-4658ad8-rerun-once.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "ci-7ac7dd3-summary.json": "f77869b59d88113ed9cb6f4be61b605efb4880db9ce110543281298489d12e56",
+    "ci-7ac7dd3/ocor-conditional-0049-6f3dff4b7459f0690cecbb8529d04aa2f34fffb5/candidate-0049/campaign_result.json": "12aa4a3fcee37a16052a534edc513c194f487980e17d6328eec47e733ca1a851",
+    "ci-7ac7dd3/ocor-conditional-0049-6f3dff4b7459f0690cecbb8529d04aa2f34fffb5/candidate-0049/docker-stats.log": "e3a3085e70755d5aac4b1f69e4a776ff332efcd6a6042fe186c24b615b39b627",
+    "ci-7ac7dd3/ocor-conditional-0049-6f3dff4b7459f0690cecbb8529d04aa2f34fffb5/candidate-0049/post_remediation_runtime.log": "b4b6c3cc220434019b7b5ba019c6c416734a82c39f7cf0491ecf9578d1af9cc0",
+    "ci-7ac7dd3/ocor-conditional-0049-6f3dff4b7459f0690cecbb8529d04aa2f34fffb5/candidate-0049/runtime_coverage_post_approval.json": "64446b5146b7d44707751cd229be9ee55f555cc2e9fe2e10565b2bd7755d8e7e",
+    "ci-7ac7dd3/ocor-conditional-0049-6f3dff4b7459f0690cecbb8529d04aa2f34fffb5/candidate-0049/runtime_junit_post_approval.xml": "2ac8fcc746619be04f0ad9fbc1d8a773cec6b09a2d538837341080d8ef3c6e85",
+    "ci-7ac7dd3/ocor-conditional-0049-6f3dff4b7459f0690cecbb8529d04aa2f34fffb5/ci_bootstrap.log": "ba5342823f7dee328dbeb57bc97776cda062283989bd00cee366ed986df4a1a2",
+    "ci-7ac7dd3/ocor-conditional-0049-6f3dff4b7459f0690cecbb8529d04aa2f34fffb5/ci_candidate_teardown.log": "160364f791792988bbb43f214e397b3739369931b7c999a568ecae99c862ca65",
+    "ci-7ac7dd3/ocor-conditional-0049-6f3dff4b7459f0690cecbb8529d04aa2f34fffb5/ci_qualification_tools.log": "2c12758b6ecaf1f0e8d89f1369173fa74e2f77f65d1cfea50bb68c481176bf3e",
+    "ci-source-final-artifacts/ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/campaign_result.json": "4603621f5ac9ac4d0aa76b41f5b11468f290c04a4db626885eecfbf2d809a139",
+    "ci-source-final-artifacts/ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/post_remediation_runtime.log": "a0426310f2ef02113135472b76ba9169a4c8e58bff8fd6e4867222f12262e4b7",
+    "ci-source-final-artifacts/ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/runtime_coverage_post_approval.json": "b8103390d1d9beff82a9b0b9d01709f4d1bb7d5f0565e6a2f4f748886b8f0b19",
+    "ci-source-final-artifacts/ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/candidate-0049/runtime_junit_post_approval.xml": "04759254a5ae0fe4174e2a12940b29f1482b2618e0c955eac07dea0a54cb30b4",
+    "ci-source-final-artifacts/ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_bootstrap.log": "01056f647605e1dbab9f753cc2ad3936d83da7d6215e6d063ad49c5b1202e855",
+    "ci-source-final-artifacts/ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_candidate_teardown.log": "ed432870e48a30296e951f2755c7377985328d75c050cf6bebe1c05754034f06",
+    "ci-source-final-artifacts/ocor-conditional-0049-d8d16b8e00338a6b0985a29a66f7c2c58251f231/ci_qualification_tools.log": "2c12758b6ecaf1f0e8d89f1369173fa74e2f77f65d1cfea50bb68c481176bf3e",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ba_junit_post_approval.xml": "df77be2e89f08bd3265f86113934aceb774231456d9690e5d8809c45cafb5917",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/campaign_result.json": "e96c5f281980b11a4bb51dfb6be2ef813c9fe852f2eb5ab9f4ed292519ff8189",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ci_bootstrap.log": "252d52158e69fcaf32e79dd7afc0309e419eba18770be566fc3df9ece1007d1a",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ci_guards.log": "b09709c9cbfad68f3fda61f233882d9e07541929de909300d8e5844ffb842eb9",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ci_teardown.log": "66ea214f0fb55a883d1e1f2d4951a93dcee2172224dc9fb214c0bf54f75fdd20",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/dec208_authoritative_promotion_results.json": "01e5c4b542df1f4addca66852d8a44afac54287b8892fd7b6f80a98ea192386f",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/ev_junit_post_approval.xml": "e2661ac2554e12ac83efa260842853c96deb3ab042dee406c3ef7d01ac67f705",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/guards_junit.xml": "c51055677ea52157eb598f0086b1e37edf138ab3ed99fcff9da51e8773a799b4",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/openapi_31_validation_results.json": "afba0ec817629d23a3f21634645c200eaf7b788b976164a8f613cd1b9740e5f0",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_approval_readiness.log": "95342b0a46a93855bf18b556eed777488e10e9ff853e0d6d48fbc0252fb0c6ab",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_ba.log": "f8438b2b8a80b2be17be13434edd0918f2295577f7b95a991abd45c6e4ea8690",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_conformance.log": "f7218fcb4d6d9eb96455ae799fb40975d7bbb544280020e52aaae35203e52f65",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_ev.log": "8a44ab2b189ce2dd97531c048d6e6e5f308f3cddf8fd7091979f78b420dc8aa2",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_openapi.log": "ea6c5eca432eef64c81bf3a2c7f6df5e41347fd50f65dba5f93a6924806d5d85",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_postgres.log": "c45ea13b28227303d71a92f9025c49ceabac5edfd9b6855f8791b3d0da67c70c",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_release_gate.log": "cd3251a03a7080cb030294186be49bd11a3e38859337d40917f68423ef9837a8",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_runtime.log": "8057af6e7119d1075b3f59942f0475ad15e00bdb64a6d85230bd0359a4d1095a",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_semantics.log": "75c4edfe5af6250e80371c0f5034ac087aa4be25718aacbd6624a5b04bc71387",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/post_remediation_verify.log": "88741587999ad9781672d95d7c76fcaed90ffa2da9732479c739844861133deb",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/postgres_junit_post_approval.xml": "8ec83fd23c7f9a0a2e991c1af2509a3a9844afbc5bf5abdcd33172a6499f4af4",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/runtime_coverage_post_approval.json": "7cc0c7326975ee4163603e0902672d567086cea2fc0e97f3af8e93230a146481",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/runtime_junit_post_approval.xml": "c7b02a0303f013901cbd0430aed849ce5d0e6a352663490c00951c9e7ad64842",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_approval_readiness_results.json": "a4ca71a012f64d0c9ff70575bc9dc00c83f30578a27bcf884b377cba9deaa17e",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_approval_readiness_results_post_approval.json": "a4ca71a012f64d0c9ff70575bc9dc00c83f30578a27bcf884b377cba9deaa17e",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_conformance_results.json": "624cf81d8da2ead26267e9d9340b3418ddd57c575ea37b533eb9535249d72898",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_conformance_results_post_approval.json": "624cf81d8da2ead26267e9d9340b3418ddd57c575ea37b533eb9535249d72898",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_release_gate_results.json": "ebe84785c29703072bfb395442cb5cfc0bc55211d59c353fb61f30c3ec1755a6",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_release_gate_results_post_approval.json": "ebe84785c29703072bfb395442cb5cfc0bc55211d59c353fb61f30c3ec1755a6",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_semantic_results.json": "95b502581415a76c292c2b294a195220d27045220c6cec147e4fad7be99bfdaf",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_semantic_results_post_approval.json": "95b502581415a76c292c2b294a195220d27045220c6cec147e4fad7be99bfdaf",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/v12_verify_report_post_approval.json": "19dd0029f64393e2a11afb47977e0a7865fb728f7cb70773d65bfd5960fb8707",
+    "ci-source-final-artifacts/ocor-validation-closure-d8d16b8e00338a6b0985a29a66f7c2c58251f231/reports/tests/validation_closure_results.json": "9475e76264ece9fb7ba25e2f868b3c29d3b41b4de4071f06d15f00bb80236ef9",
+    "ci-superseded-cancel.log": "2756aeb7880ff03133184930c30051b12db5895961febba4b34b48ae3adbae56",
+    "ci-superseded-result.json": "871a3338b4af4c98b3e5e1cef2229f6a7e2ffbb854574b883661ba77e266a6db",
+    "drift-final.log": "fde0744c001d45e69220b77ce6eeb918a314c56d5a31c6d053a72590011f509c",
+    "evidence0048-final.log": "d3c77291e1e9f43f2227111436059b7e30c08ea4306b7ddd910541c14b988490",
+    "failed-candidate-oom/candidate-full/campaign_result.json": "06b6bfa316251eaae1c73a7fb7341de681846e4135b8317fd0ee5dcebca270ad",
+    "failed-candidate-oom/candidate-full/docker-stats.log": "bf6cc42d1c83309c05c7e966c6901e3f92cdd8ec352e515a89b7b2b3534ea159",
+    "failed-candidate-oom/candidate-full/post_remediation_runtime.log": "1ece5ab1a78a772ab690ce6b845add36bf5642964f8b113e80fd16a41a840f51",
+    "failed-candidate-oom/candidate-result.json": "3005e76c7878b4a546ee14d3cd6d473e8b8279c1c3e845409e9dbc101ba87710",
+    "guard-final.log": "8efc32be4600f610c83709c309a90e8a1695e6e506345e6ff1c7d78e3792dccc",
+    "guards-final.log": "bf660390bdf092916b7c3e8ff530fbcd16ff7a39e5268a50eec538f96158bd70",
+    "harness-final.log": "61736e49983a32531b3c8362f960d943a8a7f7f437ca98e91c1f3c3f8762b413",
+    "heap-guard-green.log": "61a73421e4fee9eff1f6d61ba39680424441f26da4eca90505d43f8667900dda",
+    "heap-guard-red.log": "4d1395f34325fc476a440e13e3481df325f5e688d4609e0682bff78bbb9871ac",
+    "inputs-final.log": "0a2036313a8b8deca46e664d2621879f4e0191c98eb287e2aeeb7171aae53c34",
+    "jvm-heap-actual.json": "5d04b25e7d088831331560014c3b9e1f09915e5d050c66a51591df722f1a8f68",
+    "jvm-heap-default.log": "bc39c57b82323c7efc31da574c3e56e002c41df3c57857ed93a6646345552c52",
+    "language-final.log": "ca6cb78dcbe21415365ecd6578a2eb0bf3d22bdcd7ddbae94e31fe19f67cd29d",
+    "local-tools-actual.json": "e21717d5f95dc19ba94c2e28966e1ae0b25035f3f7bbddf32a4182e44fa1d009",
+    "local-tools-check.log": "d0531c3f7e0e171f5dafc6a13c6e2ab12c88a01e7c8d4972b8c3aa91bc957c7f",
+    "main-full/campaign_result.json": "f174e23594e50bc69299afdf928bfe854dd9fa3e485510d48041cf5299105c0e",
+    "main-full/post_remediation_runtime.log": "66697db15a5b01cffe3d773888819d8b9b34c74c0431b6eb8275eee6bbdf2131",
+    "main-full/runtime_junit_post_approval.xml": "75f3457fa7fc066c69662190b5397a66333c76a6fd5cbe419f65d5df4351996e",
+    "main-supervisor.result.json": "455f3a503947cad727b3925a378256c817c7885e11f65d6cd8f6efb30bc65832",
+    "mypy-final.log": "047be720f71ff6f55001ba8201472e4dca22eaa7f8ee244cbd28450c7224622f",
+    "plan-current.log": "c0753802bc31d2d19a9a5b77de8467f7b382f8b05832abf72af1a624819b6cba",
+    "qualification-tools-check.log": "6d9a11801d3dd9f9b0de6b9b8afd71cf9cd0f5e96257de2381d2bbac2b78d4a4",
+    "qualification-tools.log": "2c12758b6ecaf1f0e8d89f1369173fa74e2f77f65d1cfea50bb68c481176bf3e",
+    "rccad-final.log": "0043e5c71880b8696f14cc449b0e908f5418b4864e06a71d3fb4d4f212543c3f",
+    "reports-regression.log": "fd3a290c832a31e10c8d5d10e03efaeeea78abcbee5757f9871d5410a522a1cc",
+    "ruff-final.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "scope-current.log": "711ab02493261e897b250c387c59fc197b91ea15b25c53402c840980441a6c04",
+    "teardown-final.log": "eed1d6aa3937f5622936b2284e495c396886640e3fb3f64ec2c708016bcfc847",
+    "tool-check-final.log": "6d9a11801d3dd9f9b0de6b9b8afd71cf9cd0f5e96257de2381d2bbac2b78d4a4",
+    "tool-lock-red.log": "885251c7ab94d01ae99249747c1a7da5b99c0cd1401834af8f4ff898e773c3ad",
+    "toolchain.log": "4c233c968a1e1782e69e361c39bc4a7dfb609410167d46836db92042cc44d3f9"
   },
   "requirement_ids": [
     "NFR-010",
@@ -85,89 +977,46 @@
     "NFR-063",
     "NFR-064"
   ],
-  "resource_diagnosis": {
-    "cgroup_bytes": 2147483648,
-    "heap_bytes": 1073741824,
-    "running_jvm_heap_args": [
-      "-Xms128m",
-      "-Xmx1G"
-    ]
-  },
   "schema_version": "1.0",
-  "security_observability_notes": "CA e credenziali fuori Git; log sanitizzati; guard servizio perso/restart/OOM e timeout 45m; inputs/lock/checker locali invariati; 0049 NO_GO, E1/E2/Verified/claim fence invariati.",
+  "security_observability_notes": "Credenziali fuori Git, log sanitizzati, campagna bounded e fail-closed, inputs/lock esistenti e fence invariati.",
   "task_id": "OCOR-DEV-REM-0017",
   "test_results": {
-    "candidate_full_interrupted": {
-      "exit_code": 1,
-      "not_executed": "remaining collected cases; full run not completed",
-      "passed": 1309,
-      "qualification_status": "FAIL_OOM_INTERRUPTED",
-      "skipped": 0
-    },
-    "full_initial": {
-      "errors": 186,
-      "failures": 2,
+    "candidate-full": {
+      "errors": 0,
+      "failures": 0,
       "skipped": 0,
-      "tests": 1101
+      "tests": 1422
     },
-    "full_retry": {
+    "main-full": {
       "errors": 0,
       "failures": 0,
       "skipped": 0,
       "tests": 1101
     },
-    "gate_status": "LOCAL_PASS; RCCAD dynamic assurance CI_REQUIRED; CI_NOT_YET_OBSERVED",
-    "guard_final": {
-      "failed": 0,
-      "passed": 17,
-      "skipped": 0
-    },
-    "preflight": {
-      "containers": 11,
-      "drift": "0/167 su 63 task",
-      "harness": "14 PASS",
-      "inputs": "8/8 PASS",
-      "toolchain": "9/9 PASS",
-      "typed_groups_ready": 9
-    },
-    "reports_pytest": {
+    "report_guards": {
       "errors": 0,
       "failures": 0,
       "skipped": 0,
-      "tests": 44
+      "tests": 53
     },
-    "reports_standalone": {
-      "executed": 10,
-      "exit_codes": [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0
-      ]
-    },
-    "teardown": {
-      "remaining_session_bootstrap_containers": 0,
-      "remaining_session_bootstrap_volumes": 0,
-      "status": "PASS"
+    "report_regression": {
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "tests": 24
     }
   },
   "unresolved_blockers": [
-    "TEST-INFRA-006 manca su main; copertura CI separata da completare",
-    "0049 NO_GO ciclo 6; nessun ciclo 7"
+    "0049 NO_GO ciclo 6; nessun ciclo 7",
+    "Identit\u00e0 locale Fuseki OPEN_PO_DECISION_REQUIRED; pipeline CI eseguibile"
   ],
-  "updated_at": "2026-10-07T03:38:47.341865+00:00",
+  "updated_at": "2026-10-07T05:05:18.115617+00:00",
   "validation_limitations": [
-    "First candidate FULL stopped at Fuseki OOM/137 after 27m: nonqualifying, 1309 partial PASS. Retry with explicit 1GiB heap currently running; subsequent main FULL waits for its success.",
-    "jcmd missing (127) and docker top lacking PID field caused failed bootstrap probes, diagnosed/corrected; no PASS assigned.",
-    "CI of current code still running/queued; superseded runs are not final evidence.",
-    "0049 NO_GO cycle6 remains; no seventh repair or acceptance.",
-    "Independent REM review NOT_REQUESTED until qualifying runs complete."
+    "CI del commit sorgente completa e non skipped; CI dell\u2019HEAD finale contenente evidenza/stato obbligatoria prima di qualsiasi merge.",
+    "Identit\u00e0 locale Fuseki diversa dal lock: richiesta separata OPEN_PO_DECISION_REQUIRED; nessun lock/checker modificato. La qualifica CI usa la ricetta approvata e registra il suo ID effettivo.",
+    "OCOR-DEV-0049 resta NO_GO ciclo 6: nessuna riparazione, sigillatura o merge. Il run candidato prova l\u2019esecuzione infrastrutturale, non la conformance del task.",
+    "Verifica indipendente non ancora eseguita: verr\u00e0 richiesta al loop; REM non chiuso.",
+    "Il primo CI 7ac7dd3 fall\u00ec con ruff assente e probe Helm NOT_YET_SCANNED: failure preservati. Ruff e heap sono corretti; la causa specifica del ritardo Helm iniziale non \u00e8 dimostrata e va rivalutata dal verifier, senza riparare 0049."
   ],
   "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
 }

@@ -174,3 +174,32 @@ servizi. Positivi/negativi del controllo e della supervisione sono separati dai
 run real-backend; nessun mock prova la disponibilità del servizio e nessuna
 interruzione diventa un PASS. Se il retry o la CI non qualificano lo stack,
 il REM resta aperto e si applica REM-0017-PRIORITY, senza escludere test.
+
+### Esito implementativo e richiesta al verifier — 2026-10-07
+
+Stato: CANDIDATE_PENDING_INDEPENDENT_VERIFICATION, REM ancora OPEN.
+Locale: candidato immutabile 1422 PASS in 42m15s; branch REM 1101 PASS in
+6m33s; 53 guard/report e 24 regression PASS. Zero FAIL/ERROR/skip nei run
+qualificanti. Teardown: zero container/volumi bootstrap e container di test
+residui. Harness 14 PASS, digest 8/8, deriva 0/167 su 63 task; gate locali
+verdi, piano 37 PASS con 2 NOT_EXECUTED opzionali dichiarati.
+
+CI sorgente 4658ad8, run 37568937953: candidato 1422 PASS in 37m46s
+(tentativo 1); main 1101, guard 53, BA 39, EV 35, PostgreSQL live 5, tutti
+PASS/zero skip (tentativo 2 del solo job fallito). Il primo tentativo del job
+main terminò sul timeout 300s della build Fuseki, prima dell'env e dello stack;
+il reset restituì ERROR per env assente. Causa interna della build non
+catturata; nessun PASS assegnato, nessun aumento di timeout o cambio di pin,
+un solo rerun. Artefatto main riuscito selezionato per ID 11462325045;
+artefatto fallito 11461202421 preservato separatamente, senza confondere i
+nomi identici dei due upload. I failure precedenti ruff/NOT_YET_SCANNED
+sono conservati; la causa specifica della prima latenza Helm non è dimostrata.
+
+Il commit nel record identifica il codice sorgente qualificato. Il successivo
+commit dei soli report/stato è legato dall'HEAD esatto della verify_request;
+input, inputs tree e raw digest vengono ricontrollati su quell'HEAD. CI
+finale e verdetto sono ancora obbligatori prima del sigillo/merge.
+Implementatore Codex/OpenAI, verifier Claude Code/Anthropic in processo e
+contesto separati: non avviato né simulato dall'implementatore. Identità
+locale Fuseki resta richiesta PO separata; 0049 NO_GO invariato, nessun
+ciclo 7; E1/E2/Verified e tutti i claim restano nel fence originale.
