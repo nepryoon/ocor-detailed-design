@@ -564,6 +564,9 @@ def coherent_gate() -> dict:
     }
 
 
+SEALED_STORE_DIGESTS = {"ocor": "d" * 64, "ocor_poc_drill": "e" * 64}
+
+
 def coherent_receipt(profile: dict) -> dict:
     """The shape restore-finalize writes for a PASSED drill (oracle independent of the agent)."""
     completed = float(int(time.time()) - 60)
@@ -571,13 +574,14 @@ def coherent_receipt(profile: dict) -> dict:
                 6: "NOT_EXECUTED", 7: "EXECUTED", 8: "NOT_APPLICABLE", 9: "NOT_EXECUTED",
                 10: "PENDING_HUMAN_AUTHORIZATION"}
     return {
-        "schema": "ocor.poc.restore-receipt/2", "recovery_point": "rp-20261005T000000Z-00000000",
+        "schema": "ocor.poc.restore-receipt/3", "recovery_point": "rp-20261005T000000Z-00000000",
         "manifest_digest": "a" * 64, "outcome": "PASSED",
         "release_binding": {"release": profile["profile"]["release"], "profile_digest": profile_digest(profile),
                             "image_pins_digest": hashlib.sha256(canonical_bytes(profile["images"]["pins"])).hexdigest()},
         "recovery_gate": coherent_gate(),
         "steps": [{"step": s, "status": statuses[i], "detail": ""} for i, s in enumerate(profile["restore"]["steps"])],
         "replayed_event_ids": ["evt-del-m2", "evt-del-m4"], "replay_digest": "b" * 64, "quarantined_items": [],
+        "restored_scope_digest": "c" * 64, "restored_store_digests": dict(SEALED_STORE_DIGESTS),
         "retrieval_reopened": False, "materialisation": "ALLOWED_PENDING_HUMAN", "isolated_network": True,
         "completed_at": iso_utc(completed), "completed_at_epoch": completed, "duration_seconds": 1.0,
         "rto_hours_target": 4, "correlation_id": "c",
@@ -635,6 +639,7 @@ RECEIPT_MUTATIONS = [
     ("retrieval_already_reopened", _set("retrieval_reopened", True), "retrieval_reopened"),
     ("not_isolated", _set("isolated_network", False), "isolated_network"),
     ("schema_v1", _set("schema", "ocor.poc.restore-receipt/1"), "schema"),
+    ("schema_v2_without_bindings", _set("schema", "ocor.poc.restore-receipt/2"), "schema"),
     ("outcome_missing", lambda r: r.pop("outcome"), "outcome"),
     ("future_dated", _set("completed_at_epoch", 4102444800.0), "completed_at_epoch"),
     ("epoch_not_number", _set("completed_at_epoch", True), "completed_at_epoch"),
@@ -675,6 +680,13 @@ RECEIPT_MUTATIONS = [
     ("memory_step_not_executed", _step_status(5, "NOT_EXECUTED"),
      "step:replay_memory_deletion_tombstones_before_reopen_retrieval"),
     ("replay_digest_malformed", _set("replay_digest", "xyz"), "replay_digest"),
+    # Cycle 8 receipt-field audit: the bindings to the recovery point must be well formed.
+    ("restored_scope_digest_missing", lambda r: r.pop("restored_scope_digest"), "restored_scope_digest"),
+    ("restored_scope_digest_malformed", _set("restored_scope_digest", "C" * 64), "restored_scope_digest"),
+    ("store_digests_missing", lambda r: r.pop("restored_store_digests"), "restored_store_digests"),
+    ("store_digests_empty", _set("restored_store_digests", {}), "restored_store_digests"),
+    ("store_digests_not_object", _set("restored_store_digests", ["d" * 64]), "restored_store_digests"),
+    ("store_digest_malformed", _set("restored_store_digests.ocor", "d" * 63), "restored_store_digests"),
     ("replayed_ids_not_strings", _set("replayed_event_ids", [1, 2]), "replayed_event_ids"),
     # Verdict OCOR-DEV-0049-aefabf91777d-4 VF-003 (values representable in strict JSON).
     ("epoch_zero", _set("completed_at_epoch", 0), "completed_at_epoch"),
@@ -716,13 +728,17 @@ def test_receipt_without_memory_store_is_coherent_only_as_a_whole(agent_module):
                  "projection_drift_or_stale_deletion_epoch"):
         receipt["recovery_gate"][name]["detail"] = "no memory store present"
     receipt["steps"][5]["status"] = "NOT_APPLICABLE"
-    receipt.update(replayed_event_ids=[], replay_digest=None)
+    receipt.update(replayed_event_ids=[], replay_digest=None, restored_scope_digest=None)
     assert agent_module.receipt_inconsistencies(receipt, profile) == []
     mixed = deepcopy(receipt)
     mixed["recovery_gate"]["gcs"]["detail"] = coherent_gate()["gcs"]["detail"]
     assert agent_module.receipt_inconsistencies(mixed, profile) == ["gate:gcs:detail"]
-    replayed = dict(receipt, replayed_event_ids=["evt-del-m2"], replay_digest="b" * 64)
-    assert agent_module.receipt_inconsistencies(replayed, profile) == ["replayed_event_ids", "replay_digest"]
+    replayed = dict(receipt, replayed_event_ids=["evt-del-m2"], replay_digest="b" * 64,
+                    restored_scope_digest="c" * 64)
+    assert agent_module.receipt_inconsistencies(replayed, profile) == [
+        "replayed_event_ids", "replay_digest", "restored_scope_digest"]
+    unbound = dict(receipt, restored_store_digests={})
+    assert agent_module.receipt_inconsistencies(unbound, profile) == ["restored_store_digests"]
 
 
 @pytest.mark.parametrize("field,value,expected", [
@@ -762,12 +778,22 @@ def _epochs(journal_max: int, metadata_max: int):
     return mutate
 
 
-def checkpoint_memory(entries: int = 2, max_epoch: int = 7, last: str | None = "evt-del-m4",
-                      metadata_max: int = 7) -> dict:
-    """The memory section the seal signs for the drill fixture (m2@6 and m4@7 tombstoned)."""
-    return {"status": "PRESENT", "journalCheckpoints": {"entries": entries, "max_deletion_epoch": max_epoch,
-                                                        "last_event_id": last},
-            "deletionEpochs": {"journal_max": max_epoch, "metadata_max": metadata_max}}
+def sequence_digest(event_ids) -> str:
+    """Oracle, independent of the agent: SHA-256 of the canonical JSON array of the ordered ids."""
+    return hashlib.sha256(canonical_bytes(list(event_ids))).hexdigest()
+
+
+def checkpoint_memory(ids=("evt-del-m2", "evt-del-m4"), max_epoch: int = 7, metadata_max: int = 7,
+                      live_count: int = 3) -> dict:
+    """The memory section the seal signs for the drill fixture (m2@6 and m4@7 tombstoned;
+    m1/m3/m5 live, matching the opaque replay and scope digests of coherent_receipt)."""
+    ids = list(ids)
+    return {"status": "PRESENT",
+            "journalCheckpoints": {"entries": len(ids), "max_deletion_epoch": max_epoch,
+                                   "last_event_id": ids[-1] if ids else None,
+                                   "event_ids_digest": sequence_digest(ids)},
+            "deletionEpochs": {"journal_max": max_epoch, "metadata_max": metadata_max},
+            "liveItems": {"count": live_count, "ids_digest": "b" * 64, "scope_digest": "c" * 64}}
 
 
 # Not-executed check of verdict OCOR-DEV-0049-b40aa8a6908b-5: a signed receipt that is
@@ -782,6 +808,20 @@ CHECKPOINT_MUTATIONS = [
      "memory:tombstones_not_replayed"),
     ("tombstone_not_in_checkpoint", _set("replayed_event_ids", ["evt-del-m2", "evt-del-m3", "evt-del-m4"]),
      "memory:tombstones_not_replayed"),
+    # Verdict OCOR-DEV-0049-9d86abebc762-7 VF-001: the whole signed sequence, not its tail.
+    ("nonfinal_tombstone_substituted", _set("replayed_event_ids", ["evt-del-FOREIGN", "evt-del-m4"]),
+     "memory:tombstones_not_replayed"),
+    ("tombstones_permuted", _set("replayed_event_ids", ["evt-del-m4", "evt-del-m2"]),
+     "memory:tombstones_not_replayed"),
+    ("tombstone_appended", _set("replayed_event_ids", ["evt-del-m2", "evt-del-m4", "evt-del-x9"]),
+     "memory:tombstones_not_replayed"),
+    ("tombstone_duplicated", _set("replayed_event_ids", ["evt-del-m2", "evt-del-m2", "evt-del-m4"]),
+     "memory:tombstones_not_replayed"),
+    # Cycle 8 receipt-field audit: the restored live set and its isolation scope are the sealed ones.
+    ("replay_digest_not_sealed_live_set", _set("replay_digest", "f" * 64), "memory:live_items_mismatch"),
+    ("watermark_not_sealed_live_count", _gate_detail("watermark", {"index_items": 4, "live_metadata_items": 4}),
+     "memory:live_items_mismatch"),
+    ("restored_scope_not_sealed_scope", _set("restored_scope_digest", "f" * 64), "memory:restored_scope_mismatch"),
     ("deletion_epoch_below_checkpoint", _epochs(6, 6), "memory:deletion_epoch_checkpoint_mismatch"),
     ("deletion_epoch_above_checkpoint", _epochs(9, 7), "memory:deletion_epoch_checkpoint_mismatch"),
     ("metadata_epoch_below_recovery_point", _epochs(7, 5), "memory:metadata_epoch_mismatch"),
@@ -796,7 +836,7 @@ def test_receipt_matching_its_checkpoint_is_coherent(agent_module):
     _epochs(0, 0)(empty)
     assert agent_module.receipt_inconsistencies(empty, helm_profile()) == []
     assert agent_module.receipt_checkpoint_inconsistencies(
-        empty, checkpoint_memory(entries=0, max_epoch=0, last=None, metadata_max=0)) == [], "empty journal"
+        empty, checkpoint_memory(ids=(), max_epoch=0, metadata_max=0)) == [], "empty journal"
 
 
 @pytest.mark.parametrize("journal_max,metadata_max", [(7, 7), (9, 7)])
@@ -815,7 +855,7 @@ def test_tied_epoch_checkpoint_uses_the_replay_order(agent_module, journal_max, 
     receipt = coherent_receipt(helm_profile())
     receipt["replayed_event_ids"] = ids
     _epochs(journal_max, metadata_max)(receipt)
-    memory = checkpoint_memory(max_epoch=journal_max, metadata_max=metadata_max, last=ids[-1])
+    memory = checkpoint_memory(ids=ids, max_epoch=journal_max, metadata_max=metadata_max)
     assert agent_module.receipt_inconsistencies(receipt, helm_profile()) == []
     assert agent_module.receipt_checkpoint_inconsistencies(receipt, memory) == []
     for broken_ids in (ids[:-1], list(reversed(ids)), [ids[-1], ids[-1]]):
@@ -836,17 +876,157 @@ def test_receipt_checkpoint_branches(agent_module, case, mutate, expected):
     assert expected in agent_module.receipt_checkpoint_inconsistencies(receipt, checkpoint_memory()), case
 
 
+def _without(section: str, key: str) -> dict:
+    memory = checkpoint_memory()
+    memory[section].pop(key)
+    return memory
+
+
 @pytest.mark.parametrize("memory,expected", [
     ({"status": "PRESENT"}, ["memory:checkpoint_missing"]),
-    (dict(checkpoint_memory(), journalCheckpoints={"entries": True, "max_deletion_epoch": 7,
-                                                   "last_event_id": "evt-del-m4"}), ["memory:checkpoint_missing"]),
-    (checkpoint_memory(entries=0, max_epoch=0, last=None, metadata_max=0),
+    (dict(checkpoint_memory(), journalCheckpoints=dict(checkpoint_memory()["journalCheckpoints"], entries=True)),
+     ["memory:checkpoint_missing"]),
+    (_without("journalCheckpoints", "event_ids_digest"), ["memory:checkpoint_missing"]),
+    (dict(checkpoint_memory(), journalCheckpoints=dict(checkpoint_memory()["journalCheckpoints"],
+                                                       event_ids_digest="X" * 64)), ["memory:checkpoint_missing"]),
+    (_without("liveItems", "scope_digest"), ["memory:live_items_missing"]),
+    (dict(checkpoint_memory(), liveItems=None), ["memory:live_items_missing"]),
+    (dict(checkpoint_memory(), liveItems={"count": -1, "ids_digest": "b" * 64, "scope_digest": "c" * 64}),
+     ["memory:live_items_missing"]),
+    (checkpoint_memory(ids=(), max_epoch=0, metadata_max=0),
      ["memory:tombstones_not_replayed", "memory:deletion_epoch_checkpoint_mismatch",
       "memory:metadata_epoch_mismatch"]),
-], ids=["checkpoint_absent", "entries_not_a_count", "receipt_replays_beyond_an_empty_journal"])
+], ids=["checkpoint_absent", "entries_not_a_count", "sequence_digest_absent", "sequence_digest_malformed",
+        "live_scope_digest_absent", "live_items_absent", "live_count_negative",
+        "receipt_replays_beyond_an_empty_journal"])
 def test_receipt_checkpoint_manifest_branches(agent_module, memory, expected):
     receipt = coherent_receipt(helm_profile())
     assert agent_module.receipt_checkpoint_inconsistencies(receipt, memory) == expected
+
+
+# Verdict OCOR-DEV-0049-9d86abebc762-7 VF-001, class test: three tombstones at the SAME
+# deletion epoch whose ids order differently under a locale collation (a < B < c) and under
+# codepoints (B < a < c), so the locale permutation keeps the last id of the sealed sequence.
+TIED_ROWS = [{"event_id": "evt-del-a", "item_id": "m2", "deletion_epoch": "7"},
+             {"event_id": "evt-del-B", "item_id": "m4", "deletion_epoch": "7"},
+             {"event_id": "evt-del-c", "item_id": "m5", "deletion_epoch": "7"}]
+SEALED_TIED = ["evt-del-B", "evt-del-a", "evt-del-c"]
+SEQUENCE_MUTATIONS = [
+    ("permutation_keeping_last_id", ["evt-del-a", "evt-del-B", "evt-del-c"]),
+    ("rotation", ["evt-del-c", "evt-del-B", "evt-del-a"]),
+    ("nonfinal_substitution", ["evt-del-FOREIGN", "evt-del-a", "evt-del-c"]),
+    ("middle_substitution", ["evt-del-B", "evt-del-A", "evt-del-c"]),
+    ("omission", ["evt-del-B", "evt-del-c"]),
+    ("omission_of_last", ["evt-del-B", "evt-del-a"]),
+    ("addition", ["evt-del-B", "evt-del-a", "evt-del-x", "evt-del-c"]),
+    ("addition_at_end", ["evt-del-B", "evt-del-a", "evt-del-c", "evt-del-d"]),
+    ("duplication_same_length", ["evt-del-B", "evt-del-B", "evt-del-c"]),
+    ("duplication_added", ["evt-del-B", "evt-del-a", "evt-del-a", "evt-del-c"]),
+    ("empty", []),
+]
+
+
+def test_sealed_sequence_digest_is_the_whole_ordered_journal(agent_module):
+    """The digest the seal signs is the one of the codepoint-ordered sequence (oracle
+    independent of the agent), whatever order the rows were captured in."""
+    for rows in (TIED_ROWS, list(reversed(TIED_ROWS)), [TIED_ROWS[1], TIED_ROWS[0], TIED_ROWS[2]]):
+        ordered = [r["event_id"] for r in agent_module.ordered_deletion_journal(rows)]
+        assert ordered == SEALED_TIED
+        assert agent_module.event_ids_digest(ordered) == sequence_digest(SEALED_TIED)
+    assert sorted(SEALED_TIED, key=str.lower) == ["evt-del-a", "evt-del-B", "evt-del-c"], "collations diverge"
+
+
+def test_replayed_sequence_identical_to_the_sealed_one_is_accepted(agent_module):
+    receipt = coherent_receipt(helm_profile())
+    receipt["replayed_event_ids"] = list(SEALED_TIED)
+    memory = checkpoint_memory(ids=SEALED_TIED)
+    assert agent_module.receipt_inconsistencies(receipt, helm_profile()) == []
+    assert agent_module.receipt_checkpoint_inconsistencies(receipt, memory) == []
+
+
+@pytest.mark.parametrize("case,replayed", SEQUENCE_MUTATIONS, ids=[c[0] for c in SEQUENCE_MUTATIONS])
+def test_replayed_sequence_differing_from_the_sealed_one_is_refused(agent_module, case, replayed):
+    receipt = coherent_receipt(helm_profile())
+    receipt["replayed_event_ids"] = replayed
+    memory = checkpoint_memory(ids=SEALED_TIED)
+    assert agent_module.receipt_inconsistencies(receipt, helm_profile()) == [], "coherent on its own"
+    assert agent_module.receipt_checkpoint_inconsistencies(receipt, memory) == ["memory:tombstones_not_replayed"]
+
+
+def test_tail_checks_alone_would_accept_the_verdict_counterexamples(agent_module):
+    """Regression oracle for VF-001: these replays pass every pre-cycle-8 check (count,
+    uniqueness, last id) and are refused only because of the signed sequence digest."""
+    memory = checkpoint_memory(ids=SEALED_TIED)
+    for replayed in (["evt-del-a", "evt-del-B", "evt-del-c"], ["evt-del-FOREIGN", "evt-del-a", "evt-del-c"]):
+        assert len(replayed) == len(SEALED_TIED) == len(set(replayed)) and replayed[-1] == SEALED_TIED[-1]
+        receipt = dict(coherent_receipt(helm_profile()), replayed_event_ids=replayed)
+        assert agent_module.receipt_checkpoint_inconsistencies(receipt, memory) == ["memory:tombstones_not_replayed"]
+    two = checkpoint_memory(ids=["evt-del-a", "evt-del-c"])
+    receipt = dict(coherent_receipt(helm_profile()), replayed_event_ids=["evt-del-FOREIGN", "evt-del-c"])
+    assert agent_module.receipt_checkpoint_inconsistencies(receipt, two) == ["memory:tombstones_not_replayed"]
+
+
+def recovery_point_manifest(receipt: dict, **changes) -> dict:
+    manifest = {"created_at_epoch": receipt["completed_at_epoch"] - 120, "store_digests": dict(SEALED_STORE_DIGESTS)}
+    manifest.update(changes)
+    return manifest
+
+
+def test_receipt_bound_to_its_recovery_point_is_coherent(agent_module):
+    receipt = coherent_receipt(helm_profile())
+    assert agent_module.receipt_recovery_point_inconsistencies(receipt, recovery_point_manifest(receipt)) == []
+    same_second = recovery_point_manifest(receipt, created_at_epoch=receipt["completed_at_epoch"])
+    assert agent_module.receipt_recovery_point_inconsistencies(receipt, same_second) == []
+
+
+RECOVERY_POINT_MUTATIONS = [
+    ("restore_completed_before_seal", lambda r, m: m.update(created_at_epoch=r["completed_at_epoch"] + 1),
+     "receipt:completed_before_recovery_point"),
+    ("seal_time_missing", lambda r, m: m.pop("created_at_epoch"), "receipt:completed_before_recovery_point"),
+    ("seal_time_not_number", lambda r, m: m.update(created_at_epoch="0"), "receipt:completed_before_recovery_point"),
+    ("store_digest_differs", lambda r, m: r["restored_store_digests"].update(ocor="0" * 64),
+     "receipt:store_digests_mismatch"),
+    ("store_not_restored", lambda r, m: r["restored_store_digests"].pop("ocor_poc_drill"),
+     "receipt:store_digests_mismatch"),
+    ("store_not_sealed", lambda r, m: r["restored_store_digests"].update(extra="0" * 64),
+     "receipt:store_digests_mismatch"),
+    ("sealed_digests_missing", lambda r, m: m.pop("store_digests"), "receipt:store_digests_mismatch"),
+    ("sealed_digests_empty", lambda r, m: m.update(store_digests={}), "receipt:store_digests_mismatch"),
+    ("sealed_digest_malformed", lambda r, m: (m.update(store_digests={"ocor": "x"}),
+                                             r.update(restored_store_digests={"ocor": "x"})),
+     "receipt:store_digests_mismatch"),
+]
+
+
+@pytest.mark.parametrize("case,mutate,expected", RECOVERY_POINT_MUTATIONS,
+                         ids=[c[0] for c in RECOVERY_POINT_MUTATIONS])
+def test_receipt_unbound_from_its_recovery_point_is_incoherent(agent_module, case, mutate, expected):
+    receipt = coherent_receipt(helm_profile())
+    manifest = recovery_point_manifest(receipt)
+    mutate(receipt, manifest)
+    assert agent_module.receipt_recovery_point_inconsistencies(receipt, manifest) == [expected], case
+
+
+INFORMATIONAL_FIELDS = [
+    ("correlation_id", _set("correlation_id", "another-trace")),
+    ("rto_hours_target", _set("rto_hours_target", 999)),
+    ("duration_seconds", _set("duration_seconds", 12345.5)),
+    ("step_detail", _set("steps.1.detail", "free text, not the recovery point")),
+    ("release_binding_extra_key", _set("release_binding.note", "x")),
+]
+
+
+@pytest.mark.parametrize("case,mutate", INFORMATIONAL_FIELDS, ids=[c[0] for c in INFORMATIONAL_FIELDS])
+def test_informational_receipt_fields_do_not_decide(agent_module, case, mutate):
+    """Fields the audit declares not bound to the recovery point are not read by any
+    decision: changing them leaves every coherence and binding verdict unchanged."""
+    profile = helm_profile()
+    receipt = coherent_receipt(profile)
+    mutate(receipt)
+    assert agent_module.receipt_inconsistencies(receipt, profile) == []
+    assert agent_module.receipt_checkpoint_inconsistencies(receipt, checkpoint_memory()) == []
+    assert agent_module.receipt_recovery_point_inconsistencies(receipt, recovery_point_manifest(receipt)) == []
+    assert agent_module.binding_mismatch(receipt["release_binding"], profile, profile_digest(profile)) is None
 
 
 # Verdict OCOR-DEV-0049-02ac643eb3c7-3 VF-001: a tested restore belongs to one release,
@@ -1472,6 +1652,18 @@ def test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested(
     assert json.loads(mounted) == helm_profile(), "the running process consumes the governed profile"
 
 
+def drill_live_items(live: list[int]) -> dict:
+    """Oracle of the sealed live projection of the drill fixture: count, id set digest and
+    per-item isolation scope digest (tenant, compartments, marking, GCS, versions)."""
+    rows = []
+    for n in live:
+        tenant, compartment = drill_scope(n)
+        rows.append([f"m{n}", tenant, [compartment], DRILL_MARKING, drill_gcs(tenant, compartment), "2", "3"])
+    return {"count": len(live),
+            "ids_digest": hashlib.sha256(canonical_bytes(sorted(f"m{n}" for n in live))).hexdigest(),
+            "scope_digest": hashlib.sha256(canonical_bytes(sorted(rows, key=canonical_bytes))).hexdigest()}
+
+
 def test_backup_seals_an_encrypted_signed_immutable_recovery_point(stack):
     project = f"ocor-poc-backup-{uuid.uuid4().hex[:6]}"
     code, logs = stack.run_stage(project, "backup", "ocor-backup-seal")
@@ -1483,8 +1675,14 @@ def test_backup_seals_an_encrypted_signed_immutable_recovery_point(stack):
     raw = (rp / "manifest.json").read_bytes()
     manifest = json.loads(raw)
     assert manifest["memory"]["status"] == "PRESENT"
-    assert manifest["memory"]["journalCheckpoints"] == {"entries": 2, "max_deletion_epoch": 7,
-                                                        "last_event_id": "evt-del-m4"}
+    assert manifest["memory"]["journalCheckpoints"] == {
+        "entries": 2, "max_deletion_epoch": 7, "last_event_id": "evt-del-m4",
+        "event_ids_digest": sequence_digest(["evt-del-m2", "evt-del-m4"])}
+    assert manifest["memory"]["liveItems"] == drill_live_items([1, 3, 5])
+    assert set(manifest["store_digests"]) == {Path(a["name"]).stem for a in manifest["artifacts"]
+                                              if a["name"].endswith(".digest")}
+    assert {"ocor", "ocor_poc_drill"} <= set(manifest["store_digests"])
+    assert all(re.fullmatch(r"[0-9a-f]{64}", v) for v in manifest["store_digests"].values())
     assert manifest["memory"]["representationVersions"] == [2]
     assert manifest["memory"]["lifecycleEpochs"] == [3]
     assert manifest["memory"]["contentRefs"] == [f"cas:sha256:m{n}" for n in range(1, 6)]
@@ -1607,6 +1805,13 @@ def test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate(stack)
     receipt = latest_receipt(stack.vault)
     assert receipt["outcome"] == "PASSED"
     assert receipt["replayed_event_ids"] == ["evt-del-m2", "evt-del-m4"], "original ids, journal order"
+    manifest = json.loads((stack.vault / "recovery-points" / receipt["recovery_point"] / "manifest.json").read_bytes())
+    assert sequence_digest(receipt["replayed_event_ids"]) == manifest["memory"]["journalCheckpoints"][
+        "event_ids_digest"], "the replayed sequence is the signed one"
+    assert (receipt["replay_digest"], receipt["restored_scope_digest"]) == (
+        drill_live_items([1, 3, 5])["ids_digest"], drill_live_items([1, 3, 5])["scope_digest"])
+    assert receipt["restored_store_digests"] == manifest["store_digests"]
+    assert receipt["completed_at_epoch"] >= manifest["created_at_epoch"]
     assert all(receipt["recovery_gate"][name]["pass"] for name in RECOVERY_GATE)
     assert receipt["quarantined_items"] == []
     assert receipt["retrieval_reopened"] is False
@@ -1839,8 +2044,11 @@ def _observe_refused_receipt(stack, name: str, digest: str, reason: str, detail:
 
 # On the live agent a receipt is also bound to the signed checkpoint of its recovery point
 # (journal at epoch 7): a journal "ahead" of it was not restored from that point and is the
-# `deletion_epoch_above_checkpoint` negative of CHECKPOINT_MUTATIONS, not a positive.
-RECEIPT_LIVE_POSITIVE_VARIANTS = [v for v in RECEIPT_POSITIVE_VARIANTS if v[0] != "journal_ahead_of_metadata"]
+# `deletion_epoch_above_checkpoint` negative of CHECKPOINT_MUTATIONS, not a positive. Since
+# cycle 8 the watermark is bound to the sealed live count (3): another consistent count is
+# the `watermark_not_sealed_live_count` negative of CHECKPOINT_MUTATIONS.
+RECEIPT_LIVE_POSITIVE_VARIANTS = [v for v in RECEIPT_POSITIVE_VARIANTS
+                                  if v[0] not in ("journal_ahead_of_metadata", "other_consistent_watermark")]
 
 
 @pytest.mark.parametrize("case,mutate", RECEIPT_LIVE_POSITIVE_VARIANTS,
@@ -1895,6 +2103,8 @@ def test_custodian_signed_receipt_time_branches(stack, coherence_ops, case, epoc
     name, vault = coherence_ops["name"], coherence_ops["vault"]
     receipt = deepcopy(coherence_ops["authentic"])
     value = float(int(epoch()))
+    # A backdated restore needs a recovery point sealed before it (cycle 8 binding).
+    point = backdated_recovery_point(stack, vault, receipt, value - 60)
     receipt["completed_at_epoch"] = value
     receipt["completed_at"] = iso_utc(value) if coherent_iso else iso_utc(value - 86400)
     raw = canonical_bytes(receipt)
@@ -1915,11 +2125,69 @@ def test_custodian_signed_receipt_time_branches(stack, coherence_ops, case, epoc
     finally:
         for f in files:
             f.unlink()
+        shutil.rmtree(point)
     wait_for(lambda: posture(name, LOCAL_OPS)["restore"]["receipt_digest"] == coherence_ops["authentic_digest"], 30)
     assert wait_for(lambda: _standalone_readyz(name)[0] == 200, 15)
 
 
-def test_receipt_memory_branch_must_match_its_recovery_point(stack, coherence_ops):
+def backdated_recovery_point(stack, vault: Path, receipt: dict, created: float) -> Path:
+    """Custodian-signed copy of the receipt's recovery point sealed at `created`, named to
+    sort before every real point (never the latest, so RPO is unaffected); rebinds `receipt`."""
+    source = vault / "recovery-points" / receipt["recovery_point"]
+    manifest = json.loads((source / "manifest.json").read_bytes())
+    rp_id = f"rp-00000000T000000Z-{uuid.uuid4().hex[:8]}"
+    manifest.update(recovery_point=rp_id, created_at_epoch=created, created_at=iso_utc(created))
+    raw = canonical_bytes(manifest)
+    target = vault / "recovery-points" / rp_id
+    target.mkdir()
+    (target / "manifest.json").write_bytes(raw)
+    (target / "manifest.sig").write_text(transit_sign(stack.env, raw), encoding="utf-8")
+    receipt.update(recovery_point=rp_id, manifest_digest=hashlib.sha256(raw).hexdigest())
+    return target
+
+
+def _sealed_manifest(vault: Path, receipt: dict) -> dict:
+    return json.loads((vault / "recovery-points" / receipt["recovery_point"] / "manifest.json").read_bytes())
+
+
+def _completed_before_seal(vault: Path, receipt: dict) -> None:
+    value = float(int(_sealed_manifest(vault, receipt)["created_at_epoch"]) - 30)
+    receipt.update(completed_at_epoch=value, completed_at=iso_utc(value))
+
+
+# Cycle 8 receipt-field audit, live: the bindings that hold for every recovery point.
+RECOVERY_POINT_LIVE_MUTATIONS = [
+    ("restore_completed_before_seal", _completed_before_seal, "receipt:completed_before_recovery_point"),
+    ("store_digest_differs", lambda v, r: r["restored_store_digests"].update(ocor_poc_drill="0" * 64),
+     "receipt:store_digests_mismatch"),
+    ("store_not_restored", lambda v, r: r["restored_store_digests"].pop("ocor"), "receipt:store_digests_mismatch"),
+    ("store_not_sealed", lambda v, r: r["restored_store_digests"].update(foreign="0" * 64),
+     "receipt:store_digests_mismatch"),
+]
+
+
+@pytest.mark.parametrize("case,mutate,expected", RECOVERY_POINT_LIVE_MUTATIONS,
+                         ids=[c[0] for c in RECOVERY_POINT_LIVE_MUTATIONS])
+def test_custodian_signed_receipt_unbound_from_its_recovery_point_is_refused(stack, coherence_ops, case, mutate,
+                                                                            expected):
+    """Live agent, real custodian signature: a receipt coherent on its own and with the memory
+    checkpoint, whose restore precedes the seal or whose restored store digests are not the
+    sealed ones, denies readiness, /reopen and admission (positive control: the authentic one)."""
+    name, vault = coherence_ops["name"], coherence_ops["vault"]
+    receipt = deepcopy(coherence_ops["authentic"])
+    assert receipt["restored_store_digests"] == _sealed_manifest(vault, receipt)["store_digests"], "precondition"
+    mutate(vault, receipt)
+    files, digest = write_signed_receipt(stack.env, vault, receipt, f"rp-{case.replace('_', '-')}")
+    try:
+        _observe_refused_receipt(stack, name, digest, "RESTORE_RECEIPT_INCONSISTENT", expected)
+    finally:
+        for f in files:
+            f.unlink()
+    wait_for(lambda: posture(name, LOCAL_OPS)["restore"]["receipt_digest"] == coherence_ops["authentic_digest"], 30)
+    assert wait_for(lambda: _standalone_readyz(name)[0] == 200, 15)
+
+
+def test_receipt_memory_branch_must_match_its_recovery_point(stack, coherence_ops, agent_module):
     """A signed receipt that is internally coherent as a no-memory-store drill, for a
     recovery point that DOES carry a memory store, skipped the tombstone replay and the
     per-item gates: refused."""
@@ -1929,7 +2197,8 @@ def test_receipt_memory_branch_must_match_its_recovery_point(stack, coherence_op
                  "projection_drift_or_stale_deletion_epoch"):
         receipt["recovery_gate"][gate]["detail"] = "no memory store present"
     receipt["steps"][5]["status"] = "NOT_APPLICABLE"
-    receipt.update(replayed_event_ids=[], replay_digest=None)
+    receipt.update(replayed_event_ids=[], replay_digest=None, restored_scope_digest=None)
+    assert agent_module.receipt_inconsistencies(receipt, helm_profile()) == [], "coherent on its own"
     files, digest = write_signed_receipt(stack.env, vault, receipt, "memory-branch")
     try:
         _observe_refused_receipt(stack, name, digest, "RESTORE_RECEIPT_INCONSISTENT", "memory:manifest_mismatch")
@@ -2955,16 +3224,19 @@ def test_seal_and_restore_tied_epoch_tombstones_are_locale_independent(stack, ag
     try:
         load_drill_fixture(stack.env, consistent=True)
         with psycopg.connect(postgres_dsn(stack.env, "ocor_poc_drill"), autocommit=True) as conn:
-            conn.execute("update memory_item set deletion_epoch=%s where lifecycle_state='deleted'",
-                         (metadata_max,))
+            conn.execute("update memory_item set lifecycle_state='deleted', deletion_epoch=%s"
+                         " where item_id in ('m2','m4','m5')", (metadata_max,))
             conn.execute("delete from memory_deletion_journal")
-            conn.execute("insert into memory_deletion_journal values (%s,'m2',%s),(%s,'m4',%s)",
-                         ("evt-del-a", journal_max, "evt-del-B", journal_max))
+            conn.execute("insert into memory_deletion_journal values (%s,'m2',%s),(%s,'m4',%s),(%s,'m5',%s)",
+                         ("evt-del-a", journal_max, "evt-del-B", journal_max, "evt-del-c", journal_max))
             locale_ids = [r[0] for r in conn.execute("select event_id from memory_deletion_journal order by event_id")]
             codepoint_ids = [r[0] for r in conn.execute(
                 'select event_id from memory_deletion_journal order by event_id collate "C"')]
             assert locale_ids != codepoint_ids, "fixture must exercise a real DB/Python collation divergence"
-            assert codepoint_ids == ["evt-del-B", "evt-del-a"]
+            assert codepoint_ids == SEALED_TIED
+            # Cycle 8 (VF-001 of OCOR-DEV-0049-9d86abebc762-7): the locale permutation keeps the
+            # last id, so only the signed whole-sequence digest can tell it from the sealed one.
+            assert locale_ids[-1] == codepoint_ids[-1]
         code, logs = stack.run_stage(project, "backup", "ocor-backup-seal", vault=vault)
         assert code == 0, logs
         points = list((vault / "recovery-points").iterdir())
@@ -2974,15 +3246,18 @@ def test_seal_and_restore_tied_epoch_tombstones_are_locale_independent(stack, ag
                   "manifest_sha256": hashlib.sha256((point / "manifest.json").read_bytes()).hexdigest()}
         manifest = assert_sealed(stack, vault, sealed, helm_profile())
         memory = manifest["memory"]
-        assert memory["journalCheckpoints"] == {"entries": 2, "max_deletion_epoch": journal_max,
-                                               "last_event_id": codepoint_ids[-1]}
+        assert memory["journalCheckpoints"] == {"entries": 3, "max_deletion_epoch": journal_max,
+                                               "last_event_id": codepoint_ids[-1],
+                                               "event_ids_digest": sequence_digest(codepoint_ids)}
+        assert memory["liveItems"] == drill_live_items([1, 3])
         assert memory["deletionEpochs"] == {"journal_max": journal_max, "metadata_max": metadata_max}
         stack.down(project)
         code, logs = stack.run_stage_detached(project, "restore-drill", "ocor-restore-finalize", vault=vault)
         assert code == 0, logs
-        assert sorted(restored_payloads(project)) == ["m1", "m3", "m5"], "both tombstones took effect"
+        assert sorted(restored_payloads(project)) == ["m1", "m3"], "all three tombstones took effect"
         receipt = latest_receipt(vault)
         assert receipt["replayed_event_ids"] == codepoint_ids
+        assert receipt["restored_scope_digest"] == drill_live_items([1, 3])["scope_digest"]
         assert agent_module.receipt_checkpoint_inconsistencies(receipt, memory) == []
         name = _standalone_ops(stack, vault, f"{stack.ops_project}_site")
         wait_for(lambda: _standalone_readyz(name)[0] == 200, 60, message="tied-epoch receipt accepted live")
@@ -2990,10 +3265,16 @@ def test_seal_and_restore_tied_epoch_tombstones_are_locale_independent(stack, ag
         status, body = reopen(name, stack.operator_token, good_digest, base=LOCAL_OPS)
         assert (status, body["reason_code"]) == (200, "MUTATIVE_PATH_REOPENED_BY_HUMAN")
         assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)
-        mutations = [("omitted", _set("replayed_event_ids", codepoint_ids[:-1]), "memory:tombstones_not_replayed"),
+        mutations = [*[(case, _set("replayed_event_ids", replayed), "memory:tombstones_not_replayed")
+                       for case, replayed in SEQUENCE_MUTATIONS],
                      ("locale_order", _set("replayed_event_ids", locale_ids), "memory:tombstones_not_replayed"),
                      ("below_checkpoint", _epochs(journal_max - 1, min(metadata_max, journal_max - 1)),
                       "memory:deletion_epoch_checkpoint_mismatch")]
+        for case, mutate, detail in mutations:
+            broken = deepcopy(receipt)
+            mutate(broken)
+            assert agent_module.receipt_inconsistencies(broken, helm_profile()) == [], case
+            assert detail in agent_module.receipt_checkpoint_inconsistencies(broken, memory), case
         for case, mutate, detail in mutations:
             broken = deepcopy(receipt)
             mutate(broken)

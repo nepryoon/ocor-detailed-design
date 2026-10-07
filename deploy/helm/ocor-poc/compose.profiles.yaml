@@ -475,8 +475,8 @@ configs:
       NOT_OBSERVABLE_BY_OPS = ["action_adapter_timeout", "edge_partition"]
       # `$defs/digest` of the approved governed-memory-item / governed-context contracts.
       CONTRACT_DIGEST = re.compile(r"^urn:sha256:[0-9a-f]{64}$")
-      MANIFEST_SCHEMA = "ocor.poc.recovery-point/1"
-      RECEIPT_SCHEMA = "ocor.poc.restore-receipt/2"
+      MANIFEST_SCHEMA = "ocor.poc.recovery-point/2"
+      RECEIPT_SCHEMA = "ocor.poc.restore-receipt/3"
       SHA256_HEX = re.compile(r"^[0-9a-f]{64}$")
       # An image pin is `name@sha256:<64 lowercase hex>` (same rule as the Helm renderer).
       IMAGE_PIN = re.compile(r"^[a-z0-9]+([._/:-][a-z0-9]+)*@sha256:[0-9a-f]{64}$")
@@ -1086,10 +1086,15 @@ configs:
           if not isinstance(replayed, list) or not all(isinstance(e, str) and e for e in replayed) or (
                   memory_present is False and replayed):
               out.append("replayed_event_ids")
-          replay_digest = receipt.get("replay_digest")
-          if memory_present is False and replay_digest is not None or memory_present is not False and (
-                  not isinstance(replay_digest, str) or not SHA256_HEX.match(replay_digest)):
-              out.append("replay_digest")
+          for key in ("replay_digest", "restored_scope_digest"):
+              value = receipt.get(key)
+              if memory_present is False and value is not None or memory_present is not False and (
+                      not isinstance(value, str) or not SHA256_HEX.match(value)):
+                  out.append(key)
+          stores = receipt.get("restored_store_digests")
+          if not isinstance(stores, dict) or not stores or not all(
+                  isinstance(k, str) and k and isinstance(v, str) and SHA256_HEX.match(v) for k, v in stores.items()):
+              out.append("restored_store_digests")
           if receipt.get("quarantined_items") != []:
               out.append("quarantined_items")
           if receipt.get("materialisation") != "ALLOWED_PENDING_HUMAN":
@@ -1109,19 +1114,46 @@ configs:
           return out
 
 
+      def _sha256_hex(value: Any) -> bool:
+          return isinstance(value, str) and SHA256_HEX.match(value) is not None
+
+
+      def receipt_recovery_point_inconsistencies(receipt: dict[str, Any], manifest: dict[str, Any]) -> list[str]:
+          """Bindings of a structurally coherent PASSED receipt to the signed recovery point it
+          restored that hold with or without a memory store: the restore cannot precede the
+          seal, and every restored store reproduces the table digests sealed for it (LLD v1.1
+          5.4 revision and semantic-digest checks). Empty means coherent."""
+          out: list[str] = []
+          created = finite_number(manifest.get("created_at_epoch"))
+          if created is None or float(receipt["completed_at_epoch"]) < created:
+              out.append("receipt:completed_before_recovery_point")
+          sealed = manifest.get("store_digests")
+          if (not isinstance(sealed, dict) or not sealed or not all(_sha256_hex(v) for v in sealed.values())
+                  or receipt["restored_store_digests"] != sealed):
+              out.append("receipt:store_digests_mismatch")
+          return out
+
+
       def receipt_checkpoint_inconsistencies(receipt: dict[str, Any], memory: dict[str, Any]) -> list[str]:
           """Coherence of a structurally coherent PASSED receipt with the memory store of the
-          signed recovery point it restored (Part II 2.13; ADD 6.5 step 6): every checkpointed
-          deletion tombstone was replayed exactly once with its original event id, and the
-          deletion epochs the gate measured are the checkpointed ones. An epoch below the
-          checkpoint means tombstones were not replayed (resurrection risk); one above it was
-          not restored from this recovery point. Empty means coherent."""
+          signed recovery point it restored (Part II 2.13; ADD 6.5 step 6): the replayed ids are
+          exactly the signed, ordered tombstone sequence (its digest), each replayed once with
+          its original event id; the deletion epochs the gate measured are the checkpointed
+          ones; the restored projection is the sealed live set with its sealed isolation scope.
+          An epoch below the checkpoint means tombstones were not replayed (resurrection risk);
+          one above it was not restored from this recovery point. Empty means coherent."""
           checkpoint, epochs = memory.get("journalCheckpoints"), memory.get("deletionEpochs")
-          if not isinstance(checkpoint, dict) or not isinstance(epochs, dict) or not _count(checkpoint.get("entries")):
+          live = memory.get("liveItems")
+          if (not isinstance(checkpoint, dict) or not isinstance(epochs, dict) or not _count(checkpoint.get("entries"))
+                  or not _sha256_hex(checkpoint.get("event_ids_digest"))):
               return ["memory:checkpoint_missing"]
+          if (not isinstance(live, dict) or not _count(live.get("count")) or not _sha256_hex(live.get("ids_digest"))
+                  or not _sha256_hex(live.get("scope_digest"))):
+              return ["memory:live_items_missing"]
           out: list[str] = []
           replayed = receipt["replayed_event_ids"]
-          if (len(replayed) != checkpoint["entries"] or len(set(replayed)) != len(replayed)
+          if (event_ids_digest(replayed) != checkpoint["event_ids_digest"]
+                  or len(replayed) != checkpoint["entries"] or len(set(replayed)) != len(replayed)
                   or (replayed[-1] if replayed else None) != checkpoint.get("last_event_id")):
               out.append("memory:tombstones_not_replayed")
           detail = receipt["recovery_gate"]["projection_drift_or_stale_deletion_epoch"]["detail"]
@@ -1129,6 +1161,11 @@ configs:
               out.append("memory:deletion_epoch_checkpoint_mismatch")
           if detail["metadata_max"] != epochs.get("metadata_max"):
               out.append("memory:metadata_epoch_mismatch")
+          if (receipt["replay_digest"] != live["ids_digest"]
+                  or receipt["recovery_gate"]["watermark"]["detail"]["index_items"] != live["count"]):
+              out.append("memory:live_items_mismatch")
+          if receipt["restored_scope_digest"] != live["scope_digest"]:
+              out.append("memory:restored_scope_mismatch")
           return out
 
 
@@ -1170,6 +1207,9 @@ configs:
                                                                 else type(exc).__name__]
           if sha256(canonical(manifest)) != receipt["manifest_digest"]:
               return "RESTORE_RECEIPT_UNBOUND", receipt, None, ["manifest_digest"]
+          problems = receipt_recovery_point_inconsistencies(receipt, manifest)
+          if problems:
+              return "RESTORE_RECEIPT_INCONSISTENT", receipt, None, problems
           memory = manifest.get("memory")
           manifest_memory = isinstance(memory, dict) and memory.get("status") == "PRESENT"
           if (receipt["steps"][MEMORY_STEP]["status"] == "EXECUTED") is not manifest_memory:
@@ -1714,6 +1754,25 @@ configs:
           return sorted(rows, key=lambda row: (int(row["deletion_epoch"]), row["event_id"]))
 
 
+      def event_ids_digest(event_ids: list[str]) -> str:
+          """Digest of the WHOLE ordered tombstone sequence (ordered_deletion_journal order):
+          the seal signs it in journalCheckpoints, so any omission, addition, duplicate,
+          substitution or permutation of a replayed id changes it."""
+          return sha256(canonical(list(event_ids)))
+
+
+      def scope_row(item_id: Any, fields: dict[str, Any]) -> list[Any]:
+          """Isolation scope and versions of one live memory item, in the same normal form for
+          the sealed metadata row and for the restored projection payload."""
+          return [str(item_id), fields.get("tenant_id"), _compartments(fields.get("compartments")),
+                  fields.get("classification_marking_ref"), fields.get("governed_context_digest"),
+                  str(fields.get("representation_version")), str(fields.get("lifecycle_epoch"))]
+
+
+      def scope_digest(rows: list[list[Any]]) -> str:
+          return sha256(canonical(sorted(rows, key=canonical)))
+
+
       def read_digests(path: Path) -> dict[str, list[str]]:
           out: dict[str, list[str]] = {}
           for line in path.read_text().splitlines():
@@ -1747,9 +1806,12 @@ configs:
               t.log("backup_seal", "CAPTURE_MISSING", correlation, level="ERROR")
               return EXIT_VERIFY
           artifacts: list[tuple[str, str, bytes]] = []
+          store_digests: dict[str, str] = {}
           for dump in sorted(pg_dir.glob("*.dump")):
               artifacts.append(("canonical", f"postgresql/{dump.name}", dump.read_bytes()))
               artifacts.append(("audit", f"postgresql/{dump.stem}.digest", (pg_dir / f"{dump.stem}.digest").read_bytes()))
+              # What a restore of this store must reproduce (bound into the receipt check).
+              store_digests[dump.stem] = sha256(canonical(read_digests(pg_dir / f"{dump.stem}.digest")))
           kafka = staging / "kafka" / "offsets.txt"
           if not kafka.exists():
               t.log("backup_seal", "EVENT_CHECKPOINT_MISSING", correlation, level="ERROR")
@@ -1813,6 +1875,7 @@ configs:
                               "ciphertext_sha256": cdigest, "bytes": len(data)})
           journal_max = max((int(r["deletion_epoch"]) for r in journal), default=0)
           metadata_max = max((int(r["deletion_epoch"]) for r in items if r.get("deletion_epoch")), default=0)
+          live = [r for r in items if r["lifecycle_state"] != "deleted"]
           manifest = {
               "schema": MANIFEST_SCHEMA,
               "recovery_point": rp_id, "created_at": iso(created), "created_at_epoch": created,
@@ -1821,6 +1884,7 @@ configs:
               "encryption": {"mount": keys["transitMount"], "key": keys["encryption"], "algorithm": "aes256-gcm96"},
               "signature": {"key": keys["signing"], "algorithm": "ed25519"},
               "artifacts": entries,
+              "store_digests": store_digests,
               "authority_classes_present": sorted({str(e["authority_class"]) for e in entries}),
               "authority_classes_without_store": {
                   cls: "NO_STORE_DEPLOYED_AT_G4" for cls in sorted(
@@ -1833,7 +1897,12 @@ configs:
                   "lifecycleEpochs": sorted({int(r["lifecycle_epoch"]) for r in items}),
                   "deletionEpochs": {"journal_max": journal_max, "metadata_max": metadata_max},
                   "journalCheckpoints": {"entries": len(journal), "max_deletion_epoch": journal_max,
-                                         "last_event_id": journal[-1]["event_id"] if journal else None},
+                                         "last_event_id": journal[-1]["event_id"] if journal else None,
+                                         "event_ids_digest": event_ids_digest([r["event_id"] for r in journal])},
+                  # The live projection a restore of this point must reproduce, item by item.
+                  "liveItems": {"count": len(live),
+                                "ids_digest": sha256(canonical(sorted(r["item_id"] for r in live))),
+                                "scope_digest": scope_digest([scope_row(r["item_id"], r) for r in live])},
                   "auditRefs": [e["ciphertext_sha256"] for e in entries if e["authority_class"] == "audit"],
                   "indexCollection": collection if memory_present else None,
                   "boundToSameRecoveryPoint": True,
@@ -1993,6 +2062,7 @@ configs:
           step(RESTORE_STEPS[3], "EXECUTED", "profile, OPA policies and key references restored from manifest")
           # Canonical/audit stores: digests of the isolated PostgreSQL after pg_restore.
           revision_ok, digest_ok, detail = True, True, []
+          restored_store_digests: dict[str, str] = {}
           for entry in manifest["artifacts"]:
               if entry["name"].endswith(".digest"):
                   db = Path(entry["name"]).stem
@@ -2003,6 +2073,7 @@ configs:
                       detail.append(f"{db}:not_restored")
                       continue
                   restored = read_digests(restored_path)
+                  restored_store_digests[db] = sha256(canonical(restored))
                   if {k: v[0] for k, v in expected.items()} != {k: v[0] for k, v in restored.items()}:
                       revision_ok = False
                       detail.append(f"{db}:row_counts_differ")
@@ -2016,7 +2087,7 @@ configs:
           mem = manifest["memory"]
           base = f"http://{args.restore_qdrant}"
           replayed: list[str] = []
-          replay_digest = None
+          replay_digest = restored_scope_digest = None
           if mem["status"] == "PRESENT":
               collection = mem["indexCollection"]
               snap = (staging / "qdrant" / f"{collection}.snapshot").read_bytes()
@@ -2071,6 +2142,8 @@ configs:
               gate["watermark"] = {"pass": len(present) == len(live_meta),
                                    "detail": {"index_items": len(present), "live_metadata_items": len(live_meta)}}
               replay_digest = sha256(canonical(sorted(present)))
+              restored_scope_digest = scope_digest([scope_row(pt["payload"].get("item_id"), pt["payload"])
+                                                    for pt in points])
           else:
               quarantined = []
               step(RESTORE_STEPS[5], "NOT_APPLICABLE", "no memory store present in this recovery point")
@@ -2091,6 +2164,7 @@ configs:
               "manifest_digest": sha256(canonical(manifest)), "outcome": "PASSED" if passed else "FAILED",
               "recovery_gate": {name: gate[name] for name in RECOVERY_GATE}, "steps": steps,
               "replayed_event_ids": replayed, "replay_digest": replay_digest, "quarantined_items": quarantined,
+              "restored_scope_digest": restored_scope_digest, "restored_store_digests": restored_store_digests,
               "retrieval_reopened": False, "materialisation": "ALLOWED_PENDING_HUMAN" if passed else "BLOCKED",
               "isolated_network": True, "completed_at": iso(completed), "completed_at_epoch": completed,
               "duration_seconds": round(completed - start, 3), "rto_hours_target": profile["backup"]["rtoHours"],
