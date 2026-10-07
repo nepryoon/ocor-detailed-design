@@ -2,7 +2,8 @@
   "assumptions_requiring_revalidation": [
     "PR #169: verificare attivit\u00e0 concorrente prima della ripresa; nessuna interferenza in questa unit\u00e0.",
     "STACK-HYGIENE per ogni suite completa; timeout 45 minuti, uno stack, teardown.",
-    "RVW-03/INFO-A/INFO-C risolte dal PO, esecuzione audit/remediation ancora pendente."
+    "RVW-03/INFO-A/INFO-C risolte dal PO, esecuzione audit/remediation ancora pendente.",
+    "REM-0017: run 37350619188 fallita allo step Bootstrap SPIRE server and agent (two-phase, digest-pinned); --log-failed restituisce output vuoto. Diagnosi del bootstrap da riprendere senza assumere una causa non osservata."
   ],
   "base_sha": "5c57d411a7036d585d431a8030c4816831e7d40c",
   "baseline_commit": "5c57d411a7036d585d431a8030c4816831e7d40c",
@@ -10,6 +11,7 @@
   "candidate_evidence": {
     "branch": "task/OCOR-DEV-0049-poc-deployment-observability-backup-safe-degradation",
     "current_verifier": "Claude Code (Anthropic), claude-opus-5-5, fallback autorizzato",
+    "digest_check": "12/12 input/tree + raw log SHA-256 PASS; controllo meccanico, verdetto NO_GO invariato.",
     "head_sha": "d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b",
     "implementer": "Claude Code (Anthropic)",
     "independence_limits": "processo e contesto separati; le riparazioni di OCOR-DEV-0049 (ciclo 6) sono di Claude Code: implementatore della riparazione e verifier sono lo stesso fornitore/modello, in contesto separato (OCOR-DEV-0049-VERIFIER-FALLBACK); l'implementazione originale e' di un altro modello (Codex). Nessun riassunto dell'implementatore usato come prova; audit_0049.md, check_candidate.py, ITERATION_LOG e MODEL_HANDOFF non consultati come prova. Riusati solo binari toolchain/CLI acquisiti dal verifier del ciclo 5 (helm/kind/kubectl con sha256 verificati sui checksum ufficiali).",
@@ -338,6 +340,8 @@
   "previous_handoff_ref": "5c57d411a7036d585d431a8030c4816831e7d40c:reports/development/MODEL_HANDOFF.json",
   "raw_evidence_hashes": {
     "bootstrap.log": "bf812a4377a47539917123e4f1c2c0f087e381085b74ae0d1854ea94a214b4d2",
+    "candidate-integrity.json": "3944da925b335020728e69db0c4f2aabf0e91358f79956fcb1cd3c1ab0c194d6",
+    "ci-source-green.json": "5b4a817d8716f3fb9a904e2e8d4ec84b21f844f9c01fbcdee2a310cdce62c74d",
     "drift.log": "fde0744c001d45e69220b77ce6eeb918a314c56d5a31c6d053a72590011f509c",
     "evidence0048.log": "d3c77291e1e9f43f2227111436059b7e30c08ea4306b7ddd910541c14b988490",
     "fixtures.log": "6ea1e3849eec413523bc3a0fb356bdf534a38fa2f75a20bbd54f8cc2bbf38ea4",
@@ -349,6 +353,7 @@
     "mypy.log": "8ef4ff6c246c5a8edee3c9104486e6a62da573cc21b45acb783b147d88a22c41",
     "plan.log": "c0753802bc31d2d19a9a5b77de8467f7b382f8b05832abf72af1a624819b6cba",
     "rccad.log": "0043e5c71880b8696f14cc449b0e908f5418b4864e06a71d3fb4d4f212543c3f",
+    "rem0017-job.json": "6d5b3ce9b6e0b3b6ab990ca0937a031315c0b29ee5c97f348a455c5f0454749e",
     "ruff.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
     "services.log": "518a61a1c28d0e054e6b0c36359e48fde8974a1cade88ec60b8766c9aeebf8e3",
     "sync-lint.log": "1a2cadfaa957bf7bd8b4a5f0b8781087faa77e5aee336e598ce44ba2f594764d",
@@ -383,9 +388,104 @@
   "schema_version": "1.0",
   "security_observability_notes": "Nessuna modifica runtime, inputs, secret, gate o evidenza sigillata; claim fence invariato.",
   "state_sync_ci": {
-    "branch": "governed/state-sync-ocor-dev-0049-cycle6",
-    "local_unit": "Documentale; nessuna modifica prodotto/test. CI obbligatoria senza bypass.",
-    "status": "CI_REQUIRED_EXACT_HEAD"
+    "checks": [
+      {
+        "conclusion": "SUCCESS",
+        "name": "contract",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675971/job/112596972626"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "unit",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675971/job/112596972678"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "integration-postgresql",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675971/job/112596972370"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "backend-compatibility-not-ba-evidence",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675971/job/112596972648"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "evidence",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675971/job/112596972646"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "mandatory-gates",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675971/job/112597135989"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "rccad-methodology",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675945/job/112596972315"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "delivery-activation",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675919/job/112596972311"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "validation-closure",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675932/job/112596972185"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "supply-chain",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675942/job/112596972567"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "type-and-lint-gate",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675911/job/112596972367"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "tooling-policy",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675911/job/112596972171"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "fgm-contract-readiness-not-runtime-evidence",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675971/job/112596972645"
+      }
+    ],
+    "merge_performed": false,
+    "next_condition_for_integration": "Attendere 13 SUCCESS sull\u2019HEAD finale; gh pr merge --merge --match-head-commit, senza bypass e senza riuso del PASS sorgente.",
+    "observed_at": "2026-10-07T02:19:09.616673+00:00",
+    "passed": 13,
+    "pr": 172,
+    "raw_observation_sha256": "5b4a817d8716f3fb9a904e2e8d4ec84b21f844f9c01fbcdee2a310cdce62c74d",
+    "required_checks": 13,
+    "retry_count": 0,
+    "run_ids": [
+      37560675911,
+      37560675919,
+      37560675932,
+      37560675942,
+      37560675945,
+      37560675971
+    ],
+    "status": "SOURCE_HEAD_ALL_13_PASS_FINAL_HEAD_EXACT_CHECK_REQUIRED",
+    "tested_head_sha": "fb4376ef4e7d233ae1e6528451acf4b2ae825bfd"
   },
   "task_id": "OCOR-DEV-0049",
   "terminal_loop_disposition": {
@@ -395,6 +495,20 @@
     "reason": "OCOR-DEV-0049-REPAIR-6 supera l\u2019arresto puntuale: REM-0017 e 0050 eseguibili. Nessun ciclo 7."
   },
   "test_results": {
+    "ci_source_head": {
+      "final_document_commit": "Nuovo controllo esatto di tutti i gate richiesto prima del merge.",
+      "head_sha": "fb4376ef4e7d233ae1e6528451acf4b2ae825bfd",
+      "passed": 13,
+      "required_checks": 13,
+      "run_ids": [
+        37560675911,
+        37560675919,
+        37560675932,
+        37560675942,
+        37560675945,
+        37560675971
+      ]
+    },
     "full_runtime": {
       "reason": "Unit\u00e0 solo documentale; run qualificanti spettano al verifier separato.",
       "status": "NOT_EXECUTED"
@@ -405,7 +519,8 @@
       "plan": "37 PASS, 0 FAIL, 2 NOT_EXECUTED opzionali",
       "rccad": "PASS_LOCAL_PRECHECK \u2014 CI_REQUIRED per controlli dinamici",
       "ruff": "PASS",
-      "runtime_evidence_0048": "PASS"
+      "runtime_evidence_0048": "PASS",
+      "scope": "PASS 6 changed paths, immutable surfaces untouched"
     },
     "preflight": {
       "drift": {
@@ -443,7 +558,7 @@
     "OCOR-DEV-0049: budget ciclo 6 esaurito, VF-001 medium BLOCKER",
     "OCOR-DEV-REM-0017: CI #169 validation-closure FAILURE; dipendenza G6"
   ],
-  "updated_at": "2026-10-07T02:08:53.555889+00:00",
+  "updated_at": "2026-10-07T02:19:09.616673+00:00",
   "validation_limitations": {
     "bootstrap_lint_environment": "Bootstrap risincronizza il venv senza lint: primo mypy No module named mypy. Ripristinati extra test/lint e singolo retry PASS; nessun validator modificato.",
     "full_runtime_this_iteration": "NOT_EXECUTED \u2014 state sync",
