@@ -42,3 +42,14 @@ nessuna cancellazione di record sigillati e nessun prune Docker globale.
 
 E1=0, E2=0, zero requisiti Verified, runtime NOT_ESTABLISHED,
 PoC/Production NO-GO. Inputs immutabili.
+
+
+## Osservazione aggiuntiva della classe — 2026-10-07
+
+Le full del ciclo 7 e di REM-0017 mostrano anche volumi anonimi da
+`ocor-runtime/src/ocor_runtime/c5/backbone.py` (container `ocor-c5-backbone-*`).
+Il mandato STACK-HYGIENE richiede la correzione in unità distinta: estendere
+l'audit/teardown del REM anche a questo harness, con riqualifica dei suoi input
+sigillati. Nella ripresa REM-0017 18 volumi per full sono stati osservati,
+attribuiti tramite Docker mounts e rimossi; zero residui finali. Questo record
+registra il difetto, non dichiara riparato o qualificato REM-0018.

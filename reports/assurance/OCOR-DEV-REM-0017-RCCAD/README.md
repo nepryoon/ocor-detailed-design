@@ -269,3 +269,30 @@ aperto e si segue REM-0017-PRIORITY con decision request e prosecuzione G5.
 Il checkout main precede il rigetto del job candidato, quindi il teardown
 stdlib può verificare assenza delle risorse anche se la sincronizzazione è saltata.
 Nessuno skip qualificante o esclusione: campagne e CI nuove ancora IN_PROGRESS.
+
+
+### Evidenza corrente repair 1 — 2026-10-07T19:05Z
+
+`repair-1.json` e `repair-1.log` supersedono il WIP precedente non sigillato,
+preservato in Git su efce339; il candidato originale rifiutato resta invariato.
+Locale: main 1101 PASS (383.35s), candidato 1426 PASS (2552.41s), reports 63 PASS,
+zero fail/error/skip; stack ricreato e verificato prima di ogni full, extras test/lint.
+CI sul sorgente 16afae4: candidato 1426 PASS (2650.596s), zero skip;
+validation-closure ancora in corso nella snapshot storica alla preparazione.
+Il margine CI è 49.404s: VF-002 resta rischio temporale non bloccante esplicito,
+nessuna deroga ai 2700s né garanzia generale di stabilità. Il pin resta immutabile;
+lifecycle da aggiornare in change set separato dopo integrazione governata di 0049.
+
+Il log CI osserva ADD dell'archivio Fuseki in 485.8s, base pinned e SHA512 PASS.
+Il budget build 600s non cambia il limite della suite, la ricetta o i checksum.
+Il vecchio timeout 300s non aveva progress conservato: la sua fase non è
+retroattribuita. L'identità locale del lock resta FAIL e la richiesta PO resta OPEN.
+
+Teardown locale: 18 volumi anonimi per full attribuiti a container OCOR e rimossi;
+zero delta finale della sessione. È cleanup del run, non correzione del difetto
+dei test: REM-0018 resta OPEN, anche per c5/backbone.py. Nessun fix fuori scope.
+La verifica indipendente REM è di Claude Code, implementatore Codex.
+È richiesta solo dopo 13 check obbligatori verdi e campagne complete senza skip
+sull'HEAD finale esatto; la snapshot parziale non li sostituisce. La richiesta
+riacquisirà risultati e hash degli artifact finali. Nessun sigillo o merge adesso.
+0049 NO_GO ciclo 7/Grok 4.7 Cursor preservato; nessun ciclo 8. Fence invariato.

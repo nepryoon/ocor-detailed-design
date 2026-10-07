@@ -4565,3 +4565,14 @@ Gate documentali: rccad PASS_LOCAL_PRECHECK, scope/language/ruff PASS, mypy 69 s
 - CI 37580988000: artifact mostra timeout docker build Fuseki 300s; fase interna non acquisita, nessuna diagnosi inventata. Log build plain salvato anche su exit nonzero/timeout; budget operazione provisioning 600s (massimo già ammesso), suite 2700s invariata. RED 3 FAIL per helper assente, GREEN 39 PASS senza skip; subprocess reali per positivo/failure/timeout locale. Dockerfile/base/source/lock/checker invariati.
 - Checkout main anticipata al rigetto della dipendenza CI per rendere eseguibile il teardown stdlib anche se l'ambiente Python non è stato sincronizzato. Pin TEST-INFRA-006 aggiornato al candidato stabile 9d86abe, esplicitamente NO_GO, senza approvarlo né sigillarlo. Ciclo di vita e qualifica infrastrutturale distinti dalla disposition del task.
 - Digest 8/8, harness 14/14, drift 0/167, toolchain 9/9 PASS; campagne reali/CI nuove ancora pending, nessun PASS finale. Processo esterno passa-a-claude-0049 osservato in attesa; nessuna interferenza con branch 0049, nessun altro stack attivo.
+
+
+### 2026-10-07T19:05:20.064154+00:00 — REM-0017 repair 1: candidato completo
+
+- Source 16afae4b493916a0db332311d3dd80211702698b; local main 1101 PASS in 383.35s, candidato 1426 PASS in 2552.41s, zero fail/error/skip; reports 63 PASS. Reset/bootstrap/health separati, extras test/lint, watchdog 2700s e guard restart/OOM.
+- Source CI 12/13 required SUCCESS al momento della preparazione, conditional-infrastructure-0049 SUCCESS; validation-closure ancora pending nell’osservazione storica; raw observation SHA256 2f4de6731c0edaf7d7abd6be9bedf7cd9c87de84423f02582e012888d0564cd8. Il commit finale di soli report richiede nuova CI esatta prima della richiesta di verifica; nessun PASS riusato sul finale.
+- Nuovo raw repair-1 SHA256 45b47a750f4327a94b228a29bc6a74fd8feed1a931bdc14400ec1de01cb1d5a4; record WIP precedente preservato in Git efce339, evidenza originale rifiutata invariata. Inputs/tree e lock reacquisiti. Implementatore REM Codex, verifier Claude Code separato; nessuna verifica lanciata o simulata.
+- CI build: ADD dell’archivio Fuseki 485.8s e checksum SHA512 PASS, compatibile con budget precedente 300s insufficiente; fase storica dei vecchi timeout non retroattribuita.
+- 18 volumi anonimi per full local, provenienza OCOR acquisita e rimozione scoped; zero delta finale di sessione. REM-0018 resta OPEN e comprende anche C5 backbone; nessun fix fuori scope nel REM. Bootstrap locale identity FAIL conservato, lock/checker invariati.
+- Piano iniziale FAIL per log generato fuori allowlist: archiviato fuori repo, retry 37 PASS/2 NOT_EXECUTED opzionali. Primo controllo DEC208 senza builder prerequisite FAIL, retry in ordine workflow 19/19 PASS; artifact generati ripristinati. Tutti i tentativi preservati.
+- 63 completed invariati; 0049 NO_GO cycle7/Cursor preservato, nessun ciclo 8. Inputs/E1/E2/Verified e NO-GO invariati.
