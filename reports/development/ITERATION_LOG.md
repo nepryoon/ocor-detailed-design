@@ -4453,3 +4453,20 @@ Gate documentali: rccad PASS_LOCAL_PRECHECK, scope/language/ruff PASS, mypy 69 s
 ### Checkpoint task3 — 2026-10-07T11:06:12.672322+00:00
 
 - 325 PASS, zero fail/error/skip; 1752.64 s, source a128a622151261d510b332ca93a688912a119197. Teardown senza nuovi residui. Raw SHA256 23566a8dfb70523b8c37f65215a45482c46f19d4558660c70555bfa946d455dc. Suite completa ancora pending; nessun verdetto o sigillo dichiarato.
+
+### Ripresa full interrotta e routing Cursor — 2026-10-07T13:31:05.574520+00:00
+
+- Tre task run consecutivi su a128a622151261d510b332ca93a688912a119197 confermati con JUnit/log: 325 PASS ciascuno, zero fail/error/skip. La full precedente non ha un risultato finale; log parziale SHA256 e4a2c45ed7ae0596391e3eb281b02e3ead01c00a6a62709c316e5e9c7a45abaa preservato fuori repo e NON qualificante. Nessun processo orfano osservato.
+- Nuova full in corso dopo reset/bootstrap/health; 11 servizi avviati e controllo typed READY. Limite 2700 s e stop al primo OOM/restart invariati.
+- Ultima decisione PO OCOR-DEV-0049-VERIFIER-CURSOR: verifier Grok 4.7 via Cursor CLI, terzo fornitore; riparazioni cicli 2–6 Claude Code e ciclo 7 Codex. Sostituisce solo il routing corrente 0049, preserva storia/verdetti. Nessuna verifica avviata dall’implementatore.
+
+### Chiusura implementazione ciclo 7 — 2026-10-07T14:11:08.613626+00:00
+
+- Sorgente a128a622151261d510b332ca93a688912a119197; candidato 9d86abebc7626a36115540a2711772c1d2d19e23; task1: 325 PASS/0 skip (2088.5s), task2: 325 PASS/0 skip (1734.4s), task3: 325 PASS/0 skip (1752.6s), full: 1426 PASS/0 skip (2166.9s), reports: 48 PASS/0 skip (10.2s). Run reali con extras test/lint, reset/bootstrap/health separati, watchdog 45 minuti e teardown inventariato.
+- Raw candidato SHA256 ba4e1009bdb8a3ddac604da2c1ca574da443caf953c44c780366e47f7228dee3; campi inputs/tree/commit/environment e manifest riacquisiti e da verificare sull’HEAD candidato prima del push. Nessun sigillo, nessuna PR task prima del verdetto.
+- Bootstrap locale identity-lock FAIL exit 2 resta dichiarato; ricetta CI dal branch REM efce339 con base/source pinned e ID reale acquisito. Decision request separata già aperta; nessun lock/checker modificato.
+- Implementatore ciclo 7 Codex; riparazioni 2–6 Claude Code; verifier Grok 4.7 (Cursor) in processo/contesto separati. Verifica indipendente Grok 4.7 (Cursor) del ciclo 7 di OCOR-DEV-0049 sull’HEAD 9d86abebc7626a36115540a2711772c1d2d19e23; poi riprendere REM-0017 repair 1 con questo candidato, riallineare il pin e la CI senza esclusioni, richiedere verifica indipendente. Integrazione 0049 dopo REM-0017 verificato; con NO_GO escalation solo 0049 e proseguire G5, nessun ciclo 8.
+- Inputs immutabili, E1=0/E2=0, zero Verified; NO-GO e capability differite invariati.
+
+- Diagnosi teardown full: pytest 1426 PASS/0 skip in 2165.19 s; primo controllo supervisore FAIL per 14 volumi non osservati dal polling veloce. Attribuzione tramite delta di sessione, label anonymous, CreatedAt e unico join daemon di ocor-c5-backbone entro 2 secondi. Rimozione mirata completata: 18 volumi totali (4 spike Kafka + 14 harness C5); zero nuovi container/reti/volumi. REM-0018 va esteso a C5 backbone.py in unità separata, nessuna modifica fuori scope nel ciclo 7.
+- Gate piano sul candidato dirty inizialmente FAIL per superficie planning-only; dopo commit dei soli tre artifact, retry PASS 37/0 FAIL/2 NOT_EXECUTED opzionali. Gate/allowlist invariati. Diff whitespace del bundle raw resta dichiarato, non normalizzato né spacciato per PASS.

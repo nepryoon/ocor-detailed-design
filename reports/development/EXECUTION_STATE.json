@@ -3,7 +3,7 @@
     "branch": "task/OCOR-DEV-0049-poc-deployment-observability-backup-safe-degradation",
     "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_0049_REPAIR7",
     "decision_id": "DEC-210",
-    "phase": "OCOR_DEV_0049_REPAIR7_STABILITY_RESUMED_AFTER_INTERRUPTION",
+    "phase": "OCOR_DEV_0049_REPAIR7_CANDIDATE_PENDING_VERIFICATION",
     "worktree": ".ocor/worktrees/ocor-dev-0049"
   },
   "backlog_escalations": {
@@ -461,7 +461,7 @@
         "verdict_file_sha256": "934e0f032daa67c0f6abee6e379c4569c0394c5e3b0c28dce05d799c005fc18c",
         "verifier": "Claude Code (Anthropic), claude-opus-5-5, fallback autorizzato"
       },
-      "minimal_unblock_action": "Un nuovo mandato PO \u00e8 necessario soltanto per una futura riparazione 0049: uniformare l\u2019ordinamento seal/replay o rendere la verifica checkpoint indipendente dall\u2019ordine; casi positivi/negativi per tombstone a epoch uguale e collation divergenti, journal davanti ai metadata, rigenerazione evidenza stabile. Nessun ciclo 7 autorizzato; proseguire REM-0017 e 0050.",
+      "minimal_unblock_action": "Ciclo 7 autorizzato e candidato consegnato alla verifica indipendente Grok 4.7 (Cursor). Nessun ciclo 8; GO seguito da REM-0017/integrazione, NO_GO seguito da escalation e G5.",
       "po_decision_repair_cycle_3_4_5": {
         "NO_GO_disposition": "Sincronizzare lo stato, TERMINAL_BLOCKED con next_action ciclo di riparazione Claude Code su OCOR-DEV-0049; esauriti i cicli: escalation senza nuova riparazione.",
         "authorized_additional_cycles": 3,
@@ -500,7 +500,8 @@
         "id": "OCOR-DEV-0049-REPAIR-7",
         "implementer": "Codex (OpenAI)",
         "repair_cycle": 7,
-        "verifier": "Claude Code (Anthropic)"
+        "verifier": "Grok 4.7 (Cursor)",
+        "verifier_superseded_by": "OCOR-DEV-0049-VERIFIER-CURSOR (2026-10-07)"
       },
       "po_decision_required": false,
       "repair_cycle_3": {
@@ -617,21 +618,116 @@
         "verifier": "Claude Code (Anthropic), claude-opus-5-5, fallback autorizzato"
       },
       "repair_cycle_7": {
-        "prior_attempt_failure": {
-          "diagnosis": "Kubernetes manual backup capture-kafka terminated exit 255 Unknown, sandbox EOF. Original driver manually interrupted 09:48; task subprocess completed with failure 10:02. No OOM/host daemon restart proved by journalctl, cause remains undetermined; not a PASS.",
-          "failed": 1,
-          "log_path": "/home/luca/.ocor-codex/repair0049c7/task3.log",
-          "log_sha256": "b049a4d1b378bbfecdd38936a33b64b4a10763423cfd783c4660c1d70fc5a0a0",
-          "previous_source_commit": "129cc2a9cadc5c536c07cff0b2001a9ce8163e2c",
-          "reset_of_stability_sequence": true,
-          "resumed_source_commit": "a128a622151261d510b332ca93a688912a119197",
-          "skipped": 0,
-          "status": "FAIL",
-          "tests": 325
+        "branch": "task/OCOR-DEV-0049-poc-deployment-observability-backup-safe-degradation",
+        "environment_limitation": {
+          "acquisition": "Historical actual bootstrap attempt preserved; current read-only identity comparison is reacquired separately, no PASS inferred",
+          "current_identity_check": {
+            "acquired_at": "2026-10-07T13:33:23.721539+00:00",
+            "acquired_from_head": "a128a622151261d510b332ca93a688912a119197",
+            "checker_unchanged": true,
+            "exit_code": 1,
+            "expected_image_id": "sha256:a1eb484a7d056a897c7bc832fb735b06136fc876aa90da3055d9882bc1b8d9e3",
+            "governed_checker_sha256": "ffe644144af84b383f6f609fa80460ab73ba8131a4fef9f1c5aa33f8fe9aa1ff",
+            "observed_image_id": "sha256:ce8ee7a93fc3e293d2bf934c1d45e59256f512be7712af2574f6c7f27d646491",
+            "raw_log_sha256": "9a37eaceb2cf8331458418cd542d752cfc0c0e093c9338947bc04d9e095d016a",
+            "reproduction_command": "ocor-runtime/.venv/bin/python /home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/check_local_fuseki_identity.py",
+            "scope": "READ_ONLY_ARTIFACT_ID; not an executed bootstrap",
+            "status": "FAIL"
+          },
+          "disposition": "Nessun aggiornamento o bypass del lock/controllo; richiesta FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE gi\u00e0 aperta sul branch REM. I run reali usano la ricetta CI con base e sorgente locked; questo non prova conformit\u00e0 all\u2019ID locale del lock.",
+          "error": "Fuseki local image identity differs from the governed lock",
+          "exit_code": 2,
+          "log_sha256": "a0b8dab6a2fcb77f09c6479bbbf7368615a3dc96836b9ed97e6aa6191dcfa3db",
+          "status": "FAIL"
+        },
+        "head_sha": "9d86abebc7626a36115540a2711772c1d2d19e23",
+        "prior_attempts": [
+          {
+            "control": "candidate development plan gate on dirty evidence files",
+            "reason": "--base-ref HEAD before evidence commit treats the dirty candidate JSON/log as planning-only extension. Candidate scope gate PASS; plan must be rerun on committed exact candidate HEAD without changing validator or allowlist. Initial failure log retained.",
+            "status": "FAIL_INITIAL_INVOCATION"
+          },
+          {
+            "control": "initial full teardown",
+            "reason": "1426 runtime PASS/0 skip, but polling observer captured only 4 of 18 anonymous volumes; 14 fast C5 harness containers attributed using Docker CreatedAt and unique daemon network join. Final scoped cleanup completed; failure preserved in full-driver log and residue observed list. No runtime test weakened or rerun to hide residue.",
+            "status": "FAIL"
+          },
+          {
+            "execution_phase": "INTERRUPTED_BEFORE_COMPLETION",
+            "partial_log_sha256": "e4a2c45ed7ae0596391e3eb281b02e3ead01c00a6a62709c316e5e9c7a45abaa",
+            "reason": "Sessione precedente interrotta: nessun full.json/JUnit finale, nessun processo rimasto; log parziale preservato, nessun PASS attribuito.",
+            "status": "NOT_EXECUTED"
+          },
+          {
+            "diagnosis": "Kubernetes manual backup capture-kafka terminated exit 255 Unknown, sandbox EOF. Original driver manually interrupted 09:48; task subprocess completed with failure 10:02. No OOM/host daemon restart proved by journalctl, cause remains undetermined; not a PASS.",
+            "failed": 1,
+            "log_path": "/home/luca/.ocor-codex/repair0049c7/task3.log",
+            "log_sha256": "b049a4d1b378bbfecdd38936a33b64b4a10763423cfd783c4660c1d70fc5a0a0",
+            "previous_source_commit": "129cc2a9cadc5c536c07cff0b2001a9ce8163e2c",
+            "reset_of_stability_sequence": true,
+            "resumed_source_commit": "a128a622151261d510b332ca93a688912a119197",
+            "skipped": 0,
+            "status": "FAIL",
+            "tests": 325
+          },
+          {
+            "control": "development plan invocation",
+            "reason": "origin/main selects planning-only diff; CI sets PLAN_BASE=HEAD for task branches; corrected invocation PASS 37, optional NOT_EXECUTED 2; initial raw log preserved",
+            "status": "FAIL_INITIAL_INVOCATION"
+          },
+          {
+            "control": "DEC208 check invocation",
+            "reason": "CI builds current approval manifest before checking it; the same recipe was executed with outputs redirected outside the repository; committed approval manifest unchanged; both raw logs preserved",
+            "status": "FAIL_INITIAL_STANDALONE_CHECK"
+          }
+        ],
+        "raw_output_sha256": "ba4e1009bdb8a3ddac604da2c1ca574da443caf953c44c780366e47f7228dee3",
+        "request_id": "OCOR-DEV-0049-9d86abebc762-7",
+        "roles": {
+          "decision": "OCOR-DEV-0049-REPAIR-7 (2026-10-07)",
+          "historical_repairs": "Cicli 2\u20136 Claude Code; ciclo 7 Codex",
+          "implementer": "Codex (OpenAI), ciclo 7",
+          "independence_limits": "Processo e contesto separati, terzo fornitore xAI tramite Cursor CLI; non ha scritto il task. Identit\u00e0/configurazione effettive da riacquisire dal verdetto.",
+          "repair_history": "Riparazioni dei cicli 2\u20136: Claude Code; ciclo 7: Codex. Verifier ciclo 7 Claude Code (LOOP-ROLES).",
+          "same_model_separate_contexts": false,
+          "verifier": "Grok 4.7 (Cursor)",
+          "verifier_decision": "OCOR-DEV-0049-VERIFIER-CURSOR (2026-10-07)"
         },
         "source_commit": "a128a622151261d510b332ca93a688912a119197",
-        "stability_progress": {
-          "status": "3_OF_3_TASK_RUNS_PASS_FULL_PENDING",
+        "stability_runs": {
+          "full": {
+            "command": [
+              "uv",
+              "run",
+              "--project",
+              "ocor-runtime",
+              "--frozen",
+              "--extra",
+              "test",
+              "--extra",
+              "lint",
+              "pytest",
+              "-v",
+              "-ra",
+              "-p",
+              "no:cacheprovider",
+              "--basetemp=/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/bt-full",
+              "--junitxml=/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/full.xml",
+              "ocor-runtime/tests/"
+            ],
+            "counts": {
+              "errors": 0,
+              "failures": 0,
+              "skipped": 0,
+              "tests": 1426
+            },
+            "duration_seconds": 2166.9158333220003,
+            "exit_code": 0,
+            "finished_at": "2026-10-07T14:05:45.190034+00:00",
+            "head_sha": "a128a622151261d510b332ca93a688912a119197",
+            "started_at": "2026-10-07T13:29:38.274219+00:00",
+            "watchdog_error": null
+          },
           "task1": {
             "command": [
               "uv",
@@ -698,19 +794,6 @@
             "started_at": "2026-10-07T10:06:48.811749+00:00",
             "watchdog_error": null
           },
-          "task2_teardown": {
-            "final_delta": {
-              "containers": [],
-              "networks": [],
-              "volumes": []
-            },
-            "observed": {
-              "containers": [],
-              "networks": [],
-              "volumes": []
-            },
-            "removed_volumes": []
-          },
           "task3": {
             "command": [
               "uv",
@@ -743,37 +826,11 @@
             "head_sha": "a128a622151261d510b332ca93a688912a119197",
             "started_at": "2026-10-07T10:36:36.672011+00:00",
             "watchdog_error": null
-          },
-          "task3_teardown": {
-            "final_delta": {
-              "containers": [],
-              "networks": [],
-              "volumes": []
-            },
-            "observed": {
-              "containers": [],
-              "networks": [],
-              "volumes": []
-            },
-            "removed_volumes": []
-          },
-          "teardown": {
-            "final_delta": {
-              "containers": [],
-              "networks": [],
-              "volumes": []
-            },
-            "observed": {
-              "containers": [],
-              "networks": [],
-              "volumes": []
-            },
-            "removed_volumes": []
           }
         },
-        "status": "IMPLEMENTATION_STABILITY_IN_PROGRESS"
+        "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION"
       },
-      "status": "AUTHORIZED_REPAIR_7_IN_PROGRESS",
+      "status": "AUTHORIZED_REPAIR_7_PENDING_INDEPENDENT_VERIFICATION",
       "terminal_disposition": {
         "date": "2026-10-06T16:25:55.683649+00:00",
         "decision": "OCOR-DEV-0049-REPAIR-CLAUDE-AUTO + STACK-HYGIENE (2026-10-06)",
@@ -906,7 +963,8 @@
           "verdict_file_sha256": "934e0f032daa67c0f6abee6e379c4569c0394c5e3b0c28dce05d799c005fc18c",
           "verifier": "Claude Code (Anthropic), claude-opus-5-5, fallback autorizzato"
         }
-      ]
+      ],
+      "verifier_decision": "OCOR-DEV-0049-VERIFIER-CURSOR (2026-10-07)"
     }
   },
   "baseline_commit": "33821f315138b90bdae7f940e5327b15f9a19948",
@@ -984,19 +1042,22 @@
         "OCOR-DEV-0065",
         "OCOR-DEV-0066"
       ],
+      "candidate_0049_head": "9d86abebc7626a36115540a2711772c1d2d19e23",
       "concurrent_pr": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
         "disposition": "Change set ripreso dal loop nella precedente iterazione; PR #169 draft, NO_GO repair 0 preservato; non modificato dal ciclo 7 0049.",
         "head_sha": "efce339d9fc7a551216c84135e06d39c0488a222",
         "number": 169,
-        "observed_check": "validation-closure FAILURE",
-        "raw_observation_sha256": "3ed638428c6db868092ced1f6de819b610262d2c753f2ae88f603f657000f1da",
-        "run_id": 37350619188
+        "observed_check": "conditional-infrastructure-0049 FAILURE: Fuseki Docker recipe build timeout 300s; validation-closure fail-closed",
+        "raw_failed_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "raw_observation_sha256": "84526fd5fdb40446f02847b669d74eccf913b5a4575bc2ecdcb94f8a6b89c000",
+        "retry_count_this_iteration": 0,
+        "run_id": 37580988000
       },
       "id": "OCOR-DEV-REM-0017",
       "non_blocking": false,
       "scope": "REM-0017-PRIORITY (2026-10-05): stack CI completo e zero skip per tutti i CONDITIONAL_INFRASTRUCTURE_GUARD (TEST-INFRA-005/006 e successivi), poi rimozione --ignore PR #164. Prossimo task dopo verifica/integrazione 0049, prima di 0050; G6 bloccato fino alla chiusura verificata.",
-      "status": "REPAIR_1_WIP_WAITING_STABLE_0049_CANDIDATE"
+      "status": "REPAIR_1_WIP_READY_TO_REBASE_ON_0049_CANDIDATE"
     },
     {
       "blocked_tasks": [
@@ -1013,14 +1074,15 @@
         "OCOR-DEV-0068",
         "OCOR-DEV-0069"
       ],
+      "candidate_head": "9d86abebc7626a36115540a2711772c1d2d19e23",
       "decision_request": "reports/development/decision_requests/OCOR-DEV-0049-REPAIR-BUDGET.md",
       "escalation_record": "reports/development/OCOR_DEV_0049_ESCALATION.md",
       "id": "OCOR-DEV-0049",
       "non_blocking": false,
       "po_decision": "OCOR-DEV-0049-REPAIR-7 (2026-10-07)",
       "scope": "Ciclo 7 autorizzato Codex da d0ac80a; VF-001/VF-002 del ciclo 6, controllo della classe seal/restore/replay e stabilit\u00e0. Nessun ciclo 8. REM-0017 resta WIP in attesa del candidato stabile; G6 resta bloccato fino alle chiusure verificate.",
-      "status": "AUTHORIZED_REPAIR_7_IN_PROGRESS",
-      "task_status": "IN_PROGRESS"
+      "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION",
+      "task_status": "IMPLEMENTED_NOT_VERIFIED"
     },
     {
       "blocked_tasks": [],
@@ -1167,11 +1229,13 @@
   "loop_roles": {
     "OCOR-DEV-0049": {
       "decision": "OCOR-DEV-0049-REPAIR-7 (2026-10-07)",
+      "historical_repairs": "Cicli 2\u20136 Claude Code; ciclo 7 Codex",
       "implementer": "Codex (OpenAI), ciclo 7",
-      "independence_limits": "Modelli/fornitori diversi per il ciclo 7. Variante del modello e reasoning effort non attestati dal runtime.",
+      "independence_limits": "Processo e contesto separati, terzo fornitore xAI tramite Cursor CLI; non ha scritto il task. Identit\u00e0/configurazione effettive da riacquisire dal verdetto.",
       "repair_history": "Riparazioni dei cicli 2\u20136: Claude Code; ciclo 7: Codex. Verifier ciclo 7 Claude Code (LOOP-ROLES).",
       "same_model_separate_contexts": false,
-      "verifier": "Claude Code (Anthropic), processo e contesto separati"
+      "verifier": "Grok 4.7 (Cursor)",
+      "verifier_decision": "OCOR-DEV-0049-VERIFIER-CURSOR (2026-10-07)"
     },
     "decision": "LOOP-ROLES (2026-10-05)",
     "default_task_implementer": "Codex (OpenAI)",
@@ -1236,7 +1300,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Completare la sequenza di stabilit\u00e0 ripresa del ciclo 7 su a128a622151261d510b332ca93a688912a119197 (3 suite task consecutive e 1 full, zero skip, timeout 45 minuti), gate ed evidenza candidata; richiedere verifica indipendente Claude Code solo sull\u2019HEAD finale pubblicato. REM-0017 repair 1 resta in attesa del candidato; nessun ciclo 8.",
+  "next_executable_action": "Verifica indipendente Grok 4.7 (Cursor) del ciclo 7 di OCOR-DEV-0049 sull\u2019HEAD 9d86abebc7626a36115540a2711772c1d2d19e23; poi riprendere REM-0017 repair 1 con questo candidato, riallineare il pin e la CI senza esclusioni, richiedere verifica indipendente. Integrazione 0049 dopo REM-0017 verificato; con NO_GO escalation solo 0049 e proseguire G5, nessun ciclo 8.",
   "ready_set_observation": {
     "blocked_transitively_on_0049": [
       "OCOR-DEV-0049",
@@ -1257,11 +1321,11 @@
       "OCOR-DEV-0050"
     ],
     "executable_backlog_tasks": [
-      "OCOR-DEV-0049",
+      "OCOR-DEV-0049:authorized repair 7 pending verification",
       "OCOR-DEV-0050"
     ],
-    "observed_at": "2026-10-07T09:30:42.558550+00:00",
-    "priority_remediation": "REM-0017 WIP in attesa del candidato 0049 ciclo 7; ripresa autorizzata del ciclo 7 in questa unit\u00e0.",
+    "observed_at": "2026-10-07T14:11:08.613626+00:00",
+    "priority_remediation": "REM-0017 repair 1 da riprendere dopo il verdetto indipendente del candidato 0049 ciclo 7; G5 disponibile secondo dipendenze.",
     "source": "origin/main execution state + approved backlog + OCOR-DEV-0049-REPAIR-7 + REM-0017-PRIORITY"
   },
   "remediation_status": {
@@ -1578,7 +1642,7 @@
       37560675945,
       37560675971
     ],
-    "status": "SOURCE_HEAD_ALL_13_PASS_FINAL_HEAD_EXACT_CHECK_REQUIRED",
+    "status": "FINAL_HEAD_CI_PENDING",
     "tested_head_sha": "fb4376ef4e7d233ae1e6528451acf4b2ae825bfd"
   },
   "state_sync_ci_history": [
@@ -2005,5 +2069,5 @@
     "loop_status": "CONTINUE",
     "reason": "0049 ciclo 7 autorizzato; REM-0017 WIP preservato in attesa candidato; G5 eseguibile per dipendenze. Nessun ciclo 8."
   },
-  "updated_at": "2026-10-07T11:06:12.672322+00:00"
+  "updated_at": "2026-10-07T14:11:08.613626+00:00"
 }

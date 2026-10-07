@@ -286,3 +286,9 @@ FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE aperta sul change set REM, non occultata
 Con GO si riprende REM-0017 e l’integrazione secondo REM-0017-PRIORITY; con NO_GO
 si escala il solo 0049 e si prosegue G5. E1=0, E2=0, zero Verified e claim NO-GO
 invariati. Referto finale e HEAD candidato esatto da acquisire dopo la stabilità.
+
+### Candidato ciclo 7 consegnato — 2026-10-07T14:11:08.613626+00:00
+
+Candidato `9d86abebc7626a36115540a2711772c1d2d19e23`, sorgente `a128a622151261d510b332ca93a688912a119197`: task1: 325 PASS/0 skip (2088.5s), task2: 325 PASS/0 skip (1734.4s), task3: 325 PASS/0 skip (1752.6s), full: 1426 PASS/0 skip (2166.9s), reports: 48 PASS/0 skip (10.2s). Esito locale, non verdetto indipendente; escalation storica dei cicli precedenti preservata. Bootstrap locale Fuseki identity-lock FAIL dichiarato, nessuna uguaglianza col lock asserita.
+
+Verifica indipendente Grok 4.7 (Cursor) del ciclo 7 di OCOR-DEV-0049 sull’HEAD 9d86abebc7626a36115540a2711772c1d2d19e23; poi riprendere REM-0017 repair 1 con questo candidato, riallineare il pin e la CI senza esclusioni, richiedere verifica indipendente. Integrazione 0049 dopo REM-0017 verificato; con NO_GO escalation solo 0049 e proseguire G5, nessun ciclo 8.
