@@ -200,7 +200,7 @@
   "exact_next_action": "OCOR-DEV-REM-0017:implementation \u2014 riprendere repair 1 nel worktree .ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire da efce339d9fc7a551216c84135e06d39c0488a222, preservando il WIP; riallineare a origin/main senza force-push, diagnosticare CI run 37580988000, gestire il pin TEST-INFRA-006 e il suo ciclo di vita tenendo esplicito il NO_GO del candidato 0049 9d86abebc7626a36115540a2711772c1d2d19e23. Stack completo, zero skip, timeout suite <=2700 s, nessuna esclusione; acquisire CI verde esatta e nuova verifica indipendente Claude Code. Se una condizione riservata/esterna impedisce il REM, accodare la sola decisione pertinente e proseguire OCOR-DEV-0050/G5. 0049 resta escalato, nessun ciclo 8.",
   "external_publication": {
     "api_source_commit": "64468442dd4e9e116e4b5cdd59af7ea0bf4a0439",
-    "different_commit_reason": "API normalizes author/committer offset +0200 to UTC; tree and parent are identical. Local worktree switched to API-published commit.",
+    "different_commit_reason": "API omits the final newline from the commit message when the payload omits it. The API renders author/committer dates as UTC while preserving their Git header offsets. This transformation reproduces API source SHA 64468442dd4e9e116e4b5cdd59af7ea0bf4a0439 from preserved local commit 0121d7d4c87a0102bf8d049738139caabec0b78a; tree, parent and timestamps are identical. Final API payload preserves the message newline and UTC timestamps to retain the exact local SHA.",
     "git_push_attempts": 2,
     "git_push_result": "FAIL: GitHub Internal Server Error both attempts (2026-10-07T16:59:06Z, 16:59:28Z); no third push attempt",
     "identical_tree": "05b69c22f6dee977e89ed2838046e952054734f7",
@@ -719,7 +719,7 @@
     "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE: bootstrap attuale FAIL, lock/checker invariati; salute NOT_EXECUTED",
     "REM-0018 separato: teardown volumi spike vector/Kafka e harness C5 da qualificare"
   ],
-  "updated_at": "2026-10-07T17:25:27.369262+00:00",
+  "updated_at": "2026-10-07T17:27:12.890515+00:00",
   "validation_limitations": [
     {
       "control": "Bootstrap locale",
