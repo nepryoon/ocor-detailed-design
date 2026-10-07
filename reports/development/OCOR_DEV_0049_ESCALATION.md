@@ -1,6 +1,6 @@
 # Escalation record — OCOR-DEV-0049 (repair budget exhausted)
 
-- **Status corrente**: `BLOCKED_REPAIR_BUDGET_EXHAUSTED` (ciclo 5 concluso, NO_GO)
+- **Status corrente**: `BLOCKED_REPAIR_BUDGET_EXHAUSTED` (ciclo 7 concluso, NO_GO; loop CONTINUE)
 - **Disposition storica ciclo 2**: `BLOCKED_REPAIR_BUDGET_EXHAUSTED`, superseded dalla decisione PO `OCOR-DEV-0049-REPAIR-CLAUDE-AUTO` (2026-10-05).
 - **Task**: `OCOR-DEV-0049` — Implement PoC deployment observability backup and safe degradation
 - **Change set**: `governed/state-sync-ocor-dev-0049-escalation`
@@ -292,3 +292,51 @@ invariati. Referto finale e HEAD candidato esatto da acquisire dopo la stabilit�
 Candidato `9d86abebc7626a36115540a2711772c1d2d19e23`, sorgente `a128a622151261d510b332ca93a688912a119197`: task1: 325 PASS/0 skip (2088.5s), task2: 325 PASS/0 skip (1734.4s), task3: 325 PASS/0 skip (1752.6s), full: 1426 PASS/0 skip (2166.9s), reports: 48 PASS/0 skip (10.2s). Esito locale, non verdetto indipendente; escalation storica dei cicli precedenti preservata. Bootstrap locale Fuseki identity-lock FAIL dichiarato, nessuna uguaglianza col lock asserita.
 
 Verifica indipendente Grok 4.7 (Cursor) del ciclo 7 di OCOR-DEV-0049 sull’HEAD 9d86abebc7626a36115540a2711772c1d2d19e23; poi riprendere REM-0017 repair 1 con questo candidato, riallineare il pin e la CI senza esclusioni, richiedere verifica indipendente. Integrazione 0049 dopo REM-0017 verificato; con NO_GO escalation solo 0049 e proseguire G5, nessun ciclo 8.
+
+
+## 2026-10-07T16:57:52.731979+00:00 — Verdetto finale ciclo 7, escalation circoscritta
+
+Verdetto `OCOR-DEV-0049-9d86abebc762-7` sull’HEAD remoto esatto `9d86abebc7626a36115540a2711772c1d2d19e23`:
+**NO_GO**, SHA-256 `bc8539a202ce6d88e711a7832e71cf78902ea5e6fee2cd3b609ffa8628ed8e7e`. Creato dal verifier `2026-10-07T16:53:13Z`,
+letto in sola lettura; nessun verdetto scritto o modificato dal loop.
+
+Riparazioni cicli 2–6: **Claude Code (Anthropic)**; ciclo 7: **Codex (OpenAI)**.
+Verifier effettivo: **Grok 4.7 (xAI) tramite Cursor CLI**, processo e contesto separati,
+fornitore diverso da entrambi gli implementatori (`OCOR-DEV-0049-VERIFIER-CURSOR`).
+
+### VF-001 — ciclo 7 (`high`, BLOCKER)
+
+Riferimento: `deploy/helm/ocor-poc/compose.profiles.yaml:1124`.
+
+La funzione reale receipt_checkpoint_inconsistencies (compose.profiles.yaml:1124-1126), invocata da latest_valid_receipt prima di RESTORE_TESTED (riga 1179), accetta una ricevuta PASSED il cui replayed_event_ids non e il journal checkpointato. Probe sul modulo estratto dall'HEAD, checkpoint entries=3 max_deletion_epoch=9 last_event_id=evt-del-c (ordine codepoint evt-del-B, evt-del-a, evt-del-c): middle_swap ['evt-del-a','evt-del-B','evt-del-c'] -> []; foreign_nonfinal ['evt-del-FOREIGN','evt-del-a','evt-del-c'] -> []. Stessa falla a due id: checkpoint last_event_id=evt-del-a, replayed ['evt-del-FOREIGN','evt-del-a'] -> []. L'inversione che cambia l'ultimo id e l'omissione sono rifiutate, e i test live 7/7 e 9/7 (collation en_US.utf8, journal_max 9 > metadata_max 7, omissione, ordine locale, epoch sotto checkpoint) sono PASS: non coprono la sostituzione di un id non finale ne una permutazione che conserva last_event_id. Il commento della funzione richiede invece ogni tombstone checkpointato, una volta, con l'event id originale. Lista vuota significa ricevuta coerente e, sul boundary, RESTORE_TESTED.
+
+Azione minima tecnica proposta, **non eseguita e non autorizzata come ciclo 8**:
+Vincolare replayed_event_ids all'intera sequenza ordinata degli event id del journal firmato, o al digest di quella sequenza, dentro journalCheckpoints. receipt_checkpoint_inconsistencies deve rifiutare con memory:tombstones_not_replayed ogni omissione, duplicato, sostituzione e permutazione, non solo un last_event_id diverso. Aggiungere il negativo unitario e live in cui un id non finale e sostituito e quello in cui due id non finali sono scambiati lasciando invariato last_event_id; entrambi devono dare RESTORE_RECEIPT_INCONSISTENT sul boundary, con il positivo canonico ancora accettato.
+
+LLD v1.1 §5.4 richiede event ID originali e recovery gate prima della riapertura;
+ADD v1.3 Part I §6.5 fissa ordering/digest del replay e Part II §2.13 lega i
+tombstone al recovery point. La firma della receipt non risolve il binding incompleto.
+Il verifier conferma i positivi unitari/live 7/7 e 9/7 e l’ordinamento comune:
+nessuna regressione o finding generico aggiunto sui difetti risolti.
+
+Risultati **del verifier**, non run del loop: task **325 PASS/0 skip** (1915,35 s),
+full **1426 PASS/0 skip** (2633,22 s). Il tentativo full senza DSN è esplicitamente
+non qualificante (1370 PASS/5 skip/51 error), poi ripetuto con DSN reale.
+Il finding bloccante del probe prevale sulle suite verdi. `not_executed` del verdetto: `[]`.
+
+Budget ciclo 7 consumato; **nessun ciclo 8**, nessuna sigillatura, nessuna PR o merge
+del task 0049. Candidato `9d86abebc7626a36115540a2711772c1d2d19e23` preservato byte per byte.
+Un nuovo mandato PO sarebbe necessario soltanto per riaprire 0049: nessuna autorizzazione
+implicita o richiesta di conferma. Blocco transitivo ricalcolato: OCOR-DEV-0049, OCOR-DEV-0059, OCOR-DEV-0060, OCOR-DEV-0061, OCOR-DEV-0062, OCOR-DEV-0063, OCOR-DEV-0064, OCOR-DEV-0065, OCOR-DEV-0066, OCOR-DEV-0067, OCOR-DEV-0068, OCOR-DEV-0069.
+Task pronti per dipendenze: OCOR-DEV-0049, OCOR-DEV-0050; eseguibile **OCOR-DEV-0050**.
+G5 indipendente raggiungibile: OCOR-DEV-0050, OCOR-DEV-0051, OCOR-DEV-0052, OCOR-DEV-0053, OCOR-DEV-0054, OCOR-DEV-0055, OCOR-DEV-0056, OCOR-DEV-0057, OCOR-DEV-0058.
+
+Loop **CONTINUE**: prossimo lavoro **REM-0017 repair 1** (PR #169 `efce339d9fc7a551216c84135e06d39c0488a222`,
+CI run 37580988000 FAILURE), poi **0050/G5**; il REM deve gestire esplicitamente il pin
+del candidato NO_GO, senza farlo diventare evidenza accettata di 0049. Se resta in attesa
+di una decisione/evento esterno, proseguire G5. Nessun test/gate escluso o indebolito.
+
+Preflight corrente: inputs 8/8, harness 14 PASS, drift 0/167 su 63 task, toolchain 9/9.
+Bootstrap locale **FAIL**, ID Fuseki diverso dal lock; salute **NOT_EXECUTED**, nessuno
+stack avviato. Suite runtime locale **NOT_EXECUTED** per unità solo documentale.
+Raw log/hash in MODEL_HANDOFF, `/home/luca/.ocor-codex/state-sync-0049-cycle7-verdict`. Claim fence invariato.
