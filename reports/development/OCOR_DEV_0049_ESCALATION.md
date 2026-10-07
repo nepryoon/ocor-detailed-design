@@ -256,3 +256,21 @@ Controlli del verifier `NOT_EXECUTED`:
 Budget ciclo 6 consumato: **nessun ciclo 7 autorizzato**, nessuna riparazione Codex, sigillatura o merge 0049. Candidato `d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b` preservato. La disposizione globale precedente `TERMINAL_BLOCKED` è superseduta da `OCOR-DEV-0049-REPAIR-6`: il loop continua con **REM-0017 → 0050**, poi i task raggiungibili senza 0049. Chiusura transitiva bloccata: OCOR-DEV-0049, OCOR-DEV-0059, OCOR-DEV-0060, OCOR-DEV-0061, OCOR-DEV-0062, OCOR-DEV-0063, OCOR-DEV-0064, OCOR-DEV-0065, OCOR-DEV-0066, OCOR-DEV-0067, OCOR-DEV-0068, OCOR-DEV-0069. REM-0017 resta prerequisito G6. PR #169 osservata aperta, HEAD 7562d3c48015f45a0b518fde622ca4304e9468ca, validation-closure FAILURE run 37350619188; preservata in questa unità.
 
 State sync documentale su `governed/state-sync-ocor-dev-0049-cycle6` da `5c57d411a7036d585d431a8030c4816831e7d40c`; suite runtime locale **NOT_EXECUTED**, risultati del verifier distinti dai controlli meccanici del loop. `inputs/`, E1=0/E2=0, zero Verified, runtime NOT_ESTABLISHED, PoC/Production NO-GO invariati.
+
+
+### OCOR-DEV-0049-REPAIR-7 — autorizzazione ricevuta 2026-10-07
+
+Il Product Owner autorizza UN solo ciclo 7, implementatore Codex (OpenAI),
+verifier Claude Code (Anthropic) in contesto separato, dall'HEAD remoto
+`d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b`. Sostituisce per questo ciclo
+la riserva delle riparazioni a Claude. Ambito VF-001/VF-002 del ciclo 6,
+controllo della classe degli ordinamenti DB/Python in sigillo/restore/replay,
+positivi/negativi unitari e live e stabilità task tre run + full uno, zero skip.
+Storia dei cicli 2–6 Claude conservata. Nessun ciclo 8 autorizzato.
+
+REM-0017 repair 1 ha corretto il teardown e registrato i residui spike come
+REM-0018, ma attende il distinto candidato 0049 stabile: la sua CI esatta
+fallisce su readiness `NOT_YET_SCANNED` dopo sleep fisso. L'attesa soddisfa
+la condizione PO per iniziare il ciclo 7 dopo questa unità. Nessuna riparazione
+0049 eseguita nello scope REM; nessun GO o sigillo attribuito al ciclo 6.
+Con NO_GO del ciclo 7, escalation del solo task e prosecuzione G5.

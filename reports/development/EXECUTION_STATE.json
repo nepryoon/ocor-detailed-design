@@ -1,9 +1,9 @@
 {
   "active_iteration": {
     "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_REM_0017",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_REM_0017_REPAIR1",
     "decision_id": "DEC-210",
-    "phase": "REM_0017_CANDIDATE_PENDING_INDEPENDENT_VERIFICATION",
+    "phase": "REM_0017_REPAIR1_WIP_WAITING_0049_CANDIDATE",
     "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
   },
   "backlog_escalations": {
@@ -461,7 +461,7 @@
         "verdict_file_sha256": "934e0f032daa67c0f6abee6e379c4569c0394c5e3b0c28dce05d799c005fc18c",
         "verifier": "Claude Code (Anthropic), claude-opus-5-5, fallback autorizzato"
       },
-      "minimal_unblock_action": "Un nuovo mandato PO \u00e8 necessario soltanto per una futura riparazione 0049: uniformare l\u2019ordinamento seal/replay o rendere la verifica checkpoint indipendente dall\u2019ordine; casi positivi/negativi per tombstone a epoch uguale e collation divergenti, journal davanti ai metadata, rigenerazione evidenza stabile. Nessun ciclo 7 autorizzato; proseguire REM-0017 e 0050.",
+      "minimal_unblock_action": "Eseguire il solo ciclo 7 ora autorizzato; REM-0017 attende il candidato stabile, non viene abbandonato.",
       "po_decision_repair_cycle_3_4_5": {
         "NO_GO_disposition": "Sincronizzare lo stato, TERMINAL_BLOCKED con next_action ciclo di riparazione Claude Code su OCOR-DEV-0049; esauriti i cicli: escalation senza nuova riparazione.",
         "authorized_additional_cycles": 3,
@@ -492,6 +492,16 @@
         "implementer": "Claude Code (Anthropic)",
         "remaining_cycles": 0,
         "verifier": "Claude Code (Anthropic), contesto separato (fallback)"
+      },
+      "po_decision_repair_cycle_7": {
+        "NO_GO_disposition": "Escalation del solo 0049, nessun ciclo 8; proseguire G5.",
+        "authorized_start_head": "d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b",
+        "date": "2026-10-07",
+        "id": "OCOR-DEV-0049-REPAIR-7",
+        "implementer": "Codex (OpenAI)",
+        "repair_cycle": 7,
+        "scope": "VF-001/VF-002 ciclo 6, controllo classe ordine DB/Python e stabilit\u00e0",
+        "verifier": "Claude Code (Anthropic)"
       },
       "po_decision_required": false,
       "repair_cycle_3": {
@@ -607,7 +617,7 @@
         "verdict_file_sha256": "934e0f032daa67c0f6abee6e379c4569c0394c5e3b0c28dce05d799c005fc18c",
         "verifier": "Claude Code (Anthropic), claude-opus-5-5, fallback autorizzato"
       },
-      "status": "BLOCKED_REPAIR_BUDGET_EXHAUSTED",
+      "status": "READY_FOR_AUTHORIZED_REPAIR_CYCLE_7",
       "terminal_disposition": {
         "date": "2026-10-06T16:25:55.683649+00:00",
         "decision": "OCOR-DEV-0049-REPAIR-CLAUDE-AUTO + STACK-HYGIENE (2026-10-06)",
@@ -820,18 +830,42 @@
       ],
       "concurrent_pr": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
-        "disposition": "Ripresa dopo assenza di attivit\u00e0 concorrente; WIP Codex, nessun merge n\u00e9 chiusura.",
-        "head_sha": "4658ad808d41dfdb0b75255837adfd3f9609d071",
+        "disposition": "PR del loop inattiva; ripresa controllata, non concorrente.",
+        "head_sha": "6e2a08b62524b88b06f3b4b02b9e91449058de4a",
         "number": 169,
-        "observed_check": "SOURCE_CI_SUCCESS_FINAL_HEAD_CI_REQUIRED",
+        "observed_check": "conditional-infrastructure-0049 FAILURE; validation-closure FAILURE",
         "raw_observation_sha256": "3ed638428c6db868092ced1f6de819b610262d2c753f2ae88f603f657000f1da",
-        "run_id": 37568937953
+        "run_id": 37574931568
       },
+      "external_event": "Candidato OCOR-DEV-0049 ciclo 7 stabile e verificato; poi campagna CI REM sull\u2019HEAD esatto.",
       "id": "OCOR-DEV-REM-0017",
       "implementation_record": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/evidence.json",
+      "independent_verification": {
+        "blocking_findings": [
+          "VF-001"
+        ],
+        "findings": [
+          "VF-001",
+          "VF-002",
+          "VF-003",
+          "VF-004"
+        ],
+        "head_sha": "6e2a08b62524b88b06f3b4b02b9e91449058de4a",
+        "implementer": "Codex (OpenAI)",
+        "not_executed": [
+          "Clone pulito da origin con teardown/ricreazione per ADVERSARIAL_CONFORMANCE: non applicabile (review_type REMEDIATION). Usato un worktree detached all'HEAD esatto con reset e ricreazione dello stack da zero.",
+          "Run CI verde sull'HEAD verificato: NON ottenuta. La run 37574931568 e' fallita (VF-001), quindi il controllo REM-0017-PRIORITY sull'esecuzione CI di stack completo, guard e rimozione dell'--ignore NON e' superato sull'HEAD. La rimozione dell'--ignore e' verificata solo staticamente nel diff del workflow e con la run locale."
+        ],
+        "repair_cycle": 0,
+        "request_id": "OCOR-DEV-REM-0017-6e2a08b62524-0",
+        "verdict": "NO_GO",
+        "verdict_file_sha256": "41cef72daef6732584cf7a448dd7da5f7f24d83bccccb05e9c53057e24318317",
+        "verifier": "Claude Code (Anthropic)"
+      },
       "non_blocking": false,
-      "scope": "REM-0017-PRIORITY (2026-10-05): stack CI completo e zero skip per tutti i CONDITIONAL_INFRASTRUCTURE_GUARD (TEST-INFRA-005/006 e successivi), poi rimozione --ignore PR #164. Prossimo task dopo verifica/integrazione 0049, prima di 0050; G6 bloccato fino alla chiusura verificata.",
-      "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION",
+      "repair_cycle": 1,
+      "scope": "REM-0017-PRIORITY invariato. VF-003 corretto localmente; VF-001/VF-002 richiedono il candidato 0049 stabile e un nuovo pin governato. Nessuna nuova verify_request finch\u00e9 manca CI verde esatta.",
+      "status": "WAITING_EXTERNAL_CANDIDATE_REPAIR",
       "test_infra_006_disposition": "Campagna CI completa sul candidato immutabile d0ac80a; zero skip; NO_GO 0049 preservato; verifier REM Claude Code atteso."
     },
     {
@@ -853,10 +887,10 @@
       "escalation_record": "reports/development/OCOR_DEV_0049_ESCALATION.md",
       "id": "OCOR-DEV-0049",
       "non_blocking": false,
-      "po_decision": "OCOR-DEV-0049-REPAIR-6 (2026-10-07)",
-      "scope": "Ciclo 6 NO_GO: VF-001 medium BLOCKER (collation seal/replay divergente); VF-002 low di copertura. Nessun ciclo 7. REM-0017 e 0050 eseguibili. Decision request del ciclo 5 risolta dal mandato ciclo 6.",
-      "status": "BLOCKED_REPAIR_BUDGET_EXHAUSTED",
-      "task_status": "BLOCKED_REPAIR_BUDGET_EXHAUSTED"
+      "po_decision": "OCOR-DEV-0049-REPAIR-7 (2026-10-07)",
+      "scope": "VF-001/VF-002 ciclo 6 e controllo della classe di ordinamenti sigillo/restore/replay; stabilit\u00e0 task 3 run + full 1. REM-0017 attende il candidato: condizione PO per l\u2019avvio ciclo 7 soddisfatta.",
+      "status": "READY_FOR_AUTHORIZED_REPAIR_CYCLE_7",
+      "task_status": "READY_FOR_AUTHORIZED_REPAIR_CYCLE_7"
     },
     {
       "blocked_tasks": [],
@@ -874,6 +908,22 @@
       "non_blocking": true,
       "scope": "Bootstrap locale con confronto ID esatto irrisolto; pipeline CI eseguibile, lock/checker invariati.",
       "status": "OPEN_PO_DECISION_REQUIRED"
+    },
+    {
+      "blocked_tasks": [
+        "OCOR-DEV-0060",
+        "OCOR-DEV-0061",
+        "OCOR-DEV-0062",
+        "OCOR-DEV-0063",
+        "OCOR-DEV-0064",
+        "OCOR-DEV-0065",
+        "OCOR-DEV-0066"
+      ],
+      "id": "OCOR-DEV-REM-0018",
+      "implementation_record": "reports/assurance/OCOR-DEV-REM-0018-RCCAD/README.md",
+      "non_blocking": false,
+      "scope": "VF-004 REM-0017: teardown dei volumi anonimi spike vector/Kafka. Unit\u00e0 governata separata con riqualifica; non blocca G5.",
+      "status": "OPEN"
     }
   ],
   "claims": {
@@ -958,28 +1008,25 @@
     "reason": "Disposizione puntuale OCOR-DEV-0049-REPAIR-CLAUDE-AUTO: ultimo ciclo 5 NO_GO. Non equivale a tutto il backlog bloccato."
   },
   "latest_ci_evidence": {
-    "candidate_commit": "fb4376ef4e7d233ae1e6528451acf4b2ae825bfd",
-    "conclusion": "PASS_ALL_13_GREEN_ON_EXACT_SOURCE_HEAD \u2014 FINAL_HEAD_CHECK_REQUIRED",
-    "passed": 13,
-    "pr": 172,
-    "raw_observation_sha256": "5b4a817d8716f3fb9a904e2e8d4ec84b21f844f9c01fbcdee2a310cdce62c74d",
-    "required_checks": 13,
+    "candidate_commit": "6e2a08b62524b88b06f3b4b02b9e91449058de4a",
+    "conclusion": "FAILURE_ON_VERIFIED_HEAD",
+    "disposition": "Verdetto REM NO_GO. Riparazione 1 WIP: CI esatta del nuovo candidato richiesta prima di verifica/sigillo; nessun retry del difetto intermittente.",
+    "failed_checks": [
+      "conditional-infrastructure-0049",
+      "validation-closure"
+    ],
+    "pr": 169,
     "run_ids": [
-      37560675911,
-      37560675919,
-      37560675932,
-      37560675942,
-      37560675945,
-      37560675971
+      37574931568
     ]
   },
   "loop_roles": {
     "OCOR-DEV-0049": {
-      "fallback_decision": "OCOR-DEV-0049-VERIFIER-FALLBACK (2026-10-06)",
-      "implementer": "Claude Code (Anthropic)",
-      "independence_limits": "processo e contesto separati; le riparazioni di OCOR-DEV-0049 (ciclo 6) sono di Claude Code: implementatore della riparazione e verifier sono lo stesso fornitore/modello, in contesto separato (OCOR-DEV-0049-VERIFIER-FALLBACK); l'implementazione originale e' di un altro modello (Codex). Nessun riassunto dell'implementatore usato come prova; audit_0049.md, check_candidate.py, ITERATION_LOG e MODEL_HANDOFF non consultati come prova. Riusati solo binari toolchain/CLI acquisiti dal verifier del ciclo 5 (helm/kind/kubectl con sha256 verificati sui checksum ufficiali).",
-      "same_model_separate_contexts": true,
-      "verifier": "Claude Code (Anthropic), claude-opus-5-5, fallback autorizzato"
+      "decision": "OCOR-DEV-0049-REPAIR-7 (2026-10-07)",
+      "implementer": "Codex (OpenAI), ciclo 7; riparazioni 2\u20136 Claude Code (Anthropic)",
+      "independence_limits": "Per ciclo 7 implementatore e verifier di fornitori diversi; storia dei cicli Claude conservata.",
+      "same_model_separate_contexts": false,
+      "verifier": "Claude Code (Anthropic), processo e contesto separati"
     },
     "decision": "LOOP-ROLES (2026-10-05)",
     "default_task_implementer": "Codex (OpenAI)",
@@ -1044,32 +1091,20 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Verifica indipendente Claude Code su HEAD finale; poi integrazione REM-0017 con tutti i check richiesti verdi sullo stesso HEAD, state sync e OCOR-DEV-0050. OCOR-DEV-0049 bloccato; nessun ciclo 7.",
+  "next_executable_action": "OCOR-DEV-0049:implementation \u2014 ciclo 7 Codex autorizzato da OCOR-DEV-0049-REPAIR-7; riprendere il worktree task da HEAD remoto d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b. REM-0017 riparazione 1 preparata ma in attesa del candidato 0049 stabile: correggere VF-001/VF-002 ciclo 6 e rendere deterministico il readiness wait rilevato nel verdetto REM; task suite 3 run consecutivi e full 1, zero skip; verifier Claude Code. Poi riprendere REM-0017: aggiornare il pin solo al candidato governato, misurare il margine entro 45 minuti, CI completa e nuova verifica repair_cycle=1. Nessun sigillo o merge REM prima del GO.",
   "ready_set_observation": {
-    "blocked_transitively_on_0049": [
-      "OCOR-DEV-0049",
-      "OCOR-DEV-0059",
-      "OCOR-DEV-0060",
-      "OCOR-DEV-0061",
-      "OCOR-DEV-0062",
-      "OCOR-DEV-0063",
-      "OCOR-DEV-0064",
-      "OCOR-DEV-0065",
-      "OCOR-DEV-0066",
-      "OCOR-DEV-0067",
-      "OCOR-DEV-0068",
-      "OCOR-DEV-0069"
-    ],
     "dependency_ready_tasks": [
       "OCOR-DEV-0049",
       "OCOR-DEV-0050"
     ],
     "executable_backlog_tasks": [
+      "OCOR-DEV-0049",
       "OCOR-DEV-0050"
     ],
-    "observed_at": "2026-10-07T02:08:53.555889+00:00",
-    "priority_remediation": "OCOR-DEV-REM-0017",
-    "source": "origin/main execution state + approved backlog + OCOR-DEV-0049-REPAIR-6 + REM-0017-PRIORITY"
+    "next_authorized_repair": "OCOR-DEV-0049:repair_cycle=7",
+    "observed_at": "2026-10-07T06:10:33.768922+00:00",
+    "priority_remediation": "OCOR-DEV-REM-0017:WAITING_EXTERNAL_CANDIDATE_REPAIR",
+    "source": "origin/main + backlog + verdetto REM + OCOR-DEV-0049-REPAIR-7"
   },
   "remediation_status": {
     "CI-0048_REAL_BACKEND": {
@@ -1606,6 +1641,12 @@
       },
       "deviation_pr": 164,
       "deviation_registered_in": "reports/development/METHOD_COMPLIANCE.json",
+      "findings_disposition": {
+        "VF-001": "OPEN: candidato 0049 ha race readiness CI; attende il ciclo 7 autorizzato, nessun rerun fino al verde",
+        "VF-002": "OPEN: margine osservato 16 s su 2700 s, pin candidato da sostituire alla riparazione e rimuovere dopo integrazione; nessun aumento oltre 45 minuti",
+        "VF-003": "LOCAL_FIX_IMPLEMENTED: teardown CI verifica assenza su tre tipi di risorse senza env, altrimenti fail-closed; verifica indipendente pendente",
+        "VF-004": "REMEDIATION_REGISTERED: OCOR-DEV-REM-0018, scope spike e riqualifica separata"
+      },
       "g6_dependency": [
         "OCOR-DEV-0060",
         "OCOR-DEV-0061",
@@ -1615,13 +1656,36 @@
         "OCOR-DEV-0065",
         "OCOR-DEV-0066"
       ],
+      "independent_verification": {
+        "blocking_findings": [
+          "VF-001"
+        ],
+        "findings": [
+          "VF-001",
+          "VF-002",
+          "VF-003",
+          "VF-004"
+        ],
+        "head_sha": "6e2a08b62524b88b06f3b4b02b9e91449058de4a",
+        "implementer": "Codex (OpenAI)",
+        "not_executed": [
+          "Clone pulito da origin con teardown/ricreazione per ADVERSARIAL_CONFORMANCE: non applicabile (review_type REMEDIATION). Usato un worktree detached all'HEAD esatto con reset e ricreazione dello stack da zero.",
+          "Run CI verde sull'HEAD verificato: NON ottenuta. La run 37574931568 e' fallita (VF-001), quindi il controllo REM-0017-PRIORITY sull'esecuzione CI di stack completo, guard e rimozione dell'--ignore NON e' superato sull'HEAD. La rimozione dell'--ignore e' verificata solo staticamente nel diff del workflow e con la run locale."
+        ],
+        "repair_cycle": 0,
+        "request_id": "OCOR-DEV-REM-0017-6e2a08b62524-0",
+        "verdict": "NO_GO",
+        "verdict_file_sha256": "41cef72daef6732584cf7a448dd7da5f7f24d83bccccb05e9c53057e24318317",
+        "verifier": "Claude Code (Anthropic)"
+      },
       "notes": [
         "PR #164 excluded ocor-runtime/tests/tasks/test_ocor_dev_0048.py from the validation-closure CI (--ignore); accepted by the Product Owner ONLY as a temporary measure.",
         "OCOR-DEV-REM-0017 opened: provision the full ocor-bootstrap stack in CI (SPIRE server/agent + bootstrap credentials + digest-pinned images from infra/services.lock.json), run test_ocor_dev_0048.py with zero skips, remove the --ignore.",
         "Standing rule (2026-10-05): never exclude, deselect or mark tests to pass a check, and never remove skipped from counts. If a check fails for missing CI infrastructure, write a decision request and continue with other ready work."
       ],
       "rem_opened": "OCOR-DEV-REM-0017",
-      "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION"
+      "repair_cycle": 1,
+      "status": "REM_REPAIR1_WAITING_0049_CANDIDATE"
     },
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -2340,12 +2404,12 @@
   ],
   "status": "IN_PROGRESS",
   "terminal_loop_disposition": {
-    "available_next_work": "OCOR-DEV-REM-0017, poi OCOR-DEV-0050",
+    "available_next_work": "OCOR-DEV-0049 ciclo 7, REM-0017 dopo candidato stabile, poi G5",
     "loop_status": "CONTINUE",
     "po_decisions_pending": [
       "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE"
     ],
-    "reason": "REM-0017 candidato alla verifica; 0050 e task G5 indipendenti restano eseguibili. 0049 NO_GO invariato."
+    "reason": "REM-0017 resta WIP e attende candidato; ciclo 7 ora autorizzato. Nessuna chiusura o promozione."
   },
-  "updated_at": "2026-10-07T05:05:18.115617+00:00"
+  "updated_at": "2026-10-07T06:10:33.768922+00:00"
 }

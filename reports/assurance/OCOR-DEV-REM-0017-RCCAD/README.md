@@ -203,3 +203,50 @@ Implementatore Codex/OpenAI, verifier Claude Code/Anthropic in processo e
 contesto separati: non avviato né simulato dall'implementatore. Identità
 locale Fuseki resta richiesta PO separata; 0049 NO_GO invariato, nessun
 ciclo 7; E1/E2/Verified e tutti i claim restano nel fence originale.
+
+
+## Verdetto 0 e riparazione 1 — 2026-10-07 (WIP)
+
+Il verdetto Claude Code `OCOR-DEV-REM-0017-6e2a08b62524-0` è **NO_GO**.
+La CI esatta run 37574931568 fallisce sulla race del candidato 0049:
+il test Helm dopo uno sleep fisso ottiene `NOT_YET_SCANNED` invece della
+condizione attesa. Il PASS locale non sostituisce questa prova CI; nessun
+rerun fino al verde, nessuna nuova richiesta di verifica finché manca
+la campagna verde dell'HEAD esatto. Il record precedente e i raw originali
+sono preservati come candidati rifiutati, senza riscritture o sigilli.
+
+VF-003: il nuovo comando `bootstrap_ci_environment.py --teardown --execute`
+verifica tutti e tre gli inventari Docker etichettati `ocor-bootstrap`.
+Senza env consente soltanto un'assenza verificata; con risorse, oppure
+inventario Docker fallito, restituisce FAIL. Con env riusa il reset governato
+invariato e verifica l'assenza dei residui. Le due procedure `always()` del
+workflow consumano questo comando. I test prima della modifica falliscono;
+i positivi/negativi locali e le prove Docker sono nel record WIP repair-1.
+
+VF-004: aperto `OCOR-DEV-REM-0018` sul teardown degli spike, ID successivo
+verificato libero. Lo scope non è implementato in REM-0017; G6 resta bloccato
+anche da quel REM fino alla qualifica con riqualifiche content-addressed.
+
+VF-001/VF-002 restano aperti: la disposizione PO `OCOR-DEV-0049-REPAIR-7`
+(2026-10-07) autorizza il candidato riparato dal loop Codex con verifier
+Claude Code. REM-0017 ha completato il lavoro preparatorio e ora attende
+quell'evento sul distinto branch task, condizione che consente l'avvio
+ciclo 7 senza abbandonare il REM. Poi aggiornare il pin immutabile al nuovo
+candidato governato e ripetere CI e verifica REM repair_cycle=1.
+
+Ciclo di vita del pin: un aggiornamento richiede SHA esatto, candidata
+stabile e campagna completa senza skip; dopo l'integrazione di 0049
+rimuovere la checkout separata in un change set governato e richiedere
+`test_ocor_dev_0049` nella campagna principale. Nessun pin mobile. Fino a
+quel change set il gate resta fail-closed e la PR non può essere integrata.
+Il limite suite di 2700 secondi resta invariato: i 16 secondi di margine
+osservati dal verifier sono insufficienti a dichiarare stabilità. Servono
+misure e riduzione del costo della campagna, senza rimuovere casi, coverage
+o controlli; il task rimane OPEN se il limite non è rispettato stabilmente.
+
+Implementatore REM: Codex (OpenAI); verifier: Claude Code (Anthropic),
+processo e contesto separati. Nessuna nuova verifica avviata o simulata.
+Per 0049 la storia dei cicli 2–6 Claude resta dichiarata; ciclo 7 Codex.
+La divergenza identità Fuseki locale resta registrata nella richiesta
+FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE: nessuna modifica a lock o validator.
+E1=0, E2=0, zero Verified, runtime NOT_ESTABLISHED e PoC/Production NO-GO.

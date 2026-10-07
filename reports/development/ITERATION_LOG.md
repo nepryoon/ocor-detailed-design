@@ -4450,3 +4450,47 @@ Gate documentali: rccad PASS_LOCAL_PRECHECK, scope/language/ruff PASS, mypy 69 s
 - Tooling supplementare ufficiale Helm/kind/kubectl con checksum pubblicati, archive/binary digest distinti dove necessario, installazione worktree-scoped. Nessun cambiamento di infra/toolchain.lock.json, infra/services.lock.json, Dockerfile o checker; sole aggiunte puntuali all’allowlist di piano e self-hash settle. Teardown kind/bootstrap entrambi tentati anche su errore.
 - CI sorgente run 37568937953 su 4658ad808d41dfdb0b75255837adfd3f9609d071 SUCCESS, tentativo 2 del solo job principale; candidato PASS al tentativo 1. Prima build del job principale in timeout 300s, cleanup ERROR prima dell’env (nessuno stack creato): causa interna non catturata, raw preservati, un solo rerun senza cambio di pin/timeouts/gate; nessun PASS retroattivo. Evidenza operativa dei sei guard. Il record finale richiede nuovi check esatti prima del merge: non riusa il verde sorgente come verde finale. Implementatore Codex/OpenAI; verifier Claude Code/Anthropic in contesto separato, richiesta al loop, nessun verdetto simulato.
 - Completed invariati (63), ready set dalle dipendenze 0049/0050, 0049 escluso per escalation ciclo 6. Priorità REM-0017 poi 0050. Richiesta Fuseki separata pendente e non bloccante per CI; E1=0/E2=0, zero Verified, runtime NOT_ESTABLISHED e PoC/Production NO-GO invariati. CONTINUE.
+
+
+## 2026-10-07 — OCOR-DEV-REM-0017 repair 1, preparazione e attesa candidato 0049
+
+- Mandato CC-OCOR-DELIVERY-COMPLETION; implementatore Codex/OpenAI,
+  verifier Claude Code/Anthropic separato. Ripresa dal main 33821f315138b90bdae7f940e5327b15f9a19948
+  e dal verdetto REM-0017-6e2a08b62524-0 NO_GO: VF-001 CI race candidata,
+  VF-002 margine/pin, VF-003 teardown senza env, VF-004 volumi spike.
+- Worktree isolato e branch della PR #169 ripresi puliti, senza riscrittura.
+  Nessun implementatore concorrente attivo sullo scope; wrapper storico
+  Claude 0049 presente, candidato remoto d0ac80a invariato, nessun suo file modificato.
+- RED: 7 test teardown FAIL prima del codice, fingerprint SHA-256
+  0f6ba5aa378bfd28ea5c224ccd053a38e070115e5126873a74b035d4c325b6c4.
+  GREEN: 60 guard/report PASS, zero skip. Teardown CI credenziale-free
+  accetta solo inventari vuoti; Docker non disponibile o risorse residue
+  falliscono. Il reset sigillato 0082 è invariato; nessuna sua riqualifica necessaria.
+- VF-004 registrato come REM-0018 (successore libero verificato su repo/worktree),
+  nessuna modifica spike nello scope REM-0017; dipendenza G6 e riqualifica futura.
+- Bootstrap locale NOT_READY: identità Fuseki diversa dal lock, exit 2,
+  fallimento preservato senza retry; il punto resta nella decision request esistente.
+  Stack della ricetta CI qualificato tipizzato e 11 servizi pronti all'avvio;
+  suite completa e prove Docker catturate nel record WIP e nell'handoff.
+- Il primo controllo piano rileva solo self-hash del validator dopo aggiunte
+  puntuali all'allowlist; settle previsto senza modifiche alla logica dei gate.
+  L'ambiente recuperato manca di mypy: primo type check FAIL, extras lint
+  da completare prima del gate strict; esiti finali registrati nell'handoff.
+- VF-001/VF-002 REM ancora aperti; nessun rerun intermittente o aumento del
+  limite 45 minuti. Nessun sigillo/merge o verifica simulata. Attesa esterna
+  del candidato stabile: ora autorizzato ciclo 7 0049 Codex, Claude verifier,
+  da d0ac80a remoto. Prossima unità: riparazione 0049 e stabilità richiesta,
+  poi nuovo pin e CI completa + verifica REM repair_cycle=1. REM non abbandonato.
+- Inputs immutabili, E1=0/E2=0, zero Verified, claim NO-GO invariati.
+- Chiusura locale dell'unità: full 1101 PASS in 387.78 s, zero skip; report 60 PASS,
+  regression 18 PASS; mypy strict PASS su 72 file dopo sync frozen extras test/lint
+  (7 sole aggiunte, nessuna distribuzione preesistente cambiata). Prove Docker
+  positive e negativa PASS: no-op senza env solo su assenza verificata, rete
+  etichettata presente → rigetto e nessuna rimozione implicita. Normale teardown
+  elimina progetto; 18 volumi anonimi dei test rilevati e rimossi individualmente
+  sulla sola differenza della sessione, confermando VF-004/REM-0018. Nessun residuo
+  bootstrap; nessuna operazione sulle risorse Docker esterne alla sessione.
+- Source commit `188f6e9f8aa3d04b92e3c5a0f9668ddd2ffbf611`; record WIP repair-1 preserva record e raw del
+  candidato rifiutato. Piano settled 37 PASS/2 NOT_EXECUTED opzionali;
+  gli altri gate locali PASS. CI nuova e verifica REM NOT_EXECUTED, in attesa
+  del candidato ciclo 7 0049; nessun PASS attribuito all'HEAD CI fallito.
