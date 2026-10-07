@@ -198,8 +198,20 @@
     "reports/development/TERMINAL_BLOCKED_REPORT.json"
   ],
   "exact_next_action": "OCOR-DEV-REM-0017:implementation \u2014 riprendere repair 1 nel worktree .ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire da efce339d9fc7a551216c84135e06d39c0488a222, preservando il WIP; riallineare a origin/main senza force-push, diagnosticare CI run 37580988000, gestire il pin TEST-INFRA-006 e il suo ciclo di vita tenendo esplicito il NO_GO del candidato 0049 9d86abebc7626a36115540a2711772c1d2d19e23. Stack completo, zero skip, timeout suite <=2700 s, nessuna esclusione; acquisire CI verde esatta e nuova verifica indipendente Claude Code. Se una condizione riservata/esterna impedisce il REM, accodare la sola decisione pertinente e proseguire OCOR-DEV-0050/G5. 0049 resta escalato, nessun ciclo 8.",
-  "head_sha": "a7dd7525f1670f45d8996298efb167ff1017bbc1",
-  "head_sha_role": "BASELINE_BEFORE_STATE_SYNC; final state-sync HEAD acquired after commit and exact-green CI",
+  "external_publication": {
+    "api_source_commit": "64468442dd4e9e116e4b5cdd59af7ea0bf4a0439",
+    "different_commit_reason": "API normalizes author/committer offset +0200 to UTC; tree and parent are identical. Local worktree switched to API-published commit.",
+    "git_push_attempts": 2,
+    "git_push_result": "FAIL: GitHub Internal Server Error both attempts (2026-10-07T16:59:06Z, 16:59:28Z); no third push attempt",
+    "identical_tree": "05b69c22f6dee977e89ed2838046e952054734f7",
+    "initial_pr_create": "FAIL: GitHub GraphQL server error 2026-10-07T16:59:19Z; one retry succeeded after API publication",
+    "local_preserved_branch": "governed/state-sync-ocor-dev-0049-cycle7-verdict-local-preapi",
+    "local_preserved_commit": "0121d7d4c87a0102bf8d049738139caabec0b78a",
+    "pr": 174,
+    "recovery_method": "GitHub Git Data API tree/commit/ref, same repository and exact content validated; source local commit preserved as branch, no history rewritten"
+  },
+  "head_sha": "64468442dd4e9e116e4b5cdd59af7ea0bf4a0439",
+  "head_sha_role": "EXACT_TESTED_STATE_SYNC_SOURCE; final documentation HEAD must pass all 13 checks again",
   "independent_verification": {
     "blocking_findings": [
       "VF-001"
@@ -231,6 +243,14 @@
     "sha256": "1fc21ccd747627059474af20a850bd82631a9926954712e726efc691efc70454"
   },
   "raw_evidence_hashes": {
+    "api-commit-response.json": {
+      "path": "/home/luca/.ocor-codex/state-sync-0049-cycle7-verdict/api-commit-response.json",
+      "sha256": "38e41763cd90b4c2b4ff34e4a6ba57f40092585725f72337cf2e26fd1df417a1"
+    },
+    "api-tree-response.json": {
+      "path": "/home/luca/.ocor-codex/state-sync-0049-cycle7-verdict/api-tree-response.json",
+      "sha256": "4d6e7aa49fc77ddf0775c6b885fc635b6b1d6bb6a9378f6096d366649c42cb89"
+    },
     "pr169": {
       "path": "/home/luca/.ocor-codex/state-sync-0049-cycle7-verdict/pr169.json",
       "sha256": "6741b00ec58a1ffa404c8d26e4381313b32000a9f79bc537bab03bd0857d7bd1"
@@ -356,6 +376,10 @@
         "sha256": "09f2e2101a8cb87b039dbc76d330545c91b580cef816af00890c65edb0628553"
       }
     },
+    "publish-ref-response.json": {
+      "path": "/home/luca/.ocor-codex/state-sync-0049-cycle7-verdict/publish-ref-response.json",
+      "sha256": "0e2b14c7c4ce4d155c931151b95f650f6d953d1d186a1f7eabee8ca5db7e25f5"
+    },
     "ruleset": {
       "path": "/home/luca/.ocor-codex/state-sync-0049-cycle7-verdict/ruleset.json",
       "sha256": "14560b099709fcb4a16142a4cec4aaa9ae7e13fe7773b8a6eb512cc1a0b8ab0d"
@@ -363,6 +387,10 @@
     "session_resources": {
       "path": "/home/luca/.ocor-codex/state-sync-0049-cycle7-verdict/session-resources.json",
       "sha256": "8398256438afcff4d0788c3eca565f7e447a5e617f0982f63156f09e2ee008ee"
+    },
+    "source_ci": {
+      "path": "/home/luca/.ocor-codex/state-sync-0049-cycle7-verdict/source-ci-observation.json",
+      "sha256": "f905f81a6d35d4c4872a2c03f9b142181e1afe1b14687914249f7e68dba2c27e"
     },
     "verdict": {
       "path": "/home/luca/.ocor-codex/verdicts/OCOR-DEV-0049-9d86abebc762-7.json",
@@ -384,11 +412,155 @@
   "security_observability_notes": "inputs immutati; E1=0/E2=0; zero Verified; runtime NOT_ESTABLISHED, PoC/Production NO-GO; nessun nuovo DEC, capability, chiusura OI/ASM/RSK; nessuna risorsa condivisa toccata. Runtime/test/record candidato e sigillati preservati.",
   "state_sync_branch": "governed/state-sync-ocor-dev-0049-cycle7-verdict",
   "state_sync_ci": {
-    "branch": "governed/state-sync-ocor-dev-0049-cycle7-verdict",
-    "required_checks": 13,
-    "ruleset_id": 23412233,
-    "ruleset_observation_sha256": "14560b099709fcb4a16142a4cec4aaa9ae7e13fe7773b8a6eb512cc1a0b8ab0d",
-    "status": "PENDING_EXACT_HEAD_CI"
+    "checks": {
+      "backend-compatibility-not-ba-evidence": {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-07T17:02:58Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615679/job/112910353253",
+        "name": "backend-compatibility-not-ba-evidence",
+        "startedAt": "2026-10-07T17:02:40Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      "contract": {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-07T17:03:03Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615679/job/112910353343",
+        "name": "contract",
+        "startedAt": "2026-10-07T17:02:42Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      "delivery-activation": {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-07T17:22:54Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615572/job/112910354752",
+        "name": "delivery-activation",
+        "startedAt": "2026-10-07T17:02:43Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR autonomous delivery controls"
+      },
+      "evidence": {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-07T17:02:58Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615679/job/112910353095",
+        "name": "evidence",
+        "startedAt": "2026-10-07T17:02:41Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      "fgm-contract-readiness-not-runtime-evidence": {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-07T17:02:59Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615679/job/112910353486",
+        "name": "fgm-contract-readiness-not-runtime-evidence",
+        "startedAt": "2026-10-07T17:02:41Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      "integration-postgresql": {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-07T17:03:20Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615679/job/112910352459",
+        "name": "integration-postgresql",
+        "startedAt": "2026-10-07T17:02:40Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      "mandatory-gates": {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-07T17:03:28Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615679/job/112910888606",
+        "name": "mandatory-gates",
+        "startedAt": "2026-10-07T17:03:24Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      "rccad-methodology": {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-07T17:24:12Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615668/job/112910357799",
+        "name": "rccad-methodology",
+        "startedAt": "2026-10-07T17:02:41Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR RCCAD methodology gates"
+      },
+      "supply-chain": {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-07T17:03:02Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615845/job/112910355043",
+        "name": "supply-chain",
+        "startedAt": "2026-10-07T17:02:45Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR supply-chain gates"
+      },
+      "tooling-policy": {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-07T17:03:04Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615745/job/112910354144",
+        "name": "tooling-policy",
+        "startedAt": "2026-10-07T17:02:40Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR tooling and bootstrap policy"
+      },
+      "type-and-lint-gate": {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-07T17:03:32Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615745/job/112910354909",
+        "name": "type-and-lint-gate",
+        "startedAt": "2026-10-07T17:02:41Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR tooling and bootstrap policy"
+      },
+      "unit": {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-07T17:02:57Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615679/job/112910353171",
+        "name": "unit",
+        "startedAt": "2026-10-07T17:02:40Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      "validation-closure": {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-07T17:19:28Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615933/job/112910356085",
+        "name": "validation-closure",
+        "startedAt": "2026-10-07T17:02:43Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR governance and validation closure"
+      }
+    },
+    "final_head_check_required": true,
+    "head_sha": "64468442dd4e9e116e4b5cdd59af7ea0bf4a0439",
+    "missing": [],
+    "observed_at": "2026-10-07T17:24:29.116971+00:00",
+    "pr": 174,
+    "raw_observation_sha256": "f905f81a6d35d4c4872a2c03f9b142181e1afe1b14687914249f7e68dba2c27e",
+    "required_count": 13,
+    "run_ids": [
+      37655615572,
+      37655615668,
+      37655615679,
+      37655615745,
+      37655615845,
+      37655615933
+    ],
+    "status": "PASS_ALL_13_GREEN_ON_EXACT_HEAD",
+    "success": 13
   },
   "state_sync_gate_results": {
     "drift": {
@@ -547,7 +719,7 @@
     "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE: bootstrap attuale FAIL, lock/checker invariati; salute NOT_EXECUTED",
     "REM-0018 separato: teardown volumi spike vector/Kafka e harness C5 da qualificare"
   ],
-  "updated_at": "2026-10-07T16:57:52.731979+00:00",
+  "updated_at": "2026-10-07T17:25:27.369262+00:00",
   "validation_limitations": [
     {
       "control": "Bootstrap locale",
