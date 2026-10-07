@@ -2,8 +2,8 @@
 backup/replay and bounded safe-degraded modes (ADD v1.3 Part I §6, Part II §2.13;
 LLD v1.1 §5).
 
-Repair cycle 5 (implementer: Claude Code; verifier: Codex; PO decision
-OCOR-DEV-0049-REPAIR-CLAUDE-AUTO, third of three authorized cycles). Every criterion is proven on behaviour of real
+Repair cycle 7 (implementer: Codex; verifier: Claude Code; PO decision
+OCOR-DEV-0049-REPAIR-7; cycles 2–6 repaired by Claude Code). Every criterion is proven on behaviour of real
 processes on the digest-pinned stack, never on configuration booleans or string
 searches:
 
@@ -797,6 +797,34 @@ def test_receipt_matching_its_checkpoint_is_coherent(agent_module):
     assert agent_module.receipt_inconsistencies(empty, helm_profile()) == []
     assert agent_module.receipt_checkpoint_inconsistencies(
         empty, checkpoint_memory(entries=0, max_epoch=0, last=None, metadata_max=0)) == [], "empty journal"
+
+
+@pytest.mark.parametrize("journal_max,metadata_max", [(7, 7), (9, 7)])
+def test_tied_epoch_checkpoint_uses_the_replay_order(agent_module, journal_max, metadata_max):
+    """Seal and replay share one ordering even when the DB locale orders capitals
+    differently. A missing/reordered tombstone stays fail-closed; journal ahead
+    of metadata is valid when both belong to this signed recovery point."""
+    rows = [{"event_id": "evt-del-a", "item_id": "m2", "deletion_epoch": str(journal_max)},
+            {"event_id": "evt-del-B", "item_id": "m4", "deletion_epoch": str(journal_max)}]
+    ordered = agent_module.ordered_deletion_journal(rows)
+    ids = [r["event_id"] for r in ordered]
+    assert ids == ["evt-del-B", "evt-del-a"]
+    assert agent_module.ordered_deletion_journal(list(reversed(rows))) == ordered
+    earlier = {"event_id": "z", "item_id": "m0", "deletion_epoch": "2"}
+    assert agent_module.ordered_deletion_journal([*rows, earlier])[0] == earlier
+    receipt = coherent_receipt(helm_profile())
+    receipt["replayed_event_ids"] = ids
+    _epochs(journal_max, metadata_max)(receipt)
+    memory = checkpoint_memory(max_epoch=journal_max, metadata_max=metadata_max, last=ids[-1])
+    assert agent_module.receipt_inconsistencies(receipt, helm_profile()) == []
+    assert agent_module.receipt_checkpoint_inconsistencies(receipt, memory) == []
+    for broken_ids in (ids[:-1], list(reversed(ids)), [ids[-1], ids[-1]]):
+        broken = dict(receipt, replayed_event_ids=broken_ids)
+        assert "memory:tombstones_not_replayed" in agent_module.receipt_checkpoint_inconsistencies(broken, memory)
+    broken = deepcopy(receipt)
+    _epochs(journal_max - 1, metadata_max)(broken)
+    assert "memory:deletion_epoch_checkpoint_mismatch" in agent_module.receipt_checkpoint_inconsistencies(
+        broken, memory)
 
 
 @pytest.mark.parametrize("case,mutate,expected", CHECKPOINT_MUTATIONS, ids=[c[0] for c in CHECKPOINT_MUTATIONS])
@@ -1819,7 +1847,8 @@ RECEIPT_LIVE_POSITIVE_VARIANTS = [v for v in RECEIPT_POSITIVE_VARIANTS if v[0] !
                          ids=[c[0] for c in RECEIPT_LIVE_POSITIVE_VARIANTS])
 def test_custodian_signed_receipt_with_coherent_details_is_accepted(stack, coherence_ops, case, mutate):
     """Positive side of VF-002 on the live agent: a validly signed receipt whose details are
-    legitimately non-empty (other counts, journal ahead of metadata) is READY and reopenable."""
+    legitimately non-empty (other counts) is READY and reopenable. Journal ahead
+    of metadata is tested below against its own sealed recovery point."""
     name, vault = coherence_ops["name"], coherence_ops["vault"]
     receipt = deepcopy(coherence_ops["authentic"])
     mutate(receipt)
@@ -2685,12 +2714,25 @@ def test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness(kind, 
     ops = wait_for(lambda: pod_name(kind["namespace"], "ops"), 120, 2, "ops pod scheduled")
     wait_for(lambda: kubectl("-n", ns, "get", "pod", ops, "-o", "jsonpath={.status.phase}",
                              check=False).stdout == "Running", 300, 3, "ops pod running")
-    time.sleep(8)
-    assert not pod_ready(ns, "ops"), "pod must not be Ready before a tested restore exists"
-    probe = pod_python(ns, ops, "import urllib.request,urllib.error\ntry: urllib.request.urlopen("
-                       "'http://127.0.0.1:8080/readyz',timeout=5)\nexcept urllib.error.HTTPError as e: "
-                       "print(e.code, e.read().decode())")
+    def restore_untested_probe() -> str | None:
+        code = ("import urllib.request,urllib.error\ntry:\n"
+                " r=urllib.request.urlopen('http://127.0.0.1:8080/readyz',timeout=5); "
+                "print(r.status, r.read().decode())\n"
+                "except urllib.error.HTTPError as e: print(e.code, e.read().decode())\n"
+                "except OSError as e: print(type(e).__name__)\n")
+        result = kubectl("-n", ns, "exec", ops, "--", "python3", "-c", code, check=False)
+        if result.returncode:
+            return None  # container startup is bounded by wait_for, never a PASS
+        probe = result.stdout.strip()
+        assert not probe.startswith("200"), "readiness admitted an untested restore"
+        assert not pod_ready(ns, "ops"), "pod became Ready before a tested restore exists"
+        return probe if probe.startswith("503") and "RESTORE_UNTESTED" in probe else None
+
+    # REM-0017 verifier VF-001: Running is not a completed scan. Wait for the
+    # required denial itself, never treat NOT_YET_SCANNED as the assertion.
+    probe = wait_for(restore_untested_probe, 120, 2, "first completed scan denies an untested restore")
     assert probe.startswith("503") and "RESTORE_UNTESTED" in probe, probe
+    assert not pod_ready(ns, "ops"), "pod must not be Ready before a tested restore exists"
 
     # Verdict OCOR-DEV-0049-02ac643eb3c7-3 VF-003: a manual backup launched at the tick of
     # the approved schedule runs concurrently with the scheduled one; each job's recovery
@@ -2895,3 +2937,77 @@ def test_missing_environment_fails_instead_of_skipping(tmp_path):
     assert 'skipped="0"' in report, report
     assert 'errors="1"' in report or 'failures="1"' in report, report
     assert "ocor-bootstrap env file not found" in result.stdout
+
+
+@pytest.mark.parametrize("journal_max,metadata_max", [(7, 7), (9, 7)])
+def test_seal_and_restore_tied_epoch_tombstones_are_locale_independent(stack, agent_module,
+                                                                     journal_max, metadata_max):
+    """Live VF-001/VF-002: seal + isolated restore with same-epoch IDs whose
+    locale and codepoint orders diverge; the signed checkpoint accepts the real
+    replay (also with journal ahead of metadata), and refuses omitted, reordered
+    tombstones and a deletion epoch below the checkpoint at the live boundary."""
+    import psycopg
+
+    vault = stack.work / f"tied-epoch-{journal_max}"
+    vault.mkdir()
+    project = f"ocor-poc-tied-{uuid.uuid4().hex[:6]}"
+    name = None
+    try:
+        load_drill_fixture(stack.env, consistent=True)
+        with psycopg.connect(postgres_dsn(stack.env, "ocor_poc_drill"), autocommit=True) as conn:
+            conn.execute("update memory_item set deletion_epoch=%s where lifecycle_state='deleted'",
+                         (metadata_max,))
+            conn.execute("delete from memory_deletion_journal")
+            conn.execute("insert into memory_deletion_journal values (%s,'m2',%s),(%s,'m4',%s)",
+                         ("evt-del-a", journal_max, "evt-del-B", journal_max))
+            locale_ids = [r[0] for r in conn.execute("select event_id from memory_deletion_journal order by event_id")]
+            codepoint_ids = [r[0] for r in conn.execute(
+                'select event_id from memory_deletion_journal order by event_id collate "C"')]
+            assert locale_ids != codepoint_ids, "fixture must exercise a real DB/Python collation divergence"
+            assert codepoint_ids == ["evt-del-B", "evt-del-a"]
+        code, logs = stack.run_stage(project, "backup", "ocor-backup-seal", vault=vault)
+        assert code == 0, logs
+        points = list((vault / "recovery-points").iterdir())
+        assert len(points) == 1, "this vault belongs to only this seal"
+        point = points[0]
+        sealed = {"recovery_point": point.name,
+                  "manifest_sha256": hashlib.sha256((point / "manifest.json").read_bytes()).hexdigest()}
+        manifest = assert_sealed(stack, vault, sealed, helm_profile())
+        memory = manifest["memory"]
+        assert memory["journalCheckpoints"] == {"entries": 2, "max_deletion_epoch": journal_max,
+                                               "last_event_id": codepoint_ids[-1]}
+        assert memory["deletionEpochs"] == {"journal_max": journal_max, "metadata_max": metadata_max}
+        stack.down(project)
+        code, logs = stack.run_stage_detached(project, "restore-drill", "ocor-restore-finalize", vault=vault)
+        assert code == 0, logs
+        assert sorted(restored_payloads(project)) == ["m1", "m3", "m5"], "both tombstones took effect"
+        receipt = latest_receipt(vault)
+        assert receipt["replayed_event_ids"] == codepoint_ids
+        assert agent_module.receipt_checkpoint_inconsistencies(receipt, memory) == []
+        name = _standalone_ops(stack, vault, f"{stack.ops_project}_site")
+        wait_for(lambda: _standalone_readyz(name)[0] == 200, 60, message="tied-epoch receipt accepted live")
+        good_digest = receipt_digest(vault)
+        status, body = reopen(name, stack.operator_token, good_digest, base=LOCAL_OPS)
+        assert (status, body["reason_code"]) == (200, "MUTATIVE_PATH_REOPENED_BY_HUMAN")
+        assert_admission(name, admitted=OPERATION_CLASSES, base=LOCAL_OPS)
+        mutations = [("omitted", _set("replayed_event_ids", codepoint_ids[:-1]), "memory:tombstones_not_replayed"),
+                     ("locale_order", _set("replayed_event_ids", locale_ids), "memory:tombstones_not_replayed"),
+                     ("below_checkpoint", _epochs(journal_max - 1, min(metadata_max, journal_max - 1)),
+                      "memory:deletion_epoch_checkpoint_mismatch")]
+        for case, mutate, detail in mutations:
+            broken = deepcopy(receipt)
+            mutate(broken)
+            files, digest = write_signed_receipt(stack.env, vault, broken, f"tied-{case}")
+            try:
+                _observe_refused_receipt(stack, name, digest, "RESTORE_RECEIPT_INCONSISTENT", detail)
+            finally:
+                for f in files:
+                    f.unlink()
+            wait_for(lambda: posture(name, LOCAL_OPS)["restore"]["receipt_digest"] == good_digest, 30,
+                     message="authentic tied-epoch receipt accepted again")
+            assert wait_for(lambda: _standalone_readyz(name)[0] == 200, 15)
+    finally:
+        if name:
+            subprocess.run(["docker", "rm", "-f", "-v", name], capture_output=True, check=True)
+        stack.down(project)
+        load_drill_fixture(stack.env, consistent=True)

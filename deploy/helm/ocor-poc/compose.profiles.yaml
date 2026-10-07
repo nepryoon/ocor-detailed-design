@@ -181,7 +181,7 @@ services:
         memory=$$(psql -d ocor -Atc "select count(*) from pg_database where datname='$$MEMORY_DB'")
         if [ "$$memory" = 1 ]; then
           psql -d "$$MEMORY_DB" -c "\copy (select item_id, tenant_id, compartments, representation_version, lifecycle_epoch, lifecycle_state, coalesce(deletion_epoch::text, '') as deletion_epoch, content_ref, classification_marking_ref, governed_context_digest from memory_item order by item_id) to '$$out/memory-items.csv' csv header"
-          psql -d "$$MEMORY_DB" -c "\copy (select event_id, item_id, deletion_epoch from memory_deletion_journal order by deletion_epoch, event_id) to '$$out/memory-deletion-journal.csv' csv header"
+          psql -d "$$MEMORY_DB" -c "\copy (select event_id, item_id, deletion_epoch from memory_deletion_journal order by deletion_epoch, event_id collate \"C\") to '$$out/memory-deletion-journal.csv' csv header"
         fi
         ls -l "$$out"
 
@@ -1707,6 +1707,13 @@ configs:
               return list(csv.DictReader(fh))
 
 
+      def ordered_deletion_journal(rows: list[dict[str, str]]) -> list[dict[str, str]]:
+          """One numeric-epoch/codepoint order for seal checkpoints and replay.
+          PostgreSQL capture uses COLLATE C; its database locale is never authority
+          for the event-id tie break. Sorting here also canonicalizes older CSV cuts."""
+          return sorted(rows, key=lambda row: (int(row["deletion_epoch"]), row["event_id"]))
+
+
       def read_digests(path: Path) -> dict[str, list[str]]:
           out: dict[str, list[str]] = {}
           for line in path.read_text().splitlines():
@@ -1750,7 +1757,7 @@ configs:
           artifacts.append(("event", "kafka/offsets.txt", kafka.read_bytes()))
           # Memory metadata, deletion journal and index snapshot at the same cut (Part II 2.13).
           items = read_csv(pg_dir / "memory-items.csv")
-          journal = read_csv(pg_dir / "memory-deletion-journal.csv")
+          journal = ordered_deletion_journal(read_csv(pg_dir / "memory-deletion-journal.csv"))
           q = deps["qdrant"]
           base = f"http://{q['host']}:{q['port']}"
           collection = mem_cfg["indexCollection"]
@@ -2017,8 +2024,7 @@ configs:
               http_bytes("POST", f"{base}/collections/{collection}/snapshots/upload?priority=snapshot&wait=true",
                      body, ctype, timeout=120)
               items = read_csv(staging / "memory" / "memory-items.csv")
-              journal = sorted(read_csv(staging / "memory" / "memory-deletion-journal.csv"),
-                               key=lambda r: (int(r["deletion_epoch"]), r["event_id"]))
+              journal = ordered_deletion_journal(read_csv(staging / "memory" / "memory-deletion-journal.csv"))
               # Replay tombstones BEFORE retrieval reopens, with original event ids, no external effects.
               for tomb in journal:
                   http_bytes("POST", f"{base}/collections/{collection}/points/delete?wait=true",
