@@ -62,6 +62,34 @@ def execute(repository: Path, command: list[str], label: str, timeout: int) -> s
     return result.stdout
 
 
+def owned_resources(repository: Path) -> dict[str, list[str]]:
+    """Inventory every resource kind under the exact disposable Compose label."""
+    commands = {
+        "containers": ["docker", "ps", "-aq"],
+        "volumes": ["docker", "volume", "ls", "-q"],
+        "networks": ["docker", "network", "ls", "-q"],
+    }
+    return {
+        kind: execute(repository, command + ["--filter", "label=com.docker.compose.project=ocor-bootstrap"],
+                      f"teardown inventory {kind}", 10).split()
+        for kind, command in commands.items()
+    }
+
+
+def teardown(repository: Path) -> dict[str, object]:
+    """Allow credential-free teardown only when absence is positively verified."""
+    if not (repository / ".ocor/bootstrap.env").is_file():
+        residual = owned_resources(repository)
+        if any(residual.values()):
+            raise BootstrapError("teardown credentials absent but owned resources remain")
+        return {"status": "PASS", "operation": "teardown", "result": "ALREADY_REMOVED", "residual": residual}
+    execute(repository, [sys.executable, "scripts/reset_test_environment.py", "--execute"], "governed teardown", 180)
+    residual = owned_resources(repository)
+    if any(residual.values()):
+        raise BootstrapError("owned resources remain after teardown")
+    return {"status": "PASS", "operation": "teardown", "result": "REMOVED", "residual": residual}
+
+
 def prepare_ca(repository: Path, env_file: Path) -> None:
     values = dict(line.split("=", 1) for line in env_file.read_text().splitlines() if "=" in line)
     directory = Path(values["OCOR_SPIRE_BOOTSTRAP_DIR"]).resolve()
@@ -175,11 +203,22 @@ def provision(repository: Path, timeout: int) -> dict[str, object]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--execute", action="store_true")
+    parser.add_argument("--teardown", action="store_true", help="remove this disposable CI stack or verify its absence")
     parser.add_argument("--timeout", type=int, default=300)
     args = parser.parse_args()
     if not 1 <= args.timeout <= 600:
         parser.error("timeout must be between 1 and 600 seconds")
     repository = root()
+    if args.teardown:
+        if not args.execute:
+            print(json.dumps({"mode": "CHECK_ONLY", "operation": "teardown", "status": "PASS"}))
+            return 0
+        try:
+            print(json.dumps(teardown(repository), indent=2, sort_keys=True))
+            return 0
+        except (BootstrapError, OSError, ValueError, subprocess.SubprocessError) as exc:
+            print(json.dumps({"status": "FAIL", "operation": "teardown", "error": str(exc)}))
+            return 1
     if not args.execute:
         errors = validate_locks(repository)
         print(json.dumps({"mode": "CHECK_ONLY", "status": "FAIL" if errors else "PASS", "errors": errors}))

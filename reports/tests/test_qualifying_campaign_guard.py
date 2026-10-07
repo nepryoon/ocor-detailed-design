@@ -157,3 +157,62 @@ def test_fuseki_unbounded_absent_or_ambiguous_jvm_fails_closed(processes):
     from ocor_bootstrap_lib import BootstrapError
     with pytest.raises(BootstrapError):
         running_jvm_args(processes)
+
+
+@pytest.mark.parametrize("resource_kind", ["containers", "volumes", "networks"])
+def test_ci_teardown_missing_credentials_with_resources_fails_closed(tmp_path, monkeypatch, resource_kind):
+    import bootstrap_ci_environment as ci
+    from ocor_bootstrap_lib import BootstrapError
+    resources = {kind: [] for kind in ("containers", "volumes", "networks")}
+    resources[resource_kind] = ["owned-resource"]
+    monkeypatch.setattr(ci, "owned_resources", lambda repository: resources, raising=False)
+    monkeypatch.setattr(ci, "execute", lambda *args: pytest.fail("must not mutate without credentials"))
+    with pytest.raises(BootstrapError, match="credentials absent.*resources remain"):
+        ci.teardown(tmp_path)
+
+
+def test_ci_teardown_absent_credentials_and_no_resources_is_verified_noop(tmp_path, monkeypatch):
+    import bootstrap_ci_environment as ci
+    monkeypatch.setattr(ci, "owned_resources", lambda repository: {
+        "containers": [], "volumes": [], "networks": []
+    }, raising=False)
+    monkeypatch.setattr(ci, "execute", lambda *args: pytest.fail("empty stack must not call Compose"))
+    assert ci.teardown(tmp_path) == {"status": "PASS", "operation": "teardown", "result": "ALREADY_REMOVED",
+                                    "residual": {"containers": [], "volumes": [], "networks": []}}
+
+
+def test_ci_teardown_inventory_failure_is_not_an_empty_stack(tmp_path, monkeypatch):
+    import bootstrap_ci_environment as ci
+    from ocor_bootstrap_lib import BootstrapError
+    def fail(*args):
+        raise BootstrapError("docker inventory failed")
+    monkeypatch.setattr(ci, "execute", fail)
+    with pytest.raises(BootstrapError, match="docker inventory failed"):
+        ci.teardown(tmp_path)
+
+
+def test_ci_teardown_existing_credentials_runs_governed_reset_and_checks_residue(tmp_path, monkeypatch):
+    import bootstrap_ci_environment as ci
+    (tmp_path / ".ocor").mkdir()
+    (tmp_path / ".ocor/bootstrap.env").touch()
+    calls = []
+    monkeypatch.setattr(ci, "execute", lambda *args: calls.append(args) or "")
+    monkeypatch.setattr(ci, "owned_resources", lambda repository: {
+        "containers": [], "volumes": [], "networks": []
+    }, raising=False)
+    assert ci.teardown(tmp_path)["result"] == "REMOVED"
+    assert calls[0][1] == [sys.executable, "scripts/reset_test_environment.py", "--execute"]
+    assert calls[0][3] == 180
+
+
+def test_ci_teardown_residual_resources_are_a_failure(tmp_path, monkeypatch):
+    import bootstrap_ci_environment as ci
+    from ocor_bootstrap_lib import BootstrapError
+    (tmp_path / ".ocor").mkdir()
+    (tmp_path / ".ocor/bootstrap.env").touch()
+    monkeypatch.setattr(ci, "execute", lambda *args: "")
+    monkeypatch.setattr(ci, "owned_resources", lambda repository: {
+        "containers": [], "volumes": ["residue"], "networks": []
+    }, raising=False)
+    with pytest.raises(BootstrapError, match="resources remain after teardown"):
+        ci.teardown(tmp_path)
