@@ -4447,3 +4447,5 @@ Gate documentali: rccad PASS_LOCAL_PRECHECK, scope/language/ruff PASS, mypy 69 s
 - Checkpoint ripresa: task1 su a128a62 = 325 PASS/0 fail/error/skip, 2088.53 s, SHA256 a94a71df44e8c8b96647d1d8dcbe41039b497ec11eb0868247cacb34969e1ade. Teardown con delta vuoto; task2/task3/full ancora pending, nessun PASS finale di stabilità.
 
 - CI source PR #173: 13/13 required SUCCESS su 989ab55fa6c5d23b1dfd4700048cb4b091836664, ruleset 23412233 active/no bypass verificato. Run 37601614242, 37601614246, 37601614371, 37601614527, 37601614529, 37601614534; raw SHA256 db520bd90efd8a90cf670ff8855f8a07644457b0e9f7d00c8241184de2f5dbab. Stato finale da ricontrollare sull’HEAD finale: nessun PASS del sorgente riusato per il merge.
+
+- Checkpoint ripresa: task2 su a128a62 = 325 PASS/0 fail/error/skip, 1734.41 s, SHA256 75cd6e19fe5a2fa5a674774282ab4ab5a13349dee81ce8f0880a1d360b43b092. Teardown delta vuoto; task3/full pending. Rilette le 9 righe IRB del registro approvato v1.1 (BR-003, FR-156, NFR-001/041/042/043/065/067/080); scope candidato resta circoscritto, nessun requisito globale Verified.

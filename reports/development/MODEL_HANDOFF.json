@@ -122,6 +122,7 @@
     "red-unit.log": "a2ba54534b9802a821c8c69dfed7eaf4fffc77a14f5930426fc369d2b69cc7fc",
     "redactual.log": "e902a104fb92be8d564058e53e464c28ab5749ccf5a51db681c27e866f2033b5",
     "resume-task1.log": "a94a71df44e8c8b96647d1d8dcbe41039b497ec11eb0868247cacb34969e1ade",
+    "resume-task2.log": "75cd6e19fe5a2fa5a674774282ab4ab5a13349dee81ce8f0880a1d360b43b092",
     "ruff.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
     "toolchain.log": "78d7fb21f0d714aea905c902192d95893745154dbd15904bd1323d9bc6c720d6"
   },
@@ -397,7 +398,7 @@
     "stability_progress": {
       "qualifying_runs": [],
       "raw_directory": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128",
-      "remaining": "task2/task3/full pending; no final stability PASS",
+      "remaining": "task3/full pending; no final stability PASS",
       "source_commit": "a128a622151261d510b332ca93a688912a119197",
       "status": "IN_PROGRESS",
       "task1": {
@@ -445,6 +446,52 @@
           "volumes": []
         },
         "removed_volumes": []
+      },
+      "task2": {
+        "command": [
+          "uv",
+          "run",
+          "--project",
+          "ocor-runtime",
+          "--frozen",
+          "--extra",
+          "test",
+          "--extra",
+          "lint",
+          "pytest",
+          "-v",
+          "-ra",
+          "-p",
+          "no:cacheprovider",
+          "--basetemp=/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/bt-task2",
+          "--junitxml=/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/task2.xml",
+          "ocor-runtime/tests/tasks/test_ocor_dev_0049.py"
+        ],
+        "counts": {
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "tests": 325
+        },
+        "duration_seconds": 1734.4062990880047,
+        "exit_code": 0,
+        "finished_at": "2026-10-07T10:35:43.218028+00:00",
+        "head_sha": "a128a622151261d510b332ca93a688912a119197",
+        "started_at": "2026-10-07T10:06:48.811749+00:00",
+        "watchdog_error": null
+      },
+      "task2_residue": {
+        "final_delta": {
+          "containers": [],
+          "networks": [],
+          "volumes": []
+        },
+        "observed": {
+          "containers": [],
+          "networks": [],
+          "volumes": []
+        },
+        "removed_volumes": []
       }
     },
     "toolchain": "PASS 9/9"
@@ -455,7 +502,7 @@
     "REM-0018 aperto nel change set REM per volumi anonimi spike",
     "0049 non verificato/sigillato, nessun ciclo 8"
   ],
-  "updated_at": "2026-10-07T10:08:36.074977+00:00",
+  "updated_at": "2026-10-07T10:39:39.749132+00:00",
   "validation_limitations": [
     "Suite completa e tripla stabilit\u00e0 IN_PROGRESS; verifica indipendente NOT_EXECUTED",
     "Bootstrap locale con controllo ID FAIL (exit 2); identit\u00e0 Fuseki resta riservata al change set separato, nessun aggiornamento in 0049",

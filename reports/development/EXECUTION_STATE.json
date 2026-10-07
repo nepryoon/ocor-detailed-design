@@ -631,7 +631,7 @@
         },
         "source_commit": "a128a622151261d510b332ca93a688912a119197",
         "stability_progress": {
-          "status": "1_OF_3_TASK_RUNS_PASS_FULL_PENDING",
+          "status": "2_OF_3_TASK_RUNS_PASS_FULL_PENDING",
           "task1": {
             "command": [
               "uv",
@@ -664,6 +664,52 @@
             "head_sha": "a128a622151261d510b332ca93a688912a119197",
             "started_at": "2026-10-07T09:31:02.839594+00:00",
             "watchdog_error": null
+          },
+          "task2": {
+            "command": [
+              "uv",
+              "run",
+              "--project",
+              "ocor-runtime",
+              "--frozen",
+              "--extra",
+              "test",
+              "--extra",
+              "lint",
+              "pytest",
+              "-v",
+              "-ra",
+              "-p",
+              "no:cacheprovider",
+              "--basetemp=/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/bt-task2",
+              "--junitxml=/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/task2.xml",
+              "ocor-runtime/tests/tasks/test_ocor_dev_0049.py"
+            ],
+            "counts": {
+              "errors": 0,
+              "failures": 0,
+              "skipped": 0,
+              "tests": 325
+            },
+            "duration_seconds": 1734.4062990880047,
+            "exit_code": 0,
+            "finished_at": "2026-10-07T10:35:43.218028+00:00",
+            "head_sha": "a128a622151261d510b332ca93a688912a119197",
+            "started_at": "2026-10-07T10:06:48.811749+00:00",
+            "watchdog_error": null
+          },
+          "task2_teardown": {
+            "final_delta": {
+              "containers": [],
+              "networks": [],
+              "volumes": []
+            },
+            "observed": {
+              "containers": [],
+              "networks": [],
+              "volumes": []
+            },
+            "removed_volumes": []
           },
           "teardown": {
             "final_delta": {
@@ -1913,5 +1959,5 @@
     "loop_status": "CONTINUE",
     "reason": "0049 ciclo 7 autorizzato; REM-0017 WIP preservato in attesa candidato; G5 eseguibile per dipendenze. Nessun ciclo 8."
   },
-  "updated_at": "2026-10-07T10:08:36.073993+00:00"
+  "updated_at": "2026-10-07T10:39:39.748099+00:00"
 }
