@@ -1,10 +1,10 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-ocor-dev-0049-cycle6",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_0049_CYCLE6_ESCALATION_STATE_SYNC",
+    "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__REM_0017_BOOTSTRAP_REPAIR",
     "decision_id": "DEC-210",
-    "phase": "OCOR_DEV_0049_CYCLE6_NO_GO_ESCALATION_CONTINUE",
-    "worktree": ".ocor/worktrees/state-sync-ocor-dev-0049-cycle6"
+    "phase": "REM_0017_IMPLEMENTATION_WIP",
+    "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
   },
   "backlog_escalations": {
     "OCOR-DEV-0048": {
@@ -743,7 +743,7 @@
       ]
     }
   },
-  "baseline_commit": "5c57d411a7036d585d431a8030c4816831e7d40c",
+  "baseline_commit": "33821f315138b90bdae7f940e5327b15f9a19948",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -820,7 +820,7 @@
       ],
       "concurrent_pr": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
-        "disposition": "PR concorrente osservata e non modificata; precede 0050 dopo la verifica/integrazione 0049.",
+        "disposition": "Ripresa dopo assenza di attivit\u00e0 concorrente; WIP Codex, nessun merge n\u00e9 chiusura.",
         "head_sha": "7562d3c48015f45a0b518fde622ca4304e9468ca",
         "number": 169,
         "observed_check": "validation-closure FAILURE",
@@ -828,9 +828,11 @@
         "run_id": 37350619188
       },
       "id": "OCOR-DEV-REM-0017",
+      "implementation_record": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/evidence.json",
       "non_blocking": false,
       "scope": "REM-0017-PRIORITY (2026-10-05): stack CI completo e zero skip per tutti i CONDITIONAL_INFRASTRUCTURE_GUARD (TEST-INFRA-005/006 e successivi), poi rimozione --ignore PR #164. Prossimo task dopo verifica/integrazione 0049, prima di 0050; G6 bloccato fino alla chiusura verificata.",
-      "status": "OPEN"
+      "status": "IN_PROGRESS_IMPLEMENTATION_WIP",
+      "test_infra_006_disposition": "NOT_EXECUTED; test assente su main, candidato 0049 rifiutato preservato; campagna CI separata da completare"
     },
     {
       "blocked_tasks": [
@@ -864,6 +866,14 @@
       "resolution": "Hosted runner nuovamente disponibili: 13 check richiesti SUCCESS su PR #170 HEAD bda5fb1294398c43f0ee37b915896e669c1745f0; raw observation SHA-256 a62916010830d4689c8c6522268550c0a804357a0daad89bfb6a60417e901769. Il commit finale documentale richiede di nuovo 13 check SUCCESS prima del merge esatto.",
       "scope": "PR #170: quattro job non acquisiti da hosted runner anche dopo l\u2019unico rerun; merge dello state sync impossibile. Non blocca riparazione Claude Code di 0049 n\u00e9 implementazioni locali G5; nessun bypass o risorsa a pagamento autorizzato.",
       "status": "RESOLVED_EXTERNAL_CONDITION"
+    },
+    {
+      "blocked_tasks": [],
+      "decision_request": "reports/development/decision_requests/FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE.md",
+      "id": "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE",
+      "non_blocking": true,
+      "scope": "Bootstrap locale con confronto ID esatto irrisolto; pipeline CI eseguibile, lock/checker invariati.",
+      "status": "OPEN_PO_DECISION_REQUIRED"
     }
   ],
   "claims": {
@@ -1034,7 +1044,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-REM-0017:implementation \u2014 riprendere il change set della PR #169 dopo verifica di assenza di attivit\u00e0 concorrente; diagnosticare validation-closure run 37350619188, stack CI completo e zero skip, verifica indipendente Claude Code; poi OCOR-DEV-0050. OCOR-DEV-0049 bloccato, nessun ciclo 7 autorizzato.",
+  "next_executable_action": "OCOR-DEV-REM-0017:implementation \u2014 osservare CI PR #169 sul nuovo HEAD; completare TEST-INFRA-006 con checkout CI separato e immutato del candidato 0049 d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b e tooling ufficiale pinned, senza riparare/promuovere 0049; poi gate e verifica indipendente Claude Code. Se capacit\u00e0 CI insufficiente: misure/decision request e proseguire OCOR-DEV-0050.",
   "ready_set_observation": {
     "blocked_transitively_on_0049": [
       "OCOR-DEV-0049",
@@ -1804,5 +1814,5 @@
     "po_decisions_pending": [],
     "reason": "OCOR-DEV-0049-REPAIR-6 supera l\u2019arresto puntuale: REM-0017 e 0050 eseguibili. Nessun ciclo 7."
   },
-  "updated_at": "2026-10-07T02:19:09.616673+00:00"
+  "updated_at": "2026-10-07T02:52:07.941061+00:00"
 }
