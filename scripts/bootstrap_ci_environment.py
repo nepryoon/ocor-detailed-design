@@ -10,12 +10,27 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
 
 from bootstrap_development_environment import replace_env, write_secret_file
 from ocor_bootstrap_lib import BootstrapError, load_json, retry, root, run, validate_locks
+
+
+def redact(text: str, secrets: list[str]) -> str:
+    for value in secrets:
+        if value:
+            text = text.replace(value, "[REDACTED]")
+    return re.sub(r"-----BEGIN (?:RSA |EC )?PRIVATE KEY-----.*?-----END (?:RSA |EC )?PRIVATE KEY-----", "[REDACTED PRIVATE KEY]", text, flags=re.DOTALL)
+
+
+def redact_campaign_log(repository: Path, path: Path) -> None:
+    env_file = repository / ".ocor/bootstrap.env"
+    secrets = [line.split("=", 1)[1] for line in env_file.read_text().splitlines()
+               if "=" in line and line.split("=", 1)[0].endswith(("TOKEN", "PASSWORD"))]
+    path.write_text(redact(path.read_text(), secrets))
 
 
 def collect_stack_diagnostics(repository: Path, output: Path) -> None:
@@ -35,10 +50,7 @@ def collect_stack_diagnostics(repository: Path, output: Path) -> None:
         for identity in ids:
             result = run(["docker", "logs", "--tail", "100", identity], cwd=repository, timeout=10)
             text = result.stdout + result.stderr
-            for secret in secrets:
-                if secret:
-                    text = text.replace(secret, "[REDACTED]")
-            log.write(f"\nContainer {identity}\n{text}")
+            log.write(f"\nContainer {identity}\n{redact(text, secrets)}")
 
 
 def execute(repository: Path, command: list[str], label: str, timeout: int) -> str:

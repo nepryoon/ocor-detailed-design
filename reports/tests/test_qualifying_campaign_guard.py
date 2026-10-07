@@ -60,3 +60,13 @@ def test_manual_restart_is_rejected_even_without_restart_counter_change():
     after['State']['StartedAt'] = '2026-10-07T02:00:05Z'
     with pytest.raises(GUARD.CampaignError):
         GUARD.check_stack({'service': before}, {'service': after})
+
+
+def test_credential_redaction_preserves_failure_and_counts():
+    from bootstrap_ci_environment import redact
+    assert redact('FAIL: secret-token; 1 failed, 0 skipped', ['secret-token']) == 'FAIL: [REDACTED]; 1 failed, 0 skipped'
+
+
+def test_pem_redaction_removes_key_material():
+    from bootstrap_ci_environment import redact
+    assert 'private-data' not in redact('-----BEGIN PRIVATE KEY-----\nprivate-data\n-----END PRIVATE KEY-----', [])

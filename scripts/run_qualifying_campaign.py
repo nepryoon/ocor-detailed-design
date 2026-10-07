@@ -13,7 +13,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
-from bootstrap_ci_environment import collect_stack_diagnostics
+from bootstrap_ci_environment import collect_stack_diagnostics, redact_campaign_log
 
 
 class CampaignError(RuntimeError):
@@ -107,6 +107,9 @@ def main() -> int:
     finally:
         if process is not None:
             stop(process)
+            redact_campaign_log(repository, output / "post_remediation_runtime.log")
+            if junit.exists():
+                redact_campaign_log(repository, junit)
 
 
 if __name__ == "__main__":
