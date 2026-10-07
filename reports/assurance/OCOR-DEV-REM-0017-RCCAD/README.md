@@ -112,3 +112,65 @@ Rollback: nuovo revert del change set governato; nessuna migrazione dei dati.
 L'eventuale rollback della rimozione dell'ignore è solo ripristino della misura
 storica PR #164, soggetto alla sua disposition PO, mai un mezzo per sigillare
 questo REM. Il candidato non è stato integrato; main conserva la misura.
+
+## Copertura del candidato TEST-INFRA-006 — 2026-10-07
+
+Il job `conditional-infrastructure-0049` acquisisce in una checkout separata il
+commit immutabile `d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b` e avvia lo stack
+completo mediante il bootstrap del change set REM. Esegue l'intera suite del
+candidato, senza selezioni o esclusioni. Il supervisore verifica l'HEAD e
+l'assenza di modifiche tracciate prima e dopo il run, oltre a richiedere nel
+JUnit entrambi i moduli `test_ocor_dev_0048` e `test_ocor_dev_0049`. Un verde
+senza uno dei due moduli viene rifiutato anche se altri test passano.
+
+Il job obbligatorio `validation-closure` dipende da tale campagna e usa
+`if: always()` con un controllo esplicito del risultato della dipendenza:
+fallimento, cancellazione o mancata esecuzione non diventano un check verde
+per effetto di uno skip del job. La successiva campagna del branch REM esegue
+nuovamente tutti i test di main e le guardie dei report. TEST-INFRA-001/003/005
+sono nella suite runtime, TEST-INFRA-002/004 nei report; TEST-INFRA-006 è
+esercitato nella checkout candidata. Nessuna nuova guardia è registrata.
+
+Helm 3.14.4, kind 0.29.0 e kubectl 1.33.1 sono acquisiti da release ufficiali
+con confronto del checksum pubblicato, digest del download e del binario
+installato. Versioni, oggetti misurati, licenze, architettura e data sono in
+`infra/qualification_tools.lock.json`, supplemento per la qualificazione
+non-production sotto DEC-211: il lock della toolchain esistente è invariato.
+L'acquisizione scrive solo `.ocor/tools/bin/` del worktree e richiede
+`--execute`; il controllo non mutativo valida i pin e le fonti senza installare.
+
+Il teardown tenta sia kind sia bootstrap anche se una delle rimozioni
+fallisce, preserva l'errore e verifica i residui. Timeout della suite 45 minuti,
+zero skip, nessuna tolleranza a restart/OOM di bootstrap. I positivi e negativi
+del supervisore e dei pin sono registrati nell'evidenza con fingerprint RED.
+
+Questa campagna dimostra l'esecuzione delle guardie infrastrutturali, **non**
+l'accettazione di OCOR-DEV-0049: il suo NO_GO ciclo 6 e i finding restano
+invariati; nessun ciclo 7, riparazione, sigillo o merge di 0049. Implementatore
+REM: Codex (OpenAI). Verifier REM: Claude Code (Anthropic), processo e contesto
+separati; l'esito va acquisito dal loop prima di sigillare o integrare il REM.
+
+### Igiene e memoria della JVM bootstrap
+
+Il primo full del candidato in questa unità è stato interrotto dal supervisore
+al minuto 27: `ocor-bootstrap-fuseki-1` OOMKilled=true, exit 137, cgroup 2 GiB.
+I 1309 casi conclusi positivamente sono un risultato **parziale e non
+qualificante**; il secondo stack non è stato avviato. Diagnostica e run fallito
+sono preservati fuori Git e nel raw record. L'entrypoint dell'immagine pinned
+imposta `JVM_ARGS=-Xmx4G`, superiore al suo cgroup; sul medesimo runtime la heap
+non esplicitamente limitata può dipendere anche dalla memoria dell'host.
+
+Il bootstrap REM genera un override worktree-local del solo ambiente Fuseki:
+`JVM_ARGS=-Xms128m -Xmx1G`. Compose governato, limite 2 GiB, Dockerfile, immagine
+e lock sono invariati. Il controllo legge il processo Java effettivo mediante
+`docker top` (PID 1 è Docker init), rifiuta argomenti di heap contraddittori e
+usa una flag probe della JRE pinned con gli stessi argomenti. La misura reale
+è 1073741824 byte di heap entro 2147483648 byte di cgroup. `jcmd` assente e
+`docker top` senza colonna PID sono stati tentativi falliti, non PASS; i metodi
+sono stati corretti dopo diagnosi. Nessun pacchetto o runtime Java sostituito.
+
+La nuova suite parte soltanto dopo teardown, bootstrap completo e salute dei
+servizi. Positivi/negativi del controllo e della supervisione sono separati dai
+run real-backend; nessun mock prova la disponibilità del servizio e nessuna
+interruzione diventa un PASS. Se il retry o la CI non qualificano lo stack,
+il REM resta aperto e si applica REM-0017-PRIORITY, senza escludere test.

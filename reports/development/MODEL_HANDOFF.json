@@ -44,14 +44,15 @@
     "sha256sum -c inputs/normative/SHA256SUMS"
   ],
   "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
-  "current_task": "OCOR-DEV-REM-0017:implementation \u2014 bootstrap/supervisore WIP",
+  "current_run_logs": "/home/luca/.ocor-codex/rem0017-resume",
+  "current_task": "OCOR-DEV-REM-0017:implementation \u2014 resource hygiene retry WIP",
   "evidence_paths": [
     "reports/assurance/OCOR-DEV-REM-0017-RCCAD/evidence.json",
     "reports/assurance/OCOR-DEV-REM-0017-RCCAD/raw.log"
   ],
-  "exact_next_action": "OCOR-DEV-REM-0017:implementation \u2014 osservare CI PR #169 sul nuovo HEAD; completare TEST-INFRA-006 con checkout CI separato e immutato del candidato 0049 d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b e tooling ufficiale pinned, senza riparare/promuovere 0049; poi gate e verifica indipendente Claude Code. Se capacit\u00e0 CI insufficiente: misure/decision request e proseguire OCOR-DEV-0050.",
-  "head_sha": "10f7b8c788dd28a95c99233633ecd4e0af6327e5",
-  "head_sha_role": "Snapshot del codice; HEAD WIP finale ricavabile da Git. Nessuna verifica richiesta.",
+  "exact_next_action": "OCOR-DEV-REM-0017:implementation \u2014 attendere retry FULL candidato d0ac80a (heap bootstrap 1 GiB verificata; run monitorato max 45m) e successiva FULL del branch REM; diagnosticare qualsiasi errore, acquisire CI completa dell\u2019HEAD corrente, raw/count/hash e teardown. Solo con gate qualificanti verdi richiedere verifier Claude Code sul finale. 0049 NO_GO, nessun ciclo 7; poi 0050.",
+  "head_sha": "809f460d7faf1b51fcb72b534edad802489933c7",
+  "head_sha_role": "SOURCE_HEAD resource repair; retry and CI still running, no verification request",
   "independent_verification": {
     "implementer": "Codex (OpenAI)",
     "status": "NOT_REQUESTED_WIP",
@@ -84,10 +85,25 @@
     "NFR-063",
     "NFR-064"
   ],
+  "resource_diagnosis": {
+    "cgroup_bytes": 2147483648,
+    "heap_bytes": 1073741824,
+    "running_jvm_heap_args": [
+      "-Xms128m",
+      "-Xmx1G"
+    ]
+  },
   "schema_version": "1.0",
   "security_observability_notes": "CA e credenziali fuori Git; log sanitizzati; guard servizio perso/restart/OOM e timeout 45m; inputs/lock/checker locali invariati; 0049 NO_GO, E1/E2/Verified/claim fence invariati.",
   "task_id": "OCOR-DEV-REM-0017",
   "test_results": {
+    "candidate_full_interrupted": {
+      "exit_code": 1,
+      "not_executed": "remaining collected cases; full run not completed",
+      "passed": 1309,
+      "qualification_status": "FAIL_OOM_INTERRUPTED",
+      "skipped": 0
+    },
     "full_initial": {
       "errors": 186,
       "failures": 2,
@@ -145,13 +161,13 @@
     "TEST-INFRA-006 manca su main; copertura CI separata da completare",
     "0049 NO_GO ciclo 6; nessun ciclo 7"
   ],
-  "updated_at": "2026-10-07T02:52:07.941061+00:00",
+  "updated_at": "2026-10-07T03:38:47.341865+00:00",
   "validation_limitations": [
-    "TEST-INFRA-006 NOT_EXECUTED: test_ocor_dev_0049.py assente su origin/main; candidato d0ac80a NO_GO preservato, non copiato n\u00e9 qualificato da questa unit\u00e0.",
-    "CI del nuovo HEAD NOT_EXECUTED al momento di questo record: push WIP e osservazione da eseguire.",
-    "Fuseki CI build ID diverso dal lock locale; vecchio artefatto non disponibile, richiesta PO separata; nessuna coincidenza di ID dichiarata.",
-    "Verifica indipendente NOT_REQUESTED: implementazione WIP, requisito TEST-INFRA-006 ancora da esercitare.",
-    "Supervisore del full retry avviato da d333781; aggiunte StartedAt e sanitizzazione successive validata dai 17 test guard a f8191c52fe5a46df17500670339361b41607551f. Test runtime e bootstrap non modificati dopo avvio."
+    "First candidate FULL stopped at Fuseki OOM/137 after 27m: nonqualifying, 1309 partial PASS. Retry with explicit 1GiB heap currently running; subsequent main FULL waits for its success.",
+    "jcmd missing (127) and docker top lacking PID field caused failed bootstrap probes, diagnosed/corrected; no PASS assigned.",
+    "CI of current code still running/queued; superseded runs are not final evidence.",
+    "0049 NO_GO cycle6 remains; no seventh repair or acceptance.",
+    "Independent REM review NOT_REQUESTED until qualifying runs complete."
   ],
   "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
 }

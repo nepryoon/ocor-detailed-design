@@ -4435,3 +4435,9 @@ Gate documentali: rccad PASS_LOCAL_PRECHECK, scope/language/ruff PASS, mypy 69 s
 - Raw log content-addressed 2b67b5bc64502d37323e98ac536a66f4ab9c1b8c3242a162d04d0b7d72188b45; CI nuova da osservare dopo push; inputs/E1/E2/Verified/runtime/PoC/Production invariati.
 - Teardown finale: zero container e volumi del progetto creati dalla sessione; nessuna risorsa non OCOR toccata.
 - Prima CI sul WIP 5c0b0a3: supply-chain FAILURE, run 37564144092, artifact 11458446486. Unico finding PRIVATE_KEY sul literal dell’header PEM del test fittizio (payload private-data); stesso caso costruito a runtime, 17/17 PASS, scanner e gate invariati. Head successivo da osservare; nessun rerun del finding reale e nessun PASS CI riusato.
+
+## 2026-10-07 — REM-0017: checkpoint igiene JVM e retry qualificante
+
+- Codice 809f460d7faf1b51fcb72b534edad802489933c7, PR #169 WIP. FULL candidato interrotta al minuto 27 dal supervisore: Fuseki OOMKilled=true/137, 1309 PASS parziali, zero skip; non qualifica. Diagnosi: entrypoint pinned JVM_ARGS=-Xmx4G, cgroup 2 GiB. Raw/statistiche conservati in ~/.ocor-codex/rem0017-resume/failed-candidate-oom/.
+- Override del solo bootstrap CI worktree-local: heap 1 GiB, Xms128m; Compose governato, ceiling 2 GiB, immagine, Dockerfile, lock e checker invariati. Misura reale 1073741824/2147483648 byte, processo Java effettivo e probe della JRE pinned. jcmd assente e Docker top senza PID sono errori documentati, non PASS. 29 test supervisore/guard PASS; nuove guard heap RED 4 FAIL/23 PASS prima della funzione.
+- Reset e bootstrap completi prima del retry; retry FULL candidato in corso, FULL del branch REM in attesa del suo esito. CI degli HEAD superseduti non riusata come verde finale; nessuna sigillatura/verifica richiesta/integrazione. Checkpoint per ripresa da Git durante eventuale compattazione. 63 completed invariati; 0049 NO_GO, nessun ciclo 7; E1=0/E2=0 e claim fence invariati.
