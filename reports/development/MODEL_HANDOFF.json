@@ -17,6 +17,16 @@
     "scripts/run_qualifying_campaign.py",
     "scripts/validate_ocor_development_plan.py"
   ],
+  "ci_observations": [
+    {
+      "artifact_id": 11458446486,
+      "check": "supply-chain",
+      "conclusion": "FAILURE",
+      "finding": "PRIVATE_KEY at test_qualifying_campaign_guard.py:72: literal dummy PEM header, not key material; same fixture constructed at runtime, scanner unchanged.",
+      "head_sha": "5c0b0a30c945e39ecd932ecf31e42c1b269e5381",
+      "run_id": 37564144092
+    }
+  ],
   "commands_run": [
     "reset_test_environment.py --execute",
     "bootstrap_ci_environment.py --execute --timeout 300",
@@ -40,7 +50,7 @@
     "reports/assurance/OCOR-DEV-REM-0017-RCCAD/raw.log"
   ],
   "exact_next_action": "OCOR-DEV-REM-0017:implementation \u2014 osservare CI PR #169 sul nuovo HEAD; completare TEST-INFRA-006 con checkout CI separato e immutato del candidato 0049 d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b e tooling ufficiale pinned, senza riparare/promuovere 0049; poi gate e verifica indipendente Claude Code. Se capacit\u00e0 CI insufficiente: misure/decision request e proseguire OCOR-DEV-0050.",
-  "head_sha": "f8191c52fe5a46df17500670339361b41607551f",
+  "head_sha": "10f7b8c788dd28a95c99233633ecd4e0af6327e5",
   "head_sha_role": "Snapshot del codice; HEAD WIP finale ricavabile da Git. Nessuna verifica richiesta.",
   "independent_verification": {
     "implementer": "Codex (OpenAI)",
