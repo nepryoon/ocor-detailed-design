@@ -3,7 +3,9 @@
     "HEAD remoto d0ac80a verificato prima delle modifiche",
     "REM-0017 WIP preservato; nessuna riparazione concorrente osservata",
     "Tutti i run della stabilit\u00e0 devono terminare verdi senza skip entro 45 minuti, al primo OOM/restart si interrompe",
-    "Identit\u00e0 locale Fuseki non coincide col lock: controllo locale FAIL; prove reali sulla ricetta CI locked-base/source, limite dichiarato e nessun controllo aggirato"
+    "Identit\u00e0 locale Fuseki non coincide col lock: controllo locale FAIL; prove reali sulla ricetta CI locked-base/source, limite dichiarato e nessun controllo aggirato",
+    "Collaudo Cursor separato osservato concluso, 14 container ocor-spike-0023 preesistenti conservati nella baseline della sessione; non sono risorse create dal loop corrente.",
+    "Sintesi di collaudo esterno non usata come evidenza del ciclo 7. La suite task3 fallita resta tale; causa della terminazione containerd non dimostrata."
   ],
   "base_sha": "d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b",
   "baseline_commit": "33821f315138b90bdae7f940e5327b15f9a19948",
@@ -15,7 +17,7 @@
       "reports/evidence/G4/OCOR-DEV-0049.log",
       "reports/evidence/G4/MANIFEST.json"
     ],
-    "source_commit": "129cc2a9cadc5c536c07cff0b2001a9ce8163e2c",
+    "source_commit": "a128a622151261d510b332ca93a688912a119197",
     "status": "CANDIDATE_REBUILD_PENDING_STABILITY",
     "worktree": ".ocor/worktrees/ocor-dev-0049"
   },
@@ -93,13 +95,13 @@
     "OCOR-DEV-0048"
   ],
   "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
-  "current_task": "OCOR-DEV-0049:implementation \u2014 ciclo 7 Codex, stabilit\u00e0 in corso",
+  "current_task": "OCOR-DEV-0049:implementation \u2014 ripresa ciclo 7, stabilit\u00e0 da riacquisire",
   "evidence_paths": [
     "reports/development/ITERATION_LOG.md",
     "reports/development/EXECUTION_STATE.json"
   ],
-  "exact_next_action": "OCOR-DEV-0049:implementation \u2014 terminare stabilit\u00e0 ciclo 7 (3 task run consecutivi, 1 full, zero skip) e gate; candidato non sigillato e richiesta Claude Code sull\u2019HEAD esatto. Dopo il verdetto riprendere REM-0017 riparazione 1 con il candidato stabile, CI completa e verifica indipendente; poi integrazione 0049/0050 secondo REM-0017-PRIORITY. Nessun ciclo 8.",
-  "head_sha": "129cc2a9cadc5c536c07cff0b2001a9ce8163e2c",
+  "exact_next_action": "Completare la sequenza di stabilit\u00e0 ripresa del ciclo 7 su a128a622151261d510b332ca93a688912a119197 (3 suite task consecutive e 1 full, zero skip, timeout 45 minuti), gate ed evidenza candidata; richiedere verifica indipendente Claude Code solo sull\u2019HEAD finale pubblicato. REM-0017 repair 1 resta in attesa del candidato; nessun ciclo 8.",
+  "head_sha": "a128a622151261d510b332ca93a688912a119197",
   "head_sha_role": "Commit sorgente della riparazione; HEAD candidato finale si acquisisce dopo gli aggiornamenti di evidenza.",
   "independent_verification": {
     "historical_repairs": "Cicli 2\u20136 Claude Code; ciclo 7 Codex",
@@ -121,6 +123,100 @@
     "redactual.log": "e902a104fb92be8d564058e53e464c28ab5749ccf5a51db681c27e866f2033b5",
     "ruff.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
     "toolchain.log": "78d7fb21f0d714aea905c902192d95893745154dbd15904bd1323d9bc6c720d6"
+  },
+  "recovery_gate_results": {
+    "drift": {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python",
+        "scripts/validate_evidence_input_drift.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/drift.log",
+      "sha256": "fde0744c001d45e69220b77ce6eeb918a314c56d5a31c6d053a72590011f509c"
+    },
+    "harness": {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python",
+        "scripts/verify.py",
+        "--json"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/harness.log",
+      "sha256": "61736e49983a32531b3c8362f960d943a8a7f7f437ca98e91c1f3c3f8762b413"
+    },
+    "inputs": {
+      "command": [
+        "sha256sum",
+        "-c",
+        "inputs/normative/SHA256SUMS"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/inputs.log",
+      "sha256": "0a2036313a8b8deca46e664d2621879f4e0191c98eb287e2aeeb7171aae53c34"
+    },
+    "language": {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python",
+        "scripts/validate_language_policy.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/language.log",
+      "sha256": "ca6cb78dcbe21415365ecd6578a2eb0bf3d22bdcd7ddbae94e31fe19f67cd29d"
+    },
+    "mypy": {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python",
+        "-m",
+        "mypy"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/mypy.log",
+      "sha256": "a734d82216576d140b6330546b1d6097a6ff28ab45d0a3f71bb6f364fa137aba"
+    },
+    "rccad": {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python",
+        "scripts/validate_rccad.py",
+        "--base-ref",
+        "origin/main"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/rccad.log",
+      "sha256": "0043e5c71880b8696f14cc449b0e908f5418b4864e06a71d3fb4d4f212543c3f"
+    },
+    "ruff": {
+      "command": [
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/ruff.log",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "scope": {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python",
+        "scripts/validate_ocor_change_scope.py",
+        "--base",
+        "origin/main",
+        "--branch",
+        "task/OCOR-DEV-0049-poc-deployment-observability-backup-safe-degradation"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/scope.log",
+      "sha256": "e71bc492cf1dd92d96891672c84c340fd5d2b88d725e7fb1cfa00e1b48c1ac20"
+    },
+    "toolchain": {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python",
+        "scripts/preflight_environment.py",
+        "--require-ready"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/toolchain.log",
+      "sha256": "60796ac9d3d3593b4eb0ade58f7ad3e1c7da48abf1870f2019ae973ac9c7291a"
+    }
   },
   "repair_authorization": {
     "NO_GO_disposition": "Escalation solo 0049; nessun ciclo 8; proseguire REM-0017 e G5 secondo dipendenze.",
@@ -145,6 +241,96 @@
   "schema_version": "1.0",
   "security_observability_notes": "Nessuna modifica inputs/lock/validator/workflow/record sigillato; E1=0/E2=0, zero Verified e claim NO-GO invariati. Ordinamento unico seal/replay e attesa esplicita di diniego readiness. Nessun mock nei nuovi casi live.",
   "state_sync_branch": "governed/state-sync-ocor-dev-0049-cycle7",
+  "state_sync_gate_results": {
+    "drift": {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python",
+        "scripts/validate_evidence_input_drift.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/state-drift.log",
+      "sha256": "fde0744c001d45e69220b77ce6eeb918a314c56d5a31c6d053a72590011f509c"
+    },
+    "language": {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python",
+        "scripts/validate_language_policy.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/state-language.log",
+      "sha256": "ca6cb78dcbe21415365ecd6578a2eb0bf3d22bdcd7ddbae94e31fe19f67cd29d"
+    },
+    "mypy": {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python",
+        "-m",
+        "mypy"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/state-mypy.log",
+      "sha256": "a734d82216576d140b6330546b1d6097a6ff28ab45d0a3f71bb6f364fa137aba"
+    },
+    "plan": {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python",
+        "scripts/validate_ocor_development_plan.py",
+        "--authorized-extension",
+        "--base-ref",
+        "origin/main"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/state-plan.log",
+      "sha256": "c0753802bc31d2d19a9a5b77de8467f7b382f8b05832abf72af1a624819b6cba"
+    },
+    "rccad": {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python",
+        "scripts/validate_rccad.py",
+        "--base-ref",
+        "origin/main"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/state-rccad.log",
+      "sha256": "0043e5c71880b8696f14cc449b0e908f5418b4864e06a71d3fb4d4f212543c3f"
+    },
+    "ruff": {
+      "command": [
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/state-ruff.log",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "runtime-evidence": {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python",
+        "scripts/validate_runtime_evidence.py",
+        "--task",
+        "OCOR-DEV-0048",
+        "--non-skipped",
+        "--manifest",
+        "reports/evidence/G4/MANIFEST.json"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/state-runtime-evidence.log",
+      "sha256": "d3c77291e1e9f43f2227111436059b7e30c08ea4306b7ddd910541c14b988490"
+    },
+    "scope": {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0049/ocor-runtime/.venv/bin/python",
+        "scripts/validate_ocor_change_scope.py",
+        "--base",
+        "origin/main",
+        "--branch",
+        "governed/state-sync-ocor-dev-0049-cycle7"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128/state-scope.log",
+      "sha256": "008238e162643a7731ce850a1bdb9c0ff1dc787fb1a592a4fa1ca7550a503d32"
+    }
+  },
   "state_sync_worktree": ".ocor/worktrees/state-sync-ocor-dev-0049-cycle7",
   "task_id": "OCOR-DEV-0049",
   "terminal_loop_disposition": {
@@ -162,6 +348,23 @@
     "harness": "14 PASS",
     "inputs": "8/8 PASS",
     "mypy": "PASS 69 sorgenti",
+    "prior_stability_attempt": {
+      "conclusion": "FAIL; sequenza azzerata, nessun PASS finale",
+      "task1": "325 PASS/0 skip su 129cc2a",
+      "task2": "325 PASS/0 skip su 129cc2a",
+      "task3": {
+        "diagnosis": "Kubernetes manual backup capture-kafka terminated exit 255 Unknown, sandbox EOF. Original driver manually interrupted 09:48; task subprocess completed with failure 10:02. No OOM/host daemon restart proved by journalctl, cause remains undetermined; not a PASS.",
+        "failed": 1,
+        "log_path": "/home/luca/.ocor-codex/repair0049c7/task3.log",
+        "log_sha256": "b049a4d1b378bbfecdd38936a33b64b4a10763423cfd783c4660c1d70fc5a0a0",
+        "previous_source_commit": "129cc2a9cadc5c536c07cff0b2001a9ce8163e2c",
+        "reset_of_stability_sequence": true,
+        "resumed_source_commit": "a128a622151261d510b332ca93a688912a119197",
+        "skipped": 0,
+        "status": "FAIL",
+        "tests": 325
+      }
+    },
     "red_actual": {
       "errors": 0,
       "failed": 4,
@@ -170,6 +373,12 @@
     },
     "ruff": "PASS",
     "stability": "IN_PROGRESS \u2014 nessun PASS finale attribuito",
+    "stability_progress": {
+      "qualifying_runs": [],
+      "raw_directory": "/home/luca/.ocor-codex/repair0049c7/resume-20261007T1128",
+      "source_commit": "a128a622151261d510b332ca93a688912a119197",
+      "status": "IN_PROGRESS"
+    },
     "toolchain": "PASS 9/9"
   },
   "unresolved_blockers": [
@@ -178,10 +387,11 @@
     "REM-0018 aperto nel change set REM per volumi anonimi spike",
     "0049 non verificato/sigillato, nessun ciclo 8"
   ],
-  "updated_at": "2026-10-07T06:37:56.103494+00:00",
+  "updated_at": "2026-10-07T09:30:42.558550+00:00",
   "validation_limitations": [
     "Suite completa e tripla stabilit\u00e0 IN_PROGRESS; verifica indipendente NOT_EXECUTED",
-    "Bootstrap locale con controllo ID FAIL (exit 2); identit\u00e0 Fuseki resta riservata al change set separato, nessun aggiornamento in 0049"
+    "Bootstrap locale con controllo ID FAIL (exit 2); identit\u00e0 Fuseki resta riservata al change set separato, nessun aggiornamento in 0049",
+    "Primo comando di gate documentali NOT_EXECUTED: worktree state sync privo di venv; singolo retry con interpreter isolato esistente del task PASS. Nessun pacchetto globale installato."
   ],
   "worktree": ".ocor/worktrees/ocor-dev-0049"
 }

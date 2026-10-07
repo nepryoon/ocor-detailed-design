@@ -3,7 +3,7 @@
     "branch": "task/OCOR-DEV-0049-poc-deployment-observability-backup-safe-degradation",
     "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_0049_REPAIR7",
     "decision_id": "DEC-210",
-    "phase": "OCOR_DEV_0049_REPAIR7_STABILITY_IN_PROGRESS",
+    "phase": "OCOR_DEV_0049_REPAIR7_STABILITY_RESUMED_AFTER_INTERRUPTION",
     "worktree": ".ocor/worktrees/ocor-dev-0049"
   },
   "backlog_escalations": {
@@ -616,6 +616,22 @@
         "verdict_file_sha256": "934e0f032daa67c0f6abee6e379c4569c0394c5e3b0c28dce05d799c005fc18c",
         "verifier": "Claude Code (Anthropic), claude-opus-5-5, fallback autorizzato"
       },
+      "repair_cycle_7": {
+        "prior_attempt_failure": {
+          "diagnosis": "Kubernetes manual backup capture-kafka terminated exit 255 Unknown, sandbox EOF. Original driver manually interrupted 09:48; task subprocess completed with failure 10:02. No OOM/host daemon restart proved by journalctl, cause remains undetermined; not a PASS.",
+          "failed": 1,
+          "log_path": "/home/luca/.ocor-codex/repair0049c7/task3.log",
+          "log_sha256": "b049a4d1b378bbfecdd38936a33b64b4a10763423cfd783c4660c1d70fc5a0a0",
+          "previous_source_commit": "129cc2a9cadc5c536c07cff0b2001a9ce8163e2c",
+          "reset_of_stability_sequence": true,
+          "resumed_source_commit": "a128a622151261d510b332ca93a688912a119197",
+          "skipped": 0,
+          "status": "FAIL",
+          "tests": 325
+        },
+        "source_commit": "a128a622151261d510b332ca93a688912a119197",
+        "status": "IMPLEMENTATION_STABILITY_IN_PROGRESS"
+      },
       "status": "AUTHORIZED_REPAIR_7_IN_PROGRESS",
       "terminal_disposition": {
         "date": "2026-10-06T16:25:55.683649+00:00",
@@ -873,6 +889,40 @@
       "resolution": "Hosted runner nuovamente disponibili: 13 check richiesti SUCCESS su PR #170 HEAD bda5fb1294398c43f0ee37b915896e669c1745f0; raw observation SHA-256 a62916010830d4689c8c6522268550c0a804357a0daad89bfb6a60417e901769. Il commit finale documentale richiede di nuovo 13 check SUCCESS prima del merge esatto.",
       "scope": "PR #170: quattro job non acquisiti da hosted runner anche dopo l\u2019unico rerun; merge dello state sync impossibile. Non blocca riparazione Claude Code di 0049 n\u00e9 implementazioni locali G5; nessun bypass o risorsa a pagamento autorizzato.",
       "status": "RESOLVED_EXTERNAL_CONDITION"
+    },
+    {
+      "blocked_tasks": [],
+      "id": "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE",
+      "non_blocking": true,
+      "scope": "Bootstrap locale con confronto ID esatto irrisolto; pipeline CI eseguibile, lock/checker invariati.",
+      "source_reference": {
+        "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
+        "head_sha": "efce339d9fc7a551216c84135e06d39c0488a222",
+        "path": "reports/development/decision_requests/FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE.md",
+        "status": "WIP_NOT_MERGED"
+      },
+      "status": "OPEN_PO_DECISION_REQUIRED"
+    },
+    {
+      "blocked_tasks": [
+        "OCOR-DEV-0060",
+        "OCOR-DEV-0061",
+        "OCOR-DEV-0062",
+        "OCOR-DEV-0063",
+        "OCOR-DEV-0064",
+        "OCOR-DEV-0065",
+        "OCOR-DEV-0066"
+      ],
+      "id": "OCOR-DEV-REM-0018",
+      "non_blocking": false,
+      "scope": "VF-004 REM-0017: teardown dei volumi anonimi spike vector/Kafka. Unit\u00e0 governata separata con riqualifica; non blocca G5.",
+      "source_reference": {
+        "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
+        "head_sha": "efce339d9fc7a551216c84135e06d39c0488a222",
+        "path": "reports/assurance/OCOR-DEV-REM-0018-RCCAD/README.md",
+        "status": "WIP_NOT_MERGED"
+      },
+      "status": "OPEN"
     }
   ],
   "claims": {
@@ -1044,7 +1094,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0049:implementation \u2014 terminare stabilit\u00e0 ciclo 7 (3 task run consecutivi, 1 full, zero skip) e gate; candidato non sigillato e richiesta Claude Code sull\u2019HEAD esatto. Dopo il verdetto riprendere REM-0017 riparazione 1 con il candidato stabile, CI completa e verifica indipendente; poi integrazione 0049/0050 secondo REM-0017-PRIORITY. Nessun ciclo 8.",
+  "next_executable_action": "Completare la sequenza di stabilit\u00e0 ripresa del ciclo 7 su a128a622151261d510b332ca93a688912a119197 (3 suite task consecutive e 1 full, zero skip, timeout 45 minuti), gate ed evidenza candidata; richiedere verifica indipendente Claude Code solo sull\u2019HEAD finale pubblicato. REM-0017 repair 1 resta in attesa del candidato; nessun ciclo 8.",
   "ready_set_observation": {
     "blocked_transitively_on_0049": [
       "OCOR-DEV-0049",
@@ -1068,8 +1118,8 @@
       "OCOR-DEV-0049",
       "OCOR-DEV-0050"
     ],
-    "observed_at": "2026-10-07T06:40:03.829328+00:00",
-    "priority_remediation": "OCOR-DEV-REM-0017 \u2014 repair 1 WIP waiting stable 0049 candidate; cycle 7 authorized during that wait",
+    "observed_at": "2026-10-07T09:30:42.558550+00:00",
+    "priority_remediation": "REM-0017 WIP in attesa del candidato 0049 ciclo 7; ripresa autorizzata del ciclo 7 in questa unit\u00e0.",
     "source": "origin/main execution state + approved backlog + OCOR-DEV-0049-REPAIR-7 + REM-0017-PRIORITY"
   },
   "remediation_status": {
@@ -1813,5 +1863,5 @@
     "loop_status": "CONTINUE",
     "reason": "0049 ciclo 7 autorizzato; REM-0017 WIP preservato in attesa candidato; G5 eseguibile per dipendenze. Nessun ciclo 8."
   },
-  "updated_at": "2026-10-07T06:36:56.718360+00:00"
+  "updated_at": "2026-10-07T09:30:42.558550+00:00"
 }
