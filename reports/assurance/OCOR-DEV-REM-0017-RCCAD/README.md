@@ -296,3 +296,8 @@ La verifica indipendente REM è di Claude Code, implementatore Codex.
 sull'HEAD finale esatto; la snapshot parziale non li sostituisce. La richiesta
 riacquisirà risultati e hash degli artifact finali. Nessun sigillo o merge adesso.
 0049 NO_GO ciclo 7/Grok 4.7 Cursor preservato; nessun ciclo 8. Fence invariato.
+
+
+### 2026-10-07T20:07:47.087641+00:00 — FAIL della CI finale, nessuna richiesta di verifica
+
+HEAD11fd3e49, run37672467983: timeout2700s durante Helm; JUnit parziale1314, non qualificante. Teardown candidato FAIL per risorse residue; main full NOT_EXECUTED dopo rigetto della dipendenza. 12/13 required verdi; rischio VF-002 materializzato. Raw e proof append-only nel candidato non sigillato; storico11fd preservato in Git. Decision request REM-0017-CI-CAMPAIGN-BUDGET OPEN; nessun rerun per cercare verde. Proseguire0050/G5; G6 resta bloccato fino alla chiusura verificata REM. ImplementatoreCodex, verifierClaude non richiesto. Nessuna riparazione0049 ciclo8, nessun sigillo/merge.

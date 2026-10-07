@@ -422,6 +422,7 @@ def main() -> int:
         "reports/development/decision_requests/GITHUB-HOSTED-RUNNER-AVAILABILITY.md",
         "reports/development/decision_requests/OCOR-DEV-0049-REPAIR-BUDGET.md",
         "reports/development/decision_requests/FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE.md",
+        "reports/development/decision_requests/REM-0017-CI-CAMPAIGN-BUDGET.md",
         "reports/assurance/OCOR-DEV-REM-0014-RCCAD/README.md",
         "reports/assurance/OCOR-DEV-REM-0014-RCCAD/evidence.json",
         "reports/assurance/OCOR-DEV-REM-0014-RCCAD/OCOR-DEV-REM-0014.json",

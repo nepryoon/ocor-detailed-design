@@ -189,7 +189,7 @@
     }
   ],
   "commit": "16afae4b493916a0db332311d3dd80211702698b",
-  "commit_role": "QUALIFIED_SOURCE_COMMIT; exact final report HEAD bound by verify_request; inputs rechecked at final HEAD",
+  "commit_role": "HISTORICAL_LOCAL_AND_SOURCE_CI_ONLY; final report HEAD11fd CI FAIL, no evidence seal",
   "created_at": "2026-10-07T19:05:20.064154+00:00",
   "environment": {
     "extras": [
@@ -606,9 +606,66 @@
       }
     }
   },
+  "final_ci_failure": {
+    "acquired_at": "2026-10-07T20:07:47.087641+00:00",
+    "additional_checks_failed": [
+      "conditional-infrastructure-0049"
+    ],
+    "campaign": {
+      "error": "45-minute campaign limit reached",
+      "status": "FAIL"
+    },
+    "candidate_head": "9d86abebc7626a36115540a2711772c1d2d19e23",
+    "candidate_teardown": "FAIL: owned resources remain after teardown",
+    "decision_request": "reports/development/decision_requests/REM-0017-CI-CAMPAIGN-BUDGET.md",
+    "failure_logged_at": "2026-10-07T20:02:21.8354533Z",
+    "head_sha": "11fd3e49b606ead40dfb270e3496851e86b55e84",
+    "interrupted_test": "test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness",
+    "main_full": "NOT_EXECUTED: failed dependency rejected before setup",
+    "main_no_env_teardown": "PASS: positively verified empty inventory",
+    "observed_docker_stats": {
+      "fuseki": "1.361GiB / 2GiB",
+      "keycloak": "586.6MiB / 2GiB",
+      "residual_resource_identifiers": "NOT_EXECUTED: inventory output captured only by helper, not exported; exact residual kind/cause is unproven",
+      "runner_memory_limit": "15.61GiB",
+      "timeout_reason": "45-minute campaign limit reached"
+    },
+    "partial_junit": {
+      "errors": 0,
+      "failures": 0,
+      "qualifying": false,
+      "skipped": 0,
+      "tests": 1314,
+      "time_seconds": 2701.689
+    },
+    "raw_file_hashes": {
+      "ci-final-failed-artifacts.json": "d076824a1538c08853644c0c76979b135e609d1af8dcd19faa732bfc5449f5c9",
+      "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/campaign_result.json": "e7844b67afdf9bd6838d060955c03c0b8406d5e59c78f142ff507db19b400d69",
+      "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/docker-stats.log": "e79d356394f149f937813c9ca84e3badbea764afcebe60a97bd065e58c15843b",
+      "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/post_remediation_runtime.log": "87e8c9ed83ee54c825ca139cfff5207a9d641725bd5d6a13c157e653fc29e44f",
+      "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/runtime_junit_post_approval.xml": "17bd8f6a400f3ce9b736b731a015bde82a062f8d2b1600ad1538ac9992ba57bc",
+      "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/ci_candidate_teardown.log": "f909af6b487d0b2de204a428b0159c51da6a52cfc76691fb3c9c87a13999d562",
+      "ci-final-failed-checks.json": "70dd969f35da729b5899d963426b47b856a85061f28af0337382b180e5499428",
+      "ci-final-failed-job.log": "c01a189ffff9493622d8df17af3e7d2a5497a3e6a4ca6e186339cb5b8553479f",
+      "ci-final-failed-run.json": "9dcab5e8335cd2409b3e45d43a3bff8d47c168560abba8cb2376960a4299a37f"
+    },
+    "required_checks_failed": [
+      "validation-closure"
+    ],
+    "required_checks_passed": 12,
+    "retry_count": 0,
+    "run_id": 37672467983,
+    "run_url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37672467983",
+    "status": "FAIL",
+    "step_started_at": "2026-10-07T19:16:18Z",
+    "suite_limit_seconds": 2700
+  },
   "findings_disposition": {
     "VF-001": "Stable immutable cycle-7 candidate replaces d0ac80a for infrastructure qualification only. Local and exact-source CI complete suites without skip. Candidate 0049 NO_GO and blocking finding preserved.",
-    "VF-002": "OPEN_NONBLOCKING_TIMING_RISK: CI candidate 2650.596s, only 49.404s margin; local 2552.413s, 147.587s margin. No general stability guarantee or timing waiver asserted. Suite budget 2700s unchanged; measured margins recorded. Immutable pin lifecycle: replace only with identified stable candidate; after governed integration of 0049, remove separate checkout and require module in main full suite in a separate change set.",
+    "VF-002": {
+      "detail": "Timing risk materialized: exact final CI exceeded2700s during Helm, unlike source2650.596s PASS. No rerun/waiver/exclusion; PO request and G5 progression.",
+      "status": "OPEN_BLOCKING_QUALIFICATION"
+    },
     "VF-003": "Verified missing-env empty-stack no-op; owned-resource/inventory-failure negatives retained. Checkout precedes candidate result rejection; stdlib teardown remains available when sync was not executed.",
     "VF-004": "REM-0018 OPEN; 18 anonymous volumes per local full run attributed to OCOR containers and removed by session teardown. Tests still have the recorded lifecycle defect; no false test-level no-residue claim."
   },
@@ -630,6 +687,7 @@
     "scripts/run_qualifying_campaign.py": "f507bb88c518cf670edf0042f54f889feedde6ed2657945ea7791ad781e96a11",
     "scripts/validate_ocor_development_plan.py": "96100c2f0ec1532ff31c759a0d2025c069d4c7989f7e2be0aaf1f61176bf68dd"
   },
+  "inputs_role": "HISTORICAL_QUALIFIED_SOURCE_16afae4; final exact11fd CI FAIL; subsequent report/inventory revision is NOT_QUALIFIED",
   "local_gates": [
     {
       "command": [
@@ -820,8 +878,16 @@
     "Evidence seal and merge: pending independent GO and final exact-HEAD CI.",
     "Local governed output-image identity bootstrap: FAIL, lock/checker unchanged; existing PO decision request remains open.",
     "REM-0018 test-level teardown repair: separate open change set.",
-    "VF-002 timing margin remains narrow (49.404s source CI); independent reviewer must assess. No waiver or removal of coverage."
+    "VF-002 timing margin remains narrow (49.404s source CI); independent reviewer must assess. No waiver or removal of coverage.",
+    "Final exact11fd main full suite NOT_EXECUTED after dependency failure; archived tracked artifacts in its upload are historical and are NOT proof of this run.",
+    "Independent verification repair1 NOT_REQUESTED: exact CI FAIL; no VERIFIER_ERROR or NO_GO invented.",
+    "Precise identities of CI residual resources / Helm pod-job diagnostics NOT_EXECUTED; runner exited before these were exported."
   ],
+  "previous_candidate_revision": {
+    "head_sha": "11fd3e49b606ead40dfb270e3496851e86b55e84",
+    "raw_output_sha256": "45b47a750f4327a94b228a29bc6a74fd8feed1a931bdc14400ec1de01cb1d5a4",
+    "record_sha256": "91b5f0f6fa087d4af9fa4c7a4dea7c37dcb62bb307477e343c58577acb288dbe"
+  },
   "prior_verdict": {
     "head_sha": "6e2a08b62524b88b06f3b4b02b9e91449058de4a",
     "request_id": "OCOR-DEV-REM-0017-6e2a08b62524-0",
@@ -880,6 +946,42 @@
     "ci-failed.log": {
       "export_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "source_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "ci-final-failed-artifacts.json": {
+      "export_sha256": "d076824a1538c08853644c0c76979b135e609d1af8dcd19faa732bfc5449f5c9",
+      "source_sha256": "d076824a1538c08853644c0c76979b135e609d1af8dcd19faa732bfc5449f5c9"
+    },
+    "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/campaign_result.json": {
+      "export_sha256": "e7844b67afdf9bd6838d060955c03c0b8406d5e59c78f142ff507db19b400d69",
+      "source_sha256": "e7844b67afdf9bd6838d060955c03c0b8406d5e59c78f142ff507db19b400d69"
+    },
+    "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/docker-stats.log": {
+      "export_sha256": "e79d356394f149f937813c9ca84e3badbea764afcebe60a97bd065e58c15843b",
+      "source_sha256": "e79d356394f149f937813c9ca84e3badbea764afcebe60a97bd065e58c15843b"
+    },
+    "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/post_remediation_runtime.log": {
+      "export_sha256": "87e8c9ed83ee54c825ca139cfff5207a9d641725bd5d6a13c157e653fc29e44f",
+      "source_sha256": "87e8c9ed83ee54c825ca139cfff5207a9d641725bd5d6a13c157e653fc29e44f"
+    },
+    "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/runtime_junit_post_approval.xml": {
+      "export_sha256": "17bd8f6a400f3ce9b736b731a015bde82a062f8d2b1600ad1538ac9992ba57bc",
+      "source_sha256": "17bd8f6a400f3ce9b736b731a015bde82a062f8d2b1600ad1538ac9992ba57bc"
+    },
+    "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/ci_candidate_teardown.log": {
+      "export_sha256": "f909af6b487d0b2de204a428b0159c51da6a52cfc76691fb3c9c87a13999d562",
+      "source_sha256": "f909af6b487d0b2de204a428b0159c51da6a52cfc76691fb3c9c87a13999d562"
+    },
+    "ci-final-failed-checks.json": {
+      "export_sha256": "70dd969f35da729b5899d963426b47b856a85061f28af0337382b180e5499428",
+      "source_sha256": "70dd969f35da729b5899d963426b47b856a85061f28af0337382b180e5499428"
+    },
+    "ci-final-failed-job.log": {
+      "export_sha256": "c01a189ffff9493622d8df17af3e7d2a5497a3e6a4ca6e186339cb5b8553479f",
+      "source_sha256": "c01a189ffff9493622d8df17af3e7d2a5497a3e6a4ca6e186339cb5b8553479f"
+    },
+    "ci-final-failed-run.json": {
+      "export_sha256": "9dcab5e8335cd2409b3e45d43a3bff8d47c168560abba8cb2376960a4299a37f",
+      "source_sha256": "9dcab5e8335cd2409b3e45d43a3bff8d47c168560abba8cb2376960a4299a37f"
     },
     "ci-source-artifacts/ocor-conditional-0049-1ae354c38160de315e2f05eb39adbcfb9492d486/candidate-0049/post_remediation_runtime.log": {
       "export_sha256": "25a8813ea547ef05206cbbf1f1d63944841ae4fdf23f6895a5f35fcfb9d511d2",
@@ -1058,7 +1160,7 @@
       "source_sha256": "c30183fb06398464d5481e01c8ac44098cd4586376c4f92b60b2fa192dd01269"
     }
   },
-  "raw_output_sha256": "45b47a750f4327a94b228a29bc6a74fd8feed1a931bdc14400ec1de01cb1d5a4",
+  "raw_output_sha256": "76a63b4dbf4636db04534b4b18d8c7727fd05c7a60576013137b2c136db7aaf3",
   "repair_cycle": 1,
   "report_tests": {
     "errors": 0,
@@ -1442,7 +1544,7 @@
       "sha256": "2a9d165534dd438bf42b4e04f33b55e988cc63b884843a23499a3f5620f00ac9"
     }
   ],
-  "status": "CANDIDATE_PENDING_EXACT_CI_AND_INDEPENDENT_VERIFICATION",
+  "status": "NOT_QUALIFIED_FINAL_EXACT_CI_TIMEOUT",
   "supersedes": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/evidence.json",
   "supersedes_sha256": "1fcd77af09f2d403c4b1f4f4a196670255fcadbcc37676e6a25e7983e291c3f1",
   "supersession_scope": "Solo WIP del candidato REM rifiutato; record originale preservato. Nessun record sigillato modificato.",
@@ -1559,5 +1661,6 @@
       ]
     }
   },
+  "updated_at": "2026-10-07T20:07:47.087641+00:00",
   "verifier": "Claude Code (Anthropic), external loop; separate process and clean context"
 }

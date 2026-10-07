@@ -3,7 +3,7 @@
     "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
     "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_REM_0017_REPAIR1",
     "decision_id": "DEC-210",
-    "phase": "REM_0017_REPAIR1_PENDING_EXACT_CI_AND_VERIFICATION",
+    "phase": "REM_0017_REPAIR1_EXACT_CI_FAIL_STATE_SYNC_PENDING",
     "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
   },
   "backlog_escalations": {
@@ -1252,19 +1252,74 @@
       "candidate_0049_verdict": "NO_GO",
       "concurrent_pr": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
-        "disposition": "PR #169 WIP preservata e non modificata in questa unit\u00e0; prossimo lavoro prioritario.",
-        "head_sha": "efce339d9fc7a551216c84135e06d39c0488a222",
+        "disposition": "WIP, draft; no verifier request or seal; next0050 per REM-0017-PRIORITY",
+        "head_sha": "11fd3e49b606ead40dfb270e3496851e86b55e84",
         "number": 169,
-        "observed_check": "conditional-infrastructure-0049 FAILURE: Fuseki Docker recipe build timeout 300s; validation-closure fail-closed",
+        "observed_check": "Exact final CI FAIL:2700s Helm timeout; teardown FAIL; main rejected dependency",
         "raw_failed_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "raw_observation_sha256": "84526fd5fdb40446f02847b669d74eccf913b5a4575bc2ecdcb94f8a6b89c000",
         "retry_count_this_iteration": 0,
-        "run_id": 37580988000
+        "run_id": 37672467983
+      },
+      "decision_request": "reports/development/decision_requests/REM-0017-CI-CAMPAIGN-BUDGET.md",
+      "final_ci_failure": {
+        "acquired_at": "2026-10-07T20:07:47.087641+00:00",
+        "additional_checks_failed": [
+          "conditional-infrastructure-0049"
+        ],
+        "campaign": {
+          "error": "45-minute campaign limit reached",
+          "status": "FAIL"
+        },
+        "candidate_head": "9d86abebc7626a36115540a2711772c1d2d19e23",
+        "candidate_teardown": "FAIL: owned resources remain after teardown",
+        "decision_request": "reports/development/decision_requests/REM-0017-CI-CAMPAIGN-BUDGET.md",
+        "failure_logged_at": "2026-10-07T20:02:21.8354533Z",
+        "head_sha": "11fd3e49b606ead40dfb270e3496851e86b55e84",
+        "interrupted_test": "test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness",
+        "main_full": "NOT_EXECUTED: failed dependency rejected before setup",
+        "main_no_env_teardown": "PASS: positively verified empty inventory",
+        "observed_docker_stats": {
+          "fuseki": "1.361GiB / 2GiB",
+          "keycloak": "586.6MiB / 2GiB",
+          "residual_resource_identifiers": "NOT_EXECUTED: inventory output captured only by helper, not exported; exact residual kind/cause is unproven",
+          "runner_memory_limit": "15.61GiB",
+          "timeout_reason": "45-minute campaign limit reached"
+        },
+        "partial_junit": {
+          "errors": 0,
+          "failures": 0,
+          "qualifying": false,
+          "skipped": 0,
+          "tests": 1314,
+          "time_seconds": 2701.689
+        },
+        "raw_file_hashes": {
+          "ci-final-failed-artifacts.json": "d076824a1538c08853644c0c76979b135e609d1af8dcd19faa732bfc5449f5c9",
+          "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/campaign_result.json": "e7844b67afdf9bd6838d060955c03c0b8406d5e59c78f142ff507db19b400d69",
+          "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/docker-stats.log": "e79d356394f149f937813c9ca84e3badbea764afcebe60a97bd065e58c15843b",
+          "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/post_remediation_runtime.log": "87e8c9ed83ee54c825ca139cfff5207a9d641725bd5d6a13c157e653fc29e44f",
+          "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/runtime_junit_post_approval.xml": "17bd8f6a400f3ce9b736b731a015bde82a062f8d2b1600ad1538ac9992ba57bc",
+          "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/ci_candidate_teardown.log": "f909af6b487d0b2de204a428b0159c51da6a52cfc76691fb3c9c87a13999d562",
+          "ci-final-failed-checks.json": "70dd969f35da729b5899d963426b47b856a85061f28af0337382b180e5499428",
+          "ci-final-failed-job.log": "c01a189ffff9493622d8df17af3e7d2a5497a3e6a4ca6e186339cb5b8553479f",
+          "ci-final-failed-run.json": "9dcab5e8335cd2409b3e45d43a3bff8d47c168560abba8cb2376960a4299a37f"
+        },
+        "required_checks_failed": [
+          "validation-closure"
+        ],
+        "required_checks_passed": 12,
+        "retry_count": 0,
+        "run_id": 37672467983,
+        "run_url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37672467983",
+        "status": "FAIL",
+        "step_started_at": "2026-10-07T19:16:18Z",
+        "suite_limit_seconds": 2700
       },
       "id": "OCOR-DEV-REM-0017",
       "non_blocking": false,
       "scope": "REM-0017-PRIORITY (2026-10-05): stack CI completo e zero skip per tutti i CONDITIONAL_INFRASTRUCTURE_GUARD (TEST-INFRA-005/006 e successivi), poi rimozione --ignore PR #164. Prossimo task dopo verifica/integrazione 0049, prima di 0050; G6 bloccato fino alla chiusura verificata. Candidato ciclo 7 NO_GO: la qualifica infrastrutturale non chiude n\u00e9 approva 0049; riesaminare il ciclo di vita del pin nel REM.",
-      "status": "PENDING_EXACT_CI_AND_VERIFICATION_REPAIR_1"
+      "status": "BLOCKED_CI_CAMPAIGN_TIMEOUT"
     },
     {
       "blocked_tasks": [
@@ -1356,6 +1411,26 @@
         "status": "WIP_NOT_MERGED"
       },
       "status": "OPEN"
+    },
+    {
+      "blocked_tasks": [
+        "OCOR-DEV-REM-0017",
+        "OCOR-DEV-0060",
+        "OCOR-DEV-0061",
+        "OCOR-DEV-0062",
+        "OCOR-DEV-0063",
+        "OCOR-DEV-0064",
+        "OCOR-DEV-0065",
+        "OCOR-DEV-0066",
+        "OCOR-DEV-0067",
+        "OCOR-DEV-0068",
+        "OCOR-DEV-0069"
+      ],
+      "decision_request": "reports/development/decision_requests/REM-0017-CI-CAMPAIGN-BUDGET.md",
+      "id": "REM-0017-CI-CAMPAIGN-BUDGET",
+      "non_blocking": true,
+      "scope": "Hosted full campaign cannot be qualified after exact final2700s timeout and teardown failure; preserve coverage/limit and proceedG5 per PO priority decision.",
+      "status": "OPEN_PO_DECISION_REQUIRED"
     }
   ],
   "claims": {
@@ -1536,7 +1611,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Acquisire CI finale esatta e verdetto Claude Code di REM-0017 repair 1; con GO sigillare e integrare PR #169 solo con 13 check obbligatori verdi esatti, poi state sync. Con NO_GO applicare budget ordinario senza indebolire gate. OCOR-DEV-0049 resta NO_GO ciclo 7, nessun ciclo 8; G5/0050 resta raggiungibile.",
+  "next_executable_action": "OCOR-DEV-0050:implementation da origin/main, worktree isolato; REM-0017 resta WIP/bloccato per CI timeout con decision request REM-0017-CI-CAMPAIGN-BUDGET. Nessuna qualifica, richiesta verifier o merge169; G6 attende chiusura verificata REM. 0049 NO_GO ciclo7, nessun ciclo8.",
   "ready_set_observation": {
     "blocked_transitively_on_0049": [
       "OCOR-DEV-0049",
@@ -1570,14 +1645,68 @@
       "OCOR-DEV-0057",
       "OCOR-DEV-0058"
     ],
-    "observed_at": "2026-10-07T16:57:52.731979+00:00",
-    "priority_remediation": "OCOR-DEV-REM-0017:implementation repair 1; se bloccato da evento esterno/decisione riservata proseguire 0050/G5.",
+    "observed_at": "2026-10-07T20:07:47.087641+00:00",
+    "priority_remediation": "REM-0017 waiting reserved disposition/executable qualification; per priority decision proceed0050",
     "source": "origin/main execution state + approved backlog + verdict cycle 7 + REM-0017-PRIORITY"
   },
   "remediation_status": {
     "CI-0048_REAL_BACKEND": {
       "deviation_pr": 164,
       "deviation_registered_in": "reports/development/METHOD_COMPLIANCE.json",
+      "final_ci_failure": {
+        "acquired_at": "2026-10-07T20:07:47.087641+00:00",
+        "additional_checks_failed": [
+          "conditional-infrastructure-0049"
+        ],
+        "campaign": {
+          "error": "45-minute campaign limit reached",
+          "status": "FAIL"
+        },
+        "candidate_head": "9d86abebc7626a36115540a2711772c1d2d19e23",
+        "candidate_teardown": "FAIL: owned resources remain after teardown",
+        "decision_request": "reports/development/decision_requests/REM-0017-CI-CAMPAIGN-BUDGET.md",
+        "failure_logged_at": "2026-10-07T20:02:21.8354533Z",
+        "head_sha": "11fd3e49b606ead40dfb270e3496851e86b55e84",
+        "interrupted_test": "test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness",
+        "main_full": "NOT_EXECUTED: failed dependency rejected before setup",
+        "main_no_env_teardown": "PASS: positively verified empty inventory",
+        "observed_docker_stats": {
+          "fuseki": "1.361GiB / 2GiB",
+          "keycloak": "586.6MiB / 2GiB",
+          "residual_resource_identifiers": "NOT_EXECUTED: inventory output captured only by helper, not exported; exact residual kind/cause is unproven",
+          "runner_memory_limit": "15.61GiB",
+          "timeout_reason": "45-minute campaign limit reached"
+        },
+        "partial_junit": {
+          "errors": 0,
+          "failures": 0,
+          "qualifying": false,
+          "skipped": 0,
+          "tests": 1314,
+          "time_seconds": 2701.689
+        },
+        "raw_file_hashes": {
+          "ci-final-failed-artifacts.json": "d076824a1538c08853644c0c76979b135e609d1af8dcd19faa732bfc5449f5c9",
+          "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/campaign_result.json": "e7844b67afdf9bd6838d060955c03c0b8406d5e59c78f142ff507db19b400d69",
+          "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/docker-stats.log": "e79d356394f149f937813c9ca84e3badbea764afcebe60a97bd065e58c15843b",
+          "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/post_remediation_runtime.log": "87e8c9ed83ee54c825ca139cfff5207a9d641725bd5d6a13c157e653fc29e44f",
+          "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/candidate-0049/runtime_junit_post_approval.xml": "17bd8f6a400f3ce9b736b731a015bde82a062f8d2b1600ad1538ac9992ba57bc",
+          "ci-final-failed-artifacts/ocor-conditional-0049-fe37316ccc1ad6bdfb3f210fd24f41be9cb78861/ci_candidate_teardown.log": "f909af6b487d0b2de204a428b0159c51da6a52cfc76691fb3c9c87a13999d562",
+          "ci-final-failed-checks.json": "70dd969f35da729b5899d963426b47b856a85061f28af0337382b180e5499428",
+          "ci-final-failed-job.log": "c01a189ffff9493622d8df17af3e7d2a5497a3e6a4ca6e186339cb5b8553479f",
+          "ci-final-failed-run.json": "9dcab5e8335cd2409b3e45d43a3bff8d47c168560abba8cb2376960a4299a37f"
+        },
+        "required_checks_failed": [
+          "validation-closure"
+        ],
+        "required_checks_passed": 12,
+        "retry_count": 0,
+        "run_id": 37672467983,
+        "run_url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37672467983",
+        "status": "FAIL",
+        "step_started_at": "2026-10-07T19:16:18Z",
+        "suite_limit_seconds": 2700
+      },
       "g6_dependency": [
         "OCOR-DEV-0060",
         "OCOR-DEV-0061",
@@ -1593,7 +1722,7 @@
         "Standing rule (2026-10-05): never exclude, deselect or mark tests to pass a check, and never remove skipped from counts. If a check fails for missing CI infrastructure, write a decision request and continue with other ready work."
       ],
       "rem_opened": "OCOR-DEV-REM-0017",
-      "status": "REM_OPENED"
+      "status": "REM_OPEN_BLOCKED_CI_TIMEOUT"
     },
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -2383,5 +2512,5 @@
     "loop_status": "CONTINUE",
     "reason": "Escalation solo OCOR-DEV-0049 dopo NO_GO ciclo 7. REM-0017 prioritario, OCOR-DEV-0050 e G5 raggiungibili; nessun ciclo 8."
   },
-  "updated_at": "2026-10-07T19:05:20.064154+00:00"
+  "updated_at": "2026-10-07T20:07:47.087641+00:00"
 }

@@ -4576,3 +4576,11 @@ Gate documentali: rccad PASS_LOCAL_PRECHECK, scope/language/ruff PASS, mypy 69 s
 - 18 volumi anonimi per full local, provenienza OCOR acquisita e rimozione scoped; zero delta finale di sessione. REM-0018 resta OPEN e comprende anche C5 backbone; nessun fix fuori scope nel REM. Bootstrap locale identity FAIL conservato, lock/checker invariati.
 - Piano iniziale FAIL per log generato fuori allowlist: archiviato fuori repo, retry 37 PASS/2 NOT_EXECUTED opzionali. Primo controllo DEC208 senza builder prerequisite FAIL, retry in ordine workflow 19/19 PASS; artifact generati ripristinati. Tutti i tentativi preservati.
 - 63 completed invariati; 0049 NO_GO cycle7/Cursor preservato, nessun ciclo 8. Inputs/E1/E2/Verified e NO-GO invariati.
+
+
+## 2026-10-07T20:07:47.087641+00:00 — REM-0017 repair1: CI esatta FAIL e prosecuzione G5
+
+- Final report HEAD11fd3e49, run37672467983: candidato timeout2700s durante Helm; JUnit parziale1314/0 fail/error/skip NON qualificante. Teardown FAIL per risorse residue; identità precise non esportate (NOT_EXECUTED). Main suite NOT_EXECUTED dopo rigetto della dipendenza, main no-env teardown PASS. 12/13 required SUCCESS, validation-closure e conditional job FAILURE.
+- Source16afae4 run37663505832 completato SUCCESS, candidato2650.596s/main392.547s, zero skip: risultato storico, non sostituisce il finale. VF-002 materializzato; nessun rerun per cercare il verde, nessun verifier/verdetto simulato. Candidato repair1 ora NOT_QUALIFIED, nuovo rawSHA256 76a63b4dbf4636db04534b4b18d8c7727fd05c7a60576013137b2c136db7aaf3, originale rifiutato invariato e versione11fd preservata.
+- Docker stats al timeout runner15.61GiB, Fuseki1.361GiB/2GiB, Keycloak586.6MiB/2GiB; nessuna deduzione di causa OOM senza prova. Decision request REM-0017-CI-CAMPAIGN-BUDGET OPEN conforme a REM-0017-PRIORITY. Main CI artifact storici tracciati non qualificano run non eseguito.
+- PR169 resta draft. Stato/handoff: prossimo0050/G5, REM17/G6 aperti; 63 completed, 0049 NO_GO7/no8, input/lock/gate/fence invariati. Allowlist piano aggiunta solo per il nuovo documento richiesto; self-hash settled senza variare controlli. ImplementatoreCodex, verifierREMClaude non richiesto. Nessuno stack locale residuo dalla sessione.
