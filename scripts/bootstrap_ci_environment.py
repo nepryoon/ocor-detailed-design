@@ -79,6 +79,18 @@ def prepare_ca(repository: Path, env_file: Path) -> None:
     # would require an unnecessary second privileged operation on hosted runners.
 
 
+def ci_resources(repository: Path) -> Path:
+    """Constrain Fuseki's default 4 GiB heap within its unchanged 2 GiB cgroup."""
+    profile = repository / ".ocor/ci-resources.yaml"
+    if profile.is_symlink():
+        raise BootstrapError("CI resource profile must not be a symlink")
+    # JSON is a YAML subset. Keep the governed Compose, image and Dockerfile intact.
+    profile.write_text(json.dumps({"services": {"fuseki": {"environment": {
+        "JVM_ARGS": "-Xms128m -Xmx1G"
+    }}}}, indent=2, sort_keys=True) + "\n")
+    return profile
+
+
 def provision(repository: Path, timeout: int) -> dict[str, object]:
     errors = validate_locks(repository)
     if errors:
@@ -107,7 +119,8 @@ def provision(repository: Path, timeout: int) -> dict[str, object]:
     (ca / "ca.key").chmod(0o600)
     (ca / "ca.crt").chmod(0o600)
     prepare_ca(repository, env_file)
-    compose = ["docker", "compose", "-p", "ocor-bootstrap", "--env-file", str(env_file), "-f", "deploy/bootstrap/compose.yaml"]
+    resources = ci_resources(repository)
+    compose = ["docker", "compose", "-p", "ocor-bootstrap", "--env-file", str(env_file), "-f", "deploy/bootstrap/compose.yaml", "-f", str(resources)]
     server_image = next(service for service in services if service["id"] == "spire-server")["image"]
     user = execute(repository, ["docker", "image", "inspect", server_image, "--format", "{{.Config.User}}"], "SPIRE image UID", 30).strip()
     if user != "1000:1000":
@@ -118,6 +131,9 @@ def provision(repository: Path, timeout: int) -> dict[str, object]:
         raise BootstrapError("SPIRE token output invalid")
     replace_env(env_file, "OCOR_SPIRE_JOIN_TOKEN", token.split("Token:", 1)[1].splitlines()[0].strip())
     execute(repository, compose + ["up", "--detach", "--wait", "--wait-timeout", str(timeout), "--no-build"], "complete stack", timeout + 60)
+    flags = execute(repository, ["docker", "exec", "ocor-bootstrap-fuseki-1", "jcmd", "1", "VM.flags"], "Fuseki actual heap", 30)
+    if not re.search(r"(?:^|\s)-XX:MaxHeapSize=1073741824(?:\s|$)", flags):
+        raise BootstrapError("Fuseki heap is not bounded to 1 GiB inside its 2 GiB cgroup")
     agent = ["docker", "exec", "ocor-bootstrap-spire-agent-1", "/opt/spire/bin/spire-agent"]
     ready = retry(agent + ["healthcheck", "-socketPath", "/run/spire/sockets/agent.sock"], cwd=repository, attempts=5, timeout=10)
     if ready.returncode:
@@ -136,7 +152,7 @@ def provision(repository: Path, timeout: int) -> dict[str, object]:
     for script in ("deploy/bootstrap/init/initialize_services.py", "deploy/bootstrap/fixtures/load_fixtures.py"):
         execute(repository, [sys.executable, script, "--env-file", str(env_file)], script, timeout)
     health = json.loads(execute(repository, [sys.executable, "scripts/verify_external_services.py", "--execute", "--typed"], "typed service health", timeout))
-    return {"status": "PASS", "fuseki_built_image_id": image_id, "fuseki_lock_image_id": fuseki["output_sha256"], "services": health}
+    return {"status": "PASS", "fuseki_built_image_id": image_id, "fuseki_lock_image_id": fuseki["output_sha256"], "fuseki_max_heap_bytes": 1073741824, "services": health}
 
 
 def main() -> int:
