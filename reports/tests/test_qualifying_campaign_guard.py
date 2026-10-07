@@ -117,3 +117,24 @@ def test_download_digest_matches_and_mismatch_fails_closed():
     checked_digest(data, hashlib.sha256(data).hexdigest())
     with pytest.raises(ValueError, match='checksum mismatch'):
         checked_digest(data + b'tampered', hashlib.sha256(data).hexdigest())
+
+
+def test_qualification_lock_checks_are_non_mutating_and_fail_closed(tmp_path):
+    import json
+    from copy import deepcopy
+    from provision_qualification_tools import load_lock
+    lock = json.loads((Path(__file__).resolve().parents[2] / 'infra/qualification_tools.lock.json').read_text())
+    (tmp_path / 'infra').mkdir()
+    path = tmp_path / 'infra/qualification_tools.lock.json'
+    path.write_text(json.dumps(lock))
+    assert len(load_lock(tmp_path)) == 3
+    assert not (tmp_path / '.ocor').exists()
+    for field, value in [('source_sha256', 'wrong'), ('source', 'http://untrusted.invalid/tool'), ('archive_member', '../helm')]:
+        damaged = deepcopy(lock)
+        damaged['tools'][0][field] = value
+        path.write_text(json.dumps(damaged))
+        with pytest.raises(ValueError):
+            load_lock(tmp_path)
+    path.unlink()
+    with pytest.raises(OSError):
+        load_lock(tmp_path)
