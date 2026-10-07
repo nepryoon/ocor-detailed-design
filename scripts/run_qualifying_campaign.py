@@ -31,16 +31,28 @@ def check_stack(initial: dict[str, Any], current: dict[str, Any]) -> None:
             raise CampaignError(f"service restarted, stopped or OOM killed: {name}")
 
 
-def check_junit(path: Path) -> dict[str, int]:
+def check_junit(path: Path, *, required_modules: list[str] | None = None) -> dict[str, int]:
     try:
         tree = ET.parse(path).getroot()
         suites = [tree] if tree.tag == "testsuite" else list(tree.iter("testsuite"))
         counts = {key: sum(int(suite.get(key, "0")) for suite in suites) for key in ("tests", "failures", "errors", "skipped")}
         if not counts["tests"] or any(counts[key] for key in ("failures", "errors", "skipped")) or list(tree.iter("skipped")):
             raise CampaignError(f"nonqualifying JUnit: {counts}")
+        modules = {part for case in tree.iter("testcase") for part in case.get("classname", "").split(".")}
+        if missing := set(required_modules or []) - modules:
+            raise CampaignError(f"required guard not executed: {sorted(missing)}")
         return counts
     except (OSError, ET.ParseError, ValueError) as exc:
         raise CampaignError("JUnit absent or invalid") from exc
+
+
+def verify_revision(repository: Path, expected_head: str) -> None:
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repository, capture_output=True, text=True, timeout=10, check=True).stdout.strip()
+    if head != expected_head:
+        raise CampaignError(f"candidate HEAD mismatch: {head}")
+    dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=repository, capture_output=True, text=True, timeout=10, check=True).stdout
+    if dirty:
+        raise CampaignError("candidate has tracked changes")
 
 
 def inspect_stack() -> dict[str, Any]:
@@ -66,24 +78,34 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--repository", type=Path, help="separate, immutable candidate checkout; always runs its FULL suite")
+    parser.add_argument("--expected-head", help="exact candidate commit, required with --repository")
     args = parser.parse_args()
-    if not args.execute:
-        print(json.dumps({"status": "PASS", "mode": "CHECK_ONLY", "suite": "ocor-runtime/tests/", "limit_seconds": 2700}))
-        return 0
+    if bool(args.repository) != bool(args.expected_head):
+        parser.error("--repository and --expected-head must be supplied together")
     repository = Path(__file__).resolve().parents[1]
+    suite_repository = args.repository.resolve() if args.repository else repository
+    required_modules = ["test_ocor_dev_0048", "test_ocor_dev_0049"] if args.repository else ["test_ocor_dev_0048"]
+    if not args.execute:
+        if args.expected_head:
+            verify_revision(suite_repository, args.expected_head)
+        print(json.dumps({"status": "PASS", "mode": "CHECK_ONLY", "repository": str(suite_repository), "suite": "ocor-runtime/tests/", "limit_seconds": 2700}))
+        return 0
     output = args.output_dir.resolve()
     output.mkdir(parents=True, exist_ok=True)
     junit = output / "runtime_junit_post_approval.xml"
     command = [sys.executable, "-m", "pytest", "-v", "--cov=src", "--cov-report=term-missing", f"--cov-report=json:{output / 'runtime_coverage_post_approval.json'}", f"--junitxml={junit}", "tests/"]
     process: subprocess.Popen[Any] | None = None
     try:
+        if args.expected_head:
+            verify_revision(suite_repository, args.expected_head)
         initial = inspect_stack()
         if len(initial) != 11:
             raise CampaignError(f"expected 11 mandatory containers, found {len(initial)}")
         check_stack(initial, initial)
         start = time.monotonic()
         with (output / "post_remediation_runtime.log").open("w") as log:
-            process = subprocess.Popen(command, cwd=repository / "ocor-runtime", stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+            process = subprocess.Popen(command, cwd=suite_repository / "ocor-runtime", stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
             while process.poll() is None:
                 check_stack(initial, inspect_stack())
                 if time.monotonic() - start >= 2700:
@@ -92,7 +114,9 @@ def main() -> int:
             check_stack(initial, inspect_stack())
         if process.returncode:
             raise CampaignError(f"pytest exit code {process.returncode}")
-        result = {"status": "PASS", "counts": check_junit(junit), "duration_seconds": time.monotonic() - start}
+        if args.expected_head:
+            verify_revision(suite_repository, args.expected_head)
+        result = {"status": "PASS", "counts": check_junit(junit, required_modules=required_modules), "duration_seconds": time.monotonic() - start, "candidate_head": args.expected_head, "required_modules": required_modules}
         (output / "campaign_result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
         print(json.dumps(result))
         return 0

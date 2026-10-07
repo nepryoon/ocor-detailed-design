@@ -72,3 +72,48 @@ def test_pem_redaction_removes_key_material():
     begin = '-'.join(['-----BEGIN PRIVATE KEY', '----'])
     end = '-'.join(['-----END PRIVATE KEY', '----'])
     assert 'private-data' not in redact(begin + '\nprivate-data\n' + end, [])
+
+
+def test_required_guard_is_executed(tmp_path):
+    path = tmp_path / 'run.xml'
+    path.write_text('<testsuite tests="1"><testcase classname="tests.tasks.test_ocor_dev_0049" name="live"/></testsuite>')
+    assert GUARD.check_junit(path, required_modules=['test_ocor_dev_0049'])['tests'] == 1
+
+
+def test_missing_guard_cannot_be_hidden_by_other_passing_tests(tmp_path):
+    path = tmp_path / 'run.xml'
+    path.write_text('<testsuite tests="1"><testcase classname="tests.tasks.test_ocor_dev_0048" name="live"/></testsuite>')
+    with pytest.raises(GUARD.CampaignError, match='required guard'):
+        GUARD.check_junit(path, required_modules=['test_ocor_dev_0049'])
+
+
+def test_candidate_head_is_bound_before_execution(tmp_path):
+    import subprocess
+    subprocess.run(['git', 'init', '-q', str(tmp_path)], check=True)
+    subprocess.run(['git', '-C', str(tmp_path), '-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '--allow-empty', '-qm', 'test'], check=True)
+    head = subprocess.check_output(['git', '-C', str(tmp_path), 'rev-parse', 'HEAD'], text=True).strip()
+    GUARD.verify_revision(tmp_path, head)
+    with pytest.raises(GUARD.CampaignError, match='HEAD'):
+        GUARD.verify_revision(tmp_path, '0' * 40)
+
+
+def test_candidate_tracked_changes_are_rejected(tmp_path):
+    import subprocess
+    subprocess.run(['git', 'init', '-q', str(tmp_path)], check=True)
+    file = tmp_path / 'file'
+    file.write_text('original')
+    subprocess.run(['git', '-C', str(tmp_path), 'add', 'file'], check=True)
+    subprocess.run(['git', '-C', str(tmp_path), '-c', 'user.name=Test', '-c', 'user.email=test@example.invalid', 'commit', '-qm', 'test'], check=True)
+    head = subprocess.check_output(['git', '-C', str(tmp_path), 'rev-parse', 'HEAD'], text=True).strip()
+    file.write_text('changed')
+    with pytest.raises(GUARD.CampaignError, match='tracked'):
+        GUARD.verify_revision(tmp_path, head)
+
+
+def test_download_digest_matches_and_mismatch_fails_closed():
+    import hashlib
+    from provision_qualification_tools import checked_digest
+    data = b'qualification-tool'
+    checked_digest(data, hashlib.sha256(data).hexdigest())
+    with pytest.raises(ValueError, match='checksum mismatch'):
+        checked_digest(data + b'tampered', hashlib.sha256(data).hexdigest())
