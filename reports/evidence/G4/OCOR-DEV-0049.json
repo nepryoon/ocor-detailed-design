@@ -18,12 +18,34 @@
       "status": "PASS"
     },
     {
-      "command": "uv run --project ocor-runtime --frozen pytest -v -ra ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task validation_command; Compose stack + fresh kind cluster)",
+      "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest -v -ra ocor-runtime/tests/tasks/test_ocor_dev_0049.py — task suite run 1/3 (task validation_command in the declared environment; Compose stack + fresh kind cluster)",
       "exit_code": 0,
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 295,
+        "passed": 321,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest -v -ra ocor-runtime/tests/tasks/test_ocor_dev_0049.py — task suite run 2/3 (task validation_command in the declared environment; Compose stack + fresh kind cluster)",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 321,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest -v -ra ocor-runtime/tests/tasks/test_ocor_dev_0049.py — task suite run 3/3 (task validation_command in the declared environment; Compose stack + fresh kind cluster)",
+      "exit_code": 0,
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 321,
         "skipped": 0
       },
       "status": "PASS"
@@ -128,12 +150,12 @@
       "status": "PASS"
     },
     {
-      "command": "OCOR_LIVE_POSTGRES_DSN=<ocor-bootstrap-postgres> uv run --frozen pytest -q -ra ocor-runtime/tests/ (full suite)",
+      "command": "OCOR_LIVE_POSTGRES_DSN=<ocor-bootstrap-postgres> uv run --frozen --extra test --extra lint pytest -q -ra ocor-runtime/tests/ (full suite)",
       "exit_code": 0,
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1396,
+        "passed": 1422,
         "skipped": 0
       },
       "status": "PASS"
@@ -172,10 +194,10 @@
       "status": "PASS"
     }
   ],
-  "commit": "49cd235473c2105bc54a37b47708135234246651",
-  "created_at": "2026-10-06T09:05:25.142609+00:00",
+  "commit": "2d4c67f4d6be115c9315a0359c37f2dd139187d3",
+  "created_at": "2026-10-07T00:34:47.117448+00:00",
   "environment": {
-    "acquired_from_head": "49cd235473c2105bc54a37b47708135234246651",
+    "acquired_from_head": "2d4c67f4d6be115c9315a0359c37f2dd139187d3",
     "backend_under_test": "the ocor-ops agent process (deploy/helm/ocor-poc/compose.profiles.yaml configs.ocor-ops-agent) on python:3.11@sha256:c722..., against the real digest-pinned ocor-bootstrap services; OpenBao transit for encryption/signature; ephemeral pinned PostgreSQL/Qdrant for isolated restore",
     "bootstrap_containers": {
       "ocor-bootstrap-fuseki-1": "ocor/jena-fuseki:6.2.0 sha256:a1eb484a7d056a897c7bc832fb735b06136fc876aa90da3055d9882bc1b8d9e3",
@@ -190,18 +212,15 @@
       "ocor-bootstrap-terminusdb-1": "terminusdb/terminusdb-server@sha256:58f829d5a96b3bc8e63811270c766ea4603fae0c948dced724de481461b4d073 sha256:58f829d5a96b3bc8e63811270c766ea4603fae0c948dced724de481461b4d073",
       "ocor-bootstrap-typedb-1": "typedb/typedb@sha256:7555df2fffd5354553143facbfc81a58ce7036e4cc8b3b50bc7139faff4a721f sha256:7555df2fffd5354553143facbfc81a58ce7036e4cc8b3b50bc7139faff4a721f"
     },
-    "docker_compose": "5.5.1",
+    "docker_compose": "5.6.0",
     "docker_server": "29.8.2",
     "environment_repairs": [
-      "cycle 5 resumed after the 2026-10-06 machine freeze (PO decision STACK-HYGIENE): the earlier qualifying run at f9bf6ea was interrupted and its /tmp raw logs, RED logs and isolated toolchain were lost; nothing from them is reused as evidence",
-      "STACK-HYGIENE rule 1 before each suite: scripts/reset_test_environment.py --execute (ocor-bootstrap down --volumes), scripts/bootstrap_development_environment.py --execute, initialize_services.py, load_fixtures.py, verify_external_services.py --execute --typed (all services READY) — raw log sections 'stack preparation'",
-      "STACK-HYGIENE rule 3: each suite ran under timeout 2700 s with a watchdog that interrupts it at the first bootstrap service stopped, restarted or OOM-killed; the qualifying task and full-suite runs reported here were not interrupted (no watchdog log); the one interrupted attempt is recorded separately below",
-      "Fuseki root cause (diagnosed, not worked around silently): the fuseki-server launcher starts the JVM with -Xmx4G inside the 2 GiB compose limit, so the idle heap reaches the cgroup limit (observed 2026-10-06T06:07:54Z: anon 2106028032 bytes 15 min after start, 1.999/2 GiB); recorded runtime mitigation for these runs only: docker update --memory 6g --memory-swap 6g ocor-bootstrap-fuseki-1 after each bootstrap (image, command, environment and compose file unchanged); a governed bootstrap fix (JVM heap within the cgroup) is recommended outside this task",
-      "first stack preparation of the qualifying run (2026-10-06T06:28Z) failed before any test: the run script had exported the previous OCOR_SPIRE_JOIN_TOKEN, which overrides the env file in Compose, so the SPIRE agent presented an unknown token (typed verification spiffe-spire UNREACHABLE); the script was fixed to run reset/bootstrap/init/verification in a clean environment and the preparation was repeated from the reset (raw log section 'stack preparation before the task suite')",
-      "qualifying attempt at 49cd235 (2026-10-06T07:05Z) interrupted at 07:12:05Z by the STACK-HYGIENE watchdog (rule 3): ocor-bootstrap-spire-agent-1 exited because the disposable SPIRE test CA .ocor/spire/ca.crt (2-day validity) expired at 07:11:58Z; diagnostics in raw log section 'qualifying attempt at 49cd235 interrupted'; the forced kill skipped the fixture teardown, its residues were recorded and removed, and the watchdog now sends SIGINT to pytest first so that teardowns run; the CA certificate was re-issued with the same local key and subject (2 days, as the bootstrap script does) and the run restarted from the reset",
-      "first full-suite run at 49cd235 (2026-10-06T07:49Z) on the freshly reset stack: 1208 passed, 186 errors and 2 failures, all in tests/tasks/test_ocor_dev_0048.py, because the governed bootstrap does not create the SPIRE registration entry spiffe://ocor.test/ocor/control-plane that the 0048 tests require (the earlier long-lived stack had it; the REM-0017 CI job registers it explicitly); the entry was registered with the REM-0017 CI command after a new reset and the full suite repeated (raw log sections 'superseded full-suite attempt' and 'SPIRE registration entry')",
-      "hygiene defect outside this task, recorded for remediation: src/ocor_runtime/c5/backbone.py removes its Kafka test container with docker rm --force without -v, leaving the anonymous volumes of the cp-kafka image (18 in the first full-suite run); they were removed at the end of each run (STACK-HYGIENE rule 4); OCOR-DEV-0049 scope does not cover that file",
-      "residue sweep before the run: networks ocor-poc-ops-3da079_site and ocor-missing-image-negative_default left by the interrupted runs were removed; ocor-spike-* containers of other tasks were not touched"
+      "STACK-HYGIENE rule 1 before each of the four suites (task runs 1/3, 2/3, 3/3 and the full suite): scripts/reset_test_environment.py --execute, scripts/bootstrap_development_environment.py --execute, initialize_services.py, load_fixtures.py, verify_external_services.py --execute --typed (all services READY) — raw log sections 'stack preparation'",
+      "STACK-HYGIENE rule 3: each suite ran under timeout 2700 s with a watchdog that interrupts it at the first bootstrap service stopped, restarted or OOM-killed; none of the four suites was interrupted (no watchdog log)",
+      "recorded Fuseki mitigation carried over from cycle 5 (diagnosed root cause: the fuseki-server launcher starts the JVM with -Xmx4G inside the 2 GiB compose limit): docker update --memory 6g --memory-swap 6g ocor-bootstrap-fuseki-1 after each bootstrap (image, command, environment and compose file unchanged); a governed bootstrap fix is recommended outside this task",
+      "the governed bootstrap does not create the SPIRE registration entry spiffe://ocor.test/ocor/control-plane required by tests/tasks/test_ocor_dev_0048.py; it is registered before the full suite with the REM-0017 CI command (raw log section 'SPIRE registration entry')",
+      "VF-002 of verdict -5: every suite runs in the declared environment `uv run ... --frozen --extra test --extra lint` (mypy of the lint extra present); without it test_agent_source_passes_ruff_and_mypy_strict now fails with an explicit precondition message instead of 'No module named mypy'",
+      "hygiene defect outside this task, recorded for remediation: src/ocor_runtime/c5/backbone.py removes its Kafka test container with docker rm --force without -v, leaving anonymous cp-kafka volumes; they are recorded and removed at the end of the full suite (STACK-HYGIENE rule 4); OCOR-DEV-0049 scope does not cover that file"
     ],
     "host": "nepryoon",
     "isolated_toolchain": {
@@ -253,7 +272,7 @@
     "kernel": "7.0.0-34-generic",
     "kind_node_image": "kindest/node:v1.33.1@sha256:050072256b9a903bd914c0b2866828150cb229cea0efe5892e2b644d5dd3b34f",
     "language_policy_note": "DEC-212 authorizes .py only outside deploy/helm; the stdlib agent is therefore carried as Compose `configs` content (single source, mounted by the Helm ConfigMap) and kept under ruff and mypy --strict by the task suite",
-    "main_head": "d33ae207105648799ac11479cca5b9eb9bf619ca",
+    "main_head": "5c57d411a7036d585d431a8030c4816831e7d40c",
     "ops_image": "python:3.11@sha256:c7220863385ee39fb6d822da81f4469d0cd33ff893d92ce94105e5c3f4b95fe2",
     "orchestrators": "Docker Compose (project-scoped carrier against the running ocor-bootstrap stack) and Kubernetes via a disposable kind cluster created and deleted by the test fixture (DEC-211)",
     "python_runtime_tests": "Python 3.12.11",
@@ -277,7 +296,7 @@
   },
   "inputs": {
     "deploy/helm/ocor-poc/Chart.yaml": "b6731d8de4effda2421dec13e73acc9f3207af1e95a140f5ef363879f3dd8e8b",
-    "deploy/helm/ocor-poc/compose.profiles.yaml": "1c40ad9d1eed259ffa07e72c2e0190af6e6faf45dd082413f83e77a15cc1b345",
+    "deploy/helm/ocor-poc/compose.profiles.yaml": "cf4addb7b37dc4cf13968b37dc3e3fe41c4076159f110152c2250dc2f8842443",
     "deploy/helm/ocor-poc/templates/_helpers.tpl": "e9ab150755a039f6ed1bfe9b0ce282d05cc4abadc7dec023eea827e606031381",
     "deploy/helm/ocor-poc/templates/backup-cronjob.yaml": "908ed594a6e078f5ff1e7b4f9ef96b04ae158dd16858d75980565809fe2bfbe7",
     "deploy/helm/ocor-poc/templates/configmap.yaml": "c7c1a7617e45cf042489925a1d67b08788162ca99243c0d2175c4cc40a79dd2c",
@@ -287,7 +306,7 @@
     "deploy/helm/ocor-poc/templates/serviceaccount.yaml": "73f2993e162b886f7ad619956a7c187d540cf17f006cc002e9411f49fc349f9a",
     "deploy/helm/ocor-poc/values.yaml": "c11e630dbc9468f548480a52a628c13554fbc8e04ec9c283eeaa30ff809923c2",
     "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
-    "ocor-runtime/tests/tasks/test_ocor_dev_0049.py": "9fbcb6d14bac8b84284b6c1bf10d9da17d47b9a04dddf738dbd3e0bef661fa50"
+    "ocor-runtime/tests/tasks/test_ocor_dev_0049.py": "77e89d8d86d8da8fcaa1b2113f42379368e830d921fc3f1effe7373eaa7dbd0b"
   },
   "not_claimed": [
     "No requirement is Verified; G6 qualification (OCOR-DEV-0060..0066) is not anticipated.",
@@ -299,39 +318,39 @@
     "action_adapter_timeout and edge_partition faults are not observable by the ops plane at G4 and are reported as such in /posture.",
     "The Compose carrier has no scheduler: the 15-minute backup cadence is enforced by the Helm CronJob; with Compose it requires a host scheduler, and RPO compliance is exported as ocor_recovery_point_within_rpo."
   ],
-  "raw_output_sha256": "371c7e1fc25f421b20d2f752ef4f956979f11951ddeb82e497fe00442a22bb61",
+  "raw_output_sha256": "c76848bd997cd9432058dc99ae4e7991929d313c9748a776008ae1f04bacd721",
   "repair": {
     "audit_matrix": "~/.ocor-codex/audit_0049.md (outside the repository)",
     "closes": [
-      "OCOR-DEV-0049-aefabf91777d-4 VF-001 (every workload image rendered only from ocor.images.pins, the pins the release binding covers; operational.*Image overrides and non-digest pins refused before rendering; agent pin rule name@sha256:<64 lowercase hex>)",
-      "OCOR-DEV-0049-aefabf91777d-4 VF-002 (typed recovery-gate detail must agree with pass=true: tenant/compartment/GCS/marking/orphan/duplicate/resurrection/drift/count violations, memory branch bound to the recovery point)",
-      "OCOR-DEV-0049-aefabf91777d-4 VF-003 (strict RFC 8259 parsing of signed records and profile, finite past ISO-coherent unexpired receipt times, no NaN emitted)",
-      "cycle-5 qualifying attempt at ce82147: PostgreSQL capture made fail-closed (a failed query in a for-list or pipeline no longer yields an empty capture or a skipped memory store; bounded source wait, CAPTURE_SOURCE_UNREACHABLE/CAPTURE_EMPTY) and failed kind jobs report per-container state (commit e6a14a2)",
-      "cycle-5 qualifying attempt at e6a14a2: each seal's Qdrant index snapshot is bound to the checksum of its own creation (concurrent snapshots in the same second share one file name on the real Qdrant), bounded jittered retry then INDEX_SNAPSHOT_UNSTABLE, cleanup tolerant of a concurrent delete (commit f9bf6ea)",
-      "PO decision STACK-HYGIENE (2026-10-06): run-wide teardown — standalone containers removed with their anonymous volumes, every Compose project of the run torn down also on failure, and containers/volumes/networks of the run listed by label and name after teardown: any residue fails the run (commit 50ec9a2)",
-      "qualifying attempt at 50ec9a2 on a freshly reset stack: the live VF-004 precondition assumed two baseline OPA policies; it now requires exactly the baseline ids plus the test module, digest assertions unchanged (commit 49cd235)",
-      "OCOR-DEV-0049-aefabf91777d-4 VF-004 (policy digest of the complete OPA inventory read up to 4 MiB; oversized/truncated/malformed/unavailable inventory yields no digest and an explicit reason code)"
+      "OCOR-DEV-0049-b40aa8a6908b-5 VF-001 (snapshot_index: a 5xx on the creation POST — the concurrent-seal collision observed on the real Qdrant — is retried within the same jittered bound; a 4xx propagates on the first attempt; INDEX_SNAPSHOT_UNSTABLE once exhausted; only successfully created names are cleaned up; deterministic 500/503 cases plus the real-Qdrant concurrent test repeated 3 rounds)",
+      "OCOR-DEV-0049-b40aa8a6908b-5 VF-002 (declared environment --extra test --extra lint for every suite; explicit precondition failure when mypy is absent)",
+      "OCOR-DEV-0049-b40aa8a6908b-5 not-executed check (receipt/recovery-point coherence): a structurally coherent signed PASSED receipt must match the signed checkpoint of its recovery point — every checkpointed tombstone replayed exactly once with the checkpoint's last event id, gate journal_max equal to the checkpoint max_deletion_epoch and metadata_max equal to the recovery point; otherwise RESTORE_RECEIPT_INCONSISTENT (memory:tombstones_not_replayed / memory:deletion_epoch_checkpoint_mismatch / memory:metadata_epoch_mismatch / memory:checkpoint_missing), proven at unit level and on the live agent with real custodian signatures",
+      "live positive variant 'journal_ahead_of_metadata' (journal_max 9 over the checkpoint 7) is no longer a live positive: on the live agent it is the deletion_epoch_above_checkpoint negative; it remains a unit-level positive of the receipt-only coherence function"
     ],
-    "cycle": 5,
+    "cycle": 6,
     "implementer": "Claude Code (Anthropic)",
-    "po_decision": "OCOR-DEV-0049-REPAIR-CLAUDE-AUTO (2026-10-05; third and last of three authorized Claude Code cycles)",
+    "independence_limit": "the repairs of OCOR-DEV-0049 (cycles 2-6) and the verifier are the same model (Claude Code) in separate processes/contexts; the original implementation is by another model",
+    "po_decision": "OCOR-DEV-0049-REPAIR-6 (2026-10-07; one sixth cycle from b40aa8a6908b02d95cdf8138200f99f2e8aea8b1, resolves OCOR-DEV-0049-REPAIR-BUDGET)",
     "previously_closed": [
+      "OCOR-DEV-0049-aefabf91777d-4 VF-001..VF-004 and the cycle-5 qualifying-attempt defects (commits e6a14a2, f9bf6ea, 50ec9a2, 49cd235)",
       "OCOR-DEV-0049-02ac643eb3c7-3 VF-001..VF-003",
       "OCOR-DEV-0049-7fd4f7728801-2 VF-001..VF-003",
       "OCOR-DEV-0049-2c5a574a5f3a-1 VF-001..VF-006",
       "OCOR-DEV-0049-884f7b1160b1-0 VF-001..VF-003"
     ],
     "red_fingerprint": {
-      "base": "aefabf91777d311b95cad0c60de0ffa61357ea19",
-      "method": "final cycle-5 test module (byte-identical to the code commit) executed against the unrepaired agent/chart at aefabf9 in a disposable detached worktree: all 25 unit/static test functions, then the live chain (prerequisites + VF-001/VF-002/VF-003/VF-004 live cases) on the real ocor-bootstrap stack; regenerated on 2026-10-06 after the machine freeze because the first RED raw logs were under /tmp and were lost",
+      "base": "b40aa8a6908b02d95cdf8138200f99f2e8aea8b1",
+      "method": "final cycle-6 test module (byte-identical to the code commit) executed against the unrepaired agent/chart at b40aa8a in a disposable detached worktree: the new deterministic snapshot-creation cases and the receipt/checkpoint coherence cases (unit level)",
       "observed": [
-        "unit/static at aefabf9: 75 failed, 109 passed (VF-001 Helm image overrides / tag-only pins / uppercase pin accepted; VF-002 receipts with pass=true contradicted by the typed detail accepted; VF-003 no strict JSON parser, non-finite and ISO-incoherent times accepted; VF-004 no complete-inventory policy digest; seal snapshot not bound to its own creation)",
-        "live at aefabf9 on the real stack: 36 failed, 47 passed — 29 custodian-signed incoherent receipts accepted (incl. gcs pass=true with tenant_mismatch [m1]), 5 non-finite/ISO-incoherent receipt times accepted (NaN, Infinity, -Infinity, 1e400, ISO mismatch), receipt memory branch not bound to the recovery point; the VF-004 live case, re-run with the final module on the freshly reset stack, fails with KeyError 'policy' (no complete-inventory policy digest exposed)",
-        "superseded cycle-5 qualifying attempts (raw logs lost with /tmp in the 2026-10-06 machine freeze; diagnosis kept in commits e6a14a2 and f9bf6ea): ce82147 kind manual backup BackoffLimitExceeded without output (capture not fail-closed); e6a14a2 full suite: overlapping kind backup seal failed (concurrent Qdrant snapshots of the same second share one file name, reproduced on the real Qdrant)"
+        "unit at b40aa8a: 16 failed, 8 passed — VF-001: a 500/503 on the snapshot creation POST propagates as HTTPError instead of being retried within the bound (creation_500_then_own, creation_503_then_own) and is not reported as INDEX_SNAPSHOT_UNSTABLE once exhausted (creation_500_exhausted, creation_500_then_overwritten); not-executed check of verdict -5: no receipt/checkpoint coherence check exists (receipt_checkpoint_inconsistencies absent: tombstones not replayed, deletion epoch below/above the checkpoint, metadata epoch mismatch all undetected)",
+        "the 8 passing cases at b40aa8a are the pre-existing snapshot branches and the 4xx negatives (a 4xx creation error already propagated, and must keep propagating)",
+        "live RED of the new live-agent checkpoint cases at b40aa8a: NOT_EXECUTED (one stack at a time under STACK-HYGIENE; the decision function is the same one proven RED at unit level and is now called by latest_valid_receipt)",
+        "cycle-5 verifier reproduction of VF-001 at b40aa8a (verdict OCOR-DEV-0049-b40aa8a6908b-5): real Qdrant 500 'failed to store snapshot archive ... File IO error: No such file' on concurrent creation, 1/60 probe calls and the task/full suites"
       ],
-      "summary_sha256": "c75349005cd227a43ec9cd310dee3f65ab9afa4200675e7bdf91467f151a1a74"
+      "summary_sha256": "d325b7201814d972b864c20b15923e5a10a646ba5fb9f945e7abe7336466dd19"
     },
-    "verifier": "Codex (independent process, separate context)"
+    "stability": "task suite executed 3 consecutive times and the full suite once on freshly reset stacks, all green with zero skips (PO decision OCOR-DEV-0049-REPAIR-6)",
+    "verifier": "Claude Code in a separate process and context (OCOR-DEV-0049-VERIFIER-FALLBACK)"
   },
   "requirement_results": [
     {
@@ -341,19 +360,19 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
     },
     {
       "case_id": "OCOR-DEV-0049-AGENT-SOURCE-PASSES-RUFF-AND-MYPY-STRICT",
-      "command": "the embedded ops agent passes ruff and mypy --strict (test_agent_source_passes_ruff_and_mypy_strict)",
+      "command": "the embedded ops agent passes ruff and mypy --strict (declared environment --extra test --extra lint; explicit precondition failure without mypy) (test_agent_source_passes_ruff_and_mypy_strict)",
       "requirement_id": "NFR-001",
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -365,7 +384,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -377,7 +396,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 43,
+        "passed": 129,
         "skipped": 0
       },
       "status": "PASS"
@@ -389,7 +408,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 5,
+        "passed": 15,
         "skipped": 0
       },
       "status": "PASS"
@@ -401,7 +420,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -413,7 +432,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 2,
+        "passed": 6,
         "skipped": 0
       },
       "status": "PASS"
@@ -425,7 +444,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -437,7 +456,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 3,
+        "passed": 9,
         "skipped": 0
       },
       "status": "PASS"
@@ -449,7 +468,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 12,
+        "passed": 36,
         "skipped": 0
       },
       "status": "PASS"
@@ -461,7 +480,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -473,7 +492,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -485,7 +504,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -497,7 +516,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 7,
+        "passed": 21,
         "skipped": 0
       },
       "status": "PASS"
@@ -509,7 +528,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 58,
+        "passed": 174,
         "skipped": 0
       },
       "status": "PASS"
@@ -521,7 +540,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 4,
+        "passed": 12,
         "skipped": 0
       },
       "status": "PASS"
@@ -533,7 +552,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -545,7 +564,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 7,
+        "passed": 21,
         "skipped": 0
       },
       "status": "PASS"
@@ -557,7 +576,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 5,
+        "passed": 15,
         "skipped": 0
       },
       "status": "PASS"
@@ -569,7 +588,43 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 4,
+        "passed": 12,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RECEIPT-MATCHING-ITS-CHECKPOINT-IS-COHERENT",
+      "command": "cycle-6 positive: a receipt replaying exactly the checkpointed tombstones with the checkpoint deletion epochs is coherent with its recovery point, also for an empty journal (test_receipt_matching_its_checkpoint_is_coherent)",
+      "requirement_id": "NFR-067",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 3,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RECEIPT-CHECKPOINT-BRANCHES",
+      "command": "cycle-6 (not-executed check of verdict -5): receipts coherent on their own but not with the signed checkpoint — one tombstone missing, none replayed, foreign last id, duplicate replay, extra tombstone, deletion epoch below or above the checkpoint, metadata epoch below the recovery point — are incoherent (test_receipt_checkpoint_branches)",
+      "requirement_id": "NFR-067",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 24,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RECEIPT-CHECKPOINT-MANIFEST-BRANCHES",
+      "command": "cycle-6: recovery point without checkpoint or with a non-count entries field -> memory:checkpoint_missing; a receipt replaying beyond an empty journal -> all three checkpoint mismatches (test_receipt_checkpoint_manifest_branches)",
+      "requirement_id": "NFR-067",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 9,
         "skipped": 0
       },
       "status": "PASS"
@@ -581,7 +636,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 3,
+        "passed": 9,
         "skipped": 0
       },
       "status": "PASS"
@@ -593,7 +648,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 15,
+        "passed": 45,
         "skipped": 0
       },
       "status": "PASS"
@@ -605,19 +660,31 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
     },
     {
       "case_id": "OCOR-DEV-0049-INDEX-SNAPSHOT-DOWNLOAD-IS-BOUND-TO-ITS-OWN-CREATION",
-      "command": "seal snapshot download branches (scripted endpoint, failure handling only): own snapshot accepted; deleted or overwritten by a concurrent seal -> new snapshot then own accepted; never own or no checksum -> INDEX_SNAPSHOT_UNSTABLE; every created name cleaned up (test_index_snapshot_download_is_bound_to_its_own_creation)",
+      "command": "seal snapshot download branches (scripted endpoint, failure handling only): own snapshot accepted; deleted or overwritten by a concurrent seal -> new snapshot then own accepted; cycle-6 VF-001: creation 500/503 -> retried then own accepted; creation 500 exhausted or followed by an overwritten snapshot -> INDEX_SNAPSHOT_UNSTABLE; never own or no checksum -> INDEX_SNAPSHOT_UNSTABLE; bounded attempts; every successfully created name cleaned up (test_index_snapshot_download_is_bound_to_its_own_creation)",
       "requirement_id": "NFR-042",
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 5,
+        "passed": 27,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-INDEX-SNAPSHOT-CREATION-CLIENT-ERROR-IS-NOT-RETRIED",
+      "command": "cycle-6 VF-001 negative: a 400/404/409 on snapshot creation propagates on the first attempt (no retry, nothing created or deleted) — the seal fails closed (test_index_snapshot_creation_client_error_is_not_retried)",
+      "requirement_id": "NFR-042",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 9,
         "skipped": 0
       },
       "status": "PASS"
@@ -629,7 +696,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -641,7 +708,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -653,19 +720,19 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
     },
     {
       "case_id": "OCOR-DEV-0049-CONCURRENT-SEALS-EACH-DOWNLOAD-THEIR-OWN-INDEX-SNAPSHOT",
-      "command": "live real Qdrant: precondition observed (concurrent snapshot creations share one file name); four concurrent seal downloads each return a snapshot verified against their own creation checksum and leave no snapshot behind (test_concurrent_seals_each_download_their_own_index_snapshot)",
+      "command": "live real Qdrant: precondition observed (concurrent snapshot creations share one file name); three rounds of four concurrent seal downloads each return a snapshot verified against their own creation checksum (creation 5xx of the collision retried) and leave no snapshot behind (test_concurrent_seals_each_download_their_own_index_snapshot)",
       "requirement_id": "NFR-042",
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -677,7 +744,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -689,7 +756,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -701,7 +768,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -713,7 +780,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -725,7 +792,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 2,
+        "passed": 6,
         "skipped": 0
       },
       "status": "PASS"
@@ -737,7 +804,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -749,7 +816,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -761,19 +828,19 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 58,
+        "passed": 174,
         "skipped": 0
       },
       "status": "PASS"
     },
     {
       "case_id": "OCOR-DEV-0049-CUSTODIAN-SIGNED-RECEIPT-WITH-COHERENT-DETAILS-IS-ACCEPTED",
-      "command": "live VF-002 positives: custodian-signed receipts with other consistent counts, journal ahead of metadata, integral epoch -> verified, READY, reopen 200, six classes admitted (test_custodian_signed_receipt_with_coherent_details_is_accepted)",
+      "command": "live VF-002 positives: custodian-signed receipts with other consistent counts and an integral epoch -> verified, READY, reopen 200, six classes admitted (journal ahead of the checkpoint is a live negative since cycle 6) (test_custodian_signed_receipt_with_coherent_details_is_accepted)",
       "requirement_id": "NFR-067",
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 4,
+        "passed": 9,
         "skipped": 0
       },
       "status": "PASS"
@@ -785,7 +852,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 9,
+        "passed": 27,
         "skipped": 0
       },
       "status": "PASS"
@@ -797,7 +864,19 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-CUSTODIAN-SIGNED-RECEIPT-INCOHERENT-WITH-ITS-CHECKPOINT-IS-REFUSED",
+      "command": "live cycle-6: 8 custodian-signed receipts coherent on their own but not with the checkpoint of their recovery point (tombstones not replayed, deletion epoch below/above the checkpoint, metadata epoch) -> RESTORE_RECEIPT_INCONSISTENT with the named cause, readiness 503, /reopen 409, no class admitted; removal restores READY (test_custodian_signed_receipt_incoherent_with_its_checkpoint_is_refused)",
+      "requirement_id": "NFR-067",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 24,
         "skipped": 0
       },
       "status": "PASS"
@@ -809,7 +888,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 3,
+        "passed": 9,
         "skipped": 0
       },
       "status": "PASS"
@@ -821,7 +900,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -833,7 +912,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -845,7 +924,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -857,7 +936,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 4,
+        "passed": 12,
         "skipped": 0
       },
       "status": "PASS"
@@ -869,7 +948,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 2,
+        "passed": 6,
         "skipped": 0
       },
       "status": "PASS"
@@ -881,7 +960,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 5,
+        "passed": 15,
         "skipped": 0
       },
       "status": "PASS"
@@ -893,7 +972,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -905,7 +984,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -917,7 +996,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -929,7 +1008,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -941,7 +1020,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -953,7 +1032,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -965,7 +1044,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -977,7 +1056,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -989,7 +1068,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -1001,7 +1080,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -1013,7 +1092,7 @@
       "result": {
         "failed": 0,
         "not_executed": 0,
-        "passed": 1,
+        "passed": 3,
         "skipped": 0
       },
       "status": "PASS"
@@ -1028,6 +1107,8 @@
     "kindnet programs the NetworkPolicy of a newly created pod asynchronously: in that window the agent itself observes and reports PUBLIC_EGRESS_OPEN and the pod stays NotReady (fail-closed); the Helm test waits for convergence before asserting that the release fence is the only remaining reason.",
     "The release fence binds a tested restore to the FULL profile digest: any profile change, including operational tuning, requires a new backup and recovery-gate pass before readiness (most restrictive fail-closed reading, recorded).",
     "The ops agent does not inspect its own image id from inside the pod: executed image == governed pin holds by construction (single source pin -> rendered image, refused overrides) and is observed on Compose (container image id) and kind (pod imageID).",
+    "Cycle 6: the full runtime suite took 2654 s against the 2700 s STACK-HYGIENE budget (OCOR-DEV-0049 alone ~29 min of it): a slower host may exceed the 45-minute limit; splitting the task suite out of the full-suite budget or shortening the live chain needs a separate decision.",
+    "Cycle 6: the 5xx retry of the snapshot creation is bounded (5 attempts, jittered 1-6 s pauses); with more concurrent seals than attempts in the same seconds the seal fails closed with INDEX_SNAPSHOT_UNSTABLE rather than serializing.",
     "The policy inventory bound is 4 MiB: a legitimate inventory above it is reported POLICY_INVENTORY_TOO_LARGE (no digest in telemetry) rather than truncated."
   ],
   "result": "PASS",

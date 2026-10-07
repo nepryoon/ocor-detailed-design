@@ -172,12 +172,12 @@
     },
     {
       "path": "OCOR-DEV-0049.json",
-      "sha256": "a2619191ca3b997756abb20d00a49651808ef8bc5da10ffe416a047454bd867a",
+      "sha256": "769c7c93e78b88b262e7fc17fa5246662b70120aa20dbaa69a0528051c06b3c1",
       "task_id": "OCOR-DEV-0049"
     },
     {
       "path": "OCOR-DEV-0049.log",
-      "sha256": "371c7e1fc25f421b20d2f752ef4f956979f11951ddeb82e497fe00442a22bb61",
+      "sha256": "c76848bd997cd9432058dc99ae4e7991929d313c9748a776008ae1f04bacd721",
       "task_id": "OCOR-DEV-0049-RAW"
     }
   ],
@@ -3246,7 +3246,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-AGENT-SOURCE-PASSES-RUFF-AND-MYPY-STRICT",
-      "command": "the embedded ops agent passes ruff and mypy --strict (test_agent_source_passes_ruff_and_mypy_strict)",
+      "command": "the embedded ops agent passes ruff and mypy --strict (declared environment --extra test --extra lint; explicit precondition failure without mypy) (test_agent_source_passes_ruff_and_mypy_strict)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-001",
@@ -3416,6 +3416,33 @@
       "task_id": "OCOR-DEV-0049"
     },
     {
+      "case_id": "OCOR-DEV-0049-RECEIPT-MATCHING-ITS-CHECKPOINT-IS-COHERENT",
+      "command": "cycle-6 positive: a receipt replaying exactly the checkpointed tombstones with the checkpoint deletion epochs is coherent with its recovery point, also for an empty journal (test_receipt_matching_its_checkpoint_is_coherent)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RECEIPT-CHECKPOINT-BRANCHES",
+      "command": "cycle-6 (not-executed check of verdict -5): receipts coherent on their own but not with the signed checkpoint — one tombstone missing, none replayed, foreign last id, duplicate replay, extra tombstone, deletion epoch below or above the checkpoint, metadata epoch below the recovery point — are incoherent (test_receipt_checkpoint_branches)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RECEIPT-CHECKPOINT-MANIFEST-BRANCHES",
+      "command": "cycle-6: recovery point without checkpoint or with a non-count entries field -> memory:checkpoint_missing; a receipt replaying beyond an empty journal -> all three checkpoint mismatches (test_receipt_checkpoint_manifest_branches)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
       "case_id": "OCOR-DEV-0049-RELEASE-BINDING-BRANCHES",
       "command": "VF-001 decision branches: binding equal to the running release/profile/pins passes; other release, other pin set, other profile digest, missing or partial binding are refused; binding checked against an independent oracle (test_release_binding_branches)",
       "evidence_path": "OCOR-DEV-0049.json",
@@ -3444,7 +3471,16 @@
     },
     {
       "case_id": "OCOR-DEV-0049-INDEX-SNAPSHOT-DOWNLOAD-IS-BOUND-TO-ITS-OWN-CREATION",
-      "command": "seal snapshot download branches (scripted endpoint, failure handling only): own snapshot accepted; deleted or overwritten by a concurrent seal -> new snapshot then own accepted; never own or no checksum -> INDEX_SNAPSHOT_UNSTABLE; every created name cleaned up (test_index_snapshot_download_is_bound_to_its_own_creation)",
+      "command": "seal snapshot download branches (scripted endpoint, failure handling only): own snapshot accepted; deleted or overwritten by a concurrent seal -> new snapshot then own accepted; cycle-6 VF-001: creation 500/503 -> retried then own accepted; creation 500 exhausted or followed by an overwritten snapshot -> INDEX_SNAPSHOT_UNSTABLE; never own or no checksum -> INDEX_SNAPSHOT_UNSTABLE; bounded attempts; every successfully created name cleaned up (test_index_snapshot_download_is_bound_to_its_own_creation)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-042",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-INDEX-SNAPSHOT-CREATION-CLIENT-ERROR-IS-NOT-RETRIED",
+      "command": "cycle-6 VF-001 negative: a 400/404/409 on snapshot creation propagates on the first attempt (no retry, nothing created or deleted) — the seal fails closed (test_index_snapshot_creation_client_error_is_not_retried)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-042",
@@ -3480,7 +3516,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-CONCURRENT-SEALS-EACH-DOWNLOAD-THEIR-OWN-INDEX-SNAPSHOT",
-      "command": "live real Qdrant: precondition observed (concurrent snapshot creations share one file name); four concurrent seal downloads each return a snapshot verified against their own creation checksum and leave no snapshot behind (test_concurrent_seals_each_download_their_own_index_snapshot)",
+      "command": "live real Qdrant: precondition observed (concurrent snapshot creations share one file name); three rounds of four concurrent seal downloads each return a snapshot verified against their own creation checksum (creation 5xx of the collision retried) and leave no snapshot behind (test_concurrent_seals_each_download_their_own_index_snapshot)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-042",
@@ -3561,7 +3597,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-CUSTODIAN-SIGNED-RECEIPT-WITH-COHERENT-DETAILS-IS-ACCEPTED",
-      "command": "live VF-002 positives: custodian-signed receipts with other consistent counts, journal ahead of metadata, integral epoch -> verified, READY, reopen 200, six classes admitted (test_custodian_signed_receipt_with_coherent_details_is_accepted)",
+      "command": "live VF-002 positives: custodian-signed receipts with other consistent counts and an integral epoch -> verified, READY, reopen 200, six classes admitted (journal ahead of the checkpoint is a live negative since cycle 6) (test_custodian_signed_receipt_with_coherent_details_is_accepted)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-067",
@@ -3580,6 +3616,15 @@
     {
       "case_id": "OCOR-DEV-0049-RECEIPT-MEMORY-BRANCH-MUST-MATCH-ITS-RECOVERY-POINT",
       "command": "live VF-002: a custodian-signed receipt coherent as a no-memory drill for a recovery point that carries a memory store -> RESTORE_RECEIPT_INCONSISTENT memory:manifest_mismatch, readiness 503, /reopen 409, no class admitted (test_receipt_memory_branch_must_match_its_recovery_point)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-CUSTODIAN-SIGNED-RECEIPT-INCOHERENT-WITH-ITS-CHECKPOINT-IS-REFUSED",
+      "command": "live cycle-6: 8 custodian-signed receipts coherent on their own but not with the checkpoint of their recovery point (tombstones not replayed, deletion epoch below/above the checkpoint, metadata epoch) -> RESTORE_RECEIPT_INCONSISTENT with the named cause, readiness 503, /reopen 409, no class admitted; removal restores READY (test_custodian_signed_receipt_incoherent_with_its_checkpoint_is_refused)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-067",
