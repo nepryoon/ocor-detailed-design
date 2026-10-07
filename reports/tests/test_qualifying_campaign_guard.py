@@ -51,3 +51,12 @@ def test_nonqualifying_junit_is_rejected(tmp_path, xml):
 def test_missing_junit_is_rejected(tmp_path):
     with pytest.raises(GUARD.CampaignError):
         GUARD.check_junit(tmp_path / 'missing.xml')
+
+
+def test_manual_restart_is_rejected_even_without_restart_counter_change():
+    before = state()
+    before['State']['StartedAt'] = '2026-10-07T02:00:00Z'
+    after = state()
+    after['State']['StartedAt'] = '2026-10-07T02:00:05Z'
+    with pytest.raises(GUARD.CampaignError):
+        GUARD.check_stack({'service': before}, {'service': after})

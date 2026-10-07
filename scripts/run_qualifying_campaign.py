@@ -26,6 +26,7 @@ def check_stack(initial: dict[str, Any], current: dict[str, Any]) -> None:
     for name, before in initial.items():
         after = current[name]
         if (after["Id"] != before["Id"] or after["RestartCount"] != before["RestartCount"]
+                or after["State"].get("StartedAt") != before["State"].get("StartedAt")
                 or not after["State"]["Running"] or after["State"].get("OOMKilled")):
             raise CampaignError(f"service restarted, stopped or OOM killed: {name}")
 
