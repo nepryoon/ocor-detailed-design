@@ -131,8 +131,13 @@ def provision(repository: Path, timeout: int) -> dict[str, object]:
         raise BootstrapError("SPIRE token output invalid")
     replace_env(env_file, "OCOR_SPIRE_JOIN_TOKEN", token.split("Token:", 1)[1].splitlines()[0].strip())
     execute(repository, compose + ["up", "--detach", "--wait", "--wait-timeout", str(timeout), "--no-build"], "complete stack", timeout + 60)
-    flags = execute(repository, ["docker", "exec", "ocor-bootstrap-fuseki-1", "jcmd", "1", "VM.flags"], "Fuseki actual heap", 30)
-    if not re.search(r"(?:^|\s)-XX:MaxHeapSize=1073741824(?:\s|$)", flags):
+    # The pinned image contains a JRE, not jcmd. Bind the running PID's arguments
+    # to a read-only VM flag probe using that same runtime and the same heap args.
+    argv = execute(repository, ["docker", "exec", "ocor-bootstrap-fuseki-1", "cat", "/proc/1/cmdline"], "Fuseki running JVM arguments", 30).split("\0")
+    if "-Xms128m" not in argv or "-Xmx1G" not in argv:
+        raise BootstrapError("Fuseki running JVM did not consume the CI heap bounds")
+    flags = execute(repository, ["docker", "exec", "ocor-bootstrap-fuseki-1", "java", "-Xms128m", "-Xmx1G", "-XX:+PrintFlagsFinal", "-version"], "Fuseki JVM heap flag probe", 30)
+    if not re.search(r"\bMaxHeapSize\s*=\s*1073741824\b", flags):
         raise BootstrapError("Fuseki heap is not bounded to 1 GiB inside its 2 GiB cgroup")
     agent = ["docker", "exec", "ocor-bootstrap-spire-agent-1", "/opt/spire/bin/spire-agent"]
     ready = retry(agent + ["healthcheck", "-socketPath", "/run/spire/sockets/agent.sock"], cwd=repository, attempts=5, timeout=10)
