@@ -49,6 +49,26 @@ jobs:
           version: "0.12.5"
           enable-cache: true
 
+      - name: Install and verify pinned ruff executable
+        run: |
+          set -euo pipefail
+          uv tool install ruff==0.13.1
+          tool_bin="$(uv tool dir --bin)"
+          echo "$tool_bin" >> "$GITHUB_PATH"
+          "$tool_bin/ruff" --version
+          python - "$tool_bin/ruff" <<'PYTHON'
+          import hashlib
+          import json
+          import sys
+          from pathlib import Path
+          lock = json.loads(Path('infra/toolchain.lock.json').read_text())
+          entry = next(tool for tool in lock['tools'] if tool['id'] == 'ruff')
+          actual = hashlib.sha256(Path(sys.argv[1]).read_bytes()).hexdigest()
+          if actual != entry['integrity']:
+              raise SystemExit('Installed ruff digest differs from the governed lock')
+          print(f"ruff {entry['version']}: SHA-256 matches governed lock")
+          PYTHON
+
       - name: Synchronize locked runtime environment
         working-directory: ocor-runtime
         run: |
@@ -207,6 +227,26 @@ jobs:
         with:
           version: "0.12.5"
           enable-cache: true
+
+      - name: Install and verify pinned ruff executable
+        run: |
+          set -euo pipefail
+          uv tool install ruff==0.13.1
+          tool_bin="$(uv tool dir --bin)"
+          echo "$tool_bin" >> "$GITHUB_PATH"
+          "$tool_bin/ruff" --version
+          python - "$tool_bin/ruff" <<'PYTHON'
+          import hashlib
+          import json
+          import sys
+          from pathlib import Path
+          lock = json.loads(Path('infra/toolchain.lock.json').read_text())
+          entry = next(tool for tool in lock['tools'] if tool['id'] == 'ruff')
+          actual = hashlib.sha256(Path(sys.argv[1]).read_bytes()).hexdigest()
+          if actual != entry['integrity']:
+              raise SystemExit('Installed ruff digest differs from the governed lock')
+          print(f"ruff {entry['version']}: SHA-256 matches governed lock")
+          PYTHON
 
       - name: Synchronize locked runtime environment
         working-directory: ocor-runtime
