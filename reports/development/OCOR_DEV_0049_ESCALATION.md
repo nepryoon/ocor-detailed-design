@@ -256,3 +256,39 @@ Controlli del verifier `NOT_EXECUTED`:
 Budget ciclo 6 consumato: **nessun ciclo 7 autorizzato**, nessuna riparazione Codex, sigillatura o merge 0049. Candidato `d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b` preservato. La disposizione globale precedente `TERMINAL_BLOCKED` è superseduta da `OCOR-DEV-0049-REPAIR-6`: il loop continua con **REM-0017 → 0050**, poi i task raggiungibili senza 0049. Chiusura transitiva bloccata: OCOR-DEV-0049, OCOR-DEV-0059, OCOR-DEV-0060, OCOR-DEV-0061, OCOR-DEV-0062, OCOR-DEV-0063, OCOR-DEV-0064, OCOR-DEV-0065, OCOR-DEV-0066, OCOR-DEV-0067, OCOR-DEV-0068, OCOR-DEV-0069. REM-0017 resta prerequisito G6. PR #169 osservata aperta, HEAD 7562d3c48015f45a0b518fde622ca4304e9468ca, validation-closure FAILURE run 37350619188; preservata in questa unità.
 
 State sync documentale su `governed/state-sync-ocor-dev-0049-cycle6` da `5c57d411a7036d585d431a8030c4816831e7d40c`; suite runtime locale **NOT_EXECUTED**, risultati del verifier distinti dai controlli meccanici del loop. `inputs/`, E1=0/E2=0, zero Verified, runtime NOT_ESTABLISHED, PoC/Production NO-GO invariati.
+
+
+## 2026-10-07 — Autorizzazione OCOR-DEV-0049-REPAIR-7, riparazione Codex
+
+La decisione esplicita del Product Owner autorizza il solo ciclo 7 da HEAD remoto
+`d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b`, verificato in sola lettura prima
+della modifica. Supersede il divieto di ciclo 7 e l’assegnazione delle riparazioni
+al solo Claude Code per questa iterazione. Implementatore ciclo 7: Codex (OpenAI);
+verifier: Claude Code (Anthropic) in processo/contesto separati. Riparazioni 2–6 di
+Claude Code conservate; nessun ciclo 8 autorizzato. Il NO_GO del ciclo 6 rimane
+un evento storico e non viene riscritto come GO.
+
+REM-0017 PR #169 `efce339` è WIP in attesa del candidato stabile; non è stata
+interrotta né modificata in questa riparazione. Il ciclo 7 procede durante tale
+attesa, come autorizzato. Codice sorgente `129cc2a`: ordinamento comune al sigillo
+e al replay, capture `COLLATE "C"`, casi positivi/negativi unitari e live con due
+tombstone alla stessa epoch e collation divergenti; positivo journal 9/metadata 7
+sigillato e restored. Test Helm attende esplicitamente il diniego RESTORE_UNTESTED,
+fallendo su 200/Ready e senza accettare NOT_YET_SCANNED come prova.
+
+Stabilità in corso (3 suite task consecutive e 1 completa, zero skip, 45 minuti,
+reset/bootstrap/health e watchdog per ogni run). Primo run: 325 PASS in 1811,50 s,
+zero skip e nessun nuovo residuo. Non è ancora un verdetto, un sigillo o una chiusura.
+Controllo locale dell’ID Fuseki FAIL, registrato separatamente; ricetta CI con base
+/source locked e servizi reali, nessun update o bypass del lock. Decision request
+FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE aperta sul change set REM, non occultata.
+
+Con GO si riprende REM-0017 e l’integrazione secondo REM-0017-PRIORITY; con NO_GO
+si escala il solo 0049 e si prosegue G5. E1=0, E2=0, zero Verified e claim NO-GO
+invariati. Referto finale e HEAD candidato esatto da acquisire dopo la stabilità.
+
+### Candidato ciclo 7 consegnato — 2026-10-07T14:11:08.613626+00:00
+
+Candidato `9d86abebc7626a36115540a2711772c1d2d19e23`, sorgente `a128a622151261d510b332ca93a688912a119197`: task1: 325 PASS/0 skip (2088.5s), task2: 325 PASS/0 skip (1734.4s), task3: 325 PASS/0 skip (1752.6s), full: 1426 PASS/0 skip (2166.9s), reports: 48 PASS/0 skip (10.2s). Esito locale, non verdetto indipendente; escalation storica dei cicli precedenti preservata. Bootstrap locale Fuseki identity-lock FAIL dichiarato, nessuna uguaglianza col lock asserita.
+
+Verifica indipendente Grok 4.7 (Cursor) del ciclo 7 di OCOR-DEV-0049 sull’HEAD 9d86abebc7626a36115540a2711772c1d2d19e23; poi riprendere REM-0017 repair 1 con questo candidato, riallineare il pin e la CI senza esclusioni, richiedere verifica indipendente. Integrazione 0049 dopo REM-0017 verificato; con NO_GO escalation solo 0049 e proseguire G5, nessun ciclo 8.
