@@ -216,3 +216,27 @@ def test_ci_teardown_residual_resources_are_a_failure(tmp_path, monkeypatch):
     }, raising=False)
     with pytest.raises(BootstrapError, match="resources remain after teardown"):
         ci.teardown(tmp_path)
+
+
+@pytest.mark.parametrize("exit_code", [0, 4])
+def test_build_log_survives_success_and_nonzero_exit(tmp_path, exit_code):
+    import bootstrap_ci_environment as ci
+    from ocor_bootstrap_lib import BootstrapError
+    (tmp_path / "reports/tests").mkdir(parents=True)
+    command = [sys.executable, "-c", f"import sys; print('locked recipe step', flush=True); sys.exit({exit_code})"]
+    if exit_code:
+        with pytest.raises(BootstrapError, match="build failed"):
+            ci.execute_logged(tmp_path, command, "build", 5, "ci_fuseki_build.log")
+    else:
+        ci.execute_logged(tmp_path, command, "build", 5, "ci_fuseki_build.log")
+    assert (tmp_path / "reports/tests/ci_fuseki_build.log").read_text() == "locked recipe step\n"
+
+
+def test_build_timeout_retains_last_step_and_fails_closed(tmp_path):
+    import bootstrap_ci_environment as ci
+    from ocor_bootstrap_lib import BootstrapError
+    (tmp_path / "reports/tests").mkdir(parents=True)
+    command = [sys.executable, "-c", "import time; print('downloading pinned archive', flush=True); time.sleep(10)"]
+    with pytest.raises(BootstrapError, match="timeout after 1s.*build"):
+        ci.execute_logged(tmp_path, command, "build", 1, "ci_fuseki_build.log")
+    assert "downloading pinned archive" in (tmp_path / "reports/tests/ci_fuseki_build.log").read_text()

@@ -250,3 +250,22 @@ Per 0049 la storia dei cicli 2–6 Claude resta dichiarata; ciclo 7 Codex.
 La divergenza identità Fuseki locale resta registrata nella richiesta
 FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE: nessuna modifica a lock o validator.
 E1=0, E2=0, zero Verified, runtime NOT_ESTABLISHED e PoC/Production NO-GO.
+
+
+### Ripresa serale repair 1 — 2026-10-07
+
+Il candidato 0049 ciclo 7 è stabile nelle suite (tre task run e una full locali),
+ma il verdetto Grok 4.7/Cursor resta NO_GO per VF-001 sul binding della receipt.
+La campagna TEST-INFRA-006 usa ora SHA immutabile 9d86abebc7626a36115540a2711772c1d2d19e23
+solo per esercitare tutti i test sullo stack; nessuna accettazione o sigillatura 0049.
+Riparazioni 2–6 Claude Code, ciclo 7 Codex, verifier del task Grok 4.7/Cursor.
+Verifier REM: Claude Code; implementatore REM: Codex.
+
+Il timeout build nella run 37580988000 è provato, la fase interna non lo è.
+La build salva ora progress plain anche al timeout; provisioning passa dal budget
+300s al massimo già ammesso 600s, senza variare il limite suite 2700s, lock, recipe
+o condizioni di accettazione. Se il runner non completa stabilmente, il REM resta
+aperto e si segue REM-0017-PRIORITY con decision request e prosecuzione G5.
+Il checkout main precede il rigetto del job candidato, quindi il teardown
+stdlib può verificare assenza delle risorse anche se la sincronizzazione è saltata.
+Nessuno skip qualificante o esclusione: campagne e CI nuove ancora IN_PROGRESS.

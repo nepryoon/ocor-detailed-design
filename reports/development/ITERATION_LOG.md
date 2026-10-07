@@ -4557,3 +4557,11 @@ Gate documentali: rccad PASS_LOCAL_PRECHECK, scope/language/ruff PASS, mypy 69 s
   candidato rifiutato. Piano settled 37 PASS/2 NOT_EXECUTED opzionali;
   gli altri gate locali PASS. CI nuova e verifica REM NOT_EXECUTED, in attesa
   del candidato ciclo 7 0049; nessun PASS attribuito all'HEAD CI fallito.
+
+
+## 2026-10-07T17:57:27.374104+00:00 — REM-0017 repair 1: ripresa qualificazione
+
+- Main 9afbc87, WIP efce339 preservato e merge non riscritto e00ba10. Conflitti risolti preservando stato/verdetto 0049 ciclo 7 di main e append integrale delle voci REM precedenti; nessun codice/task/evidenza 0049 modificato. Verifier REM Claude Code, implementatore Codex.
+- CI 37580988000: artifact mostra timeout docker build Fuseki 300s; fase interna non acquisita, nessuna diagnosi inventata. Log build plain salvato anche su exit nonzero/timeout; budget operazione provisioning 600s (massimo già ammesso), suite 2700s invariata. RED 3 FAIL per helper assente, GREEN 39 PASS senza skip; subprocess reali per positivo/failure/timeout locale. Dockerfile/base/source/lock/checker invariati.
+- Checkout main anticipata al rigetto della dipendenza CI per rendere eseguibile il teardown stdlib anche se l'ambiente Python non è stato sincronizzato. Pin TEST-INFRA-006 aggiornato al candidato stabile 9d86abe, esplicitamente NO_GO, senza approvarlo né sigillarlo. Ciclo di vita e qualifica infrastrutturale distinti dalla disposition del task.
+- Digest 8/8, harness 14/14, drift 0/167, toolchain 9/9 PASS; campagne reali/CI nuove ancora pending, nessun PASS finale. Processo esterno passa-a-claude-0049 osservato in attesa; nessuna interferenza con branch 0049, nessun altro stack attivo.

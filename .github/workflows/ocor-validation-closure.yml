@@ -25,13 +25,13 @@ jobs:
       group: ocor-validation-closure-${{ github.ref }}
       cancel-in-progress: false
     steps:
-      - name: Reject missing or failed conditional infrastructure campaign
-        run: test "${{ needs.conditional-infrastructure-0049.result }}" = success
-
       - name: Checkout exact revision
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           fetch-depth: 0
+
+      - name: Reject missing or failed conditional infrastructure campaign
+        run: test "${{ needs.conditional-infrastructure-0049.result }}" = success
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
@@ -92,7 +92,7 @@ jobs:
       - name: Provision the full pinned disposable stack
         run: |
           set -euo pipefail
-          ocor-runtime/.venv/bin/python scripts/bootstrap_ci_environment.py --execute --timeout 300 | tee reports/tests/ci_bootstrap.log
+          ocor-runtime/.venv/bin/python scripts/bootstrap_ci_environment.py --execute --timeout 600 | tee reports/tests/ci_bootstrap.log
           ocor-runtime/.venv/bin/python - <<'PYTHON'
           import os
           from pathlib import Path
@@ -167,7 +167,8 @@ jobs:
         if: always()
         run: |
           set -euo pipefail
-          ocor-runtime/.venv/bin/python scripts/bootstrap_ci_environment.py --teardown --execute | tee reports/tests/ci_teardown.log
+          mkdir -p reports/tests
+          python3 scripts/bootstrap_ci_environment.py --teardown --execute | tee reports/tests/ci_teardown.log
           test -z "$(docker ps -aq --filter label=com.docker.compose.project=ocor-bootstrap)"
           test -z "$(docker volume ls -q --filter label=com.docker.compose.project=ocor-bootstrap)"
 
@@ -263,7 +264,7 @@ jobs:
       - name: Checkout immutable TEST-INFRA-006 candidate (NO_GO preserved)
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
-          ref: d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b
+          ref: 9d86abebc7626a36115540a2711772c1d2d19e23
           path: .ocor/candidate-0049
           persist-credentials: false
 
@@ -285,7 +286,7 @@ jobs:
       - name: Provision the full pinned disposable stack
         run: |
           set -euo pipefail
-          ocor-runtime/.venv/bin/python scripts/bootstrap_ci_environment.py --execute --timeout 300 | tee reports/tests/ci_bootstrap.log
+          ocor-runtime/.venv/bin/python scripts/bootstrap_ci_environment.py --execute --timeout 600 | tee reports/tests/ci_bootstrap.log
           ocor-runtime/.venv/bin/python - <<'PYTHON'
           import os
           from pathlib import Path
@@ -302,7 +303,7 @@ jobs:
       - name: Run the immutable candidate FULL suite with TEST-INFRA-005 and 006
         run: |
           set -euo pipefail
-          .ocor/candidate-0049/ocor-runtime/.venv/bin/python scripts/run_qualifying_campaign.py --execute --repository .ocor/candidate-0049 --expected-head d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b --output-dir reports/tests/candidate-0049
+          .ocor/candidate-0049/ocor-runtime/.venv/bin/python scripts/run_qualifying_campaign.py --execute --repository .ocor/candidate-0049 --expected-head 9d86abebc7626a36115540a2711772c1d2d19e23 --output-dir reports/tests/candidate-0049
 
       - name: Teardown candidate-owned resources and the disposable stack
         if: always()

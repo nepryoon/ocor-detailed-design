@@ -4,9 +4,9 @@
     "PR #169 WIP: verificare attivit\u00e0 concorrente prima di riprenderla",
     "Nessun PASS del verifier sigilla 0049 quando il verdetto complessivo \u00e8 NO_GO"
   ],
-  "base_sha": "a7dd7525f1670f45d8996298efb167ff1017bbc1",
-  "baseline_commit": "a7dd7525f1670f45d8996298efb167ff1017bbc1",
-  "branch": "governed/state-sync-ocor-dev-0049-cycle7-verdict",
+  "base_sha": "9afbc87b0b1308dcd8cecab6247bdd43360c1ed4",
+  "baseline_commit": "9afbc87b0b1308dcd8cecab6247bdd43360c1ed4",
+  "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
   "changed_paths": [
     "reports/development/EXECUTION_STATE.json",
     "reports/development/MODEL_HANDOFF.json",
@@ -191,13 +191,13 @@
     "OCOR-DEV-0048"
   ],
   "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
-  "current_task": "OCOR-DEV-0049:integration \u2014 disposition NO_GO ciclo 7, escalation e state sync",
+  "current_task": "OCOR-DEV-REM-0017:implementation repair 1",
   "evidence_paths": [
     "reports/development/OCOR_DEV_0049_ESCALATION.md",
     "reports/development/decision_requests/OCOR-DEV-0049-REPAIR-BUDGET.md",
     "reports/development/TERMINAL_BLOCKED_REPORT.json"
   ],
-  "exact_next_action": "OCOR-DEV-REM-0017:implementation \u2014 riprendere repair 1 nel worktree .ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire da efce339d9fc7a551216c84135e06d39c0488a222, preservando il WIP; riallineare a origin/main senza force-push, diagnosticare CI run 37580988000, gestire il pin TEST-INFRA-006 e il suo ciclo di vita tenendo esplicito il NO_GO del candidato 0049 9d86abebc7626a36115540a2711772c1d2d19e23. Stack completo, zero skip, timeout suite <=2700 s, nessuna esclusione; acquisire CI verde esatta e nuova verifica indipendente Claude Code. Se una condizione riservata/esterna impedisce il REM, accodare la sola decisione pertinente e proseguire OCOR-DEV-0050/G5. 0049 resta escalato, nessun ciclo 8.",
+  "exact_next_action": "Completare REM-0017 repair 1: qualificare pin immutabile 9d86abebc7626a36115540a2711772c1d2d19e23 (0049 NO_GO preservato), log build Fuseki bounded, campagne locali e CI esatta senza skip, nuova verifica Claude Code. Nessun ciclo 8 di 0049; se REM bloccato, proseguire 0050/G5.",
   "external_publication": {
     "api_source_commit": "64468442dd4e9e116e4b5cdd59af7ea0bf4a0439",
     "different_commit_reason": "API omits the final newline from the commit message when the payload omits it. The API renders author/committer dates as UTC while preserving their Git header offsets. This transformation reproduces API source SHA 64468442dd4e9e116e4b5cdd59af7ea0bf4a0439 from preserved local commit 0121d7d4c87a0102bf8d049738139caabec0b78a; tree, parent and timestamps are identical. Final API payload preserves the message newline and UTC timestamps to retain the exact local SHA.",
@@ -212,6 +212,7 @@
   },
   "head_sha": "64468442dd4e9e116e4b5cdd59af7ea0bf4a0439",
   "head_sha_role": "EXACT_TESTED_STATE_SYNC_SOURCE; final documentation HEAD must pass all 13 checks again",
+  "implementer": "Codex (OpenAI)",
   "independent_verification": {
     "blocking_findings": [
       "VF-001"
@@ -242,6 +243,7 @@
     "path": "reports/development/MODEL_HANDOFF.json",
     "sha256": "1fc21ccd747627059474af20a850bd82631a9926954712e726efc691efc70454"
   },
+  "raw_directory": "/home/luca/.ocor-codex/rem0017-repair1/resume-20261007-evening",
   "raw_evidence_hashes": {
     "api-commit-response.json": {
       "path": "/home/luca/.ocor-codex/state-sync-0049-cycle7-verdict/api-commit-response.json",
@@ -719,7 +721,7 @@
     "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE: bootstrap attuale FAIL, lock/checker invariati; salute NOT_EXECUTED",
     "REM-0018 separato: teardown volumi spike vector/Kafka e harness C5 da qualificare"
   ],
-  "updated_at": "2026-10-07T17:27:12.890515+00:00",
+  "updated_at": "2026-10-07T17:57:27.374104+00:00",
   "validation_limitations": [
     {
       "control": "Bootstrap locale",
@@ -736,5 +738,7 @@
       "status": "NOT_EXECUTED"
     }
   ],
-  "worktree": ".ocor/worktrees/state-sync-ocor-dev-0049-cycle7-verdict"
+  "verification_status": "NOT_REQUESTED_QUALIFICATION_PENDING",
+  "verifier": "Claude Code (Anthropic), processo e contesto separati",
+  "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
 }

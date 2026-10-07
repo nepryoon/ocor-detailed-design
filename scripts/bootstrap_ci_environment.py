@@ -62,6 +62,25 @@ def execute(repository: Path, command: list[str], label: str, timeout: int) -> s
     return result.stdout
 
 
+def execute_logged(repository: Path, command: list[str], label: str, timeout: int, log_name: str) -> None:
+    """Retain build progress even when the process fails or reaches its deadline.
+
+    Used only before credential generation, for the locked Docker recipe.
+    """
+    log = repository / "reports/tests" / log_name
+    log.parent.mkdir(parents=True, exist_ok=True)
+    with log.open("w") as stream:
+        try:
+            result = subprocess.run(command, cwd=repository, stdout=stream,
+                                    stderr=subprocess.STDOUT, timeout=timeout, check=False)
+        except subprocess.TimeoutExpired as exc:
+            print(json.dumps({"operation": label, "exit_code": 124, "log": str(log)}), flush=True)
+            raise BootstrapError(f"timeout after {timeout}s: {label}; see {log_name}") from exc
+    print(json.dumps({"operation": label, "exit_code": result.returncode, "log": str(log)}), flush=True)
+    if result.returncode:
+        raise BootstrapError(f"{label} failed; see {log_name}")
+
+
 def owned_resources(repository: Path) -> dict[str, list[str]]:
     """Inventory every resource kind under the exact disposable Compose label."""
     commands = {
@@ -152,7 +171,7 @@ def provision(repository: Path, timeout: int) -> dict[str, object]:
     dockerfile = (repository / fuseki["dockerfile"]).read_text()
     if f"FROM {fuseki['base_image']}\n" not in dockerfile or fuseki["source_sha512"] not in dockerfile:
         raise BootstrapError("Fuseki recipe differs from the locked base/source")
-    execute(repository, ["docker", "build", "--pull", "-t", fuseki["output_image"], "infra/fuseki"], "Fuseki recipe build", timeout)
+    execute_logged(repository, ["docker", "build", "--progress=plain", "--pull", "-t", fuseki["output_image"], "infra/fuseki"], "Fuseki recipe build", timeout, "ci_fuseki_build.log")
     image_id = execute(repository, ["docker", "image", "inspect", fuseki["output_image"], "--format", "{{.Id}}"], "Fuseki identity capture", 30).strip()
     env_file = write_secret_file(repository)
     ca = repository / ".ocor/spire"
