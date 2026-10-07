@@ -1,1006 +1,571 @@
 {
   "assumptions_requiring_revalidation": [
-    "Stesso modello per implementatore e verifier in contesti separati; nessuna diversit\u00e0 di modello dichiarata. Model/effort esatti NOT_EXPOSED_BY_RUNTIME.",
-    "La candidatura richiede verdetto sullo stesso head_sha e futura integrazione governata. I report terminali storici restano conservati."
+    "PR #169: verificare attivit\u00e0 concorrente prima della ripresa; nessuna interferenza in questa unit\u00e0.",
+    "STACK-HYGIENE per ogni suite completa; timeout 45 minuti, uno stack, teardown.",
+    "RVW-03/INFO-A/INFO-C risolte dal PO, esecuzione audit/remediation ancora pendente.",
+    "REM-0017: run 37350619188 fallita allo step Bootstrap SPIRE server and agent (two-phase, digest-pinned); --log-failed restituisce output vuoto. Diagnosi del bootstrap da riprendere senza assumere una causa non osservata."
   ],
-  "base_sha": "45e4a6f66209af3136d79980c00c41d79fb9ae8a",
-  "baseline_commit": "45e4a6f66209af3136d79980c00c41d79fb9ae8a",
-  "branch": "governed/ci-0048-real-backend-registration",
+  "base_sha": "5c57d411a7036d585d431a8030c4816831e7d40c",
+  "baseline_commit": "5c57d411a7036d585d431a8030c4816831e7d40c",
+  "branch": "governed/state-sync-ocor-dev-0049-cycle6",
   "candidate_evidence": {
-    "base_sha": "feb83b0c3a684929a09b8684e8a334cb86c77efc",
-    "branch": "task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls",
-    "head_sha": "618875eff62a43c524180596f680cafb0b4a1d02",
+    "branch": "task/OCOR-DEV-0049-poc-deployment-observability-backup-safe-degradation",
+    "current_verifier": "Claude Code (Anthropic), claude-opus-5-5, fallback autorizzato",
+    "digest_check": "12/12 input/tree + raw log SHA-256 PASS; controllo meccanico, verdetto NO_GO invariato.",
+    "head_sha": "d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b",
+    "implementer": "Claude Code (Anthropic)",
+    "independence_limits": "processo e contesto separati; le riparazioni di OCOR-DEV-0049 (ciclo 6) sono di Claude Code: implementatore della riparazione e verifier sono lo stesso fornitore/modello, in contesto separato (OCOR-DEV-0049-VERIFIER-FALLBACK); l'implementazione originale e' di un altro modello (Codex). Nessun riassunto dell'implementatore usato come prova; audit_0049.md, check_candidate.py, ITERATION_LOG e MODEL_HANDOFF non consultati come prova. Riusati solo binari toolchain/CLI acquisiti dal verifier del ciclo 5 (helm/kind/kubectl con sha256 verificati sui checksum ufficiali).",
     "paths": [
-      "reports/evidence/G4/OCOR-DEV-0048.json",
-      "reports/evidence/G4/OCOR-DEV-0048.log",
-      "reports/evidence/G4/MANIFEST.json"
+      "reports/evidence/G4/OCOR-DEV-0049.json",
+      "reports/evidence/G4/OCOR-DEV-0049.log"
     ],
-    "request_id": "OCOR-DEV-0048-618875eff62a-7",
-    "seal_commit": "6e9bbb4",
-    "status": "SEALED",
-    "verdict": "GO_FOR_EVIDENCE_SEAL",
-    "worktree": ".ocor/worktrees/ocor-dev-0048"
+    "repair_cycle": 6,
+    "request_id": "OCOR-DEV-0049-d0ac80a9d1d6-6",
+    "source_commit": "2d4c67f4d6be115c9315a0359c37f2dd139187d3",
+    "status": "CANDIDATE_REJECTED_BY_INDEPENDENT_VERIFICATION \u2014 file immutati"
   },
   "changed_paths": [
-    "ocor-runtime/src/ocor_runtime/security/control_plane.py",
-    "ocor-runtime/tests/tasks/test_ocor_dev_0048.py",
-    "reports/evidence/G4/MANIFEST.json",
-    "reports/evidence/G4/OCOR-DEV-0048.json",
-    "reports/evidence/G4/OCOR-DEV-0048.log"
+    "reports/development/EXECUTION_STATE.json",
+    "reports/development/MODEL_HANDOFF.json",
+    "reports/development/ITERATION_LOG.md",
+    "reports/development/OCOR_DEV_0049_ESCALATION.md",
+    "reports/development/TERMINAL_BLOCKED_REPORT.json",
+    "reports/development/decision_requests/OCOR-DEV-0049-REPAIR-BUDGET.md"
   ],
   "commands_run": [
     {
-      "command": "PR #54 merged (Phase 0 reconciliation)",
-      "result": "PASS_MERGE_b698f6b847f1afcd429e2dd7b7d72ab01d425a02"
-    },
-    {
-      "command": "PR #55 merged (DEC-212 language policy)",
-      "result": "PASS_MERGE_7c7f9b5b6a5135aa2583445697f54e9ff1dfcf3e_ALL_CHECKS_GREEN_ON_EXACT_HEAD"
-    },
-    {
-      "command": "gh run rerun <rccad-methodology job> --failed",
-      "result": "TRANSIENT_DOCKER_HUB_NETWORK_FLAKE_pulling_pinned_confluentinc/cp-kafka_image_unrelated_to_diff_rerun_PASS"
-    },
-    {
-      "command": "curl https://registry.npmjs.org/typescript (+ /7.0.2)",
-      "result": "CONFIRMED_7.0.2_IS_REAL_DIST_TAG_LATEST"
-    },
-    {
-      "command": "npm install typescript@7.0.2 in /tmp/ts_install; tsc --version",
-      "result": "Version 7.0.2; sha256(bin/tsc)=2219f428a7e55aaf1f7ad85b9b0f0cf5078aeb76ccc9a7c6036c92d48f492ffd"
-    },
-    {
-      "command": "gh pr checks 56",
-      "result": "12/12 checks pass across 6 unique run ids on head de3bcac7"
-    },
-    {
-      "command": "python3 scripts/validate_language_policy.py && python3 scripts/validate_rccad.py --root .",
-      "result": "PASS after also syncing MODEL_HANDOFF.json/EXECUTION_STATE.json baseline_commit and branch"
-    },
-    {
-      "command": "gh pr merge 57 --merge",
-      "result": "MERGED_3911228e7b657bf1bd2b1fc17f49fcad9bef3e5c_ALL_12_CHECKS_GREEN_ON_EXACT_HEAD_040275f"
-    },
-    {
-      "command": "mypy --strict probe run to gauge scope, then fix pass, then ocor-runtime/.venv/bin/python -m mypy from repo root",
-      "result": "43 errors -> 0 (2 files excluded, 1 justified per-module stub override)"
-    },
-    {
-      "command": "ruff check --isolated . baseline, then fix pass, then ruff check . with root pyproject.toml",
-      "result": "125 errors -> 0 (5 files excluded, all content-addressed or frozen-review-corpus)"
-    },
-    {
-      "command": "uv lock && uv sync --frozen --extra test --extra lint (ocor-runtime)",
-      "result": "PASS_resolved_46_packages"
-    },
-    {
-      "command": "python3 scripts/build_ocor_development_plan.py (exploratory, to settle a self-hash) then git checkout -- to discard",
-      "result": "DISCOVERED_generator_drops_OCOR-DEV-0070..0084_reverted_before_commit_escalation_registered"
-    },
-    {
-      "command": "gh pr merge 59 --merge",
-      "result": "MERGED_1cfa0a787ee620e462adfd0d25378f752c74af28_ALL_12_CHECKS_GREEN_ON_EXACT_HEAD_5123650e"
-    },
-    {
-      "command": "uv python list / uv python install 3.12.11 / uv lock / uv sync --frozen (ocor-runtime, this shell)",
-      "result": "ALL_FAILED_no_exact_3.12.11_interpreter_obtainable_in_this_sandbox; confirmed real and available in GitHub Actions via prior CI environment dumps (pythonLocation: /opt/hostedtoolcache/Python/3.12.11/x64)"
-    },
-    {
-      "command": "gh pr merge 61 --merge",
-      "result": "MERGED_47ca9017c8f8f5f89d5155daea13f05314f1025f_ALL_12_CHECKS_GREEN_ON_EXACT_HEAD_7b97e96"
-    },
-    {
-      "command": "npx tsc --project tsconfig.json against the generator's pre-fix output (first ever real compile)",
-      "result": "FAILED_19_TS2304_errors; RED log sealed at reports/tests/evidence/rem_generate_contracts_refs/red.log"
-    },
-    {
-      "command": "git stash / git stash pop to reproduce the pre-fix generator output for RED evidence without losing the in-progress fix",
-      "result": "PASS_clean_reversible_capture"
-    },
-    {
-      "command": "npm install && npm run build (clean-room rebuild) + full NFR-022 conformance suite",
-      "result": "PASS_zero_tsc_errors_4_of_4_conformance_tests"
-    },
-    {
-      "command": "gh pr merge 63 --merge",
-      "result": "MERGED_b4510123dee21c054876ecca97b02d33b971318a_ALL_12_CHECKS_GREEN_ON_EXACT_HEAD_5428ab37"
-    },
-    {
-      "command": "grep FR-047 across the traceability CSV, requirement register, and backlog; look up OCOR-DEV-0047 and OCOR-DEV-0010's actual titles/workstreams",
-      "result": "CONFIRMED_the_mandate's_claim_and_identified_the_correct_task"
-    },
-    {
-      "command": "gh pr merge 65 --merge",
-      "result": "MERGED_dcfca5086ac20ed1b99548c4eb02b57f92dee66c_ALL_12_CHECKS_GREEN_ON_EXACT_HEAD_f4eda681"
-    },
-    {
-      "command": "git stash / restore original TASK_SPECS-only generator, re-run build_tasks() to capture RED evidence of the 15-task silent drop, then stash pop to restore the in-progress fix",
-      "result": "PASS_clean_reversible_capture; RED log sealed at reports/tests/evidence/rem_backlog_generator_drift/red.log (sha256 94c2781e8c0072dd4e7c1b84c9772aeedd7159fa78e00f521efb946bc7748841)"
-    },
-    {
-      "command": "in-memory REPL comparison of the fixed build_tasks()/dag_text()/context_manifest() against the committed docs/development_plan/{OCOR_IMPLEMENTATION_BACKLOG.json,OCOR_DEPENDENCY_DAG.mmd,OCOR_AGENT_CONTEXT_MANIFEST.json}, never written to disk until verified",
-      "result": "0_mismatches_across_all_84_tasks_and_every_field; DAG and context-manifest byte-identical"
-    },
-    {
-      "command": "same in-memory comparison extended to build_trace()/OCOR_TRACEABILITY_PLAN.csv (285 rows), to check for any additional drift before declaring the escalation resolved",
-      "result": "2_of_285_rows_would_differ_if_regenerated_BR-003_and_FR-047_both_traced_to_a_pre-existing_order-sensitive_by_ws[rid]='last task wins'_ownership_heuristic_in_build_trace()_unrelated_to_this_fix_and_deliberately_left_out_of_scope_as_a_new_separate_non-blocking_finding"
-    },
-    {
-      "command": "gh pr merge 67 --merge",
-      "result": "MERGED_9bd2821464339f406df26cc3b2dd8579330c80fb_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_fbdec46; post-merge git fetch confirms origin/main == mergeCommit.oid"
-    },
-    {
-      "command": "gh pr merge 68 --merge",
-      "result": "MERGED_5a08f78c9e429c2e80ec93b9d05c029e9e46cfb9_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_a19c321; post-merge git fetch confirms origin/main == mergeCommit.oid"
-    },
-    {
-      "command": "grep for existing C4/C5 real-implementation code (ocor_runtime.c4_marking, ocor_runtime.c5_actions) and a local live-PostgreSQL backend, before designing the Phase 3 harness",
-      "result": "CONFIRMED_no_real_C4_projection_or_C5_event-backbone_implementation_exists_anywhere_in_ocor_runtime_yet (only the marking lattice and the obsolete 32-transition FSM); CONFIRMED_no_local_PostgreSQL (no psql/pg_isready/psycopg), same gap already documented for test_ocor_dev_0015.py's live suite"
-    },
-    {
-      "command": "build ocor-runtime/sdk/typescript/src/cli/benchmark_canonicalize.ts (new, self-timed Node oracle) + npm run build; python3 scripts/run_language_migration_benchmark.py --regenerate-corpus (200 docs, seed 20260912, ~10KB each) then --out ... (25 repeats/doc, real measurement)",
-      "result": "component 1 MEASURED, median_ratio_python_over_node=4.24 (>3.0 threshold) -> MIGRATION_THRESHOLD_EXCEEDED; reran twice more with the identical sealed corpus for stability, ratio 4.51 and 4.77, both exceeding -- not measurement noise"
-    },
-    {
-      "command": "grep .github/workflows/*.yml for which CI jobs actually collect reports/tests/*.py",
-      "result": "DISCOVERED_gap_from_PR_#67: reports/tests/test_backlog_generator_reality_parity.py was never wired into any CI job (only run locally); fixed by adding it, and the new Phase 3 harness test, to ocor-tooling-bootstrap.yml's type-and-lint-gate job"
-    },
-    {
-      "command": "gh pr merge 69 --merge",
-      "result": "MERGED_4532dded147f77f025f65fd45d53b6a8043671e9_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_6d19ca5; post-merge git fetch confirms origin/main == mergeCommit.oid"
-    },
-    {
-      "command": "gh pr merge 70 --merge",
-      "result": "MERGED_1dc3a0824b08b446ffb07598dded9f526b02d008_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_de3fb19; post-merge git fetch confirms origin/main == mergeCommit.oid"
-    },
-    {
-      "command": "docker ps / docker info",
-      "result": "DISCOVERED_Docker_is_available_in_this_sandbox_with_all_11_required_service_ports_free; pre-existing unrelated containers (eci-dev-control-plane, open-webui) left untouched"
-    },
-    {
-      "command": "docker compose --env-file <session-local, never-committed> -p ocor-bootstrap up -d terminusdb typedb fuseki opa keycloak openbao postgresql kafka qdrant",
-      "result": "PASS_all_9_healthy_within_1_minute; fuseki built locally from infra/fuseki/Dockerfile per the lock's declared source hash"
-    },
-    {
-      "command": "generate a disposable self-signed CA (openssl req -x509 ...) for OCOR_SPIRE_BOOTSTRAP_DIR, up spire-server, docker exec spire-server ... token generate for a real join token, then up spire-agent",
-      "result": "PASS_node_attestation_successful_spire-agent_healthy; this from-scratch two-phase bootstrap sequence was not previously documented anywhere in the repo (only steady-state rotation was, in deploy/bootstrap/services/spire/qualify.py)"
-    },
-    {
-      "command": "run the 4 existing per-service qualify.py/qualify_security_services.py modules (typedb, openbao, spire, policy-identity) against the freshly bootstrapped live stack",
-      "result": "PASS_all_4_result_PASS_confirming_the_bootstrap_is_correct_before_writing_new_code"
-    },
-    {
-      "command": "extend scripts/verify_external_services.py with typed ServiceStatus/ServiceHealth and 5 new inline checks (terminusdb, fuseki, postgresql, kafka, qdrant) for the services lacking a dedicated qualify module; reuse the other 4 via subprocess",
-      "result": "PASS_typed_check_all_11_services_READY_including_real_negative_probes_under_--execute_(wrong-credential/absent-resource checks all FAIL_CLOSED)"
-    },
-    {
-      "command": "bounded fault injection: docker pause/unpause terminusdb and kafka, typed check before/after",
-      "result": "PASS_both_detected_DEGRADED_while_paused_and_recovered_to_READY_within_the_bounded_window; full stack confirmed healthy afterward"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0079.py -v (17 unit/negative/contract tests, no live dependency)",
-      "result": "PASS_17_of_17"
-    },
-    {
-      "command": "gh pr merge 71 --merge",
-      "result": "MERGED_751836ef2cb836ee77e7908bbdeba0dd1846678e_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_5104e94; post-merge git fetch confirms origin/main == mergeCommit.oid; live Docker stack from OCOR-DEV-0079 confirmed still running and reused directly for OCOR-DEV-0080"
-    },
-    {
-      "command": "curl-based manual exploration of real TerminusDB/TypeDB/Keycloak/OPA/OpenBao APIs (create-database, sign-in, realm-create, policy PUT, mount-enable, plus their idempotent-retry and conflict responses) before writing any code",
-      "result": "CONFIRMED_all_5_real_API_shapes_and_their_already-exists/conflict responses, then cleaned up every manually created artifact back to a pristine baseline before the real evidence-capture run"
-    },
-    {
-      "command": "implement deploy/bootstrap/init/initialize_services.py (5 ordered idempotent steps) and deploy/bootstrap/init/opa/bootstrap.rego (fail-closed default-deny placeholder, not real policy content)",
-      "result": "PASS_RUN_1_real_CREATE_for_4_mutating_steps_ALREADY_INITIALIZED_for_spire_trust_verify-only_step"
-    },
-    {
-      "command": "re-invoke against the now-initialized live stack",
-      "result": "PASS_RUN_2_ALREADY_INITIALIZED_across_all_5_steps_zero_mutating_calls"
-    },
-    {
-      "command": "externally mutate the live OPA policy via curl, then re-invoke",
-      "result": "FAIL_RUN_3_DRIFT_DETECTED_exit_1_no_overwrite_attempted -- real, executed rollback/fail-closed drill, not simulated"
-    },
-    {
-      "command": "restore the correct policy content via curl, then re-invoke",
-      "result": "PASS_RUN_4_full_recovery_confirmed"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0080.py -v (16 unit/negative/contract tests, all network/subprocess calls faked via monkeypatch)",
-      "result": "PASS_16_of_16"
-    },
-    {
-      "command": "gh pr merge 72 --merge",
-      "result": "MERGED_79084dd7be841bee0b36b92b939e9abea0e37362_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_ef33cf1; post-merge git fetch confirms origin/main == mergeCommit.oid; docker compose ps showed fuseki had exited (137, likely OOM from a large unrelated host container) -- restarted with docker compose up -d fuseki, healthy again within seconds, no other service touched"
-    },
-    {
-      "command": "curl-based manual exploration of real TerminusDB document API (schema+instance insert, GET, DELETE) and TypeDB HTTP v1 transaction API (open/query/commit/close, define/insert/match/undefine) before writing any code",
-      "result": "DISCOVERED_a_live_TerminusDB_quirk: a not-found single-document GET returns real HTTP 200 with a body literally prefixed by 'Status: 404\\nContent-type: ...\\n\\n' before the JSON payload; also discovered TypeDB allows only one open schema/write transaction at a time and a forgotten open transaction blocks new ones and even database deletion -- resolved by explicitly closing/committing every transaction opened during exploration before writing the real loader"
-    },
-    {
-      "command": "implement deploy/bootstrap/fixtures/synthetic_fixtures.json + load_fixtures.py (check-before-mutate for both TerminusDB and TypeDB, same CREATED/ALREADY_INITIALIZED/DRIFT_DETECTED contract as OCOR-DEV-0080)",
-      "result": "PASS_RUN_1_real_CREATED_for_both_targets_identical_post-load_verification_digest_across_both_backends_for_the_same_semantic_content"
-    },
-    {
-      "command": "re-invoke against the now-loaded live databases",
-      "result": "PASS_RUN_2_ALREADY_INITIALIZED_for_both_targets_zero_mutating_calls"
-    },
-    {
-      "command": "externally mutate the live TerminusDB fixture instance via curl, then re-invoke",
-      "result": "FAIL_RUN_3_DRIFT_DETECTED_exit_1_no_overwrite_attempted -- real, executed rollback/fail-closed drill"
-    },
-    {
-      "command": "restore the correct content via curl, then re-invoke",
-      "result": "PASS_RUN_4_full_recovery_confirmed"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0081.py -v (12 unit/negative/contract tests, all network calls faked via monkeypatch, including a dedicated test for the TerminusDB response-body quirk)",
-      "result": "PASS_12_of_12"
-    },
-    {
-      "command": "gh pr merge 73 --merge",
-      "result": "MERGED_48b6d01a254d0ceb78fb9ad4ec96088e1835c5fb_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_8d76829; post-merge git fetch confirms origin/main == mergeCommit.oid; docker compose ps confirmed all 11 containers still healthy"
-    },
-    {
-      "command": "read the pre-existing scripts/reset_test_environment.py before writing anything -- discovered it already implements full teardown (docker compose down --volumes) but has no lighter-weight 'reset' distinct from that, despite the task title naming both",
-      "result": "DESIGNED_reset_as_the_exact_inverse_of_OCOR-DEV-0080's_4_mutating_init_steps_leaving_containers_running_teardown_kept_unchanged"
-    },
-    {
-      "command": "real --reset --execute against the live, initialized stack; re-invoke for idempotency; then run OCOR-DEV-0080's real initializer against the reset stack to prove a full round-trip",
-      "result": "PASS_RUN_1_RESET_for_all_4_targets_RUN_2_ALREADY_RESET_docker_compose_ps_confirmed_containers_untouched_RUN_3_re-init_recreated_all_4_from_scratch_proving_reset_is_a_genuine_complete_inverse"
-    },
-    {
-      "command": "reload OCOR-DEV-0081's synthetic fixtures after the round-trip, restoring the exact state other in-progress backlog tasks expect",
-      "result": "PASS"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0082.py -v (10 unit/negative/contract tests, all network calls faked via monkeypatch)",
-      "result": "PASS_10_of_10"
-    },
-    {
-      "command": "gh pr merge 74 --merge",
-      "result": "MERGED_6a7d51ef7534f0cbd2f3519d9e92f2441c5f8aa2_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_c7c4d74; post-merge git fetch confirms origin/main == mergeCommit.oid; fuseki OOM-killed again by an unrelated large host container (recurring pattern), restarted cleanly"
-    },
-    {
-      "command": "check whether scripts/fault_inject_test_environment.py is a sealed content-addressed input of any already-accepted task before extending it",
-      "result": "FOUND_referenced_in_OCOR-DEV-0073/0075_evidence_inputs_dicts_but_confirmed_no_validator_enforces_that_hash_as_a_live_invariant_(unlike_PINNED_GENERATED_HASHES-style_sealed_tests) -- safe to extend directly, verified before editing"
-    },
-    {
-      "command": "add --bounded to fault_inject_test_environment.py using a bare-TCP-connect oracle for disconnect detection, then run it for real against fuseki",
-      "result": "FAILED_silently -- disconnect never detected within 20s even though docker network inspect confirmed the container was really removed from the network"
-    },
-    {
-      "command": "diagnose: manual curl vs raw Python socket.create_connection probes during a live disconnect on opa and fuseki",
-      "result": "DISCOVERED a real Docker Desktop networking quirk: a bare TCP connect to a disconnected container's published port succeeds (the port-forwarding proxy completes the handshake independently of network attachment), while a real HTTP round trip correctly times out -- fixed by switching the bounded-disconnect oracle to http_reachable() against each service's real health endpoint"
-    },
-    {
-      "command": "real bounded cycles against the live stack: pause/unpause on typedb, disconnect/reconnect on fuseki (corrected oracle), restart on keycloak",
-      "result": "PASS_all_3_detected_and_recovered_within_their_bounded_windows"
-    },
-    {
-      "command": "restore full stack state (initialize_services.py + load_fixtures.py) after fault-injection testing wiped OPA's in-memory policy and Keycloak's ephemeral realm (both dev-mode services with no persistent storage, lost on restart)",
-      "result": "DISCOVERED_a_real_bug_in_OCOR-DEV-0081's_load_fixtures.py: TerminusDB returned a real HTTP 404 for the identical not-found condition its own code only expected as the '200 with Status: 404 text prefix' quirk -- fixed to accept both response shapes, added a regression test to that task's own test file"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0081.py ocor-runtime/tests/tasks/test_ocor_dev_0083.py -v (25 tests total)",
-      "result": "PASS_25_of_25"
-    },
-    {
-      "command": "gh pr checks 75",
-      "result": "13/13 checks pass on head e1b4fe1; PR #75 merged"
-    },
-    {
-      "command": "real captures against the live stack: RUN1 positive (all healthy -> PASS), RUN2 negative (typedb paused -> DEGRADED, exit 1), RUN3 recovery (unpaused, polled to PASS on attempt 4)",
-      "result": "PASS_all_3_runs_correctly_reflected_environment_status_never_a_silent_PASS"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0084.py -v (4 tests) + full local regression",
-      "result": "PASS_4_of_4__604_passed_5_skipped_2_failed_known_10_errors_known_no_new_failures"
-    },
-    {
-      "command": "gh pr checks 76; gh pr merge 76 --merge; git fetch origin main",
-      "result": "13/13 checks pass; PR #76 MERGED_cbf53da9be6d13e77d545679dacebc2398f5af97; post-merge SHA verified; WS-12 chain (OCOR-DEV-0070..0084) closed"
-    },
-    {
-      "command": "scripts/ocor_autonomous_delivery.py --status, cross-checked against docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and EXECUTION_STATE.json's completed_evidence_tasks",
-      "result": "the orchestrator's own internal state file is stale (never updated by this session's manual PR-by-PR execution) and reported only OCOR-DEV-0079 as dependency_ready; ground truth confirmed directly from the backlog: OCOR-DEV-0016/0017/0018/0021 (all wave 11) all have every hard_dependency satisfied now that OCOR-DEV-0084 merged; selected OCOR-DEV-0016 first by numeric order"
-    },
-    {
-      "command": "psycopg connect to postgresql://ocor:***@127.0.0.1:55433/ocor (the ocor-bootstrap stack's postgresql service) and SELECT version()",
-      "result": "CONFIRMED_real_PostgreSQL_16.14_reachable_locally_for_the_first_time_this_session; set OCOR_LIVE_POSTGRES_DSN locally and reran ocor-runtime/tests/tasks/test_ocor_dev_0015.py -- all 10 previously-erroring live-Postgres tests now pass for real locally, not just in CI"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0016.py -v against the real local Postgres, repeated 5 times",
-      "result": "PASS_5_of_5_every_run_no_flakiness; first attempt of the failure-under-concurrency test was genuinely nondeterministic (a cold-start race let the survivor sometimes win the lock first, so the crash worker exited on a real revision conflict instead of crashing) -- fixed by synchronizing on observe_lock_contention before releasing the survivor thread, then reverified deterministic across 5 runs"
-    },
-    {
-      "command": "full local pytest regression with OCOR_LIVE_POSTGRES_DSN set (ocor-runtime/tests/ + 3 reports/tests suites)",
-      "result": "PASS_2_failed_624_passed_0_skipped_0_errors (the 2 failures are the pre-existing, unrelated interpreter-pin gap; zero errors for the first time this session, versus 10 known errors previously without a local DSN)"
-    },
-    {
-      "command": "gh pr checks 77; gh pr merge 77 --merge; git fetch origin main",
-      "result": "13/13 checks pass; PR #77 MERGED_a2ea8f467cc47891add109fbcd1b2e8567c49399; post-merge SHA verified"
-    },
-    {
-      "command": "empirical TypeDB syntax probes (raw psycopg-free urllib HTTP v1 calls) against the real live instance before writing the adapter: undefined-type reference, redefinition of an identical schema, duplicate @key insert",
-      "result": "CONFIRMED_INF2_for_undefined_type; CONFIRMED_define_is_idempotent_HTTP_200_no_error_on_this_instance; CONFIRMED_CNT9_for_duplicate_key_insert -- all three findings directly shaped the adapter's initialize()/ingest() design"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0017.py -v against the real local TypeDB, repeated 5 times",
-      "result": "PASS_5_of_5_every_run_no_flakiness; first attempt failed 2/6 tests with QUERY_CONTRACT_INVALID -- ServedContext/Watermark (OCOR-DEV-0012's sealed contract) require non-empty strings for canonical_commit/projection_watermark, so using \"\" as the no-watermark-yet sentinel broke construction before the consistency check ever ran; fixed by introducing a non-empty sentinel constant guaranteed never to collide with a real test commit id"
-    },
-    {
-      "command": "docker compose ps (mid-iteration) showed fuseki exited 137 (OOM-killed by the unrelated eci-dev-control-plane host container, a recurring finding this session); restarted only the fuseki service",
-      "result": "PASS_all_11_services_healthy_again_within_seconds; the unrelated host container was never touched"
-    },
-    {
-      "command": "full local pytest regression with OCOR_LIVE_POSTGRES_DSN set (ocor-runtime/tests/ + 3 reports/tests suites)",
-      "result": "PASS_2_failed_630_passed_0_skipped_0_errors (the 2 failures are the pre-existing, unrelated interpreter-pin gap)"
-    },
-    {
-      "command": "PR #78 first push CI feedback: 3 jobs failed (delivery-activation, rccad-methodology, validation-closure) with the same root cause pattern as anticipated -- no TypeDB service in CI. Root-caused via gh run view --log-failed, fixed by adding a real ephemeral TypeDB service container to the 3 workflows and hardening adapter.py to create the database if absent",
-      "result": "SECOND_PUSH_ALL_13_CHECKS_GREEN; PR #78 merged (d573b7e119b195837cc9a7f122369c06ace1523d); post-merge SHA verified"
-    },
-    {
-      "command": "proactive check before opening OCOR-DEV-0018's PR: grep -rln fuseki .github/workflows/*.yml",
-      "result": "CONFIRMED_no_workflow_provisions_Fuseki_either; unlike TypeDB, infra/fuseki/Dockerfile is built from source, so a GH Actions services: image: field cannot reference it directly"
-    },
-    {
-      "command": "docker build -t ocor/jena-fuseki:ci-test infra/fuseki; docker run -d -p 3031:3030 (alternate port, never touching the live ocor-bootstrap-fuseki-1 container); health-wait; real SPARQL query; teardown",
-      "result": "PASS_end_to_end_rehearsal_of_the_exact_recipe_before_adding_it_to_any_CI_workflow; confirmed the live 11-service stack was unaffected before and after"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0018.py -v against the real local Fuseki, repeated 5 times",
-      "result": "PASS_5_of_5_every_run_no_flakiness; first attempt failed all 6 tests with json.JSONDecodeError -- Fuseki's /ocor/sparql endpoint returns SPARQL-XML, not JSON, without an explicit Accept header; fixed by sending Accept: application/sparql-results+json on every query"
-    },
-    {
-      "command": "full local pytest regression with OCOR_LIVE_POSTGRES_DSN set (ocor-runtime/tests/ + 3 reports/tests suites)",
-      "result": "PASS_2_failed_636_passed_0_skipped_0_errors (the 2 failures are the pre-existing, unrelated interpreter-pin gap)"
-    },
-    {
-      "command": "gh pr checks 79; gh pr merge 79 --merge; git fetch origin main",
-      "result": "13/13 checks pass on the first push; PR #79 MERGED_0b3d855c09f50be583a970868ed19375ef4d0802; post-merge SHA verified; the proactive Fuseki CI fix worked first try, no repair cycle needed"
-    },
-    {
-      "command": "Product Owner explicit written disposition on PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED: DEFERRED (not opened, not rejected). Checked whether the repository methodology requires a new formal DEC-* decision record for this disposition type",
-      "result": "DETERMINED_NOT_REQUIRED: contrasted with DEC-212 (a genuine new policy adoption, registered in OCOR_Decision_Register_v1.6_APPROVED.md), this disposition adopts no new policy, changes no threshold, authorizes nothing -- the same category as prior escalation dispositions this mandate (PHASE2-4-BACKLOG-GENERATOR-DRIFT, GITHUB-BRANCH-PROTECTION-001), neither of which minted a new DEC-*; updated existing documents only, per the Product Owner's own conditional instruction"
-    },
-    {
-      "command": "gh pr checks 81 (first push): 3 jobs failed with 'No such container: ocor-bootstrap-opa-1' because fault_command() (OCOR-DEV-0083, sealed) constructs the target name as ocor-bootstrap-<service>-1, but the CI docker run recipe named the containers opa/keycloak/openbao",
-      "result": "ROOT_CAUSED_AND_FIXED: renamed every docker run --name in the CI recipe (fuseki, opa, keycloak, openbao) across all 3 workflows to the ocor-bootstrap-<service>-1 convention; second push all 13 checks green; PR #81 merged (9e97e1c19c7ac82bdfe074e28991493ac798b1c1); post-merge SHA verified"
-    },
-    {
-      "command": "compute the next DAG-ready task directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks (scripts/ocor_autonomous_delivery.py --status remains stale/unreliable)",
-      "result": "CONFIRMED_wave_11_fully_closed; wave 12 ready set = {OCOR-DEV-0024, OCOR-DEV-0025, OCOR-DEV-0028, OCOR-DEV-0029}; selected OCOR-DEV-0024 by numeric order"
-    },
-    {
-      "command": "select the next DAG-ready task after wave 11 closed, directly from the backlog rather than trusting scripts/ocor_autonomous_delivery.py --status",
-      "result": "wave 12 ready set = {OCOR-DEV-0024, OCOR-DEV-0025, OCOR-DEV-0028, OCOR-DEV-0029}; selected OCOR-DEV-0024 by numeric order"
-    },
-    {
-      "command": "self-caught state-file drift at the start of this iteration: scripts/validate_rccad.py reported RCCAD-STATE-HANDOFF-DRIFT (baseline_commit then branch) because MODEL_HANDOFF.json had not yet been caught up to OCOR-DEV-0021's PR #81 merge from the prior iteration",
-      "result": "FIXED_by_updating_MODEL_HANDOFF.json_with_OCOR-DEV-0021's_completion_before_proceeding; validate_rccad.py PASS after"
-    },
-    {
-      "command": "gh pr checks 82; gh pr merge 82 --merge",
-      "result": "13/13 checks pass on the first push; PR #82 MERGED_e003fdc453420f8d5942dd9c39261d1ccf0a73ea; post-merge SHA verified"
-    },
-    {
-      "command": "gh pr checks 83; gh pr merge 83 --merge",
-      "result": "13/13 checks pass on the first push (proactive TypeDB CI fix worked without any repair cycle); PR #83 MERGED_c13a634b94bd1b6f6aed52e54d252746242e050d; post-merge SHA verified"
-    },
-    {
-      "command": "recompute wave-12 readiness after OCOR-DEV-0025 merged; inspect OCOR-DEV-0028/0029's dependency (OCOR-DEV-0011's sealed C1 ports) before designing the compiler slice",
-      "result": "CONFIRMED_wave_12's_only_remaining_ready_tasks_are_0028_and_0029_both_gate_G3; selected 0028 by numeric order; read ocor_runtime.c1.ports in full to design the smallest contract-compliant slice against its already-sealed Protocols/dataclasses"
-    },
-    {
-      "command": "gh pr checks 84; gh pr merge 84 --merge",
-      "result": "13/13 checks pass on the first push; PR #84 MERGED_b8170f3c5ca9500d38faf95d2b2d01c7ded41850; post-merge SHA verified"
-    },
-    {
-      "command": "scripts/validate_rccad.py --root . after writing the first version of ocor-runtime/src/ocor_runtime/c3/service.py (importing psycopg directly)",
-      "result": "FAIL: AFF-002/AFF-006 -- infrastructure client leaked outside adapters/ (OCOR_LANGUAGE_POLICY.md row 8, a sealed architectural fitness rule this session had not triggered before, since every prior real-backend task lived under spikes/ rather than ocor-runtime/src/); fixed by extracting all psycopg usage into a new ocor-runtime/src/ocor_runtime/c3/adapters/postgres.py, re-ran and confirmed PASS"
-    },
-    {
-      "command": "gh pr create for governed/ocor-dev-0029-c3-canonical-commit-slice",
-      "result": "TWO_TRANSIENT_GITHUB_API_ERRORS (502 Bad Gateway, then a GraphQL 500-class error), both unrelated to repository content; succeeded on the third attempt as PR #85"
-    },
-    {
-      "command": "gh pr checks 85; gh pr merge 85 --merge; git fetch origin main",
-      "result": "13/13 checks pass on the first push; PR #85 MERGED_7e1cf57bfe98c314f2cfb1ae0469249428e0ab8f; post-merge SHA verified; wave 12 fully closed"
-    },
-    {
-      "command": "immediate dedicated state-sync PR (governed/state-sync-ocor-dev-0029) per the Product Owner's explicit correction, instead of deferring to the next task's own commit",
-      "result": "gh pr checks 86; gh pr merge 86 --merge; git fetch origin main -- 13/13 checks pass on the first push; PR #86 MERGED_ffe28fd9504a65b45645bf08f3df2c1d73a0a1bf; post-merge SHA verified"
-    },
-    {
-      "command": "compute the next DAG-ready task set directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks after OCOR-DEV-0029 merged",
-      "result": "wave 13 ready set = {OCOR-DEV-0026, OCOR-DEV-0027, OCOR-DEV-0030} -- OCOR-DEV-0030 newly ready since its hard_dependency OCOR-DEV-0029 just merged; selected OCOR-DEV-0026 by numeric order"
-    },
-    {
-      "command": "proactive CI-provisioning check before writing any OCOR-DEV-0026 code: grep .github/workflows for postgres/typedb/qdrant provisioning",
-      "result": "CONFIRMED_no_gap: PostgreSQL, TypeDB and Qdrant are already real, already-provisioned backends in all 3 CI workflows from OCOR-DEV-0016/0017/0025; also confirmed (before considering a real Postgres pause/unpause fault-injection test) that PostgreSQL is provisioned in CI via a native services: block, not the docker run --name ocor-bootstrap-postgresql-1 convention fault_command() expects -- deliberately avoided designing a test that would depend on pausing it, choosing a real-but-lower-blast-radius network fault (a genuinely closed local port) instead"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0026.py -v against the real live stack, repeated 4 times",
-      "result": "PASS_24_of_24_every_run_no_flakiness"
-    },
-    {
-      "command": "full local pytest regression with OCOR_LIVE_POSTGRES_DSN set (ocor-runtime/tests/ + 3 reports/tests suites)",
-      "result": "PASS_2_failed_648_passed_0_skipped_0_errors_plus_29_passed (the 2 failures are the pre-existing, unrelated interpreter-pin gap)"
-    },
-    {
-      "command": "gh pr checks 87; gh pr merge 87 --merge; git fetch origin main",
-      "result": "13/13 checks pass on the first push; PR #87 MERGED_a78d054d22ac85839181c833a0acc8deed8aa9c8; post-merge SHA verified"
-    },
-    {
-      "command": "immediate dedicated state-sync PR (governed/state-sync-ocor-dev-0026), mirroring the OCOR-DEV-0029/PR #86 pattern",
-      "result": "gh pr checks 88; gh pr merge 88 --merge; git fetch origin main -- 13/13 checks pass on the first push; PR #88 MERGED_4630340f135fa0cab64c7926c8ae38bd0588cb0f; post-merge SHA verified"
-    },
-    {
-      "command": "compute the next DAG-ready task set directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks after OCOR-DEV-0026 merged",
-      "result": "wave 13 ready set = {OCOR-DEV-0027, OCOR-DEV-0030}; selected OCOR-DEV-0027 by numeric order"
-    },
-    {
-      "command": "proactive CI-provisioning check before writing any OCOR-DEV-0027 code",
-      "result": "CONFIRMED_no_gap: Qdrant self-provisions via a real docker run inside the test process itself in all 3 CI workflows, the same mechanism OCOR-DEV-0023/0024/0025 already exercise successfully"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0027.py -v against a real, self-provisioned, ephemeral Qdrant container, repeated 4 times",
-      "result": "PASS_32_of_32_every_run_no_flakiness"
-    },
-    {
-      "command": "full local pytest regression with OCOR_LIVE_POSTGRES_DSN set (ocor-runtime/tests/ + 3 reports/tests suites)",
-      "result": "PASS_2_failed_656_passed_0_skipped_0_errors_plus_29_passed (the 2 failures are the pre-existing, unrelated interpreter-pin gap)"
-    },
-    {
-      "command": "gh pr checks 89; gh pr merge 89 --merge; git fetch origin main",
-      "result": "13/13 checks pass on the first push; PR #89 MERGED_53ad2e5bb76f7b59a5ffae9863b685338027edbe; post-merge SHA verified; wave 13 fully closed"
-    },
-    {
-      "command": "compute the next DAG-ready task set directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks after OCOR-DEV-0027 merged",
-      "result": "ready set = {OCOR-DEV-0030} -- the only remaining ready task, gate G3, depending on OCOR-DEV-0020/0021/0029 (all merged); note OCOR-DEV-0030 has parallel_wave=13 in the backlog JSON, the same wave as 0026/0027, so wave 13 was not yet fully closed by 0027's merge"
-    },
-    {
-      "command": "gh pr checks 90 (rechecked after the wave-numbering correction commit); gh pr merge 90 --merge; git fetch origin main",
-      "result": "13/13 checks pass on the corrected commit; PR #90 MERGED_c783d7c2b8b3e6824176764cbda0a683dd44c105; post-merge SHA verified"
-    },
-    {
-      "command": "read docs/OCOR_LLD_v1.1.md sections 2.6/3.1/3.2/4 before designing OCOR-DEV-0030; grep for existing sealed C6/C7 code",
-      "result": "CONFIRMED_the_full_C6_workflow_is_a_normative_44-transition_FSM_ACT-T01..T31b_this_task_is_a_smallest_contract-compliant_SLICE_of_the_representative_path_not_the_full_FSM; DISCOVERED_ocor_runtime.c6_capabilities.CapabilityAuthority_and_ocor_runtime.c7_emission.EmissionFence_already_exist_as_sealed_unmodified_retained_code_from_an_earlier_phase -- no Human Gate or Decision record existed, so those two are the only genuinely new record types needed"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0030.py -v -- pure in-memory, no external backend, repeated 4 times",
-      "result": "PASS_36_of_36_every_run_no_flakiness"
-    },
-    {
-      "command": "full local pytest regression with OCOR_LIVE_POSTGRES_DSN set (ocor-runtime/tests/ + 3 reports/tests suites)",
-      "result": "PASS_2_failed_665_passed_0_skipped_0_errors_plus_29_passed (the 2 failures are the pre-existing, unrelated interpreter-pin gap)"
-    },
-    {
-      "command": "gh pr checks 91; gh pr merge 91 --merge; git fetch origin main",
-      "result": "13/13 checks pass on the first push; PR #91 MERGED_c9ac9ca4615337193202846d06a4b5f6e38afcbc; post-merge SHA verified; wave 13 fully closed (OCOR-DEV-0026/0027/0030)"
-    },
-    {
-      "command": "compute the next DAG-ready task set directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks (including OCOR-DEV-0030) after OCOR-DEV-0030 merged, checking parallel_wave on the result",
-      "result": "ready set = {OCOR-DEV-0031} -- parallel_wave=14, title 'Integrate first real C1-C8 synthetic mission thread', gate G3, depending on OCOR-DEV-0017/0018/0019/0022/0024/0027/0028/0029/0030 (all merged); a significantly larger integration task than recent single-component slices"
-    },
-    {
-      "command": "gh pr checks 92; gh pr merge 92 --merge; git fetch origin main",
-      "result": "13/13 checks pass on the first push; PR #92 MERGED_c452a38680058b66d47588ea1dccee433d183487; post-merge SHA verified"
-    },
-    {
-      "command": "read docs/OCOR_LLD_v1.1.md sections 2.1-2.9/3/4 and the full source of every C1-C8 hard-dependency component (ocor_runtime.c1.compiler, ocor_runtime.c2.ports, ocor_runtime.c2_identity, ocor_runtime.c3.service, ocor_runtime.c4_marking, ocor_runtime.c6.engine, ocor_runtime.c6_capabilities, ocor_runtime.c7_emission, ocor_runtime.c8_agent, spikes.typedb_exact_commit.adapter, spikes.jena_marking.adapter, spikes.kafka_delivery.oracle, spikes.causal_reproducibility.oracle, spikes.context_replay.replay) before designing the mission thread",
-      "result": "CONFIRMED_every_needed_C1-C8_component_already_exists_as_sealed_retained_code_or_a_sealed_spike; also discovered ocor_runtime.c5_actions.py ('the complete ACT-T01...ACT-T31b action state machine') is the pre-existing OBSOLETE generic 32-state FSM already documented elsewhere in this session, unrelated to the approved LLD's real ACT-T semantics -- confirmed OCOR-DEV-0030's work is not duplicative and must not reuse this module"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/mission_thread/test_first_governed_slice.py -v against the real live stack, first attempt",
-      "result": "2_of_5_failed: Jena list_authorized row key is 'resource' not 'resource_id'; a plain-function EventSink fallback is called as sink(event) with no idempotency_key, so a keyword-only idempotency_key parameter on a plain function crashes -- fixed by using a class implementing the EventSink Protocol's emit() method, matching OCOR-DEV-0030's own RecordingSink pattern"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/mission_thread/test_first_governed_slice.py -v, second attempt after fixing the Jena row key and the sink shape",
-      "result": "1_of_5_failed: MODEL_PIN_MISMATCH -- the causal pin digests were computed with ocor_runtime.kernel.canonical.canonical_digest (RFC 8785 JCS, urn:sha256: prefix) but spikes.causal_reproducibility.oracle.execute() recomputes and compares using its own local canonical_digest (plain json.dumps sort_keys, raw hex, no prefix); fixed by importing and using the spike's own canonical_digest for the three causal pins"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/mission_thread/test_first_governed_slice.py -v, third attempt; then repeated 2 more times (3 total) for determinism",
-      "result": "PASS_15_of_15_every_run_no_flakiness"
-    },
-    {
-      "command": "full local pytest regression with OCOR_LIVE_POSTGRES_DSN set (ocor-runtime/tests/ + 3 reports/tests suites)",
-      "result": "PASS_2_failed_670_passed_0_skipped_0_errors_plus_29_passed (the 2 failures are the pre-existing, unrelated interpreter-pin gap)"
-    },
-    {
-      "command": "gh pr checks 93 (first push): delivery-activation/rccad-methodology/validation-closure all failed with ModuleNotFoundError: No module named 'spikes'",
-      "result": "ROOT_CAUSED via gh api .../jobs/<id>/logs and local reproduction with the bare ocor-runtime/.venv/bin/pytest console script (matching CI's uv run --project ocor-runtime --frozen pytest exactly): this file's spikes.* imports silently relied on another already-collected test module's own sys.path.insert(0, REPOSITORY_ROOT) side effect (shared by 13 existing task test files) having already executed in the same pytest session; ocor-runtime/tests/mission_thread/ sorts alphabetically before ocor-runtime/tests/tasks/, so this new file was collected first. 'python -m pytest' (used locally until now) auto-prepends the CWD to sys.path and had masked this entirely -- the bare 'pytest' console script CI actually invokes does not."
-    },
-    {
-      "command": "fix: added this file's own explicit sys.path.insert(0, REPOSITORY_ROOT) before the spikes.* imports, matching the established pattern already used by 13 other task test files; re-verified with the bare pytest console script (not python -m pytest) that the whole tree collects cleanly and all 5 mission-thread tests plus the full regression pass; pushed as a new commit (never amend) on the same branch",
-      "result": "PASS_5_of_5_mission_thread_672_tests_collected_0_errors_670_passed_2_known_failures_regression_unchanged"
-    },
-    {
-      "command": "gh pr checks 93 (corrected commit); gh pr merge 93 --merge; git fetch origin main",
-      "result": "13/13 checks pass on the corrected commit; PR #93 MERGED_47df17176f050c644105b73c3ae7aae085e86a76; post-merge SHA verified; wave 14 fully closed, gate G4 (wave 15) opened"
-    },
-    {
-      "command": "compute the next DAG-ready task set directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks (including OCOR-DEV-0031) after OCOR-DEV-0031 merged, checking parallel_wave on the result",
-      "result": "ready set = {OCOR-DEV-0032, 0034, 0036, 0037, 0038, 0040, 0042, 0046, 0048} -- all parallel_wave=15, gate G4, all depending on OCOR-DEV-0031; selected OCOR-DEV-0032 by numeric order"
-    },
-    {
-      "command": "gh pr checks 94; gh pr merge 94 --merge; git fetch origin main",
-      "result": "13/13 checks pass on the first push; PR #94 MERGED_947b2b2586fb89c1d5342199bba2f091b061ef9c; post-merge SHA verified"
-    },
-    {
-      "command": "read ocor_runtime.c1.ports in full (the complete sealed DiagnosticCode enum) and ocor_runtime.c1.compiler (OCOR-DEV-0028) before designing frontend.py, to identify exactly which diagnostics remain uncovered",
-      "result": "CONFIRMED_covered_by_0028: SOURCE_INVALID, UNKNOWN_SYNTAX (at SourceUnit construction), UNRESOLVED_REFERENCE/DUPLICATE_RESOURCE (at CompilerRequest construction, external dependency-lock imports only), TYPE_ERROR, CONSTRAINT_ERROR, RELEASE_REJECTED (at CanonicalIrRelease.create); UNCOVERED: MULTIPLE_EXECUTION_OWNERS, UNSUPPORTED_CAPABILITY, and any semantic (non-import) cross-resource reference resolution/cycle detection"
-    },
-    {
-      "command": "pytest ocor-runtime/tests/tasks/test_ocor_dev_0032.py -v via the bare pytest console script, first attempt",
-      "result": "12_of_15_passed_3_failed: two test assertions expected lists but release.core is recursively frozen (lists become tuples) by the sealed CanonicalIrRelease.create(); one genuine design bug -- require_resolved_references' sealed uniqueness check on the flat 'referenced' list wrongly rejected a legitimate diamond reference graph (two resources sharing one common referenced target) as a duplicate-resource error"
-    },
-    {
-      "command": "fix: corrected the two test assertions to expect tuples; fixed frontend.py to pass only the distinct set of referenced targets to require_resolved_references, never a flat list with repeats",
-      "result": "PASS_15_of_15_repeated_4_times_no_flakiness"
-    },
-    {
-      "command": "full local pytest regression via the bare pytest console script (matching CI exactly), ocor-runtime/tests/ + 3 reports/tests suites",
-      "result": "PASS_2_failed_685_passed_0_skipped_0_errors_plus_29_passed (the 2 failures are the pre-existing, unrelated interpreter-pin gap)"
-    },
-    {
-      "command": "gh pr checks 95; gh pr merge 95 --merge; git fetch origin main",
-      "result": "13/13 checks pass on the first push; PR #95 MERGED_00b51e710c24832d09cf87a8f139edfa74f37a1d; post-merge SHA verified"
-    },
-    {
-      "command": "compute the next DAG-ready task set directly from docs/development_plan/OCOR_IMPLEMENTATION_BACKLOG.json and completed_evidence_tasks (including OCOR-DEV-0032) after OCOR-DEV-0032 merged, checking parallel_wave on the result",
-      "result": "ready set = {OCOR-DEV-0033 (wave 16, newly ready, depends only on OCOR-DEV-0032), OCOR-DEV-0034/0036/0037/0038/0040/0042/0046/0048 (wave 15, still ready)}; selected OCOR-DEV-0033 by numeric order across the whole ready set, per the established convention of not restricting selection to a single wave"
-    },
-    {
-      "command": "sha256sum -c inputs/normative/SHA256SUMS",
-      "result": "PASS_8_of_8_OK"
-    },
-    {
-      "command": "docker compose -p ocor-bootstrap ps + scripts/verify_external_services.py --execute --typed",
-      "result": "PASS_11_of_11_services_READY_including_spiffe-spire"
-    },
-    {
-      "command": "gh api repos/nepryoon/ocor-detailed-design/rulesets/23412233",
-      "result": "ruleset active since 2026-09-15, enforcement=active, 13 required status checks, no bypass actors"
-    },
-    {
-      "command": "gh pr close 131 --comment superseded",
-      "result": "CLOSED draft governed/ocor-dev-0048-control-plane-1935 (superseded by R1 state realignment)"
-    },
-    {
-      "command": "processed independent-verification verdict for REM-0010/0011/0012 (request_id OCOR-DEV-REM-0010-0011-0012-1aaef13885ed-0, head_sha 1aaef13885ed...)",
-      "result": "NO_GO: appended independent_verification_result to the 3 evidence.json in append without rewrite (findings VF-001..VF-004); records remain CANDIDATE_PENDING_INDEPENDENT_VERIFICATION, not sealed"
-    },
-    {
-      "command": "registered ID-collision erratum (grep-verified first free OCOR-DEV-REM-*)",
-      "result": "OCOR-DEV-REM-0010 C4-adapter hardening (PR #128) aliased canonically to OCOR-DEV-REM-0013 without renaming history; id_alias field appended to evidence.json"
-    },
-    {
-      "command": "opened the necessary REMs + queued reserved decisions",
-      "result": "REM-0014 (TypeDB commit_id/watermark injection), REM-0015 (validate_rccad NUL-delimited paths), REM-0016 (content-addressed evidence records) registered as README-only open records; decision_requests/RVW-03, INFO-A, INFO-C queued as OPEN_PO_DECISION_REQUIRED non-blocking blockers"
-    },
-    {
-      "command": "extended validate_ocor_development_plan.py extension_paths allowlist for the 6 new files + settled self-hash",
-      "result": "PASS: artifact_hashes[scripts/validate_ocor_development_plan.py] updated in OCOR_PLAN_RUN_STATE.json"
-    },
-    {
-      "command": "gh pr merge 135 --merge --match-head-commit 0820fec09ac303410c161205b96971c83d91d5c0",
-      "result": "MERGED_a8c5e5d92513b1a333593bbc56c411b61773f29b_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_0820fec; post-merge fetch confirms origin/main == merge commit; sealed evidence hashes intact (record 04f60e45d9b79be0045ea2e3ab34f930335c386b9ed0ecf2eb652321565bf6cb, raw log 8733c7c227041ad92e5a7545b8033ae1917cb06b4ba26155d053b43566ceb9f9)"
-    },
-    {
-      "command": "Process NO_GO verdict OCOR-DEV-REM-0015-92e194e2965f-1 (repair cycle 1)",
-      "result": "VF-001 (toolchain-lock identity mismatch: docker/git/gh/node/uv versions+digests differ from infra/toolchain.lock.json; official Node 20.20.2 digest != lock). git_changed() fix functionally correct. Escalated (2 repair cycles exhausted); decision request TOOLCHAIN-LOCK-UPDATE + blocker registered; evidence remains unsealed."
-    },
-    "TOOLCHAIN-LOCK-UPDATE governed re-acquisition: PR #138 merged (749a88f7fb4b96aa00fc83fd1097fb12274a70f7). All 13 checks green on the exact head 39e8153. node/gh/docker/uv re-acquired at unchanged versions with digests verified against official checksums (node 4446eb8e->62954886 verified against SHASUMS256.txt + GPG; gh be795719->d0a90152 against gh_2.99.0_checksums.txt; docker d62dfea0->e4538110 official static binary; uv unchanged). git 2.55.0/typescript 7.0.2 deferred to decision request TOOLCHAIN-LOCK-RESIDUAL. Lock verification code unchanged.",
-    {
-      "command": "Process REM-0015 cycle-2 NO_GO verdict (OCOR-DEV-REM-0015-6790a7fe0343-2) into governed state sync",
-      "result": "RECORDED_VF-001_git_2.55.0_sole_residual_REM-0015_BLOCKED_ON_TOOLCHAIN-LOCK-RESIDUAL_verifier_confirmed_fix_functionally_correct"
-    },
-    {
-      "command": "Merge R3 step (a) PR #140 (governed/remediation-r3-evidence-input-drift) via gh pr merge --merge --match-head-commit d2b36f46342693ad05d68993f360621791902b18",
-      "result": "MERGED_80fcbaa676055e34ac079539806c6093f328f187_13_CHECKS_GREEN_ON_EXACT_HEAD_d2b36f4; post-merge origin/main == mergeCommit.oid"
-    },
-    "R3 step (a) state sync: recorded merge of PR #140 and validator RED (checked_tasks=62, checked_inputs=165, drifted_inputs=51, drifted_tasks=32) in EXECUTION_STATE remediation_status.R3_evidence_input_drift; next_executable_action -> R3 step (b) requalification records.",
-    {
-      "command": "R3 step (b) part 1: requalify 12 drifted G0/G1 evidence records at HEAD, open PR #143, wait 13/13 green on exact head f0c8483, merge --match-head-commit",
-      "result": "PASS_MERGE_362e1a598ce3438d44207b05b9b35dbcd08273af_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_f0c84834e811; post-merge drift validator 29/165 inputs + 20/62 tasks (was 51/165 + 32/62 at step (a) RED)"
-    },
-    {
-      "command": "R3 step (b) part 2: requalify 20 remaining drifted G1/G2/G4 evidence records at HEAD, open PR #145, wait 13/13 green on exact head fb18866, merge --match-head-commit",
-      "result": "PASS_MERGE_168665f8fc5942086f6390896c8ab3e76a927772_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_fb18866ef113bb59b3f97e10b97f117f45112d4b; post-merge drift validator GREEN 0/165 inputs + 0/62 tasks (was 29/165 + 20/62 after part 1)"
-    },
-    {
-      "command": "gh pr merge 149 --merge --match-head-commit 0f98a5d0f29801e0a2c7aabe1f0dbbe999d5447d",
-      "result": "MERGED_54ec7d13d7e954b4264efdb2d4965b6f8957b2a7_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_0f98a5d; post-merge fetch confirms origin/main == merge commit; sealed evidence hashes intact (record f165975a8327f4c13cf9f66c6f6001b697c0032c8f4f2ac5f9a53c03cc90619f, raw log 3d59fbee761dc6d68b900e09e6b1032277b30eb63c4679f4f053cc1a65dd49cf)"
-    },
-    {
-      "command": "gh pr merge 151 --merge --match-head-commit 8174019fe803b24f0fc00dc8a7efe8a727a1a87c",
-      "result": "MERGED_5e1e601431a2ecab15869cdfb4775a39c145cc4f_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD"
-    },
-    {
-      "command": "seal REM-0016 evidence + record PR #151 + push + wait CI green + merge",
-      "result": "PASS_GO_FOR_EVIDENCE_SEAL_CYCLE_2_SEALED"
-    },
-    {
-      "command": "gh pr merge 153 --merge --match-head-commit af61453cfae010dd8b68c82692cb42fbc3e9e678",
-      "result": "MERGED_7d833606756203f28c50913871f6ae6d66c790ee_ALL_13_CHECKS_GREEN_ON_EXACT_HEAD_af61453; post-merge fetch confirms origin/main == merge commit; drift validator GREEN 0/165 inputs + 0/62 tasks"
-    },
-    {
-      "command": "state sync for R3 step (c): update EXECUTION_STATE/MODEL_HANDOFF/ITERATION_LOG (baseline_commit, latest_ci_evidence, next_executable_action, R3 status COMPLETE)",
-      "result": "PENDING_MERGE_STATE_SYNC_R3C"
-    },
-    {
-      "command": "Process cycle-2 NO_GO verdict for OCOR-DEV-0048 (eda08db30ca2-2): escalate per RCCAD 8",
-      "result": "ESCALATED_BLOCKED_REPAIR_BUDGET_EXHAUSTED_2_cycles_exhausted_cycle0_8_findings_cycle1_7_findings_cycle2_VF-001_timezone_offset_bypass_VF-002_delegation_not_wired_into_keycloak_opa_boundary"
-    },
-    {
-      "command": "ocor-runtime/.venv/bin/python -m pytest -q -ra ocor-runtime/tests/tasks/test_ocor_dev_0048.py (real ocor-bootstrap stack)",
-      "result": "50 passed in 21.12s (VF-001 canonical-UTC window + VF-002 delegation grant/revocation at the policy boundary)"
-    },
-    {
-      "command": "python scripts/validate_runtime_evidence.py --task OCOR-DEV-0048 --non-skipped --manifest reports/evidence/G4/MANIFEST.json",
-      "result": "PASS: qualifying task evidence for OCOR-DEV-0048"
-    },
-    {
-      "command": "ruff check . && ocor-runtime/.venv/bin/python -m mypy ocor-runtime/src/ocor_runtime/security/control_plane.py (strict)",
-      "result": "PASS (ruff 0.13.1 clean; mypy strict clean)"
-    },
-    {
-      "command": "scripts/validate_rccad.py --base-ref origin/main; validate_language_policy.py; validate_ocor_change_scope.py; validate_evidence_input_drift.py; sha256sum -c inputs/normative/SHA256SUMS",
-      "result": "PASS_LOCAL_PRECHECK; PASS; PASS; PASS; 8/8 PASS"
-    },
-    {
-      "command": "git push origin HEAD (task/OCOR-DEV-0048-integrate-opa-keycloak-spiffe-openbao-mtls)",
-      "result": "PUSH_eda08db..7f2fff5"
-    },
-    {
-      "command": "wrote ~/.ocor-codex/verify_request.json",
-      "result": "REQUEST_OCOR-DEV-0048-7f2fff555621-3_TASK_EVIDENCE_repair_cycle_3"
-    },
-    {
-      "command": "read ~/.ocor-codex/verdicts/OCOR-DEV-0048-7f2fff555621-3.json",
-      "result": "NO_GO: 2 blocking high findings (VF-001 delegation window re-validated against request.at -> expired delegation still PERMIT; VF-002 valid_until fixed at 300s not bounded by delegation expiry -> decision outlives Authority). Full suite 955 passed on real stack, ruff/mypy clean, real OPA/Keycloak/OpenBao/SPIRE healthy. Per PO decision no further repair."
-    },
-    {
-      "command": "governed/state-sync-toolchain-lock-typescript-resolved: close TOOLCHAIN-LOCK-TYPESCRIPT decision request as RESOLVED (PO decision 2026-10-02 Option 1)",
-      "result": "DECISION_REQUEST_RESOLVED_NO_LOCK_VARIATION_isolated_node_20.20.2_typescript_7.0.2_for_local_gates"
-    },
-    {
-      "command": "governed/state-sync-terminal-blocked-report-cycle3: refresh TERMINAL_BLOCKED_REPORT.json + EXECUTION_STATE/MODEL_HANDOFF/ITERATION_LOG state sync",
-      "result": "PASS_validators_green; baseline_commit -> 7cac163; latest_ci_evidence -> PR #159; loop terminates TERMINAL_BLOCKED"
-    },
-    "git worktree add --detach /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048-repair4-red 7f2fff555621424c8c89764aba16810f038ef509 => exit 0",
-    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m pytest -v --tb=line ocor-runtime/tests/tasks/test_ocor_dev_0048.py -k repair4 --junitxml=/home/luca/.ocor-codex/repair4/red-final.xml => exit 1",
-    "git restore ocor-runtime/tests/tasks/test_ocor_dev_0048.py => exit 0",
-    "git worktree remove /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048-repair4-red => exit 0",
-    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m pytest -v --tb=line ocor-runtime/tests/ --junitxml=/home/luca/.ocor-codex/repair4/full-runtime.xml => exit 0",
-    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m pytest -v --tb=line reports/tests/test_authoritative_contract_conformance.py reports/tests/test_autonomous_tooling_policy.py reports/tests/test_backlog_generator_reality_parity.py reports/tests/test_bootstrap_lock_validation.py reports/tests/test_evidence_input_drift.py reports/tests/test_generate_contracts_reference_resolution.py reports/tests/test_language_migration_benchmark_harness.py reports/tests/test_rccad_methodology.py reports/tests/test_runtime_evidence_validator.py reports/tests/test_validate_language_policy.py --junitxml=/home/luca/.ocor-codex/repair4/reports-ci.xml => exit 0",
-    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python reports/tests/test_lld_add_alignment.py => exit 0",
-    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python reports/tests/test_v12_approval_readiness.py => exit 0",
-    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python reports/tests/test_v12_candidate.py => exit 0",
-    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python reports/tests/test_v12_release_gate.py => exit 0",
-    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python reports/tests/test_v12_semantics.py => exit 0",
-    "ruff check . => exit 0",
-    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python -m mypy => exit 0",
-    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python scripts/preflight_environment.py --require-ready => exit 0",
-    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python scripts/verify.py --json => exit 0",
-    "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0048/ocor-runtime/.venv/bin/python scripts/validate_evidence_input_drift.py => exit 0",
-    "sha256sum -c inputs/normative/SHA256SUMS => exit 0",
-    "validate_rccad.py: PASS_LOCAL_PRECHECK; validate_language_policy.py: PASS; validate_ocor_change_scope.py: PASS sull'intero diff task; validate_runtime_evidence.py --non-skipped: PASS",
-    "validate_ocor_development_plan.py --authorized-extension --base-ref exact committed HEAD: PASS, due strumenti opzionali NOT_EXECUTED; output planning ripristinati",
-    {
-      "command": "verifier esterno OCOR-DEV-0048-c6cbcd328216-4 (loop)",
-      "result": "VERIFIER_ERROR_after_3_attempts_rc=1_moderation_flag('possible_cybersecurity_risk'); request re-issued once per RCCAD \u00a76; stale /tmp verifier worktree removed to enable clean retry"
-    },
-    {
-      "command": "verifier esterno OCOR-DEV-0048-c6cbcd328216-4 (loop)",
-      "result": "NO_GO: 2 finding bloccanti high (VF-001 SignedDelegation non firma tenant/domini/compartimenti richiesti da ADD v1.3 \u00a75.2; VF-002 modulo OPA non firmato iniettato -> PERMIT con digest stantio anzich\u00e9 STALE_BUNDLE). Per decisione OCOR-DEV-0048-REPAIR-4-CODEX nessuna quinta riparazione: TERMINAL_BLOCKED."
-    },
-    {
-      "command": "verifier esterno OCOR-DEV-0048-4d9a0644cdd1-5 (loop)",
-      "result": "NO_GO: 2 finding bloccanti (VF-001 high: claim act firmato non sostituisce la catena del DelegationGrant \u2014 omissione grant/capability produce PERMIT; VF-002 medium: digest inputs_tree dell'evidenza candidata errato). Per decisione OCOR-DEV-0048-REPAIR-5-CLAUDE nessuna sesta riparazione senza nuova decisione: TERMINAL_BLOCKED."
-    },
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/ocor-runtime/.venv/bin/python",
+        "scripts/bootstrap_development_environment.py",
+        "--execute",
+        "--timeout",
+        "300"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/bootstrap.log",
+      "sha256": "bf812a4377a47539917123e4f1c2c0f087e381085b74ae0d1854ea94a214b4d2",
+      "started_at": "2026-10-07T02:07:19.522612+00:00",
+      "updated_at": "2026-10-07T02:08:00.815593+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/ocor-runtime/.venv/bin/python",
+        "scripts/validate_evidence_input_drift.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/drift.log",
+      "sha256": "fde0744c001d45e69220b77ce6eeb918a314c56d5a31c6d053a72590011f509c",
+      "started_at": "2026-10-07T02:07:17.027910+00:00",
+      "updated_at": "2026-10-07T02:07:17.092008+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/ocor-runtime/.venv/bin/python",
+        "scripts/validate_runtime_evidence.py",
+        "--task",
+        "OCOR-DEV-0048",
+        "--non-skipped",
+        "--manifest",
+        "reports/evidence/G4/MANIFEST.json"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/evidence0048.log",
+      "sha256": "d3c77291e1e9f43f2227111436059b7e30c08ea4306b7ddd910541c14b988490",
+      "started_at": "2026-10-07T02:09:00.674188+00:00",
+      "updated_at": "2026-10-07T02:09:00.738864+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/ocor-runtime/.venv/bin/python",
+        "deploy/bootstrap/fixtures/load_fixtures.py",
+        "--env-file",
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/.ocor/bootstrap.env"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/fixtures.log",
+      "sha256": "6ea1e3849eec413523bc3a0fb356bdf534a38fa2f75a20bbd54f8cc2bbf38ea4",
+      "started_at": "2026-10-07T02:08:59.468265+00:00",
+      "updated_at": "2026-10-07T02:08:59.682568+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/ocor-runtime/.venv/bin/python",
+        "scripts/verify.py",
+        "--json"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/harness.log",
+      "sha256": "61736e49983a32531b3c8362f960d943a8a7f7f437ca98e91c1f3c3f8762b413",
+      "started_at": "2026-10-07T02:07:17.027767+00:00",
+      "updated_at": "2026-10-07T02:07:17.693006+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/ocor-runtime/.venv/bin/python",
+        "deploy/bootstrap/init/initialize_services.py",
+        "--env-file",
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/.ocor/bootstrap.env"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/initialize.log",
+      "sha256": "6e6011a52c85df6c43c4c45e4f94e4b4873b9af265dcbbe8b7c6b4021cc9d533",
+      "started_at": "2026-10-07T02:08:57.750963+00:00",
+      "updated_at": "2026-10-07T02:08:59.467982+00:00"
+    },
+    {
+      "command": [
+        "sha256sum",
+        "-c",
+        "inputs/normative/SHA256SUMS"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/inputs.log",
+      "sha256": "0a2036313a8b8deca46e664d2621879f4e0191c98eb287e2aeeb7171aae53c34",
+      "started_at": "2026-10-07T02:07:17.027380+00:00",
+      "updated_at": "2026-10-07T02:07:17.031543+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/ocor-runtime/.venv/bin/python",
+        "scripts/validate_language_policy.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/language.log",
+      "sha256": "ca6cb78dcbe21415365ecd6578a2eb0bf3d22bdcd7ddbae94e31fe19f67cd29d",
+      "started_at": "2026-10-07T02:09:00.673295+00:00",
+      "updated_at": "2026-10-07T02:09:00.740086+00:00"
+    },
     {
-      "command": "gh pr merge 163 --merge --match-head-commit 61b7dcdb190426aefb6212e62a7408613d3ca506",
-      "result": "MERGED_45e4a6f66209af3136d79980c00c41d79fb9ae8a_ALL_13_GREEN_ON_EXACT_HEAD"
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/ocor-runtime/.venv/bin/python",
+        "-m",
+        "mypy"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/mypy-retry.log",
+      "sha256": "a734d82216576d140b6330546b1d6097a6ff28ab45d0a3f71bb6f364fa137aba",
+      "started_at": "2026-10-07T02:09:19.055817+00:00",
+      "updated_at": "2026-10-07T02:09:22.275563+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/ocor-runtime/.venv/bin/python",
+        "-m",
+        "mypy"
+      ],
+      "exit_code": 1,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/mypy.log",
+      "sha256": "8ef4ff6c246c5a8edee3c9104486e6a62da573cc21b45acb783b147d88a22c41",
+      "started_at": "2026-10-07T02:09:00.673819+00:00",
+      "updated_at": "2026-10-07T02:09:00.708651+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/ocor-runtime/.venv/bin/python",
+        "scripts/validate_ocor_development_plan.py",
+        "--base-ref",
+        "origin/main",
+        "--authorized-extension"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/plan.log",
+      "sha256": "c0753802bc31d2d19a9a5b77de8467f7b382f8b05832abf72af1a624819b6cba",
+      "started_at": "2026-10-07T02:09:00.940924+00:00",
+      "updated_at": "2026-10-07T02:09:01.105139+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/ocor-runtime/.venv/bin/python",
+        "scripts/validate_rccad.py",
+        "--base-ref",
+        "origin/main"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/rccad.log",
+      "sha256": "0043e5c71880b8696f14cc449b0e908f5418b4864e06a71d3fb4d4f212543c3f",
+      "started_at": "2026-10-07T02:09:00.673037+00:00",
+      "updated_at": "2026-10-07T02:09:00.940108+00:00"
+    },
+    {
+      "command": [
+        "ruff",
+        "check",
+        "."
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/ruff.log",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "started_at": "2026-10-07T02:09:00.673555+00:00",
+      "updated_at": "2026-10-07T02:09:00.740600+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/ocor-runtime/.venv/bin/python",
+        "scripts/verify_external_services.py",
+        "--execute",
+        "--typed",
+        "--timeout",
+        "180"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/services.log",
+      "sha256": "518a61a1c28d0e054e6b0c36359e48fde8974a1cade88ec60b8766c9aeebf8e3",
+      "started_at": "2026-10-07T02:08:59.682837+00:00",
+      "updated_at": "2026-10-07T02:09:02.502988+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/ocor-runtime/.venv/bin/python",
+        "scripts/reset_test_environment.py",
+        "--execute"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/teardown.log",
+      "sha256": "837787229d5f08d16895ca873583fd71bfbabdb81129fd859528ea3f4a635504",
+      "started_at": "2026-10-07T02:09:27.817982+00:00",
+      "updated_at": "2026-10-07T02:09:29.334692+00:00"
+    },
+    {
+      "command": [
+        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle6/ocor-runtime/.venv/bin/python",
+        "scripts/preflight_environment.py",
+        "--require-ready"
+      ],
+      "exit_code": 0,
+      "log": "/home/luca/.ocor-codex/state-sync-0049-cycle6/toolchain.log",
+      "sha256": "6b81fc7c85adba1a7d0bbe2da45519f94fcdd2dc31f5bec27ac54636ffcb49e5",
+      "started_at": "2026-10-07T02:07:17.028097+00:00",
+      "updated_at": "2026-10-07T02:07:17.492698+00:00"
     }
   ],
   "completed_tasks": [
-    "Phase 0: reconciled EXECUTION_STATE/MODEL_HANDOFF/ITERATION_LOG to real evidence (28 sealed tasks, not 19); superseded TERMINAL_BLOCKED_REPORT.json and G2/blockers/MANIFEST.json",
-    "Phase 1: allocated DEC-212, authored OCOR_LANGUAGE_POLICY.md and the fail-closed scripts/validate_language_policy.py (RED/GREEN/REFACTOR), wired into 3 CI workflows, added ARA Decision Record v1.6 and append-only registers",
-    "Phase 1B: corrected 3 findings from independent verification before starting Phase 2.1 -- (1) OCOR_LANGUAGE_POLICY.md Sec.3 now discloses the p95<50ms budget as a working hypothesis dependent on OI-008 (numeric acceptance thresholds), not the previously-misattributed OI-024 (which actually governs DEC-131 dual-control authority thresholds, unrelated to latency); neither OI is closed. (2) EXECUTION_STATE.json latest_ci_evidence populated with the real PR#56 exact-head CI (candidate commit de3bcac7, 6 unique green workflow runs, merge 50c3bbbe). (3) infra/toolchain.lock.json gained a schema-valid typescript/tsc entry, version 7.0.2 verified as real and current on the npm registry, integrity = sha256 of the installed bin/tsc entrypoint.",
-    "Phase 1B: PR #57 merged (3911228e), closing the 3 independent-review corrections (OI-008 vs OI-024, real CI evidence, verified TypeScript 7.0.2 pin); a follow-up commit on the same PR fixed a real tooling-policy CI failure at the root (missing allowlist entry for the new evidence file in scripts/validate_ocor_development_plan.py's extension_paths, plus the self-hash settle in OCOR_PLAN_RUN_STATE.json), not bypassed.",
-    "Phase 2.1 (pending PR/merge): mypy --strict on ocor-runtime/src and scripts/ (0 errors, precise per-module override for grpcio-tools' missing stubs, 2 files excluded for content-addressed sealed-evidence/generator-drift reasons) and a repository-wide ruff gate (5 files excluded for frozen-review-corpus/sealed-evidence reasons), wired as a new blocking type-and-lint-gate job. mypy pinned via a new lint optional-dependency group (mypy==2.3.1 + exact-pinned type stubs, all verified real on PyPI), uv.lock regenerated. Fixed 9 files with precise type annotations/unused-import removals/ambiguous-name renames; no runtime behavior changed (full pytest regression unchanged: 498 passed). Audited every reports/evidence/**/*.json inputs/artifact_hashes dict before editing anything, caught and reverted 3 edits that would have invalidated sealed evidence for OCOR-DEV-0004/0015/0072, and discovered that scripts/build_ocor_development_plan.py silently deletes OCOR-DEV-0070..0084 if re-run -- registered as a non-blocking escalation for Phase 2.4 rather than masked or worked around.",
-    "Phase 2.1: PR #59 merged (1cfa0a78), all 12 checks green on exact head including the new type-and-lint-gate job on the first CI run.",
-    "Phase 2.2 (pending PR/merge): interpreter pinned to exact 3.12.11 in requires-python, new .python-version, uv.lock header, and all 6 CI workflows; new fail-closed test_interpreter_pin.py. Local sandbox has no exact 3.12.11 interpreter (uv lock/sync/run all refuse), so verification bypassed uv's wrapper (direct venv invocation) and one uv.lock line was hand-edited as a documented, justified exception (a literal copy of pyproject.toml's own field). Two new local-only test failures are expected and documented (both trace to the same missing-interpreter root cause, not a logic defect); CI is the real qualifying gate since actions/setup-python has already proven it provisions exactly 3.12.11 in every prior PR this session.",
-    "Phase 2.2: PR #61 merged (47ca9017). Disclosed interpreter-resolution risk did not materialize -- every uv-based CI step passed cleanly on the exact 3.12.11 pin. First push failed on an unrelated, already-familiar self-hash-settle miss; fixed on second push, all 12 checks green.",
-    "Phase 2.3 (pending PR/merge): real TypeScript SDK under ocor-runtime/sdk/typescript (package.json, tsconfig strict, errors.ts/canonical.ts hand-written kernel support, generated ocor_contracts.ts committed byte-identical to the generator's own output), tsc==7.0.2 wired into the type-and-lint-gate CI job, NFR-022 cross-SDK conformance suite (canonical byte/digest/error-model/idempotency-binding identity on shared fixtures, driving the compiled TypeScript as a subprocess the way Node.js already serves as the REM-0007 oracle). Discovered, while performing the FIRST real tsc compile of the generator's own output, that generate_contracts.py's $ref resolution has been silently broken since OCOR-DEV-0010 (missing Gateway/Memory prefix awareness, no handling for scalar/alias components) -- fixed via a proper RED/GREEN remediation (OCOR-DEV-REM-0010) that left the sealed test_ocor_dev_0010.py completely untouched and re-verified its full 15/15 suite green against the fix, and only corrects reference resolution (54-model inventory unchanged).",
-    "Phase 2.3: PR #63 merged (b4510123). All 12 checks green on the first push, including the new tsc build step and both new pytest suites in type-and-lint-gate.",
-    "Phase 2.4 (partial, pending PR/merge): fixed the FR-047 traceability misallocation named by the mandate. Confirmed OCOR-DEV-0047 (C8 tool boundary sandbox/kill switch) has no relation to FR-047 ('generate the Python/TypeScript SDKs and typed MCP contracts'), almost certainly a number-matching slip; reassigned to OCOR-DEV-0010, the real, already-accepted SDK-generation task. Updated both requirement_ids lists in the backlog to match. No new task added -- the fix was a pure reallocation, no dependency edges changed, no DAG regeneration needed or performed. PHASE2-4-BACKLOG-GENERATOR-DRIFT remains open for its own dedicated iteration.",
-    "Phase 2.4 (FR-047 part): PR #65 merged (dcfca508). First push failed tooling-policy on the same self-hash-settle miss as before (edited validate_ocor_development_plan.py twice, only settled after the first); fixed and green on second push, all 12 checks passed.",
-    "Phase 2.4 (generator-drift part): resolved PHASE2-4-BACKLOG-GENERATOR-DRIFT. Added WS12_TASK_SPECS (15 tuples) and a dedicated WS-12 generation branch to scripts/build_ocor_development_plan.py's build_tasks(); added dependency 84 to tasks 16/17/18/21 (real backlog requires it); added a post-hoc requirement_ids override reproducing PR #65's FR-047 fix so a future regeneration cannot silently revert it (root cause: requirement_owner()'s WS-09 keyword rule matches the substring 'tool' inside FR-047's own title); rewrote context_manifest() via a new _task_context_entry() helper so tasks 70-84 get the real 'Infrastructure and Operations Agent' role distinct from tasks 6/49 (which share workstream=WS-12 but use the generic formula). Verified in-memory (never written to disk pre-verification, per mandate) that the fixed generator reproduces the committed 84-task backlog/DAG/context-manifest bit-for-bit. Added a permanent regression test (reports/tests/test_backlog_generator_reality_parity.py, RED/GREEN) to prevent recurrence. Discovered build_trace()/OCOR_TRACEABILITY_PLAN.csv has its own separate, pre-existing, order-sensitive staleness (2/285 rows) -- registered as a new non-blocking finding, explicitly out of scope for this fix.",
-    "Phase 2.4 (generator-drift part): PR #67 merged (9bd28214). All 13 checks green on the first push. Post-merge SHA verified against origin/main. Phase 2.4 is now fully closed.",
-    "Phase 2.4 (state close): PR #68 merged (5a08f78c). All 13 checks green on the first push; a small follow-up commit settled the validator's own self-embedded base-ref. Post-merge SHA verified.",
-    "Phase 3: built and ran the reproducible, content-addressed language-migration benchmark harness (scripts/run_language_migration_benchmark.py) required by OCOR_LANGUAGE_POLICY.md \u00a73. Component 1 (RFC 8785 canonicalization kernel) MEASURED for real: median ratio Python/Node 4.24x-4.77x across 3 runs on the same sealed 200-document, ~10KB-payload corpus (threshold >3x) -> MIGRATION_THRESHOLD_EXCEEDED. Registered escalation PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED (opening a migration decision is policy-authorized; performing the migration is not -- it would substitute approved architecture, AFF-001 -- so no migration work was undertaken, only the decision package). Components 2-4 (C3 commit path, C5 event backbone, C4 projection) honestly reported NOT_YET_MEASURABLE with concrete, non-fabricated reasons (no live Postgres; no real C4/C5 implementation exists yet). Full decision package: reports/development/PHASE3_LANGUAGE_MIGRATION_DECISION.md. Added reports/tests/test_language_migration_benchmark_harness.py (11 tests) and, having discovered PR #67's test_backlog_generator_reality_parity.py was never wired into CI, fixed both gaps by wiring both regression tests into ocor-tooling-bootstrap.yml's type-and-lint-gate job.",
-    "Phase 3: PR #69 merged (4532dded). All 13 checks green on the first push. Post-merge SHA verified against origin/main. Phase 3 is now fully closed as a process; the component-1 migration escalation remains open, reserved to the Product Owner, and does not block backlog execution.",
-    "Phase 3 (state close): PR #70 merged (1dc3a082). All 13 checks green on the first push. Post-merge SHA verified.",
-    "OCOR-DEV-0079 (pending PR/merge): implemented typed service health checks. Discovered Docker is genuinely available in this sandbox (all 11 required ports free, no conflicting containers); bootstrapped the real full compose stack from scratch (9 services directly, SPIRE via its own two-phase server-then-agent join-token flow with a freshly generated disposable CA) using session-local, never-committed secrets. Verified the 4 existing per-service qualify modules (typedb, openbao, spire, policy-identity) all PASS against the fresh stack before writing new code. Extended scripts/verify_external_services.py with a typed ServiceStatus enum/ServiceHealth dataclass (READY/DEGRADED/UNREACHABLE/NOT_PROVISIONED replacing the old untyped READY/NOT_READY strings that conflated 'checked and broken' with 'never provisioned'); the 4 covered services are driven as subprocesses of their existing modules, and 5 new inline typed checks (terminusdb, fuseki, postgresql, kafka, qdrant) add lock validation, live Docker inspection, and real positive+negative protocol probes (wrong-credential TerminusDB/PostgreSQL access, absent Fuseki dataset, absent Kafka topic, absent Qdrant collection, all verified FAIL_CLOSED). Ran real bounded fault injection (docker pause/unpause) against terminusdb and kafka, confirming DEGRADED-then-READY detection and full-stack recovery. Added 17 unit/negative/contract tests (no live dependency, always run in CI) and sealed real evidence (reports/evidence/G2/OCOR-DEV-0079.json + .log) against the live 11-service stack, mirroring OCOR-DEV-0073/0075's prior real-evidence pattern. Backward compatibility preserved: the old --manifest-only and legacy port/container-scan CLI modes are unchanged.",
-    "OCOR-DEV-0079: PR #71 merged (751836ef). All 13 checks green on the first push. Post-merge SHA verified. The live 11-service Docker stack was left running and confirmed still healthy, then reused directly for OCOR-DEV-0080 without a fresh bootstrap.",
-    "OCOR-DEV-0080 (pending PR/merge): implemented deterministic, idempotent service initialization per deploy/bootstrap/init/README.md's 5 ordered steps (SPIRE trust verify, Keycloak realm, OPA policy, OpenBao paths, graph databases). Manually explored every real API first (TerminusDB/TypeDB database create, Keycloak realm create, OPA policy PUT, OpenBao mount enable) to learn exact request/response/conflict shapes, then cleaned all manual artifacts back to a pristine baseline before writing deploy/bootstrap/init/initialize_services.py. Each step checks existing state before mutating: absent -> CREATED, present-and-matching -> ALREADY_INITIALIZED (no mutation), present-but-different -> DRIFT_DETECTED (fails closed, never overwrites). Deliberately does not author real OPA/Keycloak security-policy content (WS-11 scope, not this WS-12 task) -- only a fail-closed default-deny placeholder policy and an empty realm/database shell. Proved the full contract for real against the live stack: RUN1 created everything, RUN2 (re-invoke) was fully idempotent, RUN3 (externally mutated OPA policy) was detected as drift and rejected (exit 1, a real executed rollback drill, not simulated), RUN4 confirmed full recovery after restoring the correct content. Added 16 unit/negative tests (all network/subprocess calls faked via monkeypatch, no live dependency) and fixed a real gap found along the way: scripts/validate_language_policy.py had no authorized area for deploy/bootstrap/init's .py/.rego files.",
-    "OCOR-DEV-0080: PR #72 merged (79084dd7). All 13 checks green on the first push. Post-merge SHA verified. Found fuseki had exited (137, likely OOM from a large unrelated host container sharing the same Docker daemon); restarted it cleanly without touching any other service, all 11 healthy again within seconds.",
-    "OCOR-DEV-0081 (pending PR/merge): implemented deterministic synthetic fixture loading for the 2 databases OCOR-DEV-0080 shelled out (TerminusDB, TypeDB `ocor_default`). Manually explored both real APIs first (TerminusDB document schema+instance CRUD; TypeDB's transaction-based HTTP v1 API -- open/query/commit/close, define/insert/match/undefine) before writing code, and discovered two real quirks along the way: TerminusDB's not-found single-document GET returns real HTTP 200 with a body literally prefixed by 'Status: 404\\nContent-type: ...\\n\\n' before the JSON payload (now documented in code and covered by a dedicated unit test); TypeDB allows only one open schema/write transaction at a time, and a forgotten open transaction blocks new ones and even database deletion (resolved during exploration by always closing/committing). Wrote deploy/bootstrap/fixtures/synthetic_fixtures.json (one minimal versioned entity/document) and load_fixtures.py with the same CREATED/ALREADY_INITIALIZED/DRIFT_DETECTED check-before-mutate contract as OCOR-DEV-0080. PostgreSQL/Kafka/Qdrant fixtures explicitly declared out of scope: those 3 services were already provisioned and evidenced by earlier, unrelated tasks (OCOR-DEV-0006/0015/0019/0023) predating this WS-12 chain, not part of its newly-provisioned service set. Proved the full contract for real: RUN1 created both fixtures with identical post-load verification digests across both backends for the same semantic content; RUN2 was fully idempotent; RUN3 (externally mutated TerminusDB fixture) was detected as drift and rejected (exit 1, real executed rollback drill); RUN4 confirmed full recovery. Added 12 unit/negative tests (all network calls faked via monkeypatch) and fixed scripts/validate_language_policy.py again for the new deploy/bootstrap/fixtures area -- checked BEFORE opening the PR this time, per the lesson from OCOR-DEV-0080.",
-    "OCOR-DEV-0081: PR #73 merged (48b6d01a). All 13 checks green on the first push. Post-merge SHA verified; live stack confirmed still healthy.",
-    "OCOR-DEV-0082 (pending PR/merge): implemented service reset. scripts/reset_test_environment.py already existed but only implemented full teardown (docker compose down --volumes); added a distinct, lighter-weight --reset mode that undoes exactly OCOR-DEV-0080's 4 mutating init steps (Keycloak realm, OPA policy, OpenBao mount, TerminusDB/TypeDB ocor_default databases) without stopping any container -- SPIRE trust is deliberately left untouched since OCOR-DEV-0080 only ever verifies it, never creates it. Proved the full contract for real against the live stack: real reset succeeded for all 4 targets, a second invocation was fully idempotent, and -- the strongest proof -- running OCOR-DEV-0080's real initializer against the freshly-reset stack recreated all 4 targets from scratch, confirming reset is a genuine complete inverse rather than a partial or lossy operation. docker compose ps confirmed every container stayed running throughout. --teardown's actual destructive execution was deliberately never run (would destroy the live stack other in-progress backlog tasks depend on); its command construction and dry-run path were verified instead. Added 10 unit/negative tests (network calls faked via monkeypatch); scripts/validate_language_policy.py needed no new area this time since scripts/ was already authorized.",
-    "OCOR-DEV-0082: PR #74 merged (6a7d51ef). All 13 checks green on the first push. Post-merge SHA verified.",
-    "OCOR-DEV-0083 (pending PR/merge): implemented bounded fault injection. scripts/fault_inject_test_environment.py already existed (raw pause/unpause/restart/disconnect/reconnect, dry-run by default) but had no bounded detect+auto-recover cycle. Added --bounded for pause/unpause, disconnect/reconnect and restart: applies the fault, polls for the expected unhealthy/unreachable condition within a timeout, then -- in a finally block, so recovery is attempted even if detection never completed -- applies the recovery action and polls for healthy/reachable again. A first implementation used a bare TCP connect to detect disconnect faults and silently never detected them; diagnosed to a genuine Docker Desktop networking quirk (the port-forwarding proxy completes TCP handshakes independently of a container's network attachment) and fixed by switching to a real HTTP round trip per service. Proved all 3 bounded cycle types for real against the live stack: pause/unpause on typedb, disconnect/reconnect on fuseki, restart on keycloak -- all detected and auto-recovered within their bounded windows. Restoring full stack state afterward (fault-injection testing wiped OPA's and Keycloak's ephemeral in-memory state) surfaced a real bug in OCOR-DEV-0081's load_fixtures.py: it only tolerated one of two response shapes TerminusDB uses for the identical not-found condition; fixed and covered by a new regression test in that task's own test file. Added 12 unit/negative tests for the bounded-cycle logic itself.",
-    "OCOR-DEV-0083: PR #75 merged (e1b4fe1657d7222bc17b41b04feff8658a1cc6d1). All 13 checks green on the first push. Post-merge SHA verified.",
-    "OCOR-DEV-0084 (pending PR/merge): implemented reproducible environment evidence capture. scripts/capture_environment_evidence.py already existed but only captured the raw docker compose ps inventory (container-exists + Docker-healthcheck level), saying nothing about the governed contract each service must satisfy. Added a typed environment_status field folding in scripts/verify_external_services.py's typed_health_checks (pinned image, loopback-only publication, real protocol probe, fail-closed negative checks), kept deliberately separate from the pre-existing status field (capture-process success, not environment health) so a degraded service is visible in the evidence rather than silently absorbed into a generic 'captured OK'. Proved for real against the live stack: RUN1 positive (all healthy -> environment_status=PASS), RUN2 negative (typedb paused -> DEGRADED, exit 1, never a silent PASS), RUN3 recovery (unpaused, re-captured until PASS returned, confirming the health-check settle delay is reflected, not swallowed). Also fixed a real, reproduced defect discovered while running the positive capture: the pre-existing --env-file auto-discovery only checked .ocor/bootstrap.env, which never matched this session's actual secrets path, so docker compose ps failed to interpolate Keycloak's password variable and the whole capture silently reported PARTIAL even though every service was genuinely healthy -- fixed with an explicit --env-file CLI argument. This is the LAST task in the WS-12 infrastructure-bootstrap-repair chain (OCOR-DEV-0070..0084); G2 spikes OCOR-DEV-0016/0017/0018/0021 depend on it and become executable next. Added 4 unit/negative/contract tests (typed health check faked, no live Docker dependency).",
-    "OCOR-DEV-0084: PR #76 merged (cbf53da9be6d13e77d545679dacebc2398f5af97). All 13 checks green on the first push. Post-merge SHA verified. This closes the entire WS-12 infrastructure-bootstrap-repair chain (OCOR-DEV-0070..0084).",
-    "OCOR-DEV-0016 (pending PR/merge): SPIKE selected C3 backend behaviour -- the first G2 spike executed after WS-12 closed. Reused OCOR-DEV-0015's sealed spikes/c3_atomicity/oracle.py PostgreSQLAtomicCommitOracle completely unmodified (the selected backend's atomic-commit contract); added a new spikes/c3_backend/concurrency_oracle.py with a real-concurrency race harness (race_distinct_commands: two DISTINCT commands racing the same aggregate/expected_revision, each on its own live PostgreSQL connection) plus two independent, out-of-band probes: observe_lock_contention (a separate connection directly witnessing the real advisory lock held by another session, proving mutual exclusion on the wire rather than only inferring it from the race's outcome) and sample_revision_during (a concurrent reader continuously sampling the aggregate row during a live race, proving no dirty read is ever observed). Added 5 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0016.py covering locking, isolation, failure-under-real-concurrency, and reconciliation (a synthetic phantom_receipt anomaly, a different anomaly shape than OCOR-DEV-0015's orphan_state test). Genuine finding: the ocor-bootstrap Docker stack's postgresql service (127.0.0.1:55433) let OCOR_LIVE_POSTGRES_DSN be set locally for the first time this session, retroactively qualifying OCOR-DEV-0015's 10 previously-erroring live-Postgres tests as real local passes too. Genuine bug found and fixed before sealing: the first failure-under-concurrency test started the crash subprocess and the live survivor as a cold-start race with no synchronization, which was truly nondeterministic (the survivor sometimes won the lock first, so the crash worker hit a real revision conflict instead of actually crashing); fixed by blocking on observe_lock_contention until the crash subprocess is observed holding the real advisory lock before releasing the survivor thread, verified deterministic across 5 consecutive runs.",
-    "OCOR-DEV-0016: PR #77 merged (a2ea8f467cc47891add109fbcd1b2e8567c49399). All 13 checks green on the first push. Post-merge SHA verified.",
-    "OCOR-DEV-0017 (pending PR/merge): SPIKE TypeDB exact-at-commit semantics. Reused OCOR-DEV-0012's sealed ocor_runtime.c2.ports contract (ConsistencyMode/ConsistencyRequirement/ServedContext/NamedQueryRequest.verify_served) completely unmodified; added a new spikes/typedb_exact_commit/adapter.py implementing ProjectionReadPort/WatermarkPort against a real, live TypeDB instance via its HTTP v1 transaction API (signin/open/query/commit/close, the same pattern already validated in OCOR-DEV-0081). Modeled a lagging, asynchronously-applied C4 projection: ingest() writes a fact stamped with the commit that produced it, while advance_watermark() is a SEPARATE step simulating when the projection pipeline has actually applied that commit. Added 6 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0017.py, all against real TypeDB, no mocks: exact match when fact and watermark align; fail-closed (CONSISTENCY_DOWNGRADE) when a fact is ingested ahead of the watermark; fail-closed when a row has moved past the watermark to a newer commit (proving the negative acceptance criterion -- a mislabeled fact is never served as exact, in either the older-served-as-newer or newer-served-as-older direction); AT_LEAST_COMMIT correctly reports PROJECTION_NOT_READY with an independently observable watermark; a full two-commit progression proving a superseded commit is never served as exact once stale; RESULT_NOT_FOUND reached only after consistency is confirmed, never used to mask it. Before writing the adapter, empirically probed the real TypeDB instance for three previously-unknown behaviors: undefined-type references fail with INF2 (as already known from OCOR-DEV-0081), redefining an identical schema is idempotent (HTTP 200, no error -- so initialize() needs no check-before-mutate guard), and a duplicate @key insert fails with CNT9 (motivating a delete-then-insert update pattern for fact overwrites). Genuine bug found and fixed before sealing: the first version used an empty string as the sentinel for \"no watermark yet\", which violated OCOR-DEV-0012's sealed ServedContext/Watermark non-empty-string invariant and raised QUERY_CONTRACT_INVALID before the consistency check could ever run; fixed with a dedicated non-empty sentinel constant.",
-    "OCOR-DEV-0017: PR #78 merged (d573b7e119b195837cc9a7f122369c06ace1523d) after a second push fixing a real CI gap -- the first push failed 3 jobs (delivery-activation, rccad-methodology, validation-closure) because they run the full ocor-runtime/tests/ sweep with a real Postgres service container but no TypeDB service; fixed by adding a real, ephemeral TypeDB service container to the 3 workflows (same pinned image digest as deploy/bootstrap/compose.yaml) and hardening the adapter to create the ocor_default database if absent. All 13 checks green on the second push. Post-merge SHA verified.",
-    "OCOR-DEV-0018 (pending PR/merge): SPIKE Jena marking-safe projection. Reused ocor_runtime.c4_marking's sealed MarkingEngine/MarkingSchemeDefinition/MarkingSet finite lattice (C4's marking/authorization decision) completely unmodified; added a new spikes/jena_marking/adapter.py implementing a real Fuseki-backed marking-safe projection against the live Fuseki instance's pre-configured in-memory 'ocor' dataset (SPARQL 1.1 Query/Update over HTTP). Key design: list_authorized executes a SINGLE SPARQL query that joins a resource with its classification in the same graph pattern (the 'marking join' the acceptance criteria require -- a resource missing its classification triple can never appear, at any clearance); count_authorized/exists_authorized are deliberately derived from list_authorized's own filtered result rather than independent SPARQL COUNT/ASK queries, so they structurally cannot diverge or leak. Added 6 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0018.py, all against real Fuseki, no mocks: marking-based filtering, count-never-diverges, a real raw unfiltered SPARQL COUNT demonstrating why naive counting would leak (and proving the public API never exposes it), existence-check indistinguishability between a forbidden and a nonexistent resource, fail-closed handling of a resource missing its marking triple even at the highest clearance, and no unauthorized content leaking anywhere in a low-clearance payload. Genuine bug found and fixed before sealing: querying Fuseki without an explicit Accept header returns SPARQL-XML rather than JSON, causing json.JSONDecodeError on the first run; fixed by sending Accept: application/sparql-results+json explicitly. Learning directly from OCOR-DEV-0017's CI failure, proactively added a real, ephemeral Fuseki service (a build+run step, since its image is built from source and cannot be referenced as a plain services: image:) to the same 3 CI workflows already carrying TypeDB, rehearsing the exact recipe locally end-to-end (on an alternate port, never touching the live ocor-bootstrap stack) before adding it to any workflow -- avoiding a repeat of the same category of CI failure.",
-    "OCOR-DEV-0018: PR #79 merged (0b3d855c09f50be583a970868ed19375ef4d0802). All 13 checks green on the first push -- the proactive Fuseki CI fix (added before opening the PR, learning from OCOR-DEV-0017's reactive fix) worked without any repair cycle. Post-merge SHA verified.",
-    "Phase 3 escalation disposition (pending PR/merge): recorded the Product Owner's explicit, verbatim-dictated disposition on PHASE3-COMPONENT1-CANONICAL-KERNEL-MIGRATION-THRESHOLD-EXCEEDED as a new appended section (\u00a78) in reports/development/PHASE3_LANGUAGE_MIGRATION_DECISION.md -- sections 1-7 (the sealed measurement and its numbers) left byte-for-byte untouched, confirmed via git diff --stat showing only pure insertions after the file's prior end. Decision: DEFERRED, not opened, not rejected -- the candidate and the sealed measurement stay registered/valid. Recorded the Product Owner's four-point rationale and three-condition falsifiable reopening trigger verbatim as instructed ('da riportare come tale'), without editorializing. Checked and documented that no new DEC-* decision record is required for this disposition type (see commands_run above for the reasoning). Updated EXECUTION_STATE.json's phase_3_benchmark.escalations entry from OPEN to DISPOSED_DEFERRED with the same rationale and reopening condition. Observed every tassative constraint: OCOR_LANGUAGE_POLICY.md \u00a73 thresholds untouched, OI-024 not closed, no ASM-*/RSK-* touched, no kernel code changed, no E1/E2/Verified/runtime-conformance promotion. This is a documents-only change (no source code, no tests) -- the local gate suite and full regression were re-run anyway per the standard protocol and confirmed unaffected.",
-    "OCOR-DEV-0021: PR #81 merged (9e97e1c19c7ac82bdfe074e28991493ac798b1c1) after a second push fixing a real CI gap -- the first push failed 3 jobs with 'No such container: ocor-bootstrap-opa-1' because the docker run recipe named the CI containers plainly (opa/keycloak/openbao) while the reused, sealed fault_command() (OCOR-DEV-0083) expects docker compose's ocor-bootstrap-<service>-1 naming convention; fixed by renaming every docker run --name across all 3 workflows. All 13 checks green on the second push. Post-merge SHA verified. This closes the entire wave-11 G2 spike set (OCOR-DEV-0016/0017/0018/0021).",
-    "OCOR-DEV-0024 (pending PR/merge): SPIKE cross-compartment non-interference. Composes three previously sealed spikes at the test level, all reused completely unmodified: spikes.jena_marking.adapter.JenaMarkingProjectionAdapter (OCOR-DEV-0018) for Jena content/existence/count; spikes.vector_partition.oracle (OCOR-DEV-0023, including its self-provisioned, ephemeral real Qdrant container) for rank/count/timing/existence-hiding; spikes.control_plane_latency.probe.bounded_probe (OCOR-DEV-0021) plus scripts/fault_inject_test_environment.py's fault_command/http_reachable (OCOR-DEV-0083) for cross-service timing non-interference. Added the one new abstraction this task needed: spikes/non_interference/equivalence.py's assert_observationally_equivalent, a paired-fixture comparison with an axis-labeled failure message, reused across every content/existence/rank/count check. Added 7 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0024.py, all against real backends, no mocks: a low-clearance Jena view unaffected by ingesting a TOP_SECRET resource elsewhere; a low-partition Qdrant search's rank/count unaffected by 200 foreign vectors upserted into a high partition; the same low-partition's bounded timing envelope still admitting the observed timing after that population; identical denial for a real high partition versus a fabricated one; OPA's own bounded-probe availability and timing unaffected by a real pause/unpause fault-injection cycle on the unrelated OpenBao service; repeated low-clearance queries against both Jena and Qdrant staying identical after high-compartment population in both; and a falsifiability check that the new equivalence assertion actually raises on a real constructed divergence. No new CI provisioning needed: OPA/OpenBao/Fuseki were already real services from OCOR-DEV-0018/0021, and Qdrant self-provisions via a real docker run inside the test itself, the same mechanism OCOR-DEV-0023 already exercises successfully in the same CI jobs.",
-    "OCOR-DEV-0024: PR #82 merged (e003fdc453420f8d5942dd9c39261d1ccf0a73ea). All 13 checks green on the first push (Qdrant self-provisioning worked cleanly in CI). Post-merge SHA verified.",
-    "OCOR-DEV-0025: PR #83 merged (c13a634b94bd1b6f6aed52e54d252746242e050d). All 13 checks green on the first push -- the proactive TypeDB CI provisioning fix (converting from a native services: block to a manual docker run --name ocor-bootstrap-typedb-1 step, applying the OCOR-DEV-0021 lesson before ever pushing) worked without any repair cycle. Post-merge SHA verified.",
-    "OCOR-DEV-0028 (pending PR/merge): Build retained C1 compiler slice -- the first retained (non-spike) G3 runtime component this delivery closes. Implements the smallest contract-compliant slice of OCOR-DEV-0011's sealed C1 ports (ocor_runtime.c1.ports, reused unmodified): RetainedOacParser (real YAML/JSON parsing), RetainedSemanticValidator (enforces the DSL's minimal id/fields shape contract), and RetainedCanonicalIrBuilder (assembles a deterministic core document plus a migration-metadata artifact). Pure, in-memory, deterministic component -- no external service needed, unlike every prior spike this session. signature_envelope_ref is an honestly-labeled unsigned placeholder; real signing (IrSigner) remains a separate, unimplemented sealed Protocol. Added 8 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0028.py: a mixed YAML/JSON fixture compiling successfully with migration metadata; reproducible-digest verification via the sealed verify_deterministic_build oracle; rejection of an unresolved import (already enforced by the sealed CompilerRequest constructor); rejection of malformed YAML, missing required keys, a non-mapping fields value, and a declared-id mismatch, each with the correct DiagnosticCode; and a direct proof that no rejection path ever returns a partial CanonicalIrRelease. Created reports/evidence/G3/MANIFEST.json fresh -- the first G3-gated evidence manifest this delivery seals.",
-    "OCOR-DEV-0028: PR #84 merged (b8170f3c5ca9500d38faf95d2b2d01c7ded41850). All 13 checks green on the first push. Post-merge SHA verified.",
-    "OCOR-DEV-0029 (pending PR/merge): Build retained C3 canonical commit slice. Implements all 5 sealed C3 ports (OCOR-DEV-0013, ocor_runtime.c3.ports, reused unmodified) as PostgresC3Service: GovernedCommitPort (commit), CanonicalReadPort (read), RevisionPort (current_revision), OutboxRelayPort (claim_batch/acknowledge), RecoveryPort (reconcile). Backed by real PostgreSQL, generalizing the real-concurrency locking/atomicity technique already proven for real by the sealed C3 spikes (spikes.c3_atomicity.oracle, OCOR-DEV-0015; spikes.c3_backend, OCOR-DEV-0016) into a production-shaped implementation speaking the sealed dataclasses directly. Genuine architectural fitness violation found and fixed before sealing: the first version imported psycopg directly in service.py, which scripts/validate_rccad.py's AFF-002/AFF-006 correctly flagged as leaking a direct backend client outside the sanctioned adapters/ subtree; fixed by extracting every psycopg reference into a new ocor-runtime/src/ocor_runtime/c3/adapters/postgres.py (PostgresC3Adapter), exposing only plain psycopg-free Python types to service.py, which now composes the adapter with zero direct client imports -- the first such adapters/ subtree this delivery has needed. Added 9 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0029.py, all against real PostgreSQL, no mocks: isinstance conformance to every sealed Protocol; atomic commit persisting state/revision/outbox together; idempotent replay; idempotency-conflict and revision-conflict rejection; two distinct commands racing the same revision (exactly one wins); a real subprocess process crash mid-commit (zero partial visibility, successful retry); a real simulated corruption fixture (a derived outbox row deleted directly against the database, repaired by reconcile()); and outbox claim/acknowledge. This closes wave 12 entirely (OCOR-DEV-0024/0025/0028/0029 all merged).",
-    "OCOR-DEV-0029: PR #85 merged (7e1cf57bfe98c314f2cfb1ae0469249428e0ab8f) after two transient GitHub API errors (502 Bad Gateway, then a GraphQL 500-class error) resolved by simple retry, unrelated to repository content. All 13 checks green on the first push. Post-merge SHA verified. Wave 12 (OCOR-DEV-0024/0025/0028/0029) is now fully closed.",
-    "State sync (OCOR-DEV-0029): PR #86 merged (ffe28fd9504a65b45645bf08f3df2c1d73a0a1bf), a dedicated state-sync-only PR opened immediately after OCOR-DEV-0029's merge, per the Product Owner's explicit correction not to defer state-file sync to the next task's own commit. No source code touched; local gate suite re-run and confirmed unaffected. All 13 checks green on the first push.",
-    "OCOR-DEV-0026 (pending PR/merge): SPIKE restore without resurrection. Composes OCOR-DEV-0025's sealed distributed deletion saga (spikes.memory_deletion.saga: DeletionStatus/DeletionTarget/run_deletion_saga plus PostgresMetadataTarget/TypeDBContentTarget/QdrantCacheTarget, all reused completely unmodified) with a new spikes/restore_no_resurrection/journal.py: a durable, real-PostgreSQL-backed TombstoneJournal, record_deletion() (tombstones the journal only once the saga independently confirms full deletion across every target), and restore_from_backup() (consults the journal BEFORE ever touching any target; a tombstoned item is refused outright, and a journal that cannot be reached is refused too -- fail closed, never silently treated as safe to restore). Proactively confirmed before writing any code that PostgreSQL/TypeDB/Qdrant are already real and provisioned in all 3 CI workflows from prior tasks, so no CI change was needed; also deliberately avoided designing the 'unreachable journal' fault-injection test around pausing the shared ocor-bootstrap-postgresql-1 container (used concurrently by many other sealed tasks, and CI-provisioned via a native services: block that fault_command() cannot target) in favor of a real OS-level TCP connection refusal against a genuinely closed local port -- a real network fault at lower blast radius than a broader CI provisioning change would justify. Added 6 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0026.py, all against real backends, no mocks: restore of a never-deleted item succeeds across all 3 backends; restore of a tombstoned item is refused and the item never reappears; record_deletion only tombstones the journal when every target confirms full deletion (a lying-but-incomplete target never triggers a tombstone write); restore consults the journal before ever touching a target (proven via a call-order spy); an unreachable journal fails closed and never resurrects; and restoring a distinct, never-tombstoned item is unaffected by an unrelated item's tombstone.",
-    "OCOR-DEV-0026: PR #87 merged (a78d054d22ac85839181c833a0acc8deed8aa9c8). All 13 checks green on the first push. Post-merge SHA verified.",
-    "State sync (OCOR-DEV-0026): dedicated state-sync-only PR, mirroring the OCOR-DEV-0029/PR #86 pattern, opened immediately after OCOR-DEV-0026's merge per the Product Owner's standing instruction. No source code touched.",
-    "OCOR-DEV-0026: PR #87 merged (a78d054d22ac85839181c833a0acc8deed8aa9c8). All 13 checks green on the first push. Post-merge SHA verified.",
-    "State sync (OCOR-DEV-0026): PR #88 merged (4630340f135fa0cab64c7926c8ae38bd0588cb0f). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0027 (pending PR/merge): SPIKE deterministic context-assembly replay. Proves that a context-assembly receipt digest is a pure, deterministic function of exactly five pinned dimensions -- item versions, ordering, redactions, truncation and representation. New spikes/context_replay/replay.py: PinnedItem/AssemblyRequest/ContextReceipt dataclasses and assemble_context(), which orders candidates via a real cosine-similarity search against OCOR-DEV-0023's sealed QdrantHarness (reused unmodified) and computes the receipt digest via ocor_runtime.kernel.canonical.canonical_digest (sealed RFC 8785 canonicalization, also reused unmodified) over a representation that folds in every pinned dimension. Proactively confirmed no CI change was needed: Qdrant self-provisions the same way OCOR-DEV-0023/0024/0025 already do. Added 8 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0027.py, all against a real self-provisioned Qdrant container, no mocks: identical pinned inputs reproduce an identical digest; bumping an item version changes it; changing redaction changes it; changing the query vector changes both the real ranking order and the digest; changing truncation changes it and sets the truncated flag; changing only the representation version changes the digest even with identical ordering; two independent assemblies are proven equivalent via OCOR-DEV-0024's sealed assert_observationally_equivalent helper (reused unmodified); and a real TCP connection refusal against a genuinely closed local port during ranking fails closed (ContextReplayError) rather than returning a silent partial context -- the same lower-blast-radius real-fault pattern established in OCOR-DEV-0026.",
-    "OCOR-DEV-0027: PR #89 merged (53ad2e5bb76f7b59a5ffae9863b685338027edbe). All 13 checks green on the first push. Post-merge SHA verified. OCOR-DEV-0030 (gate G3) is also part of wave 13 (parallel_wave=13), so wave 13 is not yet fully closed; it remains as the one final wave-13 task.",
-    "State sync (OCOR-DEV-0027): PR #90 merged (c783d7c2b8b3e6824176764cbda0a683dd44c105) after a self-caught wave-numbering correction (OCOR-DEV-0030 has parallel_wave=13, not a new wave 14) pushed as a second commit on the same branch before any merge. All 13 checks green on the corrected commit. No source code touched.",
-    "OCOR-DEV-0030 (pending PR/merge): Build retained governed-action slice. Smallest contract-compliant slice of LLD v1.1 section 3's normative 44-transition C6 workflow (ACT-T01..T31b): a risk-bearing action must cross, in strict order, Authority (G-AUTHORITY), Human Gate (G-APPROVAL), Decision (G-DECISION) and EMISSION-FENCE before any simulated effect. New ocor-runtime/src/ocor_runtime/c6/engine.py: GovernedActionEngine, ActionProposal, Approval, Decision, ActionOutcome, GovernedActionError. Discovered before writing anything that ocor_runtime.c6_capabilities.CapabilityAuthority (Authority) and ocor_runtime.c7_emission.EmissionFence (EMISSION-FENCE) already exist as sealed, unmodified retained code from an earlier delivery phase -- reused directly; Approval and Decision are the only genuinely new record types, since no Human Gate or Decision record existed anywhere before. Pure, in-memory, deterministic component, no external backend needed (like OCOR-DEV-0028's C1 compiler slice) -- no AFF-002/AFF-006 concern since zero direct backend clients are imported. Added 9 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0030.py: the full happy path crossing all four gates to a simulated effect; denial at Authority (a lease granting the wrong capability); denial at Human Gate (missing or explicitly rejected approval) for a risk-bearing action; a non-risk-bearing action skipping Human Gate entirely (ACT-T07's NOT_REQUIRED); denial at Decision (missing or rejected, with rationale preserved); a failing sink leaving the canonical commit durable but unreleased, with a safe retry against the same fence; and a fidelity test tracing the engine's four gate names back to OCOR-DEV-0020's sealed, LLD-digest-verified 44-transition table, proving the gate names were not invented independently.",
-    "OCOR-DEV-0030: PR #91 merged (c9ac9ca4615337193202846d06a4b5f6e38afcbc). All 13 checks green on the first push. Post-merge SHA verified. This closes wave 13 entirely (OCOR-DEV-0026/0027/0030).",
-    "State sync (OCOR-DEV-0030): PR #92 merged (c452a38680058b66d47588ea1dccee433d183487). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0031 (pending PR/merge): Integrate first real C1-C8 synthetic mission thread. A single content-addressed fixture, identified by one correlation_id, crosses real PostgreSQL (C3 canonical commit via PostgresC3Service, OCOR-DEV-0029), real TypeDB (C4 exact-at-commit projection, OCOR-DEV-0017), real Fuseki (C4 marking-safe projection, OCOR-DEV-0018), a real self-provisioned Qdrant-ranked context assembly (C4/C2, OCOR-DEV-0027), a real self-provisioned Kafka event (C5, OCOR-DEV-0019), C6's governed-action engine (OCOR-DEV-0030), and the sealed causal-reproducibility oracle (C7, OCOR-DEV-0022) -- with C2/C8 identity resolution (ocor_runtime.c2_identity/ocor_runtime.c8_agent, retained, predating this session) shared throughout. The C6 action's own emission event id becomes the C7 causal query's causation_id, making the thread a genuine causal chain rather than a shared correlation label. Discovered before writing any code that every needed C1-C8 component already existed as sealed retained code or a sealed spike -- this task adds zero new production code, only the integration test itself, matching the backlog's single expected_file_areas entry exactly. Also confirmed ocor_runtime.c5_actions.py's 'complete ACT-T01...ACT-T31b action state machine' is the pre-existing obsolete generic FSM (already documented elsewhere in this session), unrelated to OCOR-DEV-0030's real LLD-aligned work. Added 5 new tests in ocor-runtime/tests/mission_thread/test_first_governed_slice.py, all against real backends, no mocks: the full happy-path thread producing all six correlated receipt kinds; causal-receipt reproducibility with identical pins; an Authority denial halting the thread before any canonical/projection/event/causal step; a real TypeDB EXACT_AT_COMMIT consistency enforcement against a genuine C3 commit; and a real Kafka broker restart (on the self-provisioned, per-test-run isolated broker) preserving durable ordered delivery. Two real bugs found and fixed while first running the suite: a Jena row-key mismatch ('resource' not 'resource_id') and a plain-function EventSink fallback missing its required idempotency_key parameter (fixed by using a class implementing the sealed EventSink Protocol, matching OCOR-DEV-0030's own pattern), plus a causal-pin digest mismatch (the spike's own local canonical_digest must be used for pins, not the kernel's RFC 8785 one).",
-    "OCOR-DEV-0031: PR #93 merged (47df17176f050c644105b73c3ae7aae085e86a76) after a self-caught and fixed CI-only bug -- the first push failed 3 jobs with ModuleNotFoundError: No module named 'spikes', root-caused to this file relying on another test module's collection-order-dependent sys.path.insert side effect; fixed with the file's own explicit sys.path.insert, matching 13 other task test files' established pattern, and re-verified using the bare pytest console script (not python -m pytest) to match CI exactly. All 13 checks green on the corrected commit. Post-merge SHA verified. This closes wave 14 entirely and opens gate G4 (wave 15, 9 newly-ready tasks, all depending on OCOR-DEV-0031).",
-    "State sync (OCOR-DEV-0031): PR #94 merged (947b2b2586fb89c1d5342199bba2f091b061ef9c). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0032 (pending PR/merge): Complete C1 parser type-checker and semantic validation. New, parallel, more complete implementation of the sealed OacParser/SemanticValidator/CanonicalIrBuilder protocols (ocor_runtime.c1.frontend), completing OCOR-DEV-0028's minimal slice: a closed type grammar (string/integer/number/boolean/list) requiring every field to declare and satisfy a type (TYPE_ERROR/UNSUPPORTED_CAPABILITY), rejection of a resource declaring more than one distinct execution owner (MULTIPLE_EXECUTION_OWNERS), and semantic cross-resource reference resolution and cycle detection over a new 'references' field, distinct from CompilerRequest's own sealed external dependency-lock import resolution (UNRESOLVED_REFERENCE via the sealed require_resolved_references helper; CONSTRAINT_ERROR for cycles, via a three-color DFS). OCOR-DEV-0028's sealed compiler.py is completely untouched. A genuine design bug was found and fixed before sealing: require_resolved_references' sealed uniqueness check on the flat 'referenced' list would have wrongly rejected a legitimate diamond reference graph (two resources sharing one common referenced target) as a duplicate-resource error -- fixed by passing only the distinct set of referenced targets. Added 15 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0032.py, all pure in-memory, no external backend: deterministic valid-corpus compilation; missing/undeclared field types; unsupported declared type; type mismatches including a boolean value against a declared integer type; ambiguous vs. unambiguous execution ownership; unresolved reference; direct and longer reference cycles; a legitimate non-cyclic diamond reference graph; malformed syntax; declared-id mismatch; and no-partial-release-on-rejection. This is the first task to seal evidence under gate G4 (reports/evidence/G4/MANIFEST.json created fresh, mirroring OCOR-DEV-0028's first-G3-manifest pattern).",
-    "OCOR-DEV-0032: PR #95 merged (00b51e710c24832d09cf87a8f139edfa74f37a1d). All 13 checks green on the first push. Post-merge SHA verified.",
-    "State sync (OCOR-DEV-0032): PR #96 merged (9a22f7392fa6190af0373e54de2d84aa5bc623d3). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0033 (pending PR/merge): Complete C1 releases semantic diff migration and generators. Implements the remaining sealed C1 ports (OCOR-DEV-0011, ocor_runtime.c1.ports, reused unmodified) as ocor_runtime.c1.releases: RetainedSemanticDiffEngine.compare (a deterministic, content-addressed structural diff digest over added/removed/changed resources), RetainedCompatibilityChecker.check (IDENTICAL/COMPATIBLE/BREAKING, where a resource removal, a field-type declaration removal, or an existing field's declared type changing are all BREAKING), RetainedMigrationPlanner.plan (a content-addressed migration plan with its own plan_digest and ordered retire/expand-migrate-contract/introduce steps), and RetainedArtifactGenerator (generate() unconditional per the sealed Protocol; a new generate_governed() making this task's negative acceptance criterion executable -- a BREAKING candidate can never reach generation without an explicit, non-empty governed migration plan). Reuses ocor_runtime.c1.frontend (OCOR-DEV-0032, unmodified) to build real CanonicalIrRelease fixtures for the 14 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0033.py, all of which passed on the first attempt -- no bugs found in this task's own new code, unlike every other task in this wave. A transient, unrelated Fuseki OOM (a recurring environmental finding this session) interrupted the first full-regression attempt with 15 unrelated errors; diagnosed via docker compose -p ocor-bootstrap ps and resolved by restarting only the fuseki service, confirmed unrelated via a clean second regression run (699 passed, 2 pre-existing known failures).",
-    "OCOR-DEV-0033: PR #97 merged (305772453f25223d8c01e83a70ad944d1e7ac7a6). All 13 checks green on the first push. Post-merge SHA verified.",
-    "State sync (OCOR-DEV-0033): PR #98 merged (c5fcdbde94f5eb54a81e9468f0875a79bcdf23d3). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0034 (pending PR/merge): Implement C2 named-query gateway and identity resolution. New ocor_runtime.c2.gateway: NamedQueryGateway (implements the sealed NamedQueryPort, OCOR-DEV-0012) ensures only registered named queries execute, and only after identity, purpose, marking and policy checks are all dispositive. Purpose is already fail-closed inside the sealed NamedQueryRequest constructor; this task provides the FIRST real implementations of the sealed AuthorityResolutionPort (IdentityBackedAuthority, delegating to the retained c2_identity.IdentityRegistry, reused unmodified) and PolicyDecisionPort (RegistrationAndMarkingPolicy, combining an explicit contract name/version allow-list with a real marking-join check against spikes.jena_marking.adapter.JenaMarkingProjectionAdapter, OCOR-DEV-0018, reused unmodified), then delegates to an injected ProjectionReadPort (spikes.typedb_exact_commit.adapter.TypeDBExactCommitAdapter, OCOR-DEV-0017, reused unmodified) for the actual read. Deliberate design: an unregistered contract, an unregistered version, and a marking denial all return the identical ARBITRARY_QUERY_FORBIDDEN reason code, so a caller cannot distinguish which barrier was crossed; no response, partial or otherwise, is ever returned on any denial path. Added 14 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0034.py, all against real Fuseki and real TypeDB, no mocks: Protocol conformance for all three new classes; the full happy path reaching a real TypeDB read; denial for an unregistered contract, an unregistered version, an unresolvable identity (never-registered principal), a resource outside clearance, a resource missing its marking triple entirely, and an unresolvable clearance reference; a registered query with no resource parameter skipping the marking join; missing-purpose and arbitrary-query-shape rejection at the sealed constructor boundary; and a real fault-injection test (a genuine closed local TCP port, the same lower-blast-radius pattern established in OCOR-DEV-0026/0027) proving a marking-backend failure propagates rather than silently defaulting to permit. One test-writing bug found and fixed before sealing: a test expected C2Error from a missing-purpose GovernedContext, but the sealed GovernedContext constructor raises its own distinct GovernedContextError -- fixed the test's expected exception type, no production-code change needed.",
-    "OCOR-DEV-0034: PR #99 merged (1af39d6feefbec7a21edeff4c635cf4c406919d8). All 13 checks green on the first push (proactively confirmed TypeDB and Fuseki were already provisioned in all 3 CI workflows that run the full test sweep, from OCOR-DEV-0017/0018's prior fixes, before ever pushing). Post-merge SHA verified.",
-    "State sync (OCOR-DEV-0034): PR #100 merged (ea7ecc51a8830af14b59abe51e248ed44ce06abc). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0035 (pending PR/merge): Implement C2 policy-filtered planning consistency and watermarks. New ocor_runtime.c2.planner: ConsistencyPlanner plans whether a policy-permitted request's requested consistency can be honored, using ONLY the sealed PolicyDecisionPort (OCOR-DEV-0012/0034, reused unmodified) and WatermarkPort (OCOR-DEV-0012, reused unmodified) -- never the real projection data query (ProjectionReadPort.read). Policy is evaluated first: an unregistered or otherwise denied query never even reaches the watermark check. BEST_AVAILABLE returns a plan with no required commit but the real observed watermark attached (so a caller can always show its work, never a bare unevidenced success); EXACT_AT_COMMIT/AT_LEAST_COMMIT compare the real watermark against the required commit and raise PROJECTION_NOT_READY naming the real observed watermark when it has not caught up, mirroring the equality-based comparison already established by the sealed ConsistencyRequirement.verify_served/OCOR-DEV-0017's adapter, rather than inventing new ordering semantics. Added 8 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0035.py, all against real TypeDB (for the watermark), no mocks: Protocol conformance for the test's TypeDB watermark adapter wrapper; BEST_AVAILABLE with the real watermark attached; EXACT_AT_COMMIT proceeding when the watermark matches; EXACT_AT_COMMIT and AT_LEAST_COMMIT both reporting PROJECTION_NOT_READY with the real watermark until it catches up; a spy WatermarkPort proving -- not merely asserting by comment -- that a policy denial short-circuits strictly before the watermark check; a denial never leaking any plan; and a real fault-injection test (a genuine closed local TCP port) proving a watermark-backend failure propagates rather than silently defaulting to a permissive outcome. No bugs found in this task's own new code -- all 8 tests passed on the first attempt.",
-    "OCOR-DEV-0035: PR #101 merged (bfd928d2036f37ecf7a09658b45a3b0848afbea5). All 13 checks green on the first push. Post-merge SHA verified. This closes wave 16 entirely (OCOR-DEV-0033/0034/0035).",
-    "State sync (OCOR-DEV-0035): PR #102 merged (4a71e0a0f44fc75cbf19d18393e7a2affa70c9bd). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0036 (pending PR/merge): Complete C3 single-writer recovery and reconciliation. New ocor_runtime.c3.recovery.SingleWriterRecoveryCoordinator, composing the sealed PostgresC3Service (OCOR-DEV-0029, reused unmodified) exclusively through its own sealed public methods (reconcile, claim_batch, acknowledge). Before writing anything, checked whether c3/service.py and c3/adapters/postgres.py are hash-referenced as OCOR-DEV-0029's own sealed, single deliverable (reports/evidence/G3/OCOR-DEV-0029.json inputs) -- confirmed yes; excluded both from modification per the standing protocol, and instead added a NEW, separate adapter (ocor_runtime.c3.adapters.recovery_lock.PostgresAdvisoryLock) for the one new capability needed (a real, session-scoped PostgreSQL advisory lock via pg_advisory_lock/pg_advisory_unlock, the same hashtextextended locking primitive OCOR-DEV-0029's own commit_transaction already uses for real), keeping AFF-002/AFF-006 satisfied without touching OCOR-DEV-0029's sealed files. run_recovery_pass wraps reconcile() in the real lock so concurrent or restarted processes serialize on the identical real lock and never race the same repair (reconcile() already repairs BOTH orphan directions -- missing idempotency row and missing outbox row -- so 'corrupt outbox' convergence was already covered by the sealed contract; this task's own scope is the single-writer serialization and health-gate around it). claim_and_deliver wraps claim+deliver+acknowledge in the same critical section, so two concurrent relay workers can never both claim the same unacknowledged row before either acknowledges; a lost ACK (a crash between delivery and acknowledge) leaves the row claimable again, and it is the caller's own idempotent sink (keyed by event_id) that prevents a duplicate canonical effect on redelivery -- the standard outbox at-least-once contract, never silently upgraded to exactly-once by the coordinator itself. assert_healthy treats reconcile()'s own repaired count as the pre-flight health signal, since RecoveryPort exposes no side-effect-free count as part of the sealed contract: it raises UNRECONCILED_DURABLE_INTENT for the pass where anything needed repairing, and succeeds once nothing remains. Added 8 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0036.py, all against real PostgreSQL, no mocks, including real threading-based concurrency proofs: a real advisory lock genuinely serializing two concurrent holders (proven by real monotonic timestamps, not inferred); two real concurrent recovery passes racing the same real simulated corruption converging to exactly one real repair; a lost-ACK redelivery test proving the caller's own idempotent sink absorbs a genuine duplicate delivery attempt; two concurrent relay workers racing a single unacknowledged event never both claiming it; a fresh coordinator/service instance simulating a real process restart converging without repeating an already-completed repair; and a real fault-injection test (an unreachable PostgreSQL DSN) proving a lock-backend failure propagates and the recovery pass never runs unlocked. Three genuine test-writing bugs found and fixed before sealing: (1) make_command initially guessed a non-existent GovernedCanonicalCommitCommand constructor field (command_digest) instead of reusing OCOR-DEV-0029's own from_mapping helper pattern; (2) idempotency_key values under 16 characters violate the sealed COMMIT_CONTRACT_INVALID minimum length; (3) the fault-injection test expected OSError, but psycopg.OperationalError does not subclass OSError. Repeated the full test suite 6 times to rule out flakiness in the real-concurrency tests -- all deterministic.",
-    "OCOR-DEV-0036: PR #103 merged (ab06c8fc7fd996c40e8728dc5c55c6a4be56967c). All 13 checks green on the first push. Post-merge SHA verified.",
-    "State sync (OCOR-DEV-0036): PR #104 merged (807f43d581e66f6dae288a6edcb6e55f02c55db3). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0037 (pending PR/merge): Implement C4 TypeDB projection adapter. New ocor_runtime.c4.typedb_adapter.TypeDBProjectionAdapter, the retained (non-spike) version of spikes.typedb_exact_commit.adapter (OCOR-DEV-0017): a real, live TypeDB-backed ProjectionReadPort/WatermarkPort (OCOR-DEV-0012, reused unmodified), reimplementing the same real HTTP v1 API surface the spike already proved rather than importing spike code into retained runtime (spikes/ lies outside ocor-runtime's own pythonpath in production, matching OCOR-DEV-0028's own precedent). The one genuine behavioral difference: apply_commit() ingests a fact AND advances the watermark to that commit atomically, in ONE real TypeDB write transaction (the spike's own ingest()/advance_watermark() are deliberately two separate calls, so its tests can model and exercise races between a fact and its watermark -- this retained adapter is the real production path a C5 consumer uses, where drift between fact and watermark should never be possible in normal operation). read()/current() reuse the exact same fail-closed NamedQueryRequest.verify_served the spike already proved: a stale projection can never masquerade as exact. Confirmed AFF-002/AFF-006's DIRECT_CLIENTS regex only matches literal psycopg/kafka/qdrant_client/terminusdb_client/typedb package imports, not urllib, so this file's real HTTP calls need no adapters/ subtree, matching the spike's own single-file layout. Added 8 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0037.py, all against real TypeDB, no mocks. Two genuine bugs found and fixed before sealing: (1) the first draft mirrored the spike's own watermark() method (no arguments), which does NOT actually conform to the sealed WatermarkPort.current(projection_id, branch) signature -- isinstance(adapter, WatermarkPort) genuinely failed; fixed by renaming to current(self, projection_id, branch), closing a real conformance gap the spike itself never closed; (2) the fault-injection test expected TypeDBAdapterError from an unreachable host, but a genuine connection-refused failure raises urllib.error.URLError directly (uncaught by _request, which only translates HTTP-level error responses) -- fixed the test's expected exception type rather than papering over it with a broad except in production code.",
-    "OCOR-DEV-0037: PR #105 merged (7fa50fcc40a15cdad46a6c0c1b24bec630744d68). All 13 checks green on the first push. Post-merge SHA verified.",
-    "State sync (OCOR-DEV-0037): PR #106 merged (80047f8ee8673ccd3d5f99802c5cbffca72bb69e). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0038 (pending PR/merge): Implement C4 Jena RDF SHACL adapter. New ocor_runtime.c4.jena_adapter.JenaSHACLProjectionAdapter, extending OCOR-DEV-0018's real Fuseki-backed marking pattern (reused unmodified) with a real publish path. Confirmed no pyshacl (or any general SHACL processor) is a project dependency, so implemented the smallest contract-compliant SHACL-equivalent directly: a closed required-property/closed-predicate shape check enforced BEFORE any SPARQL write, rather than adding a new external dependency (which would require pyproject.toml/uv.lock changes outside this task's own scope). An unauthorized predicate (ALLOWED_PREDICATES) or lossy/missing provenanceRef blocks publication entirely -- the task's two negative acceptance criteria, made structural; a rejected resource is never partially visible. Reads (list_authorized/exists_authorized) reuse the exact real marking-join pattern OCOR-DEV-0018 already proved. to_json_ld is denied via exists_authorized for any unauthorized clearance and otherwise serializes real, well-formed JSON-LD via rdflib (already a project dependency, 7.1.4) over a real SPARQL CONSTRUCT result. Added 8 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0038.py, all against real Fuseki, no mocks -- all 8 passed on the first attempt, no bugs found (the OCOR-DEV-0037 lesson about urllib.error.URLError not being translated by _request into a wrapped error was applied proactively to the fault-injection test's expected exception type).",
-    "OCOR-DEV-0038: PR #107 merged (80962a15fd677cbca610c8382639443d5f70c1c2). All 13 checks green on the first push. Post-merge SHA verified. Recomputed readiness directly from the backlog: OCOR-DEV-0039 (wave 16, 'Implement C4 rebuild and drift reconciliation', depends on OCOR-DEV-0037 and OCOR-DEV-0038 both just merged) became ready, lower-numbered than wave 15's remaining 4 tasks (0040/0042/0046/0048), selected next per the numeric-order-across-the-whole-ready-set convention.",
-    "State sync (OCOR-DEV-0038): PR #108 merged (ea9d96309cf55a54a1c7a5f89489a37381eb12b8). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0039 (pending PR/merge): Implement C4 rebuild and drift reconciliation. New ocor_runtime.c4.rebuild.ProjectionDriftDetector, implementing LLD v1.1 section 2.4's named ProjectionDriftDetector component directly. Checked whether c3/service.py and c4/typedb_adapter.py are hash-referenced as already-accepted tasks' sealed single deliverables (OCOR-DEV-0029, OCOR-DEV-0037) -- confirmed yes; composed both EXCLUSIVELY through their existing sealed public methods (PostgresC3Service.read, TypeDBProjectionAdapter.apply_commit/read), never touching either sealed file. rebuild() reads the canonical snapshot from C3 (authoritative), peeks the currently-served projection digest via the adapter's own sealed ProjectionReadPort.read() (a synthetic, deterministic BEST_AVAILABLE system request) BEFORE ever overwriting it, and compares. A mismatch is real drift: the aggregate is added to an in-memory quarantine set and the live divergent projection is left untouched rather than silently repaired; a match (or first-ever projection) applies the rebuilt fact and clears any stale quarantine. read_if_healthy() makes the negative acceptance criterion executable: it raises PROJECTION_QUARANTINED before ever delegating to the projection's own read for a quarantined aggregate. A first design draft peeked the served projection via the adapter's private, underscore-prefixed _lookup_fact helper -- caught and rejected before sealing as reaching into another sealed module's internals rather than its public contract; replaced with the sealed read() path. Added 6 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0039.py, all against real PostgreSQL and real TypeDB, no mocks -- all 6 passed on the first attempt, no bugs found in the task's own new code. One transient environmental test-run blip was observed during exploratory local iteration (all 6 tests errored in one run) but did not reproduce across 7 subsequent consecutive repeats; documented as a non-blocking infrastructure hiccup under concurrent local load (consistent with this session's other transient findings, e.g. the recurring Fuseki OOM), not a real defect.",
-    "OCOR-DEV-0039: PR #109 merged (02859b0e3dd36824975414b19ee213af2bf2043d). All 13 checks green on the first push. Post-merge SHA verified. This closes wave 16 entirely (OCOR-DEV-0033/0034/0035/0039).",
-    "State sync (OCOR-DEV-0039): PR #110 merged (f76f04fbe760849c393f990a7462ffb8e7b03922). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0040 (pending PR/merge): Implement C5 canonical event backbone. New ocor_runtime.c5.backbone.CanonicalEventBackbone, the first retained C5 component: a closed CanonicalIngestionEnvelope (LLD v1.1 section 2.5) published over a real, live Kafka broker, keyed by aggregate_ref so Kafka's own partitioner preserves per-aggregate order. Genuine design correction found mid-implementation: grep -l kafka .github/workflows/*.yml confirmed NO CI workflow provisions any shared Kafka service at all (unlike TypeDB/Fuseki, added to 3 workflows by prior tasks); the only Kafka usage anywhere in CI is OCOR-DEV-0031's own mission-thread test, which self-provisions its own isolated broker. Redesigned CanonicalEventBackbone to self-provision a real, isolated, single-node KRaft broker per instance (provision()/destroy()), reimplementing the exact real broker configuration and lifecycle spikes.kafka_delivery.oracle.KafkaCli (OCOR-DEV-0019) already proved for real, rather than importing the spike, since spikes/ lies outside ocor-runtime's own pythonpath in production. publish() checks the registered-schema allow-list and the aggregate's own last-published sequence BEFORE ever calling the real producer CLI, quarantining (never publishing) an unknown schema or an out-of-order sequence; publish_from_mapping() additionally catches a missing/malformed governed-context field at construction time and quarantines it too. Added 7 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0040.py, all against a real, self-provisioned broker per test, no mocks -- all 7 passed, no bugs found in the new envelope/publish/consume logic. One genuine AFF-009 finding self-caught and fixed before sealing: reset()'s original try/except KafkaBackboneError: pass silently swallowed a delete-topic-that-does-not-exist-yet failure; fixed by adding an explicit topic_exists() check before ever attempting delete, removing the bare except entirely. All 13 CI checks passed on the first push, including the 3 long full-sweep jobs (delivery-activation, rccad-methodology, validation-closure) that were the first to exercise Kafka self-provisioning in the complete CI test suite.",
-    "OCOR-DEV-0040: PR #111 merged (916446c03c22317dd928d8bc89bed87f34e6a83d). All 13 checks green on the first push. Post-merge SHA verified.",
-    "State sync (OCOR-DEV-0040): PR #112 merged (0bbf02eed4ce3c55d42cf182e23acd46a6187748). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0041 (pending PR/merge): Implement C5 replay backpressure DLQ and quarantine. New ocor_runtime.c5.operations.EventOperationsCoordinator, wrapping the sealed CanonicalEventBackbone (OCOR-DEV-0040, reused unmodified, composed exclusively through its public publish() method): a bounded per-tenant admission quota (publish_with_backpressure), an immutable DeadLetter record for every real publish failure, POISON classification after 3 repeated failures of the same event gated behind an explicit release_for_operator_replay operator gate, and replay() that always reconstructs the envelope and re-calls the real backbone's publish() -- an incompatible schema or lost marking is blocked on replay exactly as on a fresh publish, never bypassed, and an already-durable idempotency key is a safe no-op via the backbone's own idempotency handling. Found and resolved a genuine environmental incident before trusting the regression: the host disk was at 99% capacity (2.9GB free of 234GB), dominated by large pre-existing images from unrelated projects on the shared machine, not this session's own footprint (the two authorized-safe docker prune commands reclaimed 0B); the actual root cause of the 33 test errors was ocor-bootstrap-fuseki-1 and ocor-bootstrap-spire-agent-1 having been OOM-killed (exit 137) hours earlier, unrelated to this task's code -- restarted both (routine, reversible maintenance on the project's own bootstrap stack, never touching eci-dev-control-plane or open-webui), after which the full regression passed cleanly. Considered and reverted (git checkout --) an in-flight tmpfs redesign of the sealed backbone.py after recognizing mid-edit that it -- and test_ocor_dev_0040.py -- are hash-referenced sealed deliverables of already-merged OCOR-DEV-0040; the real root cause was the OOM-killed backends, not backbone.py's own disk footprint, so both sealed files were left byte-for-byte untouched (verified via sha256sum against reports/evidence/G4/OCOR-DEV-0040.json's inputs hashes both before and after this task). Added 8 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0041.py, all against a real, live, self-provisioned Kafka broker via the sealed backbone, no mocks -- all 8 passed, repeated 3 times for determinism, no bugs found in this task's own new code.",
-    "OCOR-DEV-0041: PR #113 merged (600b1aa1e95123e0194af13d973637d9d0999231). All 13 checks green on the first push. Post-merge SHA verified, including confirming backbone.py and test_ocor_dev_0040.py remained byte-identical to their OCOR-DEV-0040 sealed hashes.",
-    "State sync (OCOR-DEV-0041): PR #114 merged (574a42c955a0bc9c80cb80a7c9984b6902f5cfa9). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0042 (pending PR/merge): Implement exact approved 44-transition C6 FSM. New ocor_runtime.c6.fsm.GovernedActionFSM, covering all 44 approved LLD v1.1 section 3.2 transitions -- complementing, not duplicating, OCOR-DEV-0030's engine.py (the executable slice of the single representative path, left completely untouched, verified byte-identical to its sealed hash before and after). Reimplemented (not imported) the same closed five-column LLD parsing and semantic-digest validation logic OCOR-DEV-0020's sealed spikes.c6_fsm_fidelity.generator already proved fidelity for -- the spikes/-outside-runtime-pythonpath precedent from OCOR-DEV-0028/0037/0040. TRANSITIONS is computed eagerly at module import time, so any missing, extra, duplicate or semantically altered transition raises FSMTableIntegrityError before the module can finish importing, failing both local startup and CI -- the negative acceptance criterion made structural. GovernedActionFSM.apply() durably persists an immutable PersistedEffect record of whichever transition's declared effect fires, via an injected sink (a Protocol object or a plain callable, mirroring GovernedActionEngine.execute's own flexible sink parameter); a sink failure propagates rather than being silently swallowed, and a retry against the same FSM instance recovers cleanly. Added 15 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0042.py, all pure in-memory, no external backend -- including a direct cross-validation (importing OCOR-DEV-0020's sealed spike only in this test file, per the established test-file exception to the spikes/-import precedent) that this task's own reimplemented parser reproduces the sealed generator's output bit-for-bit on the identical approved LLD document. All 15 tests passed on the first attempt, repeated 4 times for determinism, no bugs found.",
-    "OCOR-DEV-0042: PR #115 merged (6e60235e89fb3eb7f88cf6f82d432f61a4b97007). All 13 checks green on the first push. Post-merge SHA verified, including confirming engine.py remained byte-identical to its OCOR-DEV-0030 sealed hash.",
-    "State sync (OCOR-DEV-0042): PR #116 merged (5f43d8047a41bb01679497316951c2bb92769324). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0043 (pending PR/merge): Implement Human Gate Decision Approval and dual control. New ocor_runtime.c6.human_gate.HumanGateCoordinator, supplying the real quorum/separation-of-duties/signature/scope/TTL logic the Human Gate transitions in OCOR-DEV-0042's sealed fsm.py declare (ACT-T06/T07/T08/T09a/T09b) actually need. validate() filters a presented GateSignature set down to only those unexcluded, resolved via the sealed c2_identity.IdentityRegistry (reused unmodified), scope-matched, and within the policy's TTL as of the call's own timestamp; separation of duties is enforced by never letting one principal_id satisfy two distinct required_roles. Because validate() is a pure function of (signatures, scope, at), calling it once at resolution and again, completely unmodified, immediately before dispatch is what gives dual control its real meaning -- a signature within TTL at resolution can have expired by dispatch time, and the identical check denies then exactly as it would for a fresh evaluation, never trusting a stale resolution. On success it returns the identical sealed OCOR-DEV-0030 Approval dataclass GovernedActionEngine.execute already accepts, through Approval's own public constructor -- engine.py verified byte-identical to its sealed hash both before and after this task. Accepts an optional control_check callable so a caller can wire a real live control-plane probe (OCOR-DEV-0021/0014's sealed fail-closed ControlStatus/SecurityControlError pattern) without this module depending on any one concrete backend. Added 13 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0043.py: quorum/role-coverage/SoD/TTL/scope/exclusion/unresolved-identity scenarios, a dual-control test proving the same approval denies again at a later dispatch-time timestamp once TTL elapses, a real fault-injection test against a genuinely unreachable local port via OCOR-DEV-0021's sealed bounded_probe (imported only in this test file), and an integration test wiring HumanGateCoordinator's own output directly into the real GovernedActionEngine end-to-end. Two genuine test-writing bugs found and fixed before sealing: two tests originally left only 1 distinct valid signatory after excluding the proposer/unresolved principal, so QUORUM_NOT_MET fired before MISSING_REQUIRED_ROLE could -- fixed by adding a third distinct valid signatory to isolate the intended role-coverage behavior specifically.",
-    "OCOR-DEV-0043: PR #117 merged (3c89c90c1c870159564c8573ff7c5793da86061a). All 13 checks green on the first push. Post-merge SHA verified, including confirming engine.py and fsm.py remained byte-identical to their sealed hashes.",
-    "State sync (OCOR-DEV-0043): PR #118 merged (f0e7c16bfe0521c9aefca1dc892629f9b13b854f). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0044 (pending PR/merge): Implement compensation reconciliation break-glass and emergency stop. New ocor_runtime.c6.safety.py adds three independent, composable safety mechanisms, all new files, composing but never touching the sealed engine.py (OCOR-DEV-0030)/fsm.py (OCOR-DEV-0042)/human_gate.py (OCOR-DEV-0043) -- verified byte-identical to their sealed hashes both before and after. EmergencyStopController implements LLD 4.3's approved NORMAL->STOPPING->STOPPED->RESET_PENDING->NORMAL machine under a real threading.RLock; guard_dispatch fails closed unless the system is NORMAL AND the presented fencing epoch equals the current one exactly, and confirm_reset always issues a brand-new epoch so a reset never re-enables a lease fenced to the pre-stop epoch; reset itself requires two distinct, resolved human approvers (via the sealed c2_identity.IdentityRegistry, reused unmodified). BreakGlassController implements LLD 4.2's bounded, dual-human-approved exceptional grant (TTL capped at 15 minutes per ADD 5.5); authorize() is a pure function of (grant, capability, at) re-run on every use -- expired, revoked, forbidden-capability (a fixed denylist: create a Decision, reduce marking, disable provenance/audit, ignore emergency stop, change the release pin, authorize R3 without quorum, access outside compartment), or stop-active all deny every time, never only at grant time; every use requires a mandatory review reference. OutcomeReconciler implements the ACT-T18a/T18b/T20a-c/T21-T21e/T24/T25 ambiguous-outcome and compensation reconciliation path: an ambiguous timeout suspends retry and opens reconciliation; real Evidence resolves it to confirmed/failed or compensated/compensation-failed; no evidence before the reconciliation deadline makes no inference and escalates to INDETERMINATE with adjudication opened only once the deadline has genuinely passed; require_may_auto_retry is the task's own core negative claim made executable -- an ambiguous or indeterminate outcome whose effect is not proven idempotent can never be auto-retried. Added 29 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0044.py, including a real multi-threaded fault-injection test (genuine threading.Thread/threading.Barrier racing 8 dispatch attempts against a concurrent stop activation, proving the real lock makes epoch capture-and-check atomic) run 5 additional times alone plus the full suite 3 more times for extra determinism confidence, and an integration test combining stop precedence with reconciliation end-to-end. One genuine mypy finding self-caught and fixed before sealing: tuple(sorted(distinct)) has inferred type tuple[str, ...], not BreakGlassGrant.approvers' declared tuple[str, str] -- fixed by explicitly unpacking the sorted 2-element set into a (first, second) pair.",
-    "OCOR-DEV-0044: PR #119 merged (cd8ad4ffbc942d10aabd9bbb40332427795316cf). All 13 checks green on the first push. Post-merge SHA verified, including confirming engine.py, fsm.py and human_gate.py all remained byte-identical to their sealed hashes.",
-    "State sync (OCOR-DEV-0044): PR #120 merged (f5ce89e847676025df6fccebf3b9365a4890db30). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0045 (pending PR/merge): Implement C7 scenario and causal runtime. New ocor_runtime.c7.runtime module, a new c7/ package directory, completely separate from and never touching the sealed ocor_runtime.c7_emission.py (a different C7 concern -- durable, ordered effect emission). Reimplements OCOR-DEV-0022's sealed spikes.causal_reproducibility.oracle's identify-or-abstain fail-closed identification gate as production code (pin verification against caller-declared model/data/intervention digests; scenario/ branch requirement with main always abstaining MAIN_CONTAMINATED; release digest match; non-empty factual set; no unresolved confounding; in-domain intervention value; positivity), shared by all four public operations so every one of them abstains under precisely the same conditions the spike's own ATE estimator does. estimate_intervention reimplements the spike's own STRATIFIED_BACKDOOR_ATE. Three new operations the spike itself never computed: estimate_counterfactual imputes a specific unit's outcome under the opposite treatment via the within-stratum mean difference; estimate_uncertainty computes a deterministic bootstrap confidence interval seeded from the pinned query.seed; estimate_sensitivity recomputes the ATE after an additive confounding shift to every control-arm observation, reporting whether the effect's sign survives it. Added 27 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0045.py, including a direct cross-validation (importing the sealed spike only in this test file) that the reimplemented intervention path reproduces the sealed oracle bit-for-bit on the identical fixture data (effect=-4). All 27 passed on the first attempt, repeated 4 times for determinism. Two genuine mypy findings and one genuine ruff finding self-caught and fixed before sealing.",
-    "OCOR-DEV-0045: PR #121 merged (c6406feeddbad4ca6f778fdaeca9f89110856738). All 13 checks green on the first push. Post-merge SHA verified, including confirming c7_emission.py remained byte-identical to its sealed hash.",
-    "State sync (OCOR-DEV-0045): PR #122 merged (5de9d0c9dee3d192bf2dfbac8175cd6bb72d130b). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0046 (pending PR/merge): Implement C8 AgentRun Task Assignment Commitment Handoff and Dissent. New ocor_runtime.c8.orchestrator.AgentRunOrchestrator, built around the existing, predating-this-session ocor_runtime.c8_agent.AgentKernel (untouched) and the sealed CapabilityAuthority/AtomicOutboxStore (reused unmodified, composed exclusively through their own public issue()/authorize()/write()/get() methods). assign()/commit()/handoff()/register_dissent() each require a real capability lease authorized via the sealed authority before doing anything else, and write their resulting record through the sealed store's own single-writer commit path with the orchestrator as the store's sole authoritative writer_id -- structurally realizing all three negative claims: an agent cannot self-grant a capability (authorize() only accepts a lease the authority itself already issued), cannot mutate canonical state directly (the sealed store's own SingleWriterViolation refuses any writer_id but the orchestrator's), and cannot suppress a registered dissent (Dissent is frozen, dissents is a read-only append-only tuple, no removal method exists). Added 12 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0046.py, including a real fault-injection proof of the single-writer boundary and a full handoff-then-recommit lifecycle. One genuine design bug found and fixed before sealing: commit()'s idempotency key needed a real per-aggregate attempt counter (derived from the store's own document version via store.get()) to correctly distinguish a legitimate recommit by a new agent (post-handoff) from an idempotent replay of the same commit -- the sealed store correctly raised ConcurrencyConflict on the original fixed-key design, a genuine bug in the new code, not the sealed store; fixed with proper optimistic-concurrency versioning applied to both assign() and commit().",
-    "OCOR-DEV-0046: PR #123 merged (fc9f75bbd8326c22b46573abd0ac3ce11b4591a8). All 13 checks green on the first push. Post-merge SHA verified, including confirming c8_agent.py remained byte-identical to its sealed hash.",
-    "State sync (OCOR-DEV-0046): PR #124 merged (b70dcb24cfb916d3611f2c7d869f75d890d37819). All 13 checks green on the first push. No source code touched.",
-    "OCOR-DEV-0047 (pending PR/merge): Implement C8 tool boundary sandbox budgets and kill switch. New ocor_runtime.c8.tool_runtime.ToolCallRuntime, wiring five real fail-closed bindings around every tool call, all enforced before any tool effect: capability (CapabilityAuthority.authorize, never self-granted), purpose (the sealed GovernedContext, already fail-closed on a missing purpose at construction), marking (MarkingEngine.require_authorized against the caller's real clearance), stop (OCOR-DEV-0044's sealed EmergencyStopController.guard_dispatch), and budget (TokenBudget.consume, charged before the tool is ever attempted, never refunded after). Only once all five pass does the real expression reach the sealed StrictSandbox for AST-whitelisted execution -- an escape-syntax attempt is refused there, before the registered tool function itself is ever called. All reused sealed components (c8_agent.py, c8/orchestrator.py, c6_capabilities.py, c4_marking.py, c6/safety.py, kernel/governed_context.py) verified byte-identical to their sealed hashes both before and after this task -- this task's own tool_runtime.py is a new, separate file. Added 11 new tests in ocor-runtime/tests/tasks/test_ocor_dev_0047.py, including an integration test running one legitimate call and four distinct denial scenarios (revoked capability, insufficient clearance, escape syntax, over-budget) in sequence against a shared effects list, proving exactly one real effect ever lands no matter how many ways a call is attempted and refused. All 11 passed on the first attempt, repeated 4 times for determinism, no bugs found.",
-    "OCOR-DEV-0047: PR #125 merged (355ff68cc65053f55b26812843b4a7cb19e9b177). All 13 checks green on the first push. Post-merge SHA verified for all reused sealed files.",
-    "R1 state realignment: closed PR #131 as superseded; baseline_commit -> 276fc65 (HEAD of main); registered merges #128/#129/#130/#132; GITHUB-BRANCH-PROTECTION-001 resolved server-side by ruleset 23412233; OCOR-DEV-0048 unblocked (local preflight all 11 services READY, SPIRE included); historical ITERATION_LOG entry of PR #131 carried verbatim.",
-    "OCOR-DEV-REM-0014: PR #135 merged (a8c5e5d92513b1a333593bbc56c411b61773f29b). All 13 checks green on the exact head 0820fec. TypeDB commit_id/watermark safe literal rendering + identifier contract; 17 live positive/negative cases on the real TypeDB backend; sealed content-addressed evidence record (record 04f60e45d9b79be0045ea2e3ab34f930335c386b9ed0ecf2eb652321565bf6cb, raw log 8733c7c227041ad92e5a7545b8033ae1917cb06b4ba26155d053b43566ceb9f9).",
-    "R3 step (b) part 2: PR #145 merged (168665f). 20 remaining G1/G2/G4 drifted evidence records requalified at HEAD with content-addressed *.requalified.json/.log records carrying explicit 'supersedes' links; surgical MANIFEST.json insertion; original sealed records never modified; planning self-hash re-aligned. Post-merge drift validator GREEN (0/165 inputs, 0/62 tasks).",
-    "OCOR-DEV-REM-0015: PR #149 merged (54ec7d13d7e954b4264efdb2d4965b6f8957b2a7). All 13 checks green on the exact head 0f98a5d0f29801e0a2c7aabe1f0dbbe999d5447d. validate_rccad.py NUL-delimited git diff path handling (finding VF-002); sealed content-addressed evidence record.",
-    "OCOR-DEV-REM-0016: PR #151 merged (5e1e601431a2ecab15869cdfb4775a39c145cc4f). All 13 checks green on the exact head 8174019fe803b24f0fc00dc8a7efe8a727a1a87c. Content-addressed evidence records for REM-0010/0011/0012 (finding VF-003); fail-closed validate_runtime_evidence.py; sealed content-addressed evidence record.",
-    "R3 step (c): PR #153 merged (7d833606756203f28c50913871f6ae6d66c790ee). scripts/validate_evidence_input_drift.py wired as blocking CI gate (ocor-tooling-bootstrap.yml) and preflight step (AGENTS.md); all 13 checks green on the exact head af61453cfae010dd8b68c82692cb42fbc3e9e678; drift validator GREEN at HEAD (0/165 inputs, 0/62 tasks).",
-    "OCOR-DEV-0048 escalation: cycle-2 independent verification (head eda08db30ca20c722a1cc11d25e4b34d7c590227) returned NO_GO with 2 blocking high findings (VF-001 timezone-offset bypass of signed-delegation/bundle window; VF-002 delegation not wired into Keycloak->OPA boundary). 2 repair cycles exhausted -> escalated BLOCKED_REPAIR_BUDGET_EXHAUSTED per RCCAD 8; task and all transitive dependents (OCOR-DEV-0049..0069) blocked pending PO disposition. Evidence remains CANDIDATE_PENDING_INDEPENDENT_VERIFICATION (not sealed).",
-    "Terminal state sync: refreshed reports/development/TERMINAL_BLOCKED_REPORT.json to the cycle-3 terminal state (OCOR-DEV-0048 BLOCKED_REPAIR_BUDGET_EXHAUSTED after cycle-3 NO_GO OCOR-DEV-0048-7f2fff555621-3); baseline_commit -> 7cac163; latest_ci_evidence -> PR #159 (6 green workflow runs, head c94c072e, merge 7cac163e). No executable work remains; loop terminates TERMINAL_BLOCKED.",
-    "Terminal state sync (cycle 5): OCOR-DEV-0048 verified NO_GO (OCOR-DEV-0048-4d9a0644cdd1-5) after the Claude Code repair cycle 5 (implementer Claude Code/Anthropic, verifier Codex/OpenAI); refreshed TERMINAL_BLOCKED_REPORT.json to the cycle-5 terminal state (BLOCKED_REPAIR_BUDGET_EXHAUSTED); baseline_commit -> 97f1081; latest_ci_evidence -> PR #161. No executable work remains; loop terminates TERMINAL_BLOCKED.",
-    "OCOR-DEV-0048 ciclo 6 (implementatore Claude Code/Anthropic, verifier Codex/OpenAI): verdetto indipendente OCOR-DEV-0048-feb83b0c3a68-6 NO_GO con 1 finding high (VF-001: il ramo HTTP non-200 di evaluate() perde la correlazione della richiesta).",
-    "OCOR-DEV-0048 ciclo 7 (implementatore Claude Code/Anthropic, verifier Codex/OpenAI): corretto VF-001 del ciclo 6 mantenendo la correlazione richiesta nel ramo OPA non-200; verdetto indipendente OCOR-DEV-0048-618875eff62a-7 GO_FOR_EVIDENCE_SEAL con 0 finding; evidenza G4 sigillata (status SEALED) e mergiata in PR #163 (45e4a6f66209af3136d79980c00c41d79fb9ae8a) con 13 check verdi sull'HEAD esatto 61b7dcdb190426aefb6212e62a7408613d3ca506.",
-    "PR #164 merged (validation-closure CI scope: exclude SPIRE conditional-infrastructure-guard from the runtime campaign, non-bypass, still exercising the 196 real-backend cases)."
+    "OCOR-DEV-0001",
+    "OCOR-DEV-0002",
+    "OCOR-DEV-0003",
+    "OCOR-DEV-0004",
+    "OCOR-DEV-0005",
+    "OCOR-DEV-0006",
+    "OCOR-DEV-0007",
+    "OCOR-DEV-0008",
+    "OCOR-DEV-0009",
+    "OCOR-DEV-0010",
+    "OCOR-DEV-0011",
+    "OCOR-DEV-0012",
+    "OCOR-DEV-0013",
+    "OCOR-DEV-0014",
+    "OCOR-DEV-0015",
+    "OCOR-DEV-0019",
+    "OCOR-DEV-0020",
+    "OCOR-DEV-0022",
+    "OCOR-DEV-0023",
+    "OCOR-DEV-0070",
+    "OCOR-DEV-0071",
+    "OCOR-DEV-0072",
+    "OCOR-DEV-0073",
+    "OCOR-DEV-0074",
+    "OCOR-DEV-0075",
+    "OCOR-DEV-0076",
+    "OCOR-DEV-0077",
+    "OCOR-DEV-0078",
+    "OCOR-DEV-0079",
+    "OCOR-DEV-0080",
+    "OCOR-DEV-0081",
+    "OCOR-DEV-0082",
+    "OCOR-DEV-0083",
+    "OCOR-DEV-0084",
+    "OCOR-DEV-0016",
+    "OCOR-DEV-0017",
+    "OCOR-DEV-0018",
+    "OCOR-DEV-0021",
+    "OCOR-DEV-0024",
+    "OCOR-DEV-0025",
+    "OCOR-DEV-0028",
+    "OCOR-DEV-0029",
+    "OCOR-DEV-0026",
+    "OCOR-DEV-0027",
+    "OCOR-DEV-0030",
+    "OCOR-DEV-0031",
+    "OCOR-DEV-0032",
+    "OCOR-DEV-0033",
+    "OCOR-DEV-0034",
+    "OCOR-DEV-0035",
+    "OCOR-DEV-0036",
+    "OCOR-DEV-0037",
+    "OCOR-DEV-0038",
+    "OCOR-DEV-0039",
+    "OCOR-DEV-0040",
+    "OCOR-DEV-0041",
+    "OCOR-DEV-0042",
+    "OCOR-DEV-0043",
+    "OCOR-DEV-0044",
+    "OCOR-DEV-0045",
+    "OCOR-DEV-0046",
+    "OCOR-DEV-0047",
+    "OCOR-DEV-0048"
   ],
   "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
-  "current_task": "CI-0048-REAL-BACKEND: registered PR #164 deviation in METHOD_COMPLIANCE.json and opened OCOR-DEV-REM-0017 (G6 gate: provision full ocor-bootstrap stack in CI, run test_ocor_dev_0048.py with zero skips, remove --ignore).",
+  "current_task": "OCOR-DEV-0049:integration \u2014 ciclo 6 NO_GO, escalation e prosecuzione",
   "evidence_paths": [
-    "reports/development/RECONCILIATION_2026-09-12_STATE.md",
-    "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
-    "reports/evidence/local-gates/phase1-language-policy-20260912.json",
-    "reports/tests/language_policy_tdd_evidence.json",
-    "docs/development_methodology/OCOR_LANGUAGE_POLICY.md",
-    "reports/evidence/local-gates/phase1b-independent-review-corrections-20260912.json",
-    "reports/evidence/local-gates/phase2-1-mypy-ruff-gates-20260912.json",
-    "reports/evidence/local-gates/phase2-2-interpreter-pin-20260912.json",
-    "reports/evidence/local-gates/phase2-3-typescript-sdk-20260912.json",
-    "reports/tests/evidence/rem_generate_contracts_refs/red.log",
-    "reports/evidence/local-gates/phase2-4-fr047-traceability-20260912.json",
-    "reports/tests/evidence/rem_backlog_generator_drift/red.log",
-    "reports/evidence/local-gates/phase2-4-backlog-generator-drift-20260912.json",
-    "reports/development/PHASE3_LANGUAGE_MIGRATION_DECISION.md",
-    "reports/benchmarks/phase3_language_migration_benchmark_20260912.json",
-    "reports/evidence/local-gates/phase3-language-migration-benchmark-20260912.json",
-    "reports/evidence/G2/OCOR-DEV-0079.json",
-    "reports/evidence/G2/OCOR-DEV-0079.log",
-    "reports/evidence/G2/OCOR-DEV-0080.json",
-    "reports/evidence/G2/OCOR-DEV-0080.log",
-    "reports/evidence/G2/OCOR-DEV-0081.json",
-    "reports/evidence/G2/OCOR-DEV-0081.log",
-    "reports/evidence/G2/OCOR-DEV-0082.json",
-    "reports/evidence/G2/OCOR-DEV-0082.log",
-    "reports/evidence/G2/OCOR-DEV-0083.json",
-    "reports/evidence/G2/OCOR-DEV-0083.log",
-    "reports/evidence/G2/OCOR-DEV-0084.json",
-    "reports/evidence/G2/OCOR-DEV-0084.log",
-    "reports/evidence/G2/OCOR-DEV-0016.json",
-    "reports/evidence/G2/OCOR-DEV-0016.log",
-    "reports/evidence/G2/OCOR-DEV-0017.json",
-    "reports/evidence/G2/OCOR-DEV-0017.log",
-    "reports/evidence/G2/OCOR-DEV-0018.json",
-    "reports/evidence/G2/OCOR-DEV-0018.log",
-    "reports/development/PHASE3_LANGUAGE_MIGRATION_DECISION.md",
-    "reports/evidence/G2/OCOR-DEV-0024.json",
-    "reports/evidence/G2/OCOR-DEV-0024.log",
-    "reports/evidence/G2/OCOR-DEV-0024.json",
-    "reports/evidence/G2/OCOR-DEV-0024.log",
-    "reports/evidence/G2/OCOR-DEV-0025.json",
-    "reports/evidence/G2/OCOR-DEV-0025.log",
-    "reports/evidence/G3/OCOR-DEV-0028.json",
-    "reports/evidence/G3/OCOR-DEV-0028.log",
-    "reports/evidence/G3/OCOR-DEV-0028.json",
-    "reports/evidence/G3/OCOR-DEV-0028.log",
-    "reports/evidence/G3/OCOR-DEV-0029.json",
-    "reports/evidence/G3/OCOR-DEV-0029.log",
-    "reports/evidence/G2/OCOR-DEV-0026.json",
-    "reports/evidence/G2/OCOR-DEV-0026.log",
-    "reports/evidence/G2/OCOR-DEV-0027.json",
-    "reports/evidence/G2/OCOR-DEV-0027.log",
-    "reports/evidence/G3/OCOR-DEV-0030.json",
-    "reports/evidence/G3/OCOR-DEV-0030.log",
-    "reports/evidence/G3/OCOR-DEV-0031.json",
-    "reports/evidence/G3/OCOR-DEV-0031.log",
-    "reports/evidence/G4/OCOR-DEV-0032.json",
-    "reports/evidence/G4/OCOR-DEV-0032.log",
-    "reports/evidence/G4/OCOR-DEV-0033.json",
-    "reports/evidence/G4/OCOR-DEV-0033.log",
-    "reports/evidence/G4/OCOR-DEV-0034.json",
-    "reports/evidence/G4/OCOR-DEV-0034.log",
-    "reports/evidence/G4/OCOR-DEV-0035.json",
-    "reports/evidence/G4/OCOR-DEV-0035.log",
-    "reports/evidence/G4/OCOR-DEV-0036.json",
-    "reports/evidence/G4/OCOR-DEV-0036.log",
-    "reports/evidence/G4/OCOR-DEV-0037.json",
-    "reports/evidence/G4/OCOR-DEV-0037.log",
-    "reports/evidence/G4/OCOR-DEV-0038.json",
-    "reports/evidence/G4/OCOR-DEV-0038.log",
-    "reports/evidence/G4/OCOR-DEV-0039.json",
-    "reports/evidence/G4/OCOR-DEV-0039.log",
-    "reports/evidence/G4/OCOR-DEV-0040.json",
-    "reports/evidence/G4/OCOR-DEV-0040.log",
-    "reports/evidence/G4/OCOR-DEV-0041.json",
-    "reports/evidence/G4/OCOR-DEV-0041.log",
-    "reports/evidence/G4/OCOR-DEV-0042.json",
-    "reports/evidence/G4/OCOR-DEV-0042.log",
-    "reports/evidence/G4/OCOR-DEV-0043.json",
-    "reports/evidence/G4/OCOR-DEV-0043.log",
-    "reports/evidence/G4/OCOR-DEV-0044.json",
-    "reports/evidence/G4/OCOR-DEV-0044.log",
-    "reports/evidence/G4/OCOR-DEV-0045.json",
-    "reports/evidence/G4/OCOR-DEV-0045.log",
-    "reports/evidence/G4/OCOR-DEV-0046.json",
-    "reports/evidence/G4/OCOR-DEV-0046.log",
-    "reports/evidence/G4/OCOR-DEV-0047.json",
-    "reports/evidence/G4/OCOR-DEV-0047.log"
+    "reports/development/OCOR_DEV_0049_ESCALATION.md"
   ],
-  "exact_next_action": "OCOR-DEV-0049:implementation \u2014 lowest-numbered ready task (hard_dependencies satisfied; OCOR-DEV-0050 also ready). OCOR-DEV-REM-0017 is a mandatory dependency of every G6 task (OCOR-DEV-0060..0066) but does not block OCOR-DEV-0049 or G5. Non-blocking PO decisions RVW-03, INFO-A, INFO-C remain OPEN_PO_DECISION_REQUIRED.",
-  "head_sha": "618875eff62a43c524180596f680cafb0b4a1d02",
+  "exact_next_action": "OCOR-DEV-REM-0017:implementation \u2014 riprendere il change set della PR #169 dopo verifica di assenza di attivit\u00e0 concorrente; diagnosticare validation-closure run 37350619188, stack CI completo e zero skip, verifica indipendente Claude Code; poi OCOR-DEV-0050. OCOR-DEV-0049 bloccato, nessun ciclo 7 autorizzato.",
+  "head_sha": "d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b",
+  "head_sha_role": "HEAD del candidato rifiutato; state sync HEAD si ricava da Git sul branch dedicato",
   "independent_verification": {
-    "head_sha": "618875eff62a43c524180596f680cafb0b4a1d02",
+    "blocking_findings": [
+      "VF-001"
+    ],
+    "created_at": "2026-10-07T02:05:22Z",
+    "findings": [
+      "VF-001",
+      "VF-002"
+    ],
+    "head_sha": "d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b",
     "implementer": "Claude Code (Anthropic)",
-    "reasoning_effort": "NOT_EXPOSED_BY_RUNTIME",
-    "repair_cycle": 7,
-    "request_id": "OCOR-DEV-0048-618875eff62a-7",
-    "verdict_status": "GO_FOR_EVIDENCE_SEAL",
-    "verifier": "Codex (OpenAI), processo esterno a contesto pulito"
+    "independence_limits": "processo e contesto separati; le riparazioni di OCOR-DEV-0049 (ciclo 6) sono di Claude Code: implementatore della riparazione e verifier sono lo stesso fornitore/modello, in contesto separato (OCOR-DEV-0049-VERIFIER-FALLBACK); l'implementazione originale e' di un altro modello (Codex). Nessun riassunto dell'implementatore usato come prova; audit_0049.md, check_candidate.py, ITERATION_LOG e MODEL_HANDOFF non consultati come prova. Riusati solo binari toolchain/CLI acquisiti dal verifier del ciclo 5 (helm/kind/kubectl con sha256 verificati sui checksum ufficiali).",
+    "not_executed": [
+      "Riproduzione end-to-end live di VF-001 (seal + restore dell'agente su un journal con tombstone alla stessa epoch e id a collation divergente): non eseguita; il difetto e' provato da probe che usa l'ORDER BY reale su PostgreSQL ocor-bootstrap e le funzioni reali dell'agente.",
+      "Run CI GitHub per l'HEAD verificato: non richiesta per OCOR-DEV-0049 (REM-0017-PRIORITY riguarda OCOR-DEV-REM-0017), non consultata."
+    ],
+    "repair_cycle": 6,
+    "request_id": "OCOR-DEV-0049-d0ac80a9d1d6-6",
+    "review_type": "TASK_EVIDENCE",
+    "same_model_separate_contexts": true,
+    "verdict": "NO_GO",
+    "verdict_file_sha256": "934e0f032daa67c0f6abee6e379c4569c0394c5e3b0c28dce05d799c005fc18c",
+    "verifier": "Claude Code (Anthropic), claude-opus-5-5, fallback autorizzato"
   },
-  "migration_rollback_result": "Review meccanica: cinque soli percorsi autorizzati, nessuna migrazione/schema/port sigillato modificato. git diff origin/main...HEAD limita il task a source/test, JSON/log e manifest G4; reverse-apply --check del commit di riparazione passante. Le fixture rimuovono i client temporanei Keycloak e le entry SPIRE, recuperano i container nei finally e usano segreti disposable su OCOR. Nessun rollback semantico o conformance globale dichiarato.",
+  "loop_implementer": "Codex (OpenAI)",
+  "migration_rollback_result": "Nessuna migrazione: revert tramite nuovo commit del solo state sync; candidato e record sigillati invariati.",
+  "previous_handoff_ref": "5c57d411a7036d585d431a8030c4816831e7d40c:reports/development/MODEL_HANDOFF.json",
   "raw_evidence_hashes": {
-    "candidate_json": "25a8cd65065e74d2087a15afd7a54416baaef905bdd0af21d2744300395f31a4",
-    "candidate_log": "0502fc016b98981e3bbeaa1fb1f3a9d40cf533f0c5a5b0293eb4cd79438288eb"
+    "bootstrap.log": "bf812a4377a47539917123e4f1c2c0f087e381085b74ae0d1854ea94a214b4d2",
+    "candidate-integrity.json": "3944da925b335020728e69db0c4f2aabf0e91358f79956fcb1cd3c1ab0c194d6",
+    "ci-source-green.json": "5b4a817d8716f3fb9a904e2e8d4ec84b21f844f9c01fbcdee2a310cdce62c74d",
+    "drift.log": "fde0744c001d45e69220b77ce6eeb918a314c56d5a31c6d053a72590011f509c",
+    "evidence0048.log": "d3c77291e1e9f43f2227111436059b7e30c08ea4306b7ddd910541c14b988490",
+    "fixtures.log": "6ea1e3849eec413523bc3a0fb356bdf534a38fa2f75a20bbd54f8cc2bbf38ea4",
+    "harness.log": "61736e49983a32531b3c8362f960d943a8a7f7f437ca98e91c1f3c3f8762b413",
+    "initialize.log": "6e6011a52c85df6c43c4c45e4f94e4b4873b9af265dcbbe8b7c6b4021cc9d533",
+    "inputs.log": "0a2036313a8b8deca46e664d2621879f4e0191c98eb287e2aeeb7171aae53c34",
+    "language.log": "ca6cb78dcbe21415365ecd6578a2eb0bf3d22bdcd7ddbae94e31fe19f67cd29d",
+    "mypy-retry.log": "a734d82216576d140b6330546b1d6097a6ff28ab45d0a3f71bb6f364fa137aba",
+    "mypy.log": "8ef4ff6c246c5a8edee3c9104486e6a62da573cc21b45acb783b147d88a22c41",
+    "plan.log": "c0753802bc31d2d19a9a5b77de8467f7b382f8b05832abf72af1a624819b6cba",
+    "rccad.log": "0043e5c71880b8696f14cc449b0e908f5418b4864e06a71d3fb4d4f212543c3f",
+    "rem0017-job.json": "6d5b3ce9b6e0b3b6ab990ca0937a031315c0b29ee5c97f348a455c5f0454749e",
+    "ruff.log": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+    "services.log": "518a61a1c28d0e054e6b0c36359e48fde8974a1cade88ec60b8766c9aeebf8e3",
+    "sync-lint.log": "1a2cadfaa957bf7bd8b4a5f0b8781087faa77e5aee336e598ce44ba2f594764d",
+    "teardown.log": "837787229d5f08d16895ca873583fd71bfbabdb81129fd859528ea3f4a635504",
+    "toolchain.log": "6b81fc7c85adba1a7d0bbe2da45519f94fcdd2dc31f5bec27ac54636ffcb49e5",
+    "verdict": "934e0f032daa67c0f6abee6e379c4569c0394c5e3b0c28dce05d799c005fc18c"
   },
   "repair_authorization": {
-    "NO_GO_disposition": "TERMINAL_BLOCKED; nessuna ulteriore riparazione (esauriti i tre cicli)",
-    "authorized_start_head": "HEAD corrente del branch remoto",
-    "date": "2026-10-04",
-    "id": "OCOR-DEV-0048-REPAIR-CLAUDE-AUTO",
+    "NO_GO_disposition": "Escalation di 0049; nessun ciclo 7. Proseguire REM-0017, poi 0050 e task raggiungibili senza 0049; CONTINUE finch\u00e9 esiste lavoro eseguibile.",
+    "authorized_repair_cycles": [
+      6
+    ],
+    "authorized_start_head": "b40aa8a6908b02d95cdf8138200f99f2e8aea8b1",
+    "consumed_cycles": 1,
+    "date": "2026-10-07",
+    "id": "OCOR-DEV-0049-REPAIR-6",
     "implementer": "Claude Code (Anthropic)",
-    "scope": "Fino a TRE ulteriori cicli di riparazione; audit per percorsi di security/control_plane.py; nessun PERMIT/lease senza verifica completa ADD v1.3 5.1-5.2; un claim OIDC autentica gli attori e non sostituisce il grant.",
-    "verifier": "Codex (OpenAI)"
+    "remaining_cycles": 0,
+    "verifier": "Claude Code (Anthropic), contesto separato (fallback)"
   },
   "requirement_ids": [
     "BR-003",
-    "BR-007",
-    "BR-013",
-    "BR-016",
-    "FR-020",
-    "FR-021",
-    "FR-067",
-    "FR-103",
-    "FR-110",
-    "FR-117",
-    "FR-128",
-    "FR-143",
-    "FR-153",
-    "FR-160",
-    "NFR-010",
-    "NFR-019",
-    "NFR-026",
-    "NFR-031",
-    "NFR-049",
-    "NFR-052",
-    "NFR-056",
-    "NFR-063",
-    "NFR-064",
-    "NFR-073",
-    "NFR-074",
-    "NFR-086",
-    "NFR-087",
-    "NFR-089"
+    "FR-156",
+    "NFR-001",
+    "NFR-041",
+    "NFR-042",
+    "NFR-043",
+    "NFR-065",
+    "NFR-067",
+    "NFR-080"
   ],
   "schema_version": "1.0",
-  "security_observability_notes": "Clock UTC del boundary, validit\u00e0 intersecate, correlazione presente; nessun secret nei log candidati o in Git. E1/E2/Verified e tutti i claim invariati.",
-  "task_id": "OCOR-DEV-0048",
+  "security_observability_notes": "Nessuna modifica runtime, inputs, secret, gate o evidenza sigillata; claim fence invariato.",
+  "state_sync_ci": {
+    "checks": [
+      {
+        "conclusion": "SUCCESS",
+        "name": "contract",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675971/job/112596972626"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "unit",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675971/job/112596972678"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "integration-postgresql",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675971/job/112596972370"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "backend-compatibility-not-ba-evidence",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675971/job/112596972648"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "evidence",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675971/job/112596972646"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "mandatory-gates",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675971/job/112597135989"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "rccad-methodology",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675945/job/112596972315"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "delivery-activation",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675919/job/112596972311"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "validation-closure",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675932/job/112596972185"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "supply-chain",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675942/job/112596972567"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "type-and-lint-gate",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675911/job/112596972367"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "tooling-policy",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675911/job/112596972171"
+      },
+      {
+        "conclusion": "SUCCESS",
+        "name": "fgm-contract-readiness-not-runtime-evidence",
+        "status": "COMPLETED",
+        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37560675971/job/112596972645"
+      }
+    ],
+    "merge_performed": false,
+    "next_condition_for_integration": "Attendere 13 SUCCESS sull\u2019HEAD finale; gh pr merge --merge --match-head-commit, senza bypass e senza riuso del PASS sorgente.",
+    "observed_at": "2026-10-07T02:19:09.616673+00:00",
+    "passed": 13,
+    "pr": 172,
+    "raw_observation_sha256": "5b4a817d8716f3fb9a904e2e8d4ec84b21f844f9c01fbcdee2a310cdce62c74d",
+    "required_checks": 13,
+    "retry_count": 0,
+    "run_ids": [
+      37560675911,
+      37560675919,
+      37560675932,
+      37560675942,
+      37560675945,
+      37560675971
+    ],
+    "status": "SOURCE_HEAD_ALL_13_PASS_FINAL_HEAD_EXACT_CHECK_REQUIRED",
+    "tested_head_sha": "fb4376ef4e7d233ae1e6528451acf4b2ae825bfd"
+  },
+  "task_id": "OCOR-DEV-0049",
+  "terminal_loop_disposition": {
+    "available_next_work": "OCOR-DEV-REM-0017, poi OCOR-DEV-0050",
+    "loop_status": "CONTINUE",
+    "po_decisions_pending": [],
+    "reason": "OCOR-DEV-0049-REPAIR-6 supera l\u2019arresto puntuale: REM-0017 e 0050 eseguibili. Nessun ciclo 7."
+  },
   "test_results": {
+    "ci_source_head": {
+      "final_document_commit": "Nuovo controllo esatto di tutti i gate richiesto prima del merge.",
+      "head_sha": "fb4376ef4e7d233ae1e6528451acf4b2ae825bfd",
+      "passed": 13,
+      "required_checks": 13,
+      "run_ids": [
+        37560675911,
+        37560675919,
+        37560675932,
+        37560675942,
+        37560675945,
+        37560675971
+      ]
+    },
     "full_runtime": {
-      "command": "pytest -v --tb=line ocor-runtime/tests/",
-      "exit_code": 0,
-      "failed": 0,
-      "passed": 1071,
-      "raw_output_sha256": "796fe2b59c424a1e93256629d801219789665f3cf6b7870843f4911b8d7e2bc3",
-      "skipped": 0,
-      "source_commit": "46854e06ee3cc139c2042ba4373f08ea80e3a6fa"
+      "reason": "Unit\u00e0 solo documentale; run qualificanti spettano al verifier separato.",
+      "status": "NOT_EXECUTED"
     },
-    "reports_ci": {
-      "failed": 0,
-      "not_executed": 0,
-      "passed": 82,
-      "skipped": 0
+    "local_gates": {
+      "language": "PASS",
+      "mypy": "PASS 69 file; primo tentativo FAIL per extra lint rimosso dal bootstrap, singolo retry dopo uv sync --frozen --extra test --extra lint",
+      "plan": "37 PASS, 0 FAIL, 2 NOT_EXECUTED opzionali",
+      "rccad": "PASS_LOCAL_PRECHECK \u2014 CI_REQUIRED per controlli dinamici",
+      "ruff": "PASS",
+      "runtime_evidence_0048": "PASS",
+      "scope": "PASS 6 changed paths, immutable surfaces untouched"
     },
-    "task": {
-      "failed": 0,
-      "not_executed": 0,
-      "passed": 166,
-      "skipped": 0
+    "preflight": {
+      "drift": {
+        "checked_inputs": 167,
+        "checked_tasks": 63,
+        "drifted_inputs": 0,
+        "drifted_tasks": [],
+        "findings": [],
+        "status": "PASS"
+      },
+      "harness": "14 PASS, 0 FAIL, 0 NOT_EXECUTED",
+      "inputs": "8/8 PASS",
+      "services": "9 READY; teardown PASS",
+      "toolchain": "9/9 PASS, ambiente isolato"
+    },
+    "task0049": {
+      "reason": "Il loop non ripara n\u00e9 riesegue la verifica 0049.",
+      "status": "NOT_EXECUTED"
+    },
+    "verifier_reported_results": {
+      "attribution": "OCOR-DEV-0049-d0ac80a9d1d6-6 \u2014 risultati riportati dal verifier Claude Code, non dal loop",
+      "full": {
+        "failed": 0,
+        "passed": 1422,
+        "skipped": 0
+      },
+      "task": {
+        "failed": 0,
+        "passed": 321,
+        "skipped": 0
+      }
     }
   },
-  "unresolved_blockers": [],
-  "updated_at": "2026-10-05T10:04:04Z",
-  "worktree": ".ocor/worktrees/state-sync-ocor-dev-0048-sealed"
+  "unresolved_blockers": [
+    "OCOR-DEV-0049: budget ciclo 6 esaurito, VF-001 medium BLOCKER",
+    "OCOR-DEV-REM-0017: CI #169 validation-closure FAILURE; dipendenza G6"
+  ],
+  "updated_at": "2026-10-07T02:19:09.616673+00:00",
+  "validation_limitations": {
+    "bootstrap_lint_environment": "Bootstrap risincronizza il venv senza lint: primo mypy No module named mypy. Ripristinati extra test/lint e singolo retry PASS; nessun validator modificato.",
+    "full_runtime_this_iteration": "NOT_EXECUTED \u2014 state sync",
+    "independent_verifier_not_executed": [
+      "Riproduzione end-to-end live di VF-001 (seal + restore dell'agente su un journal con tombstone alla stessa epoch e id a collation divergente): non eseguita; il difetto e' provato da probe che usa l'ORDER BY reale su PostgreSQL ocor-bootstrap e le funzioni reali dell'agente.",
+      "Run CI GitHub per l'HEAD verificato: non richiesta per OCOR-DEV-0049 (REM-0017-PRIORITY riguarda OCOR-DEV-REM-0017), non consultata."
+    ]
+  },
+  "worktree": ".ocor/worktrees/state-sync-ocor-dev-0049-cycle6"
 }
