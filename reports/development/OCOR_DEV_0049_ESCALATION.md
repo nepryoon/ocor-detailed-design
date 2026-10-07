@@ -222,3 +222,37 @@ Esauriti i cicli aggiuntivi 3/4/5; nessun ciclo 6 autorizzato. Decision request 
 Il loop termina `TERMINAL_BLOCKED` per la disposizione puntuale del PO sul budget di 0049. Non significa che tutto il backlog sia bloccato: REM-0017 è la prossima unità operativa alla ripresa del loop, poi 0050. PR #169 preservata. Claim fence invariato (E1=0, E2=0, zero Verified, runtime NOT_ESTABLISHED, PoC/Production NO-GO).
 
 Chiusura transitiva ricalcolata dal backlog: 0049, 0059 e tutti i task 0060–0069. La lista breve dei record precedenti era incompleta; 0050–0058 restano raggiungibili senza la chiusura di 0049. REM-0017 resta prioritario alla ripresa.
+
+## 2026-10-07 — Ciclo 6 NO_GO; escalation circoscritta e prosecuzione
+
+La decisione PO `OCOR-DEV-0049-REPAIR-6` risolve la richiesta di budget del ciclo 5 e autorizza un solo ciclo 6 da Claude Code. Verdetto `OCOR-DEV-0049-d0ac80a9d1d6-6`, HEAD `d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b`, creato `2026-10-07T02:05:22Z`: **NO_GO**. HEAD remoto confrontato prima della scrittura; SHA-256 del verdetto esterno `934e0f032daa67c0f6abee6e379c4569c0394c5e3b0c28dce05d799c005fc18c`. Nessun verdetto scritto o modificato dal loop.
+
+Implementatore riparazioni **Claude Code (Anthropic)**; verifier effettivo **Claude Code (claude-opus-5-5)**, processo e contesto separati secondo `OCOR-DEV-0049-VERIFIER-FALLBACK`; stesso modello delle riparazioni, implementazione originale di altro modello. Implementatore loop **Codex (OpenAI)**.
+
+### VF-001 — ciclo 6 (`medium`, BLOCKER)
+
+Riferimento: `deploy/helm/ocor-poc/compose.profiles.yaml:1125`.
+
+Il seal scrive il journal con `order by deletion_epoch, event_id` in PostgreSQL (compose.profiles.yaml:184; database con collation en_US.utf8, verificato: pg_database.datcollate=en_US.utf8 per ocor e template1, da cui `create database ocor_poc_drill` eredita) e firma `last_event_id = journal[-1]` (riga 1829); il restore riproduce i tombstone ordinati in Python per (int(deletion_epoch), event_id) in ordine di codepoint (riga 2021); il nuovo receipt_checkpoint_inconsistencies confronta replayed[-1] con last_event_id (riga 1125). Le due collation divergono (PostgreSQL reale: 'evt-del-a' < 'evt-del-b' < 'evt-del-B' e 'evtdel-m3' < 'evt-del-m4'; Python: l'opposto) e deletion_epoch non e' unico (colonna bigint not null senza vincolo). Probe riproducibile (/tmp/ocor-verify-OCOR-DEV-0049-d0ac80a9d1d6-6/probe/collation_probe.py: ORDER BY eseguita sul PostgreSQL ocor-bootstrap, funzioni reali dell'agente): con due tombstone alla stessa epoch massima, un restore che li ha riprodotti tutti produce receipt_inconsistencies=[] ma receipt_checkpoint_inconsistencies=['memory:tombstones_not_replayed']; latest_valid_receipt restituisce quindi RESTORE_RECEIPT_INCONSISTENT in modo deterministico per quel recovery point (ogni nuovo drill sugli stessi dati fallisce allo stesso modo) con una diagnosi falsa di tombstone non riprodotti. Fail-closed, ma il criterio positivo (restore testato -> readiness) e' violato da dati legittimi e nessun test copre tombstone multipli alla stessa epoch.
+
+Azione minima proposta, **non autorizzata come ciclo 7**: Rendere identico l'ordinamento di seal e replay (es. `order by deletion_epoch, event_id collate "C"` nella capture, oppure ordinare il journal in Python con la stessa chiave del restore prima di calcolare journalCheckpoints), o rendere il confronto indipendente dall'ordine; aggiungere un caso positivo unitario e live con >=2 tombstone alla stessa deletion_epoch e id con maiuscole/punteggiatura divergenti tra collation, e il relativo negativo; rigenerare l'evidenza.
+
+### VF-002 — ciclo 6 (`low`, NON_BLOCKING)
+
+Riferimento: `ocor-runtime/tests/tasks/test_ocor_dev_0049.py:1815`.
+
+Il ciclo 6 ha rimosso dai positivi live la variante journal_ahead_of_metadata (test_ocor_dev_0049.py:1815) perche' incompatibile con il checkpoint della fixture (journal 7); non esiste piu' un positivo live ne' un positivo unitario di receipt_checkpoint_inconsistencies con journal_max > metadata_max coerente col checkpoint (test_receipt_matching_its_checkpoint_is_coherent:791 copre solo 7/7 e 0/0), e la docstring a :1822 dichiara ancora 'journal ahead of metadata'. Il comportamento e' corretto: probe del verifier con checkpoint journal 9 / metadata 7 e ricevuta 9/7 -> [] .
+
+Azione minima proposta, **non autorizzata come ciclo 7**: Aggiungere un caso positivo (unitario e, se possibile, live con un recovery point sigillato con journal davanti ai metadata) per receipt_checkpoint_inconsistencies con journal_max > metadata_max, e allineare la docstring a :1822.
+
+Risultati dichiarati nel verdetto del verifier, non prodotti dal loop: suite task 321 PASS/0 FAIL/0 skip; suite completa 1422 PASS/0 FAIL/0 skip, in 2565.34 s. Queste run verdi non annullano il finding bloccante del probe di collation. VF-001 del ciclo 5 (collisione POST Qdrant) risolto secondo il verifier: 80/80 download, 2 HTTP 500 assorbiti, zero snapshot residui. La coerenza receipt/checkpoint è stata esercitata, ma la riproduzione end-to-end della nuova collisione di collation resta non eseguita.
+
+Controlli del verifier `NOT_EXECUTED`:
+
+- Riproduzione end-to-end live di VF-001 (seal + restore dell'agente su un journal con tombstone alla stessa epoch e id a collation divergente): non eseguita; il difetto e' provato da probe che usa l'ORDER BY reale su PostgreSQL ocor-bootstrap e le funzioni reali dell'agente.
+
+- Run CI GitHub per l'HEAD verificato: non richiesta per OCOR-DEV-0049 (REM-0017-PRIORITY riguarda OCOR-DEV-REM-0017), non consultata.
+
+Budget ciclo 6 consumato: **nessun ciclo 7 autorizzato**, nessuna riparazione Codex, sigillatura o merge 0049. Candidato `d0ac80a9d1d603ca19ddbb2d5291e252b3d6ae2b` preservato. La disposizione globale precedente `TERMINAL_BLOCKED` è superseduta da `OCOR-DEV-0049-REPAIR-6`: il loop continua con **REM-0017 → 0050**, poi i task raggiungibili senza 0049. Chiusura transitiva bloccata: OCOR-DEV-0049, OCOR-DEV-0059, OCOR-DEV-0060, OCOR-DEV-0061, OCOR-DEV-0062, OCOR-DEV-0063, OCOR-DEV-0064, OCOR-DEV-0065, OCOR-DEV-0066, OCOR-DEV-0067, OCOR-DEV-0068, OCOR-DEV-0069. REM-0017 resta prerequisito G6. PR #169 osservata aperta, HEAD 7562d3c48015f45a0b518fde622ca4304e9468ca, validation-closure FAILURE run 37350619188; preservata in questa unità.
+
+State sync documentale su `governed/state-sync-ocor-dev-0049-cycle6` da `5c57d411a7036d585d431a8030c4816831e7d40c`; suite runtime locale **NOT_EXECUTED**, risultati del verifier distinti dai controlli meccanici del loop. `inputs/`, E1=0/E2=0, zero Verified, runtime NOT_ESTABLISHED, PoC/Production NO-GO invariati.

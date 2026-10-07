@@ -1,15 +1,15 @@
 {
-  "baseline_commit": "d33ae207105648799ac11479cca5b9eb9bf619ca",
+  "baseline_commit": "5c57d411a7036d585d431a8030c4816831e7d40c",
   "blocker_manifest": {
     "path": "reports/development/EXECUTION_STATE.json",
-    "sha256": "93569bc9744b31c50ce1cc90768c9f15c5eacf2f8c56eea1492d72b795d5d395"
+    "sha256": "accd4a4f08ebd99b691be69cc1f2bdf246a367a51ede6d2a354ab9bbf6c603a2"
   },
   "blocking_tasks": [
     {
       "evidence": "reports/development/OCOR_DEV_0049_ESCALATION.md",
-      "reason": "BLOCKED_REPAIR_BUDGET_EXHAUSTED: ultimo ciclo 5 NO_GO, VF-001 high; nessuna sesta riparazione autorizzata.",
-      "service": "Qdrant pinned / backup snapshot concurrency",
-      "sha256": "0326907542a05b15b4c01c7868adb4ba4ec53b55dcc85bbaa5279a125ff9e177",
+      "reason": "Ciclo 6 NO_GO; collation tombstone seal/replay; nessun ciclo 7. Blocco circoscritto, non terminale globale.",
+      "service": "Backup/restore checkpoint ordering",
+      "sha256": "368c439e636c478db312297ecb3b6a9d836b86db67a509d038cf9727b7450232",
       "task_id": "OCOR-DEV-0049"
     }
   ],
@@ -25,11 +25,36 @@
   "decision_requests": [
     "reports/development/decision_requests/OCOR-DEV-0049-REPAIR-BUDGET.md"
   ],
-  "direct_ready_disposition": "0049_BLOCKED_BY_BUDGET;_0050_READY;_REM_0017_PRIORITY;_LOOP_TERMINATES_PER_SPECIFIC_PO_DISPOSITION",
+  "direct_ready_disposition": "0049_BLOCKED_BY_BUDGET;_REM_0017_PRIORITY;_0050_READY;_CONTINUE_PER_OCOR_DEV_0049_REPAIR_6",
   "direct_ready_tasks": [
     "OCOR-DEV-0049",
     "OCOR-DEV-0050"
   ],
+  "historical_cycle5_terminal_report": {
+    "baseline_commit": "d33ae207105648799ac11479cca5b9eb9bf619ca",
+    "direct_ready_disposition": "0049_BLOCKED_BY_BUDGET;_0050_READY;_REM_0017_PRIORITY;_LOOP_TERMINATES_PER_SPECIFIC_PO_DISPOSITION",
+    "independent_verifier": {
+      "blocker": 1,
+      "high": 1,
+      "identity": "OCOR-DEV-0049-b40aa8a6908b-5",
+      "low": 1,
+      "medium": 0,
+      "model_and_effort": "Claude Code claude-opus-5-5; effort non attestato; stesso modello delle riparazioni in contesto separato",
+      "verdict": "NO_GO",
+      "verdict_file_sha256": "e1bc2e0662d7323ccf43bc082f13154df7baddbe22be6a6f630c264047abda1a"
+    },
+    "local_controls": {
+      "evidence_input_drift": "63 tasks / 167 inputs / 0 drift",
+      "local_gates": "RCCAD/static, scope, language, ruff, mypy PASS; piano 37 PASS / 2 NOT_EXECUTED",
+      "normative_sha256": "8/8 PASS",
+      "prescribed_root_harness": "14 PASS",
+      "remote_ci_on_current_state_sync": "13/13 SUCCESS source 4e60e8799a5b4416ff10726d0ba6a7de88c0b32f; check esatti sul commit finale obbligatori prima del merge",
+      "runtime_this_iteration": "NOT_EXECUTED \u2014 state sync",
+      "services": "11 READY; risorse della sessione rimosse",
+      "toolchain": "9/9 PASS"
+    },
+    "minimal_unblock_action": "Nuovo mandato esplicito del Product Owner per qualsiasi ulteriore riparazione di 0049. Azione tecnica minima: VF-001 del ciclo 5, gestione bounded delle collisioni/5xx del POST Qdrant con fail-closed dopo esaurimento, teardown e positivi/negativi deterministici pi\u00f9 stack reale; rigenerazione evidenza con suite task/full verdi e zero skip, ambiente test+lint. Non eseguibile sotto il budget attuale."
+  },
   "independent_reachable_tasks_after_excluding_blocked_roots": [
     "OCOR-DEV-0050",
     "OCOR-DEV-0051",
@@ -43,133 +68,37 @@
   ],
   "independent_verifier": {
     "blocker": 1,
-    "high": 1,
-    "identity": "OCOR-DEV-0049-b40aa8a6908b-5",
+    "high": 0,
+    "identity": "OCOR-DEV-0049-d0ac80a9d1d6-6",
     "low": 1,
-    "medium": 0,
-    "model_and_effort": "Claude Code claude-opus-5-5; effort non attestato; stesso modello delle riparazioni in contesto separato",
+    "medium": 1,
+    "model_and_effort": "Claude Code claude-opus-5-5; effort non attestato; stesso modello riparazioni, contesto separato",
+    "not_executed": [
+      "Riproduzione end-to-end live di VF-001 (seal + restore dell'agente su un journal con tombstone alla stessa epoch e id a collation divergente): non eseguita; il difetto e' provato da probe che usa l'ORDER BY reale su PostgreSQL ocor-bootstrap e le funzioni reali dell'agente.",
+      "Run CI GitHub per l'HEAD verificato: non richiesta per OCOR-DEV-0049 (REM-0017-PRIORITY riguarda OCOR-DEV-REM-0017), non consultata."
+    ],
     "verdict": "NO_GO",
-    "verdict_file_sha256": "e1bc2e0662d7323ccf43bc082f13154df7baddbe22be6a6f630c264047abda1a"
+    "verdict_file_sha256": "934e0f032daa67c0f6abee6e379c4569c0394c5e3b0c28dce05d799c005fc18c"
   },
   "local_controls": {
-    "evidence_input_drift": "63 tasks / 167 inputs / 0 drift",
-    "local_gates": "RCCAD/static, scope, language, ruff, mypy PASS; piano 37 PASS / 2 NOT_EXECUTED",
-    "normative_sha256": "8/8 PASS",
-    "prescribed_root_harness": "14 PASS",
-    "remote_ci_on_current_state_sync": "13/13 SUCCESS source 4e60e8799a5b4416ff10726d0ba6a7de88c0b32f; check esatti sul commit finale obbligatori prima del merge",
-    "runtime_this_iteration": "NOT_EXECUTED \u2014 state sync",
-    "services": "11 READY; risorse della sessione rimosse",
-    "toolchain": "9/9 PASS"
+    "current_iteration_controls": "Risultati e raw log nel MODEL_HANDOFF corrente; CI richiesta sull\u2019HEAD esatto.",
+    "runtime_this_iteration": "NOT_EXECUTED \u2014 state sync documentale"
   },
-  "minimal_unblock_action": "Nuovo mandato esplicito del Product Owner per qualsiasi ulteriore riparazione di 0049. Azione tecnica minima: VF-001 del ciclo 5, gestione bounded delle collisioni/5xx del POST Qdrant con fail-closed dopo esaurimento, teardown e positivi/negativi deterministici pi\u00f9 stack reale; rigenerazione evidenza con suite task/full verdi e zero skip, ambiente test+lint. Non eseguibile sotto il budget attuale.",
-  "next_executable_action": "OCOR-DEV-REM-0017:implementation \u2014 riprendere PR #169 senza esclusioni, ottenere verifica indipendente Claude Code e CI completa; poi OCOR-DEV-0050. Nessuna riparazione OCOR-DEV-0049 senza nuova decisione PO.",
-  "open_pull_requests": 2,
-  "recorded_at": "2026-10-06T16:25:55.683649+00:00",
+  "minimal_unblock_action": "Un nuovo mandato PO \u00e8 necessario soltanto per una futura riparazione 0049: uniformare l\u2019ordinamento seal/replay o rendere la verifica checkpoint indipendente dall\u2019ordine; casi positivi/negativi per tombstone a epoch uguale e collation divergenti, journal davanti ai metadata, rigenerazione evidenza stabile. Nessun ciclo 7 autorizzato; proseguire REM-0017 e 0050.",
+  "next_executable_action": "OCOR-DEV-REM-0017:implementation \u2014 riprendere il change set della PR #169 dopo verifica di assenza di attivit\u00e0 concorrente; diagnosticare validation-closure run 37350619188, stack CI completo e zero skip, verifica indipendente Claude Code; poi OCOR-DEV-0050. OCOR-DEV-0049 bloccato, nessun ciclo 7 autorizzato.",
+  "open_pull_requests": 1,
+  "recorded_at": "2026-10-07T02:08:53.555889+00:00",
   "remaining_backlog_tasks": 21,
   "schema_version": "1.0",
   "state_sync_ci": {
-    "checks": [
-      {
-        "conclusion": "SUCCESS",
-        "name": "backend-compatibility-not-ba-evidence",
-        "status": "COMPLETED",
-        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37495921876/job/112380311468"
-      },
-      {
-        "conclusion": "SUCCESS",
-        "name": "contract",
-        "status": "COMPLETED",
-        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37495921876/job/112380310681"
-      },
-      {
-        "conclusion": "SUCCESS",
-        "name": "delivery-activation",
-        "status": "COMPLETED",
-        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37495921877/job/112380310484"
-      },
-      {
-        "conclusion": "SUCCESS",
-        "name": "evidence",
-        "status": "COMPLETED",
-        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37495921876/job/112380310669"
-      },
-      {
-        "conclusion": "SUCCESS",
-        "name": "fgm-contract-readiness-not-runtime-evidence",
-        "status": "COMPLETED",
-        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37495921876/job/112380310988"
-      },
-      {
-        "conclusion": "SUCCESS",
-        "name": "integration-postgresql",
-        "status": "COMPLETED",
-        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37495921876/job/112380310675"
-      },
-      {
-        "conclusion": "SUCCESS",
-        "name": "mandatory-gates",
-        "status": "COMPLETED",
-        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37495921876/job/112380594401"
-      },
-      {
-        "conclusion": "SUCCESS",
-        "name": "rccad-methodology",
-        "status": "COMPLETED",
-        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37495922017/job/112380311175"
-      },
-      {
-        "conclusion": "SUCCESS",
-        "name": "supply-chain",
-        "status": "COMPLETED",
-        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37495922070/job/112380311657"
-      },
-      {
-        "conclusion": "SUCCESS",
-        "name": "tooling-policy",
-        "status": "COMPLETED",
-        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37495921893/job/112380311505"
-      },
-      {
-        "conclusion": "SUCCESS",
-        "name": "type-and-lint-gate",
-        "status": "COMPLETED",
-        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37495921893/job/112380312245"
-      },
-      {
-        "conclusion": "SUCCESS",
-        "name": "unit",
-        "status": "COMPLETED",
-        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37495921876/job/112380310482"
-      },
-      {
-        "conclusion": "SUCCESS",
-        "name": "validation-closure",
-        "status": "COMPLETED",
-        "url": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37495922129/job/112380311798"
-      }
-    ],
-    "merge_performed": false,
-    "next_condition_for_integration": "Attendere tutti i 13 check richiesti SUCCESS sull\u2019HEAD finale del commit di evidenza CI; poi gh pr merge --merge --match-head-commit. Source PASS non riusato sul finale.",
-    "observed_at": "2026-10-06T16:47:16.383004+00:00",
-    "passed": 13,
-    "pr": 171,
-    "raw_observation_sha256": "e2795733db614d171412dba9f548159981892760bfd052726bf6ce25042c9970",
-    "required_checks": 13,
-    "retry_count": 0,
-    "run_ids": [
-      37495921876,
-      37495921877,
-      37495921893,
-      37495922017,
-      37495922070,
-      37495922129
-    ],
-    "status": "SOURCE_HEAD_ALL_13_PASS_FINAL_HEAD_EXACT_CHECK_REQUIRED",
-    "tested_head_sha": "4e60e8799a5b4416ff10726d0ba6a7de88c0b32f"
+    "branch": "governed/state-sync-ocor-dev-0049-cycle6",
+    "status": "CI_REQUIRED_EXACT_HEAD"
   },
+  "status": "SUPERSEDED_LOOP_CONTINUES",
   "supersedes": {
-    "prior_report": "reports/development/TERMINAL_BLOCKED_REPORT.json @ 2026-10-04T13:49:11Z",
-    "reason": "Disposition terminale storica 0048 superseduta dal merge PR #163; il blocco corrente riguarda 0049 ultimo ciclo 5, non tutti i task."
+    "prior_report": "5c57d411a7036d585d431a8030c4816831e7d40c:reports/development/TERMINAL_BLOCKED_REPORT.json",
+    "reason": "OCOR-DEV-0049-REPAIR-6 risolve richiesta del ciclo 5, autorizza il ciclo 6 e supera arresto globale. Ciclo 6 NO_GO; REM-0017/0050 eseguibili."
   },
-  "terminal_state": "BLOCKED"
+  "terminal_state": "NOT_TERMINAL_WORK_AVAILABLE",
+  "updated_at": "2026-10-07T02:08:53.555889+00:00"
 }
