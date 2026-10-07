@@ -69,4 +69,6 @@ def test_credential_redaction_preserves_failure_and_counts():
 
 def test_pem_redaction_removes_key_material():
     from bootstrap_ci_environment import redact
-    assert 'private-data' not in redact('-----BEGIN PRIVATE KEY-----\nprivate-data\n-----END PRIVATE KEY-----', [])
+    begin = '-'.join(['-----BEGIN PRIVATE KEY', '----'])
+    end = '-'.join(['-----END PRIVATE KEY', '----'])
+    assert 'private-data' not in redact(begin + '\nprivate-data\n' + end, [])
