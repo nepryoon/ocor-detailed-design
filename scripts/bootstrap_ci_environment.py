@@ -91,6 +91,19 @@ def ci_resources(repository: Path) -> Path:
     return profile
 
 
+def running_jvm_args(processes: str) -> list[str]:
+    rows = [line.split() for line in processes.splitlines() if line.split()]
+    commands = [row[1:] if row[0].isdigit() else row for row in rows]
+    jvms = [argv for argv in commands if argv and Path(argv[0]).name == "java"]
+    if len(jvms) != 1:
+        raise BootstrapError("Fuseki Java process is absent or ambiguous")
+    argv = jvms[0]
+    heap_args = [arg for arg in argv if arg.startswith(("-Xms", "-Xmx"))]
+    if heap_args != ["-Xms128m", "-Xmx1G"] or any(arg.startswith(("-XX:MaxHeapSize", "-XX:InitialHeapSize", "-XX:MaxRAM")) for arg in argv):
+        raise BootstrapError("Fuseki running JVM did not consume the CI heap bounds")
+    return argv
+
+
 def provision(repository: Path, timeout: int) -> dict[str, object]:
     errors = validate_locks(repository)
     if errors:
@@ -131,11 +144,10 @@ def provision(repository: Path, timeout: int) -> dict[str, object]:
         raise BootstrapError("SPIRE token output invalid")
     replace_env(env_file, "OCOR_SPIRE_JOIN_TOKEN", token.split("Token:", 1)[1].splitlines()[0].strip())
     execute(repository, compose + ["up", "--detach", "--wait", "--wait-timeout", str(timeout), "--no-build"], "complete stack", timeout + 60)
-    # The pinned image contains a JRE, not jcmd. Bind the running PID's arguments
-    # to a read-only VM flag probe using that same runtime and the same heap args.
-    argv = execute(repository, ["docker", "exec", "ocor-bootstrap-fuseki-1", "cat", "/proc/1/cmdline"], "Fuseki running JVM arguments", 30).split("\0")
-    if "-Xms128m" not in argv or "-Xmx1G" not in argv:
-        raise BootstrapError("Fuseki running JVM did not consume the CI heap bounds")
+    # The pinned image contains a JRE, not jcmd, and PID 1 is Docker's init.
+    # Bind the actual Java process to a flag probe in that same runtime.
+    processes = execute(repository, ["docker", "top", "ocor-bootstrap-fuseki-1", "-eo", "pid,args"], "Fuseki running JVM arguments", 30)
+    running_jvm_args(processes)
     flags = execute(repository, ["docker", "exec", "ocor-bootstrap-fuseki-1", "java", "-Xms128m", "-Xmx1G", "-XX:+PrintFlagsFinal", "-version"], "Fuseki JVM heap flag probe", 30)
     if not re.search(r"\bMaxHeapSize\s*=\s*1073741824\b", flags):
         raise BootstrapError("Fuseki heap is not bounded to 1 GiB inside its 2 GiB cgroup")

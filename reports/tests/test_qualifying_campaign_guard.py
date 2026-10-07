@@ -138,3 +138,22 @@ def test_qualification_lock_checks_are_non_mutating_and_fail_closed(tmp_path):
     path.unlink()
     with pytest.raises(OSError):
         load_lock(tmp_path)
+
+
+def test_fuseki_resource_validation_uses_java_not_init():
+    from bootstrap_ci_environment import running_jvm_args
+    assert running_jvm_args('PID COMMAND\n1 /sbin/docker-init -- /opt/fuseki/fuseki-server\n41 /opt/java/bin/java -Xms128m -Xmx1G -jar server.jar\n')[:3] == ['/opt/java/bin/java', '-Xms128m', '-Xmx1G']
+
+
+@pytest.mark.parametrize('processes', [
+    'COMMAND\n/sbin/docker-init -- server\n',
+    'COMMAND\njava -Xms128m -Xmx4G -jar server.jar\n',
+    'COMMAND\njava -Xms128m -Xmx1G -Xmx4G -jar server.jar\n',
+    'COMMAND\njava -Xms128m -Xmx1G -XX:MaxHeapSize=4G -jar server.jar\n',
+    'COMMAND\njava -Xms128m -Xmx1G\njava -Xms128m -Xmx1G\n',
+])
+def test_fuseki_unbounded_absent_or_ambiguous_jvm_fails_closed(processes):
+    from bootstrap_ci_environment import running_jvm_args
+    from ocor_bootstrap_lib import BootstrapError
+    with pytest.raises(BootstrapError):
+        running_jvm_args(processes)
