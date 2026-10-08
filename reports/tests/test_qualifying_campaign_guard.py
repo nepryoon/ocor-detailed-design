@@ -240,3 +240,69 @@ def test_build_timeout_retains_last_step_and_fails_closed(tmp_path):
     with pytest.raises(BootstrapError, match="timeout after 1s.*build"):
         ci.execute_logged(tmp_path, command, "build", 1, "ci_fuseki_build.log")
     assert "downloading pinned archive" in (tmp_path / "reports/tests/ci_fuseki_build.log").read_text()
+
+
+def test_full_suite_budget_is_75_minutes_and_60_minutes_requires_decision():
+    assert GUARD.check_deadline(3599) is False
+    assert GUARD.check_deadline(3601) is True
+    assert GUARD.check_deadline(4499) is True
+    with pytest.raises(GUARD.CampaignError, match="75-minute"):
+        GUARD.check_deadline(4500)
+
+
+def test_teardown_exports_exact_residue_even_when_reset_fails(tmp_path, monkeypatch, capsys):
+    import json
+    import bootstrap_ci_environment as ci
+    from ocor_bootstrap_lib import BootstrapError
+    (tmp_path / ".ocor").mkdir()
+    (tmp_path / ".ocor/bootstrap.env").touch()
+    residue = {"containers": [], "volumes": ["owned-volume"], "networks": ["owned-network"]}
+    monkeypatch.setattr(ci, "owned_resources", lambda repository: residue)
+    def fail(*args):
+        raise BootstrapError("governed reset failed")
+    monkeypatch.setattr(ci, "execute", fail)
+    with pytest.raises(BootstrapError):
+        ci.teardown(tmp_path)
+    records = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
+    assert records[-1]["residual"] == residue
+    assert records[-1]["status"] == "FAIL"
+
+
+def test_session_volume_attribution_does_not_depend_on_event_order():
+    import bootstrap_ci_environment as ci
+    events = [
+        {"Type": "volume", "Action": "mount", "Actor": {"ID": "owned-volume", "Attributes": {"container": "test-id"}}},
+        {"Type": "volume", "Action": "mount", "Actor": {"ID": "foreign-volume", "Attributes": {"container": "foreign-id"}}},
+        {"Type": "container", "Action": "create", "Actor": {"ID": "test-id", "Attributes": {"name": "ocor-spike-0023-session"}}},
+        {"Type": "container", "Action": "create", "Actor": {"ID": "foreign-id", "Attributes": {"name": "open-webui"}}},
+    ]
+    assert ci.session_resources(events) == {"containers": {"test-id": "ocor-spike-0023-session"}, "volumes": ["owned-volume"], "networks": {}}
+    assert ci.session_resources(list(reversed(events))) == ci.session_resources(events)
+
+
+def test_preexisting_volume_is_not_deleted_by_session_cleanup(tmp_path, monkeypatch):
+    import bootstrap_ci_environment as ci
+    (tmp_path / ".ocor").mkdir()
+    import json
+    record = {"repository": str(tmp_path.resolve()), "before_volumes": ["preexisting"],
+              "resources": {"containers": {}, "volumes": ["preexisting", "created"]}}
+    (tmp_path / ".ocor/campaign-resources.json").write_text(json.dumps(record))
+    calls = []
+    monkeypatch.setattr(ci, "execute", lambda repo, cmd, label, timeout: calls.append(cmd) or "")
+    monkeypatch.setattr(ci, "session_inventory", lambda repository: {"containers": {}, "volumes": ["preexisting", "created"]} if not calls else {"containers": {}, "volumes": ["preexisting"]})
+    ci.cleanup_session_resources(tmp_path)
+    assert calls == [["docker", "volume", "rm", "created"]]
+
+
+def test_failed_session_volume_removal_preserves_error(tmp_path, monkeypatch):
+    import bootstrap_ci_environment as ci
+    from ocor_bootstrap_lib import BootstrapError
+    import json
+    (tmp_path / ".ocor").mkdir()
+    (tmp_path / ".ocor/campaign-resources.json").write_text(json.dumps({
+        "repository": str(tmp_path.resolve()), "before_volumes": [],
+        "resources": {"containers": {}, "volumes": ["created"]}}))
+    monkeypatch.setattr(ci, "session_inventory", lambda repository: {"containers": {}, "volumes": ["created"]})
+    monkeypatch.setattr(ci, "execute", lambda *args: "")
+    with pytest.raises(BootstrapError, match="session resources remain"):
+        ci.cleanup_session_resources(tmp_path)

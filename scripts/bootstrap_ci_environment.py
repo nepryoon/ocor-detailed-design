@@ -13,7 +13,10 @@ import json
 import re
 import subprocess
 import sys
+import threading
+import time
 from pathlib import Path
+from typing import Any, TypedDict
 
 from bootstrap_development_environment import replace_env, write_secret_file
 from ocor_bootstrap_lib import BootstrapError, load_json, retry, root, run, validate_locks
@@ -95,18 +98,162 @@ def owned_resources(repository: Path) -> dict[str, list[str]]:
     }
 
 
+class ResourceInventory(TypedDict):
+    containers: dict[str, str]
+    volumes: list[str]
+    networks: dict[str, str]
+
+
+def session_inventory(repository: Path) -> ResourceInventory:
+    containers = execute(repository, ["docker", "ps", "-a", "--no-trunc", "--format", "{{json .}}"], "session container inventory", 10)
+    return {"containers": {row["ID"]: row["Names"] for line in containers.splitlines() if (row := json.loads(line))},
+            "volumes": execute(repository, ["docker", "volume", "ls", "-q"], "session volume inventory", 10).split(),
+            "networks": {row["ID"]: row["Name"] for line in execute(repository, ["docker", "network", "ls", "--no-trunc", "--format", "{{json .}}"], "session network inventory", 10).splitlines() if (row := json.loads(line))}}
+
+
+def owned_test_name(name: str) -> bool:
+    return bool(re.fullmatch(r"ocor-(?:spike|poc|c5-backbone)-[A-Za-z0-9_.-]+", name))
+
+
+def session_resources(events: list[dict[str, Any]]) -> ResourceInventory:
+    """Bind anonymous volumes to test containers, even if mount precedes create."""
+    containers = {}
+    volumes = []
+    for event in events:
+        actor = event.get("Actor", {})
+        if event.get("Type") == "container" and event.get("Action") in ("create", "start"):
+            name = actor.get("Attributes", {}).get("name", "")
+            if owned_test_name(name):
+                containers[actor["ID"]] = name
+    for event in events:
+        actor = event.get("Actor", {})
+        if event.get("Type") == "volume" and event.get("Action") == "mount" and actor.get("Attributes", {}).get("container") in containers:
+            volumes.append(actor["ID"])
+    networks = {event["Actor"]["ID"]: event["Actor"].get("Attributes", {}).get("name", "")
+                for event in events if event.get("Type") == "network" and event.get("Action") == "create"
+                and (owned_test_name(event["Actor"].get("Attributes", {}).get("name", ""))
+                     or (event["Actor"].get("Attributes", {}).get("name") == "kind"
+                         and "ocor-poc-control-plane" in containers.values()))}
+    return {"containers": containers, "volumes": sorted(set(volumes)), "networks": networks}
+
+
+class SessionRecorder:
+    """Observe resource ownership; never infer ownership from a global volume delta."""
+
+    def __init__(self, repository: Path):
+        self.repository = repository
+        self.path = repository / ".ocor/campaign-resources.json"
+        self.since = str(int(time.time()))
+        self.before = session_inventory(repository)
+        self.events: list[dict[str, Any]] = []
+        self.errors: list[str] = []
+        # Since covers events between the inventory and the listener becoming ready.
+        self.process = subprocess.Popen(["docker", "events", "--since", self.since, "--format", "{{json .}}"],
+                                        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        self.thread = threading.Thread(target=self.observe, daemon=True)
+        self.thread.start()
+
+    def observe(self) -> None:
+        try:
+            assert self.process.stdout is not None
+            for line in self.process.stdout:
+                event = json.loads(line)
+                actor = event.get("Actor", {})
+                attributes = actor.get("Attributes", {})
+                # Persist only ownership identifiers; no arbitrary labels or env values.
+                if event.get("Type") in ("container", "volume", "network"):
+                    self.events.append({"Type": event["Type"], "Action": event.get("Action"),
+                                        "Actor": {"ID": actor.get("ID"), "Attributes": {
+                                            key: attributes[key] for key in ("name", "container") if key in attributes}}})
+        except (OSError, ValueError) as exc:
+            self.errors.append(str(exc))
+
+    def finish(self) -> None:
+        if self.process.poll() is not None:
+            self.errors.append("Docker ownership event stream ended unexpectedly")
+        else:
+            self.process.terminate()
+        self.process.wait(timeout=10)
+        self.thread.join(timeout=10)
+        if self.thread.is_alive():
+            self.errors.append("Docker ownership recorder did not stop")
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        record = {"repository": str(self.repository.resolve()), "before_volumes": self.before["volumes"],
+                  "before_containers": list(self.before["containers"]), "before_networks": list(self.before["networks"]),
+                  "resources": session_resources(self.events), "errors": self.errors}
+        self.path.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n")
+        if self.errors:
+            raise BootstrapError("ownership capture failed; session resources require diagnosis")
+
+
+def cleanup_session_resources(repository: Path) -> dict[str, list[str]]:
+    path = repository / ".ocor/campaign-resources.json"
+    if not path.is_file():
+        return {"containers": [], "volumes": []}
+    record = json.loads(path.read_text())
+    if record["repository"] != str(repository.resolve()):
+        raise BootstrapError("resource ledger belongs to another worktree")
+    resources = record["resources"]
+    current = session_inventory(repository)
+    containers = {identity: name for identity, name in resources["containers"].items()
+                  if identity not in record.get("before_containers", []) and identity in current["containers"]}
+    if any(not owned_test_name(name) or current["containers"][identity] != name for identity, name in containers.items()):
+        raise BootstrapError("session container ownership mismatch")
+    errors = list(record.get("errors", []))
+    for identity in containers:
+        try:
+            execute(repository, ["docker", "rm", "--force", "--volumes", identity], "owned test container teardown", 60)
+        except BootstrapError as exc:
+            errors.append(str(exc))
+    current = session_inventory(repository)
+    volumes = set(resources["volumes"]) - set(record["before_volumes"])
+    for volume in sorted(volumes & set(current["volumes"])):
+        try:
+            execute(repository, ["docker", "volume", "rm", volume], "attributed session volume teardown", 30)
+        except BootstrapError as exc:
+            errors.append(str(exc))
+    current = session_inventory(repository)
+    networks = {identity: name for identity, name in resources.get("networks", {}).items()
+                if identity not in record.get("before_networks", []) and identity in current.get("networks", {})}
+    if any(not (owned_test_name(name) or name == "kind") or current["networks"][identity] != name for identity, name in networks.items()):
+        raise BootstrapError("session network ownership mismatch")
+    for identity in networks:
+        try:
+            execute(repository, ["docker", "network", "rm", identity], "attributed test network teardown", 30)
+        except BootstrapError as exc:
+            errors.append(str(exc))
+    current = session_inventory(repository)
+    residual = {"containers": sorted(set(containers) & set(current["containers"])),
+                "volumes": sorted(volumes & set(current["volumes"])),
+                "networks": sorted(set(networks) & set(current.get("networks", {})))}
+    print(json.dumps({"operation": "session resource residual", "residual": residual,
+                      "errors": errors, "status": "FAIL" if errors or any(residual.values()) else "PASS"}), flush=True)
+    if errors or any(residual.values()):
+        raise BootstrapError("session resources remain or cleanup failed")
+    return residual
+
+
 def teardown(repository: Path) -> dict[str, object]:
-    """Allow credential-free teardown only when absence is positively verified."""
-    if not (repository / ".ocor/bootstrap.env").is_file():
-        residual = owned_resources(repository)
-        if any(residual.values()):
-            raise BootstrapError("teardown credentials absent but owned resources remain")
-        return {"status": "PASS", "operation": "teardown", "result": "ALREADY_REMOVED", "residual": residual}
-    execute(repository, [sys.executable, "scripts/reset_test_environment.py", "--execute"], "governed teardown", 180)
+    """Always export residue and preserve failures; remove test attachments first."""
+    errors = []
+    try:
+        cleanup_session_resources(repository)
+    except (BootstrapError, OSError, ValueError, subprocess.SubprocessError) as exc:
+        errors.append(str(exc))
+    credentials = (repository / ".ocor/bootstrap.env").is_file()
+    if credentials:
+        try:
+            execute(repository, [sys.executable, "scripts/reset_test_environment.py", "--execute"], "governed teardown", 180)
+        except (BootstrapError, OSError, subprocess.SubprocessError) as exc:
+            errors.append(str(exc))
     residual = owned_resources(repository)
-    if any(residual.values()):
-        raise BootstrapError("owned resources remain after teardown")
-    return {"status": "PASS", "operation": "teardown", "result": "REMOVED", "residual": residual}
+    failed = bool(errors or any(residual.values()))
+    print(json.dumps({"operation": "teardown residual", "residual": residual, "errors": errors,
+                      "status": "FAIL" if failed else "PASS"}), flush=True)
+    if failed:
+        detail = "owned resources remain after teardown" if credentials else "teardown credentials absent but owned resources remain"
+        raise BootstrapError(detail + ("; " + "; ".join(errors) if errors else ""))
+    return {"status": "PASS", "operation": "teardown", "result": "REMOVED" if credentials else "ALREADY_REMOVED", "residual": residual}
 
 
 def prepare_ca(repository: Path, env_file: Path) -> None:

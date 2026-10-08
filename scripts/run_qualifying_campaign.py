@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the complete runtime suite, stopping on stack failure or the 45-minute limit."""
+"""Run the complete runtime suite, stopping on stack failure or the governed 75-minute full-suite limit."""
 from __future__ import annotations
 
 import argparse
@@ -13,11 +13,22 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
-from bootstrap_ci_environment import collect_stack_diagnostics, redact_campaign_log
+from bootstrap_ci_environment import SessionRecorder, collect_stack_diagnostics, redact_campaign_log
+
+
+FULL_SUITE_LIMIT_SECONDS = 4500
+PO_DECISION_THRESHOLD_SECONDS = 3600
 
 
 class CampaignError(RuntimeError):
     """The campaign cannot supply qualifying evidence."""
+
+
+
+def check_deadline(elapsed: float) -> bool:
+    if elapsed >= FULL_SUITE_LIMIT_SECONDS:
+        raise CampaignError("75-minute campaign limit reached")
+    return elapsed > PO_DECISION_THRESHOLD_SECONDS
 
 
 def check_stack(initial: dict[str, Any], current: dict[str, Any]) -> None:
@@ -85,17 +96,21 @@ def main() -> int:
         parser.error("--repository and --expected-head must be supplied together")
     repository = Path(__file__).resolve().parents[1]
     suite_repository = args.repository.resolve() if args.repository else repository
-    required_modules = ["test_ocor_dev_0048", "test_ocor_dev_0049"] if args.repository else ["test_ocor_dev_0048"]
+    required_modules = ["test_ocor_dev_0048"]
+    if args.repository or (suite_repository / "ocor-runtime/tests/tasks/test_ocor_dev_0049.py").is_file():
+        required_modules.append("test_ocor_dev_0049")
     if not args.execute:
         if args.expected_head:
             verify_revision(suite_repository, args.expected_head)
-        print(json.dumps({"status": "PASS", "mode": "CHECK_ONLY", "repository": str(suite_repository), "suite": "ocor-runtime/tests/", "limit_seconds": 2700}))
+        print(json.dumps({"status": "PASS", "mode": "CHECK_ONLY", "repository": str(suite_repository), "suite": "ocor-runtime/tests/", "limit_seconds": FULL_SUITE_LIMIT_SECONDS}))
         return 0
     output = args.output_dir.resolve()
     output.mkdir(parents=True, exist_ok=True)
     junit = output / "runtime_junit_post_approval.xml"
     command = [sys.executable, "-m", "pytest", "-v", "--cov=src", "--cov-report=term-missing", f"--cov-report=json:{output / 'runtime_coverage_post_approval.json'}", f"--junitxml={junit}", "tests/"]
     process: subprocess.Popen[Any] | None = None
+    recorder: SessionRecorder | None = None
+    decision_required = False
     try:
         if args.expected_head:
             verify_revision(suite_repository, args.expected_head)
@@ -103,20 +118,20 @@ def main() -> int:
         if len(initial) != 11:
             raise CampaignError(f"expected 11 mandatory containers, found {len(initial)}")
         check_stack(initial, initial)
+        recorder = SessionRecorder(repository)
         start = time.monotonic()
         with (output / "post_remediation_runtime.log").open("w") as log:
             process = subprocess.Popen(command, cwd=suite_repository / "ocor-runtime", stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
             while process.poll() is None:
                 check_stack(initial, inspect_stack())
-                if time.monotonic() - start >= 2700:
-                    raise CampaignError("45-minute campaign limit reached")
+                decision_required = check_deadline(time.monotonic() - start) or decision_required
                 time.sleep(5)
             check_stack(initial, inspect_stack())
         if process.returncode:
             raise CampaignError(f"pytest exit code {process.returncode}")
         if args.expected_head:
             verify_revision(suite_repository, args.expected_head)
-        result = {"status": "PASS", "counts": check_junit(junit, required_modules=required_modules), "duration_seconds": time.monotonic() - start, "candidate_head": args.expected_head, "required_modules": required_modules}
+        result = {"status": "PASS", "counts": check_junit(junit, required_modules=required_modules), "duration_seconds": time.monotonic() - start, "candidate_head": args.expected_head, "required_modules": required_modules, "po_decision_required": decision_required}
         (output / "campaign_result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
         print(json.dumps(result))
         return 0
@@ -124,11 +139,19 @@ def main() -> int:
         if process is not None:
             stop(process)
         collect_stack_diagnostics(repository, output / "docker-stats.log")
-        result = {"status": "FAIL", "error": str(exc)}
+        result = {"status": "FAIL", "error": str(exc), "po_decision_required": decision_required}
         (output / "campaign_result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
         print(json.dumps(result))
         return 1
     finally:
+        if process is not None:
+            stop(process)
+        if recorder is not None:
+            try:
+                recorder.finish()
+            except Exception as exc:
+                (output / "campaign_result.json").write_text(json.dumps({"status": "FAIL", "error": str(exc)}, indent=2, sort_keys=True) + "\n")
+                raise
         if process is not None:
             stop(process)
             redact_campaign_log(repository, output / "post_remediation_runtime.log")
