@@ -18,8 +18,9 @@ import time
 from pathlib import Path
 from typing import Any, TypedDict
 
+from acquire_fuseki_archive import acquire, build_context
 from bootstrap_development_environment import replace_env, write_secret_file
-from ocor_bootstrap_lib import BootstrapError, load_json, retry, root, run, validate_locks
+from ocor_bootstrap_lib import BootstrapError, load_json, root, run, validate_locks
 
 
 def redact(text: str, secrets: list[str]) -> str:
@@ -310,27 +311,45 @@ def running_jvm_args(processes: str) -> list[str]:
 
 
 def provision(repository: Path, timeout: int) -> dict[str, object]:
+    deadline = time.monotonic() + timeout
+    def budget() -> int:
+        seconds = int(deadline - time.monotonic())
+        if seconds < 1:
+            raise BootstrapError("total provisioning budget exhausted")
+        return seconds
+
+    def bounded_retry(command: list[str], *, operation_timeout: int, attempts: int = 5) -> subprocess.CompletedProcess[str]:
+        for attempt in range(attempts):
+            result = run(command, cwd=repository, timeout=min(operation_timeout, budget()))
+            if result.returncode == 0:
+                return result
+            if attempt + 1 < attempts:
+                time.sleep(min(2 ** attempt, budget()))
+        return result
+
     errors = validate_locks(repository)
     if errors:
         raise BootstrapError("; ".join(errors))
     env_file = repository / ".ocor/bootstrap.env"
     if env_file.exists():
         raise BootstrapError("CI provisioning requires a fresh worktree-local credential file")
-    present = execute(repository, ["docker", "ps", "-aq", "--filter", "label=com.docker.compose.project=ocor-bootstrap"], "single stack guard", 30)
+    present = execute(repository, ["docker", "ps", "-aq", "--filter", "label=com.docker.compose.project=ocor-bootstrap"], "single stack guard", min(30, budget()))
     if present.strip():
         raise BootstrapError("reset the existing ocor-bootstrap stack before CI provisioning")
     services = load_json(repository / "infra/services.lock.json")["services"]
     for service in services:
         if "image" in service:
-            result = retry(["docker", "pull", service["image"]], cwd=repository, attempts=5, timeout=timeout)
+            result = bounded_retry(["docker", "pull", service["image"]], operation_timeout=timeout)
             if result.returncode:
                 raise BootstrapError(f"pinned pull failed: {service['id']}")
     fuseki = next(service for service in services if service["id"] == "fuseki")["build"]
     dockerfile = (repository / fuseki["dockerfile"]).read_text()
     if f"FROM {fuseki['base_image']}\n" not in dockerfile or fuseki["source_sha512"] not in dockerfile:
         raise BootstrapError("Fuseki recipe differs from the locked base/source")
-    execute_logged(repository, ["docker", "build", "--progress=plain", "--pull", "-t", fuseki["output_image"], "infra/fuseki"], "Fuseki recipe build", timeout, "ci_fuseki_build.log")
-    image_id = execute(repository, ["docker", "image", "inspect", fuseki["output_image"], "--format", "{{.Id}}"], "Fuseki identity capture", 30).strip()
+    archive, acquisition = acquire(repository, timeout=budget())
+    with build_context(repository, archive) as context:
+        execute_logged(repository, ["docker", "build", "--progress=plain", "--pull", "-t", fuseki["output_image"], str(context)], "Fuseki recipe build", budget(), "ci_fuseki_build.log")
+    image_id = execute(repository, ["docker", "image", "inspect", fuseki["output_image"], "--format", "{{.Id}}"], "Fuseki identity capture", min(30, budget())).strip()
     env_file = write_secret_file(repository)
     ca = repository / ".ocor/spire"
     ca.chmod(0o700)
@@ -340,41 +359,41 @@ def provision(repository: Path, timeout: int) -> dict[str, object]:
     resources = ci_resources(repository)
     compose = ["docker", "compose", "-p", "ocor-bootstrap", "--env-file", str(env_file), "-f", "deploy/bootstrap/compose.yaml", "-f", str(resources)]
     server_image = next(service for service in services if service["id"] == "spire-server")["image"]
-    user = execute(repository, ["docker", "image", "inspect", server_image, "--format", "{{.Config.User}}"], "SPIRE image UID", 30).strip()
+    user = execute(repository, ["docker", "image", "inspect", server_image, "--format", "{{.Config.User}}"], "SPIRE image UID", min(30, budget())).strip()
     if user != "1000:1000":
         raise BootstrapError("unexpected pinned SPIRE image UID")
-    execute(repository, compose + ["up", "--detach", "--wait", "--wait-timeout", str(timeout), "spire-server"], "SPIRE server", timeout + 60)
-    token = execute(repository, compose + ["exec", "-T", "spire-server", "/opt/spire/bin/spire-server", "token", "generate", "-socketPath", "/run/spire/sockets/server.sock"], "SPIRE token", 30)
+    execute(repository, compose + ["up", "--detach", "--wait", "--wait-timeout", str(budget()), "spire-server"], "SPIRE server", budget())
+    token = execute(repository, compose + ["exec", "-T", "spire-server", "/opt/spire/bin/spire-server", "token", "generate", "-socketPath", "/run/spire/sockets/server.sock"], "SPIRE token", min(30, budget()))
     if "Token:" not in token:
         raise BootstrapError("SPIRE token output invalid")
     replace_env(env_file, "OCOR_SPIRE_JOIN_TOKEN", token.split("Token:", 1)[1].splitlines()[0].strip())
-    execute(repository, compose + ["up", "--detach", "--wait", "--wait-timeout", str(timeout), "--no-build"], "complete stack", timeout + 60)
+    execute(repository, compose + ["up", "--detach", "--wait", "--wait-timeout", str(budget()), "--no-build"], "complete stack", budget())
     # The pinned image contains a JRE, not jcmd, and PID 1 is Docker's init.
     # Bind the actual Java process to a flag probe in that same runtime.
-    processes = execute(repository, ["docker", "top", "ocor-bootstrap-fuseki-1", "-eo", "pid,args"], "Fuseki running JVM arguments", 30)
+    processes = execute(repository, ["docker", "top", "ocor-bootstrap-fuseki-1", "-eo", "pid,args"], "Fuseki running JVM arguments", min(30, budget()))
     running_jvm_args(processes)
-    flags = execute(repository, ["docker", "exec", "ocor-bootstrap-fuseki-1", "java", "-Xms128m", "-Xmx1G", "-XX:+PrintFlagsFinal", "-version"], "Fuseki JVM heap flag probe", 30)
+    flags = execute(repository, ["docker", "exec", "ocor-bootstrap-fuseki-1", "java", "-Xms128m", "-Xmx1G", "-XX:+PrintFlagsFinal", "-version"], "Fuseki JVM heap flag probe", min(30, budget()))
     if not re.search(r"\bMaxHeapSize\s*=\s*1073741824\b", flags):
         raise BootstrapError("Fuseki heap is not bounded to 1 GiB inside its 2 GiB cgroup")
     agent = ["docker", "exec", "ocor-bootstrap-spire-agent-1", "/opt/spire/bin/spire-agent"]
-    ready = retry(agent + ["healthcheck", "-socketPath", "/run/spire/sockets/agent.sock"], cwd=repository, attempts=5, timeout=10)
+    ready = bounded_retry(agent + ["healthcheck", "-socketPath", "/run/spire/sockets/agent.sock"], operation_timeout=10)
     if ready.returncode:
         raise BootstrapError("SPIRE agent did not become healthy")
     server = ["docker", "exec", "ocor-bootstrap-spire-server-1", "/opt/spire/bin/spire-server"]
-    agents = json.loads(execute(repository, server + ["agent", "list", "-socketPath", "/run/spire/sockets/server.sock", "-output", "json"], "SPIRE attested agent", 30))["agents"]
+    agents = json.loads(execute(repository, server + ["agent", "list", "-socketPath", "/run/spire/sockets/server.sock", "-output", "json"], "SPIRE attested agent", min(30, budget())))["agents"]
     if len(agents) != 1 or agents[0]["id"]["trust_domain"] != "ocor.test":
         raise BootstrapError("unexpected SPIRE attested agent set")
     identity = agents[0]["id"]
     parent = f"spiffe://{identity['trust_domain']}{identity['path']}"
-    execute(repository, server + ["entry", "create", "-socketPath", "/run/spire/sockets/server.sock", "-parentID", parent, "-spiffeID", "spiffe://ocor.test/ocor/control-plane", "-selector", "unix:uid:0"], "control-plane workload entry", 30)
-    material = retry(agent + ["api", "fetch", "x509", "-socketPath", "/run/spire/sockets/agent.sock", "-output", "json"], cwd=repository, attempts=5, timeout=15)
+    execute(repository, server + ["entry", "create", "-socketPath", "/run/spire/sockets/server.sock", "-parentID", parent, "-spiffeID", "spiffe://ocor.test/ocor/control-plane", "-selector", "unix:uid:0"], "control-plane workload entry", min(30, budget()))
+    material = bounded_retry(agent + ["api", "fetch", "x509", "-socketPath", "/run/spire/sockets/agent.sock", "-output", "json"], operation_timeout=15)
     if material.returncode or not any(item.get("spiffe_id") == "spiffe://ocor.test/ocor/control-plane" for item in json.loads(material.stdout).get("svids", [])):
         raise BootstrapError("control-plane SVID absent")
     print(json.dumps({"operation": "control-plane SVID", "exit_code": 0}), flush=True)
     for script in ("deploy/bootstrap/init/initialize_services.py", "deploy/bootstrap/fixtures/load_fixtures.py"):
-        execute(repository, [sys.executable, script, "--env-file", str(env_file)], script, timeout)
-    health = json.loads(execute(repository, [sys.executable, "scripts/verify_external_services.py", "--execute", "--typed"], "typed service health", timeout))
-    return {"status": "PASS", "fuseki_built_image_id": image_id, "fuseki_lock_image_id": fuseki["output_sha256"], "fuseki_max_heap_bytes": 1073741824, "services": health}
+        execute(repository, [sys.executable, script, "--env-file", str(env_file)], script, budget())
+    health = json.loads(execute(repository, [sys.executable, "scripts/verify_external_services.py", "--execute", "--typed"], "typed service health", budget()))
+    return {"status": "PASS", "fuseki_built_image_id": image_id, "fuseki_lock_image_id": fuseki["output_sha256"], "fuseki_max_heap_bytes": 1073741824, "services": health, "fuseki_archive": acquisition, "provisioning_seconds": round(timeout - (deadline - time.monotonic()), 3)}
 
 
 def main() -> int:

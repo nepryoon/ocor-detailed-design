@@ -84,6 +84,17 @@ jobs:
       - name: Reset or positively verify absence of the previous stack
         run: python3 scripts/bootstrap_ci_environment.py --teardown --execute
 
+      - name: Resolve governed Fuseki content address
+        id: fuseki-key
+        run: python3 scripts/acquire_fuseki_archive.py --github-output >> "$GITHUB_OUTPUT"
+
+      - name: Restore exact SHA512-addressed Fuseki archive
+        id: fuseki-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ steps.fuseki-key.outputs.path }}
+          key: ${{ steps.fuseki-key.outputs.key }}
+
       - name: Provision the full pinned disposable stack
         run: |
           set -euo pipefail
@@ -100,6 +111,14 @@ jobs:
               if key.endswith(('PASSWORD', 'TOKEN')):
                   print(f'::add-mask::{value}')
           PYTHON
+
+      - name: Save verified Fuseki archive in this repository cache
+        if: success() && steps.fuseki-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ${{ steps.fuseki-key.outputs.path }}
+          key: ${{ steps.fuseki-key.outputs.key }}
+
 
       - name: Meta-validate schema and validate methodology instance
         run: |
