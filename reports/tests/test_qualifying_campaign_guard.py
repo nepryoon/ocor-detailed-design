@@ -426,3 +426,14 @@ def test_kubernetes_runtime_inventory_rejects_foreign_name(monkeypatch):
     monkeypatch.setattr(GUARD.subprocess, 'run', run)
     with pytest.raises(GUARD.CampaignError, match='scope'):
         GUARD.inspect_kubernetes_runtimes()
+
+
+def test_full_campaign_rejects_an_internal_runtime_restart(tmp_path, monkeypatch):
+    output, json = stub_completed_campaign(tmp_path, monkeypatch, seconds=10)
+    monkeypatch.setattr(GUARD, 'inspect_kubernetes_runtimes', lambda: {
+        'owned-node:containerd': {'restarts': 1, 'active': 'active', 'pid': 6825}})
+    assert GUARD.main() == 1
+    result = json.loads((output / 'campaign_result.json').read_text())
+    assert result['status'] == 'FAIL'
+    assert 'Kubernetes service restarted' in result['error']
+    assert (output / 'kubernetes-diagnostics.log').exists()
