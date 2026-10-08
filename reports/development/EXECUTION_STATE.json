@@ -1,10 +1,10 @@
 {
   "active_iteration": {
-    "branch": "governed/fuseki-local-identity-20261008",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__FUSEKI_LOCAL_IDENTITY_20261008",
+    "branch": "governed/state-sync-fuseki-local-identity-20261008",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__FUSEKI_LOCAL_IDENTITY_STATE_SYNC",
     "decision_id": "DEC-210",
-    "phase": "FUSEKI_IDENTITY_SEALED_PENDING_EXACT_CI",
-    "worktree": ".ocor/worktrees/fuseki-local-identity-20261008"
+    "phase": "STATE_SYNC_PENDING_EXACT_CI",
+    "worktree": ".ocor/worktrees/state-sync-fuseki-local-identity-20261008"
   },
   "backlog_escalations": {
     "OCOR-DEV-0048": {
@@ -1510,7 +1510,7 @@
       "verifier_decision": "OCOR-DEV-0049-VERIFIER-CURSOR (2026-10-07)"
     }
   },
-  "baseline_commit": "ef58743adebe717113832da1094224e5117d1c48",
+  "baseline_commit": "6b407b0f62042ba8eb787948c111b7b50d86967a",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -1863,10 +1863,160 @@
       "blocked_tasks": [],
       "decision_request": "reports/development/decision_requests/FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE.md",
       "id": "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE",
+      "integration": {
+        "branch": "governed/fuseki-local-identity-20261008",
+        "candidate_commit": "b5b54d05ff079fe9fbfa7d3118c2267dd662095e",
+        "checks": [
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:34:33Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443250",
+            "name": "contract",
+            "startedAt": "2026-10-08T16:34:14Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:44:48Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815872/job/113423442036",
+            "name": "rccad-methodology",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR RCCAD methodology gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:44:47Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815847/job/113423441470",
+            "name": "delivery-activation",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR autonomous delivery controls"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:51:31Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815950/job/113423442313",
+            "name": "validation-closure",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR governance and validation closure"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:34:33Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815865/job/113423442076",
+            "name": "supply-chain",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR supply-chain gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:35:05Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815786/job/113423442041",
+            "name": "type-and-lint-gate",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR tooling and bootstrap policy"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:35:08Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443462",
+            "name": "unit",
+            "startedAt": "2026-10-08T16:34:49Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:34:35Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815786/job/113423442658",
+            "name": "tooling-policy",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR tooling and bootstrap policy"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:34:57Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443380",
+            "name": "integration-postgresql",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:35:09Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443744",
+            "name": "backend-compatibility-not-ba-evidence",
+            "startedAt": "2026-10-08T16:34:49Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:34:34Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443377",
+            "name": "fgm-contract-readiness-not-runtime-evidence",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:34:35Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443082",
+            "name": "evidence",
+            "startedAt": "2026-10-08T16:34:14Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:35:15Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423892863",
+            "name": "mandatory-gates",
+            "startedAt": "2026-10-08T16:35:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          }
+        ],
+        "merge_commit": "6b407b0f62042ba8eb787948c111b7b50d86967a",
+        "observed_at": "2026-10-08T16:51:57.198842+00:00",
+        "pull_request": 179,
+        "qualification_scope": "Fuseki local identity unit; no REM17/0049 completion or new runtime/global claims.",
+        "raw_observation_sha256": "57ad1baa90363fc6ae344fe2fd845edbad2994c744a45eb55eac840f786baf7f",
+        "run_ids": [
+          37809815786,
+          37809815847,
+          37809815865,
+          37809815872,
+          37809815873,
+          37809815950
+        ],
+        "status": "PASS_EXACT_HEAD_13_REQUIRED"
+      },
       "non_blocking": true,
       "po_decision": "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE (2026-10-08)",
       "record": "reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/candidate.json",
-      "resolution": "Riacquisizione autorizzata e verificata sullo stesso HEAD; GO Claude Code, zero finding bloccanti. Sigillo di candidato e otto riqualifiche; merge solo dopo13 check verdi esatti. RicettaCOPY presente solo nel REM17 WIP, bootstrap/checker invariati.",
+      "resolution": "PR179 merged after exact13/13 green; local output identity and eight requalifications sealed. Companion acquisition snapshot preserves recipe from REM17 WIP; Dockerfile/checker unchanged in this unit.",
       "scope": "Bootstrap locale con confronto ID esatto irrisolto; pipeline CI eseguibile, lock/checker invariati.",
       "source_reference": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
@@ -1874,7 +2024,7 @@
         "path": "reports/development/decision_requests/FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE.md",
         "status": "WIP_NOT_MERGED"
       },
-      "status": "RESOLVED_EXECUTION_SEALED_PENDING_CI_AND_INTEGRATION"
+      "status": "RESOLVED"
     },
     {
       "blocked_tasks": [
@@ -2050,177 +2200,154 @@
     "reason": "Disposizione puntuale OCOR-DEV-0049-REPAIR-CLAUDE-AUTO: ultimo ciclo 5 NO_GO. Non equivale a tutto il backlog bloccato."
   },
   "latest_ci_evidence": {
-    "branch": "governed/state-sync-ocor-dev-0049-cycle8",
-    "candidate_commit": "f583c89d3db220817fa97580efeb54a87821443b",
+    "branch": "governed/fuseki-local-identity-20261008",
+    "candidate_commit": "b5b54d05ff079fe9fbfa7d3118c2267dd662095e",
     "checks": [
       {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:15Z",
+        "completedAt": "2026-10-08T16:34:33Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091115",
-        "name": "backend-compatibility-not-ba-evidence",
-        "startedAt": "2026-10-08T07:19:57Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR PoC layered mandatory gates"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:19Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091466",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443250",
         "name": "contract",
-        "startedAt": "2026-10-08T07:19:55Z",
+        "startedAt": "2026-10-08T16:34:14Z",
         "status": "COMPLETED",
         "workflowName": "OCOR PoC layered mandatory gates"
       },
       {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:33:33Z",
+        "completedAt": "2026-10-08T16:44:48Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762781/job/113197089923",
-        "name": "delivery-activation",
-        "startedAt": "2026-10-08T07:19:56Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR autonomous delivery controls"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:14Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091158",
-        "name": "evidence",
-        "startedAt": "2026-10-08T07:19:55Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR PoC layered mandatory gates"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:11Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091246",
-        "name": "fgm-contract-readiness-not-runtime-evidence",
-        "startedAt": "2026-10-08T07:19:55Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR PoC layered mandatory gates"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:28Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091258",
-        "name": "integration-postgresql",
-        "startedAt": "2026-10-08T07:19:55Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR PoC layered mandatory gates"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:34Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197282796",
-        "name": "mandatory-gates",
-        "startedAt": "2026-10-08T07:20:30Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR PoC layered mandatory gates"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:33:20Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762841/job/113197090235",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815872/job/113423442036",
         "name": "rccad-methodology",
-        "startedAt": "2026-10-08T07:19:55Z",
+        "startedAt": "2026-10-08T16:34:13Z",
         "status": "COMPLETED",
         "workflowName": "OCOR RCCAD methodology gates"
       },
       {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:14Z",
+        "completedAt": "2026-10-08T16:44:47Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762932/job/113197090903",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815847/job/113423441470",
+        "name": "delivery-activation",
+        "startedAt": "2026-10-08T16:34:13Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR autonomous delivery controls"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T16:51:31Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815950/job/113423442313",
+        "name": "validation-closure",
+        "startedAt": "2026-10-08T16:34:13Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR governance and validation closure"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T16:34:33Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815865/job/113423442076",
         "name": "supply-chain",
-        "startedAt": "2026-10-08T07:19:55Z",
+        "startedAt": "2026-10-08T16:34:13Z",
         "status": "COMPLETED",
         "workflowName": "OCOR supply-chain gates"
       },
       {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:16Z",
+        "completedAt": "2026-10-08T16:35:05Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762888/job/113197090404",
-        "name": "tooling-policy",
-        "startedAt": "2026-10-08T07:19:55Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR tooling and bootstrap policy"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:40Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762888/job/113197090833",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815786/job/113423442041",
         "name": "type-and-lint-gate",
-        "startedAt": "2026-10-08T07:19:55Z",
+        "startedAt": "2026-10-08T16:34:13Z",
         "status": "COMPLETED",
         "workflowName": "OCOR tooling and bootstrap policy"
       },
       {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:15Z",
+        "completedAt": "2026-10-08T16:35:08Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091259",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443462",
         "name": "unit",
-        "startedAt": "2026-10-08T07:19:55Z",
+        "startedAt": "2026-10-08T16:34:49Z",
         "status": "COMPLETED",
         "workflowName": "OCOR PoC layered mandatory gates"
       },
       {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:38:45Z",
+        "completedAt": "2026-10-08T16:34:35Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762794/job/113197090243",
-        "name": "validation-closure",
-        "startedAt": "2026-10-08T07:19:55Z",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815786/job/113423442658",
+        "name": "tooling-policy",
+        "startedAt": "2026-10-08T16:34:13Z",
         "status": "COMPLETED",
-        "workflowName": "OCOR governance and validation closure"
+        "workflowName": "OCOR tooling and bootstrap policy"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T16:34:57Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443380",
+        "name": "integration-postgresql",
+        "startedAt": "2026-10-08T16:34:13Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T16:35:09Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443744",
+        "name": "backend-compatibility-not-ba-evidence",
+        "startedAt": "2026-10-08T16:34:49Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T16:34:34Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443377",
+        "name": "fgm-contract-readiness-not-runtime-evidence",
+        "startedAt": "2026-10-08T16:34:13Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T16:34:35Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443082",
+        "name": "evidence",
+        "startedAt": "2026-10-08T16:34:14Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T16:35:15Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423892863",
+        "name": "mandatory-gates",
+        "startedAt": "2026-10-08T16:35:13Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
       }
     ],
-    "final_head_rule": "Commit finale di soli report: tutti i13 check richiesti SUCCESS sul suo HEAD prima del merge match-head; nessun PASS sorgente attribuito al finale.",
-    "merge_performed": false,
-    "next_condition_for_integration": "Attendere CI finale esatta13/13, poi merge177 e main ff-only. PR176 resta aperta/non mergiata:10/13 FAIL infra; prossima unit\u00e0 REM17.",
-    "observed_at": "2026-10-08T07:38:46.547684+00:00",
-    "passed": 13,
-    "pr": 177,
-    "raw_observation_sha256": "e3b987355be655aae5d505471be7c151714d338c259933105e937dab489b2a7c",
-    "required_checks": 13,
+    "merge_commit": "6b407b0f62042ba8eb787948c111b7b50d86967a",
+    "observed_at": "2026-10-08T16:51:57.198842+00:00",
+    "pull_request": 179,
+    "qualification_scope": "Fuseki local identity unit; no REM17/0049 completion or new runtime/global claims.",
+    "raw_observation_sha256": "57ad1baa90363fc6ae344fe2fd845edbad2994c744a45eb55eac840f786baf7f",
     "run_ids": [
-      37742762781,
-      37742762794,
-      37742762831,
-      37742762841,
-      37742762888,
-      37742762932
+      37809815786,
+      37809815847,
+      37809815865,
+      37809815872,
+      37809815873,
+      37809815950
     ],
-    "state_sync_observation": {
-      "final_head_rule": "No source PASS transferred; await all13 checks of report-only final HEAD and merge with --match-head-commit",
-      "qualification_scope": "Documentary sync only; inherited temporary PR164 deviation does not qualify REM17/0049",
-      "source_head": "667a5230e1a10433572cedc85fd858951b80c571",
-      "source_observed_at": "2026-10-08T10:07:48.844922+00:00",
-      "source_raw_sha256": "bc1842266282fa78a5b84870c1ca81dda2d2a72f329eda13ce0b65a26a79f78c",
-      "source_required_passed": 13,
-      "source_required_total": 13,
-      "source_run_ids": [
-        37758651103,
-        37758651124,
-        37758651135,
-        37758651149,
-        37758651177,
-        37758651179,
-        37758651284
-      ],
-      "status": "SOURCE_CHECKS_GREEN_FINAL_HEAD_REQUIRED"
-    },
-    "status": "SOURCE_HEAD_ALL_13_PASS_FINAL_HEAD_EXACT_CHECK_REQUIRED",
-    "tested_head_sha": "f583c89d3db220817fa97580efeb54a87821443b"
+    "status": "PASS_EXACT_HEAD_13_REQUIRED"
   },
   "loop_roles": {
     "OCOR-DEV-0049": {
@@ -2303,16 +2430,16 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Attendere i13 check obbligatori sullo stesso HEAD del sigillo FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE; merge governato con match-head-commit, poi state sync. A seguire0050/G5; REM17 WIP e0049PR176 restano aperti.",
+  "next_executable_action": "OCOR-DEV-0050:implementation da origin/main in nuovo worktree isolato; prima riacquisire statoCI PR169 REM17/PR1760049 e ready set. REM17 WIP non qualificato,0049GO sigillato ma non mergiato; nessuna esclusione, nuovo ciclo0049 o promozioneG6.",
   "ready_set_observation": {
-    "basis": "backlog hard_dependencies and63 completed_evidence_tasks; independent verdict and merge still required for0049",
-    "observed_at": "2026-10-08T16:04:42.208402+00:00",
+    "basis": "backlog hard_dependencies and63 completed_evidence_tasks; governance unit adds no completed task",
+    "observed_at": "2026-10-08T16:52:37.764781+00:00",
     "ready": [
       "OCOR-DEV-0049",
       "OCOR-DEV-0050"
     ],
-    "reason": "Next distinct authorized unit in published REM17 handoff; final COPY Dockerfile already implemented; no product or REM17 code repair.",
-    "selected_unit": "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE:implementation"
+    "reason": "REM17 published handoff records bounded containerd diagnosis/qualification blocker;0049PR176 awaits REM17CI. G5 remains ready under REM-0017-PRIORITY.",
+    "selected_unit": "OCOR-DEV-0050:implementation"
   },
   "remediation_status": {
     "CI-0048_REAL_BACKEND": {
@@ -2477,6 +2604,156 @@
           "process": "Claude Code, sessione non interattiva, contesto pulito"
         }
       },
+      "integration": {
+        "branch": "governed/fuseki-local-identity-20261008",
+        "candidate_commit": "b5b54d05ff079fe9fbfa7d3118c2267dd662095e",
+        "checks": [
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:34:33Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443250",
+            "name": "contract",
+            "startedAt": "2026-10-08T16:34:14Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:44:48Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815872/job/113423442036",
+            "name": "rccad-methodology",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR RCCAD methodology gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:44:47Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815847/job/113423441470",
+            "name": "delivery-activation",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR autonomous delivery controls"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:51:31Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815950/job/113423442313",
+            "name": "validation-closure",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR governance and validation closure"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:34:33Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815865/job/113423442076",
+            "name": "supply-chain",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR supply-chain gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:35:05Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815786/job/113423442041",
+            "name": "type-and-lint-gate",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR tooling and bootstrap policy"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:35:08Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443462",
+            "name": "unit",
+            "startedAt": "2026-10-08T16:34:49Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:34:35Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815786/job/113423442658",
+            "name": "tooling-policy",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR tooling and bootstrap policy"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:34:57Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443380",
+            "name": "integration-postgresql",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:35:09Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443744",
+            "name": "backend-compatibility-not-ba-evidence",
+            "startedAt": "2026-10-08T16:34:49Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:34:34Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443377",
+            "name": "fgm-contract-readiness-not-runtime-evidence",
+            "startedAt": "2026-10-08T16:34:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:34:35Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423443082",
+            "name": "evidence",
+            "startedAt": "2026-10-08T16:34:14Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T16:35:15Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37809815873/job/113423892863",
+            "name": "mandatory-gates",
+            "startedAt": "2026-10-08T16:35:13Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          }
+        ],
+        "merge_commit": "6b407b0f62042ba8eb787948c111b7b50d86967a",
+        "observed_at": "2026-10-08T16:51:57.198842+00:00",
+        "pull_request": 179,
+        "qualification_scope": "Fuseki local identity unit; no REM17/0049 completion or new runtime/global claims.",
+        "raw_observation_sha256": "57ad1baa90363fc6ae344fe2fd845edbad2994c744a45eb55eac840f786baf7f",
+        "run_ids": [
+          37809815786,
+          37809815847,
+          37809815865,
+          37809815872,
+          37809815873,
+          37809815950
+        ],
+        "status": "PASS_EXACT_HEAD_13_REQUIRED"
+      },
       "requalified_tasks": [
         "OCOR-DEV-0070",
         "OCOR-DEV-0073",
@@ -2488,7 +2765,7 @@
         "OCOR-DEV-0079"
       ],
       "source_commit": "6cfaf8ed6f185862e7eca1cd5c5a9357e0cd5f0c",
-      "status": "SEALED_PENDING_CI_AND_INTEGRATION",
+      "status": "RESOLVED_SEALED_AND_MERGED",
       "verifier": "Claude Code (Anthropic), claude-opus-5-5"
     },
     "R1_state_realignment": {
@@ -2688,23 +2965,23 @@
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "state_sync_ci": {
-    "final_head_rule": "No source PASS transferred; await all13 checks of report-only final HEAD and merge with --match-head-commit",
-    "qualification_scope": "Documentary sync only; inherited temporary PR164 deviation does not qualify REM17/0049",
-    "source_head": "667a5230e1a10433572cedc85fd858951b80c571",
-    "source_observed_at": "2026-10-08T10:07:48.844922+00:00",
-    "source_raw_sha256": "bc1842266282fa78a5b84870c1ca81dda2d2a72f329eda13ce0b65a26a79f78c",
+    "final_head_rule": "Await all13 required checks on exact state-sync HEAD; source qualification cannot substitute finalCI.",
+    "qualification_scope": "State sync only; no new assurance seal or task completion.",
+    "source_head": "b5b54d05ff079fe9fbfa7d3118c2267dd662095e",
+    "source_observed_at": "2026-10-08T16:51:57.198842+00:00",
+    "source_pull_request": 179,
+    "source_raw_sha256": "57ad1baa90363fc6ae344fe2fd845edbad2994c744a45eb55eac840f786baf7f",
     "source_required_passed": 13,
     "source_required_total": 13,
     "source_run_ids": [
-      37758651103,
-      37758651124,
-      37758651135,
-      37758651149,
-      37758651177,
-      37758651179,
-      37758651284
+      37809815786,
+      37809815847,
+      37809815865,
+      37809815872,
+      37809815873,
+      37809815950
     ],
-    "status": "SOURCE_CHECKS_GREEN_FINAL_HEAD_REQUIRED"
+    "status": "PENDING_EXACT_STATE_SYNC_HEAD"
   },
   "state_sync_ci_history": [
     {
@@ -3145,6 +3422,182 @@
       "policy": "Existing main workflow/deviation164 unchanged; passing state-sync checks does not qualify REM or task0049; acquire exact HEAD13/13 before manual match-head merge.",
       "required_checks": 13,
       "status": "PENDING_EXACT_STATE_SYNC_HEAD"
+    },
+    {
+      "historical_latest_ci_evidence": {
+        "branch": "governed/state-sync-ocor-dev-0049-cycle8",
+        "candidate_commit": "f583c89d3db220817fa97580efeb54a87821443b",
+        "checks": [
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T07:20:15Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091115",
+            "name": "backend-compatibility-not-ba-evidence",
+            "startedAt": "2026-10-08T07:19:57Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T07:20:19Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091466",
+            "name": "contract",
+            "startedAt": "2026-10-08T07:19:55Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T07:33:33Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762781/job/113197089923",
+            "name": "delivery-activation",
+            "startedAt": "2026-10-08T07:19:56Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR autonomous delivery controls"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T07:20:14Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091158",
+            "name": "evidence",
+            "startedAt": "2026-10-08T07:19:55Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T07:20:11Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091246",
+            "name": "fgm-contract-readiness-not-runtime-evidence",
+            "startedAt": "2026-10-08T07:19:55Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T07:20:28Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091258",
+            "name": "integration-postgresql",
+            "startedAt": "2026-10-08T07:19:55Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T07:20:34Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197282796",
+            "name": "mandatory-gates",
+            "startedAt": "2026-10-08T07:20:30Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T07:33:20Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762841/job/113197090235",
+            "name": "rccad-methodology",
+            "startedAt": "2026-10-08T07:19:55Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR RCCAD methodology gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T07:20:14Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762932/job/113197090903",
+            "name": "supply-chain",
+            "startedAt": "2026-10-08T07:19:55Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR supply-chain gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T07:20:16Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762888/job/113197090404",
+            "name": "tooling-policy",
+            "startedAt": "2026-10-08T07:19:55Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR tooling and bootstrap policy"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T07:20:40Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762888/job/113197090833",
+            "name": "type-and-lint-gate",
+            "startedAt": "2026-10-08T07:19:55Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR tooling and bootstrap policy"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T07:20:15Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091259",
+            "name": "unit",
+            "startedAt": "2026-10-08T07:19:55Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR PoC layered mandatory gates"
+          },
+          {
+            "__typename": "CheckRun",
+            "completedAt": "2026-10-08T07:38:45Z",
+            "conclusion": "SUCCESS",
+            "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762794/job/113197090243",
+            "name": "validation-closure",
+            "startedAt": "2026-10-08T07:19:55Z",
+            "status": "COMPLETED",
+            "workflowName": "OCOR governance and validation closure"
+          }
+        ],
+        "final_head_rule": "Commit finale di soli report: tutti i13 check richiesti SUCCESS sul suo HEAD prima del merge match-head; nessun PASS sorgente attribuito al finale.",
+        "merge_performed": false,
+        "next_condition_for_integration": "Attendere CI finale esatta13/13, poi merge177 e main ff-only. PR176 resta aperta/non mergiata:10/13 FAIL infra; prossima unit\u00e0 REM17.",
+        "observed_at": "2026-10-08T07:38:46.547684+00:00",
+        "passed": 13,
+        "pr": 177,
+        "raw_observation_sha256": "e3b987355be655aae5d505471be7c151714d338c259933105e937dab489b2a7c",
+        "required_checks": 13,
+        "run_ids": [
+          37742762781,
+          37742762794,
+          37742762831,
+          37742762841,
+          37742762888,
+          37742762932
+        ],
+        "state_sync_observation": {
+          "final_head_rule": "No source PASS transferred; await all13 checks of report-only final HEAD and merge with --match-head-commit",
+          "qualification_scope": "Documentary sync only; inherited temporary PR164 deviation does not qualify REM17/0049",
+          "source_head": "667a5230e1a10433572cedc85fd858951b80c571",
+          "source_observed_at": "2026-10-08T10:07:48.844922+00:00",
+          "source_raw_sha256": "bc1842266282fa78a5b84870c1ca81dda2d2a72f329eda13ce0b65a26a79f78c",
+          "source_required_passed": 13,
+          "source_required_total": 13,
+          "source_run_ids": [
+            37758651103,
+            37758651124,
+            37758651135,
+            37758651149,
+            37758651177,
+            37758651179,
+            37758651284
+          ],
+          "status": "SOURCE_CHECKS_GREEN_FINAL_HEAD_REQUIRED"
+        },
+        "status": "SOURCE_HEAD_ALL_13_PASS_FINAL_HEAD_EXACT_CHECK_REQUIRED",
+        "tested_head_sha": "f583c89d3db220817fa97580efeb54a87821443b"
+      },
+      "retained_at": "2026-10-08T16:52:37.764781+00:00"
     }
   ],
   "status": "IN_PROGRESS",
@@ -3152,5 +3605,5 @@
     "loop_status": "CONTINUE",
     "reason": "0049 GO_FOR_EVIDENCE_SEAL, PR176 CI FAIL/non mergiata; REM17 prioritario eseguibile con budget PO, G5 pronto. Nessun ciclo9."
   },
-  "updated_at": "2026-10-08T16:32:32.334323+00:00"
+  "updated_at": "2026-10-08T16:52:37.764781+00:00"
 }
