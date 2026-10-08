@@ -64,3 +64,8 @@ Il record macchina e i raw log conservano anche i tentativi non qualificanti.
 Il contesto storico sopra è preservato, senza attribuire alle sue date gli esiti
 successivi. Nessun cambiamento0049 o promozioneREM17; E1/E2/Verified0 e NO-GO
 invariati. Review, sigillo e CI esatta precedono il merge di questa unità.
+
+
+## Integrazione 2026-10-08T16:32:32.334323+00:00
+
+GO_FOR_EVIDENCE_SEAL indipendente Claude Code (claude-opus-5-5) su `1e808f3824a3fae42bf279ea3e05a8f3d71dfe13`; request `FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE-1e808f3824a3-0`, verdetto SHA256 `f45427b97fe40cf4d58155324bc925bca0b26176520b3f063f4ef8444e27a970`. Candidato e otto riqualifiche sigillati; CI e merge pending. Tre finding low non bloccanti registrati nel candidato. Companion lock come snapshot storico di acquisizione, ricettaCOPY da REM17 non ancora integrata. Nessuna promozione di claim o completamentoREM17/0049.

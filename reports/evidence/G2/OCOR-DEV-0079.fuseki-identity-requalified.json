@@ -285,6 +285,51 @@
   },
   "full_tested_head": "cf0e31dae674c3b3deef29ed808a165a96f6b1f0",
   "implementer": "Codex (OpenAI)",
+  "independent_verification_result": {
+    "appended_at": "2026-10-08T16:32:32.334323+00:00",
+    "findings": [
+      {
+        "blocking": false,
+        "evidence": "Su HEAD l'entry fuseki dichiara dockerfile=infra/fuseki/Dockerfile (sha256 6018164d..., ADD da archive.apache.org) ma output_sha256=6534156b... e' l'immagine costruita dalla ricetta COPY di bc811af (build_recipe.txt sha256 8704d0e8...). Dopo il merge di questa unita' sola, il Dockerfile dichiarato nel lock di main non puo' produrre l'ID lockato; il legame e' solo nel companion lock (build_recipe_in_main=false). Il bootstrap resta fail-closed (rebuild da infra/fuseki -> 'identity differs'). Divergenza dichiarata nelle limitations e coerente con la decisione PO di change set separato da REM17.",
+        "id": "VF-001",
+        "path": "infra/services.lock.json:9-11",
+        "required_fix": "Nessun fix bloccante. Integrare la modifica ADD->COPY di REM17 prima o insieme alla prossima riacquisizione, oppure aggiungere al test di accettazione un controllo esplicito che registri la differenza hash Dockerfile main vs ricetta, cosi' che l'incoerenza temporanea sia verificata e non solo dichiarata.",
+        "severity": "low"
+      },
+      {
+        "blocking": false,
+        "evidence": "archive_cache='HIT; SHA512 rechecked before build' e' una stringa riassuntiva: il bundle qualification.log non contiene l'output grezzo del ricontrollo pre-COPY (cache_key/verified_sha512 di acquire_fuseki_archive.py). La verifica SHA512 e' comunque provata dal build.log (sha512sum -c: OK, step #7) e l'ho riacquisita in modo indipendente: cache e checksum ufficiali Apache coincidono con ba65f586...a132.",
+        "id": "VF-002",
+        "path": "infra/fuseki/local_identity.lock.json:3",
+        "required_fix": "Nelle prossime acquisizioni archiviare nel raw log l'output JSON dell'acquisizione (cache HIT/MISS, cache_key, source, verified_sha512) come richiesto da REM-0017-CI-ARCHIVE-ACQUISITION.",
+        "severity": "low"
+      },
+      {
+        "blocking": false,
+        "evidence": "Il diff aggiunge 19 path del change set all'allowlist extension_paths di un validator, mentre l'autorizzazione PO recita 'nessuna modifica validator/checker'. E' il meccanismo gia' usato dai precedenti change set governed (git log del file) e non indebolisce alcun controllo oltre all'ammissione esatta dei path del change set; il checker d'identita' (ocor_bootstrap_lib.py) e il bootstrap sono byte-identici a main (verificato dal test e da sha256).",
+        "id": "VF-003",
+        "path": "scripts/validate_ocor_development_plan.py:275-293",
+        "required_fix": "Nessun fix bloccante; esplicitare nella PR che la sola modifica a script e' l'allowlist di planning, distinta dal checker del lock oggetto del vincolo PO.",
+        "severity": "low"
+      }
+    ],
+    "head_sha": "1e808f3824a3fae42bf279ea3e05a8f3d71dfe13",
+    "implementer": "Codex (OpenAI)",
+    "not_executed": [
+      "ADVERSARIAL_CONFORMANCE con clone pulito da origin: non richiesto (review_type REMEDIATION); stack comunque azzerato e ricreato da zero con reset+bootstrap prima della suite qualificante.",
+      "Rebuild indipendente dell'immagine dalla ricetta: non eseguito di proposito per non sostituire l'immagine locale governata; l'ID non e' riproducibile bit-a-bit e nessuna rebuild-equality e' asserita. Identita' verificata su immagine presente, layer base, history e build.log.",
+      "CI esatta sull'HEAD e sigillo: fuori scope di questa verifica (iterazione di integrazione separata, nessuna PR aperta)."
+    ],
+    "request_id": "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE-1e808f3824a3-0",
+    "review_type": "REMEDIATION",
+    "verdict": "GO_FOR_EVIDENCE_SEAL",
+    "verdict_file_sha256": "f45427b97fe40cf4d58155324bc925bca0b26176520b3f063f4ef8444e27a970",
+    "verifier": {
+      "independence_limits": "processo e contesto separati; verifier Claude Code (Anthropic), implementatore Codex (OpenAI): modelli e fornitori diversi; nessun riassunto dell'implementatore usato come prova, tutti i controlli rieseguiti sullo stack reale ricreato.",
+      "model": "claude-opus-5-5",
+      "process": "Claude Code, sessione non interattiva, contesto pulito"
+    }
+  },
   "inputs": {
     "deploy/bootstrap/compose.yaml": "9d9141e55b5b06d52d6a49ca1245bcbc54dfff058669fa92cae56f76b4994d83",
     "infra/services.lock.json": "6d0c8678521ca7f3831324dddb6df9796cd129b941746386809688bd558c98c2",
@@ -327,9 +372,10 @@
   "rollback": null,
   "runtime_tree_unchanged_since_full": true,
   "schema_version": 1.0,
-  "status": "REQUALIFIED_PENDING_INDEPENDENT_REMEDIATION_REVIEW",
+  "sealed_at": "2026-10-08T16:32:32.334323+00:00",
+  "status": "SEALED_REQUALIFIED_PENDING_CI_AND_INTEGRATION",
   "supersedes": "OCOR-DEV-0079-requalified-b920411a8aa5",
   "supersedes_sha256": "60e9b5bffc0ff10ed32f078a956c4c1f5928711271c5acdf869387bf32ab1cb6",
   "task_id": "OCOR-DEV-0079",
-  "verifier": "Claude Code (Anthropic), pending independent process/context"
+  "verifier": "Claude Code (Anthropic), claude-opus-5-5, separate process/context"
 }

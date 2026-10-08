@@ -409,6 +409,173 @@
     }
   ],
   "implementer": "Codex (OpenAI)",
+  "independent_verification_result": {
+    "appended_at": "2026-10-08T16:32:32.334323+00:00",
+    "commands": [
+      {
+        "command": "git worktree add --detach /tmp/ocor-verify-<id>/wt 1e808f3824a3fae42bf279ea3e05a8f3d71dfe13",
+        "exit_code": 0,
+        "summary": "worktree detached all'HEAD esatto; diff ef58743..HEAD = 26 path, 4 commit"
+      },
+      {
+        "command": "sha256sum -c inputs/normative/SHA256SUMS",
+        "exit_code": 0,
+        "summary": "inputs/ intatto"
+      },
+      {
+        "command": "git diff --name-status ef58743adebe717113832da1094224e5117d1c48..HEAD",
+        "exit_code": 0,
+        "summary": "solo aggiunte + modifiche a services.lock (1 riga output_sha256), EXECUTION_STATE/ITERATION_LOG/MODEL_HANDOFF, G2/MANIFEST (solo append), OCOR_PLAN_RUN_STATE, validate_ocor_development_plan.py (allowlist); nessun record sigillato modificato"
+      },
+      {
+        "command": "cd ocor-runtime && uv sync --frozen --extra test --extra lint",
+        "exit_code": 0,
+        "summary": "ambiente isolato nel worktree"
+      },
+      {
+        "command": "ocor-runtime/.venv/bin/python -m pytest reports/tests/test_fuseki_local_identity.py -q",
+        "exit_code": 0,
+        "summary": "14 passed (1 positivo + 13 negativi: identita', base, SHA512, provenienza, altro valore del lock, tamper ricetta con hash ricalcolato, ricetta = Dockerfile bc811af, bootstrap/validator byte-identici a main)"
+      },
+      {
+        "command": "python3 scripts/validate_runtime_evidence.py --task FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE --non-skipped --manifest reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/MANIFEST.json",
+        "exit_code": 0,
+        "summary": "PASS"
+      },
+      {
+        "command": "python3 scripts/validate_runtime_evidence.py --task OCOR-DEV-00{70,73,74,75,76,77,78,79} --non-skipped --manifest reports/evidence/G2/MANIFEST.json",
+        "exit_code": 0,
+        "summary": "8/8 PASS"
+      },
+      {
+        "command": "python3 scripts/validate_runtime_evidence.py --non-skipped",
+        "exit_code": 2,
+        "summary": "forma senza --task/--manifest non supportata dallo script (argparse); eseguita nelle forme per-task sopra"
+      },
+      {
+        "command": "python3 scripts/validate_evidence_input_drift.py",
+        "exit_code": 0,
+        "summary": "PASS, drifted_tasks=[]"
+      },
+      {
+        "command": "python3 scripts/validate_rccad.py --base-ref ef58743adebe717113832da1094224e5117d1c48",
+        "exit_code": 0,
+        "summary": "PASS_LOCAL_PRECHECK"
+      },
+      {
+        "command": "python3 scripts/validate_language_policy.py",
+        "exit_code": 0,
+        "summary": "PASS"
+      },
+      {
+        "command": "python3 scripts/validate_ocor_change_scope.py --base ef58743adebe717113832da1094224e5117d1c48",
+        "exit_code": 0,
+        "summary": "PASS: 26 changed paths; immutable surfaces untouched; task ledger stable"
+      },
+      {
+        "command": "python3 scripts/validate_ocor_development_plan.py --authorized-extension --base-ref ef58743adebe717113832da1094224e5117d1c48",
+        "exit_code": 0,
+        "summary": "PASS 37, NOT_EXECUTED 2 (tool opzionali); rigenera 2 report planning con la base ref (artefatto benigno, ripristinato nel worktree temporaneo)"
+      },
+      {
+        "command": "ruff check .",
+        "exit_code": 0,
+        "summary": "All checks passed"
+      },
+      {
+        "command": "ocor-runtime/.venv/bin/python -m mypy",
+        "exit_code": 0,
+        "summary": "Success: no issues found in 69 source files (configurazione CI)"
+      },
+      {
+        "command": "python -m pytest reports/tests/{test_bootstrap_lock_validation,test_autonomous_tooling_policy,test_evidence_input_drift,test_rccad_methodology,test_validate_language_policy,test_runtime_evidence_validator,test_generate_contracts_reference_resolution,test_backlog_generator_reality_parity,test_language_migration_benchmark_harness,test_authoritative_contract_conformance}.py -q",
+        "exit_code": 0,
+        "summary": "82 passed, 11 subtests passed"
+      },
+      {
+        "command": "sha512sum <cache content-addressed REM17>/apache-jena-fuseki.tar.gz; curl archive.apache.org e downloads.apache.org .../apache-jena-fuseki-6.2.0.tar.gz.sha512",
+        "exit_code": 0,
+        "summary": "SHA512 ba65f586...a132 identico al lock e ai checksum ufficiali Apache; provenance.json della cache = dlcdn.apache.org (CDN ufficiale Apache, nessun mirror terzo)"
+      },
+      {
+        "command": "docker image inspect eclipse-temurin@sha256:db1689...73b0 / ocor/jena-fuseki:6.2.0; docker history",
+        "exit_code": 0,
+        "summary": "base Id = digest lockato, 5 layer identici al companion lock e prefisso dei layer dell'immagine; immagine Id sha256:6534156b...cc2b = output_sha256; history = ricetta COPY + ARG FUSEKI_SHA512 + USER 10001"
+      },
+      {
+        "command": "scripts/reset_test_environment.py --execute; bootstrap_development_environment.py --execute --timeout 600",
+        "exit_code": 0,
+        "summary": "primo tentativo con bootstrap.env della checkout principale fallito (CA SPIRE del path principale); rigenerato env locale: bootstrap PASS senza rebuild, controllo d'identita' invariato accetta l'immagine esatta; 11 container healthy, fuseki su Image 6534156b"
+      },
+      {
+        "command": "initialize_services.py; load_fixtures.py; register_control_plane.py.txt (letto prima); verify_external_services.py --execute --typed",
+        "exit_code": 0,
+        "summary": "tutti PASS; entry SPIRE control-plane unix:uid:0 identica a quella di REM17 bootstrap_ci_environment.py:388; SVID ottenuto; health typed con negativi FAIL_CLOSED"
+      },
+      {
+        "command": "pytest -v -rs tests/ (ocor-runtime) senza OCOR_LIVE_POSTGRES_DSN",
+        "exit_code": 1,
+        "summary": "1045 passed, 5 skipped, 51 errors: tutti per DSN assente nel mio ambiente (fail-closed atteso), non qualificante; ripetuto con ambiente come CI/run_dec211_evidence.py"
+      },
+      {
+        "command": "reset + bootstrap + init + fixtures + SPIRE + health, poi OCOR_LIVE_POSTGRES_DSN=...:55433 pytest -v -rs --junitxml tests/",
+        "exit_code": 0,
+        "summary": "1101 passed in 370.56s; JUnit: 0 skip/failure/error; test_ocor_dev_0048: 196 casi, 0 skip, 0 fail (controllo compensativo CI-0048-REAL-BACKEND); Fuseki ha servito 105 richieste reali"
+      },
+      {
+        "command": "scripts/fault_inject_test_environment.py fuseki pause --bounded --execute --timeout 60",
+        "exit_code": 0,
+        "summary": "detected+recovered PASS"
+      },
+      {
+        "command": "scripts/reset_test_environment.py --execute; git worktree remove --force",
+        "exit_code": 0,
+        "summary": "0 container, 0 volumi, 0 reti ocor-bootstrap residui; worktree rimosso; checkout principale pulita"
+      }
+    ],
+    "findings": [
+      {
+        "blocking": false,
+        "evidence": "Su HEAD l'entry fuseki dichiara dockerfile=infra/fuseki/Dockerfile (sha256 6018164d..., ADD da archive.apache.org) ma output_sha256=6534156b... e' l'immagine costruita dalla ricetta COPY di bc811af (build_recipe.txt sha256 8704d0e8...). Dopo il merge di questa unita' sola, il Dockerfile dichiarato nel lock di main non puo' produrre l'ID lockato; il legame e' solo nel companion lock (build_recipe_in_main=false). Il bootstrap resta fail-closed (rebuild da infra/fuseki -> 'identity differs'). Divergenza dichiarata nelle limitations e coerente con la decisione PO di change set separato da REM17.",
+        "id": "VF-001",
+        "path": "infra/services.lock.json:9-11",
+        "required_fix": "Nessun fix bloccante. Integrare la modifica ADD->COPY di REM17 prima o insieme alla prossima riacquisizione, oppure aggiungere al test di accettazione un controllo esplicito che registri la differenza hash Dockerfile main vs ricetta, cosi' che l'incoerenza temporanea sia verificata e non solo dichiarata.",
+        "severity": "low"
+      },
+      {
+        "blocking": false,
+        "evidence": "archive_cache='HIT; SHA512 rechecked before build' e' una stringa riassuntiva: il bundle qualification.log non contiene l'output grezzo del ricontrollo pre-COPY (cache_key/verified_sha512 di acquire_fuseki_archive.py). La verifica SHA512 e' comunque provata dal build.log (sha512sum -c: OK, step #7) e l'ho riacquisita in modo indipendente: cache e checksum ufficiali Apache coincidono con ba65f586...a132.",
+        "id": "VF-002",
+        "path": "infra/fuseki/local_identity.lock.json:3",
+        "required_fix": "Nelle prossime acquisizioni archiviare nel raw log l'output JSON dell'acquisizione (cache HIT/MISS, cache_key, source, verified_sha512) come richiesto da REM-0017-CI-ARCHIVE-ACQUISITION.",
+        "severity": "low"
+      },
+      {
+        "blocking": false,
+        "evidence": "Il diff aggiunge 19 path del change set all'allowlist extension_paths di un validator, mentre l'autorizzazione PO recita 'nessuna modifica validator/checker'. E' il meccanismo gia' usato dai precedenti change set governed (git log del file) e non indebolisce alcun controllo oltre all'ammissione esatta dei path del change set; il checker d'identita' (ocor_bootstrap_lib.py) e il bootstrap sono byte-identici a main (verificato dal test e da sha256).",
+        "id": "VF-003",
+        "path": "scripts/validate_ocor_development_plan.py:275-293",
+        "required_fix": "Nessun fix bloccante; esplicitare nella PR che la sola modifica a script e' l'allowlist di planning, distinta dal checker del lock oggetto del vincolo PO.",
+        "severity": "low"
+      }
+    ],
+    "head_sha": "1e808f3824a3fae42bf279ea3e05a8f3d71dfe13",
+    "implementer": "Codex (OpenAI)",
+    "not_executed": [
+      "ADVERSARIAL_CONFORMANCE con clone pulito da origin: non richiesto (review_type REMEDIATION); stack comunque azzerato e ricreato da zero con reset+bootstrap prima della suite qualificante.",
+      "Rebuild indipendente dell'immagine dalla ricetta: non eseguito di proposito per non sostituire l'immagine locale governata; l'ID non e' riproducibile bit-a-bit e nessuna rebuild-equality e' asserita. Identita' verificata su immagine presente, layer base, history e build.log.",
+      "CI esatta sull'HEAD e sigillo: fuori scope di questa verifica (iterazione di integrazione separata, nessuna PR aperta)."
+    ],
+    "request_id": "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE-1e808f3824a3-0",
+    "review_type": "REMEDIATION",
+    "verdict": "GO_FOR_EVIDENCE_SEAL",
+    "verdict_file_sha256": "f45427b97fe40cf4d58155324bc925bca0b26176520b3f063f4ef8444e27a970",
+    "verifier": {
+      "independence_limits": "processo e contesto separati; verifier Claude Code (Anthropic), implementatore Codex (OpenAI): modelli e fornitori diversi; nessun riassunto dell'implementatore usato come prova, tutti i controlli rieseguiti sullo stack reale ricreato.",
+      "model": "claude-opus-5-5",
+      "process": "Claude Code, sessione non interattiva, contesto pulito"
+    }
+  },
   "inputs": {
     "infra/fuseki/local_identity.lock.json": "1205874fb7525010e5868246b1ddd74f036241ba60ec91051718b0437188d720",
     "infra/services.lock.json": "6d0c8678521ca7f3831324dddb6df9796cd129b941746386809688bd558c98c2",
@@ -440,7 +607,8 @@
   "runtime_tree_unchanged_since_full": true,
   "schema_version": "1.0",
   "scope": "Dedicated governed local image identity reacquisition; REM-0017 and0049 are not promoted.",
-  "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION",
+  "sealed_at": "2026-10-08T16:32:32.334323+00:00",
+  "status": "SEALED_PENDING_CI_AND_INTEGRATION",
   "supervision_invocation_erratum": {
     "attempt": "qualification-attempt2",
     "disposition": "Historical only. Complete fresh run using unchanged stack/deadline/JUnit guard functions and main guard0048; all tests/ executed.",
@@ -456,5 +624,5 @@
   "task_id": "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE",
   "tdd_exception": "Declarative local lock reacquisition; RCCAD test strategy permits configuration exception. Existing input-drift validator demonstrated RED8 mismatches before requalification. Positive/negative acceptance and real qualification remain mandatory.",
   "temporary_ci_generated_artifacts": "Existing CI report scripts regenerated five tracked artifacts, including the existing DEC208 checksum manifest. Diffs preserved outside Git and all five restored byte-for-byte; no authoritative snapshot or approval change is part of the change set.",
-  "verifier": "Claude Code (Anthropic), pending independent process/context"
+  "verifier": "Claude Code (Anthropic), claude-opus-5-5, separate process/context"
 }

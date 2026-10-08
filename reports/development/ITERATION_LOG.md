@@ -4654,3 +4654,14 @@ Gate documentali: rccad PASS_LOCAL_PRECHECK, scope/language/ruff PASS, mypy 69 s
 - Nessuna PR di questa unità prima del verdetto. Richiesta esterna sul finale dopo gate/push; CI esatta successiva obbligatoria. PR169draft/176 aperte; poi0050/G5, REM17 locale restaWIP, nessun nuovo ciclo0049.
 
 - Gate finali: drift0/167 su63task; ruff/mypy strict69file/language/scope/checksum8/8/evidenza principale e8riqualifiche PASS. RCCAD PASS_LOCAL_PRECHECK con CI_REQUIRED; piano37 PASS/2 tool opzionali NOT_EXECUTED dopo settle del solo self-hash della allowlist precisa. Nessun controllo optional trasformato inPASS. Ultima shell dei test linked inizialmente non isolata27PASS/2skip è stata rifiutata e ripetuta con PATHpinned29PASS/0skip. Language guard ha rifiutato anche Dockerfile.txt: ricetta rinominata build_recipe.txt con gli stessi byte; guard invariato. I referti CI preesistenti generati da script sono stati tutti ripristinati, checksum approvato incluso.
+
+
+## 2026-10-08T16:32:32.334323+00:00 — FUSEKI local identity: integrazione del GO indipendente
+
+- Unità FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE:integration, baselineef58743adebe717113832da1094224e5117d1c48, worktree isolato. GO esatto1e808f3824a3fae42bf279ea3e05a8f3d71dfe13, requestFUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE-1e808f3824a3-0, SHA256f45427b97fe40cf4d58155324bc925bca0b26176520b3f063f4ef8444e27a970, verifier Claude Code/Anthropic claude-opus-5-5, implementatore Codex/OpenAI; fornitori/processi/contesti separati. Nessun verdetto scritto o modificato.
+- Sigillo candidato e otto riqualifiche, raw/input invariati, originali superseduti preservati. Nessun nuovo completed; ledger63,0049PR176 e REM17PR169WIP invariati. CI esatta pending; nessun merge o bypass prima dei13 check verdi.
+- Tre finding low non bloccanti conservati: ricettaCOPY REM17 distinta dal Dockerfile main, rawJSON cache da archiviare nelle prossime acquisizioni, sola allowlist planning modificata; checker/validator lock e bootstrap invariati. Companion lock conserva stato al momento dell’acquisizione; sigillo nel record assurance. Nessuna rebuild-equality asserita.
+- Preflight digest8/8, harness14 PASS, toolchain9/9, drift0/167; bootstrap/init/fixture/health PASS. Init/fixture avviati prematuramente mentre bootstrap ancora in background: FAIL conservati, retry unico in sequenza dopo completamento PASS. Printerhealth KeyError dopo PASS e lookup iniziale supersedes errato senza scritture registrati, nessun PASS dai tentativi falliti.
+- E1=0/E2=0, zero Verified, runtime NOT_ESTABLISHED, PoC/Production NO-GO invariati. Nessuna riparazione0049 o qualificaREM17.
+
+- Gate del sigillo: RCCAD PASS_LOCAL_PRECHECK/CI_REQUIRED, drift0/167, scope/language/ruff/evidence PASS, mypy strict69 sorgenti PASS dopo sync frozen test/lint (prima modulo assente NOT_EXECUTED), piano37 PASS/2 tool opzionali NOT_EXECUTED. Tutti input e originali superseduti invariati; nessun nuovo test o codice modificato dal sigillo.
