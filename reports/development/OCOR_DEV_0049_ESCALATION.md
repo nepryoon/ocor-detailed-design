@@ -340,3 +340,12 @@ Preflight corrente: inputs 8/8, harness 14 PASS, drift 0/167 su 63 task, toolcha
 Bootstrap locale **FAIL**, ID Fuseki diverso dal lock; salute **NOT_EXECUTED**, nessuno
 stack avviato. Suite runtime locale **NOT_EXECUTED** per unità solo documentale.
 Raw log/hash in MODEL_HANDOFF, `/home/luca/.ocor-codex/state-sync-0049-cycle7-verdict`. Claim fence invariato.
+
+
+## 2026-10-08T07:18:03.967776+00:00 — REPAIR-8 e disposition del verdetto indipendente
+
+La decisione PO `OCOR-DEV-0049-REPAIR-8` (2026-10-07) supersede il divieto di ciclo8 del record precedente. Implementatore ciclo8 Claude Code; verifier effettivo Grok4.7 (Cursor), fallback previsto dopo due interruzioni Codex. Il ciclo7 e le relative evidenze NO_GO restano storia immutata.
+
+Verdetto `OCOR-DEV-0049-b14e4bf59695-8` su `b14e4bf596959de35313dd9a6ee538576432ffd2`: **GO_FOR_EVIDENCE_SEAL**, nessun finding/NOT_EXECUTED, SHA256 `130a47fc98ed61fc0865079418ff9df3a2877a8d42b140357f3a8d6a1f912d4b`. Riproduzioni indipendenti:390 PASS x3 e full1491 PASS, zero skip/failure/error. Candidato sigillato da Codex nel solo record/manifest su `df444af855e884d7783612b302e008b90105fe13`; nessuna riparazione codice del loop.
+
+PR [#176](https://github.com/nepryoon/ocor-detailed-design/pull/176) aperta: CI finale **FAIL**, 10/13 check richiesti verdi, `rccad-methodology, delivery-activation, validation-closure` fallisce. Il task è `VERIFIED_SEALED_PENDING_CI_REMEDIATION`, **non** completato/mergiato. Nessun finding funzionale aperto del ciclo8; il precedente VF-001 è superseduto dalla correzione/verifica8. Nessun ciclo9. Prossimo lavoro REM-0017 separato secondo REM-0017-PRIORITY e nuovo budget75m, poi check/merge sull’HEAD esatto di0049. Nessuna riduzione di copertura o soglia, E1/E2 e claim invariati.

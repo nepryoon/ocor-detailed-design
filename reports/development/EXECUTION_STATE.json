@@ -1,10 +1,10 @@
 {
   "active_iteration": {
-    "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_REM_0017_REPAIR1",
+    "branch": "governed/state-sync-ocor-dev-0049-cycle8",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__0049_CYCLE8_INTEGRATION_STATE_SYNC",
     "decision_id": "DEC-210",
-    "phase": "REM_0017_REPAIR1_EXACT_CI_FAIL_STATE_SYNC_PENDING",
-    "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
+    "phase": "0049_VERIFIED_SEALED_CI_INFRASTRUCTURE_BLOCKED",
+    "worktree": ".ocor/worktrees/state-sync-ocor-dev-0049-cycle8"
   },
   "backlog_escalations": {
     "OCOR-DEV-0048": {
@@ -269,40 +269,109 @@
       ]
     },
     "OCOR-DEV-0049": {
-      "cycles_exhausted": 7,
+      "cycles_exhausted": 8,
       "decision_request": "reports/development/decision_requests/OCOR-DEV-0049-REPAIR-BUDGET.md",
       "escalation_record": "reports/development/OCOR_DEV_0049_ESCALATION.md",
-      "final_findings": [
-        {
-          "blocking": true,
-          "evidence": "La funzione reale receipt_checkpoint_inconsistencies (compose.profiles.yaml:1124-1126), invocata da latest_valid_receipt prima di RESTORE_TESTED (riga 1179), accetta una ricevuta PASSED il cui replayed_event_ids non e il journal checkpointato. Probe sul modulo estratto dall'HEAD, checkpoint entries=3 max_deletion_epoch=9 last_event_id=evt-del-c (ordine codepoint evt-del-B, evt-del-a, evt-del-c): middle_swap ['evt-del-a','evt-del-B','evt-del-c'] -> []; foreign_nonfinal ['evt-del-FOREIGN','evt-del-a','evt-del-c'] -> []. Stessa falla a due id: checkpoint last_event_id=evt-del-a, replayed ['evt-del-FOREIGN','evt-del-a'] -> []. L'inversione che cambia l'ultimo id e l'omissione sono rifiutate, e i test live 7/7 e 9/7 (collation en_US.utf8, journal_max 9 > metadata_max 7, omissione, ordine locale, epoch sotto checkpoint) sono PASS: non coprono la sostituzione di un id non finale ne una permutazione che conserva last_event_id. Il commento della funzione richiede invece ogni tombstone checkpointato, una volta, con l'event id originale. Lista vuota significa ricevuta coerente e, sul boundary, RESTORE_TESTED.",
-          "id": "VF-001",
-          "path": "deploy/helm/ocor-poc/compose.profiles.yaml:1124",
-          "required_fix": "Vincolare replayed_event_ids all'intera sequenza ordinata degli event id del journal firmato, o al digest di quella sequenza, dentro journalCheckpoints. receipt_checkpoint_inconsistencies deve rifiutare con memory:tombstones_not_replayed ogni omissione, duplicato, sostituzione e permutazione, non solo un last_event_id diverso. Aggiungere il negativo unitario e live in cui un id non finale e sostituito e quello in cui due id non finali sono scambiati lasciando invariato last_event_id; entrambi devono dare RESTORE_RECEIPT_INCONSISTENT sul boundary, con il positivo canonico ancora accettato.",
-          "severity": "high"
-        }
-      ],
+      "final_findings": [],
       "final_verdict": {
-        "blocking_findings": [
-          "VF-001"
+        "blocking_findings": [],
+        "commands": [
+          {
+            "command": "sha256sum -c inputs/normative/SHA256SUMS",
+            "exit_code": 0,
+            "summary": "8/8 digest normativi OK sull'HEAD b14e4bf"
+          },
+          {
+            "command": "uv sync --directory ocor-runtime --frozen --extra test --extra lint",
+            "exit_code": 0,
+            "summary": "ambiente frozen gia' allineato (uv 0.12.5)"
+          },
+          {
+            "command": "python3 scripts/validate_language_policy.py",
+            "exit_code": 0,
+            "summary": "PASS"
+          },
+          {
+            "command": "python3 scripts/validate_evidence_input_drift.py",
+            "exit_code": 0,
+            "summary": "PASS, 0 drift su 167 input e 63 task"
+          },
+          {
+            "command": "python3 scripts/validate_ocor_change_scope.py --base origin/main",
+            "exit_code": 0,
+            "summary": "PASS, 14 path nel perimetro del task rispetto a origin/main; inputs intatti"
+          },
+          {
+            "command": "python3 scripts/validate_rccad.py --base-ref origin/main",
+            "exit_code": 0,
+            "summary": "PASS_LOCAL_PRECHECK, dynamic_assurance CI_REQUIRED"
+          },
+          {
+            "command": "python3 scripts/validate_runtime_evidence.py --task OCOR-DEV-0049 --manifest reports/evidence/G4/MANIFEST.json --non-skipped",
+            "exit_code": 0,
+            "summary": "PASS"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint ruff check .",
+            "exit_code": 0,
+            "summary": "All checks passed"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint mypy --strict",
+            "exit_code": 0,
+            "summary": "nessun problema in 69 sorgenti"
+          },
+          {
+            "command": "ocor-runtime/.venv/bin/python3 scripts/verify.py --json",
+            "exit_code": 0,
+            "summary": "PASS 14, FAIL 0, NOT_EXECUTED 0"
+          },
+          {
+            "command": "probe schema_and_digest.py sul modulo estratto da compose.profiles.yaml",
+            "exit_code": 0,
+            "summary": "digest della sequenza codepoint; permutazione, sostituzione non finale, omissione, aggiunta, duplicazione e caso a due id rifiutati con memory:tombstones_not_replayed; recovery-point/1 rifiutato MANIFEST_SCHEMA_INVALID; recovery-point/2 accettato"
+          },
+          {
+            "command": "python3 scripts/reset_test_environment.py --execute && python3 <REM 4336137>/scripts/bootstrap_ci_environment.py --execute --timeout 300",
+            "exit_code": 0,
+            "summary": "stack ricreato due volte (prima delle suite del task e prima della suite completa); servizi READY; heap Fuseki 1 GiB; ID costruito diverso dal lock e non asserito uguale"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task1)",
+            "exit_code": 0,
+            "summary": "390 passed, 0 skipped, 0 failed, 2232.21s"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task2)",
+            "exit_code": 0,
+            "summary": "390 passed, 0 skipped, 0 failed, 2236.91s"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task3)",
+            "exit_code": 0,
+            "summary": "390 passed, 0 skipped, 0 failed, 2235.97s"
+          },
+          {
+            "command": "OCOR_LIVE_POSTGRES_DSN=postgresql://ocor@127.0.0.1:55433/ocor uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/",
+            "exit_code": 0,
+            "summary": "1491 passed, 0 skipped, 0 failed, 3146.50s; test_ocor_dev_0048.py 196 passed, 0 skipped, 0 failed; nessun OOM"
+          }
         ],
-        "created_at": "2026-10-07T16:53:13Z",
-        "findings": [
-          "VF-001"
-        ],
-        "head_sha": "9d86abebc7626a36115540a2711772c1d2d19e23",
-        "historical_repairs": "Riparazioni cicli 2\u20136 Claude Code; ciclo 7 Codex",
-        "implementer": "Codex (OpenAI), ciclo 7",
+        "created_at": "2026-10-08T06:55:57Z",
+        "findings": [],
+        "head_sha": "b14e4bf596959de35313dd9a6ee538576432ffd2",
+        "historical_repairs": "Riparazioni cicli 2\u20136 e 8 Claude Code; ciclo 7 Codex; verifica ciclo 7 Grok 4.7 (Cursor).",
+        "implementer": "Claude Code (Anthropic), ciclo 8",
         "not_executed": [],
-        "repair_cycle": 7,
-        "request_id": "OCOR-DEV-0049-9d86abebc762-7",
+        "repair_cycle": 8,
+        "request_id": "OCOR-DEV-0049-b14e4bf59695-8",
         "same_model_separate_contexts": false,
-        "verdict": "NO_GO",
-        "verdict_file_sha256": "bc8539a202ce6d88e711a7832e71cf78902ea5e6fee2cd3b609ffa8628ed8e7e",
+        "verdict": "GO_FOR_EVIDENCE_SEAL",
+        "verdict_file_sha256": "130a47fc98ed61fc0865079418ff9df3a2877a8d42b140357f3a8d6a1f912d4b",
         "verifier": {
-          "independence_limits": "Processo e contesto separati. Implementatore del ciclo 7: Codex (OpenAI). Verifier: Grok 4.7 (xAI) tramite Cursor CLI. Fornitori diversi. Le riparazioni dei cicli 2-6 sono di Claude Code, fornitore anch'esso diverso dal verifier.",
+          "independence_limits": "Processo e contesto separati. Implementatore del ciclo 8: Claude Code (Anthropic). Verifier effettivo: Grok 4.7 (xAI) via Cursor CLI, fallback al terzo tentativo dopo interruzioni di moderazione del verifier primario Codex (OpenAI). Fornitori di modello diversi.",
           "model": "Grok 4.7",
-          "process": "Cursor CLI, contesto pulito, esecuzione non interattiva"
+          "process": "Cursor CLI, contesto pulito; fallback del verifier primario Codex"
         }
       },
       "historical_cycle_2_disposition": {
@@ -459,18 +528,17 @@
         "verdict_file_sha256": "934e0f032daa67c0f6abee6e379c4569c0394c5e3b0c28dce05d799c005fc18c",
         "verifier": "Claude Code (Anthropic), claude-opus-5-5, fallback autorizzato"
       },
-      "historical_failed_verification_attempt": {
-        "created_at": "2026-10-06T10:03:44.913984+00:00",
-        "head_sha": "b40aa8a6908b02d95cdf8138200f99f2e8aea8b1",
-        "not_executed": [
-          "verifier: nessun verdetto valido dopo 3 tentativi"
-        ],
-        "repair_cycle": 5,
-        "request_id": "OCOR-DEV-0049-b40aa8a6908b-5",
-        "verdict": "VERIFIER_ERROR",
-        "verdict_file_sha256": "882ee290ade051a6827b0f26776afbe3064005fe9885e2fd65b1f5e4f9b9f109"
-      },
-      "latest_verification_attempt": {
+      "historical_cycle_7_final_findings": [
+        {
+          "blocking": true,
+          "evidence": "La funzione reale receipt_checkpoint_inconsistencies (compose.profiles.yaml:1124-1126), invocata da latest_valid_receipt prima di RESTORE_TESTED (riga 1179), accetta una ricevuta PASSED il cui replayed_event_ids non e il journal checkpointato. Probe sul modulo estratto dall'HEAD, checkpoint entries=3 max_deletion_epoch=9 last_event_id=evt-del-c (ordine codepoint evt-del-B, evt-del-a, evt-del-c): middle_swap ['evt-del-a','evt-del-B','evt-del-c'] -> []; foreign_nonfinal ['evt-del-FOREIGN','evt-del-a','evt-del-c'] -> []. Stessa falla a due id: checkpoint last_event_id=evt-del-a, replayed ['evt-del-FOREIGN','evt-del-a'] -> []. L'inversione che cambia l'ultimo id e l'omissione sono rifiutate, e i test live 7/7 e 9/7 (collation en_US.utf8, journal_max 9 > metadata_max 7, omissione, ordine locale, epoch sotto checkpoint) sono PASS: non coprono la sostituzione di un id non finale ne una permutazione che conserva last_event_id. Il commento della funzione richiede invece ogni tombstone checkpointato, una volta, con l'event id originale. Lista vuota significa ricevuta coerente e, sul boundary, RESTORE_TESTED.",
+          "id": "VF-001",
+          "path": "deploy/helm/ocor-poc/compose.profiles.yaml:1124",
+          "required_fix": "Vincolare replayed_event_ids all'intera sequenza ordinata degli event id del journal firmato, o al digest di quella sequenza, dentro journalCheckpoints. receipt_checkpoint_inconsistencies deve rifiutare con memory:tombstones_not_replayed ogni omissione, duplicato, sostituzione e permutazione, non solo un last_event_id diverso. Aggiungere il negativo unitario e live in cui un id non finale e sostituito e quello in cui due id non finali sono scambiati lasciando invariato last_event_id; entrambi devono dare RESTORE_RECEIPT_INCONSISTENT sul boundary, con il positivo canonico ancora accettato.",
+          "severity": "high"
+        }
+      ],
+      "historical_cycle_7_final_verdict": {
         "blocking_findings": [
           "VF-001"
         ],
@@ -493,7 +561,158 @@
           "process": "Cursor CLI, contesto pulito, esecuzione non interattiva"
         }
       },
-      "minimal_unblock_action": "Solo un nuovo mandato esplicito PO pu\u00f2 riaprire 0049; nessun ciclo 8 autorizzato. Azione tecnica proposta, non eseguita: vincolare la receipt all\u2019intera sequenza ordinata originale dei tombstone o al suo digest nel journal checkpoint firmato, con positivi canonici e negativi unitari/live per omissione, duplicazione, sostituzione e permutazione che conserva last_event_id. Proseguire REM-0017 e G5 senza attendere tale decisione.",
+      "historical_failed_verification_attempt": {
+        "created_at": "2026-10-06T10:03:44.913984+00:00",
+        "head_sha": "b40aa8a6908b02d95cdf8138200f99f2e8aea8b1",
+        "not_executed": [
+          "verifier: nessun verdetto valido dopo 3 tentativi"
+        ],
+        "repair_cycle": 5,
+        "request_id": "OCOR-DEV-0049-b40aa8a6908b-5",
+        "verdict": "VERIFIER_ERROR",
+        "verdict_file_sha256": "882ee290ade051a6827b0f26776afbe3064005fe9885e2fd65b1f5e4f9b9f109"
+      },
+      "integration": {
+        "ci": {
+          "candidate_commit": "df444af855e884d7783612b302e008b90105fe13",
+          "conclusion": "FAIL_EXACT_TASK_HEAD_NO_MERGE",
+          "decision": "REM-0017-PRIORITY (2026-10-05)",
+          "failed_checks": [
+            "rccad-methodology",
+            "delivery-activation",
+            "validation-closure"
+          ],
+          "final_head_rule": "Nessun merge o esclusione. Conservare PR176 aperta; remediation CI separata REM-0017 e successiva CI esatta 0049.",
+          "infrastructure_failure": "rccad/delivery real stack env absent and lint-extra/mypy missing: 1 failed,1164 passed,189 skipped,137 errors; no qualifying PASS. REM must cover every full-suite job, not only validation-closure.",
+          "observed_at": "2026-10-08T07:16:53.256630+00:00",
+          "passed": 10,
+          "pr": 176,
+          "raw_failed_log_hashes": {
+            "task-closure-failed.log": "5e9617c5374c0a3671c368faa2f165748166e1182c1af5cdca179f69beeae655",
+            "task-delivery-failed.log": "bb27a2d72385e99fda232c0513a0af5e815ce23783fbdcfa39fc0558fc7d4858",
+            "task-rccad-failed.log": "4b10eb162af47887b310f42b84fa97c5077b39c95ce55441e346e5fc45fd5bee"
+          },
+          "raw_observation_sha256": "18de18caafa3b9f62e7bd16901c1960dd55c8ce8eee8059b79550d067ed73fa9",
+          "required_checks": 13,
+          "retry_count": 0,
+          "run_ids": [
+            37740936580,
+            37740936597,
+            37740936608,
+            37740936657,
+            37740936664,
+            37740936708
+          ]
+        },
+        "head_sha": "df444af855e884d7783612b302e008b90105fe13",
+        "merged": false,
+        "pr": 176,
+        "raw_output_sha256": "90e9ebcdfdd2718474ef54c25333a3ba851cbaa4b503f48ee9693ebfb373f5db",
+        "reviewed_head": "b14e4bf596959de35313dd9a6ee538576432ffd2",
+        "sealed_record_sha256": "c2355d6d25714fb21b03f473c330d997e3ba4749bfc123ae490c4938c6c2683f"
+      },
+      "latest_verification_attempt": {
+        "blocking_findings": [],
+        "commands": [
+          {
+            "command": "sha256sum -c inputs/normative/SHA256SUMS",
+            "exit_code": 0,
+            "summary": "8/8 digest normativi OK sull'HEAD b14e4bf"
+          },
+          {
+            "command": "uv sync --directory ocor-runtime --frozen --extra test --extra lint",
+            "exit_code": 0,
+            "summary": "ambiente frozen gia' allineato (uv 0.12.5)"
+          },
+          {
+            "command": "python3 scripts/validate_language_policy.py",
+            "exit_code": 0,
+            "summary": "PASS"
+          },
+          {
+            "command": "python3 scripts/validate_evidence_input_drift.py",
+            "exit_code": 0,
+            "summary": "PASS, 0 drift su 167 input e 63 task"
+          },
+          {
+            "command": "python3 scripts/validate_ocor_change_scope.py --base origin/main",
+            "exit_code": 0,
+            "summary": "PASS, 14 path nel perimetro del task rispetto a origin/main; inputs intatti"
+          },
+          {
+            "command": "python3 scripts/validate_rccad.py --base-ref origin/main",
+            "exit_code": 0,
+            "summary": "PASS_LOCAL_PRECHECK, dynamic_assurance CI_REQUIRED"
+          },
+          {
+            "command": "python3 scripts/validate_runtime_evidence.py --task OCOR-DEV-0049 --manifest reports/evidence/G4/MANIFEST.json --non-skipped",
+            "exit_code": 0,
+            "summary": "PASS"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint ruff check .",
+            "exit_code": 0,
+            "summary": "All checks passed"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint mypy --strict",
+            "exit_code": 0,
+            "summary": "nessun problema in 69 sorgenti"
+          },
+          {
+            "command": "ocor-runtime/.venv/bin/python3 scripts/verify.py --json",
+            "exit_code": 0,
+            "summary": "PASS 14, FAIL 0, NOT_EXECUTED 0"
+          },
+          {
+            "command": "probe schema_and_digest.py sul modulo estratto da compose.profiles.yaml",
+            "exit_code": 0,
+            "summary": "digest della sequenza codepoint; permutazione, sostituzione non finale, omissione, aggiunta, duplicazione e caso a due id rifiutati con memory:tombstones_not_replayed; recovery-point/1 rifiutato MANIFEST_SCHEMA_INVALID; recovery-point/2 accettato"
+          },
+          {
+            "command": "python3 scripts/reset_test_environment.py --execute && python3 <REM 4336137>/scripts/bootstrap_ci_environment.py --execute --timeout 300",
+            "exit_code": 0,
+            "summary": "stack ricreato due volte (prima delle suite del task e prima della suite completa); servizi READY; heap Fuseki 1 GiB; ID costruito diverso dal lock e non asserito uguale"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task1)",
+            "exit_code": 0,
+            "summary": "390 passed, 0 skipped, 0 failed, 2232.21s"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task2)",
+            "exit_code": 0,
+            "summary": "390 passed, 0 skipped, 0 failed, 2236.91s"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task3)",
+            "exit_code": 0,
+            "summary": "390 passed, 0 skipped, 0 failed, 2235.97s"
+          },
+          {
+            "command": "OCOR_LIVE_POSTGRES_DSN=postgresql://ocor@127.0.0.1:55433/ocor uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/",
+            "exit_code": 0,
+            "summary": "1491 passed, 0 skipped, 0 failed, 3146.50s; test_ocor_dev_0048.py 196 passed, 0 skipped, 0 failed; nessun OOM"
+          }
+        ],
+        "created_at": "2026-10-08T06:55:57Z",
+        "findings": [],
+        "head_sha": "b14e4bf596959de35313dd9a6ee538576432ffd2",
+        "historical_repairs": "Riparazioni cicli 2\u20136 e 8 Claude Code; ciclo 7 Codex; verifica ciclo 7 Grok 4.7 (Cursor).",
+        "implementer": "Claude Code (Anthropic), ciclo 8",
+        "not_executed": [],
+        "repair_cycle": 8,
+        "request_id": "OCOR-DEV-0049-b14e4bf59695-8",
+        "same_model_separate_contexts": false,
+        "verdict": "GO_FOR_EVIDENCE_SEAL",
+        "verdict_file_sha256": "130a47fc98ed61fc0865079418ff9df3a2877a8d42b140357f3a8d6a1f912d4b",
+        "verifier": {
+          "independence_limits": "Processo e contesto separati. Implementatore del ciclo 8: Claude Code (Anthropic). Verifier effettivo: Grok 4.7 (xAI) via Cursor CLI, fallback al terzo tentativo dopo interruzioni di moderazione del verifier primario Codex (OpenAI). Fornitori di modello diversi.",
+          "model": "Grok 4.7",
+          "process": "Cursor CLI, contesto pulito; fallback del verifier primario Codex"
+        }
+      },
+      "minimal_unblock_action": "Chiudere REM-0017 con verifica indipendente Claude Code e CI completa senza esclusioni; riallineare PR176 preservando sigillo/hash, tutti i check verdi sull\u2019HEAD esatto, poi merge match-head.",
       "po_decision_repair_cycle_3_4_5": {
         "NO_GO_disposition": "Sincronizzare lo stato, TERMINAL_BLOCKED con next_action ciclo di riparazione Claude Code su OCOR-DEV-0049; esauriti i cicli: escalation senza nuova riparazione.",
         "authorized_additional_cycles": 3,
@@ -535,7 +754,17 @@
         "verifier": "Grok 4.7 (Cursor)",
         "verifier_superseded_by": "OCOR-DEV-0049-VERIFIER-CURSOR (2026-10-07)"
       },
-      "po_decision_required": true,
+      "po_decision_repair_cycle_8": {
+        "authorized_start_head": "9d86abebc7626a36115540a2711772c1d2d19e23",
+        "date": "2026-10-07",
+        "fallback": "Grok 4.7 (Cursor) al terzo tentativo dopo due interruzioni di moderazione",
+        "id": "OCOR-DEV-0049-REPAIR-8",
+        "implementer": "Claude Code (Anthropic)",
+        "no_go_disposition": "Escalation del solo 0049, nessun ciclo9, proseguire G5",
+        "scope": "VF-001: digest firmato dell\u2019intera sequenza canonica degli event id; test di classe unitari/live; audit del binding di ogni campo receipt; stabilit\u00e0 tre task run e una full, zero skip",
+        "verifier_primary": "Codex (OpenAI)"
+      },
+      "po_decision_required": false,
       "repair_cycle_3": {
         "created_at": "2026-10-05T20:09:14.995625Z",
         "findings": [
@@ -1013,14 +1242,115 @@
           "process": "Cursor CLI, contesto pulito, esecuzione non interattiva"
         }
       },
-      "status": "BLOCKED_REPAIR_BUDGET_EXHAUSTED",
+      "repair_cycle_8": {
+        "blocking_findings": [],
+        "commands": [
+          {
+            "command": "sha256sum -c inputs/normative/SHA256SUMS",
+            "exit_code": 0,
+            "summary": "8/8 digest normativi OK sull'HEAD b14e4bf"
+          },
+          {
+            "command": "uv sync --directory ocor-runtime --frozen --extra test --extra lint",
+            "exit_code": 0,
+            "summary": "ambiente frozen gia' allineato (uv 0.12.5)"
+          },
+          {
+            "command": "python3 scripts/validate_language_policy.py",
+            "exit_code": 0,
+            "summary": "PASS"
+          },
+          {
+            "command": "python3 scripts/validate_evidence_input_drift.py",
+            "exit_code": 0,
+            "summary": "PASS, 0 drift su 167 input e 63 task"
+          },
+          {
+            "command": "python3 scripts/validate_ocor_change_scope.py --base origin/main",
+            "exit_code": 0,
+            "summary": "PASS, 14 path nel perimetro del task rispetto a origin/main; inputs intatti"
+          },
+          {
+            "command": "python3 scripts/validate_rccad.py --base-ref origin/main",
+            "exit_code": 0,
+            "summary": "PASS_LOCAL_PRECHECK, dynamic_assurance CI_REQUIRED"
+          },
+          {
+            "command": "python3 scripts/validate_runtime_evidence.py --task OCOR-DEV-0049 --manifest reports/evidence/G4/MANIFEST.json --non-skipped",
+            "exit_code": 0,
+            "summary": "PASS"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint ruff check .",
+            "exit_code": 0,
+            "summary": "All checks passed"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint mypy --strict",
+            "exit_code": 0,
+            "summary": "nessun problema in 69 sorgenti"
+          },
+          {
+            "command": "ocor-runtime/.venv/bin/python3 scripts/verify.py --json",
+            "exit_code": 0,
+            "summary": "PASS 14, FAIL 0, NOT_EXECUTED 0"
+          },
+          {
+            "command": "probe schema_and_digest.py sul modulo estratto da compose.profiles.yaml",
+            "exit_code": 0,
+            "summary": "digest della sequenza codepoint; permutazione, sostituzione non finale, omissione, aggiunta, duplicazione e caso a due id rifiutati con memory:tombstones_not_replayed; recovery-point/1 rifiutato MANIFEST_SCHEMA_INVALID; recovery-point/2 accettato"
+          },
+          {
+            "command": "python3 scripts/reset_test_environment.py --execute && python3 <REM 4336137>/scripts/bootstrap_ci_environment.py --execute --timeout 300",
+            "exit_code": 0,
+            "summary": "stack ricreato due volte (prima delle suite del task e prima della suite completa); servizi READY; heap Fuseki 1 GiB; ID costruito diverso dal lock e non asserito uguale"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task1)",
+            "exit_code": 0,
+            "summary": "390 passed, 0 skipped, 0 failed, 2232.21s"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task2)",
+            "exit_code": 0,
+            "summary": "390 passed, 0 skipped, 0 failed, 2236.91s"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task3)",
+            "exit_code": 0,
+            "summary": "390 passed, 0 skipped, 0 failed, 2235.97s"
+          },
+          {
+            "command": "OCOR_LIVE_POSTGRES_DSN=postgresql://ocor@127.0.0.1:55433/ocor uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/",
+            "exit_code": 0,
+            "summary": "1491 passed, 0 skipped, 0 failed, 3146.50s; test_ocor_dev_0048.py 196 passed, 0 skipped, 0 failed; nessun OOM"
+          }
+        ],
+        "created_at": "2026-10-08T06:55:57Z",
+        "findings": [],
+        "head_sha": "b14e4bf596959de35313dd9a6ee538576432ffd2",
+        "historical_repairs": "Riparazioni cicli 2\u20136 e 8 Claude Code; ciclo 7 Codex; verifica ciclo 7 Grok 4.7 (Cursor).",
+        "implementer": "Claude Code (Anthropic), ciclo 8",
+        "not_executed": [],
+        "repair_cycle": 8,
+        "request_id": "OCOR-DEV-0049-b14e4bf59695-8",
+        "same_model_separate_contexts": false,
+        "verdict": "GO_FOR_EVIDENCE_SEAL",
+        "verdict_file_sha256": "130a47fc98ed61fc0865079418ff9df3a2877a8d42b140357f3a8d6a1f912d4b",
+        "verifier": {
+          "independence_limits": "Processo e contesto separati. Implementatore del ciclo 8: Claude Code (Anthropic). Verifier effettivo: Grok 4.7 (xAI) via Cursor CLI, fallback al terzo tentativo dopo interruzioni di moderazione del verifier primario Codex (OpenAI). Fornitori di modello diversi.",
+          "model": "Grok 4.7",
+          "process": "Cursor CLI, contesto pulito; fallback del verifier primario Codex"
+        }
+      },
+      "status": "VERIFIED_SEALED_PENDING_CI_REMEDIATION",
       "terminal_disposition": {
         "date": "2026-10-06T16:25:55.683649+00:00",
         "decision": "OCOR-DEV-0049-REPAIR-CLAUDE-AUTO + STACK-HYGIENE (2026-10-06)",
         "note": "Ciclo 5 ripreso e concluso: ultimo autorizzato. NO_GO finale; nessuna sesta riparazione, nessuna sigillatura o merge del task. TERMINAL_BLOCKED del loop imposto dalla decisione puntuale; REM-0017 e 0050 restano eseguibili.",
         "status": "BLOCKED_REPAIR_BUDGET_EXHAUSTED"
       },
-      "terminal_disposition_superseded_by": "OCOR-DEV-0049-REPAIR-7 (2026-10-07): ciclo 7 concluso NO_GO; escalation del solo 0049, nessun ciclo 8, loop CONTINUE con REM-0017 e G5.",
+      "terminal_disposition_superseded_by": "OCOR-DEV-0049-REPAIR-8; GO_FOR_EVIDENCE_SEAL b14e4bf, sigillo df444af, PR176 aperta con CI FAIL; nessun ciclo9.",
       "verdicts": [
         {
           "findings": [
@@ -1168,12 +1498,19 @@
             "model": "Grok 4.7",
             "process": "Cursor CLI, contesto pulito, esecuzione non interattiva"
           }
+        },
+        {
+          "findings": [],
+          "head_sha": "b14e4bf596959de35313dd9a6ee538576432ffd2",
+          "repair_cycle": 8,
+          "request_id": "OCOR-DEV-0049-b14e4bf59695-8",
+          "verdict": "GO_FOR_EVIDENCE_SEAL"
         }
       ],
       "verifier_decision": "OCOR-DEV-0049-VERIFIER-CURSOR (2026-10-07)"
     }
   },
-  "baseline_commit": "9afbc87b0b1308dcd8cecab6247bdd43360c1ed4",
+  "baseline_commit": "9e5058666ce6c1ea1acbbd434f171d1e98784d92",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -1248,12 +1585,12 @@
         "OCOR-DEV-0065",
         "OCOR-DEV-0066"
       ],
-      "candidate_0049_head": "9d86abebc7626a36115540a2711772c1d2d19e23",
-      "candidate_0049_verdict": "NO_GO",
+      "candidate_0049_head": "b14e4bf596959de35313dd9a6ee538576432ffd2",
+      "candidate_0049_verdict": "GO_FOR_EVIDENCE_SEAL",
       "concurrent_pr": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
-        "disposition": "WIP, draft; no verifier request or seal; next0050 per REM-0017-PRIORITY",
-        "head_sha": "11fd3e49b606ead40dfb270e3496851e86b55e84",
+        "disposition": "WIP PR169 invariato in questa iterazione; ripresa separata, implementatore Codex/verifier Claude Code.",
+        "head_sha": "433613772806b3034e1229d7cd58a5d92841e8c2",
         "number": 169,
         "observed_check": "Exact final CI FAIL:2700s Helm timeout; teardown FAIL; main rejected dependency",
         "raw_failed_log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -1317,9 +1654,19 @@
         "suite_limit_seconds": 2700
       },
       "id": "OCOR-DEV-REM-0017",
+      "next_action": "Riprendere WIP4336137 PR169, aggiornare75m e diagnostica/causa teardown; provvedere stack reale/zero skip anche nei job rccad-methodology e delivery-activation; preservare guard e zero skip, verifica Claude Code. Per REM-0017-PRIORITY sblocca PR176 senza merge0049 su CI rossa.",
       "non_blocking": false,
+      "po_decision": "REM-0017-CI-CAMPAIGN-BUDGET (2026-10-07)",
       "scope": "REM-0017-PRIORITY (2026-10-05): stack CI completo e zero skip per tutti i CONDITIONAL_INFRASTRUCTURE_GUARD (TEST-INFRA-005/006 e successivi), poi rimozione --ignore PR #164. Prossimo task dopo verifica/integrazione 0049, prima di 0050; G6 bloccato fino alla chiusura verificata. Candidato ciclo 7 NO_GO: la qualifica infrastrutturale non chiude n\u00e9 approva 0049; riesaminare il ciclo di vita del pin nel REM.",
-      "status": "BLOCKED_CI_CAMPAIGN_TIMEOUT"
+      "source_reference": {
+        "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
+        "head_sha": "433613772806b3034e1229d7cd58a5d92841e8c2",
+        "path": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1.json",
+        "raw_output_sha256": "76a63b4dbf4636db04534b4b18d8c7727fd05c7a60576013137b2c136db7aaf3",
+        "record_sha256": "62343d43b43b5e368f0cf86542fe38e6608b6beb65630be1a92a59dd797e6066",
+        "status": "WIP_NOT_MERGED_NOT_QUALIFIED"
+      },
+      "status": "OPEN_EXECUTION_READY_AFTER_PO_DECISION"
     },
     {
       "blocked_tasks": [
@@ -1336,38 +1683,147 @@
         "OCOR-DEV-0068",
         "OCOR-DEV-0069"
       ],
-      "candidate_head": "9d86abebc7626a36115540a2711772c1d2d19e23",
+      "candidate_head": "b14e4bf596959de35313dd9a6ee538576432ffd2",
       "decision_request": "reports/development/decision_requests/OCOR-DEV-0049-REPAIR-BUDGET.md",
       "escalation_record": "reports/development/OCOR_DEV_0049_ESCALATION.md",
       "final_verdict": {
-        "blocking_findings": [
-          "VF-001"
+        "blocking_findings": [],
+        "commands": [
+          {
+            "command": "sha256sum -c inputs/normative/SHA256SUMS",
+            "exit_code": 0,
+            "summary": "8/8 digest normativi OK sull'HEAD b14e4bf"
+          },
+          {
+            "command": "uv sync --directory ocor-runtime --frozen --extra test --extra lint",
+            "exit_code": 0,
+            "summary": "ambiente frozen gia' allineato (uv 0.12.5)"
+          },
+          {
+            "command": "python3 scripts/validate_language_policy.py",
+            "exit_code": 0,
+            "summary": "PASS"
+          },
+          {
+            "command": "python3 scripts/validate_evidence_input_drift.py",
+            "exit_code": 0,
+            "summary": "PASS, 0 drift su 167 input e 63 task"
+          },
+          {
+            "command": "python3 scripts/validate_ocor_change_scope.py --base origin/main",
+            "exit_code": 0,
+            "summary": "PASS, 14 path nel perimetro del task rispetto a origin/main; inputs intatti"
+          },
+          {
+            "command": "python3 scripts/validate_rccad.py --base-ref origin/main",
+            "exit_code": 0,
+            "summary": "PASS_LOCAL_PRECHECK, dynamic_assurance CI_REQUIRED"
+          },
+          {
+            "command": "python3 scripts/validate_runtime_evidence.py --task OCOR-DEV-0049 --manifest reports/evidence/G4/MANIFEST.json --non-skipped",
+            "exit_code": 0,
+            "summary": "PASS"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint ruff check .",
+            "exit_code": 0,
+            "summary": "All checks passed"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint mypy --strict",
+            "exit_code": 0,
+            "summary": "nessun problema in 69 sorgenti"
+          },
+          {
+            "command": "ocor-runtime/.venv/bin/python3 scripts/verify.py --json",
+            "exit_code": 0,
+            "summary": "PASS 14, FAIL 0, NOT_EXECUTED 0"
+          },
+          {
+            "command": "probe schema_and_digest.py sul modulo estratto da compose.profiles.yaml",
+            "exit_code": 0,
+            "summary": "digest della sequenza codepoint; permutazione, sostituzione non finale, omissione, aggiunta, duplicazione e caso a due id rifiutati con memory:tombstones_not_replayed; recovery-point/1 rifiutato MANIFEST_SCHEMA_INVALID; recovery-point/2 accettato"
+          },
+          {
+            "command": "python3 scripts/reset_test_environment.py --execute && python3 <REM 4336137>/scripts/bootstrap_ci_environment.py --execute --timeout 300",
+            "exit_code": 0,
+            "summary": "stack ricreato due volte (prima delle suite del task e prima della suite completa); servizi READY; heap Fuseki 1 GiB; ID costruito diverso dal lock e non asserito uguale"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task1)",
+            "exit_code": 0,
+            "summary": "390 passed, 0 skipped, 0 failed, 2232.21s"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task2)",
+            "exit_code": 0,
+            "summary": "390 passed, 0 skipped, 0 failed, 2236.91s"
+          },
+          {
+            "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task3)",
+            "exit_code": 0,
+            "summary": "390 passed, 0 skipped, 0 failed, 2235.97s"
+          },
+          {
+            "command": "OCOR_LIVE_POSTGRES_DSN=postgresql://ocor@127.0.0.1:55433/ocor uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/",
+            "exit_code": 0,
+            "summary": "1491 passed, 0 skipped, 0 failed, 3146.50s; test_ocor_dev_0048.py 196 passed, 0 skipped, 0 failed; nessun OOM"
+          }
         ],
-        "created_at": "2026-10-07T16:53:13Z",
-        "findings": [
-          "VF-001"
-        ],
-        "head_sha": "9d86abebc7626a36115540a2711772c1d2d19e23",
-        "historical_repairs": "Riparazioni cicli 2\u20136 Claude Code; ciclo 7 Codex",
-        "implementer": "Codex (OpenAI), ciclo 7",
+        "created_at": "2026-10-08T06:55:57Z",
+        "findings": [],
+        "head_sha": "b14e4bf596959de35313dd9a6ee538576432ffd2",
+        "historical_repairs": "Riparazioni cicli 2\u20136 e 8 Claude Code; ciclo 7 Codex; verifica ciclo 7 Grok 4.7 (Cursor).",
+        "implementer": "Claude Code (Anthropic), ciclo 8",
         "not_executed": [],
-        "repair_cycle": 7,
-        "request_id": "OCOR-DEV-0049-9d86abebc762-7",
+        "repair_cycle": 8,
+        "request_id": "OCOR-DEV-0049-b14e4bf59695-8",
         "same_model_separate_contexts": false,
-        "verdict": "NO_GO",
-        "verdict_file_sha256": "bc8539a202ce6d88e711a7832e71cf78902ea5e6fee2cd3b609ffa8628ed8e7e",
+        "verdict": "GO_FOR_EVIDENCE_SEAL",
+        "verdict_file_sha256": "130a47fc98ed61fc0865079418ff9df3a2877a8d42b140357f3a8d6a1f912d4b",
         "verifier": {
-          "independence_limits": "Processo e contesto separati. Implementatore del ciclo 7: Codex (OpenAI). Verifier: Grok 4.7 (xAI) tramite Cursor CLI. Fornitori diversi. Le riparazioni dei cicli 2-6 sono di Claude Code, fornitore anch'esso diverso dal verifier.",
+          "independence_limits": "Processo e contesto separati. Implementatore del ciclo 8: Claude Code (Anthropic). Verifier effettivo: Grok 4.7 (xAI) via Cursor CLI, fallback al terzo tentativo dopo interruzioni di moderazione del verifier primario Codex (OpenAI). Fornitori di modello diversi.",
           "model": "Grok 4.7",
-          "process": "Cursor CLI, contesto pulito, esecuzione non interattiva"
+          "process": "Cursor CLI, contesto pulito; fallback del verifier primario Codex"
         }
       },
       "id": "OCOR-DEV-0049",
+      "integration_ci": {
+        "candidate_commit": "df444af855e884d7783612b302e008b90105fe13",
+        "conclusion": "FAIL_EXACT_TASK_HEAD_NO_MERGE",
+        "decision": "REM-0017-PRIORITY (2026-10-05)",
+        "failed_checks": [
+          "rccad-methodology",
+          "delivery-activation",
+          "validation-closure"
+        ],
+        "final_head_rule": "Nessun merge o esclusione. Conservare PR176 aperta; remediation CI separata REM-0017 e successiva CI esatta 0049.",
+        "infrastructure_failure": "rccad/delivery real stack env absent and lint-extra/mypy missing: 1 failed,1164 passed,189 skipped,137 errors; no qualifying PASS. REM must cover every full-suite job, not only validation-closure.",
+        "observed_at": "2026-10-08T07:16:53.256630+00:00",
+        "passed": 10,
+        "pr": 176,
+        "raw_failed_log_hashes": {
+          "task-closure-failed.log": "5e9617c5374c0a3671c368faa2f165748166e1182c1af5cdca179f69beeae655",
+          "task-delivery-failed.log": "bb27a2d72385e99fda232c0513a0af5e815ce23783fbdcfa39fc0558fc7d4858",
+          "task-rccad-failed.log": "4b10eb162af47887b310f42b84fa97c5077b39c95ce55441e346e5fc45fd5bee"
+        },
+        "raw_observation_sha256": "18de18caafa3b9f62e7bd16901c1960dd55c8ce8eee8059b79550d067ed73fa9",
+        "required_checks": 13,
+        "retry_count": 0,
+        "run_ids": [
+          37740936580,
+          37740936597,
+          37740936608,
+          37740936657,
+          37740936664,
+          37740936708
+        ]
+      },
       "non_blocking": false,
-      "po_decision": "OCOR-DEV-0049-REPAIR-7 (2026-10-07)",
-      "scope": "Ciclo 7 NO_GO, VF-001 high BLOCKER sul binding della receipt al journal originale; escalation circoscritta, nessun ciclo 8. Nessuna sigillatura o integrazione 0049; G5 indipendente eseguibile.",
-      "status": "BLOCKED_REPAIR_BUDGET_EXHAUSTED",
-      "task_status": "BLOCKED"
+      "po_decision": "OCOR-DEV-0049-REPAIR-8 (2026-10-07)",
+      "scope": "Ciclo8 GO, nessun finding. PR176 df444af sigillata, CI esatta FAIL per infrastruttura; dipendenze restano non soddisfatte fino al merge/state sync. Nessuna riparazione0049 in questa iterazione.",
+      "status": "INTEGRATION_PENDING_CI_REMEDIATION",
+      "task_status": "VERIFIED_SEALED_NOT_MERGED"
     },
     {
       "blocked_tasks": [],
@@ -1403,7 +1859,7 @@
       ],
       "id": "OCOR-DEV-REM-0018",
       "non_blocking": false,
-      "scope": "VF-004 REM-0017: teardown dei volumi anonimi spike vector/Kafka. Unit\u00e0 governata separata con riqualifica; non blocca G5.",
+      "scope": "VF-004 REM-0017: teardown dei volumi anonimi spike vector/Kafka e C5 backbone osservati; unit\u00e0 governata separata con riqualifica, dipendenza G6, non blocca G5.",
       "source_reference": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
         "head_sha": "efce339d9fc7a551216c84135e06d39c0488a222",
@@ -1413,24 +1869,14 @@
       "status": "OPEN"
     },
     {
-      "blocked_tasks": [
-        "OCOR-DEV-REM-0017",
-        "OCOR-DEV-0060",
-        "OCOR-DEV-0061",
-        "OCOR-DEV-0062",
-        "OCOR-DEV-0063",
-        "OCOR-DEV-0064",
-        "OCOR-DEV-0065",
-        "OCOR-DEV-0066",
-        "OCOR-DEV-0067",
-        "OCOR-DEV-0068",
-        "OCOR-DEV-0069"
-      ],
+      "blocked_tasks": [],
       "decision_request": "reports/development/decision_requests/REM-0017-CI-CAMPAIGN-BUDGET.md",
       "id": "REM-0017-CI-CAMPAIGN-BUDGET",
       "non_blocking": true,
-      "scope": "Hosted full campaign cannot be qualified after exact final2700s timeout and teardown failure; preserve coverage/limit and proceedG5 per PO priority decision.",
-      "status": "OPEN_PO_DECISION_REQUIRED"
+      "po_decision": "REM-0017-CI-CAMPAIGN-BUDGET (2026-10-07)",
+      "resolution": "Decisione PO esplicita ricevuta e record chiuso; implementazione/qualifica REM pendenti.",
+      "scope": "Full campaign 4500s locale/CI; task2700s, arresto su restart/OOM; decision request nuova se full>3600s. Teardown esporta identit\u00e0 residue e fail-closed. Nessun codice REM modificato in questo state sync.",
+      "status": "RESOLVED_BY_PO_DECISION_EXECUTION_PENDING"
     }
   ],
   "claims": {
@@ -1515,38 +1961,175 @@
     "reason": "Disposizione puntuale OCOR-DEV-0049-REPAIR-CLAUDE-AUTO: ultimo ciclo 5 NO_GO. Non equivale a tutto il backlog bloccato."
   },
   "latest_ci_evidence": {
-    "candidate_commit": "64468442dd4e9e116e4b5cdd59af7ea0bf4a0439",
-    "conclusion": "PASS_ALL_13_GREEN_ON_EXACT_SOURCE_HEAD \u2014 FINAL_HEAD_CHECK_REQUIRED",
-    "final_head_rule": "This documentation update needs all 13 checks again on its exact resulting HEAD before merge.",
-    "observed_at": "2026-10-07T17:24:29.116971+00:00",
+    "branch": "governed/state-sync-ocor-dev-0049-cycle8",
+    "candidate_commit": "f583c89d3db220817fa97580efeb54a87821443b",
+    "checks": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T07:20:15Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091115",
+        "name": "backend-compatibility-not-ba-evidence",
+        "startedAt": "2026-10-08T07:19:57Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T07:20:19Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091466",
+        "name": "contract",
+        "startedAt": "2026-10-08T07:19:55Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T07:33:33Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762781/job/113197089923",
+        "name": "delivery-activation",
+        "startedAt": "2026-10-08T07:19:56Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR autonomous delivery controls"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T07:20:14Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091158",
+        "name": "evidence",
+        "startedAt": "2026-10-08T07:19:55Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T07:20:11Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091246",
+        "name": "fgm-contract-readiness-not-runtime-evidence",
+        "startedAt": "2026-10-08T07:19:55Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T07:20:28Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091258",
+        "name": "integration-postgresql",
+        "startedAt": "2026-10-08T07:19:55Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T07:20:34Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197282796",
+        "name": "mandatory-gates",
+        "startedAt": "2026-10-08T07:20:30Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T07:33:20Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762841/job/113197090235",
+        "name": "rccad-methodology",
+        "startedAt": "2026-10-08T07:19:55Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR RCCAD methodology gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T07:20:14Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762932/job/113197090903",
+        "name": "supply-chain",
+        "startedAt": "2026-10-08T07:19:55Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR supply-chain gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T07:20:16Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762888/job/113197090404",
+        "name": "tooling-policy",
+        "startedAt": "2026-10-08T07:19:55Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR tooling and bootstrap policy"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T07:20:40Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762888/job/113197090833",
+        "name": "type-and-lint-gate",
+        "startedAt": "2026-10-08T07:19:55Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR tooling and bootstrap policy"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T07:20:15Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091259",
+        "name": "unit",
+        "startedAt": "2026-10-08T07:19:55Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T07:38:45Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762794/job/113197090243",
+        "name": "validation-closure",
+        "startedAt": "2026-10-08T07:19:55Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR governance and validation closure"
+      }
+    ],
+    "final_head_rule": "Commit finale di soli report: tutti i13 check richiesti SUCCESS sul suo HEAD prima del merge match-head; nessun PASS sorgente attribuito al finale.",
+    "merge_performed": false,
+    "next_condition_for_integration": "Attendere CI finale esatta13/13, poi merge177 e main ff-only. PR176 resta aperta/non mergiata:10/13 FAIL infra; prossima unit\u00e0 REM17.",
+    "observed_at": "2026-10-08T07:38:46.547684+00:00",
     "passed": 13,
-    "pr": 174,
-    "raw_observation_sha256": "f905f81a6d35d4c4872a2c03f9b142181e1afe1b14687914249f7e68dba2c27e",
+    "pr": 177,
+    "raw_observation_sha256": "e3b987355be655aae5d505471be7c151714d338c259933105e937dab489b2a7c",
     "required_checks": 13,
     "run_ids": [
-      37655615572,
-      37655615668,
-      37655615679,
-      37655615745,
-      37655615845,
-      37655615933
-    ]
+      37742762781,
+      37742762794,
+      37742762831,
+      37742762841,
+      37742762888,
+      37742762932
+    ],
+    "status": "SOURCE_HEAD_ALL_13_PASS_FINAL_HEAD_EXACT_CHECK_REQUIRED",
+    "tested_head_sha": "f583c89d3db220817fa97580efeb54a87821443b"
   },
   "loop_roles": {
     "OCOR-DEV-0049": {
-      "decision": "OCOR-DEV-0049-REPAIR-7 (2026-10-07)",
-      "historical_repairs": "Cicli 2\u20136 Claude Code; ciclo 7 Codex",
-      "implementer": "Codex (OpenAI), ciclo 7",
-      "independence_limits": "Processo e contesto separati. Implementatore del ciclo 7: Codex (OpenAI). Verifier: Grok 4.7 (xAI) tramite Cursor CLI. Fornitori diversi. Le riparazioni dei cicli 2-6 sono di Claude Code, fornitore anch'esso diverso dal verifier.",
+      "decision": "OCOR-DEV-0049-REPAIR-8 (2026-10-07)",
+      "implementer": "Claude Code (Anthropic), ciclo8",
+      "independence_limits": "Processo e contesto separati. Implementatore del ciclo 8: Claude Code (Anthropic). Verifier effettivo: Grok 4.7 (xAI) via Cursor CLI, fallback al terzo tentativo dopo interruzioni di moderazione del verifier primario Codex (OpenAI). Fornitori di modello diversi.",
+      "integration_agent": "Codex (OpenAI)",
       "observed_verifier_configuration": {
-        "independence_limits": "Processo e contesto separati. Implementatore del ciclo 7: Codex (OpenAI). Verifier: Grok 4.7 (xAI) tramite Cursor CLI. Fornitori diversi. Le riparazioni dei cicli 2-6 sono di Claude Code, fornitore anch'esso diverso dal verifier.",
+        "independence_limits": "Processo e contesto separati. Implementatore del ciclo 8: Claude Code (Anthropic). Verifier effettivo: Grok 4.7 (xAI) via Cursor CLI, fallback al terzo tentativo dopo interruzioni di moderazione del verifier primario Codex (OpenAI). Fornitori di modello diversi.",
         "model": "Grok 4.7",
-        "process": "Cursor CLI, contesto pulito, esecuzione non interattiva"
+        "process": "Cursor CLI, contesto pulito; fallback del verifier primario Codex"
       },
-      "repair_history": "Riparazioni cicli 2\u20136 Claude Code; ciclo 7 Codex; verifier ciclo 7 Grok 4.7 (Cursor).",
+      "repair_history": "Riparazioni cicli 2\u20136 e 8 Claude Code; ciclo 7 Codex; verifica ciclo 7 Grok 4.7 (Cursor).",
       "same_model_separate_contexts": false,
-      "verifier": "Grok 4.7 (Cursor)",
-      "verifier_decision": "OCOR-DEV-0049-VERIFIER-CURSOR (2026-10-07)"
+      "verifier": "Grok 4.7 (Cursor), effettivo ciclo8",
+      "verifier_decision": "REPAIR-8 fallback al terzo tentativo dopo due interruzioni di moderazione",
+      "verifier_primary": "Codex (OpenAI)"
     },
     "decision": "LOOP-ROLES (2026-10-05)",
     "default_task_implementer": "Codex (OpenAI)",
@@ -1611,7 +2194,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0050:implementation da origin/main, worktree isolato; REM-0017 resta WIP/bloccato per CI timeout con decision request REM-0017-CI-CAMPAIGN-BUDGET. Nessuna qualifica, richiesta verifier o merge169; G6 attende chiusura verificata REM. 0049 NO_GO ciclo7, nessun ciclo8.",
+  "next_executable_action": "OCOR-DEV-REM-0017: riprendere PR169/WIP4336137 in worktree isolato, attuare REM-0017-CI-CAMPAIGN-BUDGET (full4500s, task2700s, stop immediato restart/OOM, identit\u00e0 residui/teardown fail-closed), ciclo repair1 pendente; coprire ogni job full-suite (rccad-methodology/delivery-activation inclusi) con extras test/lint, stack reale e zero skip, senza esclusioni; includere candidato0049 ciclo8 accettato senza riscrivere codice o sigillo. Richiedere verifica indipendente Claude Code. Poi riallineare PR176 e merge0049 solo con13 check verdi HEAD esatto. Se REM attende evento esterno,0050/G5.",
   "ready_set_observation": {
     "blocked_transitively_on_0049": [
       "OCOR-DEV-0049",
@@ -1645,9 +2228,9 @@
       "OCOR-DEV-0057",
       "OCOR-DEV-0058"
     ],
-    "observed_at": "2026-10-07T20:07:47.087641+00:00",
-    "priority_remediation": "REM-0017 waiting reserved disposition/executable qualification; per priority decision proceed0050",
-    "source": "origin/main execution state + approved backlog + verdict cycle 7 + REM-0017-PRIORITY"
+    "observed_at": "2026-10-08T07:18:03.967776+00:00",
+    "priority_remediation": "OCOR-DEV-REM-0017; candidato0049 verificato, integrazione bloccata solo dalla CI; nessuna attesa PO sul budget",
+    "source": "origin/main execution state + approved backlog + read-only verdict ciclo8 + exact PR176 CI + PO REM budget/priority"
   },
   "remediation_status": {
     "CI-0048_REAL_BACKEND": {
@@ -1721,8 +2304,16 @@
         "OCOR-DEV-REM-0017 opened: provision the full ocor-bootstrap stack in CI (SPIRE server/agent + bootstrap credentials + digest-pinned images from infra/services.lock.json), run test_ocor_dev_0048.py with zero skips, remove the --ignore.",
         "Standing rule (2026-10-05): never exclude, deselect or mark tests to pass a check, and never remove skipped from counts. If a check fails for missing CI infrastructure, write a decision request and continue with other ready work."
       ],
+      "po_decision": "REM-0017-CI-CAMPAIGN-BUDGET (2026-10-07)",
       "rem_opened": "OCOR-DEV-REM-0017",
-      "status": "REM_OPEN_BLOCKED_CI_TIMEOUT"
+      "status": "REM_OPEN_EXECUTION_READY_AFTER_PO_DECISION",
+      "verified_0049_candidate": {
+        "head_sha": "b14e4bf596959de35313dd9a6ee538576432ffd2",
+        "merged": false,
+        "sealed_head": "df444af855e884d7783612b302e008b90105fe13",
+        "task_pr": 176,
+        "verdict": "GO_FOR_EVIDENCE_SEAL"
+      }
     },
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -1921,155 +2512,158 @@
   "repository": "nepryoon/ocor-detailed-design",
   "schema_version": "1.0",
   "state_sync_ci": {
-    "checks": {
-      "backend-compatibility-not-ba-evidence": {
+    "branch": "governed/state-sync-ocor-dev-0049-cycle8",
+    "candidate_commit": "f583c89d3db220817fa97580efeb54a87821443b",
+    "checks": [
+      {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-07T17:02:58Z",
+        "completedAt": "2026-10-08T07:20:15Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615679/job/112910353253",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091115",
         "name": "backend-compatibility-not-ba-evidence",
-        "startedAt": "2026-10-07T17:02:40Z",
+        "startedAt": "2026-10-08T07:19:57Z",
         "status": "COMPLETED",
         "workflowName": "OCOR PoC layered mandatory gates"
       },
-      "contract": {
+      {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-07T17:03:03Z",
+        "completedAt": "2026-10-08T07:20:19Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615679/job/112910353343",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091466",
         "name": "contract",
-        "startedAt": "2026-10-07T17:02:42Z",
+        "startedAt": "2026-10-08T07:19:55Z",
         "status": "COMPLETED",
         "workflowName": "OCOR PoC layered mandatory gates"
       },
-      "delivery-activation": {
+      {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-07T17:22:54Z",
+        "completedAt": "2026-10-08T07:33:33Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615572/job/112910354752",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762781/job/113197089923",
         "name": "delivery-activation",
-        "startedAt": "2026-10-07T17:02:43Z",
+        "startedAt": "2026-10-08T07:19:56Z",
         "status": "COMPLETED",
         "workflowName": "OCOR autonomous delivery controls"
       },
-      "evidence": {
+      {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-07T17:02:58Z",
+        "completedAt": "2026-10-08T07:20:14Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615679/job/112910353095",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091158",
         "name": "evidence",
-        "startedAt": "2026-10-07T17:02:41Z",
+        "startedAt": "2026-10-08T07:19:55Z",
         "status": "COMPLETED",
         "workflowName": "OCOR PoC layered mandatory gates"
       },
-      "fgm-contract-readiness-not-runtime-evidence": {
+      {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-07T17:02:59Z",
+        "completedAt": "2026-10-08T07:20:11Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615679/job/112910353486",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091246",
         "name": "fgm-contract-readiness-not-runtime-evidence",
-        "startedAt": "2026-10-07T17:02:41Z",
+        "startedAt": "2026-10-08T07:19:55Z",
         "status": "COMPLETED",
         "workflowName": "OCOR PoC layered mandatory gates"
       },
-      "integration-postgresql": {
+      {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-07T17:03:20Z",
+        "completedAt": "2026-10-08T07:20:28Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615679/job/112910352459",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091258",
         "name": "integration-postgresql",
-        "startedAt": "2026-10-07T17:02:40Z",
+        "startedAt": "2026-10-08T07:19:55Z",
         "status": "COMPLETED",
         "workflowName": "OCOR PoC layered mandatory gates"
       },
-      "mandatory-gates": {
+      {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-07T17:03:28Z",
+        "completedAt": "2026-10-08T07:20:34Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615679/job/112910888606",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197282796",
         "name": "mandatory-gates",
-        "startedAt": "2026-10-07T17:03:24Z",
+        "startedAt": "2026-10-08T07:20:30Z",
         "status": "COMPLETED",
         "workflowName": "OCOR PoC layered mandatory gates"
       },
-      "rccad-methodology": {
+      {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-07T17:24:12Z",
+        "completedAt": "2026-10-08T07:33:20Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615668/job/112910357799",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762841/job/113197090235",
         "name": "rccad-methodology",
-        "startedAt": "2026-10-07T17:02:41Z",
+        "startedAt": "2026-10-08T07:19:55Z",
         "status": "COMPLETED",
         "workflowName": "OCOR RCCAD methodology gates"
       },
-      "supply-chain": {
+      {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-07T17:03:02Z",
+        "completedAt": "2026-10-08T07:20:14Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615845/job/112910355043",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762932/job/113197090903",
         "name": "supply-chain",
-        "startedAt": "2026-10-07T17:02:45Z",
+        "startedAt": "2026-10-08T07:19:55Z",
         "status": "COMPLETED",
         "workflowName": "OCOR supply-chain gates"
       },
-      "tooling-policy": {
+      {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-07T17:03:04Z",
+        "completedAt": "2026-10-08T07:20:16Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615745/job/112910354144",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762888/job/113197090404",
         "name": "tooling-policy",
-        "startedAt": "2026-10-07T17:02:40Z",
+        "startedAt": "2026-10-08T07:19:55Z",
         "status": "COMPLETED",
         "workflowName": "OCOR tooling and bootstrap policy"
       },
-      "type-and-lint-gate": {
+      {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-07T17:03:32Z",
+        "completedAt": "2026-10-08T07:20:40Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615745/job/112910354909",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762888/job/113197090833",
         "name": "type-and-lint-gate",
-        "startedAt": "2026-10-07T17:02:41Z",
+        "startedAt": "2026-10-08T07:19:55Z",
         "status": "COMPLETED",
         "workflowName": "OCOR tooling and bootstrap policy"
       },
-      "unit": {
+      {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-07T17:02:57Z",
+        "completedAt": "2026-10-08T07:20:15Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615679/job/112910353171",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091259",
         "name": "unit",
-        "startedAt": "2026-10-07T17:02:40Z",
+        "startedAt": "2026-10-08T07:19:55Z",
         "status": "COMPLETED",
         "workflowName": "OCOR PoC layered mandatory gates"
       },
-      "validation-closure": {
+      {
         "__typename": "CheckRun",
-        "completedAt": "2026-10-07T17:19:28Z",
+        "completedAt": "2026-10-08T07:38:45Z",
         "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37655615933/job/112910356085",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762794/job/113197090243",
         "name": "validation-closure",
-        "startedAt": "2026-10-07T17:02:43Z",
+        "startedAt": "2026-10-08T07:19:55Z",
         "status": "COMPLETED",
         "workflowName": "OCOR governance and validation closure"
       }
-    },
-    "final_head_check_required": true,
-    "head_sha": "64468442dd4e9e116e4b5cdd59af7ea0bf4a0439",
-    "missing": [],
-    "observed_at": "2026-10-07T17:24:29.116971+00:00",
-    "pr": 174,
-    "raw_observation_sha256": "f905f81a6d35d4c4872a2c03f9b142181e1afe1b14687914249f7e68dba2c27e",
-    "required_count": 13,
-    "run_ids": [
-      37655615572,
-      37655615668,
-      37655615679,
-      37655615745,
-      37655615845,
-      37655615933
     ],
-    "status": "PASS_ALL_13_GREEN_ON_EXACT_HEAD",
-    "success": 13
+    "final_head_rule": "Commit finale di soli report: tutti i13 check richiesti SUCCESS sul suo HEAD prima del merge match-head; nessun PASS sorgente attribuito al finale.",
+    "merge_performed": false,
+    "next_condition_for_integration": "Attendere CI finale esatta13/13, poi merge177 e main ff-only. PR176 resta aperta/non mergiata:10/13 FAIL infra; prossima unit\u00e0 REM17.",
+    "observed_at": "2026-10-08T07:38:46.547684+00:00",
+    "passed": 13,
+    "pr": 177,
+    "raw_observation_sha256": "e3b987355be655aae5d505471be7c151714d338c259933105e937dab489b2a7c",
+    "required_checks": 13,
+    "run_ids": [
+      37742762781,
+      37742762794,
+      37742762831,
+      37742762841,
+      37742762888,
+      37742762932
+    ],
+    "status": "SOURCE_HEAD_ALL_13_PASS_FINAL_HEAD_EXACT_CHECK_REQUIRED",
+    "tested_head_sha": "f583c89d3db220817fa97580efeb54a87821443b"
   },
   "state_sync_ci_history": [
     {
@@ -2505,12 +3099,17 @@
         37601614529,
         37601614534
       ]
+    },
+    {
+      "policy": "Existing main workflow/deviation164 unchanged; passing state-sync checks does not qualify REM or task0049; acquire exact HEAD13/13 before manual match-head merge.",
+      "required_checks": 13,
+      "status": "PENDING_EXACT_STATE_SYNC_HEAD"
     }
   ],
   "status": "IN_PROGRESS",
   "terminal_loop_disposition": {
     "loop_status": "CONTINUE",
-    "reason": "Escalation solo OCOR-DEV-0049 dopo NO_GO ciclo 7. REM-0017 prioritario, OCOR-DEV-0050 e G5 raggiungibili; nessun ciclo 8."
+    "reason": "0049 GO_FOR_EVIDENCE_SEAL, PR176 CI FAIL/non mergiata; REM17 prioritario eseguibile con budget PO, G5 pronto. Nessun ciclo9."
   },
-  "updated_at": "2026-10-07T20:07:47.087641+00:00"
+  "updated_at": "2026-10-08T07:39:03.983759+00:00"
 }

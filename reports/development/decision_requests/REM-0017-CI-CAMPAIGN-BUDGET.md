@@ -1,6 +1,6 @@
 # REM-0017-CI-CAMPAIGN-BUDGET
 
-Status: OPEN_PO_DECISION_REQUIRED. Data: 2026-10-07T20:07:47.087641+00:00.
+Status: RESOLVED_BY_PO_DECISION — IMPLEMENTATION_PENDING. Data: 2026-10-07T20:07:47.087641+00:00.
 Decisione applicabile: REM-0017-PRIORITY, STACK-HYGIENE. Implementatore Codex;
 verifier previsto Claude Code, non avviato perché il gate qualificante è FAIL.
 
@@ -49,3 +49,16 @@ nei tempi, quindi proseguire subito con0050/G5 indipendente. Non anticipa alcuna
 approvazione. Bloccati: chiusura REM-0017 e tutti i task G6/G7 che la richiedono;
 0050–0058 restano raggiungibili. PR169 resta draft, nessun sigillo/merge REM.
 E1=0, E2=0, zero Verified, NO-GO invariati; inputs, lock e gate immutati.
+
+
+Il WIP e i raw sono versionati nel commit `433613772806b3034e1229d7cd58a5d92841e8c2` della PR169;
+lo state sync di questa richiesta non integra script, workflow o candidati REM.
+La CI del solo state sync mantiene la deviazione temporanea già autorizzata
+della PR164: non è evidenza qualificante REM-0017 o0049.
+
+
+## 2026-10-08T07:18:03.967776+00:00 — Risoluzione Product Owner (2026-10-07)
+
+La decisione `REM-0017-CI-CAMPAIGN-BUDGET` risolve questa richiesta: limite della suite completa locale/CI **75 minuti (4500s)**; suite del task **45 minuti (2700s)**. Se una full supera60 minuti si apre nuova richiesta con le durate, senza alzare il limite. Arresto immediato al primo servizio riavviato/OOM con statistiche/log invariato; nessun caso o criterio escluso. REM-0017 deve esportare le identità delle risorse residue nel teardown e correggerne la causa, fail-closed.
+
+Decisione recepita; richiesta chiusa, implementazione/qualifica REM pendenti sulla PR169, non realizzate da questo state sync.0049 ciclo8 ha chiusura verificata GO ma PR176 CI rossa: si applica REM-0017-PRIORITY, PR aperta→REM→riallineamento/merge0049. Diagnosi CI PR176: anche rccad-methodology/delivery-activation mancano dell’env del vero stack e di mypy (extras lint); 1 failed/1164 passed/189 skipped/137 errors per ciascuno, non qualificanti. La remediation deve coprire tutti i job full-suite; nessuna nuova deroga o esclusione. Nessun completamento o sigillo REM, nessuna verifica simulata. G6 resta bloccato fino alla chiusura verificata del REM.
