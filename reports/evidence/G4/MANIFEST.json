@@ -172,12 +172,12 @@
     },
     {
       "path": "OCOR-DEV-0049.json",
-      "sha256": "89b06889dfe3920922f67fcd3c57b46423f187b3e2b80591e2f5e62980675faf",
+      "sha256": "dd1817f910fa2641dd00c0a596d1d7addc99d1cedbebaaa7d2be38de388fe269",
       "task_id": "OCOR-DEV-0049"
     },
     {
       "path": "OCOR-DEV-0049.log",
-      "sha256": "ba4e1009bdb8a3ddac604da2c1ca574da443caf953c44c780366e47f7228dee3",
+      "sha256": "90e9ebcdfdd2718474ef54c25333a3ba851cbaa4b503f48ee9693ebfb373f5db",
       "task_id": "OCOR-DEV-0049-RAW"
     }
   ],
@@ -3498,7 +3498,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-BACKUP-SEALS-AN-ENCRYPTED-SIGNED-IMMUTABLE-RECOVERY-POINT",
-      "command": "live: authority-aware recovery point from real PostgreSQL/Kafka/Qdrant/OPA, OpenBao transit encryption, ed25519 signature verified by OpenBao, 0444 content-addressed objects, memory manifest fields bound, vault survives `down -v` (test_backup_seals_an_encrypted_signed_immutable_recovery_point)",
+      "command": "Live: recovery point cifrato, firmato, immutabile; manifest recovery-point/2 con journalCheckpoints.event_ids_digest, liveItems (count, ids, scope) e store_digests uguali all’oracolo indipendente; il vault sopravvive a down -v (test_backup_seals_an_encrypted_signed_immutable_recovery_point)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-042",
@@ -3525,7 +3525,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-ISOLATED-RESTORE-REPLAYS-TOMBSTONES-AND-PASSES-THE-RECOVERY-GATE",
-      "command": "live: restore on an internal network, tombstones evt-del-m2/evt-del-m4 replayed with original ids before retrieval, restored index read from the isolated network matches the authoritative tenant/compartments/marking/GCS of every live item, all eight recovery-gate checks pass, plaintext erased, signed receipt (test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate)",
+      "command": "Live: restore isolato; tombstone riprodotti con id originali nell’ordine sigillato (digest uguale al checkpoint firmato); replay_digest, restored_scope_digest e restored_store_digests uguali ai valori sigillati; receipt firmata non anteriore al sigillo (test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-067",
@@ -3606,7 +3606,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-CUSTODIAN-SIGNED-RECEIPT-TIME-BRANCHES",
-      "command": "live VF-003 on custodian-signed receipts: recent and 167 h old -> READY, reopen 200, six classes admitted; NaN, Infinity, -Infinity, 1e400 -> RESTORE_RECEIPT_INCONSISTENT receipt:non_standard_json; future and ISO-incoherent -> INCONSISTENT; 169 h old -> RESTORE_RECEIPT_EXPIRED; each refused case: readiness 503, /reopen 409, no class admitted (test_custodian_signed_receipt_time_branches)",
+      "command": "Live: rami temporali su recovery point retrodatato firmato dal custode reale: recente e entro età accettati; NaN/Infinity/overflow, futuro, ISO incoerente rifiutati, scaduto RESTORE_RECEIPT_EXPIRED; ogni rifiuto: readiness 503, /reopen 409, nessuna classe ammessa (test_custodian_signed_receipt_time_branches)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-067",
@@ -3615,7 +3615,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-RECEIPT-MEMORY-BRANCH-MUST-MATCH-ITS-RECOVERY-POINT",
-      "command": "live VF-002: a custodian-signed receipt coherent as a no-memory drill for a recovery point that carries a memory store -> RESTORE_RECEIPT_INCONSISTENT memory:manifest_mismatch, readiness 503, /reopen 409, no class admitted (test_receipt_memory_branch_must_match_its_recovery_point)",
+      "command": "Live: receipt coerente come ramo senza memoria su recovery point con memoria -> memory:manifest_mismatch, readiness 503, /reopen 409, nessuna classe ammessa (test_receipt_memory_branch_must_match_its_recovery_point)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-067",
@@ -3624,7 +3624,7 @@
     },
     {
       "case_id": "OCOR-DEV-0049-CUSTODIAN-SIGNED-RECEIPT-INCOHERENT-WITH-ITS-CHECKPOINT-IS-REFUSED",
-      "command": "live cycle-6: 8 custodian-signed receipts coherent on their own but not with the checkpoint of their recovery point (tombstones not replayed, deletion epoch below/above the checkpoint, metadata epoch) -> RESTORE_RECEIPT_INCONSISTENT with the named cause, readiness 503, /reopen 409, no class admitted; removal restores READY (test_custodian_signed_receipt_incoherent_with_its_checkpoint_is_refused)",
+      "command": "Live: receipt firmata dal custode reale incoerente col checkpoint (omissione, sostituzione non finale, permutazione, aggiunta, duplicazione, replay/watermark/scope non sigillati, epoch sotto/sopra) -> RESTORE_RECEIPT_INCONSISTENT, readiness 503, /reopen 409, nessuna classe ammessa; rimozione ripristina READY (test_custodian_signed_receipt_incoherent_with_its_checkpoint_is_refused)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-067",
@@ -3804,7 +3804,79 @@
     },
     {
       "case_id": "OCOR-DEV-0049-SEAL-AND-RESTORE-TIED-EPOCH-TOMBSTONES-ARE-LOCALE-INDEPENDENT",
-      "command": "Live: SQL locale divergente; sigillo + restore isolato di due tombstone alla stessa epoch; checkpoint firmato accettato a 7/7 e 9/7; receipt custodian-signed con omissione/ordine/epoch rifiutata (test_seal_and_restore_tied_epoch_tombstones_are_locale_independent)",
+      "command": "Live: tre tombstone alla stessa epoch con ordine locale a,B,c e codepoint B,a,c (stesso ultimo id); sigillo reale firma il digest della sequenza; restore isolato la riproduce; accettata a 7/7 e 9/7 con READY/reopen/admission; ogni mutazione di classe e l’ordine locale firmati dal custode rifiutati live con il reason code atteso (test_seal_and_restore_tied_epoch_tombstones_are_locale_independent)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-SEALED-SEQUENCE-DIGEST-IS-THE-WHOLE-ORDERED-JOURNAL",
+      "command": "Unit: il digest firmato è quello della sequenza codepoint completa, qualunque ordine di capture; collation divergenti (test_sealed_sequence_digest_is_the_whole_ordered_journal)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-REPLAYED-SEQUENCE-IDENTICAL-TO-THE-SEALED-ONE-IS-ACCEPTED",
+      "command": "Unit: sequenza riprodotta identica a quella sigillata (tre tombstone alla stessa epoch) accettata (test_replayed_sequence_identical_to_the_sealed_one_is_accepted)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-REPLAYED-SEQUENCE-DIFFERING-FROM-THE-SEALED-ONE-IS-REFUSED",
+      "command": "Unit: 11 mutazioni di classe (permutazione con ultimo id invariato, rotazione, sostituzioni, omissioni, aggiunte, duplicazioni, vuota) rifiutate con memory:tombstones_not_replayed (test_replayed_sequence_differing_from_the_sealed_one_is_refused)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-TAIL-CHECKS-ALONE-WOULD-ACCEPT-THE-VERDICT-COUNTEREXAMPLES",
+      "command": "Unit: controesempi esatti di VF-001 (swap centrale, id estraneo non finale, caso a due id) rifiutati solo per il digest della sequenza (test_tail_checks_alone_would_accept_the_verdict_counterexamples)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RECEIPT-BOUND-TO-ITS-RECOVERY-POINT-IS-COHERENT",
+      "command": "Unit: receipt con store digest sigillati e completamento non anteriore al sigillo coerente (test_receipt_bound_to_its_recovery_point_is_coherent)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-RECEIPT-UNBOUND-FROM-ITS-RECOVERY-POINT-IS-INCOHERENT",
+      "command": "Unit: restore anteriore al sigillo, tempo di sigillo assente/non numerico, digest dei store diverso, mancante, estraneo, sigillo senza digest o malformato -> incoerente (test_receipt_unbound_from_its_recovery_point_is_incoherent)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-INFORMATIONAL-RECEIPT-FIELDS-DO-NOT-DECIDE",
+      "command": "Unit: campi informativi (correlation_id, rto_hours_target, duration_seconds, step detail, chiave extra di release_binding) non cambiano alcun verdetto (test_informational_receipt_fields_do_not_decide)",
+      "evidence_path": "OCOR-DEV-0049.json",
+      "raw_output_path": "OCOR-DEV-0049.log",
+      "requirement_id": "NFR-067",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0049"
+    },
+    {
+      "case_id": "OCOR-DEV-0049-CUSTODIAN-SIGNED-RECEIPT-UNBOUND-FROM-ITS-RECOVERY-POINT-IS-REFUSED",
+      "command": "Live: receipt firmata dal custode reale con restore anteriore al sigillo o digest dei store diversi/mancanti/estranei: readiness 503, /reopen 409, nessuna classe ammessa; la receipt autentica torna READY (test_custodian_signed_receipt_unbound_from_its_recovery_point_is_refused)",
       "evidence_path": "OCOR-DEV-0049.json",
       "raw_output_path": "OCOR-DEV-0049.log",
       "requirement_id": "NFR-067",
