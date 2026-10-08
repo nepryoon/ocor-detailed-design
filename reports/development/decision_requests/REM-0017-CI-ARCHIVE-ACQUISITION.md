@@ -1,6 +1,6 @@
 # REM-0017-CI-ARCHIVE-ACQUISITION
 
-Status: OPEN_PO_DECISION_REQUIRED. Data: 2026-10-08T09:40:15.212131+00:00.
+Status: RESOLVED_BY_PO_DECISION (2026-10-08). Data richiesta originale: 2026-10-08T09:40:15.212131+00:00.
 Implementatore Codex; verifier previsto Claude Code, non richiesto.
 
 La PR169 draft sul source HEAD `40c9c0925970f7e2b9d5217d1af3e8d2a950be68` fallisce prima dell'avvio dello stack:

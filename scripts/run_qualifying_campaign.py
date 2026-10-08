@@ -74,6 +74,57 @@ def inspect_stack() -> dict[str, Any]:
     return {entry["Name"]: entry for entry in json.loads(raw)}
 
 
+def inspect_kubernetes_runtimes() -> dict[str, dict[str, Any]]:
+    """Observe systemd inside only the disposable OCOR kind nodes.
+
+    A containerd restart does not change Docker's container RestartCount.
+    Nodes may appear and disappear as the Kubernetes fixture starts and tears down.
+    """
+    ids = subprocess.run(["docker", "ps", "-q", "--filter", "label=io.x-k8s.kind.cluster=ocor-poc"],
+                         capture_output=True, text=True, timeout=10, check=True).stdout.split()
+    if not ids:
+        return {}
+    raw = subprocess.run(["docker", "inspect", *ids], capture_output=True, text=True, timeout=10, check=True).stdout
+    current = {}
+    for node in json.loads(raw):
+        if (not node["Name"].startswith("/ocor-poc-")
+                or node["Config"]["Labels"].get("io.x-k8s.kind.cluster") != "ocor-poc"):
+            raise CampaignError("Kubernetes node outside owned scope")
+        for service in ("containerd", "kubelet"):
+            result = subprocess.run(["docker", "exec", node["Id"], "systemctl", "show", service,
+                                     "--property=ActiveState,MainPID,NRestarts"],
+                                    capture_output=True, text=True, timeout=10, check=True)
+            values = dict(line.split("=", 1) for line in result.stdout.splitlines() if "=" in line)
+            current[node["Id"] + ":" + service] = {
+                "restarts": int(values["NRestarts"]), "active": values["ActiveState"], "pid": int(values["MainPID"])}
+    return current
+
+
+def check_kubernetes_runtimes(history: dict[str, dict[str, Any]], current: dict[str, dict[str, Any]]) -> None:
+    for identity, after in current.items():
+        before = history.get(identity)
+        if (after["restarts"] != 0 or after["active"] == "failed"
+                or (before is not None and (after["active"] != "active" or after["pid"] != before["pid"]))):
+            raise CampaignError(f"Kubernetes service restarted or failed: {identity}")
+        if after["active"] == "active" and after["pid"] > 0:
+            history[identity] = after
+
+
+def collect_kubernetes_diagnostics(output: Path) -> None:
+    """Collect before SIGINT allows the fixture to remove its owned kind node."""
+    with output.open("w") as log:
+        try:
+            current = inspect_kubernetes_runtimes()
+            log.write(json.dumps(current, sort_keys=True) + "\n")
+            for node in sorted({key.split(":", 1)[0] for key in current}):
+                for command in (["docker", "stats", "--no-stream", node],
+                                ["docker", "exec", node, "journalctl", "-u", "containerd", "-u", "kubelet", "--no-pager", "-n", "200"]):
+                    result = subprocess.run(command, capture_output=True, text=True, timeout=20, check=False)
+                    log.write(result.stdout + result.stderr)
+        except (OSError, subprocess.SubprocessError, CampaignError, KeyError, ValueError) as exc:
+            log.write(f"Kubernetes diagnostics incomplete: {exc}\n")
+
+
 def stop(process: subprocess.Popen[Any]) -> None:
     if process.poll() is not None:
         return
@@ -119,14 +170,20 @@ def main() -> int:
             raise CampaignError(f"expected 11 mandatory containers, found {len(initial)}")
         check_stack(initial, initial)
         recorder = SessionRecorder(repository)
+        kubernetes_history: dict[str, dict[str, Any]] = {}
         start = time.monotonic()
         with (output / "post_remediation_runtime.log").open("w") as log:
             process = subprocess.Popen(command, cwd=suite_repository / "ocor-runtime", stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
             while process.poll() is None:
                 check_stack(initial, inspect_stack())
+                current = inspect_kubernetes_runtimes()
+                with (output / "kubernetes-runtime.log").open("a") as runtime_log:
+                    runtime_log.write(json.dumps(current, sort_keys=True) + "\n")
+                check_kubernetes_runtimes(kubernetes_history, current)
                 decision_required = check_deadline(time.monotonic() - start) or decision_required
                 time.sleep(5)
             check_stack(initial, inspect_stack())
+            check_kubernetes_runtimes(kubernetes_history, inspect_kubernetes_runtimes())
         decision_required = check_deadline(time.monotonic() - start) or decision_required
         if process.returncode:
             raise CampaignError(f"pytest exit code {process.returncode}")
@@ -137,6 +194,8 @@ def main() -> int:
         print(json.dumps(result))
         return 0
     except (CampaignError, OSError, subprocess.SubprocessError, KeyError, ValueError) as exc:
+        collect_kubernetes_diagnostics(output / "kubernetes-diagnostics.log")
+        redact_campaign_log(repository, output / "kubernetes-diagnostics.log")
         if process is not None:
             stop(process)
         collect_stack_diagnostics(repository, output / "docker-stats.log")

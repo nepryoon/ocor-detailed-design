@@ -319,6 +319,8 @@ def stub_completed_campaign(tmp_path, monkeypatch, *, seconds, recorder_error=Fa
     monkeypatch.setattr(sys, "argv", ["campaign.py", "--execute", "--output-dir", str(output)])
     snapshot = {str(n): state() for n in range(11)}
     monkeypatch.setattr(GUARD, "inspect_stack", lambda: snapshot)
+    monkeypatch.setattr(GUARD, "inspect_kubernetes_runtimes", lambda: {})
+    monkeypatch.setattr(GUARD, "collect_kubernetes_diagnostics", lambda path: path.write_text("no nodes\n"))
     ticks = iter([0, seconds, seconds, seconds])
     monkeypatch.setattr(GUARD.time, "monotonic", lambda: next(ticks))
     class Recorder:
@@ -369,3 +371,58 @@ def test_malformed_ownership_event_cannot_silently_lose_attribution(event):
     recorder.errors = []
     recorder.observe()
     assert recorder.errors
+
+
+def test_kubernetes_runtime_initial_start_and_clean_shutdown_are_allowed():
+    history = {}
+    GUARD.check_kubernetes_runtimes(history, {'node:containerd': {'restarts': 0, 'active': 'activating', 'pid': 0}})
+    GUARD.check_kubernetes_runtimes(history, {'node:containerd': {'restarts': 0, 'active': 'active', 'pid': 111}})
+    GUARD.check_kubernetes_runtimes(history, {'node:containerd': {'restarts': 0, 'active': 'active', 'pid': 111}})
+    GUARD.check_kubernetes_runtimes(history, {})  # Fixture-owned node removed normally.
+
+
+@pytest.mark.parametrize('current', [
+    {'restarts': 1, 'active': 'active', 'pid': 6825},
+    {'restarts': 0, 'active': 'active', 'pid': 6825},
+    {'restarts': 0, 'active': 'failed', 'pid': 0},
+    {'restarts': 0, 'active': 'inactive', 'pid': 0},
+])
+def test_kubernetes_internal_restart_or_failure_cannot_qualify(current):
+    history = {}
+    GUARD.check_kubernetes_runtimes(history, {'node:containerd': {'restarts': 0, 'active': 'active', 'pid': 111}})
+    with pytest.raises(GUARD.CampaignError, match='Kubernetes service'):
+        GUARD.check_kubernetes_runtimes(history, {'node:containerd': current})
+
+
+def test_kubernetes_first_observation_already_restarted_fails_closed():
+    with pytest.raises(GUARD.CampaignError, match='Kubernetes service'):
+        GUARD.check_kubernetes_runtimes({}, {'node:kubelet': {'restarts': 1, 'active': 'active', 'pid': 50}})
+
+
+def test_kubernetes_runtime_inventory_is_confined_to_owned_cluster(monkeypatch):
+    from types import SimpleNamespace
+    calls = []
+    def run(command, **kwargs):
+        calls.append(command)
+        if command[:2] == ['docker', 'ps']:
+            return SimpleNamespace(stdout='node-id\n')
+        if command[:2] == ['docker', 'inspect']:
+            return SimpleNamespace(stdout='[{"Id":"node-id","Name":"/ocor-poc-control-plane","State":{"Running":true},"Config":{"Labels":{"io.x-k8s.kind.cluster":"ocor-poc"}}}]')
+        return SimpleNamespace(stdout='ActiveState=active\nMainPID=111\nNRestarts=0\n')
+    monkeypatch.setattr(GUARD.subprocess, 'run', run)
+    assert len(GUARD.inspect_kubernetes_runtimes()) == 2
+    assert calls[0][-1] == 'label=io.x-k8s.kind.cluster=ocor-poc'
+    assert all(c[2] == 'node-id' for c in calls if c[:2] == ['docker', 'exec'])
+
+
+def test_kubernetes_runtime_inventory_rejects_foreign_name(monkeypatch):
+    from types import SimpleNamespace
+    def run(command, **kwargs):
+        if command[:2] == ['docker', 'ps']:
+            return SimpleNamespace(stdout='foreign-id\n')
+        if command[:2] == ['docker', 'inspect']:
+            return SimpleNamespace(stdout='[{"Id":"foreign-id","Name":"/open-webui","State":{"Running":true},"Config":{"Labels":{"io.x-k8s.kind.cluster":"ocor-poc"}}}]')
+        pytest.fail('foreign container must never be entered')
+    monkeypatch.setattr(GUARD.subprocess, 'run', run)
+    with pytest.raises(GUARD.CampaignError, match='scope'):
+        GUARD.inspect_kubernetes_runtimes()
