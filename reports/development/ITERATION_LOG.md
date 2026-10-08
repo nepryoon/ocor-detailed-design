@@ -4653,3 +4653,11 @@ Gate documentali: rccad PASS_LOCAL_PRECHECK, scope/language/ruff PASS, mypy 69 s
 - Implementatore REM Codex/OpenAI, verifier previsto Claude Code/Anthropic indipendente; nuova richiesta NOT_EXECUTED finché campagne e CI esatte non sono verdi.0049 GO indipendente ciclo8/Cursor e sigillo df444af preservati; PR176 aperta e PR169draft. Nessuna riparazione0049.
 
 - Raffinamento deadline download: RED1FAIL della lettura read(size), GREEN67PASS/zero skip sul portfolio mirato; read1 e timeout trasporto aggiornato per ogni receive impediscono che byte intermittenti estendano implicitamente il budget. Nuovo MISS reale dlcdn e HIT riacquisiti con il nuovo codice, SHA512PASS; nessun incremento del budget. Sourcefe823 CI storica già avviata, non trasferita al successivo codice.
+
+
+## 2026-10-08T13:42:47.237084+00:00 — REM17: crash runtime Kubernetes e qualifica aggiornata
+
+- Prima FULL locale candidata: 1490 PASS,1 FAIL,0 skip/ERROR,2463.71s. Backup manuale Helm seal255 nello stesso secondo del SIGSEGV containerd e riavvio systemd (13:15:00/01Z). Docker RestartCount0/OOMKilledfalse: la causa profonda del SIGSEGV non è stabilita, non viene attribuita al prodotto. Diagnostica/raw preservati; teardown zero risorse OCOR residue. Il supervisore precedente non osservava i riavvii interni: il run non è qualificante e non dichiariamo arresto immediato.
+- RED8 nuovi casi per monitor mancante, GREEN100 report e87 tooling/2 subtests,zero skip,ruff/mypy strict PASS. Nuovo monitor scoped ai soli nodi kind ocor-poc, PID/NRestarts/ActiveState, diagnostica prima del teardown. Cablaggio al main verificato dal negativo di campagna. Nessuna modifica0049 o lock.
+- Un solo retry locale, nuova immagine ricetta identica e stack ricreati: FULL REM1101 PASS,0 skip/error/fail,373.76s, teardown senza residui; FULL candidata IN_PROGRESS. Codice/source C70679f, request indipendente ancora NOT_EXECUTED.
+- CI sorgente fe823: delivery37778117922 e RCCAD37778117949 verdi con1101/zero skip; candidata37778117899 ancora attiva dopo3734s osservati. Nuova DR REM-0017-CI-CAMPAIGN-DURATION accodata come richiesto per >60m; cap75m invariato, non blocca G5. Tutti i risultati sorgente sono storici, non qualificano gli HEAD successivi.
