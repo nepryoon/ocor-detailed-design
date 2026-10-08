@@ -352,3 +352,20 @@ def test_event_capture_failure_is_fail_closed_and_logs_are_still_redacted(tmp_pa
     assert GUARD.main() == 1
     assert json.loads((output / "campaign_result.json").read_text())["status"] == "FAIL"
     assert "unit-private-value" not in (output / "post_remediation_runtime.log").read_text()
+
+
+@pytest.mark.parametrize("event", [
+    {"Type": "container", "Action": "create", "Actor": None},
+    {"Type": "container", "Action": "create", "Actor": {"ID": "id", "Attributes": {"name": None}}},
+    {"Type": "volume", "Action": "mount", "Actor": {"ID": "volume", "Attributes": {}}},
+])
+def test_malformed_ownership_event_cannot_silently_lose_attribution(event):
+    import json
+    from types import SimpleNamespace
+    import bootstrap_ci_environment as ci
+    recorder = ci.SessionRecorder.__new__(ci.SessionRecorder)
+    recorder.process = SimpleNamespace(stdout=iter([json.dumps(event) + "\n"]))
+    recorder.events = []
+    recorder.errors = []
+    recorder.observe()
+    assert recorder.errors

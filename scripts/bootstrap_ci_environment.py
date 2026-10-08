@@ -160,15 +160,26 @@ class SessionRecorder:
                 event = json.loads(line)
                 actor = event.get("Actor", {})
                 attributes = actor.get("Attributes", {})
+                if event.get("Type") in ("container", "volume", "network"):
+                    if not isinstance(actor.get("ID"), str) or not actor["ID"]:
+                        raise ValueError("ownership event has no resource identity")
+                    if event.get("Type") == "container" and event.get("Action") in ("create", "start"):
+                        if not isinstance(attributes.get("name"), str) or not attributes["name"]:
+                            raise ValueError("container ownership event has no name")
+                    if event.get("Type") == "volume" and event.get("Action") == "mount":
+                        if not isinstance(attributes.get("container"), str) or not attributes["container"]:
+                            raise ValueError("volume mount has no container binding")
                 # Persist only ownership identifiers; no arbitrary labels or env values.
                 if event.get("Type") in ("container", "volume", "network"):
                     self.events.append({"Type": event["Type"], "Action": event.get("Action"),
                                         "Actor": {"ID": actor.get("ID"), "Attributes": {
                                             key: attributes[key] for key in ("name", "container") if key in attributes}}})
-        except (OSError, ValueError) as exc:
+        except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
             self.errors.append(str(exc))
 
     def finish(self) -> None:
+        if not self.thread.is_alive():
+            self.errors.append("Docker ownership observer ended unexpectedly")
         if self.process.poll() is not None:
             self.errors.append("Docker ownership event stream ended unexpectedly")
         else:

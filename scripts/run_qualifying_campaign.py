@@ -151,7 +151,7 @@ def main() -> int:
         if recorder is not None:
             try:
                 recorder.finish()
-            except (OSError, ValueError, subprocess.SubprocessError, RuntimeError) as exc:
+            except (OSError, ValueError, subprocess.SubprocessError, RuntimeError, KeyError, TypeError, AttributeError) as exc:
                 recorder_error = str(exc)
                 (output / "campaign_result.json").write_text(json.dumps({"status": "FAIL", "error": recorder_error}, indent=2, sort_keys=True) + "\n")
         if process is not None:
