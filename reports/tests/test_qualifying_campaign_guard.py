@@ -437,3 +437,47 @@ def test_full_campaign_rejects_an_internal_runtime_restart(tmp_path, monkeypatch
     assert result['status'] == 'FAIL'
     assert 'Kubernetes service restarted' in result['error']
     assert (output / 'kubernetes-diagnostics.log').exists()
+
+
+def test_kubelet_bootstrap_pid_change_before_admission_is_allowed():
+    history = {}
+    for pid in (241, 749):
+        GUARD.check_kubernetes_runtimes(history, {'node:kubelet': {
+            'restarts': 0, 'active': 'active', 'pid': pid, 'admitted': False}})
+    GUARD.check_kubernetes_runtimes(history, {'node:kubelet': {
+        'restarts': 0, 'active': 'active', 'pid': 749, 'admitted': True}})
+    assert history['node:kubelet']['pid'] == 749
+    with pytest.raises(GUARD.CampaignError):
+        GUARD.check_kubernetes_runtimes(history, {'node:kubelet': {
+            'restarts': 0, 'active': 'active', 'pid': 800, 'admitted': True}})
+
+
+@pytest.mark.parametrize('service', ['containerd', 'kubelet'])
+def test_genuine_auto_restart_is_rejected_even_during_node_bootstrap(service):
+    with pytest.raises(GUARD.CampaignError):
+        GUARD.check_kubernetes_runtimes({}, {'node:' + service: {
+            'restarts': 1, 'active': 'active', 'pid': 800, 'admitted': False}})
+
+
+def test_stop_interrupts_the_owned_suspended_process_group():
+    import os
+    import signal
+    import subprocess
+    process = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
+    try:
+        os.killpg(process.pid, signal.SIGSTOP)
+        GUARD.stop(process, resume=True)
+        assert process.poll() is not None
+    finally:
+        if process.poll() is None:
+            os.killpg(process.pid, signal.SIGCONT)
+            os.killpg(process.pid, signal.SIGKILL)
+            process.wait(timeout=5)
+
+
+@pytest.mark.parametrize('active,pid', [('inactive', 0), ('activating', 0), ('active', 0)])
+def test_admitted_node_must_have_running_kubelet_on_first_observation(active, pid):
+    with pytest.raises(GUARD.CampaignError):
+        GUARD.check_kubernetes_runtimes({}, {'node:kubelet': {
+            'restarts': 0, 'active': active, 'pid': pid, 'admitted': True}})

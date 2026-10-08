@@ -96,17 +96,22 @@ def inspect_kubernetes_runtimes() -> dict[str, dict[str, Any]]:
                                     capture_output=True, text=True, timeout=10, check=True)
             values = dict(line.split("=", 1) for line in result.stdout.splitlines() if "=" in line)
             current[node["Id"] + ":" + service] = {
-                "restarts": int(values["NRestarts"]), "active": values["ActiveState"], "pid": int(values["MainPID"])}
+                "restarts": int(values["NRestarts"]), "active": values["ActiveState"], "pid": int(values["MainPID"]),
+                # The immutable fixture connects this network only after
+                # kind create --wait succeeds, before any workload dispatch.
+                "admitted": "ocor-bootstrap_ocor-bootstrap" in node.get("NetworkSettings", {}).get("Networks", {})}
     return current
 
 
 def check_kubernetes_runtimes(history: dict[str, dict[str, Any]], current: dict[str, dict[str, Any]]) -> None:
     for identity, after in current.items():
         before = history.get(identity)
+        initializing_kubelet = identity.endswith(":kubelet") and not after.get("admitted", True) and before is None
         if (after["restarts"] != 0 or after["active"] == "failed"
+                or (after.get("admitted", False) and (after["active"] != "active" or after["pid"] <= 0))
                 or (before is not None and (after["active"] != "active" or after["pid"] != before["pid"]))):
             raise CampaignError(f"Kubernetes service restarted or failed: {identity}")
-        if after["active"] == "active" and after["pid"] > 0:
+        if not initializing_kubelet and after["active"] == "active" and after["pid"] > 0:
             history[identity] = after
 
 
@@ -125,10 +130,12 @@ def collect_kubernetes_diagnostics(output: Path) -> None:
             log.write(f"Kubernetes diagnostics incomplete: {exc}\n")
 
 
-def stop(process: subprocess.Popen[Any]) -> None:
+def stop(process: subprocess.Popen[Any], *, resume: bool = False) -> None:
     if process.poll() is not None:
         return
     os.killpg(process.pid, signal.SIGINT)
+    if resume:
+        os.killpg(process.pid, signal.SIGCONT)
     try:
         process.wait(timeout=60)
     except subprocess.TimeoutExpired:
@@ -194,10 +201,22 @@ def main() -> int:
         print(json.dumps(result))
         return 0
     except (CampaignError, OSError, subprocess.SubprocessError, KeyError, ValueError) as exc:
-        collect_kubernetes_diagnostics(output / "kubernetes-diagnostics.log")
-        redact_campaign_log(repository, output / "kubernetes-diagnostics.log")
-        if process is not None:
-            stop(process)
+        # Suspend the owned pytest process group immediately. Preserve the node
+        # for diagnostics, then deliver SIGINT before resuming fixture teardown.
+        frozen = False
+        if process is not None and process.poll() is None:
+            try:
+                os.killpg(process.pid, signal.SIGSTOP)
+                frozen = True
+            except ProcessLookupError:
+                pass
+        try:
+            collect_kubernetes_diagnostics(output / "kubernetes-diagnostics.log")
+            if (repository / ".ocor/bootstrap.env").exists():
+                redact_campaign_log(repository, output / "kubernetes-diagnostics.log")
+        finally:
+            if process is not None:
+                stop(process, resume=frozen)
         collect_stack_diagnostics(repository, output / "docker-stats.log")
         result = {"status": "FAIL", "error": str(exc), "po_decision_required": decision_required}
         (output / "campaign_result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")

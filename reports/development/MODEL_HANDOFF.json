@@ -57,7 +57,7 @@
     "reports/evidence/G2/OCOR-DEV-0072.archive-requalified.json",
     "reports/evidence/G2/OCOR-DEV-0075.archive-requalified.json"
   ],
-  "exact_next_action": "Completare qualifica esatta REM-0017 repair_cycle1 (acquisizione archivio verificata, FULL locale e nuova coppia CI autorizzata), poi richiedere verifier Claude Code. Riacquisire identit\u00e0 locale Fuseki nel change set dedicato dopo Dockerfile; PR176 resta aperta, nessuna riparazione0049.",
+  "exact_next_action": "Completare una nuova FULL sul codice corretto dopo reset/health; i due candidati locali precedenti restano FAIL/INTERRUPTED. Poi aggregare raw reali, gate/push PR169draft e richiedere Claude Code sull\u2019HEAD esatto; CI sorgentefe82313/13 \u00e8 soltanto storica. Nessuna riparazione0049 o update lock in REM.",
   "head_sha": "git:HEAD",
   "head_sha_resolver": "git rev-parse HEAD",
   "independent_verification": {
@@ -83,7 +83,12 @@
       "skipped": 0,
       "status": "FAIL"
     },
-    "candidate_full_latest": "IN_PROGRESS fresh retry with final archive receiver/internal runtime monitor; prior FAIL retained",
+    "candidate_full_latest": {
+      "passed": 1379,
+      "reason": "Kubelet planned clean startup PID241->749 before kind network admission; monitor incorrectly treated initialization as operating state. Corrected with explicit admission boundary from immutable fixture; actual crash/auto-restart still fail-closed.",
+      "remaining_not_executed": 112,
+      "status": "INTERRUPTED_NONQUALIFYING"
+    },
     "full_campaigns": "IN_PROGRESS on source1ff02fd; no PASS asserted",
     "harness": "14 PASS /0 FAIL/0 NOT_EXECUTED",
     "kubernetes_monitor": {
@@ -91,7 +96,7 @@
       "RED": "8 new cases fail on missing helper",
       "scope": "Observe containerd/kubelet internal restart only in owned ocor-poc kind nodes, capture diagnostics before fixture teardown. One fresh-environment candidate rerun pending."
     },
-    "latest_report_portfolio": "91 passed /0 skipped; transport deadline RED+GREEN and real MISS+HIT requalified",
+    "latest_report_portfolio": "107 passed/0 skip;94 tooling/2 subtests; initialization RED and admitted-inactive RED preserved",
     "latest_source_commit": "c70679fa5100492bff1cb50941d1e65576135d6d",
     "main_full": {
       "counts": {
@@ -171,6 +176,6 @@
     "OCOR-DEV-REM-0018",
     "REM-0017-CI-CAMPAIGN-DURATION (PO queue, non-blocking current75m/G5)"
   ],
-  "updated_at": "2026-10-08T13:42:47.237084+00:00",
+  "updated_at": "2026-10-08T14:13:51.031499+00:00",
   "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
 }

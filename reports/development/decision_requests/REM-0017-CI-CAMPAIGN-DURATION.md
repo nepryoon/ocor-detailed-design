@@ -38,3 +38,14 @@ Nessun test viene escluso, saltato, deselezionato o marcato. La soglia resta
 Un run oltre il tetto o non verde non qualifica REM-0017. La richiesta non
 blocca G5; l'integrazione del REM e di 0049 richiede comunque campagne valide,
 verifica indipendente e CI verde sull'HEAD esatto. Nessun ciclo9 di 0049.
+
+## Esito acquisito del primo run sorgente
+
+Il raw artifact `ocor-conditional-0049-b31ebdab58d077274e9534bbf3cd5d4aad5b51ed`
+(artifact ID11553834543, run37778117899, PR head fe823) riporta durata FULL
+**4200.959 s (70m01s)**, `po_decision_required=true`,1491 PASS e zero
+FAIL/ERROR/skip. JUnit:0048=196 casi,0049=390 casi; teardown senza
+container,volumi o reti residui. Hash SHA256 campaign_result.json: `b37995903b1e24dbcd3b47696b4da98658a4aef2dd41025433bb8e93333c0db3`.
+La richiesta resta OPEN: il run è entro75 minuti ma oltre60. Il verde
+di questa sorgente non qualifica le successive modifiche del ricevitore
+e del monitor Kubernetes; è necessaria la CI dell'HEAD finale.
