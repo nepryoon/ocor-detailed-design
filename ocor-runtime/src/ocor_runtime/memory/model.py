@@ -1282,6 +1282,10 @@ class MemoryAdmissionService:
         previous = self._ledger.by_idempotency_key(key)
         if previous is not None:
             if hmac.compare_digest(previous.item_digest, item_digest):
+                # The item digest authenticates metadata, not the supplied bytes.
+                # Replays must satisfy the same content boundary before receiving
+                # an existing receipt (ADD Part II §2.4; LLD §2.8.2).
+                self._validate_content(item, payload)
                 return previous.receipt
             raise MemoryAdmissionError(
                 "MEMORY_IDEMPOTENCY_CONFLICT",

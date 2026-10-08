@@ -946,6 +946,68 @@ def test_same_idempotency_key_and_digest_returns_the_original_receipt(world: Wor
     assert world.ledger.append_calls == 1
 
 
+@pytest.mark.parametrize(
+    ("payload", "detail"),
+    [
+        (b'{"note":"different observation"}', "CONTENT_DIGEST_MISMATCH"),
+        (b"", "CONTENT_DIGEST_MISMATCH"),
+        (b"password = hunter2", "CONTENT_DIGEST_MISMATCH"),
+        (b"-----BEGIN RSA PRIVATE KEY-----\nMIIB", "CONTENT_DIGEST_MISMATCH"),
+        (b"Authorization: Bearer abc.def", "CONTENT_DIGEST_MISMATCH"),
+        (b"<thinking>hidden reasoning</thinking>", "CONTENT_DIGEST_MISMATCH"),
+        (bytearray(b"altered bytes"), "CONTENT_DIGEST_MISMATCH"),
+        ("not bytes", "PAYLOAD_INVALID"),
+        (None, "PAYLOAD_INVALID"),
+    ],
+)
+def test_same_idempotency_key_revalidates_payload_before_returning_receipt(
+    journal: Path, payload: Any, detail: str
+) -> None:
+    # The first admission and a fresh service share the real durable journal.
+    original = make_world(JournalMemoryVersionLedger(journal))
+    receipt = original.admit(candidate())
+    before = journal.read_bytes()
+    later = make_world(JournalMemoryVersionLedger(journal))
+    head = later.ledger.head
+    with pytest.raises(MemoryAdmissionError) as caught:
+        later.admit(candidate(), payload=payload)
+    error = caught.value
+    assert (error.reason_code, error.detail_code) == ("MEMORY_SCHEMA_INVALID", detail)
+    assert error.correlation_id == GCS.correlation_id
+    assert journal.read_bytes() == before
+    assert later.ledger.head == head
+    assert len(journal.read_bytes().splitlines()) == 1
+    assert later.ledger.get("mem-1", 1).receipt == receipt
+    assert later.policy.calls == 0
+    # Rejection must not poison the key: identical bytes still replay exactly.
+    assert later.admit(candidate(), payload=PAYLOAD) == receipt
+    assert journal.read_bytes() == before
+    assert later.policy.calls == 0
+
+
+def test_same_idempotency_key_revalidates_the_current_content_registry(journal: Path) -> None:
+    original = make_world(JournalMemoryVersionLedger(journal))
+    receipt = original.admit(candidate())
+    before = journal.read_bytes()
+    later = make_world(JournalMemoryVersionLedger(journal))
+    service = MemoryAdmissionService(
+        ledger=later.ledger,
+        resolver=later.resolver,
+        policy=later.policy,
+        markings=markings(),
+        clock=later.clock,
+        limits=AdmissionLimits(retention_horizons={}, content_schemas=frozenset()),
+    )
+    with pytest.raises(MemoryAdmissionError) as caught:
+        service.admit(envelope(candidate()), binding=later.binding, payload=PAYLOAD)
+    assert (caught.value.reason_code, caught.value.detail_code) == (
+        "MEMORY_SCHEMA_INVALID", "CONTENT_SCHEMA_UNKNOWN"
+    )
+    assert journal.read_bytes() == before
+    assert later.ledger.get("mem-1", 1).receipt == receipt
+    assert later.policy.calls == 0
+
+
 def test_same_idempotency_key_with_a_different_digest_is_a_conflict(world: World) -> None:
     world.admit(candidate())
     assert_rejected_before_persistence(
