@@ -318,3 +318,37 @@ FAIL nel ripristino dell'immagine precedente non più presente; richiesta
 FUSEKI locale preservata. Implementatore Codex, verifier REM Claude Code
 previsto in processo separato, nuova verifica NOT_EXECUTED. PR169 draft
 e PR176 aperte, 63 completed invariati, G6 bloccato fino a chiusura verificata.
+
+
+## Acquisizione verificata e runtime locale — 2026-10-08
+
+Stato: `WIP_NOT_QUALIFIED_LOCAL_RUNTIME_FAILURE`; REM ancora OPEN. Implementatore
+Codex (OpenAI); verifier previsto Claude Code (Anthropic), processo e contesto
+separati, **NOT_EXECUTED**: nessuna nuova request con FULL locale incompleta.
+
+`repair-1-archive.json/.log` preservano tutti i fallimenti e239 raw originali
+con SHA256/lunghezze re-estraibili. La decisione archive-acquisition è implementata:
+SHA512 unico indirizzo/autorità, cache locale e Actions del solo repository, fonti
+Apache dlcdn/downloads/archive in ordine, verifica a ogni uso, COPY degli stessi byte.
+Il download e tutto il provisioning restano dentro600s. Lock/controllo identità
+locale invariati; immagine55a9eec differisce dal locka1eb484, riacquisizione distinta
+già autorizzata, nessun PASS del confronto locale dichiarato.
+
+Gates:107 report e94 tooling/2 subtests PASS,zero skip; ruff/mypy strict verdi,
+harness14 PASS,digest8/8,deriva0/169 su63 task. FULL REM1101 PASS/zero skip in424.337s.
+Il candidato finale ha1379 PASS parziali e112 NOT_EXECUTED: containerd nel nodo kind
+termina SIGSEGV a14:59:57Z, seconda occorrenza dopo13:15:00Z. Il monitor interrompe
+alla perdita del runtime, raccoglie diagnostica prima della rimozione e teardownzero.
+Il difetto del monitor sulla normale inizializzazione kubelet è corretto: bootstrap
+pulito prima dell’ammissione distinto da crash/riavvio in uso, con positivi/negativi.
+Non è un controllo indebolito per ammettere il SIGSEGV; quel run resta FAIL.
+
+Il primo HEAD CI fe823 è13/13 verde:1491 PASS/zero skip in70m01s,196 casi0048 e390
+casi0049,teardownzero. Risultato storico, non dell’HEAD successivo. La richiesta sulla
+durata>60m resta OPEN; cap75m immutato. DR KIND-CONTAINERD-CRASH documenta lo sblocco
+minimo: diagnosi bounded sullo stesso profilo, eventuale nuova immagine/modifica0049
+solo con decisione. Nessuna nuova riparazione0049, suo GO/sigillo esistente preservato.
+
+Rollback: nuovo revert del change set non integrato; preservare record storici sigillati.
+G5 resta pronto; prossima unità riacquisizione localeFuseki distinta e poi0050.
+E1=0,E2=0,zero Verified e claim NO-GO invariati. Nessun sigillo o merge di questo REM.

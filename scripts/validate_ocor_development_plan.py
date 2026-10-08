@@ -425,6 +425,7 @@ def main() -> int:
         "reports/development/decision_requests/REM-0017-CI-CAMPAIGN-BUDGET.md",
         "reports/development/decision_requests/REM-0017-CI-ARCHIVE-ACQUISITION.md",
         "reports/development/decision_requests/REM-0017-CI-CAMPAIGN-DURATION.md",
+        "reports/development/decision_requests/REM-0017-KIND-CONTAINERD-CRASH.md",
         "reports/assurance/OCOR-DEV-REM-0014-RCCAD/README.md",
         "reports/assurance/OCOR-DEV-REM-0014-RCCAD/evidence.json",
         "reports/assurance/OCOR-DEV-REM-0014-RCCAD/OCOR-DEV-REM-0014.json",

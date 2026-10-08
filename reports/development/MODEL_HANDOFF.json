@@ -49,28 +49,36 @@
     "verify.py --json",
     "positive/negative archive acquisition portfolio",
     "real miss/hit acquisition",
-    "run_qualifying_campaign.py (IN_PROGRESS)"
+    "run_qualifying_campaign.py (IN_PROGRESS)",
+    "final FULL main1101 PASS",
+    "final FULL candidate SIGSEGV/INTERRUPTED1379",
+    "raw226 digest re-extraction PASS",
+    "runtime-evidence0072/0075 PASS",
+    "source CI13/13 PASS (not final HEAD)"
   ],
   "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
-  "current_task": "REM-0017: repair1 verified archive acquisition",
+  "current_task": "REM17 archive acquisition WIP; scoped local containerd failure",
   "evidence_paths": [
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-archive.json",
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-archive.log",
     "reports/evidence/G2/OCOR-DEV-0072.archive-requalified.json",
     "reports/evidence/G2/OCOR-DEV-0075.archive-requalified.json"
   ],
-  "exact_next_action": "Completare una nuova FULL sul codice corretto dopo reset/health; i due candidati locali precedenti restano FAIL/INTERRUPTED. Poi aggregare raw reali, gate/push PR169draft e richiedere Claude Code sull\u2019HEAD esatto; CI sorgentefe82313/13 \u00e8 soltanto storica. Nessuna riparazione0049 o update lock in REM.",
+  "exact_next_action": "Eseguire la riacquisizione governata distinta FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE gi\u00e0 autorizzata sul Dockerfile/archivio finali, poi OCOR-DEV-0050 e G5 pronto. REM17 resta WIP: diagnosi bounded containerd entro DEC-211 prima di nuova FULL; nessun retry invariato, nuova immagine/ciclo0049 richiedono decisione. PR169draft/176 aperte, nessuna nuova verifica finch\u00e9 locale non qualificato.",
   "head_sha": "git:HEAD",
   "head_sha_resolver": "git rev-parse HEAD",
   "independent_verification": {
     "implementer": "Codex (OpenAI)",
-    "new_request_status": "NOT_EXECUTED: local candidate fresh retry and exact CI pending",
+    "new_request_status": "NOT_EXECUTED: latest local candidate FULL interrupted on real runtime failure; no verify_request emitted",
     "prior_verdict": "OCOR-DEV-REM-0017-6e2a08b62524-0",
     "repair_cycle": 1,
     "verifier": "Claude Code (Anthropic), separate process/context"
   },
   "limitations": [
-    "CI and complete latest campaign results pending; no evidence seal",
-    "Local identity update deliberately separate",
-    "PR169 draft; PR176 open and unmerged"
+    "Local image output identity is not a PASS of the machine-specific bootstrap. Separate governed re-acquisition is authorized and is the next distinct unit.",
+    "First local campaigns predated receiver/monitor refinement and candidate FAIL is retained; fresh retry reacquires final source bootstrap and full supervisor. Source CI fe823 predates both refinements, and its results are historical only. Exact requested head CI must qualify final implementation.",
+    "Final candidate FULL interrupted on a second real containerd SIGSEGV;1379 partial PASS,112 NOT_EXECUTED. Fault-recovery exercise NOT_EXECUTED because campaign failed; no new verifier request.",
+    "No task0049 implementation or sealed evidence is changed. History: repair2\u20136/8 Claude Code,7 Codex; verifier7 and actual verifier8 Grok4.7/Cursor."
   ],
   "local_validation": {
     "archive_live_hit": "SHA512 rechecked PASS",
@@ -84,20 +92,27 @@
       "status": "FAIL"
     },
     "candidate_full_latest": {
-      "passed": 1379,
-      "reason": "Kubelet planned clean startup PID241->749 before kind network admission; monitor incorrectly treated initialization as operating state. Corrected with explicit admission boundary from immutable fixture; actual crash/auto-restart still fail-closed.",
-      "remaining_not_executed": 112,
-      "status": "INTERRUPTED_NONQUALIFYING"
+      "error": "Kubernetes service restarted or failed: 4e25492404a33d111bd3683ec155322fc6a527c9c89cac8fcd329ea708cef1c3:containerd",
+      "partial_counts": {
+        "duration_seconds": 2283.58,
+        "passed": 1379,
+        "remaining_not_executed": 112,
+        "skipped": 0
+      },
+      "po_decision_required": false,
+      "status": "FAIL"
     },
-    "full_campaigns": "IN_PROGRESS on source1ff02fd; no PASS asserted",
+    "drift": "0/169 across63 completed unchanged",
+    "final_plan": "37 PASS/2 optional NOT_EXECUTED; generated build log preserved outside repo and self-hash settled",
+    "full_campaigns": "FINAL_CANDIDATE_FAIL;1379 partial PASS,112 NOT_EXECUTED; no qualifying local candidate FULL",
     "harness": "14 PASS /0 FAIL/0 NOT_EXECUTED",
     "kubernetes_monitor": {
       "GREEN": "75 passed/0 skip;ruff/mypy PASS",
       "RED": "8 new cases fail on missing helper",
       "scope": "Observe containerd/kubelet internal restart only in owned ocor-poc kind nodes, capture diagnostics before fixture teardown. One fresh-environment candidate rerun pending."
     },
-    "latest_report_portfolio": "107 passed/0 skip;94 tooling/2 subtests; initialization RED and admitted-inactive RED preserved",
-    "latest_source_commit": "c70679fa5100492bff1cb50941d1e65576135d6d",
+    "latest_report_portfolio": "107 PASS/zero skip;94 tooling/2 subtests",
+    "latest_source_commit": "c3357b439cd1462de71e1a5772f4d3d0f03b7150",
     "main_full": {
       "counts": {
         "errors": 0,
@@ -117,7 +132,7 @@
         "skipped": 0,
         "tests": 1101
       },
-      "duration_seconds": 373.7627264820039,
+      "duration_seconds": 424.33718784499797,
       "po_decision_required": false,
       "required_modules": [
         "test_ocor_dev_0048"
@@ -125,18 +140,14 @@
       "status": "PASS"
     },
     "normative_checksums": "8/8 PASS",
+    "teardown": "zero owned containers/volumes/networks; own kind node removed",
     "toolchain": "9/9 version+digest PASS",
     "tooling_portfolio": "77 PASS /0 skip;2 subtests PASS"
   },
   "migration_rollback_result": "Revert acquisition changes through a new commit; no database migration. Preserve original sealed evidence; new requalifications explicitly supersede only drifted inputs.",
   "raw_evidence_hashes": {
-    "ci-source-observation.json": "1569d34035e6d016d3384ff9858232eaa9aebc017954e96819f9895c0e4c7c84",
-    "green-stream-deadline.log": "f08b47ec78f6a2b62a8bdaee21e041fb4bb76d55a295a519f4689a404bb4ca1a",
-    "live-stream-acquisition.log": "3bd48510854d9744c88706c8778953728e055250aec3090b32e21551c8530cf9",
-    "main-full/campaign_result.json": "516dc006fb798663f29dd5581650808caf00fbf70c57f9129e5b2729c0f862d2",
-    "red-stream-deadline.log": "801c42a3fbde4008045ba42f1362cc55fb38cc36a984ec0a743e9511261b1786",
-    "red.log": "c2d6d840f5754f285951e02382d4ee60e272face2c6262fa23497732e645ef67",
-    "report-portfolio-final.log": "f84964f47a5123503c745b9ca9884e0db710c16d5e23ce1c5985f549f7559774"
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-archive.json": "5efc1720e9e1791cf6435ac193d401ef9d7c61fe6d98d1d3637b74a87c1d07d2",
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-archive.log": "d72fb440383be08f1287d90c3861af6bbe76531631d9c26a98d35ade77f7c2f2"
   },
   "requirement_ids": [
     "BR-003",
@@ -152,30 +163,152 @@
   "schema_version": "1.0",
   "security_observability_notes": "Archive checksum authority unchanged; official redirects only; no secrets in Git. Recipe-based CI stack image ID differs from local output identity lock, not asserted equal. Foreign/preexisting resources preserved.",
   "source_ci_historical": {
-    "RCCAD": {
-      "FULL": 1101,
-      "duration_seconds": 540.62747397,
-      "provisioning_seconds": 103.08,
-      "run_id": 37778117949,
-      "skipped": 0
-    },
-    "delivery": {
-      "FULL": 1101,
-      "duration_seconds": 387.51438996099995,
-      "provisioning_seconds": 105.082,
-      "run_id": 37778117922,
-      "skipped": 0
-    },
+    "checks": [
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T12:37:13Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37778118009/job/113314057342",
+        "name": "contract",
+        "startedAt": "2026-10-08T12:36:52Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T12:48:27Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37778117949/job/113314068417",
+        "name": "rccad-methodology",
+        "startedAt": "2026-10-08T12:36:55Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR RCCAD methodology gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T12:46:06Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37778117922/job/113314056402",
+        "name": "delivery-activation",
+        "startedAt": "2026-10-08T12:36:52Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR autonomous delivery controls"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T12:37:09Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37778117750/job/113314056689",
+        "name": "supply-chain",
+        "startedAt": "2026-10-08T12:36:52Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR supply-chain gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T12:37:44Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37778117749/job/113314055541",
+        "name": "type-and-lint-gate",
+        "startedAt": "2026-10-08T12:36:52Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR tooling and bootstrap policy"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T12:37:12Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37778118009/job/113314057250",
+        "name": "unit",
+        "startedAt": "2026-10-08T12:36:52Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T13:59:22Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37778117899/job/113345772622",
+        "name": "validation-closure",
+        "startedAt": "2026-10-08T13:49:46Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR governance and validation closure"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T12:37:19Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37778117749/job/113314055703",
+        "name": "tooling-policy",
+        "startedAt": "2026-10-08T12:36:52Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR tooling and bootstrap policy"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T12:37:36Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37778118009/job/113314057011",
+        "name": "integration-postgresql",
+        "startedAt": "2026-10-08T12:36:52Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T12:37:15Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37778118009/job/113314057467",
+        "name": "backend-compatibility-not-ba-evidence",
+        "startedAt": "2026-10-08T12:36:52Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T12:37:14Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37778118009/job/113314057207",
+        "name": "fgm-contract-readiness-not-runtime-evidence",
+        "startedAt": "2026-10-08T12:36:52Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T12:37:12Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37778118009/job/113314057277",
+        "name": "evidence",
+        "startedAt": "2026-10-08T12:36:52Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      },
+      {
+        "__typename": "CheckRun",
+        "completedAt": "2026-10-08T12:37:42Z",
+        "conclusion": "SUCCESS",
+        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37778118009/job/113314375187",
+        "name": "mandatory-gates",
+        "startedAt": "2026-10-08T12:37:39Z",
+        "status": "COMPLETED",
+        "workflowName": "OCOR PoC layered mandatory gates"
+      }
+    ],
     "head_sha": "fe82366151c424c7f5b51e994ef7c585d6920763",
-    "limitation": "Before final archive receive refinement; not transferred to later HEAD. Conditional candidate and closure pending."
+    "observed_at": "2026-10-08T14:01:55.831105+00:00",
+    "required_checks": 13,
+    "role": "historical source; receiver/runtime-monitor refinements need exact final CI",
+    "success": 13
   },
   "task_id": "OCOR-DEV-REM-0017",
   "unresolved_blockers": [
-    "OCOR-DEV-REM-0017 qualification",
-    "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE execution in separate change set",
-    "OCOR-DEV-REM-0018",
-    "REM-0017-CI-CAMPAIGN-DURATION (PO queue, non-blocking current75m/G5)"
+    "OCOR-DEV-REM-0017 local qualification",
+    "REM-0017-KIND-CONTAINERD-CRASH (only option2/3 needs PO; diagnosis1 autonomous)",
+    "REM-0017-CI-CAMPAIGN-DURATION",
+    "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE separate authorized execution",
+    "OCOR-DEV-REM-0018"
   ],
-  "updated_at": "2026-10-08T14:13:51.031499+00:00",
+  "updated_at": "2026-10-08T15:13:58.293148+00:00",
   "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
 }

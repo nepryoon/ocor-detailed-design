@@ -3,7 +3,7 @@
     "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
     "change_set": "CC-OCOR-DELIVERY-COMPLETION__REM0017_VERIFIED_ARCHIVE_ACQUISITION",
     "decision_id": "DEC-210",
-    "phase": "REPAIR_1_ARCHIVE_ACQUISITION_QUALIFICATION_IN_PROGRESS",
+    "phase": "REPAIR_1_ARCHIVE_IMPLEMENTED_WIP_LOCAL_RUNTIME_FAILURE",
     "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
   },
   "backlog_escalations": {
@@ -1585,43 +1585,68 @@
         "OCOR-DEV-0065",
         "OCOR-DEV-0066"
       ],
-      "candidate_0049_head": "b14e4bf596959de35313dd9a6ee538576432ffd2",
+      "candidate_0049_head": "df444af855e884d7783612b302e008b90105fe13",
       "candidate_0049_verdict": "GO_FOR_EVIDENCE_SEAL",
+      "candidate_0049_verdict_head": "b14e4bf596959de35313dd9a6ee538576432ffd2",
+      "ci_history": [
+        {
+          "acquired_at": "2026-10-08T09:55:09.601881+00:00",
+          "additional_failed_check": "conditional-infrastructure-0049",
+          "checked_source_head": "23801b08a50d4212acb65bac8b46313b5c62ae95",
+          "conclusion": "FAIL_NO_EVIDENCE_SEAL",
+          "failure": "Fuseki recipe timeout600s",
+          "full_campaigns": "NOT_EXECUTED: provisioning failed",
+          "prior_source_retry_count_each_failed_workflow": 1,
+          "raw_hashes": {
+            "ci-wip-37758409757-failed.log": "cade569b43e1802439ee5ade9d0fba011391994c0bbbfb941d298b33d059b681",
+            "ci-wip-37758409836-failed.log": "87c9c49652ec80f1bd4c7bb70389eb97ef030b1b20e292da36e42dfedba442c0",
+            "ci-wip-37758409850-failed.log": "d6083bf4369e02ac6d20e3ef1444b320fb3bab2421a3d64dbe85f167cf9f9a1f"
+          },
+          "raw_observation_sha256": "9d956e1a3b68bf40158bb8a31ecac5e07e75e401e766685065abcec8084b1fb4",
+          "reason_no_further_retry": "Same official archive stall after already bounded retries during this iteration; no pertinent condition change",
+          "required_failed": [
+            "delivery-activation",
+            "rccad-methodology",
+            "validation-closure"
+          ],
+          "required_passed": 10,
+          "required_total": 13,
+          "retry_count_this_head": 0,
+          "run_ids": [
+            37758409850,
+            37758409836,
+            37758409757
+          ]
+        }
+      ],
       "concurrent_pr": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
-        "disposition": "DRAFT_WIP_NO_QUALIFICATION",
-        "head_sha": "23801b08a50d4212acb65bac8b46313b5c62ae95",
+        "disposition": "DRAFT_WIP_NOT_QUALIFIED_NO_MERGE",
+        "final_ci": "PENDING",
+        "head_sha": "git:HEAD",
+        "head_sha_resolver": "git rev-parse HEAD",
         "number": 169,
-        "retry_count_this_iteration": 1
+        "source_head": "c3357b439cd1462de71e1a5772f4d3d0f03b7150"
       },
       "current_ci": {
-        "acquired_at": "2026-10-08T09:55:09.601881+00:00",
-        "additional_failed_check": "conditional-infrastructure-0049",
-        "checked_source_head": "23801b08a50d4212acb65bac8b46313b5c62ae95",
-        "conclusion": "FAIL_NO_EVIDENCE_SEAL",
-        "failure": "Fuseki recipe timeout600s",
-        "full_campaigns": "NOT_EXECUTED: provisioning failed",
-        "prior_source_retry_count_each_failed_workflow": 1,
-        "raw_hashes": {
-          "ci-wip-37758409757-failed.log": "cade569b43e1802439ee5ade9d0fba011391994c0bbbfb941d298b33d059b681",
-          "ci-wip-37758409836-failed.log": "87c9c49652ec80f1bd4c7bb70389eb97ef030b1b20e292da36e42dfedba442c0",
-          "ci-wip-37758409850-failed.log": "d6083bf4369e02ac6d20e3ef1444b320fb3bab2421a3d64dbe85f167cf9f9a1f"
+        "final_head_ci": "PENDING_AFTER_WIP_PUSH",
+        "retry_count_this_source_head": 0,
+        "source_candidate_counts": {
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "tests": 1491
         },
-        "raw_observation_sha256": "9d956e1a3b68bf40158bb8a31ecac5e07e75e401e766685065abcec8084b1fb4",
-        "reason_no_further_retry": "Same official archive stall after already bounded retries during this iteration; no pertinent condition change",
-        "required_failed": [
-          "delivery-activation",
-          "rccad-methodology",
-          "validation-closure"
+        "source_candidate_duration_seconds": 4200.95871928,
+        "source_head": "fe82366151c424c7f5b51e994ef7c585d6920763",
+        "source_required_passed": 13,
+        "source_required_total": 13,
+        "source_run_ids": [
+          37778117949,
+          37778117922,
+          37778117899
         ],
-        "required_passed": 10,
-        "required_total": 13,
-        "retry_count_this_head": 0,
-        "run_ids": [
-          37758409850,
-          37758409836,
-          37758409757
-        ]
+        "status": "SOURCE_ALL13_PASS_FINAL_HEAD_REQUIRED_LOCAL_RUNTIME_BLOCKED"
       },
       "decision_request": "reports/development/decision_requests/REM-0017-CI-ARCHIVE-ACQUISITION.md",
       "final_ci_failure": {
@@ -1683,17 +1708,26 @@
       "next_action": "Completare qualifica esatta REM-0017 repair_cycle1 (acquisizione archivio verificata, FULL locale e nuova coppia CI autorizzata), poi richiedere verifier Claude Code. Riacquisire identit\u00e0 locale Fuseki nel change set dedicato dopo Dockerfile; PR176 resta aperta, nessuna riparazione0049.",
       "non_blocking": false,
       "po_decision": "REM-0017-CI-ARCHIVE-ACQUISITION (2026-10-08)",
+      "pr_history": [
+        {
+          "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
+          "disposition": "DRAFT_WIP_NO_QUALIFICATION",
+          "head_sha": "23801b08a50d4212acb65bac8b46313b5c62ae95",
+          "number": 169,
+          "retry_count_this_iteration": 1
+        }
+      ],
       "repair_cycle": 1,
-      "scope": "REM-0017-PRIORITY (2026-10-05): stack CI completo e zero skip per tutti i CONDITIONAL_INFRASTRUCTURE_GUARD (TEST-INFRA-005/006 e successivi), poi rimozione --ignore PR #164. Prossimo task dopo verifica/integrazione 0049, prima di 0050; G6 bloccato fino alla chiusura verificata. Candidato ciclo 7 NO_GO: la qualifica infrastrutturale non chiude n\u00e9 approva 0049; riesaminare il ciclo di vita del pin nel REM.",
+      "scope": "Archive acquisition implemented; source CI13/13 PASS. Final local candidate interrupted by repeated kind containerd SIGSEGV; no seal/verifier request. G5 remains ready.",
       "source_reference": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
-        "disposition": "WIP_NOT_QUALIFIED_CI_ARCHIVE_TIMEOUT; branch reference only, no assurance promotion",
-        "head_sha": "23801b08a50d4212acb65bac8b46313b5c62ae95",
-        "raw_output_sha256": "992cb8ef66d9c508afcd27f12e516d53e4e35c45d07d344e3d9356d13962a12c",
-        "record_path": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-resume.json",
-        "record_sha256": "67dd85dd25550938fba608470a70b036f130c2e4c748b921c047d7f98a39792f"
+        "raw_output_sha256": "d72fb440383be08f1287d90c3861af6bbe76531631d9c26a98d35ade77f7c2f2",
+        "record_path": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-archive.json",
+        "record_sha256": "5efc1720e9e1791cf6435ac193d401ef9d7c61fe6d98d1d3637b74a87c1d07d2",
+        "source_head": "c3357b439cd1462de71e1a5772f4d3d0f03b7150",
+        "status": "WIP_NOT_QUALIFIED_LOCAL_RUNTIME_FAILURE"
       },
-      "status": "REPAIR_1_ARCHIVE_QUALIFICATION_IN_PROGRESS"
+      "status": "OPEN_RUNTIME_QUALIFICATION_BLOCKED"
     },
     {
       "blocked_tasks": [
@@ -1955,7 +1989,7 @@
       "id": "REM-0017-CI-ARCHIVE-ACQUISITION",
       "non_blocking": true,
       "po_decision": "REM-0017-CI-ARCHIVE-ACQUISITION (2026-10-08)",
-      "resolution": "SHA512-addressed cache; exact official Apache source order; copied verified bytes; one new CI attempt plus one rerun authorized; total provisioning600s unchanged. Decision resolved, REM qualification remains pending.",
+      "resolution": "Verified SHA512 content-addressed acquisition implemented, real MISS/HIT and first CI13/13 green; local containerd qualification separate blocker, no assurance promotion.",
       "scope": "Only REM qualifying CI/integration0049 and G6/G7; 0050/G5 can proceed",
       "source_reference": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
@@ -1965,7 +1999,7 @@
         "record_path": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-resume.json",
         "record_sha256": "67dd85dd25550938fba608470a70b036f130c2e4c748b921c047d7f98a39792f"
       },
-      "status": "RESOLVED_BY_PO_DECISION_IMPLEMENTATION_IN_PROGRESS"
+      "status": "RESOLVED_BY_PO_DECISION_IMPLEMENTED_QUALIFICATION_PENDING"
     },
     {
       "blocked_tasks": [],
@@ -1984,6 +2018,32 @@
       "observed_step_duration_seconds": 3734,
       "scope": "Future campaign-budget disposition only; current cap75m unchanged and G5 ready. Actual REM acceptance still requires qualifying campaigns and verifier.",
       "source_ci_run_id": 37778117899,
+      "status": "OPEN_PO_DECISION_REQUIRED"
+    },
+    {
+      "blocked_tasks": [
+        "OCOR-DEV-REM-0017",
+        "OCOR-DEV-0049:integration",
+        "OCOR-DEV-0060",
+        "OCOR-DEV-0061",
+        "OCOR-DEV-0062",
+        "OCOR-DEV-0063",
+        "OCOR-DEV-0064",
+        "OCOR-DEV-0065",
+        "OCOR-DEV-0066",
+        "OCOR-DEV-0067",
+        "OCOR-DEV-0068",
+        "OCOR-DEV-0069"
+      ],
+      "decision_request": "reports/development/decision_requests/REM-0017-KIND-CONTAINERD-CRASH.md",
+      "id": "REM-0017-KIND-CONTAINERD-CRASH",
+      "non_blocking": true,
+      "observed_faults": [
+        "2026-10-08T13:15:00Z SIGSEGV",
+        "2026-10-08T14:59:57Z SIGSEGV"
+      ],
+      "record_path": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-archive.json",
+      "scope": "Only eventual image/profile change or0049 modification needs PO; bounded same-image diagnosis remains autonomous. G5 unblocked.",
       "status": "OPEN_PO_DECISION_REQUIRED"
     }
   ],
@@ -2321,7 +2381,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "Completare qualifica esatta REM-0017 repair_cycle1 (acquisizione archivio verificata, FULL locale e nuova coppia CI autorizzata), poi richiedere verifier Claude Code. Riacquisire identit\u00e0 locale Fuseki nel change set dedicato dopo Dockerfile; PR176 resta aperta, nessuna riparazione0049.",
+  "next_executable_action": "Eseguire la riacquisizione governata distinta FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE gi\u00e0 autorizzata sul Dockerfile/archivio finali, poi OCOR-DEV-0050 e G5 pronto. REM17 resta WIP: diagnosi bounded containerd entro DEC-211 prima di nuova FULL; nessun retry invariato, nuova immagine/ciclo0049 richiedono decisione. PR169draft/176 aperte, nessuna nuova verifica finch\u00e9 locale non qualificato.",
   "ready_set_observation": {
     "acquired_at": "2026-10-08T12:35:57.746917+00:00",
     "dependency_ready": [
@@ -3105,7 +3165,7 @@
   "status": "IN_PROGRESS",
   "terminal_loop_disposition": {
     "loop_status": "CONTINUE",
-    "reason": "0049 GO_FOR_EVIDENCE_SEAL, PR176 CI FAIL/non mergiata; REM17 prioritario eseguibile con budget PO, G5 pronto. Nessun ciclo9."
+    "reason": "Local REM17 runtime fault does not block authorized Fuseki identity unit or ready G5; no terminal/global block, no0049 repair."
   },
-  "updated_at": "2026-10-08T13:58:10.091947+00:00"
+  "updated_at": "2026-10-08T15:13:58.293148+00:00"
 }
