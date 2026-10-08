@@ -3,7 +3,7 @@
     "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
     "change_set": "CC-OCOR-DELIVERY-COMPLETION__REM0017_REPAIR1_BUDGET_AND_STACK",
     "decision_id": "DEC-210",
-    "phase": "REM0017_REPAIR1_LOCAL_AND_CI_CAMPAIGNS_PENDING",
+    "phase": "REM0017_REPAIR1_CI_ARCHIVE_BLOCKED_CONTINUE_G5",
     "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
   },
   "backlog_escalations": {
@@ -1598,7 +1598,44 @@
         "retry_count_this_iteration": 0,
         "run_id": 37672467983
       },
-      "decision_request": "reports/development/decision_requests/REM-0017-CI-CAMPAIGN-BUDGET.md",
+      "current_ci": {
+        "additional_failed_check": "conditional-infrastructure-0049",
+        "checked_source_head": "40c9c0925970f7e2b9d5217d1af3e8d2a950be68",
+        "checkout_merge_sha": "187ab4c6411e3d02fbc19923951af8da937ffbd3",
+        "conclusion": "FAIL_NO_EVIDENCE_SEAL",
+        "current_report_head_ci": "NOT_EXECUTED: not pushed yet; source CI never transferred",
+        "delivery_full": {
+          "candidate_head": null,
+          "counts": {
+            "errors": 0,
+            "failures": 0,
+            "skipped": 0,
+            "tests": 1101
+          },
+          "duration_seconds": 509.839008726,
+          "po_decision_required": false,
+          "required_modules": [
+            "test_ocor_dev_0048"
+          ],
+          "status": "PASS"
+        },
+        "failure": "Fuseki recipe Docker ADD official archive: timeout after600s on attempt1 and2. No OOM/DNS/supply-chain cause inferred.",
+        "main_closure_and_candidate_full": "NOT_EXECUTED: provisioning failed; dependent closure rejected failure",
+        "observation_sha256": "3dd5c157d223f6cfc4d59699b2d698a2c52ae7332e324a9bd2aece93dff3b6a1",
+        "required_failed": [
+          "rccad-methodology",
+          "validation-closure"
+        ],
+        "required_passed": 11,
+        "required_total": 13,
+        "rerun_count_per_failed_workflow": 1,
+        "run_ids": [
+          37749800723,
+          37749801174,
+          37749800685
+        ]
+      },
+      "decision_request": "reports/development/decision_requests/REM-0017-CI-ARCHIVE-ACQUISITION.md",
       "final_ci_failure": {
         "acquired_at": "2026-10-07T20:07:47.087641+00:00",
         "additional_checks_failed": [
@@ -1654,19 +1691,18 @@
         "suite_limit_seconds": 2700
       },
       "id": "OCOR-DEV-REM-0017",
-      "next_action": "Riprendere WIP4336137 PR169, aggiornare75m e diagnostica/causa teardown; provvedere stack reale/zero skip anche nei job rccad-methodology e delivery-activation; preservare guard e zero skip, verifica Claude Code. Per REM-0017-PRIORITY sblocca PR176 senza merge0049 su CI rossa.",
+      "independent_verification": "NOT_EXECUTED_NEW_REQUEST_NOT_EMITTED",
+      "next_action": "OCOR-DEV-0050:implementation da origin/main; REM-0017 repair1 sospesa su acquisizione archivio CI dopo retry bounded, PR169 draft e PR176 aperta. Riprendere REM solo dopo cambiamento pertinente e qualifica esatta, poi verifier Claude Code.",
       "non_blocking": false,
       "po_decision": "REM-0017-CI-CAMPAIGN-BUDGET (2026-10-07)",
+      "repair_cycle": 1,
       "scope": "REM-0017-PRIORITY (2026-10-05): stack CI completo e zero skip per tutti i CONDITIONAL_INFRASTRUCTURE_GUARD (TEST-INFRA-005/006 e successivi), poi rimozione --ignore PR #164. Prossimo task dopo verifica/integrazione 0049, prima di 0050; G6 bloccato fino alla chiusura verificata. Candidato ciclo 7 NO_GO: la qualifica infrastrutturale non chiude n\u00e9 approva 0049; riesaminare il ciclo di vita del pin nel REM.",
       "source_reference": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
-        "head_sha": "433613772806b3034e1229d7cd58a5d92841e8c2",
-        "path": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1.json",
-        "raw_output_sha256": "76a63b4dbf4636db04534b4b18d8c7727fd05c7a60576013137b2c136db7aaf3",
-        "record_sha256": "62343d43b43b5e368f0cf86542fe38e6608b6beb65630be1a92a59dd797e6066",
-        "status": "WIP_NOT_MERGED_NOT_QUALIFIED"
+        "head_sha": "8ff46dbd7cf3b1f44030094c6078772063e34e86",
+        "raw_output_sha256": "992cb8ef66d9c508afcd27f12e516d53e4e35c45d07d344e3d9356d13962a12c"
       },
-      "status": "OPEN_EXECUTION_READY_AFTER_PO_DECISION"
+      "status": "OPEN_CI_ARCHIVE_ACQUISITION_BLOCKER"
     },
     {
       "blocked_tasks": [
@@ -1877,6 +1913,32 @@
       "resolution": "Decisione PO esplicita ricevuta e record chiuso; implementazione/qualifica REM pendenti.",
       "scope": "Full campaign 4500s locale/CI; task2700s, arresto su restart/OOM; decision request nuova se full>3600s. Teardown esporta identit\u00e0 residue e fail-closed. Nessun codice REM modificato in questo state sync.",
       "status": "RESOLVED_BY_PO_DECISION_EXECUTION_PENDING"
+    },
+    {
+      "blocked_tasks": [
+        "OCOR-DEV-REM-0017",
+        "OCOR-DEV-0049:integration",
+        "OCOR-DEV-0060",
+        "OCOR-DEV-0061",
+        "OCOR-DEV-0062",
+        "OCOR-DEV-0063",
+        "OCOR-DEV-0064",
+        "OCOR-DEV-0065",
+        "OCOR-DEV-0066",
+        "OCOR-DEV-0067",
+        "OCOR-DEV-0068",
+        "OCOR-DEV-0069"
+      ],
+      "decision_request": "reports/development/decision_requests/REM-0017-CI-ARCHIVE-ACQUISITION.md",
+      "id": "REM-0017-CI-ARCHIVE-ACQUISITION",
+      "non_blocking": true,
+      "scope": "Only REM qualifying CI/integration0049 and G6/G7; 0050/G5 can proceed",
+      "source_reference": {
+        "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
+        "head_sha": "8ff46dbd7cf3b1f44030094c6078772063e34e86",
+        "raw_output_sha256": "992cb8ef66d9c508afcd27f12e516d53e4e35c45d07d344e3d9356d13962a12c"
+      },
+      "status": "OPEN_PO_DECISION_REQUIRED"
     }
   ],
   "claims": {
@@ -2194,46 +2256,20 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "REM-0017 repair1: eseguire le campagne FULL locali main e candidato0049 df444af con reset/bootstrap/health e zero skip; acquisire CI esatta PR169, poi richiesta indipendente Claude Code. Nessuna modifica al codice/sigillo0049.",
+  "next_executable_action": "OCOR-DEV-0050:implementation da origin/main; REM-0017 repair1 sospesa su acquisizione archivio CI dopo retry bounded, PR169 draft e PR176 aperta. Riprendere REM solo dopo cambiamento pertinente e qualifica esatta, poi verifier Claude Code.",
   "ready_set_observation": {
-    "blocked_transitively_on_0049": [
-      "OCOR-DEV-0049",
-      "OCOR-DEV-0059",
-      "OCOR-DEV-0060",
-      "OCOR-DEV-0061",
-      "OCOR-DEV-0062",
-      "OCOR-DEV-0063",
-      "OCOR-DEV-0064",
-      "OCOR-DEV-0065",
-      "OCOR-DEV-0066",
-      "OCOR-DEV-0067",
-      "OCOR-DEV-0068",
-      "OCOR-DEV-0069"
-    ],
-    "dependency_ready_tasks": [
+    "baseline": "d044aa95328092c1ef9708c05413bafd3c6ddc2e",
+    "completed_count": 63,
+    "hard_dependency_ready": [
       "OCOR-DEV-0049",
       "OCOR-DEV-0050"
     ],
-    "executable_backlog_tasks": [
-      "OCOR-DEV-0050"
-    ],
-    "independent_reachable_tasks_after_excluding_blocked_roots": [
-      "OCOR-DEV-0050",
-      "OCOR-DEV-0051",
-      "OCOR-DEV-0052",
-      "OCOR-DEV-0053",
-      "OCOR-DEV-0054",
-      "OCOR-DEV-0055",
-      "OCOR-DEV-0056",
-      "OCOR-DEV-0057",
-      "OCOR-DEV-0058"
-    ],
-    "observed_at": "2026-10-08T07:18:03.967776+00:00",
-    "priority_remediation": "OCOR-DEV-REM-0017; candidato0049 verificato, integrazione bloccata solo dalla CI; nessuna attesa PO sul budget",
-    "source": "origin/main execution state + approved backlog + read-only verdict ciclo8 + exact PR176 CI + PO REM budget/priority"
+    "reason": "0049 sealed GO but CI/integration blocked; REM17 infrastructure failed twice; PO permits independent G5 work",
+    "selected_next": "OCOR-DEV-0050"
   },
   "remediation_status": {
     "CI-0048_REAL_BACKEND": {
+      "decision_request": "reports/development/decision_requests/REM-0017-CI-ARCHIVE-ACQUISITION.md",
       "deviation_pr": 164,
       "deviation_registered_in": "reports/development/METHOD_COMPLIANCE.json",
       "final_ci_failure": {
@@ -2299,14 +2335,53 @@
         "OCOR-DEV-0065",
         "OCOR-DEV-0066"
       ],
+      "latest_ci_failure": {
+        "additional_failed_check": "conditional-infrastructure-0049",
+        "checked_source_head": "40c9c0925970f7e2b9d5217d1af3e8d2a950be68",
+        "checkout_merge_sha": "187ab4c6411e3d02fbc19923951af8da937ffbd3",
+        "conclusion": "FAIL_NO_EVIDENCE_SEAL",
+        "current_report_head_ci": "NOT_EXECUTED: not pushed yet; source CI never transferred",
+        "delivery_full": {
+          "candidate_head": null,
+          "counts": {
+            "errors": 0,
+            "failures": 0,
+            "skipped": 0,
+            "tests": 1101
+          },
+          "duration_seconds": 509.839008726,
+          "po_decision_required": false,
+          "required_modules": [
+            "test_ocor_dev_0048"
+          ],
+          "status": "PASS"
+        },
+        "failure": "Fuseki recipe Docker ADD official archive: timeout after600s on attempt1 and2. No OOM/DNS/supply-chain cause inferred.",
+        "main_closure_and_candidate_full": "NOT_EXECUTED: provisioning failed; dependent closure rejected failure",
+        "observation_sha256": "3dd5c157d223f6cfc4d59699b2d698a2c52ae7332e324a9bd2aece93dff3b6a1",
+        "required_failed": [
+          "rccad-methodology",
+          "validation-closure"
+        ],
+        "required_passed": 11,
+        "required_total": 13,
+        "rerun_count_per_failed_workflow": 1,
+        "run_ids": [
+          37749800723,
+          37749801174,
+          37749800685
+        ]
+      },
+      "next_action": "OCOR-DEV-0050:implementation da origin/main; REM-0017 repair1 sospesa su acquisizione archivio CI dopo retry bounded, PR169 draft e PR176 aperta. Riprendere REM solo dopo cambiamento pertinente e qualifica esatta, poi verifier Claude Code.",
       "notes": [
         "PR #164 excluded ocor-runtime/tests/tasks/test_ocor_dev_0048.py from the validation-closure CI (--ignore); accepted by the Product Owner ONLY as a temporary measure.",
         "OCOR-DEV-REM-0017 opened: provision the full ocor-bootstrap stack in CI (SPIRE server/agent + bootstrap credentials + digest-pinned images from infra/services.lock.json), run test_ocor_dev_0048.py with zero skips, remove the --ignore.",
-        "Standing rule (2026-10-05): never exclude, deselect or mark tests to pass a check, and never remove skipped from counts. If a check fails for missing CI infrastructure, write a decision request and continue with other ready work."
+        "Standing rule (2026-10-05): never exclude, deselect or mark tests to pass a check, and never remove skipped from counts. If a check fails for missing CI infrastructure, write a decision request and continue with other ready work.",
+        "Full75m/task45m implemented in WIP; ownership ledger and zero-residue local cleanup observed. No final qualification or merge."
       ],
       "po_decision": "REM-0017-CI-CAMPAIGN-BUDGET (2026-10-07)",
       "rem_opened": "OCOR-DEV-REM-0017",
-      "status": "REM_OPEN_EXECUTION_READY_AFTER_PO_DECISION",
+      "status": "REM_OPEN_CI_ARCHIVE_ACQUISITION_BLOCKER",
       "verified_0049_candidate": {
         "head_sha": "b14e4bf596959de35313dd9a6ee538576432ffd2",
         "merged": false,
@@ -3111,5 +3186,5 @@
     "loop_status": "CONTINUE",
     "reason": "0049 GO_FOR_EVIDENCE_SEAL, PR176 CI FAIL/non mergiata; REM17 prioritario eseguibile con budget PO, G5 pronto. Nessun ciclo9."
   },
-  "updated_at": "2026-10-08T08:12:45.383473+00:00"
+  "updated_at": "2026-10-08T09:40:15.212131+00:00"
 }

@@ -301,3 +301,20 @@ riacquisirà risultati e hash degli artifact finali. Nessun sigillo o merge ades
 ### 2026-10-07T20:07:47.087641+00:00 — FAIL della CI finale, nessuna richiesta di verifica
 
 HEAD11fd3e49, run37672467983: timeout2700s durante Helm; JUnit parziale1314, non qualificante. Teardown candidato FAIL per risorse residue; main full NOT_EXECUTED dopo rigetto della dipendenza. 12/13 required verdi; rischio VF-002 materializzato. Raw e proof append-only nel candidato non sigillato; storico11fd preservato in Git. Decision request REM-0017-CI-CAMPAIGN-BUDGET OPEN; nessun rerun per cercare verde. Proseguire0050/G5; G6 resta bloccato fino alla chiusura verificata REM. ImplementatoreCodex, verifierClaude non richiesto. Nessuna riparazione0049 ciclo8, nessun sigillo/merge.
+
+
+## Ripresa repair1 del 2026-10-08 — WIP, qualifica CI bloccata
+
+Nuovo record `repair-1-resume.json` e raw omonimo: preservati i candidati
+precedenti, nessun sigillo. Full locali storiche: main1101 e candidato0049
+df444af1491, zero skip; portfolio ultima73 PASS. CI sorgente40c9 delivery
+SUCCESS, RCCAD e closure FAIL sul Docker ADD archivio ufficiale Fuseki
+(timeout600s), anche dopo l'unico rerun. Main/candidate closure NOT_EXECUTED;
+nessun PASS trasferito all'HEAD successivo. Richiesta
+REM-0017-CI-ARCHIVE-ACQUISITION, prossimo0050/G5.
+
+Inventario finale locale zero delta container/volumi/reti. Wrapper finale
+FAIL nel ripristino dell'immagine precedente non più presente; richiesta
+FUSEKI locale preservata. Implementatore Codex, verifier REM Claude Code
+previsto in processo separato, nuova verifica NOT_EXECUTED. PR169 draft
+e PR176 aperte, 63 completed invariati, G6 bloccato fino a chiusura verificata.

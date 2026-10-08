@@ -3,66 +3,62 @@
   "baseline_commit": "d044aa95328092c1ef9708c05413bafd3c6ddc2e",
   "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
   "changed_paths": [
+    ".github/workflows/ocor-delivery-activation.yml",
+    ".github/workflows/ocor-rccad.yml",
+    ".github/workflows/ocor-validation-closure.yml",
+    "infra/qualification_tools.lock.json",
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/README.md",
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/evidence.json",
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/raw.log",
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1.json",
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1.log",
+    "reports/assurance/OCOR-DEV-REM-0018-RCCAD/README.md",
     "reports/development/EXECUTION_STATE.json",
-    "reports/development/MODEL_HANDOFF.json",
     "reports/development/ITERATION_LOG.md",
-    "reports/development/OCOR_DEV_0049_ESCALATION.md",
-    "reports/development/decision_requests/REM-0017-CI-CAMPAIGN-BUDGET.md"
+    "reports/development/MODEL_HANDOFF.json",
+    "reports/development/decision_requests/FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE.md",
+    "reports/planning/OCOR_PLAN_RUN_STATE.json",
+    "reports/tests/test_qualifying_campaign_guard.py",
+    "scripts/bootstrap_ci_environment.py",
+    "scripts/provision_qualification_tools.py",
+    "scripts/run_qualifying_campaign.py",
+    "scripts/validate_ocor_development_plan.py"
   ],
   "ci": {
-    "candidate_commit": "df444af855e884d7783612b302e008b90105fe13",
-    "closure_result": {
-      "duration_seconds": 470.58,
-      "errors": 137,
-      "failed": 1,
-      "passed": 1157,
-      "qualifying": false,
-      "raw_log_sha256": "5e9617c5374c0a3671c368faa2f165748166e1182c1af5cdca179f69beeae655",
-      "skipped": 0
+    "additional_failed_check": "conditional-infrastructure-0049",
+    "checked_source_head": "40c9c0925970f7e2b9d5217d1af3e8d2a950be68",
+    "checkout_merge_sha": "187ab4c6411e3d02fbc19923951af8da937ffbd3",
+    "conclusion": "FAIL_NO_EVIDENCE_SEAL",
+    "current_report_head_ci": "NOT_EXECUTED: not pushed yet; source CI never transferred",
+    "delivery_full": {
+      "candidate_head": null,
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 1101
+      },
+      "duration_seconds": 509.839008726,
+      "po_decision_required": false,
+      "required_modules": [
+        "test_ocor_dev_0048"
+      ],
+      "status": "PASS"
     },
-    "conclusion": "FAIL_EXACT_TASK_HEAD_NO_MERGE",
-    "decision": "REM-0017-PRIORITY (2026-10-05)",
-    "delivery_result": {
-      "duration_seconds": 430.32,
-      "errors": 137,
-      "failed": 1,
-      "passed": 1164,
-      "qualifying": false,
-      "skipped": 189
-    },
-    "failed_checks": [
+    "failure": "Fuseki recipe Docker ADD official archive: timeout after600s on attempt1 and2. No OOM/DNS/supply-chain cause inferred.",
+    "main_closure_and_candidate_full": "NOT_EXECUTED: provisioning failed; dependent closure rejected failure",
+    "observation_sha256": "3dd5c157d223f6cfc4d59699b2d698a2c52ae7332e324a9bd2aece93dff3b6a1",
+    "required_failed": [
       "rccad-methodology",
-      "delivery-activation",
       "validation-closure"
     ],
-    "final_head_rule": "Nessun merge o esclusione. Conservare PR176 aperta; remediation CI separata REM-0017 e successiva CI esatta 0049.",
-    "infrastructure_failure": "rccad/delivery real stack env absent and lint-extra/mypy missing: 1 failed,1164 passed,189 skipped,137 errors; no qualifying PASS. REM must cover every full-suite job, not only validation-closure.",
-    "observed_at": "2026-10-08T07:16:53.256630+00:00",
-    "passed": 10,
-    "pr": 176,
-    "raw_failed_log_hashes": {
-      "task-closure-failed.log": "5e9617c5374c0a3671c368faa2f165748166e1182c1af5cdca179f69beeae655",
-      "task-delivery-failed.log": "bb27a2d72385e99fda232c0513a0af5e815ce23783fbdcfa39fc0558fc7d4858",
-      "task-rccad-failed.log": "4b10eb162af47887b310f42b84fa97c5077b39c95ce55441e346e5fc45fd5bee"
-    },
-    "raw_observation_sha256": "18de18caafa3b9f62e7bd16901c1960dd55c8ce8eee8059b79550d067ed73fa9",
-    "rccad_result": {
-      "duration_seconds": 433.21,
-      "errors": 137,
-      "failed": 1,
-      "passed": 1164,
-      "qualifying": false,
-      "skipped": 189
-    },
-    "required_checks": 13,
-    "retry_count": 0,
+    "required_passed": 11,
+    "required_total": 13,
+    "rerun_count_per_failed_workflow": 1,
     "run_ids": [
-      37740936580,
-      37740936597,
-      37740936608,
-      37740936657,
-      37740936664,
-      37740936708
+      37749800723,
+      37749801174,
+      37749800685
     ]
   },
   "claims": {
@@ -81,31 +77,83 @@
     "live resource probe"
   ],
   "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
-  "current_task": "REM-0017:implementation repair1 ripresa budget/stack/teardown",
+  "current_task": "REM-0017:implementation repair1 CI timeout diagnosis; next0050",
   "evidence_paths": [
-    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1.json"
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-resume.json"
   ],
-  "exact_next_action": "REM-0017 repair1: eseguire le campagne FULL locali main e candidato0049 df444af con reset/bootstrap/health e zero skip; acquisire CI esatta PR169, poi richiesta indipendente Claude Code. Nessuna modifica al codice/sigillo0049.",
+  "exact_next_action": "OCOR-DEV-0050:implementation da origin/main; REM-0017 repair1 sospesa su acquisizione archivio CI dopo retry bounded, PR169 draft e PR176 aperta. Riprendere REM solo dopo cambiamento pertinente e qualifica esatta, poi verifier Claude Code.",
   "head_sha": "git:HEAD",
   "head_sha_resolver": "git rev-parse HEAD",
   "independent_verification": {
     "implementer": "Codex (OpenAI)",
-    "new_request_status": "NOT_EXECUTED: qualifying campaigns pending",
+    "new_request_status": "NOT_EXECUTED: source CI FAIL, latest qualifying FULL/CI incomplete",
     "prior_verdict": "OCOR-DEV-REM-0017-6e2a08b62524-0",
     "repair_cycle": 1,
     "verdict": "NO_GO",
     "verifier": "Claude Code (Anthropic)"
   },
   "limitations": [
-    "Bootstrap standard FAIL Fuseki local image identity; CI recipe qualification separate; lock/checker unchanged",
-    "REM-0018 spike teardown defect remains OPEN; campaign cleanup is scoped hygiene, no spike code change",
-    "CI and independent verification pending"
+    "Latest full/CI not qualified; prior source runs historical only",
+    "Image restoration failed after successful scoped teardown",
+    "PR169 draft and PR176 unmerged; G5 can proceed"
   ],
   "local_validation": {
-    "full_suite": "NOT_EXECUTED: pending",
-    "green": "68 PASS/0 skipped report portfolio",
-    "live_resource_probe": "PASS positive/negative real pinned PostgreSQL; anonymous volume attribution; busy attachment rejected; sentinel preserved",
-    "red": "5 FAIL/39 PASS before implementation"
+    "candidate": {
+      "candidate_head": "df444af855e884d7783612b302e008b90105fe13",
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 1491
+      },
+      "duration_seconds": 2845.548563180986,
+      "po_decision_required": false,
+      "required_modules": [
+        "test_ocor_dev_0048",
+        "test_ocor_dev_0049"
+      ],
+      "status": "PASS"
+    },
+    "latest_lint": "ruff exit0; mypy strict exit0 /53 sources",
+    "latest_report_portfolio": "73 PASS / 0 skipped; pytest exit0",
+    "main": {
+      "candidate_head": null,
+      "counts": {
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "tests": 1101
+      },
+      "duration_seconds": 362.80037237399665,
+      "po_decision_required": false,
+      "required_modules": [
+        "test_ocor_dev_0048"
+      ],
+      "status": "PASS"
+    },
+    "resources": {
+      "containers": {
+        "added": [],
+        "removed": []
+      },
+      "networks": {
+        "added": [],
+        "removed": []
+      },
+      "volumes": {
+        "added": [],
+        "removed": []
+      }
+    },
+    "source_limitation": "FULL runs started from6905ff002a4a309caee1ba855aae3e7ec2faa381 supervisor before later deadline/finalization/observer local fixes. Historical full results do not qualify final tool HEAD. Runtime main equals baseline d044; candidate immutable df444af; no task0049 change.",
+    "whole_driver_status": {
+      "campaigns_and_scoped_teardown": "PASS",
+      "image_after": "sha256:6840641ae15b9123caa3cb19bd7baafd2f156f20fd4ae24ea33cf834f8a463ec",
+      "image_before": "sha256:da8504ea177970ddb84800b1553bb521053ab9a1079a3a28150e4ba2d959041e",
+      "image_restoration": "FAIL: original image no longer present; no retry/lock update",
+      "status": "PARTIAL_FAILURE_IMAGE_RESTORE",
+      "updated_at": "2026-10-08T09:37:20.800722+00:00"
+    }
   },
   "migration_rollback_result": "Revert only this state-sync commit; task sealed artifacts and accepted history unchanged. Task rollback reviewed by verifier; no database migration in this iteration.",
   "requirement_ids": [
@@ -120,7 +168,7 @@
     "NFR-080"
   ],
   "schema_version": "1.0",
-  "security_observability_notes": "Nessun secret in Git; bootstrap FAIL prima di avviare stack, delta risorse di sessione vuoto. Nessuna interferenza con altri worktree/risorse; wrapper Claude storico non attivo sullo scope.",
+  "security_observability_notes": "Zero session resource delta; preexisting/foreign resources untouched. Final wrapper image restoration FAIL recorded; no secret in Git.",
   "source_reference": {
     "branch": "task/OCOR-DEV-0049-poc-deployment-observability-backup-safe-degradation",
     "evidence_paths": [
@@ -136,247 +184,101 @@
     "reviewed_head": "b14e4bf596959de35313dd9a6ee538576432ffd2",
     "status": "SEALED_NOT_MERGED"
   },
+  "source_reference_rem0017": {
+    "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
+    "head_sha": "8ff46dbd7cf3b1f44030094c6078772063e34e86",
+    "raw_output_sha256": "992cb8ef66d9c508afcd27f12e516d53e4e35c45d07d344e3d9356d13962a12c"
+  },
   "state_sync_ci": {
-    "branch": "governed/state-sync-ocor-dev-0049-cycle8",
-    "candidate_commit": "f583c89d3db220817fa97580efeb54a87821443b",
-    "checks": [
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:15Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091115",
-        "name": "backend-compatibility-not-ba-evidence",
-        "startedAt": "2026-10-08T07:19:57Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR PoC layered mandatory gates"
+    "source_ci_only": {
+      "additional_failed_check": "conditional-infrastructure-0049",
+      "checked_source_head": "40c9c0925970f7e2b9d5217d1af3e8d2a950be68",
+      "checkout_merge_sha": "187ab4c6411e3d02fbc19923951af8da937ffbd3",
+      "conclusion": "FAIL_NO_EVIDENCE_SEAL",
+      "current_report_head_ci": "NOT_EXECUTED: not pushed yet; source CI never transferred",
+      "delivery_full": {
+        "candidate_head": null,
+        "counts": {
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "tests": 1101
+        },
+        "duration_seconds": 509.839008726,
+        "po_decision_required": false,
+        "required_modules": [
+          "test_ocor_dev_0048"
+        ],
+        "status": "PASS"
       },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:19Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091466",
-        "name": "contract",
-        "startedAt": "2026-10-08T07:19:55Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR PoC layered mandatory gates"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:33:33Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762781/job/113197089923",
-        "name": "delivery-activation",
-        "startedAt": "2026-10-08T07:19:56Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR autonomous delivery controls"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:14Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091158",
-        "name": "evidence",
-        "startedAt": "2026-10-08T07:19:55Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR PoC layered mandatory gates"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:11Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091246",
-        "name": "fgm-contract-readiness-not-runtime-evidence",
-        "startedAt": "2026-10-08T07:19:55Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR PoC layered mandatory gates"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:28Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091258",
-        "name": "integration-postgresql",
-        "startedAt": "2026-10-08T07:19:55Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR PoC layered mandatory gates"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:34Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197282796",
-        "name": "mandatory-gates",
-        "startedAt": "2026-10-08T07:20:30Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR PoC layered mandatory gates"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:33:20Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762841/job/113197090235",
-        "name": "rccad-methodology",
-        "startedAt": "2026-10-08T07:19:55Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR RCCAD methodology gates"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:14Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762932/job/113197090903",
-        "name": "supply-chain",
-        "startedAt": "2026-10-08T07:19:55Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR supply-chain gates"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:16Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762888/job/113197090404",
-        "name": "tooling-policy",
-        "startedAt": "2026-10-08T07:19:55Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR tooling and bootstrap policy"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:40Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762888/job/113197090833",
-        "name": "type-and-lint-gate",
-        "startedAt": "2026-10-08T07:19:55Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR tooling and bootstrap policy"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:20:15Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762831/job/113197091259",
-        "name": "unit",
-        "startedAt": "2026-10-08T07:19:55Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR PoC layered mandatory gates"
-      },
-      {
-        "__typename": "CheckRun",
-        "completedAt": "2026-10-08T07:38:45Z",
-        "conclusion": "SUCCESS",
-        "detailsUrl": "https://github.com/nepryoon/ocor-detailed-design/actions/runs/37742762794/job/113197090243",
-        "name": "validation-closure",
-        "startedAt": "2026-10-08T07:19:55Z",
-        "status": "COMPLETED",
-        "workflowName": "OCOR governance and validation closure"
-      }
-    ],
-    "final_head_rule": "Commit finale di soli report: tutti i13 check richiesti SUCCESS sul suo HEAD prima del merge match-head; nessun PASS sorgente attribuito al finale.",
-    "merge_performed": false,
-    "next_condition_for_integration": "Attendere CI finale esatta13/13, poi merge177 e main ff-only. PR176 resta aperta/non mergiata:10/13 FAIL infra; prossima unit\u00e0 REM17.",
-    "observed_at": "2026-10-08T07:38:46.547684+00:00",
-    "passed": 13,
-    "pr": 177,
-    "raw_observation_sha256": "e3b987355be655aae5d505471be7c151714d338c259933105e937dab489b2a7c",
-    "required_checks": 13,
-    "run_ids": [
-      37742762781,
-      37742762794,
-      37742762831,
-      37742762841,
-      37742762888,
-      37742762932
-    ],
-    "status": "SOURCE_HEAD_ALL_13_PASS_FINAL_HEAD_EXACT_CHECK_REQUIRED",
-    "tested_head_sha": "f583c89d3db220817fa97580efeb54a87821443b"
+      "failure": "Fuseki recipe Docker ADD official archive: timeout after600s on attempt1 and2. No OOM/DNS/supply-chain cause inferred.",
+      "main_closure_and_candidate_full": "NOT_EXECUTED: provisioning failed; dependent closure rejected failure",
+      "observation_sha256": "3dd5c157d223f6cfc4d59699b2d698a2c52ae7332e324a9bd2aece93dff3b6a1",
+      "required_failed": [
+        "rccad-methodology",
+        "validation-closure"
+      ],
+      "required_passed": 11,
+      "required_total": 13,
+      "rerun_count_per_failed_workflow": 1,
+      "run_ids": [
+        37749800723,
+        37749801174,
+        37749800685
+      ]
+    },
+    "status": "NOT_EXECUTED_CURRENT_REPORT_HEAD"
   },
   "state_sync_local_validation": {
-    "sync-drift": {
-      "command": [
-        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle8/ocor-runtime/.venv/bin/python",
-        "scripts/validate_evidence_input_drift.py"
-      ],
+    "drift-last": {
       "exit_code": 0,
-      "log": "/home/luca/.ocor-codex/integrate0049c8/sync-drift.log",
-      "seconds": 0.06,
+      "raw_log": "/home/luca/.ocor-codex/rem0017-budget-resume/drift-last.log",
       "sha256": "fde0744c001d45e69220b77ce6eeb918a314c56d5a31c6d053a72590011f509c"
     },
-    "sync-inputs": {
-      "command": [
-        "sha256sum",
-        "-c",
-        "inputs/normative/SHA256SUMS"
-      ],
+    "final-language": {
       "exit_code": 0,
-      "log": "/home/luca/.ocor-codex/integrate0049c8/sync-inputs.log",
-      "seconds": 0.0,
-      "sha256": "0a2036313a8b8deca46e664d2621879f4e0191c98eb287e2aeeb7171aae53c34"
-    },
-    "sync-language": {
-      "command": [
-        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle8/ocor-runtime/.venv/bin/python",
-        "scripts/validate_language_policy.py"
-      ],
-      "exit_code": 0,
-      "log": "/home/luca/.ocor-codex/integrate0049c8/sync-language.log",
-      "seconds": 0.03,
+      "raw_log": "/home/luca/.ocor-codex/rem0017-budget-resume/final-language.log",
       "sha256": "ca6cb78dcbe21415365ecd6578a2eb0bf3d22bdcd7ddbae94e31fe19f67cd29d"
     },
-    "sync-plan": {
-      "command": [
-        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle8/ocor-runtime/.venv/bin/python",
-        "scripts/validate_ocor_development_plan.py",
-        "--authorized-extension",
-        "--base-ref",
-        "origin/main"
-      ],
+    "final-plan-settled": {
       "exit_code": 0,
-      "log": "/home/luca/.ocor-codex/integrate0049c8/sync-plan.log",
-      "seconds": 0.16,
+      "raw_log": "/home/luca/.ocor-codex/rem0017-budget-resume/final-plan-settled.log",
       "sha256": "c0753802bc31d2d19a9a5b77de8467f7b382f8b05832abf72af1a624819b6cba"
     },
-    "sync-rccad": {
-      "command": [
-        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle8/ocor-runtime/.venv/bin/python",
-        "scripts/validate_rccad.py",
-        "--base-ref",
-        "origin/main"
-      ],
+    "final-rccad": {
       "exit_code": 0,
-      "log": "/home/luca/.ocor-codex/integrate0049c8/sync-rccad.log",
-      "seconds": 0.16,
+      "raw_log": "/home/luca/.ocor-codex/rem0017-budget-resume/final-rccad.log",
       "sha256": "0043e5c71880b8696f14cc449b0e908f5418b4864e06a71d3fb4d4f212543c3f"
     },
-    "sync-scope": {
-      "command": [
-        "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/state-sync-ocor-dev-0049-cycle8/ocor-runtime/.venv/bin/python",
-        "scripts/validate_ocor_change_scope.py",
-        "--base",
-        "origin/main",
-        "--branch",
-        "governed/state-sync-ocor-dev-0049-cycle8"
-      ],
+    "final-scope": {
       "exit_code": 0,
-      "log": "/home/luca/.ocor-codex/integrate0049c8/sync-scope.log",
-      "seconds": 0.03,
-      "sha256": "45bc96e0845920241b26a1ab6caa0bb1fbad8c33293655296005a9756553bb95"
+      "raw_log": "/home/luca/.ocor-codex/rem0017-budget-resume/final-scope.log",
+      "sha256": "999a1d703cd975eb808149a6e9bd99cf1fe48f4ed5247a1dc631cea56237951c"
     },
-    "sync-sync": {
-      "command": [
-        "uv",
-        "sync",
-        "--directory",
-        "ocor-runtime",
-        "--frozen",
-        "--extra",
-        "test",
-        "--extra",
-        "lint"
-      ],
+    "inputs-last": {
       "exit_code": 0,
-      "log": "/home/luca/.ocor-codex/integrate0049c8/sync-sync.log",
-      "seconds": 0.06,
-      "sha256": "18277443b08ab0cd1c6b725bb0700f11a30291870946a2819dcc32707ef468ae"
+      "raw_log": "/home/luca/.ocor-codex/rem0017-budget-resume/inputs-last.log",
+      "sha256": "0a2036313a8b8deca46e664d2621879f4e0191c98eb287e2aeeb7171aae53c34"
+    },
+    "mypy-last": {
+      "exit_code": 0,
+      "raw_log": "/home/luca/.ocor-codex/rem0017-budget-resume/mypy-last.log",
+      "sha256": "1495598f2b8e6a09df4f1631545361d6c6e3e3204e506255935ef84876641cc6"
+    },
+    "report-guards-last": {
+      "exit_code": 0,
+      "raw_log": "/home/luca/.ocor-codex/rem0017-budget-resume/report-guards-last.log",
+      "sha256": "093e90c9f7538f1007eba8d178bd04c10cb5ec8fd5f6f7935a0e5cccbb6a4a9d"
+    },
+    "ruff-last": {
+      "exit_code": 0,
+      "raw_log": "/home/luca/.ocor-codex/rem0017-budget-resume/ruff-last.log",
+      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
+    },
+    "runtime-evidence-corrected": {
+      "exit_code": 0,
+      "raw_log": "/home/luca/.ocor-codex/rem0017-budget-resume/runtime-evidence-corrected.log",
+      "sha256": "d3c77291e1e9f43f2227111436059b7e30c08ea4306b7ddd910541c14b988490"
     }
   },
   "task_id": "OCOR-DEV-REM-0017",
@@ -420,11 +322,10 @@
     "sealed_record_sha256": "c2355d6d25714fb21b03f473c330d997e3ba4749bfc123ae490c4938c6c2683f"
   },
   "unresolved_blockers": [
-    "REM-0017 required CI/review pending",
-    "PR176 missing CI infrastructure until REM merge",
+    "REM-0017-CI-ARCHIVE-ACQUISITION",
     "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE",
     "OCOR-DEV-REM-0018"
   ],
-  "updated_at": "2026-10-08T08:12:45.383473+00:00",
+  "updated_at": "2026-10-08T09:40:15.212131+00:00",
   "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
 }
