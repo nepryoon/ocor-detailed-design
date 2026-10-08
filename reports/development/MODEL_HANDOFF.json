@@ -11,6 +11,35 @@
     "reports/planning/OCOR_PLAN_RUN_STATE.json"
   ],
   "ci": {
+    "acquired_at": "2026-10-08T09:55:09.601881+00:00",
+    "additional_failed_check": "conditional-infrastructure-0049",
+    "checked_source_head": "23801b08a50d4212acb65bac8b46313b5c62ae95",
+    "conclusion": "FAIL_NO_EVIDENCE_SEAL",
+    "failure": "Fuseki recipe timeout600s",
+    "full_campaigns": "NOT_EXECUTED: provisioning failed",
+    "prior_source_retry_count_each_failed_workflow": 1,
+    "raw_hashes": {
+      "ci-wip-37758409757-failed.log": "cade569b43e1802439ee5ade9d0fba011391994c0bbbfb941d298b33d059b681",
+      "ci-wip-37758409836-failed.log": "87c9c49652ec80f1bd4c7bb70389eb97ef030b1b20e292da36e42dfedba442c0",
+      "ci-wip-37758409850-failed.log": "d6083bf4369e02ac6d20e3ef1444b320fb3bab2421a3d64dbe85f167cf9f9a1f"
+    },
+    "raw_observation_sha256": "9d956e1a3b68bf40158bb8a31ecac5e07e75e401e766685065abcec8084b1fb4",
+    "reason_no_further_retry": "Same official archive stall after already bounded retries during this iteration; no pertinent condition change",
+    "required_failed": [
+      "delivery-activation",
+      "rccad-methodology",
+      "validation-closure"
+    ],
+    "required_passed": 10,
+    "required_total": 13,
+    "retry_count_this_head": 0,
+    "run_ids": [
+      37758409850,
+      37758409836,
+      37758409757
+    ]
+  },
+  "ci_source40_historical": {
     "additional_failed_check": "conditional-infrastructure-0049",
     "checked_source_head": "40c9c0925970f7e2b9d5217d1af3e8d2a950be68",
     "checkout_merge_sha": "187ab4c6411e3d02fbc19923951af8da937ffbd3",
@@ -177,19 +206,25 @@
     "record_sha256": "67dd85dd25550938fba608470a70b036f130c2e4c748b921c047d7f98a39792f"
   },
   "state_sync_ci": {
-    "branch": "governed/state-sync-rem0017-archive-blocker",
-    "qualification_scope": "Only documentary state sync; preexisting PR164 temporary deviation remains, not evidence REM17/0049",
-    "required_checks": 13,
-    "source_reference": {
-      "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
-      "disposition": "WIP_NOT_QUALIFIED_CI_ARCHIVE_TIMEOUT; branch reference only, no assurance promotion",
-      "head_sha": "23801b08a50d4212acb65bac8b46313b5c62ae95",
-      "raw_output_sha256": "992cb8ef66d9c508afcd27f12e516d53e4e35c45d07d344e3d9356d13962a12c",
-      "record_path": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-resume.json",
-      "record_sha256": "67dd85dd25550938fba608470a70b036f130c2e4c748b921c047d7f98a39792f"
-    },
-    "status": "PENDING_EXACT_FINAL_HEAD"
+    "final_head_rule": "No source PASS transferred; await all13 checks of report-only final HEAD and merge with --match-head-commit",
+    "qualification_scope": "Documentary sync only; inherited temporary PR164 deviation does not qualify REM17/0049",
+    "source_head": "667a5230e1a10433572cedc85fd858951b80c571",
+    "source_observed_at": "2026-10-08T10:07:48.844922+00:00",
+    "source_raw_sha256": "bc1842266282fa78a5b84870c1ca81dda2d2a72f329eda13ce0b65a26a79f78c",
+    "source_required_passed": 13,
+    "source_required_total": 13,
+    "source_run_ids": [
+      37758651103,
+      37758651124,
+      37758651135,
+      37758651149,
+      37758651177,
+      37758651179,
+      37758651284
+    ],
+    "status": "SOURCE_CHECKS_GREEN_FINAL_HEAD_REQUIRED"
   },
+  "state_sync_final_verification": "NOT_EXECUTED at report commit time; exact13 green required before merge; external loop_status records final result",
   "state_sync_local_validation": {
     "sync-drift": {
       "exit_code": 0,
@@ -272,6 +307,6 @@
     "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE",
     "OCOR-DEV-REM-0018"
   ],
-  "updated_at": "2026-10-08T09:42:51.747071+00:00",
+  "updated_at": "2026-10-08T10:09:11.225490+00:00",
   "worktree": ".ocor/worktrees/state-sync-rem0017-archive-blocker"
 }

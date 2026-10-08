@@ -30,8 +30,10 @@ una cache content-addressed in un change set governato, conservando il
 controllo SHA512 e i digest; oppure autorizzare esplicitamente un budget
 di provisioning superiore sulla base di nuove misure, lasciando75/45 minuti
 e tutti i gate invariati. Raccomandazione: acquisizione verificata/cache
-senza modificare semantica o tecnologie; eventuali nuove risorse/estensioni
-riservate al PO, nessuna risorsa a pagamento o condivisa.
+senza modificare semantica o tecnologie. La cache verificata repository-scoped
+resta una scelta tecnica autonoma entro DEC-211; la richiesta al PO riguarda
+soltanto eventuali estensioni del budget o risorse oltre il perimetro.
+Nessuna risorsa a pagamento o condivisa.
 
 Impatto: chiusura REM17, CI integrazione0049 e G6/G7 restano bloccati;
 0050/G5 e gli audit governati indipendenti restano eseguibili. PR169 draft e
@@ -49,3 +51,17 @@ Inputs immutati; E1=0/E2=0/Verified0, runtime NOT_ESTABLISHED, NO-GO invariati.
 
 Il WIP completo è pubblicato su `23801b08a50d4212acb65bac8b46313b5c62ae95`; questo state sync promuove soltanto
 stato/log/richiesta, nessuno script di provisioning, workflow o record REM.
+
+
+## 2026-10-08T09:56:03.754217+00:00 — CI dell'ultimo WIP23801b0 conclusa
+
+HEAD23801b08a50d4212acb65bac8b46313b5c62ae95:10/13 required PASS,
+RCCAD37758409850/delivery37758409836/closure37758409757 FAIL;
+conditional-infrastructure-0049 FAIL. Tutti i provisioning al timeout600s,
+RCCAD buildlog conferma ADD dello stesso archivio, base acquisita3.1s;
+nessuna FULL qualificante. Nessun retry aggiuntivo di questo HEAD dopo
+il retry bounded già consumato su40c9, senza cambiamento pertinente.
+Raw RCCAD SHA256d6083bf4369e02ac6d20e3ef1444b320fb3bab2421a3d64dbe85f167cf9f9a1f;
+closure cade569b43e1802439ee5ade9d0fba011391994c0bbbfb941d298b33d059b681;
+delivery87c9c49652ec80f1bd4c7bb70389eb97ef030b1b20e292da36e42dfedba442c0.
+Il PASS delivery40c9 è storico, non trasferito al finale.

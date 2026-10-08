@@ -4637,3 +4637,7 @@ Gate documentali: rccad PASS_LOCAL_PRECHECK, scope/language/ruff PASS, mypy 69 s
 
 - Baseline `d044aa95328092c1ef9708c05413bafd3c6ddc2e`, WIP `23801b08a50d4212acb65bac8b46313b5c62ae95` preservato in PR169 draft; questo branch aggiorna soli stato/handoff/log, nuova richiesta e allowlist esplicita/self-hash. Nessun codice CI/provisioning o record non sigillato REM viene copiato su main.
 - Next0050 validato dalle hard_dependencies e63 completed;0049 GO sigillato ma PR176 CI rossa resta aperta; G6/G7 bloccati da REM17. Verifier REM Claude Code non richiesto. CI esatta dello state sync da attendere senza bypass; CI preesistente non qualifica REM17.
+
+- 2026-10-08T09:56:03.754217+00:00: WIP23801b0 CI conclusa,10/13 required PASS, RCCAD/delivery/closure FAIL al timeout600s del provisioning; run37758409850/37758409836/37758409757. BuildlogRCCAD conferma ADDarchivio/base3.1s; full NOT_EXECUTED, nessuna qualifica trasferita da40c9. Hash dei raw nella richiesta/handoff; nessun retry dopo condizione invariata e bounded retry già consumato.
+
+- 2026-10-08T10:09:11.225490+00:00: PR178 sorgente `667a5230e1a10433572cedc85fd858951b80c571`13/13 required PASS, run[37758651103, 37758651124, 37758651135, 37758651149, 37758651177, 37758651179, 37758651284], rawSHA256 `bc1842266282fa78a5b84870c1ca81dda2d2a72f329eda13ce0b65a26a79f78c`. Source CI non trasferita al finale; questo commit aggiorna soltanto stato/log/richiesta alla CI WIP238FAIL esatta. Finale13check da attendere separatamente prima del merge --match-head-commit. Nessuno script/recordREM promosso.
