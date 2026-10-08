@@ -4631,3 +4631,13 @@ Gate documentali: rccad PASS_LOCAL_PRECHECK, scope/language/ruff PASS, mypy 69 s
 - Nessuna nuova verifica lanciata: implementatore Codex/OpenAI, verifier REM Claude Code/Anthropic in contesto separato previsto. Repair1 non consumato da nuovo verdetto; nessuna riparazione0049. Stato63 completed invariato, prossimo0050/G5 secondo REM-0017-PRIORITY. FULL75m/task45m e stopOOM invariati, E1/E2/Verified0 e NO-GO invariati.
 
 - Gate locali finali: RCCAD PASS_LOCAL_PRECHECK/dynamic CI_REQUIRED; scope23 percorsi/language/drift0/167/checksum8/8 PASS; piano37 PASS/2 opzionali NOT_EXECUTED dopo settle del self-hash della sola allowlist DR. Generic runtime validator privo task/manifest NOT_EXECUTED; corretto manifest0048 PASS, senza qualificare REM17. Generatore report errore indice JSON corretto prima della creazione. Hash/log reali nell'handoff.
+
+
+### 2026-10-08T09:42:51.747071+00:00 — State sync separato della diagnosi archivio CI REM17
+
+- Baseline `d044aa95328092c1ef9708c05413bafd3c6ddc2e`, WIP `23801b08a50d4212acb65bac8b46313b5c62ae95` preservato in PR169 draft; questo branch aggiorna soli stato/handoff/log, nuova richiesta e allowlist esplicita/self-hash. Nessun codice CI/provisioning o record non sigillato REM viene copiato su main.
+- Next0050 validato dalle hard_dependencies e63 completed;0049 GO sigillato ma PR176 CI rossa resta aperta; G6/G7 bloccati da REM17. Verifier REM Claude Code non richiesto. CI esatta dello state sync da attendere senza bypass; CI preesistente non qualifica REM17.
+
+- 2026-10-08T09:56:03.754217+00:00: WIP23801b0 CI conclusa,10/13 required PASS, RCCAD/delivery/closure FAIL al timeout600s del provisioning; run37758409850/37758409836/37758409757. BuildlogRCCAD conferma ADDarchivio/base3.1s; full NOT_EXECUTED, nessuna qualifica trasferita da40c9. Hash dei raw nella richiesta/handoff; nessun retry dopo condizione invariata e bounded retry già consumato.
+
+- 2026-10-08T10:09:11.225490+00:00: PR178 sorgente `667a5230e1a10433572cedc85fd858951b80c571`13/13 required PASS, run[37758651103, 37758651124, 37758651135, 37758651149, 37758651177, 37758651179, 37758651284], rawSHA256 `bc1842266282fa78a5b84870c1ca81dda2d2a72f329eda13ce0b65a26a79f78c`. Source CI non trasferita al finale; questo commit aggiorna soltanto stato/log/richiesta alla CI WIP238FAIL esatta. Finale13check da attendere separatamente prima del merge --match-head-commit. Nessuno script/recordREM promosso.
