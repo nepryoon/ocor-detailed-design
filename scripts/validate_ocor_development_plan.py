@@ -272,6 +272,26 @@ def main() -> int:
     changed = subprocess.run(["git", "diff", "--name-only", args.base_ref, "--"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.splitlines()
     untracked = subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], cwd=ROOT, check=True, text=True, capture_output=True).stdout.splitlines()
     extension_paths = {
+        'infra/fuseki/local_identity.lock.json',
+        'reports/tests/test_fuseki_local_identity.py',
+        'reports/development/decision_requests/FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE.md',
+        'reports/evidence/G2/fuseki-identity-requalification.log',
+        'reports/evidence/G2/OCOR-DEV-0070.fuseki-identity-requalified.json',
+        'reports/evidence/G2/OCOR-DEV-0073.fuseki-identity-requalified.json',
+        'reports/evidence/G2/OCOR-DEV-0074.fuseki-identity-requalified.json',
+        'reports/evidence/G2/OCOR-DEV-0075.fuseki-identity-requalified.json',
+        'reports/evidence/G2/OCOR-DEV-0076.fuseki-identity-requalified.json',
+        'reports/evidence/G2/OCOR-DEV-0077.fuseki-identity-requalified.json',
+        'reports/evidence/G2/OCOR-DEV-0078.fuseki-identity-requalified.json',
+        'reports/evidence/G2/OCOR-DEV-0079.fuseki-identity-requalified.json',
+        'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/candidate.json',
+        'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/qualification.log',
+        'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/MANIFEST.json',
+        'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/Dockerfile.txt',
+        'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/README.md',
+        'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/full_main.py.txt',
+        'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/register_control_plane.py.txt',
+
         ".github/workflows/ocor-auto-merge.yml",
         ".github/workflows/ocor-delivery-activation.yml",
         ".github/workflows/ocor-poc-ci.yml",
