@@ -211,3 +211,18 @@ def test_stream_deadline_falls_back_then_total_budget_rejects(tmp_path, monkeypa
     with pytest.raises(BootstrapError, match='budget'):
         archive.acquire(repo, timeout=120)
     assert len(calls) == 1 and not list(repo.rglob('*.part'))
+
+
+def test_stream_reads_one_receive_and_refreshes_transport_deadline(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    repo = repository(tmp_path)
+    timeouts = []
+    class Stream(Response):
+        fp = SimpleNamespace(raw=SimpleNamespace(_sock=SimpleNamespace(settimeout=timeouts.append)))
+        def read(self, *args):
+            pytest.fail('read(size) can wait through indefinitely dribbling chunks')
+        def read1(self, size):
+            return io.BytesIO.read(self, size)
+    monkeypatch.setattr(archive, 'urlopen', lambda *a, **kw: Stream(b'governed archive'))
+    path, _ = archive.acquire(repo, timeout=10)
+    assert path.is_file() and timeouts and all(0 < value <= 10 for value in timeouts)

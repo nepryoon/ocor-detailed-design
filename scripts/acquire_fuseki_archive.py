@@ -121,7 +121,12 @@ def acquire(repository: Path, *, timeout: float = 600) -> tuple[Path, dict[str, 
                 while True:
                     if time.monotonic() >= source_deadline:
                         raise TimeoutError("official source deadline exhausted")
-                    chunk = response.read(1024 * 1024)
+                    # read1 performs one receive; read(size) can keep waiting for
+                    # a full MiB while a slow source dribbles bytes indefinitely.
+                    transport = getattr(getattr(getattr(response, "fp", None), "raw", None), "_sock", None)
+                    if transport is not None:
+                        transport.settimeout(min(10, remaining(source_deadline)))
+                    chunk = response.read1(64 * 1024)
                     if not chunk:
                         break
                     size += len(chunk)
