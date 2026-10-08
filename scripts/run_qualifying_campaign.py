@@ -127,6 +127,7 @@ def main() -> int:
                 decision_required = check_deadline(time.monotonic() - start) or decision_required
                 time.sleep(5)
             check_stack(initial, inspect_stack())
+        decision_required = check_deadline(time.monotonic() - start) or decision_required
         if process.returncode:
             raise CampaignError(f"pytest exit code {process.returncode}")
         if args.expected_head:
@@ -146,17 +147,20 @@ def main() -> int:
     finally:
         if process is not None:
             stop(process)
+        recorder_error = None
         if recorder is not None:
             try:
                 recorder.finish()
-            except Exception as exc:
-                (output / "campaign_result.json").write_text(json.dumps({"status": "FAIL", "error": str(exc)}, indent=2, sort_keys=True) + "\n")
-                raise
+            except (OSError, ValueError, subprocess.SubprocessError, RuntimeError) as exc:
+                recorder_error = str(exc)
+                (output / "campaign_result.json").write_text(json.dumps({"status": "FAIL", "error": recorder_error}, indent=2, sort_keys=True) + "\n")
         if process is not None:
-            stop(process)
             redact_campaign_log(repository, output / "post_remediation_runtime.log")
             if junit.exists():
                 redact_campaign_log(repository, junit)
+        if recorder_error is not None:
+            print(json.dumps({"status": "FAIL", "error": recorder_error}))
+            return 1
 
 
 if __name__ == "__main__":

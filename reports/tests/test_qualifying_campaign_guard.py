@@ -306,3 +306,49 @@ def test_failed_session_volume_removal_preserves_error(tmp_path, monkeypatch):
     monkeypatch.setattr(ci, "execute", lambda *args: "")
     with pytest.raises(BootstrapError, match="session resources remain"):
         ci.cleanup_session_resources(tmp_path)
+
+
+def stub_completed_campaign(tmp_path, monkeypatch, *, seconds, recorder_error=False):
+    import json
+    import bootstrap_ci_environment as ci
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / ".ocor").mkdir()
+    (tmp_path / ".ocor/bootstrap.env").write_text("OCOR_LOCAL_POSTGRES_PASSWORD=unit-private-value\n")
+    output = tmp_path / "run"
+    monkeypatch.setattr(GUARD, "__file__", str(tmp_path / "scripts/campaign.py"))
+    monkeypatch.setattr(sys, "argv", ["campaign.py", "--execute", "--output-dir", str(output)])
+    snapshot = {str(n): state() for n in range(11)}
+    monkeypatch.setattr(GUARD, "inspect_stack", lambda: snapshot)
+    ticks = iter([0, seconds, seconds, seconds])
+    monkeypatch.setattr(GUARD.time, "monotonic", lambda: next(ticks))
+    class Recorder:
+        def __init__(self, repository):
+            pass
+        def finish(self):
+            if recorder_error:
+                raise ci.BootstrapError("event capture failed")
+    class Process:
+        returncode = 0
+        def poll(self):
+            return 0
+    def launch(*args, stdout, **kwargs):
+        stdout.write("unit-private-value; 1 passed\n")
+        (output / "runtime_junit_post_approval.xml").write_text('<testsuite tests="1"><testcase classname="tests.tasks.test_ocor_dev_0048"/></testsuite>')
+        return Process()
+    monkeypatch.setattr(GUARD, "SessionRecorder", Recorder)
+    monkeypatch.setattr(GUARD.subprocess, "Popen", launch)
+    monkeypatch.setattr(GUARD, "collect_stack_diagnostics", lambda *args: None)
+    return output, json
+
+
+def test_completed_process_after_deadline_is_still_rejected(tmp_path, monkeypatch):
+    output, json = stub_completed_campaign(tmp_path, monkeypatch, seconds=4501)
+    assert GUARD.main() == 1
+    assert "75-minute" in json.loads((output / "campaign_result.json").read_text())["error"]
+
+
+def test_event_capture_failure_is_fail_closed_and_logs_are_still_redacted(tmp_path, monkeypatch):
+    output, json = stub_completed_campaign(tmp_path, monkeypatch, seconds=1, recorder_error=True)
+    assert GUARD.main() == 1
+    assert json.loads((output / "campaign_result.json").read_text())["status"] == "FAIL"
+    assert "unit-private-value" not in (output / "post_remediation_runtime.log").read_text()
