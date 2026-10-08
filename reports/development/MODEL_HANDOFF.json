@@ -1,81 +1,42 @@
 {
-  "base_sha": "d044aa95328092c1ef9708c05413bafd3c6ddc2e",
-  "baseline_commit": "d044aa95328092c1ef9708c05413bafd3c6ddc2e",
-  "branch": "governed/state-sync-rem0017-archive-blocker",
+  "base_sha": "ef58743adebe717113832da1094224e5117d1c48",
+  "baseline_commit": "ef58743adebe717113832da1094224e5117d1c48",
+  "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
   "changed_paths": [
+    ".github/workflows/ocor-delivery-activation.yml",
+    ".github/workflows/ocor-rccad.yml",
+    ".github/workflows/ocor-validation-closure.yml",
+    "infra/fuseki/Dockerfile",
+    "infra/qualification_tools.lock.json",
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/README.md",
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/evidence.json",
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/raw.log",
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-resume.json",
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-resume.log",
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1.json",
+    "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1.log",
+    "reports/assurance/OCOR-DEV-REM-0018-RCCAD/README.md",
     "reports/development/EXECUTION_STATE.json",
-    "reports/development/MODEL_HANDOFF.json",
     "reports/development/ITERATION_LOG.md",
+    "reports/development/MODEL_HANDOFF.json",
+    "reports/development/decision_requests/FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE.md",
     "reports/development/decision_requests/REM-0017-CI-ARCHIVE-ACQUISITION.md",
-    "scripts/validate_ocor_development_plan.py",
-    "reports/planning/OCOR_PLAN_RUN_STATE.json"
+    "reports/evidence/G2/MANIFEST.json",
+    "reports/evidence/G2/OCOR-DEV-0072.archive-requalified.json",
+    "reports/evidence/G2/OCOR-DEV-0072.archive-requalified.log",
+    "reports/evidence/G2/OCOR-DEV-0075.archive-requalified.json",
+    "reports/evidence/G2/OCOR-DEV-0075.archive-requalified.log",
+    "reports/planning/OCOR_PLANNING_VALIDATION_REPORT.md",
+    "reports/planning/OCOR_PLAN_RUN_STATE.json",
+    "reports/tests/test_fuseki_archive_acquisition.py",
+    "reports/tests/test_qualifying_campaign_guard.py",
+    "scripts/acquire_fuseki_archive.py",
+    "scripts/bootstrap_ci_environment.py",
+    "scripts/bootstrap_development_environment.py",
+    "scripts/provision_qualification_tools.py",
+    "scripts/run_qualifying_campaign.py",
+    "scripts/validate_ocor_development_plan.py"
   ],
-  "ci": {
-    "acquired_at": "2026-10-08T09:55:09.601881+00:00",
-    "additional_failed_check": "conditional-infrastructure-0049",
-    "checked_source_head": "23801b08a50d4212acb65bac8b46313b5c62ae95",
-    "conclusion": "FAIL_NO_EVIDENCE_SEAL",
-    "failure": "Fuseki recipe timeout600s",
-    "full_campaigns": "NOT_EXECUTED: provisioning failed",
-    "prior_source_retry_count_each_failed_workflow": 1,
-    "raw_hashes": {
-      "ci-wip-37758409757-failed.log": "cade569b43e1802439ee5ade9d0fba011391994c0bbbfb941d298b33d059b681",
-      "ci-wip-37758409836-failed.log": "87c9c49652ec80f1bd4c7bb70389eb97ef030b1b20e292da36e42dfedba442c0",
-      "ci-wip-37758409850-failed.log": "d6083bf4369e02ac6d20e3ef1444b320fb3bab2421a3d64dbe85f167cf9f9a1f"
-    },
-    "raw_observation_sha256": "9d956e1a3b68bf40158bb8a31ecac5e07e75e401e766685065abcec8084b1fb4",
-    "reason_no_further_retry": "Same official archive stall after already bounded retries during this iteration; no pertinent condition change",
-    "required_failed": [
-      "delivery-activation",
-      "rccad-methodology",
-      "validation-closure"
-    ],
-    "required_passed": 10,
-    "required_total": 13,
-    "retry_count_this_head": 0,
-    "run_ids": [
-      37758409850,
-      37758409836,
-      37758409757
-    ]
-  },
-  "ci_source40_historical": {
-    "additional_failed_check": "conditional-infrastructure-0049",
-    "checked_source_head": "40c9c0925970f7e2b9d5217d1af3e8d2a950be68",
-    "checkout_merge_sha": "187ab4c6411e3d02fbc19923951af8da937ffbd3",
-    "conclusion": "FAIL_NO_EVIDENCE_SEAL",
-    "current_report_head_ci": "NOT_EXECUTED: not pushed yet; source CI never transferred",
-    "delivery_full": {
-      "candidate_head": null,
-      "counts": {
-        "errors": 0,
-        "failures": 0,
-        "skipped": 0,
-        "tests": 1101
-      },
-      "duration_seconds": 509.839008726,
-      "po_decision_required": false,
-      "required_modules": [
-        "test_ocor_dev_0048"
-      ],
-      "status": "PASS"
-    },
-    "failure": "Fuseki recipe Docker ADD official archive: timeout after600s on attempt1 and2. No OOM/DNS/supply-chain cause inferred.",
-    "main_closure_and_candidate_full": "NOT_EXECUTED: provisioning failed; dependent closure rejected failure",
-    "observation_sha256": "3dd5c157d223f6cfc4d59699b2d698a2c52ae7332e324a9bd2aece93dff3b6a1",
-    "required_failed": [
-      "rccad-methodology",
-      "validation-closure"
-    ],
-    "required_passed": 11,
-    "required_total": 13,
-    "rerun_count_per_failed_workflow": 1,
-    "run_ids": [
-      37749800723,
-      37749801174,
-      37749800685
-    ]
-  },
   "claims": {
     "E1": 0,
     "E2": 0,
@@ -84,91 +45,43 @@
     "runtime_conformance": "NOT_ESTABLISHED"
   },
   "commands_run": [
-    "preflight9/9",
-    "checksums8/8",
-    "harness14/14",
-    "drift0/167",
-    "RED/GREEN portfolio",
-    "live resource probe"
+    "preflight_environment.py",
+    "verify.py --json",
+    "positive/negative archive acquisition portfolio",
+    "real miss/hit acquisition",
+    "run_qualifying_campaign.py (IN_PROGRESS)"
   ],
   "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
-  "current_task": "REM-0017:state sync of CI archive acquisition blocker; next0050/G5",
-  "evidence_paths": [],
-  "exact_next_action": "OCOR-DEV-0050:implementation da origin/main; REM-0017 repair1 sospesa su acquisizione archivio CI dopo retry bounded, PR169 draft e PR176 aperta. Riprendere REM solo dopo cambiamento pertinente e qualifica esatta, poi verifier Claude Code.",
+  "current_task": "REM-0017: repair1 verified archive acquisition",
+  "evidence_paths": [
+    "reports/evidence/G2/OCOR-DEV-0072.archive-requalified.json",
+    "reports/evidence/G2/OCOR-DEV-0075.archive-requalified.json"
+  ],
+  "exact_next_action": "Completare qualifica esatta REM-0017 repair_cycle1 (acquisizione archivio verificata, FULL locale e nuova coppia CI autorizzata), poi richiedere verifier Claude Code. Riacquisire identit\u00e0 locale Fuseki nel change set dedicato dopo Dockerfile; PR176 resta aperta, nessuna riparazione0049.",
   "head_sha": "git:HEAD",
   "head_sha_resolver": "git rev-parse HEAD",
   "independent_verification": {
     "implementer": "Codex (OpenAI)",
-    "new_request_status": "NOT_EXECUTED: source CI FAIL, latest qualifying FULL/CI incomplete",
+    "new_request_status": "NOT_EXECUTED: qualification IN_PROGRESS",
     "prior_verdict": "OCOR-DEV-REM-0017-6e2a08b62524-0",
     "repair_cycle": 1,
-    "verdict": "NO_GO",
-    "verifier": "Claude Code (Anthropic)"
+    "verifier": "Claude Code (Anthropic), separate process/context"
   },
   "limitations": [
-    "Latest full/CI not qualified; prior source runs historical only",
-    "Image restoration failed after successful scoped teardown",
-    "PR169 draft and PR176 unmerged; G5 can proceed"
+    "CI and complete latest campaign results pending; no evidence seal",
+    "Local identity update deliberately separate",
+    "PR169 draft; PR176 open and unmerged"
   ],
   "local_validation": {
-    "candidate": {
-      "candidate_head": "df444af855e884d7783612b302e008b90105fe13",
-      "counts": {
-        "errors": 0,
-        "failures": 0,
-        "skipped": 0,
-        "tests": 1491
-      },
-      "duration_seconds": 2845.548563180986,
-      "po_decision_required": false,
-      "required_modules": [
-        "test_ocor_dev_0048",
-        "test_ocor_dev_0049"
-      ],
-      "status": "PASS"
-    },
-    "latest_lint": "ruff exit0; mypy strict exit0 /53 sources",
-    "latest_report_portfolio": "73 PASS / 0 skipped; pytest exit0",
-    "main": {
-      "candidate_head": null,
-      "counts": {
-        "errors": 0,
-        "failures": 0,
-        "skipped": 0,
-        "tests": 1101
-      },
-      "duration_seconds": 362.80037237399665,
-      "po_decision_required": false,
-      "required_modules": [
-        "test_ocor_dev_0048"
-      ],
-      "status": "PASS"
-    },
-    "resources": {
-      "containers": {
-        "added": [],
-        "removed": []
-      },
-      "networks": {
-        "added": [],
-        "removed": []
-      },
-      "volumes": {
-        "added": [],
-        "removed": []
-      }
-    },
-    "source_limitation": "FULL runs started from6905ff002a4a309caee1ba855aae3e7ec2faa381 supervisor before later deadline/finalization/observer local fixes. Historical full results do not qualify final tool HEAD. Runtime main equals baseline d044; candidate immutable df444af; no task0049 change.",
-    "whole_driver_status": {
-      "campaigns_and_scoped_teardown": "PASS",
-      "image_after": "sha256:6840641ae15b9123caa3cb19bd7baafd2f156f20fd4ae24ea33cf834f8a463ec",
-      "image_before": "sha256:da8504ea177970ddb84800b1553bb521053ab9a1079a3a28150e4ba2d959041e",
-      "image_restoration": "FAIL: original image no longer present; no retry/lock update",
-      "status": "PARTIAL_FAILURE_IMAGE_RESTORE",
-      "updated_at": "2026-10-08T09:37:20.800722+00:00"
-    }
+    "archive_live_hit": "SHA512 rechecked PASS",
+    "archive_live_miss": "SHA512 PASS; dlcdn.apache.org",
+    "full_campaigns": "IN_PROGRESS on source1ff02fd; no PASS asserted",
+    "harness": "14 PASS /0 FAIL/0 NOT_EXECUTED",
+    "normative_checksums": "8/8 PASS",
+    "toolchain": "9/9 version+digest PASS",
+    "tooling_portfolio": "77 PASS /0 skip;2 subtests PASS"
   },
-  "migration_rollback_result": "Revert only this state-sync commit; task sealed artifacts and accepted history unchanged. Task rollback reviewed by verifier; no database migration in this iteration.",
+  "migration_rollback_result": "Revert acquisition changes through a new commit; no database migration. Preserve original sealed evidence; new requalifications explicitly supersede only drifted inputs.",
   "requirement_ids": [
     "BR-003",
     "FR-156",
@@ -181,132 +94,13 @@
     "NFR-080"
   ],
   "schema_version": "1.0",
-  "security_observability_notes": "Zero session resource delta; preexisting/foreign resources untouched. Final wrapper image restoration FAIL recorded; no secret in Git.",
-  "source_reference": {
-    "branch": "task/OCOR-DEV-0049-poc-deployment-observability-backup-safe-degradation",
-    "evidence_paths": [
-      "reports/evidence/G4/OCOR-DEV-0049.json",
-      "reports/evidence/G4/OCOR-DEV-0049.log",
-      "reports/evidence/G4/MANIFEST.json"
-    ],
-    "head_sha": "df444af855e884d7783612b302e008b90105fe13",
-    "manifest_sha256": "38a08a520b7bc15c5f0c1185afe41b9a221543c59faec68bef0a872e2d18d504",
-    "raw_output_sha256": "90e9ebcdfdd2718474ef54c25333a3ba851cbaa4b503f48ee9693ebfb373f5db",
-    "record_sha256": "c2355d6d25714fb21b03f473c330d997e3ba4749bfc123ae490c4938c6c2683f",
-    "reference_scope": "Artifacts exist only on the sealed task branch df444af; no copy or qualification is part of this state sync.",
-    "reviewed_head": "b14e4bf596959de35313dd9a6ee538576432ffd2",
-    "status": "SEALED_NOT_MERGED"
-  },
-  "source_reference_rem0017": {
-    "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
-    "disposition": "WIP_NOT_QUALIFIED_CI_ARCHIVE_TIMEOUT; branch reference only, no assurance promotion",
-    "head_sha": "23801b08a50d4212acb65bac8b46313b5c62ae95",
-    "raw_output_sha256": "992cb8ef66d9c508afcd27f12e516d53e4e35c45d07d344e3d9356d13962a12c",
-    "record_path": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-resume.json",
-    "record_sha256": "67dd85dd25550938fba608470a70b036f130c2e4c748b921c047d7f98a39792f"
-  },
-  "state_sync_ci": {
-    "final_head_rule": "No source PASS transferred; await all13 checks of report-only final HEAD and merge with --match-head-commit",
-    "qualification_scope": "Documentary sync only; inherited temporary PR164 deviation does not qualify REM17/0049",
-    "source_head": "667a5230e1a10433572cedc85fd858951b80c571",
-    "source_observed_at": "2026-10-08T10:07:48.844922+00:00",
-    "source_raw_sha256": "bc1842266282fa78a5b84870c1ca81dda2d2a72f329eda13ce0b65a26a79f78c",
-    "source_required_passed": 13,
-    "source_required_total": 13,
-    "source_run_ids": [
-      37758651103,
-      37758651124,
-      37758651135,
-      37758651149,
-      37758651177,
-      37758651179,
-      37758651284
-    ],
-    "status": "SOURCE_CHECKS_GREEN_FINAL_HEAD_REQUIRED"
-  },
-  "state_sync_final_verification": "NOT_EXECUTED at report commit time; exact13 green required before merge; external loop_status records final result",
-  "state_sync_local_validation": {
-    "sync-drift": {
-      "exit_code": 0,
-      "log": "/home/luca/.ocor-codex/rem0017-budget-resume/sync-drift.log",
-      "sha256": "fde0744c001d45e69220b77ce6eeb918a314c56d5a31c6d053a72590011f509c"
-    },
-    "sync-inputs": {
-      "exit_code": 0,
-      "log": "/home/luca/.ocor-codex/rem0017-budget-resume/sync-inputs.log",
-      "sha256": "0a2036313a8b8deca46e664d2621879f4e0191c98eb287e2aeeb7171aae53c34"
-    },
-    "sync-language": {
-      "exit_code": 0,
-      "log": "/home/luca/.ocor-codex/rem0017-budget-resume/sync-language.log",
-      "sha256": "ca6cb78dcbe21415365ecd6578a2eb0bf3d22bdcd7ddbae94e31fe19f67cd29d"
-    },
-    "sync-plan-settled": {
-      "exit_code": 0,
-      "log": "/home/luca/.ocor-codex/rem0017-budget-resume/sync-plan-settled.log",
-      "sha256": "c0753802bc31d2d19a9a5b77de8467f7b382f8b05832abf72af1a624819b6cba"
-    },
-    "sync-rccad": {
-      "exit_code": 0,
-      "log": "/home/luca/.ocor-codex/rem0017-budget-resume/sync-rccad.log",
-      "sha256": "0043e5c71880b8696f14cc449b0e908f5418b4864e06a71d3fb4d4f212543c3f"
-    },
-    "sync-ruff": {
-      "exit_code": 0,
-      "log": "/home/luca/.ocor-codex/rem0017-budget-resume/sync-ruff.log",
-      "sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18"
-    },
-    "sync-scope": {
-      "exit_code": 0,
-      "log": "/home/luca/.ocor-codex/rem0017-budget-resume/sync-scope.log",
-      "sha256": "ec71f3c9a3b087a0cbd73ff22a30a9eb50d27c2d43bb0a54d7bbbe51e25c140a"
-    }
-  },
+  "security_observability_notes": "Archive checksum authority unchanged; official redirects only; no secrets in Git. Recipe-based CI stack image ID differs from local output identity lock, not asserted equal. Foreign/preexisting resources preserved.",
   "task_id": "OCOR-DEV-REM-0017",
-  "task_integration": {
-    "ci": {
-      "candidate_commit": "df444af855e884d7783612b302e008b90105fe13",
-      "conclusion": "FAIL_EXACT_TASK_HEAD_NO_MERGE",
-      "decision": "REM-0017-PRIORITY (2026-10-05)",
-      "failed_checks": [
-        "rccad-methodology",
-        "delivery-activation",
-        "validation-closure"
-      ],
-      "final_head_rule": "Nessun merge o esclusione. Conservare PR176 aperta; remediation CI separata REM-0017 e successiva CI esatta 0049.",
-      "infrastructure_failure": "rccad/delivery real stack env absent and lint-extra/mypy missing: 1 failed,1164 passed,189 skipped,137 errors; no qualifying PASS. REM must cover every full-suite job, not only validation-closure.",
-      "observed_at": "2026-10-08T07:16:53.256630+00:00",
-      "passed": 10,
-      "pr": 176,
-      "raw_failed_log_hashes": {
-        "task-closure-failed.log": "5e9617c5374c0a3671c368faa2f165748166e1182c1af5cdca179f69beeae655",
-        "task-delivery-failed.log": "bb27a2d72385e99fda232c0513a0af5e815ce23783fbdcfa39fc0558fc7d4858",
-        "task-rccad-failed.log": "4b10eb162af47887b310f42b84fa97c5077b39c95ce55441e346e5fc45fd5bee"
-      },
-      "raw_observation_sha256": "18de18caafa3b9f62e7bd16901c1960dd55c8ce8eee8059b79550d067ed73fa9",
-      "required_checks": 13,
-      "retry_count": 0,
-      "run_ids": [
-        37740936580,
-        37740936597,
-        37740936608,
-        37740936657,
-        37740936664,
-        37740936708
-      ]
-    },
-    "head_sha": "df444af855e884d7783612b302e008b90105fe13",
-    "merged": false,
-    "pr": 176,
-    "raw_output_sha256": "90e9ebcdfdd2718474ef54c25333a3ba851cbaa4b503f48ee9693ebfb373f5db",
-    "reviewed_head": "b14e4bf596959de35313dd9a6ee538576432ffd2",
-    "sealed_record_sha256": "c2355d6d25714fb21b03f473c330d997e3ba4749bfc123ae490c4938c6c2683f"
-  },
   "unresolved_blockers": [
-    "REM-0017-CI-ARCHIVE-ACQUISITION",
-    "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE",
+    "OCOR-DEV-REM-0017 qualification",
+    "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE execution in separate change set",
     "OCOR-DEV-REM-0018"
   ],
-  "updated_at": "2026-10-08T10:09:11.225490+00:00",
-  "worktree": ".ocor/worktrees/state-sync-rem0017-archive-blocker"
+  "updated_at": "2026-10-08T12:35:57.746917+00:00",
+  "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
 }

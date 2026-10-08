@@ -1,10 +1,10 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-rem0017-archive-blocker",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__REM0017_ARCHIVE_DIAGNOSIS_STATE_SYNC",
+    "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__REM0017_VERIFIED_ARCHIVE_ACQUISITION",
     "decision_id": "DEC-210",
-    "phase": "STATE_SYNC_CI_REQUIRED_NO_REM_PROMOTION",
-    "worktree": ".ocor/worktrees/state-sync-rem0017-archive-blocker"
+    "phase": "REPAIR_1_ARCHIVE_ACQUISITION_QUALIFICATION_IN_PROGRESS",
+    "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
   },
   "backlog_escalations": {
     "OCOR-DEV-0048": {
@@ -1510,7 +1510,7 @@
       "verifier_decision": "OCOR-DEV-0049-VERIFIER-CURSOR (2026-10-07)"
     }
   },
-  "baseline_commit": "d044aa95328092c1ef9708c05413bafd3c6ddc2e",
+  "baseline_commit": "ef58743adebe717113832da1094224e5117d1c48",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -1680,9 +1680,9 @@
       },
       "id": "OCOR-DEV-REM-0017",
       "independent_verification": "NOT_EXECUTED_NEW_REQUEST_NOT_EMITTED",
-      "next_action": "OCOR-DEV-0050:implementation da origin/main; REM-0017 repair1 sospesa su acquisizione archivio CI dopo retry bounded, PR169 draft e PR176 aperta. Riprendere REM solo dopo cambiamento pertinente e qualifica esatta, poi verifier Claude Code.",
+      "next_action": "Completare qualifica esatta REM-0017 repair_cycle1 (acquisizione archivio verificata, FULL locale e nuova coppia CI autorizzata), poi richiedere verifier Claude Code. Riacquisire identit\u00e0 locale Fuseki nel change set dedicato dopo Dockerfile; PR176 resta aperta, nessuna riparazione0049.",
       "non_blocking": false,
-      "po_decision": "REM-0017-CI-CAMPAIGN-BUDGET (2026-10-07)",
+      "po_decision": "REM-0017-CI-ARCHIVE-ACQUISITION (2026-10-08)",
       "repair_cycle": 1,
       "scope": "REM-0017-PRIORITY (2026-10-05): stack CI completo e zero skip per tutti i CONDITIONAL_INFRASTRUCTURE_GUARD (TEST-INFRA-005/006 e successivi), poi rimozione --ignore PR #164. Prossimo task dopo verifica/integrazione 0049, prima di 0050; G6 bloccato fino alla chiusura verificata. Candidato ciclo 7 NO_GO: la qualifica infrastrutturale non chiude n\u00e9 approva 0049; riesaminare il ciclo di vita del pin nel REM.",
       "source_reference": {
@@ -1693,7 +1693,7 @@
         "record_path": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-resume.json",
         "record_sha256": "67dd85dd25550938fba608470a70b036f130c2e4c748b921c047d7f98a39792f"
       },
-      "status": "OPEN_CI_ARCHIVE_ACQUISITION_BLOCKER"
+      "status": "REPAIR_1_ARCHIVE_QUALIFICATION_IN_PROGRESS"
     },
     {
       "blocked_tasks": [
@@ -1865,6 +1865,8 @@
       "blocked_tasks": [],
       "id": "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE",
       "non_blocking": true,
+      "po_decision": "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE (2026-10-08)",
+      "resolution": "Separate governed re-acquisition authorized after archive Dockerfile change; no lock/checker change in REM17; actual base/source/Dockerfile/image captured.",
       "scope": "Bootstrap locale con confronto ID esatto irrisolto; pipeline CI eseguibile, lock/checker invariati.",
       "source_reference": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
@@ -1872,7 +1874,7 @@
         "path": "reports/development/decision_requests/FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE.md",
         "status": "WIP_NOT_MERGED"
       },
-      "status": "OPEN_PO_DECISION_REQUIRED"
+      "status": "RESOLVED_BY_PO_DECISION_EXECUTION_PENDING"
     },
     {
       "blocked_tasks": [
@@ -1952,6 +1954,8 @@
       "decision_request": "reports/development/decision_requests/REM-0017-CI-ARCHIVE-ACQUISITION.md",
       "id": "REM-0017-CI-ARCHIVE-ACQUISITION",
       "non_blocking": true,
+      "po_decision": "REM-0017-CI-ARCHIVE-ACQUISITION (2026-10-08)",
+      "resolution": "SHA512-addressed cache; exact official Apache source order; copied verified bytes; one new CI attempt plus one rerun authorized; total provisioning600s unchanged. Decision resolved, REM qualification remains pending.",
       "scope": "Only REM qualifying CI/integration0049 and G6/G7; 0050/G5 can proceed",
       "source_reference": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
@@ -1961,7 +1965,7 @@
         "record_path": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-resume.json",
         "record_sha256": "67dd85dd25550938fba608470a70b036f130c2e4c748b921c047d7f98a39792f"
       },
-      "status": "OPEN_PO_DECISION_REQUIRED"
+      "status": "RESOLVED_BY_PO_DECISION_IMPLEMENTATION_IN_PROGRESS"
     }
   ],
   "claims": {
@@ -2298,16 +2302,15 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0050:implementation da origin/main; REM-0017 repair1 sospesa su acquisizione archivio CI dopo retry bounded, PR169 draft e PR176 aperta. Riprendere REM solo dopo cambiamento pertinente e qualifica esatta, poi verifier Claude Code.",
+  "next_executable_action": "Completare qualifica esatta REM-0017 repair_cycle1 (acquisizione archivio verificata, FULL locale e nuova coppia CI autorizzata), poi richiedere verifier Claude Code. Riacquisire identit\u00e0 locale Fuseki nel change set dedicato dopo Dockerfile; PR176 resta aperta, nessuna riparazione0049.",
   "ready_set_observation": {
-    "baseline": "d044aa95328092c1ef9708c05413bafd3c6ddc2e",
-    "completed_count": 63,
-    "hard_dependency_ready": [
+    "acquired_at": "2026-10-08T12:35:57.746917+00:00",
+    "dependency_ready": [
       "OCOR-DEV-0049",
       "OCOR-DEV-0050"
     ],
-    "reason": "0049 sealed GO but CI/integration blocked; REM17 infrastructure failed twice; PO permits independent G5 work",
-    "selected_next": "OCOR-DEV-0050"
+    "reason": "PO authorized relevant acquisition change removes external wait; REM-0017-PRIORITY before further G5;0049 verified/sealed but not merged",
+    "selected": "OCOR-DEV-REM-0017"
   },
   "remediation_status": {
     "CI-0048_REAL_BACKEND": {
@@ -3085,5 +3088,5 @@
     "loop_status": "CONTINUE",
     "reason": "0049 GO_FOR_EVIDENCE_SEAL, PR176 CI FAIL/non mergiata; REM17 prioritario eseguibile con budget PO, G5 pronto. Nessun ciclo9."
   },
-  "updated_at": "2026-10-08T10:09:11.225490+00:00"
+  "updated_at": "2026-10-08T12:35:57.746917+00:00"
 }
