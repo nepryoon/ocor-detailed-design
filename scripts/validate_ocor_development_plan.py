@@ -287,7 +287,7 @@ def main() -> int:
         'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/candidate.json',
         'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/qualification.log',
         'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/MANIFEST.json',
-        'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/Dockerfile.txt',
+        'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/build_recipe.txt',
         'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/README.md',
         'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/full_main.py.txt',
         'reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/register_control_plane.py.txt',
