@@ -1,10 +1,10 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-rem0017-archive-blocker",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__REM0017_ARCHIVE_DIAGNOSIS_STATE_SYNC",
+    "branch": "governed/fuseki-local-identity-20261008",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__FUSEKI_LOCAL_IDENTITY_20261008",
     "decision_id": "DEC-210",
-    "phase": "STATE_SYNC_CI_REQUIRED_NO_REM_PROMOTION",
-    "worktree": ".ocor/worktrees/state-sync-rem0017-archive-blocker"
+    "phase": "FUSEKI_IDENTITY_SEALED_PENDING_EXACT_CI",
+    "worktree": ".ocor/worktrees/fuseki-local-identity-20261008"
   },
   "backlog_escalations": {
     "OCOR-DEV-0048": {
@@ -1510,7 +1510,7 @@
       "verifier_decision": "OCOR-DEV-0049-VERIFIER-CURSOR (2026-10-07)"
     }
   },
-  "baseline_commit": "d044aa95328092c1ef9708c05413bafd3c6ddc2e",
+  "baseline_commit": "ef58743adebe717113832da1094224e5117d1c48",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -1679,21 +1679,19 @@
         "suite_limit_seconds": 2700
       },
       "id": "OCOR-DEV-REM-0017",
-      "independent_verification": "NOT_EXECUTED_NEW_REQUEST_NOT_EMITTED",
-      "next_action": "OCOR-DEV-0050:implementation da origin/main; REM-0017 repair1 sospesa su acquisizione archivio CI dopo retry bounded, PR169 draft e PR176 aperta. Riprendere REM solo dopo cambiamento pertinente e qualifica esatta, poi verifier Claude Code.",
+      "independent_verification": "NOT_EXECUTED_NEW_REQUEST_NOT_EMITTED_FOR_REM17",
+      "next_action": "Diagnosi bounded containerd nello scope DEC211; nessun retry invariato. G5 eseguibile. VerificaREMClaudeCode non richiesta finch\u00e9 qualifica locale incompleta.",
       "non_blocking": false,
       "po_decision": "REM-0017-CI-CAMPAIGN-BUDGET (2026-10-07)",
       "repair_cycle": 1,
       "scope": "REM-0017-PRIORITY (2026-10-05): stack CI completo e zero skip per tutti i CONDITIONAL_INFRASTRUCTURE_GUARD (TEST-INFRA-005/006 e successivi), poi rimozione --ignore PR #164. Prossimo task dopo verifica/integrazione 0049, prima di 0050; G6 bloccato fino alla chiusura verificata. Candidato ciclo 7 NO_GO: la qualifica infrastrutturale non chiude n\u00e9 approva 0049; riesaminare il ciclo di vita del pin nel REM.",
       "source_reference": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
-        "disposition": "WIP_NOT_QUALIFIED_CI_ARCHIVE_TIMEOUT; branch reference only, no assurance promotion",
-        "head_sha": "23801b08a50d4212acb65bac8b46313b5c62ae95",
-        "raw_output_sha256": "992cb8ef66d9c508afcd27f12e516d53e4e35c45d07d344e3d9356d13962a12c",
-        "record_path": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-resume.json",
-        "record_sha256": "67dd85dd25550938fba608470a70b036f130c2e4c748b921c047d7f98a39792f"
+        "disposition": "WIP_NOT_QUALIFIED_LOCAL_CONTAINERD_FAILURE; branch reference only; no assurance promotion",
+        "head_sha": "bc811afc2bc30023cd64051a638c632263760ecc",
+        "record_path": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-archive.json"
       },
-      "status": "OPEN_CI_ARCHIVE_ACQUISITION_BLOCKER"
+      "status": "OPEN_LOCAL_RUNTIME_QUALIFICATION_BLOCKER"
     },
     {
       "blocked_tasks": [
@@ -1863,8 +1861,12 @@
     },
     {
       "blocked_tasks": [],
+      "decision_request": "reports/development/decision_requests/FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE.md",
       "id": "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE",
       "non_blocking": true,
+      "po_decision": "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE (2026-10-08)",
+      "record": "reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/candidate.json",
+      "resolution": "Riacquisizione autorizzata e verificata sullo stesso HEAD; GO Claude Code, zero finding bloccanti. Sigillo di candidato e otto riqualifiche; merge solo dopo13 check verdi esatti. RicettaCOPY presente solo nel REM17 WIP, bootstrap/checker invariati.",
       "scope": "Bootstrap locale con confronto ID esatto irrisolto; pipeline CI eseguibile, lock/checker invariati.",
       "source_reference": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
@@ -1872,7 +1874,7 @@
         "path": "reports/development/decision_requests/FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE.md",
         "status": "WIP_NOT_MERGED"
       },
-      "status": "OPEN_PO_DECISION_REQUIRED"
+      "status": "RESOLVED_EXECUTION_SEALED_PENDING_CI_AND_INTEGRATION"
     },
     {
       "blocked_tasks": [
@@ -1952,6 +1954,8 @@
       "decision_request": "reports/development/decision_requests/REM-0017-CI-ARCHIVE-ACQUISITION.md",
       "id": "REM-0017-CI-ARCHIVE-ACQUISITION",
       "non_blocking": true,
+      "po_decision": "REM-0017-CI-ARCHIVE-ACQUISITION (2026-10-08)",
+      "resolution": "Acquisizione verificata implementata nella sola PR169WIP; nessuna promozione in questa unit\u00e0 identit\u00e0. Riferimento al branch pubblicato bc811af.",
       "scope": "Only REM qualifying CI/integration0049 and G6/G7; 0050/G5 can proceed",
       "source_reference": {
         "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
@@ -1961,7 +1965,7 @@
         "record_path": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-resume.json",
         "record_sha256": "67dd85dd25550938fba608470a70b036f130c2e4c748b921c047d7f98a39792f"
       },
-      "status": "OPEN_PO_DECISION_REQUIRED"
+      "status": "PO_DECISION_RECEIVED_EXECUTED_IN_WIP"
     }
   ],
   "claims": {
@@ -2238,7 +2242,8 @@
     "decision": "LOOP-ROLES (2026-10-05)",
     "default_task_implementer": "Codex (OpenAI)",
     "default_verifier": "Claude Code (Anthropic)",
-    "loop_implementer": "Codex (OpenAI)"
+    "loop_implementer": "Codex (OpenAI)",
+    "verifier_for_reserve_implementer_tasks": "Grok 4.7 (Cursor), per istruzione corrente del Product Owner; le identit\u00e0 dei verdetti storici sono preservate."
   },
   "mandate_phase_status": {
     "phase_0_reconciliation": {
@@ -2298,16 +2303,16 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0050:implementation da origin/main; REM-0017 repair1 sospesa su acquisizione archivio CI dopo retry bounded, PR169 draft e PR176 aperta. Riprendere REM solo dopo cambiamento pertinente e qualifica esatta, poi verifier Claude Code.",
+  "next_executable_action": "Attendere i13 check obbligatori sullo stesso HEAD del sigillo FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE; merge governato con match-head-commit, poi state sync. A seguire0050/G5; REM17 WIP e0049PR176 restano aperti.",
   "ready_set_observation": {
-    "baseline": "d044aa95328092c1ef9708c05413bafd3c6ddc2e",
-    "completed_count": 63,
-    "hard_dependency_ready": [
+    "basis": "backlog hard_dependencies and63 completed_evidence_tasks; independent verdict and merge still required for0049",
+    "observed_at": "2026-10-08T16:04:42.208402+00:00",
+    "ready": [
       "OCOR-DEV-0049",
       "OCOR-DEV-0050"
     ],
-    "reason": "0049 sealed GO but CI/integration blocked; REM17 infrastructure failed twice; PO permits independent G5 work",
-    "selected_next": "OCOR-DEV-0050"
+    "reason": "Next distinct authorized unit in published REM17 handoff; final COPY Dockerfile already implemented; no product or REM17 code repair.",
+    "selected_unit": "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE:implementation"
   },
   "remediation_status": {
     "CI-0048_REAL_BACKEND": {
@@ -2423,6 +2428,68 @@
         "task_pr": 176,
         "verdict": "GO_FOR_EVIDENCE_SEAL"
       }
+    },
+    "FUSEKI_LOCAL_IDENTITY_20261008": {
+      "candidate": "reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/candidate.json",
+      "implementer": "Codex (OpenAI)",
+      "independent_verification_result": {
+        "appended_at": "2026-10-08T16:32:32.334323+00:00",
+        "findings": [
+          {
+            "blocking": false,
+            "evidence": "Su HEAD l'entry fuseki dichiara dockerfile=infra/fuseki/Dockerfile (sha256 6018164d..., ADD da archive.apache.org) ma output_sha256=6534156b... e' l'immagine costruita dalla ricetta COPY di bc811af (build_recipe.txt sha256 8704d0e8...). Dopo il merge di questa unita' sola, il Dockerfile dichiarato nel lock di main non puo' produrre l'ID lockato; il legame e' solo nel companion lock (build_recipe_in_main=false). Il bootstrap resta fail-closed (rebuild da infra/fuseki -> 'identity differs'). Divergenza dichiarata nelle limitations e coerente con la decisione PO di change set separato da REM17.",
+            "id": "VF-001",
+            "path": "infra/services.lock.json:9-11",
+            "required_fix": "Nessun fix bloccante. Integrare la modifica ADD->COPY di REM17 prima o insieme alla prossima riacquisizione, oppure aggiungere al test di accettazione un controllo esplicito che registri la differenza hash Dockerfile main vs ricetta, cosi' che l'incoerenza temporanea sia verificata e non solo dichiarata.",
+            "severity": "low"
+          },
+          {
+            "blocking": false,
+            "evidence": "archive_cache='HIT; SHA512 rechecked before build' e' una stringa riassuntiva: il bundle qualification.log non contiene l'output grezzo del ricontrollo pre-COPY (cache_key/verified_sha512 di acquire_fuseki_archive.py). La verifica SHA512 e' comunque provata dal build.log (sha512sum -c: OK, step #7) e l'ho riacquisita in modo indipendente: cache e checksum ufficiali Apache coincidono con ba65f586...a132.",
+            "id": "VF-002",
+            "path": "infra/fuseki/local_identity.lock.json:3",
+            "required_fix": "Nelle prossime acquisizioni archiviare nel raw log l'output JSON dell'acquisizione (cache HIT/MISS, cache_key, source, verified_sha512) come richiesto da REM-0017-CI-ARCHIVE-ACQUISITION.",
+            "severity": "low"
+          },
+          {
+            "blocking": false,
+            "evidence": "Il diff aggiunge 19 path del change set all'allowlist extension_paths di un validator, mentre l'autorizzazione PO recita 'nessuna modifica validator/checker'. E' il meccanismo gia' usato dai precedenti change set governed (git log del file) e non indebolisce alcun controllo oltre all'ammissione esatta dei path del change set; il checker d'identita' (ocor_bootstrap_lib.py) e il bootstrap sono byte-identici a main (verificato dal test e da sha256).",
+            "id": "VF-003",
+            "path": "scripts/validate_ocor_development_plan.py:275-293",
+            "required_fix": "Nessun fix bloccante; esplicitare nella PR che la sola modifica a script e' l'allowlist di planning, distinta dal checker del lock oggetto del vincolo PO.",
+            "severity": "low"
+          }
+        ],
+        "head_sha": "1e808f3824a3fae42bf279ea3e05a8f3d71dfe13",
+        "implementer": "Codex (OpenAI)",
+        "not_executed": [
+          "ADVERSARIAL_CONFORMANCE con clone pulito da origin: non richiesto (review_type REMEDIATION); stack comunque azzerato e ricreato da zero con reset+bootstrap prima della suite qualificante.",
+          "Rebuild indipendente dell'immagine dalla ricetta: non eseguito di proposito per non sostituire l'immagine locale governata; l'ID non e' riproducibile bit-a-bit e nessuna rebuild-equality e' asserita. Identita' verificata su immagine presente, layer base, history e build.log.",
+          "CI esatta sull'HEAD e sigillo: fuori scope di questa verifica (iterazione di integrazione separata, nessuna PR aperta)."
+        ],
+        "request_id": "FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE-1e808f3824a3-0",
+        "review_type": "REMEDIATION",
+        "verdict": "GO_FOR_EVIDENCE_SEAL",
+        "verdict_file_sha256": "f45427b97fe40cf4d58155324bc925bca0b26176520b3f063f4ef8444e27a970",
+        "verifier": {
+          "independence_limits": "processo e contesto separati; verifier Claude Code (Anthropic), implementatore Codex (OpenAI): modelli e fornitori diversi; nessun riassunto dell'implementatore usato come prova, tutti i controlli rieseguiti sullo stack reale ricreato.",
+          "model": "claude-opus-5-5",
+          "process": "Claude Code, sessione non interattiva, contesto pulito"
+        }
+      },
+      "requalified_tasks": [
+        "OCOR-DEV-0070",
+        "OCOR-DEV-0073",
+        "OCOR-DEV-0074",
+        "OCOR-DEV-0075",
+        "OCOR-DEV-0076",
+        "OCOR-DEV-0077",
+        "OCOR-DEV-0078",
+        "OCOR-DEV-0079"
+      ],
+      "source_commit": "6cfaf8ed6f185862e7eca1cd5c5a9357e0cd5f0c",
+      "status": "SEALED_PENDING_CI_AND_INTEGRATION",
+      "verifier": "Claude Code (Anthropic), claude-opus-5-5"
     },
     "R1_state_realignment": {
       "baseline_commit": "276fc6510cb2340a41335f4b12cac864a7299573",
@@ -3085,5 +3152,5 @@
     "loop_status": "CONTINUE",
     "reason": "0049 GO_FOR_EVIDENCE_SEAL, PR176 CI FAIL/non mergiata; REM17 prioritario eseguibile con budget PO, G5 pronto. Nessun ciclo9."
   },
-  "updated_at": "2026-10-08T10:09:11.225490+00:00"
+  "updated_at": "2026-10-08T16:32:32.334323+00:00"
 }
