@@ -876,6 +876,120 @@
       "status": "PASS"
     }
   },
+  "independent_verification": {
+    "candidate_record_sha256": "dd1817f910fa2641dd00c0a596d1d7addc99d1cedbebaaa7d2be38de388fe269",
+    "disposition": "Sigillo documentale del candidato esatto accettato dal verifier; CI finale da eseguire e merge subordinato a tutti i check richiesti. Le limitazioni storiche NOT_EXECUTED della verifica candidata sono superate dal presente verdetto; le altre limitazioni restano dichiarate.",
+    "historical_repairs": "Riparazioni cicli 2–6 e 8 Claude Code; ciclo 7 Codex; verifica del ciclo 7 Grok 4.7 (Cursor).",
+    "implementer": "Claude Code (Anthropic), ciclo 8",
+    "independence_limits": "Processo e contesto separati. Implementatore del ciclo 8: Claude Code (Anthropic). Verifier effettivo: Grok 4.7 (xAI) via Cursor CLI, fallback al terzo tentativo dopo interruzioni di moderazione del verifier primario Codex (OpenAI). Fornitori di modello diversi.",
+    "integration_agent": "Codex (OpenAI)",
+    "po_decision": "OCOR-DEV-0049-REPAIR-8 (2026-10-07)",
+    "same_model_separate_contexts": false,
+    "sealed_at": "2026-10-08T06:59:41.836153+00:00",
+    "verdict": {
+      "commands": [
+        {
+          "command": "sha256sum -c inputs/normative/SHA256SUMS",
+          "exit_code": 0,
+          "summary": "8/8 digest normativi OK sull'HEAD b14e4bf"
+        },
+        {
+          "command": "uv sync --directory ocor-runtime --frozen --extra test --extra lint",
+          "exit_code": 0,
+          "summary": "ambiente frozen gia' allineato (uv 0.12.5)"
+        },
+        {
+          "command": "python3 scripts/validate_language_policy.py",
+          "exit_code": 0,
+          "summary": "PASS"
+        },
+        {
+          "command": "python3 scripts/validate_evidence_input_drift.py",
+          "exit_code": 0,
+          "summary": "PASS, 0 drift su 167 input e 63 task"
+        },
+        {
+          "command": "python3 scripts/validate_ocor_change_scope.py --base origin/main",
+          "exit_code": 0,
+          "summary": "PASS, 14 path nel perimetro del task rispetto a origin/main; inputs intatti"
+        },
+        {
+          "command": "python3 scripts/validate_rccad.py --base-ref origin/main",
+          "exit_code": 0,
+          "summary": "PASS_LOCAL_PRECHECK, dynamic_assurance CI_REQUIRED"
+        },
+        {
+          "command": "python3 scripts/validate_runtime_evidence.py --task OCOR-DEV-0049 --manifest reports/evidence/G4/MANIFEST.json --non-skipped",
+          "exit_code": 0,
+          "summary": "PASS"
+        },
+        {
+          "command": "uv run --project ocor-runtime --frozen --extra test --extra lint ruff check .",
+          "exit_code": 0,
+          "summary": "All checks passed"
+        },
+        {
+          "command": "uv run --project ocor-runtime --frozen --extra test --extra lint mypy --strict",
+          "exit_code": 0,
+          "summary": "nessun problema in 69 sorgenti"
+        },
+        {
+          "command": "ocor-runtime/.venv/bin/python3 scripts/verify.py --json",
+          "exit_code": 0,
+          "summary": "PASS 14, FAIL 0, NOT_EXECUTED 0"
+        },
+        {
+          "command": "probe schema_and_digest.py sul modulo estratto da compose.profiles.yaml",
+          "exit_code": 0,
+          "summary": "digest della sequenza codepoint; permutazione, sostituzione non finale, omissione, aggiunta, duplicazione e caso a due id rifiutati con memory:tombstones_not_replayed; recovery-point/1 rifiutato MANIFEST_SCHEMA_INVALID; recovery-point/2 accettato"
+        },
+        {
+          "command": "python3 scripts/reset_test_environment.py --execute && python3 <REM 4336137>/scripts/bootstrap_ci_environment.py --execute --timeout 300",
+          "exit_code": 0,
+          "summary": "stack ricreato due volte (prima delle suite del task e prima della suite completa); servizi READY; heap Fuseki 1 GiB; ID costruito diverso dal lock e non asserito uguale"
+        },
+        {
+          "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task1)",
+          "exit_code": 0,
+          "summary": "390 passed, 0 skipped, 0 failed, 2232.21s"
+        },
+        {
+          "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task2)",
+          "exit_code": 0,
+          "summary": "390 passed, 0 skipped, 0 failed, 2236.91s"
+        },
+        {
+          "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/tasks/test_ocor_dev_0049.py (task3)",
+          "exit_code": 0,
+          "summary": "390 passed, 0 skipped, 0 failed, 2235.97s"
+        },
+        {
+          "command": "OCOR_LIVE_POSTGRES_DSN=postgresql://ocor@127.0.0.1:55433/ocor uv run --project ocor-runtime --frozen --extra test --extra lint pytest ocor-runtime/tests/",
+          "exit_code": 0,
+          "summary": "1491 passed, 0 skipped, 0 failed, 3146.50s; test_ocor_dev_0048.py 196 passed, 0 skipped, 0 failed; nessun OOM"
+        }
+      ],
+      "created_at": "2026-10-08T06:55:57Z",
+      "findings": [],
+      "head_sha": "b14e4bf596959de35313dd9a6ee538576432ffd2",
+      "not_executed": [],
+      "request_id": "OCOR-DEV-0049-b14e4bf59695-8",
+      "verdict": "GO_FOR_EVIDENCE_SEAL",
+      "verifier": {
+        "independence_limits": "Processo e contesto separati. Implementatore del ciclo 8: Claude Code (Anthropic). Verifier effettivo: Grok 4.7 (xAI) via Cursor CLI, fallback al terzo tentativo dopo interruzioni di moderazione del verifier primario Codex (OpenAI). Fornitori di modello diversi.",
+        "model": "Grok 4.7",
+        "process": "Cursor CLI, contesto pulito; fallback del verifier primario Codex"
+      }
+    },
+    "verdict_created_at": "2026-10-08T06:55:57Z",
+    "verdict_file_sha256": "130a47fc98ed61fc0865079418ff9df3a2877a8d42b140357f3a8d6a1f912d4b",
+    "verdict_head_sha": "b14e4bf596959de35313dd9a6ee538576432ffd2",
+    "verdict_request_id": "OCOR-DEV-0049-b14e4bf59695-8",
+    "verdict_status": "GO_FOR_EVIDENCE_SEAL",
+    "verifier": "Grok 4.7 (xAI) tramite Cursor CLI",
+    "verifier_model": "Grok 4.7",
+    "verifier_process": "Cursor CLI, contesto pulito; fallback del verifier primario Codex"
+  },
   "inputs": {
     "deploy/helm/ocor-poc/Chart.yaml": "b6731d8de4effda2421dec13e73acc9f3207af1e95a140f5ef363879f3dd8e8b",
     "deploy/helm/ocor-poc/compose.profiles.yaml": "c8d9d5870522a9f65143f64fc0478b8fb37dab7c36842685db6ca58ba3d6593a",
@@ -2335,7 +2449,7 @@
   "result": "PASS",
   "rollback_procedure_verified": "Mechanically reviewed and exercised in the tests: every Compose stage is torn down with `down -v --remove-orphans` and the kind namespace/PV/cluster are deleted by the fixture; reverting the task is a revert commit of deploy/helm/ocor-poc/ and the test module (no change to deploy/bootstrap, infra locks or sealed records); the OpenBao transit mount ocor-poc-transit can be disabled; vault recovery points are immutable history and are not deleted.",
   "schema_version": "1.0",
-  "status": "CANDIDATE_PENDING_INDEPENDENT_VERIFICATION",
+  "status": "SEALED",
   "supersedes_candidate": {
     "disposition": "Ciclo 7 NO_GO (verdetto OCOR-DEV-0049-9d86abebc762-7) preservato nella storia Git; nessun record sigillato modificato.",
     "head_sha": "9d86abebc7626a36115540a2711772c1d2d19e23",
