@@ -1,17 +1,66 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-rem-0017-ci-cap-7412798",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_REM_0017_CI_CAP",
+    "branch": "governed/state-sync-ocor-dev-0051-sealed",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__OCOR_DEV_0051_SEALED",
     "decision_id": "DEC-210",
-    "phase": "OCOR_DEV_REM_0017_CI_CAP_EXCEEDED_STATE_SYNC",
+    "phase": "OCOR_DEV_0051_SEALED_STATE_SYNC",
     "source_reference": {
-      "candidate_head": "741279862edae172fd8c1b16b584c1852145f7ae",
-      "decision_request": "reports/development/decision_requests/REM-0017-CI-CAMPAIGN-DURATION.md",
-      "pull_request": 169,
-      "run_id": 37890969702
+      "accepted_head": "69d80f2d843e48a5f8648b1dba9c4ac6d030409f",
+      "code_commit": "4eed73f70ea7f27e0dbc4d7edd2ed79dda680812",
+      "method": "PR unica task/ (#188) sull HEAD di sigillo cc1d53a, figlio diretto dell HEAD verificato 69d80f2: cambiano solo independent_verification, sealed_at e status SEALED nel record e il relativo hash nel manifest G5. Codice, input e raw log byte-identici all HEAD verificato.",
+      "pull_requests": {
+        "188": {
+          "head_sha": "cc1d53a858469a7a547fe20fd7264eb8d0e299cc",
+          "merge_commit": "0f76347213bc76a5ced53ada485fd5a852b0f8fc",
+          "observed_at": "2026-10-09T14:39:57.106887+00:00",
+          "raw_observation_sha256": "80ea8771e74321103476f4a9ca9e9b03b578a8aca21ca7b279472f64427417c2",
+          "required_passed": 13,
+          "required_total": 13,
+          "run_ids": [
+            37943402246,
+            37943402250,
+            37943402254,
+            37943402259,
+            37943402262,
+            37943402286,
+            37943402376
+          ],
+          "status": "MERGED_EXACT_HEAD_13_REQUIRED"
+        }
+      },
+      "seal_invariants_on_main": "PASS",
+      "sealed_manifest_sha256": "ae4dd7c4dc791478519e08ac583261817e9c0cc0dc0523743ce0bf4fd3e06c96",
+      "sealed_raw_sha256": "362e334d9e6db432bdae0809efbc4bf8092428317dac953d20f9eef144624e80",
+      "sealed_record_sha256": "2c0932a03e2b9e256efa3948d76a42a0c4d2bd82bc817301761cd696dee07e44",
+      "verdict": {
+        "request_id": "OCOR-DEV-0051-69d80f2d843e-1",
+        "sha256": "c2fc97c1de45d87e98d6b4eaf1645ae3850c2caec4382d200b0181b1a59d5b11",
+        "verdict": "GO_FOR_EVIDENCE_SEAL"
+      },
+      "verdict_history": [
+        {
+          "findings": [
+            "VF-001",
+            "VF-002"
+          ],
+          "head_sha": "e5c49f2dc7d7746fdf4c24f1b5e50924575fda25",
+          "repair_cycle": 0,
+          "request_id": "OCOR-DEV-0051-e5c49f2dc7d7-0",
+          "sha256": "eb33109211512ff5aeeaeacc2c275dc50f712517316832ed6e3c72e8e9ea9827",
+          "verdict": "NO_GO"
+        },
+        {
+          "findings": [],
+          "head_sha": "69d80f2d843e48a5f8648b1dba9c4ac6d030409f",
+          "repair_cycle": 1,
+          "request_id": "OCOR-DEV-0051-69d80f2d843e-1",
+          "sha256": "c2fc97c1de45d87e98d6b4eaf1645ae3850c2caec4382d200b0181b1a59d5b11",
+          "verdict": "GO_FOR_EVIDENCE_SEAL"
+        }
+      ]
     },
-    "task_id": "OCOR-DEV-REM-0017",
-    "worktree": ".ocor/worktrees/state-sync-ocor-dev-rem-0017-realign"
+    "task_id": "OCOR-DEV-0051",
+    "worktree": ".ocor/worktrees/state-sync-ocor-dev-0051-sealed"
   },
   "backlog_escalations": {
     "OCOR-DEV-0048": {
@@ -1517,7 +1566,7 @@
       "verifier_decision": "OCOR-DEV-0049-VERIFIER-CURSOR (2026-10-07)"
     }
   },
-  "baseline_commit": "7b63f6101a4a3913b9dacee7718df059593f51fd",
+  "baseline_commit": "0f76347213bc76a5ced53ada485fd5a852b0f8fc",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -1774,7 +1823,7 @@
       "next_action": "OCOR-DEV-0051:implementation (pronto: hard_dependencies 0023/0025/0050 completate), branch task/ da origin/main in worktree nuovo. OCOR-DEV-REM-0017 fermo su decisione PO REM-0017-CI-CAMPAIGN-DURATION: candidato riallineato 7412798 (PR #169 draft) ha superato il tetto di 4500 s su entrambi i tentativi CI autorizzati (1382/1491 PASS, zero fail/skip, nessun riavvio/OOM); nessun ulteriore run, nessuna variazione del tetto, nessuna verifica richiesta su un HEAD con CI rossa. Integrazione OCOR-DEV-0049 (GO b14e4bf, PR #176) resta subordinata alla chiusura verificata di REM-0017, nessuna riparazione 0049. RVW-03, INFO-A, INFO-C, REM-0018 aperti e non bloccano G5.",
       "non_blocking": false,
       "note_latest_observation": "CI sullo snapshotbc811af ora13/13verde. Non \u00e8 una verifica indipendente o chiusura REM; blocker storico preservato fino alla riqualifica e al verdetto.",
-      "po_decision": "REM-0017-CI-CAMPAIGN-BUDGET (2026-10-07)",
+      "po_decision": "REM-0017-CI-CAMPAIGN-DURATION (2026-10-09)",
       "realignment": {
         "implementer": "Claude Code (Anthropic, claude-opus-5-5), implementatore di riserva del loop; REM-0017 repair-1 code by Codex (OpenAI)",
         "intermediate_head_ci": {
@@ -1848,7 +1897,7 @@
         "head_sha": "bc811afc2bc30023cd64051a638c632263760ecc",
         "record_path": "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-archive.json"
       },
-      "status": "BLOCKED_PO_DECISION_REQUIRED_CI_CAMPAIGN_DURATION"
+      "status": "PO_DECISION_RECEIVED_EXECUTION_PENDING"
     },
     {
       "blocked_tasks": [
@@ -2542,9 +2591,11 @@
         "Keep 4500 s and optimise provisioning/execution only within DEC-211 (no case, version or criterion change)",
         "Explicit PO decision on the campaign budget or on an additional authorized CI run pair after measured evidence"
       ],
+      "po_decision": "REM-0017-CI-CAMPAIGN-DURATION (2026-10-09)",
       "po_question": "Il candidato riallineato 7412798 ha superato due volte il tetto di 75 minuti (variabilit\u00e0 dei runner, nessun fallimento). Come procedere: ottimizzazione entro DEC-211, nuova coppia di run autorizzata o variazione del tetto?",
+      "resolution": "Decisione PO REM-0017-CI-CAMPAIGN-DURATION (2026-10-09): suite completa in CI in N>=2 parti parallele con aggregatore sul nome del check obbligatorio, 45 min per parte, nuova coppia di run autorizzata; esecuzione e chiusura della DR nel change set REM-0017, non in questo state sync.",
       "scope": "CI campaign duration of conditional-infrastructure-0049 (candidate 0049 FULL, 1491 cases) on GitHub-hosted runners",
-      "status": "OPEN_PO_DECISION_REQUIRED"
+      "status": "PO_DECISION_RECEIVED_EXECUTION_PENDING"
     },
     {
       "blocked_tasks": [],
@@ -2552,8 +2603,10 @@
       "decision_request_location": "branch governed/ocor-dev-rem-0017-ci-provision-spire (PR #169, head 741279862edae172fd8c1b16b584c1852145f7ae)",
       "id": "REM-0017-KIND-CONTAINERD-CRASH",
       "non_blocking": true,
+      "po_decision": "REM-0017-CI-CAMPAIGN-DURATION (2026-10-09)",
+      "resolution": "Decisione PO REM-0017-CI-CAMPAIGN-DURATION (2026-10-09): la diagnosi prosegue secondo l opzione 1 della richiesta, senza cambi di immagine o versione; esecuzione nel change set REM-0017.",
       "scope": "Local only: containerd SIGSEGV/restart inside the kind node on the */15 backup CronJob tick (3/3 local candidate FULL on this host); not observed on GitHub runners. PO decision needed only for a qualifying-profile/image change or 0049 changes.",
-      "status": "OPEN_PO_DECISION_REQUIRED"
+      "status": "PO_DECISION_RECEIVED_EXECUTION_PENDING"
     }
   ],
   "claims": {
@@ -2627,9 +2680,10 @@
     "OCOR-DEV-0046",
     "OCOR-DEV-0047",
     "OCOR-DEV-0048",
-    "OCOR-DEV-0050"
+    "OCOR-DEV-0050",
+    "OCOR-DEV-0051"
   ],
-  "current_gate": "OCOR_DEV_0050_SEALED",
+  "current_gate": "OCOR_DEV_0051_SEALED",
   "historical_terminal_loop_disposition": {
     "available_next_work": "OCOR-DEV-REM-0017, poi OCOR-DEV-0050",
     "loop_status": "TERMINAL_BLOCKED",
@@ -2639,42 +2693,24 @@
     "reason": "Disposizione puntuale OCOR-DEV-0049-REPAIR-CLAUDE-AUTO: ultimo ciclo 5 NO_GO. Non equivale a tutto il backlog bloccato."
   },
   "latest_ci_evidence": {
-    "branch": "governed/ocor-dev-0050-synthetic-secret-fixtures",
-    "candidate_commit": "79a79120a75956f8a479e779fad962b65b77378f",
-    "companion_pull_request": {
-      "head_sha": "5660ce6366e214f572fa46daf3a3f2e0141db6ae",
-      "merge_commit": "bf33012939fcb6252ca31db136a2db0548eb861f",
-      "observed_at": "2026-10-09T04:10:56.315356+00:00",
-      "pull_request": 182,
-      "raw_observation_sha256": "20fd1dd021d5038e983e7bd98362f43afec4d6bee4c050731461d3fee5b5fe92",
-      "required_passed": 13,
-      "required_total": 13,
-      "run_ids": [
-        37882091473,
-        37882091485,
-        37882091524,
-        37882091540,
-        37882091574,
-        37882091584,
-        37882091617
-      ]
-    },
-    "head_sha": "79a79120a75956f8a479e779fad962b65b77378f",
-    "merge_commit": "e459cd1dc99c9ee9f88e2644b0b7273e2fb44c4f",
-    "observed_at": "2026-10-09T04:21:11.873605+00:00",
-    "pull_request": 185,
-    "qualification_scope": "OCOR-DEV-0050 seal/merge only; no REM17/0049 completion or runtime/global claims.",
-    "raw_observation_sha256": "75e85fbb05919323282fab8700f873b13b0b5970cf342e18ff6f9ac1919c69aa",
+    "branch": "task/OCOR-DEV-0051-memory-metadata-content-index-stores",
+    "candidate_commit": "cc1d53a858469a7a547fe20fd7264eb8d0e299cc",
+    "head_sha": "cc1d53a858469a7a547fe20fd7264eb8d0e299cc",
+    "merge_commit": "0f76347213bc76a5ced53ada485fd5a852b0f8fc",
+    "observed_at": "2026-10-09T14:39:57.106887+00:00",
+    "pull_request": 188,
+    "qualification_scope": "OCOR-DEV-0051 seal/merge only; no REM17/0049 completion or runtime/global claims.",
+    "raw_observation_sha256": "80ea8771e74321103476f4a9ca9e9b03b578a8aca21ca7b279472f64427417c2",
     "required_passed": 13,
     "required_total": 13,
     "run_ids": [
-      37882797373,
-      37882797410,
-      37882797417,
-      37882797440,
-      37882797510,
-      37882797512,
-      37882797526
+      37943402246,
+      37943402250,
+      37943402254,
+      37943402259,
+      37943402262,
+      37943402286,
+      37943402376
     ],
     "status": "PASS_EXACT_HEAD_13_REQUIRED"
   },
@@ -2700,6 +2736,12 @@
       "independence": "external loop only; separate process, context and provider",
       "integration_agent": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva (quota Codex esaurita); seal 79a7912 by Codex",
       "original_implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva del loop",
+      "verifier": "Grok 4.7 (Cursor CLI; verifier: cursor)"
+    },
+    "OCOR-DEV-0051": {
+      "implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva del loop (quota Codex esaurita), cicli 0 e 1",
+      "independence": "external loop only; separate process, context and provider",
+      "integration_agent": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva (quota Codex esaurita)",
       "verifier": "Grok 4.7 (Cursor CLI; verifier: cursor)"
     },
     "decision": "LOOP-ROLES (2026-10-05)",
@@ -3578,16 +3620,17 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0051:implementation (pronto: hard_dependencies 0023/0025/0050 completate), branch task/ da origin/main in worktree nuovo. OCOR-DEV-REM-0017 fermo su decisione PO REM-0017-CI-CAMPAIGN-DURATION: candidato riallineato 7412798 (PR #169 draft) ha superato il tetto di 4500 s su entrambi i tentativi CI autorizzati (1382/1491 PASS, zero fail/skip, nessun riavvio/OOM); nessun ulteriore run, nessuna variazione del tetto, nessuna verifica richiesta su un HEAD con CI rossa. Integrazione OCOR-DEV-0049 (GO b14e4bf, PR #176) resta subordinata alla chiusura verificata di REM-0017, nessuna riparazione 0049. RVW-03, INFO-A, INFO-C, REM-0018 aperti e non bloccano G5.",
+  "next_executable_action": "OCOR-DEV-REM-0017: implementare la decisione PO REM-0017-CI-CAMPAIGN-DURATION (2026-10-09) sul branch governed/ocor-dev-rem-0017-ci-provision-spire (PR #169 draft, head 7412798): suite completa di rccad-methodology, delivery-activation, validation-closure e conditional-infrastructure-0049 in N>=2 parti parallele (partenza 3) con partizione deterministica, stack completo per parte, zero skip, teardown fail-closed, arresto su riavvio/OOM; job aggregatore con il nome del check obbligatorio che confronta i JUnit con pytest --collect-only (nessun mancante/duplicato, zero skip/fail/error); tetto 45 min per parte in CI (oltre 30 min aumentare N); ruleset 23412233 invariato; chiudere la DR REM-0017-CI-CAMPAIGN-DURATION come risolta; poi la coppia di run CI autorizzata e la verifica indipendente. REM-0017-KIND-CONTAINERD-CRASH: diagnosi secondo l'opzione 1, senza cambi di immagine o versione. Integrazione OCOR-DEV-0049 (GO b14e4bf, PR #176) subordinata alla chiusura verificata di REM-0017. Se REM-0017 resta in attesa di un evento esterno: OCOR-DEV-0052:implementation (pronto: hard_dependencies completate; 0053 pronto). RVW-03, INFO-A, INFO-C, REM-0018 aperti e non bloccano G5.",
   "ready_set_observation": {
     "basis": "approved hard_dependencies and completed_evidence_tasks on origin/main after this sync",
-    "observed_at": "2026-10-09T04:22:57Z",
+    "observed_at": "2026-10-09T14:40:20Z",
     "ready": [
       "OCOR-DEV-0049",
-      "OCOR-DEV-0051"
+      "OCOR-DEV-0052",
+      "OCOR-DEV-0053"
     ],
-    "reason": "OCOR-DEV-0050 sealed and merged (PR #182 + #185). OCOR-DEV-0049 ready by dependencies but integration pending REM-0017 closure (REM-0017-PRIORITY).",
-    "selected_unit": "OCOR-DEV-REM-0017 qualification; fallback OCOR-DEV-0051:implementation"
+    "reason": "OCOR-DEV-0051 sealed and merged (PR #188). OCOR-DEV-0049 ready by dependencies but integration pending REM-0017 closure (REM-0017-PRIORITY).",
+    "selected_unit": "OCOR-DEV-REM-0017 CI partitioning (REM-0017-CI-CAMPAIGN-DURATION); fallback OCOR-DEV-0052:implementation"
   },
   "remediation_status": {
     "CI-0048_REAL_BACKEND": {
@@ -4114,7 +4157,7 @@
   "schema_version": "1.0",
   "state_sync_ci": {
     "final_head_rule": "13 required SUCCESS on exact final HEAD; merge --match-head-commit; do not transfer prior CI.",
-    "qualification_scope": "Soli stato/handoff/log del sigillo/merge 0050.",
+    "qualification_scope": "Soli stato/handoff/log del sigillo/merge 0051.",
     "status": "CI_REQUIRED_BEFORE_EXACT_HEAD_MERGE"
   },
   "state_sync_ci_history": [
@@ -4770,6 +4813,13 @@
       "observation_source": "loop_status precedente; PR184 mergiata verificata su main. Nessuna qualifica CI trasferita al presente branch.",
       "pull_request": 184,
       "status": "MERGED_EXACT_HEAD_13_REQUIRED"
+    },
+    {
+      "head_sha": "88bd35f",
+      "merge_commit": "d027270773162689004c29ad2fee5d7e6b951029",
+      "observation_source": "PR187 mergiata verificata su main. Nessuna qualifica CI trasferita al presente branch.",
+      "pull_request": 187,
+      "status": "MERGED"
     }
   ],
   "status": "IN_PROGRESS",
@@ -4777,5 +4827,5 @@
     "loop_status": "CONTINUE",
     "reason": "0049 GO_FOR_EVIDENCE_SEAL, PR176 CI FAIL/non mergiata; REM17 prioritario eseguibile con budget PO, G5 pronto. Nessun ciclo9."
   },
-  "updated_at": "2026-10-09T11:44:03Z"
+  "updated_at": "2026-10-09T14:40:20Z"
 }
