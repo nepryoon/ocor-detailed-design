@@ -416,6 +416,117 @@
     "uv": "0.12.5",
     "worktree": ".ocor/worktrees/ocor-dev-0051"
   },
+  "independent_verification": {
+    "commands": [
+      {
+        "command": "git worktree add --detach /tmp/ocor-verify-OCOR-DEV-0051-69d80f2d843e-1/wt 69d80f2d843e48a5f8648b1dba9c4ac6d030409f",
+        "exit_code": 0,
+        "summary": "Worktree detached all'HEAD indicato. git status dei file tracciati pulito. HEAD del repository principale resta d027270."
+      },
+      {
+        "command": "sha256sum -c inputs/normative/SHA256SUMS",
+        "exit_code": 0,
+        "summary": "Tutti gli input normativi OK. Tree git di inputs/ identico a base e a 4eed73f: 60a73de8e47b38e94aeb0e2b8dedc689fab6eb35."
+      },
+      {
+        "command": "git diff --name-only d027270773162689004c29ad2fee5d7e6b951029..69d80f2d843e48a5f8648b1dba9c4ac6d030409f",
+        "exit_code": 0,
+        "summary": "5 path: stores.py, test_ocor_dev_0051.py, MANIFEST.json, OCOR-DEV-0051.json, OCOR-DEV-0051.log. Il manifest aggiunge solo le voci 0051; le voci G5 preesistenti sono preservate. Nessuna modifica a inputs/ ne a evidenze gia sigillate."
+      },
+      {
+        "command": "python3 ~/.ocor-codex/ocor-dev-0051-repair1/check_evidence.py <wt> 69d80f2d843e48a5f8648b1dba9c4ac6d030409f",
+        "exit_code": 0,
+        "summary": "PASS: commit 4eed73f antenato dell'HEAD, diff successivo solo evidenze, hash di input a commit e HEAD, raw log e JSONL, manifest, 64 casi JUnit tutti PASS, suite registrata 1363/0 skip, 22/22 mutanti uccisi, validate_runtime_evidence PASS."
+      },
+      {
+        "command": "python scripts/validate_runtime_evidence.py --task OCOR-DEV-0051 --non-skipped --manifest reports/evidence/G5/MANIFEST.json",
+        "exit_code": 0,
+        "summary": "PASS. Claim fence E1=0, E2=0, Production_readiness NO_GO, runtime_conformance NOT_ESTABLISHED."
+      },
+      {
+        "command": "python scripts/validate_evidence_input_drift.py",
+        "exit_code": 0,
+        "summary": "PASS, drifted_inputs=0, checked_tasks=64."
+      },
+      {
+        "command": "python scripts/validate_ocor_change_scope.py --base origin/main --head HEAD --branch task/OCOR-DEV-0051-memory-metadata-content-index-stores",
+        "exit_code": 0,
+        "summary": "PASS: 5 path, superfici immutabili intatte, task ledger stabile."
+      },
+      {
+        "command": "python scripts/validate_rccad.py --base-ref origin/main",
+        "exit_code": 0,
+        "summary": "PASS_LOCAL_PRECHECK, findings vuoti, AFF-001..AFF-010 PASS_STATIC_PRECHECK. dynamic_assurance resta CI_REQUIRED."
+      },
+      {
+        "command": "python scripts/validate_language_policy.py",
+        "exit_code": 0,
+        "summary": "PASS."
+      },
+      {
+        "command": "ruff check .",
+        "exit_code": 0,
+        "summary": "All checks passed. ruff 0.13.1."
+      },
+      {
+        "command": "uv sync --directory ocor-runtime --frozen --extra test --extra lint && ocor-runtime/.venv/bin/python -m mypy --strict",
+        "exit_code": 0,
+        "summary": "Success: no issues found in 71 source files. Toolchain uv 0.12.5, Python 3.12.11, node v20.20.2. Una prima invocazione e fallita perche il bootstrap ha rieseguito uv sync --extra test senza lint; rieseguita dopo il sync lint."
+      },
+      {
+        "command": "npm --prefix ocor-runtime/sdk/typescript ci && npm --prefix ocor-runtime/sdk/typescript run build",
+        "exit_code": 0,
+        "summary": "node v20.20.2 pinned. npm ci e tsc completati."
+      },
+      {
+        "command": "ocor-runtime/.venv/bin/python scripts/reset_test_environment.py --execute && scripts/bootstrap_development_environment.py --execute --timeout 600",
+        "exit_code": 0,
+        "summary": "Reset iniziale PASS su stack assente. Primo bootstrap con copia di bootstrap.env della checkout principale fallito: SPIRE ha rifiutato la CA (certificato non validabile). Il file della checkout principale non e stato modificato (sha256 f17de420859997b2436dda830e2440f3b911fd31f24b4141eacd19b78d458cc4 prima e dopo). Bootstrap con credenziali e CA generate solo nel worktree: PASS. Dopo il teardown per la suite completa il join token gia consumato e stato riemesso solo nel worktree; agent attestato, verify_external_services --execute --typed PASS su tutti i servizi, immagini coincidenti con il lock (Fuseki sha256:6534156b8d8f16b28faf0c336096e5c6a751794828525a8ef42c60ef46c9cc2b)."
+      },
+      {
+        "command": "initialize_services.py && load_fixtures.py && verify_external_services.py --execute --typed && register_control_plane.py",
+        "exit_code": 0,
+        "summary": "Initialize PASS, fixtures PASS, health PASS, SVID spiffe://ocor.test/ocor/control-plane emessa. Nessun materiale privato registrato."
+      },
+      {
+        "command": "OCOR_LIVE_POSTGRES_DSN=<ocor-bootstrap postgres> uv run --directory ocor-runtime --frozen --extra test --extra lint pytest -q -rs tests/tasks/test_ocor_dev_0051.py",
+        "exit_code": 0,
+        "summary": "64 passed in 21.80s, zero skip. Delta container, volumi e reti della sola suite di task: 0. Servizi ocor-bootstrap rimasti running, restart 0, OOM false."
+      },
+      {
+        "command": "probe indipendente su PostgreSQL 16, Qdrant 1.15.1 e OpenBao 2.6.2: documento sostituito, vettore base, vettore a un ulp binary32, cipher pass-through a 1 e 12 byte, payload onesto di 1 byte, plaintext 'vault'",
+        "exit_code": 0,
+        "summary": "Documento, vettore e un ulp: REPRESENTATION_NOT_READY/PROJECTION_UNVERIFIED, stato SQL PENDING, ciphertext vault:v1 senza il plaintext. Pass-through a 1 e 12 byte: INTERNAL_ERROR/CONTENT_NOT_ENCRYPTED, zero righe content. Payload di 1 byte onesto: COMMITTED, plaintext assente dal ciphertext. 'vault': CONTENT_NOT_ENCRYPTED, zero righe content."
+      },
+      {
+        "command": "OCOR_LIVE_POSTGRES_DSN=<ocor-bootstrap postgres> ocor-runtime/.venv/bin/python -m pytest -q -rs --junitxml=<tmp>/full-junit.xml tests/ (cwd ocor-runtime)",
+        "exit_code": 0,
+        "summary": "Una prima run e stata interrotta al 36% da un controllo del verifier che ha scambiato la pausa di OPA di un fault test per un crash; non e un OOM e non e usata come esito. Dopo reset, bootstrap, health PASS e SVID: 1363 passed in 454.61s, JUnit tests=1363 failures=0 errors=0 skipped=0. test_ocor_dev_0048.py: 196 passed, 0 skip. test_ocor_dev_0051.py: 64 inclusi. Nessun servizio ucciso, restart 0. 0 container e 0 reti nuovi; 18 volumi anonimi della suite completa (non della suite 0051) rimossi in teardown."
+      },
+      {
+        "command": "ispezione .github/workflows/ocor-validation-closure.yml rispetto a origin/main",
+        "exit_code": 0,
+        "summary": "Il diff del change set non tocca workflow ne ruleset. L'esclusione preesistente e autorizzata di tests/tasks/test_ocor_dev_0048.py nel job validation-closure resta; il controllo compensativo e la suite live sopra, 196/196 senza skip. Nessuna nuova esclusione introdotta dal diff. Su questo HEAD la suite CI non e partizionata in job paralleli: il confronto collect-only/aggregatore di REM-0017-CI-CAMPAIGN-DURATION non ha un oggetto in questo change set. La suite locale eseguita coincide con i 1363 casi del JUnit, senza duplicati ne skip."
+      }
+    ],
+    "findings": [],
+    "implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva, cicli 0 e 1 e integrazione",
+    "integration_condition": "Merge subordinato ai check obbligatori verdi sul commit di sigillo esatto; il verdetto qualifica il candidato indicato, con soli metadati di sigillo e manifest successivi.",
+    "not_executed": [],
+    "original_implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva",
+    "review_type": "TASK_EVIDENCE",
+    "verdict_created_at": "2026-10-09T14:16:30Z",
+    "verdict_file_sha256": "c2fc97c1de45d87e98d6b4eaf1645ae3850c2caec4382d200b0181b1a59d5b11",
+    "verdict_head_sha": "69d80f2d843e48a5f8648b1dba9c4ac6d030409f",
+    "verdict_request_id": "OCOR-DEV-0051-69d80f2d843e-1",
+    "verdict_status": "GO_FOR_EVIDENCE_SEAL",
+    "verifier": "Grok 4.7 (Cursor CLI)",
+    "verifier_configuration": {
+      "independence_limits": "Processo e contesto separati. Implementatore: Claude Code (Anthropic), claude-opus-5-5, cicli 0 e 1. Verifier: Grok 4.7 via Cursor CLI. Fornitore e modello diversi dall'implementatore.",
+      "model": "Grok 4.7",
+      "process": "Cursor CLI, contesto pulito, sessione non interattiva"
+    }
+  },
   "inputs": {
     "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
     "ocor-runtime/src/ocor_runtime/memory/stores.py": "6c80548679762f4f0a98e683772b49eec40014c588ad30ecc2927833527200a7",
@@ -669,7 +780,8 @@
   },
   "rollback_procedure_verified": "Mechanical review: the task adds two new files only (memory/stores.py, tests/tasks/test_ocor_dev_0051.py) plus evidence; rollback is a revert commit of the task commits. No persisted data migration: test schemas, Qdrant collections and OpenBao mounts are disposable and removed in teardown; no existing module imports stores.py.",
   "schema_version": "1.0",
-  "status": "CANDIDATE_AWAITING_INDEPENDENT_VERIFICATION",
+  "sealed_at": "2026-10-09T14:19:07.395319+00:00",
+  "status": "SEALED",
   "task_id": "OCOR-DEV-0051",
   "tdd": {
     "GREEN": {
