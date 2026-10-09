@@ -4781,3 +4781,11 @@ Gate documentali: rccad PASS_LOCAL_PRECHECK, scope/language/ruff PASS, mypy 69 s
 - DR REM-0017-CI-CAMPAIGN-DURATION chiusa come risolta; REM-0017-KIND-CONTAINERD-CRASH: diagnosi secondo l'opzione 1, backtrace ancora NOT_EXECUTED.
 - Claims invariati: E1=0, E2=0, zero Verified, runtime NOT_ESTABLISHED, PoC/Production NO-GO. Nessuna modifica a `inputs/`.
 - Prossima azione: coppia di run CI autorizzata sull'HEAD esatto (PR #169), poi richiesta di verifica indipendente REM-0017 (repair_cycle 1, verifier Grok 4.7 via Cursor).
+
+## 2026-10-09T16:46:04Z — REM-0017: primo run CI delle parti, correzione per moduli interi (Claude Code, riserva)
+
+- Primo run CI sull'HEAD `4e97cd3` (run 37952580435/37952580531/37952580779): rccad e delivery PASS, unione 1363/1363, digest identici al locale; 0049 diviso per singolo test FAIL nelle parti 2–4 (stato d'ordine interno al modulo 0049 del candidato), Helm da solo PASS in 995 s; aggregatori fail-closed. Non qualificante.
+- Correzione `12836ed`: unità = modulo intero in ordine di collezione, caso Helm unico nodo separabile; job 0049 in 3 parti. TDD (RED 4 casi, poi 94 PASS). Locale: suite principale 1363 PASS; candidato parte 1 389 PASS in 1780 s, parte 3 1101 PASS in 453 s; parte Helm NOT_EXECUTED su questo host.
+- Addendum alla DR REM-0017-CI-CAMPAIGN-DURATION: il resto di 0049 è indivisibile e sui runner può superare i 30 minuti (2013–2797 s di test misurati): presa d'atto richiesta al PO, non bloccante entro il tetto di 45 minuti. Nessun tetto, test o criterio cambiato.
+- Gate su `12836ed`: ruff, mypy strict, RCCAD, scope, language, piano, deriva 0, digest 8/8, harness 14 PASS, 134 test di report PASS. Claims invariati: E1=0, E2=0, zero Verified, NO-GO.
+- Prossima azione: CI sull'HEAD corretto (tentativo qualificante, al più un rerun per guasto infrastrutturale), poi richiesta di verifica indipendente REM-0017 (verifier Grok 4.7 via Cursor).

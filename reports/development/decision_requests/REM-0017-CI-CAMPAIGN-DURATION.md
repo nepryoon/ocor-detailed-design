@@ -108,3 +108,38 @@ Nessun test escluso, saltato o deselezionato; nessun gate, tetto o criterio
 indebolito. La coppia di run CI autorizzata si esegue sull'HEAD finale del REM.
 Registrato da Claude Code (implementatore di riserva del loop); verifier
 previsto Grok 4.7 via Cursor CLI.
+
+## Addendum — vincolo d'ordine del modulo 0049 (presa d'atto richiesta, non bloccante)
+
+Status dell'addendum: OPEN_PO_ACKNOWLEDGEMENT_REQUIRED — non blocca REM-0017
+finché ogni parte resta entro il tetto di 45 minuti.
+
+Il primo run CI dell'HEAD `4e97cd3` (run `37952580435`) ha diviso
+`test_ocor_dev_0049.py` per singolo test: la parte con il solo caso Helm è PASS
+(995 s), le altre tre sono FAIL (`IndexError` su `restore-receipts/*.json`,
+precondizioni di readiness). I test del candidato immutabile `df444af`
+consumano stato prodotto da test precedenti dello stesso modulo. Gli
+aggregatori hanno rifiutato le parti fallite (fail-closed confermato); il run
+non è qualificante.
+
+Correzione (`12836ed`): unità di partizione = modulo intero in ordine di
+collezione; unica eccezione dichiarata il caso Helm (cluster kind proprio,
+PASS da solo). Il job 0049 usa 3 parti: resto del modulo 0049, caso Helm,
+tutti gli altri moduli. In locale, sulla ricetta CI: resto di 0049 389 PASS in
+1780 s; altri moduli 1101 PASS in 453 s; la parte Helm non è eseguibile su
+questo host (`REM-0017-KIND-CONTAINERD-CRASH`).
+
+Conseguenza: il resto del modulo 0049 è una parte indivisibile. Dai JUnit CI
+precedenti vale 2013–2797 s di test sui runner, quindi può superare la soglia
+dei 30 minuti senza che aumentare N la accorci, e avvicinarsi al tetto dei 45.
+Opzioni:
+
+1. Prendere atto che per questo modulo la regola "oltre 30 minuti aumenta N"
+   non è applicabile; tetto 45 minuti invariato; un run oltre 45 minuti resta
+   FAIL. Raccomandata: nessuna modifica a test, tetti o criteri.
+2. Autorizzare una correzione dell'isolamento dei test di 0049 (nuovo ciclo
+   su 0049 con riqualifica), che renderebbe il modulo divisibile.
+3. Autorizzare un tetto specifico per questa parte.
+
+Nessuna di queste opzioni è eseguita. Registrato da Claude Code
+(implementatore di riserva del loop).

@@ -383,12 +383,9 @@ esaurita); verifier previsto Grok 4.7 via Cursor CLI, processo e contesto separa
 Nuovo record `repair-1-parallel.json/.log` (supersede il solo candidato non
 sigillato `repair-1-realign.json`; tutti i raw precedenti restano invariati).
 
-- Decisione PO del 2026-10-09: `rccad-methodology`, `delivery-activation` e
-  `validation-closure` eseguono la suite completa in 3 parti,
-  `conditional-infrastructure-0049` in 4 (con 3 parti le due parti grandi del
-  candidato arrivano a ~1190 s di test, circa 28 minuti con la variabilità di ~40%
-  già osservata sui runner, troppo vicino alla soglia di ribilanciamento dei 30).
-  Ogni parte ha runner e stack propri, stessa ricetta e cache, tetto 45 minuti.
+- Decisione PO del 2026-10-09: tutti e quattro i job eseguono la suite completa
+  in 3 parti, ognuna con runner e stack propri, stessa ricetta e cache, tetto 45
+  minuti (vedi sotto la correzione dopo il primo run CI).
 - Partizione LPT per node ID con pesi misurati sulla PASS CI del candidato
   (`f55b210`), Helm al caso peggiore 1200 s; ordine di collezione preservato. Ogni
   parte seleziona node ID espliciti e prova con `--collect-only` che pytest
@@ -412,3 +409,19 @@ sigillato `repair-1-realign.json`; tutti i raw precedenti restano invariati).
   dalla CI dell'HEAD esatto (coppia di run autorizzata). DR `REM-0017-CI-CAMPAIGN-DURATION`
   chiusa come risolta; DR `REM-0017-KIND-CONTAINERD-CRASH` prosegue con l'opzione 1.
 - E1=0, E2=0, zero Verified, claim NO-GO invariati; nessun sigillo o merge.
+
+### Primo run CI e correzione — 2026-10-09
+
+Run `37952580435`/`37952580531`/`37952580779` sull'HEAD `4e97cd3`: rccad e
+delivery PASS (unione 1363/1363, stessi digest di collezione e partizione del
+locale); parti di closure PASS; job 0049 diviso per singolo test FAIL nelle
+parti 2–4 per dipendenze d'ordine interne al modulo 0049 del candidato; parte
+Helm PASS in 995 s; aggregatori fail-closed. Non qualificante.
+
+Correzione `12836ed`: moduli interi in ordine di collezione, caso Helm unico nodo
+separabile, job 0049 in 3 parti. Locale sulla ricetta CI: suite principale 1363
+PASS (158/138/118 s), candidato parte 1 (resto di 0049) 389 PASS in 1780 s,
+parte 3 1101 PASS in 453 s; parte Helm NOT_EXECUTED su questo host. Il resto di
+0049 è indivisibile e sui runner può superare i 30 minuti: addendum di presa
+d'atto nella DR `REM-0017-CI-CAMPAIGN-DURATION`. Record `repair-1-parallel`
+rigenerato (versione mai sottoposta a verifica, storia in git).
