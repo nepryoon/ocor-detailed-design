@@ -611,6 +611,7 @@ def main() -> int:
         "reports/evidence/G4/OCOR-DEV-0046.log",
         "reports/evidence/G4/OCOR-DEV-0047.json",
         "reports/evidence/G4/OCOR-DEV-0047.log",
+        "reports/evidence/G5/MANIFEST.json",
         "reports/evidence/G5/OCOR-DEV-0050.requalified.json",
         "reports/evidence/G5/OCOR-DEV-0050.requalified.log",
         "reports/evidence/local-gates/phase0-reconciliation-20260912.json",
