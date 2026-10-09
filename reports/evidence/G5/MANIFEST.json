@@ -32,12 +32,12 @@
     },
     {
       "path": "OCOR-DEV-0053.json",
-      "sha256": "ebdaa3e959ae9d2c0e4f475c060f9a79719ecb22e310c1b895ea2fea8586c619",
+      "sha256": "41205ddeb581f205e0927f05445edde24dbe38428032b8ebfcffb3bb174709b4",
       "task_id": "OCOR-DEV-0053"
     },
     {
       "path": "OCOR-DEV-0053.log",
-      "sha256": "740b34dcdfc5deca90ef4e8b4fc6ac699b84e43f13dbc7d47dcbf83dd09865be",
+      "sha256": "dab3bb33b619586a48c0d39908d67c936db2ea90036ca76ccc490ede70001877",
       "task_id": "OCOR-DEV-0053-RAW"
     }
   ],
@@ -317,6 +317,24 @@
     {
       "case_id": "OCOR-DEV-0053-AUTHORIZED-GCS-AND-CROSS-COMPARTMENT-NON-INTERFERENCE",
       "command": "representation generation requires an authenticated binding and a GCS whose tenant, organization, domain, purpose, policy bundle and ontology release match the partition, whose compartments include it and whose marking dominates it, plus a permitted live policy decision on the context bundle; refusals write nothing; each partition has its own parallel collection and a caller authorized for one compartment searches only that layout",
+      "evidence_path": "OCOR-DEV-0053.json",
+      "raw_output_path": "OCOR-DEV-0053.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0053"
+    },
+    {
+      "case_id": "OCOR-DEV-0053-AUDITED-DENIALS-AND-COMMITTED-SUCCESS-RECEIPTS",
+      "command": "repair 1 (VF-001, VF-002): on real PostgreSQL/Qdrant/OpenBao every refusal of rebuild, invalidate and vector candidate lookup (REPRESENTATION_ABSENT, REPRESENTATION_INCOMPLETE, PROJECTION_DRIFT, REPRESENTATION_VERSION_MIXED; in the unit cases also AUTHENTICATION_REQUIRED, OPERATION_ID_INVALID, EMBEDDING_DIMENSION_MISMATCH, REPRESENTATION_REBUILDING) appends exactly one <action>.denied event with its reason/detail code and canonical audit_ref and no vector, and an unaudited denial fails closed; a compare-and-set lost to a concurrent occupant after BUILDING (rebuild) or during invalidation leaves the occupant, raises REPRESENTATION_RECORD_CONFLICT and records no success receipt, while the following rebuild records exactly one success receipt and an ACTIVE record",
+      "evidence_path": "OCOR-DEV-0053.json",
+      "raw_output_path": "OCOR-DEV-0053.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0053"
+    },
+    {
+      "case_id": "OCOR-DEV-0053-VALIDITY-WINDOW-CANDIDATE-ELIGIBILITY",
+      "command": "repair 1 (VF-003): on real backends versions whose valid_until has elapsed or whose valid_from lies in the future never occupy a vector candidate slot nor reach the search response, while an explicit historic valid_at returns the version valid then; the representation keeps their descriptors and stays complete when a future version enters its window (no rebuild); with 140 elapsed versions and one valid version in one partition, a 128-candidate lookup and the real search service return exactly the valid version without error",
       "evidence_path": "OCOR-DEV-0053.json",
       "raw_output_path": "OCOR-DEV-0053.log",
       "requirement_id": "FR-119",
