@@ -1,13 +1,13 @@
 {
   "assumptions": [
-    "REM-0017 parallel campaign implemented; qualification blocked only by the indivisible 0049 unit exceeding the 45-minute part cap.",
-    "No test, cap, criterion, ruleset or sealed record changed; E1=0, E2=0, NO-GO claims unchanged.",
+    "OCOR-DEV-0052 completed only by sealed evidence merged on main after independent GO; component-level FR-118/FR-119 only, no global requirement qualification.",
+    "REM-0017 qualification still blocked by PO decision REM-0017-CI-0049-REMAINDER-CAP.",
     "REM18 underlying teardown defect remains open.",
     "OCOR-DEV-REM-0019 registered only; 0049 tests unchanged until a dedicated PO decision."
   ],
-  "base_sha": "69a5c047cca049fe8d37f66c01c664a4d1f891ec",
-  "baseline_commit": "69a5c047cca049fe8d37f66c01c664a4d1f891ec",
-  "branch": "governed/state-sync-rem-0019-0049-test-isolation",
+  "base_sha": "ae296eb15bcace031ffb14c8f6178522a842d014",
+  "baseline_commit": "ae296eb15bcace031ffb14c8f6178522a842d014",
+  "branch": "governed/state-sync-ocor-dev-0052-sealed",
   "changed_paths": [
     "reports/development/EXECUTION_STATE.json",
     "reports/development/MODEL_HANDOFF.json",
@@ -15,9 +15,28 @@
   ],
   "ci": {
     "rem_0017_status": "NOT_QUALIFIED_0049_UNIT_AT_PART_CAP",
-    "state_sync_status": "CI_REQUIRED_BEFORE_EXACT_HEAD_MERGE"
+    "state_sync_status": "CI_REQUIRED_BEFORE_EXACT_HEAD_MERGE",
+    "task_status": "PASS_EXACT_HEAD_13_REQUIRED_PR192_MERGED"
   },
   "ci_observations": {
+    "192": {
+      "head_sha": "69542197e3ea67281d690a385ebbb63f658b89c4",
+      "merge_commit": "ae296eb15bcace031ffb14c8f6178522a842d014",
+      "observed_at": "2026-10-09T19:20:37.766336+00:00",
+      "raw_observation_sha256": "40f8c99f1e25a079e5cf3258d9988d88e0c4841cff63e49d60077fe8b5f1e55f",
+      "required_passed": 13,
+      "required_total": 13,
+      "run_ids": [
+        37978456632,
+        37978456648,
+        37978456715,
+        37978456725,
+        37978456821,
+        37978457133,
+        37978457286
+      ],
+      "state": "MERGED"
+    },
     "rem_0017": {
       "corrected_head_99f9ee5": {
         "check_runs_sha256": "d42ed8dc331543be3218c8c9c0d2f953252c5930a6912d24b5dd13ecdb74f533",
@@ -84,25 +103,26 @@
     }
   ],
   "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
-  "current_task": "OCOR-DEV-REM-0019: registrazione (presa d'atto PO sul vincolo d'ordine di 0049); prossimo OCOR-DEV-0052:implementation",
+  "current_task": "OCOR-DEV-0052 sealed and merged; state sync; prossimo OCOR-DEV-0053:implementation",
   "evidence_paths": [
-    "reports/development/EXECUTION_STATE.json",
-    "reports/development/ITERATION_LOG.md"
+    "reports/evidence/G5/OCOR-DEV-0052.json",
+    "reports/evidence/G5/OCOR-DEV-0052.log",
+    "reports/evidence/G5/MANIFEST.json"
   ],
-  "exact_next_action": "OCOR-DEV-0052:implementation (G5, pronto; 0053 anch'esso pronto), branch task/ da origin/main in worktree nuovo. OCOR-DEV-REM-0017 fermo su decisione PO REM-0017-CI-0049-REMAINDER-CAP (presa d'atto PO 2026-10-09 registrata; decisione sul tetto ancora richiesta). OCOR-DEV-REM-0019 (isolamento test 0049) aperto, dipendenza G6, esecuzione subordinata a decisione PO dedicata. Integrazione OCOR-DEV-0049 (GO b14e4bf, PR #176) subordinata alla chiusura verificata di REM-0017. RVW-03, INFO-A, INFO-C, REM-0018 aperti e non bloccano G5.",
+  "exact_next_action": "OCOR-DEV-0053:implementation (G5, pronto: hard_dependencies 0023 e 0051 completate; 0054 anch'esso pronto), branch task/ da origin/main in worktree nuovo. OCOR-DEV-REM-0017 fermo su decisione PO REM-0017-CI-0049-REMAINDER-CAP (presa d'atto PO 2026-10-09 registrata; decisione sul tetto ancora richiesta). OCOR-DEV-REM-0019 (isolamento test 0049) aperto, dipendenza G6, esecuzione subordinata a decisione PO dedicata. Integrazione OCOR-DEV-0049 (GO b14e4bf, PR #176) subordinata alla chiusura verificata di REM-0017. RVW-03, INFO-A, INFO-C, REM-0018 aperti e non bloccano G5.",
   "head_sha": "git:HEAD",
   "head_sha_resolver": "git rev-parse HEAD on versioned handoff branch",
   "independent_verification": {
-    "repair_cycle": 1,
-    "request_id": "OCOR-DEV-0051-69d80f2d843e-1",
+    "repair_cycle": 0,
+    "request_id": "OCOR-DEV-0052-a0a80c27172e-0",
     "roles": {
-      "implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva del loop (quota Codex esaurita), cicli 0 e 1",
+      "implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva del loop (quota Codex esaurita), ciclo 0",
       "independence": "external loop only; separate process, context and provider",
       "integration_agent": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva (quota Codex esaurita)",
       "verifier": "Grok 4.7 (Cursor CLI; verifier: cursor)"
     },
     "status": "GO_FOR_EVIDENCE_SEAL",
-    "verdict_sha256": "c2fc97c1de45d87e98d6b4eaf1645ae3850c2caec4382d200b0181b1a59d5b11",
+    "verdict_sha256": "0c602a649486191161765c84ebce6a7bc772d197fa61c3074efe0c71c627ccfd",
     "verifier": "cursor"
   },
   "local_full_suite": "Branch REM: CI-recipe parts on 12836ed \u2014 main 1363 PASS (exact union); candidate part 1 389 PASS 1780 s, part 3 1101 PASS; Helm part NOT_EXECUTED locally",
@@ -131,56 +151,45 @@
   "schema_version": "1.0",
   "security_observability_notes": "No secret handled; only GitHub API observations stored outside the repository with SHA-256.",
   "source_reference": {
-    "accepted_head": "69d80f2d843e48a5f8648b1dba9c4ac6d030409f",
-    "code_commit": "4eed73f70ea7f27e0dbc4d7edd2ed79dda680812",
-    "method": "PR unica task/ (#188) sull HEAD di sigillo cc1d53a, figlio diretto dell HEAD verificato 69d80f2: cambiano solo independent_verification, sealed_at e status SEALED nel record e il relativo hash nel manifest G5. Codice, input e raw log byte-identici all HEAD verificato.",
+    "accepted_head": "a0a80c27172eb7e25cd6cc5992fb8d7e9dc1e045",
+    "code_commit": "8865203f6a557d4dccb4d2cd60059c37b057e7fe",
+    "method": "PR unica task/ (#192) sull HEAD di sigillo 6954219, figlio diretto dell HEAD verificato a0a80c2: cambiano solo independent_verification, sealed_at e status SEALED nel record e il relativo hash nel manifest G5. Codice, input e raw log byte-identici all HEAD verificato.",
     "pull_requests": {
-      "188": {
-        "head_sha": "cc1d53a858469a7a547fe20fd7264eb8d0e299cc",
-        "merge_commit": "0f76347213bc76a5ced53ada485fd5a852b0f8fc",
-        "observed_at": "2026-10-09T14:39:57.106887+00:00",
-        "raw_observation_sha256": "80ea8771e74321103476f4a9ca9e9b03b578a8aca21ca7b279472f64427417c2",
+      "192": {
+        "head_sha": "69542197e3ea67281d690a385ebbb63f658b89c4",
+        "merge_commit": "ae296eb15bcace031ffb14c8f6178522a842d014",
+        "observed_at": "2026-10-09T19:20:37.766336+00:00",
+        "raw_observation_sha256": "40f8c99f1e25a079e5cf3258d9988d88e0c4841cff63e49d60077fe8b5f1e55f",
         "required_passed": 13,
         "required_total": 13,
         "run_ids": [
-          37943402246,
-          37943402250,
-          37943402254,
-          37943402259,
-          37943402262,
-          37943402286,
-          37943402376
+          37978456632,
+          37978456648,
+          37978456715,
+          37978456725,
+          37978456821,
+          37978457133,
+          37978457286
         ],
         "status": "MERGED_EXACT_HEAD_13_REQUIRED"
       }
     },
     "seal_invariants_on_main": "PASS",
-    "sealed_manifest_sha256": "ae4dd7c4dc791478519e08ac583261817e9c0cc0dc0523743ce0bf4fd3e06c96",
-    "sealed_raw_sha256": "362e334d9e6db432bdae0809efbc4bf8092428317dac953d20f9eef144624e80",
-    "sealed_record_sha256": "2c0932a03e2b9e256efa3948d76a42a0c4d2bd82bc817301761cd696dee07e44",
+    "sealed_manifest_sha256": "c439c2a19896ff25adb82b7a3ebc462f3f60d1302adfabf7936b05ffafeecc4b",
+    "sealed_raw_sha256": "acb97fe423eac481e1b51f8fe441015da6d09082f4c82d0f57c795671e18efe2",
+    "sealed_record_sha256": "8a86ab09be0d43999187e84acceb98ff29b43380748b4d493290888c7d520209",
     "verdict": {
-      "request_id": "OCOR-DEV-0051-69d80f2d843e-1",
-      "sha256": "c2fc97c1de45d87e98d6b4eaf1645ae3850c2caec4382d200b0181b1a59d5b11",
+      "request_id": "OCOR-DEV-0052-a0a80c27172e-0",
+      "sha256": "0c602a649486191161765c84ebce6a7bc772d197fa61c3074efe0c71c627ccfd",
       "verdict": "GO_FOR_EVIDENCE_SEAL"
     },
     "verdict_history": [
       {
-        "findings": [
-          "VF-001",
-          "VF-002"
-        ],
-        "head_sha": "e5c49f2dc7d7746fdf4c24f1b5e50924575fda25",
-        "repair_cycle": 0,
-        "request_id": "OCOR-DEV-0051-e5c49f2dc7d7-0",
-        "sha256": "eb33109211512ff5aeeaeacc2c275dc50f712517316832ed6e3c72e8e9ea9827",
-        "verdict": "NO_GO"
-      },
-      {
         "findings": [],
-        "head_sha": "69d80f2d843e48a5f8648b1dba9c4ac6d030409f",
-        "repair_cycle": 1,
-        "request_id": "OCOR-DEV-0051-69d80f2d843e-1",
-        "sha256": "c2fc97c1de45d87e98d6b4eaf1645ae3850c2caec4382d200b0181b1a59d5b11",
+        "head_sha": "a0a80c27172eb7e25cd6cc5992fb8d7e9dc1e045",
+        "repair_cycle": 0,
+        "request_id": "OCOR-DEV-0052-a0a80c27172e-0",
+        "sha256": "0c602a649486191161765c84ebce6a7bc772d197fa61c3074efe0c71c627ccfd",
         "verdict": "GO_FOR_EVIDENCE_SEAL"
       }
     ]
@@ -212,6 +221,6 @@
     "REM-0017-KIND-CONTAINERD-CRASH",
     "RVW-03"
   ],
-  "updated_at": "2026-10-09T18:05:00Z",
-  "worktree": ".ocor/worktrees/state-sync-rem-0019"
+  "updated_at": "2026-10-09T19:21:21Z",
+  "worktree": ".ocor/worktrees/state-sync-ocor-dev-0052-sealed"
 }
