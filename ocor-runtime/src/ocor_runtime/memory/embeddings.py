@@ -35,10 +35,18 @@ Implements the embedding-lifecycle slice of the ``GovernedMemoryService``
   reclassification, supersession or deletion of a version makes its
   descriptor ineligible at once: it never reaches a candidate slot, and
   ``invalidate`` (also part of every rebuild) removes it from the index and
-  the manifest.
+  the manifest.  A version outside its validity window at the evaluated
+  instant keeps its descriptor (it stays answerable for a historic
+  ``valid_at``) but never occupies a candidate slot either.
 * Every rebuild and invalidation writes an audit receipt (operation,
-  causation and correlation ids, pin, manifest digest, counts) before the
-  representation becomes ``ACTIVE``; raw vectors never leave the module.
+  causation and correlation ids, pin, manifest digest, counts) once the
+  ``ACTIVE`` record is committed; if that receipt cannot be written the
+  record is put back to ``BUILDING``, so no unaudited representation serves
+  and no lost compare-and-set leaves a success receipt.  Every refusal of
+  rebuild, invalidation or vector candidate lookup writes a denial event
+  (ADD v1.3 Part II: the audit store keeps access, denial and influence
+  evidence); an unaudited denial still fails closed.  Raw vectors never
+  leave the module.
 
 The module is backend-free (``OCOR_LANGUAGE_POLICY.md`` row 8): the model, the
 descriptor store, the index, policy and audit are ports.  Embeddings are
@@ -54,6 +62,7 @@ import struct
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from enum import StrEnum
 from types import MappingProxyType
 from typing import Protocol
@@ -97,6 +106,9 @@ MAX_EMBEDDING_DIMENSIONS = 4096
 # Vector layouts rank by cosine similarity, so only unit vectors are indexed.
 NORMALIZATION_PROFILES = frozenset({"l2-unit"})
 UNIT_NORM_TOLERANCE = 1e-6
+REBUILD_ACTION = "rebuildEmbeddingRepresentation"
+INVALIDATE_ACTION = "invalidateEmbeddingRepresentation"
+SEARCH_ACTION = "searchEmbeddingRepresentation"
 
 
 class MemoryEmbeddingError(MemoryAdmissionError):
@@ -748,7 +760,9 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
 
         return self._observed(
             "rebuild",
+            REBUILD_ACTION,
             binding,
+            (partition_ref, profile, operation_id),
             lambda context: self._rebuild(partition_ref, profile, context, operation_id),
         )
 
@@ -764,23 +778,30 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
 
         return self._observed(
             "invalidate",
+            INVALIDATE_ACTION,
             binding,
+            (partition_ref, profile, operation_id),
             lambda context: self._invalidate(partition_ref, profile, context, operation_id),
         )
 
     def _observed(
         self,
         operation: str,
+        audit_action: str,
         binding: VerifiedGovernedContextBinding | None,
+        request: tuple[str, VectorProfile, str],
         action: _Action,
     ) -> RepresentationReceipt:
+        partition_ref, profile, operation_id = request
         if not isinstance(binding, VerifiedGovernedContextBinding):
             self._metrics[(operation, "AUTHENTICATION_REQUIRED")] += 1
-            raise MemoryEmbeddingError(
+            error = MemoryEmbeddingError(
                 "AUTHENTICATION_REQUIRED",
                 "BINDING_MISSING",
                 "representation generation requires an authenticated governed-context binding",
             )
+            self._record_denial(audit_action, error, partition_ref, profile, operation_id, None)
+            raise error
         context = binding.expected
         try:
             receipt = action(context)
@@ -788,9 +809,47 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
             if exc.correlation_id is None:
                 exc.correlation_id = context.correlation_id
             self._metrics[(operation, exc.reason_code)] += 1
+            self._record_denial(audit_action, exc, partition_ref, profile, operation_id, context)
             raise
         self._metrics[(operation, "OK")] += 1
         return receipt
+
+    def _record_denial(
+        self,
+        action: str,
+        error: MemoryAdmissionError,
+        partition_ref: object,
+        profile: object,
+        operation_id: object,
+        context: GovernedContext | None,
+    ) -> None:
+        """Write the denial event of one refusal; an unaudited denial still fails closed."""
+
+        operation = operation_id if isinstance(operation_id, str) else None
+        event: dict[str, object] = {
+            "action": action + ".denied",
+            "operation_id": operation,
+            "causation_id": operation,
+            "correlation_id": None if context is None else context.correlation_id,
+            "governed_context_digest": None if context is None else context.digest(),
+            "partition_ref": partition_ref if isinstance(partition_ref, str) else None,
+            "representation_version": (
+                profile.representation_version if isinstance(profile, VectorProfile) else None
+            ),
+            "reason_code": error.reason_code,
+            "detail_code": error.detail_code,
+            "evaluated_at": format_utc_timestamp(self._clock.now()),
+        }
+        try:
+            self._audit.record(MappingProxyType({**event, "audit_ref": canonical_digest(event)}))
+        except Exception as exc:  # noqa: BLE001 -- an unaudited denial still fails closed
+            unaudited = MemoryEmbeddingError(
+                "CONTROL_PLANE_UNAVAILABLE",
+                "AUDIT_UNAVAILABLE",
+                "representation audit failed closed",
+            )
+            unaudited.correlation_id = error.correlation_id
+            raise unaudited from exc
 
     def _authorized_partition(
         self, partition_ref: str, pin: EmbeddingModelPin, context: GovernedContext
@@ -889,7 +948,7 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
                 f"representation stays BUILDING: {type(exc).__name__}",
             ) from exc
         return self._activate(
-            "rebuildEmbeddingRepresentation",
+            REBUILD_ACTION,
             partition,
             pin,
             building,
@@ -933,7 +992,7 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
                 "INVALIDATION_INCOMPLETE", f"invalidation failed: {type(exc).__name__}"
             ) from exc
         return self._activate(
-            "invalidateEmbeddingRepresentation",
+            INVALIDATE_ACTION,
             partition,
             pin,
             current,
@@ -1079,14 +1138,6 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
             "evaluated_at": now,
         }
         audit_ref = canonical_digest(event)
-        try:
-            self._audit.record(MappingProxyType({**event, "audit_ref": audit_ref}))
-        except Exception as exc:  # noqa: BLE001 -- no audit, no activation
-            raise MemoryEmbeddingError(
-                "CONTROL_PLANE_UNAVAILABLE",
-                "AUDIT_UNAVAILABLE",
-                "representation audit failed closed",
-            ) from exc
         active = RepresentationRecord(
             partition_digest=partition.digest,
             representation_version=pin.representation_version,
@@ -1097,7 +1148,18 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
             operation_id=operation_id,
             updated_at=now,
         )
+        # The success receipt follows the committed compare-and-set: a lost CAS
+        # raises here and leaves only the denial event of ``_observed``.
         self._representations.put_record(active, expected_digest=previous.digest)
+        try:
+            self._audit.record(MappingProxyType({**event, "audit_ref": audit_ref}))
+        except Exception as exc:  # noqa: BLE001 -- no audit, no activation
+            self._withdraw(active)
+            raise MemoryEmbeddingError(
+                "CONTROL_PLANE_UNAVAILABLE",
+                "AUDIT_UNAVAILABLE",
+                "representation audit failed closed",
+            ) from exc
         return RepresentationReceipt(
             action=action,
             partition_ref=partition.ref,
@@ -1109,6 +1171,24 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
             audit_ref=audit_ref,
         )
 
+    def _withdraw(self, active: RepresentationRecord) -> None:
+        """Put an unaudited ``ACTIVE`` record back to ``BUILDING`` (retrieval fails closed)."""
+
+        building = RepresentationRecord(
+            partition_digest=active.partition_digest,
+            representation_version=active.representation_version,
+            pin=active.pin,
+            state=RepresentationState.BUILDING,
+            manifest_digest=None,
+            entries=active.entries,
+            operation_id=active.operation_id,
+            updated_at=active.updated_at,
+        )
+        try:
+            self._representations.put_record(building, expected_digest=active.digest)
+        except Exception:  # noqa: BLE001 -- a newer operation owns the record now
+            self._metrics[("withdraw", "INCOMPLETE")] += 1
+
     # -- retrieval ---------------------------------------------------------
 
     def vector_candidates(
@@ -1118,13 +1198,26 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
         vector: Sequence[float],
         *,
         limit: int,
+        valid_at: datetime | None = None,
     ) -> tuple[BoundHit, ...]:
-        """Only pinned profiles; one representation version per partition, never mixed."""
+        """Only pinned profiles; one representation version per partition, never mixed.
+
+        ``valid_at`` is the instant of the validity window (boundary time when
+        omitted); versions outside it are skipped like ineligible ones.
+        """
 
         try:
-            return self._vector_candidates(partition, profile, vector, limit)
+            return self._vector_candidates(partition, profile, vector, limit, valid_at)
         except MemoryAdmissionError as exc:
             self._metrics[("vector_candidates", exc.reason_code)] += 1
+            self._record_denial(
+                SEARCH_ACTION,
+                exc,
+                partition.ref if isinstance(partition, MemoryPartition) else None,
+                profile,
+                None,
+                None,
+            )
             raise
 
     def _vector_candidates(
@@ -1133,8 +1226,15 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
         profile: VectorProfile,
         vector: Sequence[float],
         limit: int,
+        valid_at: datetime | None,
     ) -> tuple[BoundHit, ...]:
         _, pin = self._models.resolve(profile)
+        if valid_at is not None and (
+            not isinstance(valid_at, datetime) or valid_at.utcoffset() is None
+        ):
+            raise MemoryEmbeddingError(
+                "MEMORY_SCHEMA_INVALID", "QUERY_INVALID", "valid_at must be an aware timestamp"
+            )
         if isinstance(vector, (str, bytes)) or not isinstance(vector, Sequence):
             raise MemoryEmbeddingError(
                 "MEMORY_SCHEMA_INVALID", "QUERY_INVALID", "query vector must be a sequence"
@@ -1172,6 +1272,12 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
                 )
             if descriptor.store_ref != store_ref:
                 raise _not_ready("PROJECTION_DRIFT", "a registered descriptor does not bind")
+        instant = self._clock.now() if valid_at is None else valid_at
+        # Completeness is checked on every current version; only those valid at
+        # ``instant`` may occupy a candidate slot.
+        window = {
+            ref: entry for ref, entry in eligible.items() if _valid_at(entry[1], instant)
+        }
         layout = ParallelLayout.of(pin)
         members = frozenset(manifest.values())
         results: list[BoundHit] = []
@@ -1188,7 +1294,7 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
                 if hit.store_ref in seen:
                     continue
                 seen.add(hit.store_ref)
-                bound = self._bound(partition, pin, members, eligible, hit)
+                bound = self._bound(partition, pin, members, window, hit)
                 if bound is not None:
                     results.append(bound)
                     if len(results) == limit:
@@ -1218,7 +1324,7 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
         if descriptor.store_ref != hit.store_ref or descriptor.store_ref not in members:
             return None  # not a manifest member of this layout: unbound
         if not _current(descriptor, eligible):
-            return None  # revoked, expired, reclassified, superseded or deleted
+            return None  # revoked, expired, reclassified, superseded, deleted or out of window
         # A manifest member must still be exactly its registered descriptor and
         # its persisted vector; otherwise the ranking itself is untrustworthy.
         if self._representations.descriptor(descriptor.store_ref) != descriptor or not (
@@ -1244,6 +1350,12 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
 
 class _Action(Protocol):
     def __call__(self, context: GovernedContext) -> RepresentationReceipt: ...
+
+
+def _valid_at(item: GovernedMemoryItem, instant: datetime) -> bool:
+    """The version's validity window contains ``instant`` (as in retrieval)."""
+
+    return item.valid_from <= instant and (item.valid_until is None or instant < item.valid_until)
 
 
 def _require_operation(operation_id: str) -> None:

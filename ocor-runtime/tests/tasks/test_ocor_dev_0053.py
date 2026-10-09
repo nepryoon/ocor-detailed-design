@@ -438,6 +438,34 @@ def assert_error(action: Any, reason: str, detail: str) -> MemoryAdmissionError:
     return caught.value
 
 
+REBUILD = "rebuildEmbeddingRepresentation"
+INVALIDATE = "invalidateEmbeddingRepresentation"
+SEARCH = "searchEmbeddingRepresentation"
+
+
+def denials(world: World, action: str) -> list[tuple[str, str]]:
+    """(reason, detail) of every denial event of ``action``, in order."""
+
+    return [(str(e["reason_code"]), str(e["detail_code"])) for e in world.rep_audit.events if e["action"] == action + ".denied"]
+
+
+def successes(world: World, action: str) -> list[dict[str, Any]]:
+    return [dict(e) for e in world.rep_audit.events if e["action"] == action]
+
+
+def assert_denied(world: World, action: str, call: Any, reason: str, detail: str) -> MemoryAdmissionError:
+    """The refusal raises ``reason``/``detail`` and appends exactly one matching denial event."""
+
+    before = len(world.rep_audit.events)
+    error = assert_error(call, reason, detail)
+    added = world.rep_audit.events[before:]
+    assert [(e["action"], e["reason_code"], e["detail_code"]) for e in added] == [(action + ".denied", reason, detail)], added
+    event = added[0]
+    assert event["audit_ref"] == canonical_digest({k: v for k, v in event.items() if k != "audit_ref"})
+    assert "vector" not in event and "embedding" not in json.dumps(event).replace("Embedding", "")
+    return error
+
+
 CORPUS = (
     ("conv-1", "convoy moving along the northern supply route"),
     ("conv-2", "supply route blocked by flooding near the bridge"),
@@ -861,6 +889,130 @@ def test_markings_outside_the_lattice_and_invalid_decisions_fail_closed() -> Non
     assert world.representations.record(partition.digest, PIN_V2.representation_version) is None
 
 
+def test_unit_every_refusal_writes_a_denial_event() -> None:
+    world = unit_world()
+    record = world.admit("unit-1", "convoy route")
+    partition = MemoryPartition.for_item(record.item)
+    vector = world.coordinator.embed_query(PROFILE_V2, "convoy route")
+    assert_denied(world, INVALIDATE, lambda: world.invalidate(record), "REPRESENTATION_NOT_READY", "REPRESENTATION_ABSENT")
+    assert_denied(world, INVALIDATE, lambda: world.coordinator.invalidate(partition.ref, PROFILE_V2, binding=None, operation_id="x"), "AUTHENTICATION_REQUIRED", "BINDING_MISSING")
+    assert_denied(world, REBUILD, lambda: world.rebuild(record, op=" padded"), "MEMORY_SCHEMA_INVALID", "OPERATION_ID_INVALID")
+    assert_denied(world, SEARCH, lambda: world.coordinator.vector_candidates(partition, PROFILE_V2, vector[:-1], limit=1), "MEMORY_SCHEMA_INVALID", "EMBEDDING_DIMENSION_MISMATCH")
+    world.rebuild(record)
+    active = world.representations.record(partition.digest, PIN_V2.representation_version)
+    key = (partition.digest, PIN_V2.representation_version)
+    world.representations.records[key] = dataclasses.replace(active, state=RepresentationState.BUILDING, manifest_digest=None)
+    assert_denied(world, INVALIDATE, lambda: world.invalidate(record), "REPRESENTATION_NOT_READY", "REPRESENTATION_REBUILDING")
+    assert_denied(world, SEARCH, lambda: world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=1), "REPRESENTATION_NOT_READY", "REPRESENTATION_REBUILDING")
+    world.representations.records[key] = dataclasses.replace(active, pin=dataclasses.replace(PIN_V2, tokenizer_digest=d("tokenizer:other")))
+    assert_denied(world, INVALIDATE, lambda: world.invalidate(record), "REPRESENTATION_NOT_READY", "REPRESENTATION_VERSION_MIXED")
+    assert_denied(world, SEARCH, lambda: world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=1), "REPRESENTATION_NOT_READY", "REPRESENTATION_VERSION_MIXED")
+    world.representations.records[key] = active
+    late = world.admit("unit-2", "convoy route north")
+    assert_denied(world, SEARCH, lambda: world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=1), "REPRESENTATION_NOT_READY", "REPRESENTATION_INCOMPLETE")
+    world.rebuild(late, op="rebuild-2")
+    store_ref = dict(world.representations.record(*key).entries)[record.item.version_ref]
+    descriptor = world.representations.items[store_ref]
+    world.representations.items[store_ref] = dataclasses.replace(descriptor, embedding_digest=d("tampered"))
+    assert_denied(world, SEARCH, lambda: world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=2), "REPRESENTATION_NOT_READY", "PROJECTION_DRIFT")
+    event = world.rep_audit.events[-1]
+    assert (event["partition_ref"], event["representation_version"]) == (partition.ref, PIN_V2.representation_version)
+    # An unaudited denial still fails closed.
+    world.rep_audit.fail = True
+    assert_error(lambda: world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=2), "CONTROL_PLANE_UNAVAILABLE", "AUDIT_UNAVAILABLE")
+    world.rep_audit.fail = False
+    world.rebuild(record, op="rebuild-repair")
+    assert len(world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=2)) == 2
+    assert [e["operation_id"] for e in successes(world, REBUILD)] == ["rebuild-1", "rebuild-2", "rebuild-repair"]
+
+
+def interloper_after_building(world: World, record: AdmittedMemoryVersion) -> dict[str, Any]:
+    """Replace the BUILDING record by a concurrent operation right after it is written."""
+
+    partition = MemoryPartition.for_item(record.item)
+    inner = world.parallel.inner
+    original = inner.upsert
+    seen: dict[str, Any] = {}
+
+    def upsert(*args: Any, **kwargs: Any) -> None:
+        if "interloper" not in seen:
+            building = world.representations.record(partition.digest, PIN_V2.representation_version)
+            assert building is not None and building.state is RepresentationState.BUILDING
+            interloper = dataclasses.replace(building, operation_id="interloper")
+            world.representations.put_record(interloper, expected_digest=building.digest)
+            seen["interloper"] = interloper
+        original(*args, **kwargs)
+
+    inner.upsert = upsert
+    seen["restore"] = lambda: setattr(inner, "upsert", original)
+    return seen
+
+
+def check_lost_compare_and_set(world: World, records: Sequence[AdmittedMemoryVersion]) -> None:
+    partition = MemoryPartition.for_item(records[0].item)
+    seen = interloper_after_building(world, records[0])
+    assert_denied(world, REBUILD, lambda: world.rebuild(records[0]), "MEMORY_IDEMPOTENCY_CONFLICT", "REPRESENTATION_RECORD_CONFLICT")
+    seen["restore"]()
+    assert successes(world, REBUILD) == []
+    record = world.representations.record(partition.digest, PIN_V2.representation_version)
+    assert record == seen["interloper"] and record.state is RepresentationState.BUILDING and record.manifest_digest is None
+    assert_error(lambda: world.search_v2("supply route"), "REPRESENTATION_NOT_READY", "REPRESENTATION_REBUILDING")
+    receipt = world.rebuild(records[0], op="rebuild-2")
+    assert [(e["operation_id"], e["audit_ref"]) for e in successes(world, REBUILD)] == [("rebuild-2", receipt.audit_ref)]
+    final = world.representations.record(partition.digest, PIN_V2.representation_version)
+    assert final.state is RepresentationState.ACTIVE and final.operation_id == "rebuild-2" and final.manifest_digest == receipt.manifest_digest
+    # The same race on invalidation leaves the ACTIVE interloper and no success receipt.
+    active = world.representations.record(partition.digest, PIN_V2.representation_version)
+    inner = world.parallel.inner
+    original = inner.entries
+
+    def entries(*args: Any, **kwargs: Any) -> Any:
+        current = world.representations.record(partition.digest, PIN_V2.representation_version)
+        if current == active:
+            world.representations.put_record(dataclasses.replace(active, operation_id="interloper-2"), expected_digest=active.digest)
+        return original(*args, **kwargs)
+
+    inner.entries = entries
+    assert_denied(world, INVALIDATE, lambda: world.invalidate(records[0]), "MEMORY_IDEMPOTENCY_CONFLICT", "REPRESENTATION_RECORD_CONFLICT")
+    inner.entries = original
+    assert successes(world, INVALIDATE) == []
+    assert world.representations.record(partition.digest, PIN_V2.representation_version).operation_id == "interloper-2"
+
+
+def test_unit_a_lost_compare_and_set_leaves_no_success_receipt() -> None:
+    world = unit_world()
+    check_lost_compare_and_set(world, populate(world))
+
+
+def check_validity_window(world: World) -> None:
+    keep = world.admit("keep", "lighthouse beacon signal keep")
+    world.admit("elapsed", "lighthouse beacon signal elapsed", valid_until=NOW + timedelta(seconds=30))
+    world.admit("future", "lighthouse beacon signal future", valid_from=NOW + timedelta(hours=1))
+    receipt = world.rebuild(keep)
+    # Descriptors exist for every current version: the window is evaluated per query.
+    assert [ref.split(":")[3] for ref, _ in receipt.entries] == ["elapsed", "future", "keep"]
+    world.clock.advance(timedelta(minutes=2))
+    partition = MemoryPartition.for_item(keep.item)
+    vector = world.coordinator.embed_query(PROFILE_V2, "lighthouse beacon signal")
+
+    def names(**kwargs: Any) -> list[str]:
+        hits = world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=10, **kwargs)
+        return sorted(hit.memory_version_ref.split(":")[3] for hit in hits)
+
+    assert names() == ["keep"]
+    assert names(valid_at=NOW) == ["elapsed", "keep"]  # historic instant: the elapsed version was valid
+    assert refs(world.search_v2("lighthouse beacon signal")) == ["urn:ocor:memory:keep:v1"]
+    assert_denied(world, SEARCH, lambda: names(valid_at="2026-01-01T00:00:00Z"), "MEMORY_SCHEMA_INVALID", "QUERY_INVALID")
+    world.clock.advance(timedelta(hours=1))
+    # The future version enters its window without any rebuild: the representation stays complete.
+    assert names() == ["future", "keep"]
+    assert sorted(refs(world.search_v2("lighthouse beacon signal"))) == ["urn:ocor:memory:future:v1", "urn:ocor:memory:keep:v1"]
+
+
+def test_unit_versions_outside_their_validity_window_never_occupy_a_candidate_slot() -> None:
+    check_validity_window(unit_world())
+
+
 # --------------------------------------------------------------------------
 # Real backends (qualifying): PostgreSQL, Qdrant and OpenBao
 # --------------------------------------------------------------------------
@@ -1100,7 +1252,9 @@ def test_an_interrupted_rebuild_fails_retrieval_closed_then_resumes_to_the_same_
     assert_error(lambda: world.search_v2("supply route"), "REPRESENTATION_NOT_READY", "REPRESENTATION_REBUILDING")
     assert_error(lambda: world.search_v2("supply route", mode=RetrievalMode.HYBRID), "REPRESENTATION_NOT_READY", "REPRESENTATION_REBUILDING")
     assert len(world.search_v1("supply route").hits) == 3  # the native representation is unaffected
-    assert world.rep_audit.events == []
+    assert successes(world, REBUILD) == []
+    assert denials(world, REBUILD) == [("REPRESENTATION_NOT_READY", "REBUILD_INCOMPLETE")]
+    assert denials(world, SEARCH) == [("REPRESENTATION_NOT_READY", "REPRESENTATION_REBUILDING")] * 2
     inner.upsert = original
     resumed = world.rebuild(records[0], op="rebuild-resume")
     assert (resumed.manifest_digest, resumed.entries) == (expected.manifest_digest, expected.entries)
@@ -1114,10 +1268,14 @@ def test_an_unaudited_rebuild_never_becomes_active(backends: Backends) -> None:
     assert_error(lambda: world.rebuild(records[0]), "CONTROL_PLANE_UNAVAILABLE", "AUDIT_UNAVAILABLE")
     record = world.representations.record(MemoryPartition.for_item(records[0].item).digest, PIN_V2.representation_version)
     assert record is not None and record.state is RepresentationState.BUILDING
-    assert_error(lambda: world.search_v2("supply route"), "REPRESENTATION_NOT_READY", "REPRESENTATION_REBUILDING")
+    # Even the denial of the search cannot be audited: it still fails closed.
+    assert_error(lambda: world.search_v2("supply route"), "CONTROL_PLANE_UNAVAILABLE", "AUDIT_UNAVAILABLE")
     world.rep_audit.fail = False
+    assert world.rep_audit.events == []  # nothing could be recorded, nothing became ACTIVE
+    assert_denied(world, SEARCH, lambda: world.search_v2("supply route"), "REPRESENTATION_NOT_READY", "REPRESENTATION_REBUILDING")
     world.rebuild(records[0], op="rebuild-2")
     assert len(world.search_v2("supply route").hits) == 3
+    assert [e["operation_id"] for e in successes(world, REBUILD)] == ["rebuild-2"]
 
 
 def test_unpinned_models_and_dimensions_fail_rebuild_and_retrieval(backends: Backends) -> None:
@@ -1223,11 +1381,17 @@ def test_rebuild_requires_an_authorized_gcs_and_a_live_policy_decision(backends:
     def nothing_written() -> None:
         assert world.representations.record(partition.digest, PIN_V2.representation_version) is None
         assert parallel_entries(world, records[0]) == {}
-        assert world.rep_audit.events == []
+        assert successes(world, REBUILD) == []
 
-    assert_error(
-        lambda: world.coordinator.rebuild(partition.ref, PROFILE_V2, binding=None, operation_id="op"), "AUTHENTICATION_REQUIRED", "BINDING_MISSING"
+    assert_denied(
+        world,
+        REBUILD,
+        lambda: world.coordinator.rebuild(partition.ref, PROFILE_V2, binding=None, operation_id="op"),
+        "AUTHENTICATION_REQUIRED",
+        "BINDING_MISSING",
     )
+    unauthenticated = world.rep_audit.events[-1]
+    assert unauthenticated["correlation_id"] is None and unauthenticated["partition_ref"] == partition.ref
     for ctx in (
         context(compartments=("bravo",)),
         context(marking=base.M_UNCLASSIFIED),
@@ -1238,9 +1402,15 @@ def test_rebuild_requires_an_authorized_gcs_and_a_live_policy_decision(backends:
         dataclasses.replace(CALLER, policy_bundle_digest=d("policy-bundle:memory:2")),
         dataclasses.replace(CALLER, ontology_release_digest=d("ontology-release:2")),
     ):
-        error = assert_error(lambda ctx=ctx: world.rebuild(records[0], ctx=ctx), "POLICY_DENIED", "PARTITION_NOT_AUTHORIZED")
+        error = assert_denied(world, REBUILD, lambda ctx=ctx: world.rebuild(records[0], ctx=ctx), "POLICY_DENIED", "PARTITION_NOT_AUTHORIZED")
         assert error.correlation_id == ctx.correlation_id
-    assert_error(
+        event = world.rep_audit.events[-1]
+        assert (event["correlation_id"], event["governed_context_digest"]) == (ctx.correlation_id, ctx.digest())
+        assert (event["operation_id"], event["causation_id"], event["partition_ref"]) == ("rebuild-1", "rebuild-1", partition.ref)
+        assert event["representation_version"] == PIN_V2.representation_version
+    assert_denied(
+        world,
+        REBUILD,
         lambda: world.coordinator.rebuild("urn:ocor:memory-partition:" + "0" * 64, PROFILE_V2, binding=binding(), operation_id="op"),
         "POLICY_DENIED",
         "PARTITION_NOT_AUTHORIZED",
@@ -1248,14 +1418,26 @@ def test_rebuild_requires_an_authorized_gcs_and_a_live_policy_decision(backends:
     assert world.rep_policy.calls == []  # refused on the partition tuple before policy
     nothing_written()
     world.rep_policy.permitted = False
-    assert_error(lambda: world.rebuild(records[0]), "POLICY_DENIED", "REPRESENTATION_DENIED")
+    assert_denied(world, REBUILD, lambda: world.rebuild(records[0]), "POLICY_DENIED", "REPRESENTATION_DENIED")
     world.rep_policy.permitted, world.rep_policy.fail = True, True
-    assert_error(lambda: world.rebuild(records[0]), "CONTROL_PLANE_UNAVAILABLE", "POLICY_UNAVAILABLE")
+    assert_denied(world, REBUILD, lambda: world.rebuild(records[0]), "CONTROL_PLANE_UNAVAILABLE", "POLICY_UNAVAILABLE")
     world.rep_policy.fail, world.rep_policy.bundle = False, d("policy-bundle:stale")
-    assert_error(lambda: world.rebuild(records[0]), "STALE_POLICY", "POLICY_BUNDLE_MISMATCH")
+    assert_denied(world, REBUILD, lambda: world.rebuild(records[0]), "STALE_POLICY", "POLICY_BUNDLE_MISMATCH")
+    nothing_written()
+    assert denials(world, REBUILD) == (
+        [("AUTHENTICATION_REQUIRED", "BINDING_MISSING")]
+        + [("POLICY_DENIED", "PARTITION_NOT_AUTHORIZED")] * 9
+        + [("POLICY_DENIED", "REPRESENTATION_DENIED"), ("CONTROL_PLANE_UNAVAILABLE", "POLICY_UNAVAILABLE"), ("STALE_POLICY", "POLICY_BUNDLE_MISMATCH")]
+    )
+    # The denial of an unavailable audit sink still fails closed, without effect.
+    world.rep_policy.permitted, world.rep_audit.fail = False, True
+    assert_error(lambda: world.rebuild(records[0]), "CONTROL_PLANE_UNAVAILABLE", "AUDIT_UNAVAILABLE").correlation_id == CALLER.correlation_id
+    world.rep_policy.permitted, world.rep_audit.fail = True, False
     nothing_written()
     world.rep_policy.bundle = None
-    assert len(world.rebuild(records[0]).entries) == 3
+    receipt = world.rebuild(records[0])
+    assert len(receipt.entries) == 3
+    assert [e["audit_ref"] for e in successes(world, REBUILD)] == [receipt.audit_ref]
 
 
 def test_parallel_representations_never_cross_compartments(backends: Backends) -> None:
@@ -1366,3 +1548,57 @@ def test_unit_doubles_are_not_used_by_qualifying_worlds(backends: Backends) -> N
     assert not isinstance(world.parallel.inner, base.MemIndex) and not isinstance(world.vector.inner, base.MemIndex)
     assert isinstance(world.lexical.inner, base.PostgresLexicalIndex)
     assert isinstance(world.registry.resolve(PROFILE_V2)[0], FeatureHashingModel)
+
+
+def test_a_lost_compare_and_set_leaves_no_success_receipt_on_real_backends(backends: Backends) -> None:
+    world = backends.world()
+    check_lost_compare_and_set(world, populate(world))
+
+
+def test_versions_outside_their_validity_window_never_occupy_a_candidate_slot(backends: Backends) -> None:
+    check_validity_window(backends.world())
+
+
+def test_an_elapsed_corpus_beyond_the_candidate_pool_still_returns_the_valid_version(backends: Backends) -> None:
+    world = backends.world()
+    keep = world.admit("keep", "lighthouse beacon signal")
+    for index in range(140):
+        world.admit(f"elapsed-{index:03d}", f"lighthouse beacon signal {index}", valid_until=NOW + timedelta(seconds=30))
+    receipt = world.rebuild(keep)
+    assert len(receipt.entries) == 141
+    world.clock.advance(timedelta(minutes=2))
+    partition = MemoryPartition.for_item(keep.item)
+    vector = world.coordinator.embed_query(PROFILE_V2, "lighthouse beacon signal 7")
+    hits = world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=128)
+    assert [hit.memory_version_ref for hit in hits] == ["urn:ocor:memory:keep:v1"]
+    assert refs(world.search_v2("lighthouse beacon signal 7")) == ["urn:ocor:memory:keep:v1"]
+    assert denials(world, SEARCH) == []
+
+
+def test_every_refusal_writes_a_denial_event_on_real_backends(backends: Backends) -> None:
+    world = backends.world()
+    records = populate(world)
+    partition = MemoryPartition.for_item(records[0].item)
+    vector = world.coordinator.embed_query(PROFILE_V2, "supply route")
+    assert_denied(world, INVALIDATE, lambda: world.invalidate(records[0]), "REPRESENTATION_NOT_READY", "REPRESENTATION_ABSENT")
+    world.rebuild(records[0])
+    late = world.admit("late", "supply route reopened")
+    assert_denied(world, SEARCH, lambda: world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=3), "REPRESENTATION_NOT_READY", "REPRESENTATION_INCOMPLETE")
+    world.rebuild(late, op="rebuild-2")
+    store_ref = dict(world.representations.record(partition.digest, PIN_V2.representation_version).entries)[records[0].item.version_ref]
+    descriptor = world.representations.descriptor(store_ref)
+    world.parallel.inner.upsert(partition, ParallelLayout.of(PIN_V2), store_ref, descriptor.to_mapping(), V2.embed("unrelated decoy text"))
+    assert_denied(world, SEARCH, lambda: world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=4), "REPRESENTATION_NOT_READY", "PROJECTION_DRIFT")
+    world.rebuild(records[0], op="rebuild-3")
+    other_pin = backends.fresh(world, models=(FixtureHashModel(), _retokenized()))
+    other_pin.rep_audit = world.rep_audit
+    other_pin.coordinator = other_pin.build()
+    assert_denied(other_pin, INVALIDATE, lambda: other_pin.invalidate(records[0]), "REPRESENTATION_NOT_READY", "REPRESENTATION_VERSION_MIXED")
+    assert_denied(other_pin, SEARCH, lambda: other_pin.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=4), "REPRESENTATION_NOT_READY", "REPRESENTATION_VERSION_MIXED")
+    assert [e["operation_id"] for e in successes(world, REBUILD)] == ["rebuild-1", "rebuild-2", "rebuild-3"]
+
+
+def _retokenized() -> FeatureHashingModel:
+    model = FeatureHashingModel()
+    model.pin = dataclasses.replace(model.pin, tokenizer_digest=d("tokenizer:other"))
+    return model
