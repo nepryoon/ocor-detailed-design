@@ -346,6 +346,157 @@
     "uv": "0.12.5",
     "worktree": ".ocor/worktrees/ocor-dev-0052"
   },
+  "independent_verification": {
+    "commands": [
+      {
+        "command": "sha256sum -c inputs/normative/SHA256SUMS",
+        "exit_code": 0,
+        "summary": "8/8 OK nel worktree detached a a0a80c27172eb7e25cd6cc5992fb8d7e9dc1e045"
+      },
+      {
+        "command": "git diff --name-status 7052ec7da30431a5efcbe295dcd82e6a6a77c874..a0a80c27172eb7e25cd6cc5992fb8d7e9dc1e045",
+        "exit_code": 0,
+        "summary": "5 path: retrieval.py e test_ocor_dev_0052.py aggiunti; MANIFEST.json solo additivo (nessun record G5 preesistente modificato); evidenza OCOR-DEV-0052.json/.log aggiunta. Nessun file CI, inputs/, ADD o LLD."
+      },
+      {
+        "command": "python3 scripts/validate_ocor_change_scope.py --base origin/main --branch task/OCOR-DEV-0052-structured-full-text-vector-hybrid-retrieval",
+        "exit_code": 0,
+        "summary": "PASS: 5 changed path(s); immutable surfaces untouched; task ledger stable"
+      },
+      {
+        "command": "python3 scripts/reset_test_environment.py --execute",
+        "exit_code": 1,
+        "summary": "Primo teardown nel worktree senza .ocor/bootstrap.env: compose non interpola. File della checkout principale non toccato."
+      },
+      {
+        "command": "python3 scripts/reset_test_environment.py --execute (copia di .ocor/bootstrap.env della checkout principale, poi rimossa)",
+        "exit_code": 0,
+        "summary": "Teardown PASS su stack assente. sha256 della checkout principale f17de420859997b2436dda830e2440f3b911fd31f24b4141eacd19b78d458cc4 invariato prima e dopo."
+      },
+      {
+        "command": "python3 scripts/bootstrap_development_environment.py --execute --timeout 1200",
+        "exit_code": 0,
+        "summary": "PASS. Credenziali generate solo nel worktree. Fuseki locale sha256:6534156b8d8f16b28faf0c336096e5c6a751794828525a8ef42c60ef46c9cc2b coincide con services.lock.json; Dockerfile usa archive.apache.org e SHA512 ba65f5867d2d4741b2ed9e2af5a0d4fbb447909894ab2a0c6bc4dac8997f4fe339c87b13c48d45d054977769f0f8bf763ea346b1f7792d5cdc458041bd43a132, uguale al lock. Nessun rebuild: identita' immagine gia' coincidente."
+      },
+      {
+        "command": "python3 deploy/bootstrap/init/initialize_services.py --env-file <worktree>/.ocor/bootstrap.env && python3 deploy/bootstrap/fixtures/load_fixtures.py --env-file <worktree>/.ocor/bootstrap.env",
+        "exit_code": 0,
+        "summary": "initialize PASS e fixtures PASS"
+      },
+      {
+        "command": "uv sync --directory ocor-runtime --frozen --extra test --extra lint",
+        "exit_code": 0,
+        "summary": "venv Python 3.12.11. uv del verifier 0.12.21 con lock frozen; evidenza registra uv 0.12.5 del pin."
+      },
+      {
+        "command": "ruff check .",
+        "exit_code": 0,
+        "summary": "All checks passed (ruff 0.13.1, dalla root del worktree)"
+      },
+      {
+        "command": "ocor-runtime/.venv/bin/python -m mypy --strict",
+        "exit_code": 0,
+        "summary": "Success: no issues found in 72 source files"
+      },
+      {
+        "command": "python3 scripts/validate_rccad.py --base-ref origin/main",
+        "exit_code": 0,
+        "summary": "PASS_LOCAL_PRECHECK, AFF-001..AFF-010 PASS_STATIC_PRECHECK"
+      },
+      {
+        "command": "python3 scripts/validate_language_policy.py",
+        "exit_code": 0,
+        "summary": "PASS: no tracked file uses a monitored extension outside its authorized area"
+      },
+      {
+        "command": "python3 scripts/validate_evidence_input_drift.py",
+        "exit_code": 0,
+        "summary": "PASS: checked_inputs 172, checked_tasks 65, drifted_inputs 0"
+      },
+      {
+        "command": "python3 scripts/validate_runtime_evidence.py --task OCOR-DEV-0052 --non-skipped --manifest reports/evidence/G5/MANIFEST.json",
+        "exit_code": 0,
+        "summary": "PASS: qualifying task evidence for OCOR-DEV-0052"
+      },
+      {
+        "command": "python3 scripts/validate_ocor_development_plan.py --base-ref HEAD --authorized-extension",
+        "exit_code": 0,
+        "summary": "verdict PASS"
+      },
+      {
+        "command": "python3 scripts/verify.py --json",
+        "exit_code": 0,
+        "summary": "PASS 14 FAIL 0 NOT_EXECUTED 0; evidence fence E1=0"
+      },
+      {
+        "command": "python3 ~/.ocor-codex/ocor-dev-0052/check_evidence.py <worktree> a0a80c27172eb7e25cd6cc5992fb8d7e9dc1e045",
+        "exit_code": 0,
+        "summary": "PASS: commit 8865203 antenato, input invariati, raw e manifest coerenti, JUnit task 65 tutti PASS, full-suite registrata 1428/0/0, 23 mutanti killed"
+      },
+      {
+        "command": "OCOR_LIVE_POSTGRES_DSN=<ocor-bootstrap postgres 127.0.0.1:55433> python -m pytest -q -rs --junitxml=task-junit.xml ocor-runtime/tests/tasks/test_ocor_dev_0052.py",
+        "exit_code": 0,
+        "summary": "65 passed, 0 skipped, 15.45s. Durante la run: OpenBao quay.io/openbao/openbao@sha256:11fd73a2102cda9c55d5d881a8c3210303146a7ec1e8ac76f526e175c6d24641 e Qdrant qdrant/qdrant:v1.15.1@sha256:d122138f76868edba68d36cb0833139c1d1761f00f09e48e61f8314196e6a4c6. PostgreSQL xact_commit 56->4288. Schema ocor_t0052_* assenti a fine run. Delta nomi container vuoto."
+      },
+      {
+        "command": "python3 ~/.ocor-codex/ocor-dev-0052/mutation_probe.py <worktree> mutation-probe.json",
+        "exit_code": 0,
+        "summary": "23/23 killed, nessun sopravvissuto. hash-object di retrieval.py identico prima e dopo (e207da9aa75f99f0779cfe1d0e67ebd7540beedf)."
+      },
+      {
+        "command": "python -m pytest -q -rs tests/tasks/test_ocor_dev_0048.py (prima registrazione workload)",
+        "exit_code": 1,
+        "summary": "2 failed, 8 passed, 186 errors: SPIRE agent attestato ma 0 entry, FetchX509SVID No identity issued. Setup del verifier, non regressione del diff."
+      },
+      {
+        "command": "python3 ~/.ocor-codex/ocor-dev-0052/register_control_plane.py && python -m pytest -q -rs tests/tasks/test_ocor_dev_0048.py",
+        "exit_code": 0,
+        "summary": "SVID spiffe://ocor.test/ocor/control-plane emesso. Rerun: 196 passed, 0 skipped, 138.35s. Controllo compensativo CI-0048."
+      },
+      {
+        "command": "reset --execute && bootstrap --execute && initialize && fixtures && register_control_plane && verify_external_services.py --typed",
+        "exit_code": 0,
+        "summary": "STACK-HYGIENE prima della suite completa. Health PASS: terminusdb, typedb, fuseki, opa-keycloak, openbao, spiffe-spire, postgresql, kafka, qdrant tutti READY. Nessun OOMKilled, restart_count 0. Checkout principale invariata."
+      },
+      {
+        "command": "cd ocor-runtime && python -m pytest -q -rs tests/ (PATH con node Cursor v24.5.0)",
+        "exit_code": 1,
+        "summary": "8 failed, 1420 passed, 0 skipped, 0 errors, 444.07s. Tutti e 8 in test_ocor_dev_0007: which(node) risolve il node del Cursor agent v24.5.0 invece del pin v20.20.2. Nessun OOM. Delta nomi container vuoto."
+      },
+      {
+        "command": "PATH=<node v20.20.2>:$PATH python -m pytest -q -rs tests/tasks/test_ocor_dev_0007.py",
+        "exit_code": 0,
+        "summary": "51 passed in 0.24s con /home/luca/.ocor-codex/c5resume/toolchain/node-v20.20.2-linux-x64/bin/node (v20.20.2). Gli 8 fallimenti della suite completa non si riproducono con il node pinnato."
+      },
+      {
+        "command": "git diff --name-only 7052ec7..a0a80c2 -- .github",
+        "exit_code": 0,
+        "summary": "Nessun workflow modificato. A questo HEAD non esiste un aggregatore pytest --collect-only; --ignore di test_ocor_dev_0048.py in ocor-validation-closure.yml e' preesistente e non introdotto dal diff."
+      },
+      {
+        "command": "docker volume rm <18 volumi anonimi non montati creati dalla suite> && python3 scripts/reset_test_environment.py --execute",
+        "exit_code": 0,
+        "summary": "18 volumi anonimi rimossi; teardown ocor-bootstrap PASS. Nessun container ocor-bootstrap rimasto. sha256 bootstrap.env della checkout principale invariato."
+      }
+    ],
+    "findings": [],
+    "implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva (quota Codex esaurita), ciclo 0 e integrazione",
+    "integration_condition": "Merge subordinato ai check obbligatori verdi sul commit di sigillo esatto; il verdetto qualifica il candidato indicato, con soli metadati di sigillo e manifest successivi.",
+    "not_executed": [],
+    "original_implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva",
+    "review_type": "TASK_EVIDENCE",
+    "verdict_created_at": "2026-10-09T19:08:57Z",
+    "verdict_file_sha256": "0c602a649486191161765c84ebce6a7bc772d197fa61c3074efe0c71c627ccfd",
+    "verdict_head_sha": "a0a80c27172eb7e25cd6cc5992fb8d7e9dc1e045",
+    "verdict_request_id": "OCOR-DEV-0052-a0a80c27172e-0",
+    "verdict_status": "GO_FOR_EVIDENCE_SEAL",
+    "verifier": "Grok 4.7 (Cursor CLI)",
+    "verifier_configuration": {
+      "independence_limits": "Processo e contesto separati. Implementatore: Claude Code (Anthropic), claude-opus-5-5, ciclo 0. Verifier: Grok 4.7 via Cursor CLI. Fornitore e modello diversi dall'implementatore.",
+      "model": "Grok 4.7",
+      "process": "Cursor CLI, contesto pulito, esecuzione non interattiva"
+    }
+  },
   "inputs": {
     "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
     "ocor-runtime/src/ocor_runtime/memory/retrieval.py": "1062a1ae7b8865e525e5d87488327ce116daf3c392d5df93fabef4f1d5199b88",
@@ -548,7 +699,8 @@
   },
   "rollback_procedure_verified": "Mechanical review: the task adds two new files only (memory/retrieval.py, tests/tasks/test_ocor_dev_0052.py) plus evidence; rollback is a revert commit of the task commits. No persisted data migration: test schemas, Qdrant collections and OpenBao mounts are disposable and removed in teardown; no existing module imports retrieval.py.",
   "schema_version": "1.0",
-  "status": "CANDIDATE_AWAITING_INDEPENDENT_VERIFICATION",
+  "sealed_at": "2026-10-09T19:10:26.362456+00:00",
+  "status": "SEALED",
   "task_id": "OCOR-DEV-0052",
   "tdd": {
     "GREEN": {
