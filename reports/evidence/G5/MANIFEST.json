@@ -19,6 +19,16 @@
       "path": "OCOR-DEV-0051.log",
       "sha256": "362e334d9e6db432bdae0809efbc4bf8092428317dac953d20f9eef144624e80",
       "task_id": "OCOR-DEV-0051-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0052.json",
+      "sha256": "79bd87855903c87bd65fc7fc64f37ac3d1a38fe5d718cb3a4000d29b87a497d1",
+      "task_id": "OCOR-DEV-0052"
+    },
+    {
+      "path": "OCOR-DEV-0052.log",
+      "sha256": "acb97fe423eac481e1b51f8fe441015da6d09082f4c82d0f57c795671e18efe2",
+      "task_id": "OCOR-DEV-0052-RAW"
     }
   ],
   "created_at": "2026-10-08T18:33:05Z",
@@ -194,6 +204,60 @@
       "requirement_id": "FR-115",
       "status": "PASS",
       "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "case_id": "OCOR-DEV-0052-STRUCTURED-FULL-TEXT-VECTOR-HYBRID-RETRIEVAL",
+      "command": "on real PostgreSQL (metadata, encrypted content, full-text), Qdrant (vector) and OpenBao transit: STRUCTURED reads the metadata authority with pinned filters (source kind, content schema, confidence, taint), FULL_TEXT and VECTOR rank by their own representation, HYBRID records lexical, vector, recency, confidence, source-quality, diversity and policy factors separately with final_score recomputable from the versioned profile; a parallel embedding representation is searched only under its own pin",
+      "evidence_path": "OCOR-DEV-0052.json",
+      "raw_output_path": "OCOR-DEV-0052.log",
+      "requirement_id": "FR-118",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0052"
+    },
+    {
+      "case_id": "OCOR-DEV-0052-PINS-QUERY-REPRESENTATION-RANKING-FILTERS-EXACT-VERSIONS",
+      "command": "the audit receipt pins query contract, mode, kinds, scopes, text, query-vector digest, representation versions, filters, valid_at, top_k and ranking profile digest, plus every hit's exact version ref, item and content digest; every pinned dimension changes query_digest; identical state replays byte-identically, also across fresh adapters; a new version is a new exact pin and the earlier version stays readable; hits of another representation version fail closed",
+      "evidence_path": "OCOR-DEV-0052.json",
+      "raw_output_path": "OCOR-DEV-0052.log",
+      "requirement_id": "FR-118",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0052"
+    },
+    {
+      "case_id": "OCOR-DEV-0052-POLICY-BEFORE-LOOKUP-AND-BEFORE-MATERIALISATION",
+      "command": "malformed requests, missing or foreign bindings and GCS mismatches are refused before policy and any index read; pre-query denial, stale bundle, unauthorized kind/scope and policy outage are audited and read no candidate; cross-project, cross-domain and federated retrieval open only with explicit Authority, cross-tenant stays denied; materialisation policy outage and unbound item digests fail closed",
+      "evidence_path": "OCOR-DEV-0052.json",
+      "raw_output_path": "OCOR-DEV-0052.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0052"
+    },
+    {
+      "case_id": "OCOR-DEV-0052-UNAUTHORIZED-ITEMS-NON-INTERFERENCE",
+      "command": "two real-backend worlds, one with 21 unauthorized items of distinct classes (compartment, mixed compartments, tenant, organization, marking, purpose, domain, project, run, agent, federated, quarantined, proposed, expired, not yet valid, validity elapsed, pending, revoked, materialisation-denied, other kind, reclassified): byte-identical responses, explanations and receipts in all four modes; indexes searched only inside authorized partitions; a query matching only unauthorized items is indistinguishable from no match; ineligible hits never displace eligible candidates",
+      "evidence_path": "OCOR-DEV-0052.json",
+      "raw_output_path": "OCOR-DEV-0052.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0052"
+    },
+    {
+      "case_id": "OCOR-DEV-0052-REVOCATION-EXPIRY-RECLASSIFICATION-AND-STOP-RACES",
+      "command": "revoked, expired (boundary clock) and reclassified items disappear from result, rank, count, normalisation and explanation; a SECRET caller sees only the reclassified head; a kill switch or delegation revocation between planning and materialisation fails closed with no hit and no success receipt",
+      "evidence_path": "OCOR-DEV-0052.json",
+      "raw_output_path": "OCOR-DEV-0052.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0052"
+    },
+    {
+      "case_id": "OCOR-DEV-0052-PARTIAL-AND-DRIFTED-PROJECTIONS-NEVER-MATERIALISED",
+      "command": "a version left PENDING by a Qdrant outage is never returned; a committed full-text projection tampered in PostgreSQL blocks materialisation with REPRESENTATION_NOT_READY and no success receipt",
+      "evidence_path": "OCOR-DEV-0052.json",
+      "raw_output_path": "OCOR-DEV-0052.log",
+      "requirement_id": "FR-118",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0052"
     }
   ],
   "schema_version": "1.0"
