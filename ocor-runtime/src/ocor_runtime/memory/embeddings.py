@@ -40,13 +40,17 @@ Implements the embedding-lifecycle slice of the ``GovernedMemoryService``
   ``valid_at``) but never occupies a candidate slot either.
 * Every rebuild and invalidation writes an audit receipt (operation,
   causation and correlation ids, pin, manifest digest, counts) once the
-  ``ACTIVE`` record is committed; if that receipt cannot be written the
-  record is put back to ``BUILDING``, so no unaudited representation serves
-  and no lost compare-and-set leaves a success receipt.  Every refusal of
-  rebuild, invalidation or vector candidate lookup writes a denial event
-  (ADD v1.3 Part II: the audit store keeps access, denial and influence
-  evidence); an unaudited denial still fails closed.  Raw vectors never
-  leave the module.
+  ``ACTIVE`` record is committed, so no lost compare-and-set leaves a success
+  receipt.  The ``ACTIVE`` record names the ``audit_ref`` of that receipt and
+  serves only while the audit store holds it: if the receipt cannot be
+  written the record is put back to ``BUILDING`` (best effort, bounded), and
+  even when that compensation fails too the record never serves.  Every
+  refusal of rebuild, invalidation or vector candidate lookup writes a denial
+  event (ADD v1.3 Part II: the audit store keeps access, denial and influence
+  evidence); an unaudited denial still fails closed.  Inside a search of
+  ``EmbeddingSearchService`` the lookup denial carries the caller's
+  correlation, operation and governed-context digest and the lookup uses the
+  search's ``valid_at``.  Raw vectors never leave the module.
 
 The module is backend-free (``OCOR_LANGUAGE_POLICY.md`` row 8): the model, the
 descriptor store, the index, policy and audit are ports.  Embeddings are
@@ -61,13 +65,19 @@ import math
 import struct
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
+from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import datetime
 from enum import StrEnum
 from types import MappingProxyType
 from typing import Protocol
 
-from ..kernel.canonical import canonical_digest, format_utc_timestamp
+from ..kernel.canonical import (
+    TimestampError,
+    canonical_digest,
+    format_utc_timestamp,
+    parse_utc_timestamp,
+)
 from ..kernel.governance import TrustedClock
 from ..kernel.governed_context import GovernedContext, VerifiedGovernedContextBinding
 from .model import (
@@ -80,6 +90,7 @@ from .model import (
     MemoryVersionLedger,
     RepresentationKind,
 )
+from .retrieval import MemorySearchResponse, MemorySearchService
 from .stores import (
     BoundHit,
     ContentCipher,
@@ -109,6 +120,8 @@ UNIT_NORM_TOLERANCE = 1e-6
 REBUILD_ACTION = "rebuildEmbeddingRepresentation"
 INVALIDATE_ACTION = "invalidateEmbeddingRepresentation"
 SEARCH_ACTION = "searchEmbeddingRepresentation"
+# Compare-and-set attempts that put an unaudited ``ACTIVE`` record back to ``BUILDING``.
+WITHDRAW_ATTEMPTS = 3
 
 
 class MemoryEmbeddingError(MemoryAdmissionError):
@@ -491,6 +504,7 @@ RECORD_FIELDS = frozenset(
         "pin",
         "state",
         "manifest_digest",
+        "audit_ref",
         "entries",
         "operation_id",
         "updated_at",
@@ -503,7 +517,8 @@ class RepresentationRecord:
     """State of one parallel representation version of one partition.
 
     ``entries`` maps each embedded ``memory_version_ref`` to its descriptor
-    store ref, sorted; ``manifest_digest`` is set only when ``ACTIVE``.
+    store ref, sorted; ``manifest_digest`` and ``audit_ref`` (the success
+    receipt the record serves under) are set only when ``ACTIVE``.
     """
 
     partition_digest: str
@@ -511,6 +526,7 @@ class RepresentationRecord:
     pin: EmbeddingModelPin
     state: RepresentationState
     manifest_digest: str | None
+    audit_ref: str | None
     entries: tuple[tuple[str, str], ...]
     operation_id: str
     updated_at: str
@@ -522,6 +538,7 @@ class RepresentationRecord:
             "pin": self.pin.to_mapping(),
             "state": self.state.value,
             "manifest_digest": self.manifest_digest,
+            "audit_ref": self.audit_ref,
             "entries": [list(entry) for entry in self.entries],
             "operation_id": self.operation_id,
             "updated_at": self.updated_at,
@@ -552,9 +569,10 @@ class RepresentationRecord:
             name: value[name]
             for name in ("partition_digest", "representation_version", "operation_id", "updated_at")
         }
-        manifest = value["manifest_digest"]
-        if not all(isinstance(v, str) and v for v in strings.values()) or not (
-            manifest is None or (isinstance(manifest, str) and DIGEST.fullmatch(manifest))
+        manifest, audit_ref = value["manifest_digest"], value["audit_ref"]
+        if not all(isinstance(v, str) and v for v in strings.values()) or not all(
+            digest is None or (isinstance(digest, str) and DIGEST.fullmatch(digest))
+            for digest in (manifest, audit_ref)
         ):
             raise _corrupted("REPRESENTATION_RECORD_INVALID", "record strings are invalid")
         record = cls(
@@ -563,6 +581,7 @@ class RepresentationRecord:
             pin=pin,
             state=state,
             manifest_digest=manifest if isinstance(manifest, str) else None,
+            audit_ref=audit_ref if isinstance(audit_ref, str) else None,
             entries=tuple(entries),
             operation_id=str(strings["operation_id"]),
             updated_at=str(strings["updated_at"]),
@@ -571,6 +590,7 @@ class RepresentationRecord:
             list(record.entries) != sorted(record.entries)
             or record.pin.representation_version != record.representation_version
             or (record.state is RepresentationState.ACTIVE) != (record.manifest_digest is not None)
+            or (record.state is RepresentationState.ACTIVE) != (record.audit_ref is not None)
         ):
             raise _corrupted("REPRESENTATION_RECORD_INVALID", "record is not canonical")
         return record
@@ -656,6 +676,9 @@ class RepresentationPolicy(Protocol):
 class RepresentationAuditSink(Protocol):
     def record(self, event: Mapping[str, object]) -> None:
         """Append one audit event; raising fails the operation closed."""
+
+    def contains(self, audit_ref: str) -> bool:
+        """Whether the event with ``audit_ref`` is held; raising fails closed."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -927,6 +950,7 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
             pin=pin,
             state=RepresentationState.BUILDING,
             manifest_digest=None,
+            audit_ref=None,
             entries=() if current is None else current.entries,
             operation_id=operation_id,
             updated_at=format_utc_timestamp(self._clock.now()),
@@ -975,6 +999,7 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
             raise _not_ready("REPRESENTATION_REBUILDING", "representation is being rebuilt")
         if current.pin != pin:
             raise _not_ready("REPRESENTATION_VERSION_MIXED", "representation pin changed")
+        self._require_receipt(current)
         eligible = self._eligible(partition)
         keep: list[EmbeddingDescriptor] = []
         for _, store_ref in current.entries:
@@ -1144,12 +1169,14 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
             pin=pin,
             state=RepresentationState.ACTIVE,
             manifest_digest=digest,
+            audit_ref=audit_ref,
             entries=entries,
             operation_id=operation_id,
             updated_at=now,
         )
         # The success receipt follows the committed compare-and-set: a lost CAS
-        # raises here and leaves only the denial event of ``_observed``.
+        # raises here and leaves only the denial event of ``_observed``.  The
+        # record serves only once the audit store holds ``audit_ref``.
         self._representations.put_record(active, expected_digest=previous.digest)
         try:
             self._audit.record(MappingProxyType({**event, "audit_ref": audit_ref}))
@@ -1172,7 +1199,11 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
         )
 
     def _withdraw(self, active: RepresentationRecord) -> None:
-        """Put an unaudited ``ACTIVE`` record back to ``BUILDING`` (retrieval fails closed)."""
+        """Put an unaudited ``ACTIVE`` record back to ``BUILDING``, bounded.
+
+        Best effort only: an unaudited record never serves anyway, because its
+        ``audit_ref`` is absent from the audit store (``_require_receipt``).
+        """
 
         building = RepresentationRecord(
             partition_digest=active.partition_digest,
@@ -1180,14 +1211,48 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
             pin=active.pin,
             state=RepresentationState.BUILDING,
             manifest_digest=None,
+            audit_ref=None,
             entries=active.entries,
             operation_id=active.operation_id,
             updated_at=active.updated_at,
         )
+        for _ in range(WITHDRAW_ATTEMPTS):
+            try:
+                self._representations.put_record(building, expected_digest=active.digest)
+            except Exception:  # noqa: BLE001 -- re-read who owns the record now
+                self._metrics[("withdraw", "RETRY")] += 1
+            else:
+                return
+            try:
+                current = self._representations.record(
+                    active.partition_digest, active.representation_version
+                )
+            except Exception:  # noqa: BLE001 -- unknown owner: try again
+                continue
+            if current is None or current.digest != active.digest:
+                self._metrics[("withdraw", "SUPERSEDED")] += 1
+                return  # a newer operation owns the record
+        self._metrics[("withdraw", "INCOMPLETE")] += 1
+
+    def _require_receipt(self, record: RepresentationRecord) -> None:
+        """An ``ACTIVE`` record serves only while its success receipt is held."""
+
+        if record.audit_ref is None:
+            raise _not_ready(
+                "REPRESENTATION_UNAUDITED", "the representation has no success receipt"
+            )
         try:
-            self._representations.put_record(building, expected_digest=active.digest)
-        except Exception:  # noqa: BLE001 -- a newer operation owns the record now
-            self._metrics[("withdraw", "INCOMPLETE")] += 1
+            held = self._audit.contains(record.audit_ref)
+        except Exception as exc:  # noqa: BLE001 -- unknown receipt fails closed
+            raise MemoryEmbeddingError(
+                "CONTROL_PLANE_UNAVAILABLE",
+                "AUDIT_UNAVAILABLE",
+                "representation receipt lookup failed closed",
+            ) from exc
+        if held is not True:
+            raise _not_ready(
+                "REPRESENTATION_UNAUDITED", "the representation has no success receipt"
+            )
 
     # -- retrieval ---------------------------------------------------------
 
@@ -1202,10 +1267,16 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
     ) -> tuple[BoundHit, ...]:
         """Only pinned profiles; one representation version per partition, never mixed.
 
-        ``valid_at`` is the instant of the validity window (boundary time when
-        omitted); versions outside it are skipped like ineligible ones.
+        ``valid_at`` is the instant of the validity window; when omitted, the
+        ``valid_at`` of the enclosing ``EmbeddingSearchService`` search, else
+        the boundary time.  Versions outside it are skipped like ineligible ones.
         """
 
+        scope = _SEARCH_SCOPE.get()
+        if scope is not None and scope.coordinator is not self:
+            scope = None  # another coordinator's search
+        if valid_at is None and scope is not None:
+            valid_at = scope.valid_at
         try:
             return self._vector_candidates(partition, profile, vector, limit, valid_at)
         except MemoryAdmissionError as exc:
@@ -1215,8 +1286,8 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
                 exc,
                 partition.ref if isinstance(partition, MemoryPartition) else None,
                 profile,
-                None,
-                None,
+                None if scope is None else scope.operation_id,
+                None if scope is None else scope.context,
             )
             raise
 
@@ -1254,6 +1325,7 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
             raise _not_ready(
                 "REPRESENTATION_VERSION_MIXED", "representation was built with another pin"
             )
+        self._require_receipt(record)
         if isinstance(limit, bool) or not isinstance(limit, int) or limit < 1:
             raise MemoryEmbeddingError(
                 "MEMORY_SCHEMA_INVALID", "QUERY_INVALID", "limit must be >= 1"
@@ -1346,6 +1418,70 @@ class EmbeddingLifecycleCoordinator(MemoryStoreCoordinator):
             classification_marking_ref=descriptor.classification_marking_ref,
             score=float(hit.score),
         )
+
+
+# --------------------------------------------------------------------------
+# Search service: caller scope of representation lookups
+# --------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class _SearchScope:
+    coordinator: object
+    context: GovernedContext
+    operation_id: str | None
+    valid_at: datetime | None
+
+
+_SEARCH_SCOPE: ContextVar[_SearchScope | None] = ContextVar(
+    "ocor_memory_embedding_search_scope", default=None
+)
+
+
+class EmbeddingSearchService(MemorySearchService):
+    """``MemorySearchService`` over an ``EmbeddingLifecycleCoordinator``.
+
+    Behaviour and contract are those of the 0052 service; for the duration of
+    one authenticated search the coordinator's vector lookups additionally
+    know their caller: a lookup denial carries the binding's correlation, the
+    request's ``operation_id`` and the governed-context digest, and the lookup
+    evaluates the validity window at the request's ``valid_at``.  The scope
+    holds raw request values; the service validates the request and rejects
+    it before any lookup can read them.
+    """
+
+    def search(
+        self,
+        request: Mapping[str, object],
+        *,
+        binding: VerifiedGovernedContextBinding | None,
+    ) -> MemorySearchResponse:
+        if not isinstance(binding, VerifiedGovernedContextBinding) or not isinstance(
+            request, Mapping
+        ):
+            return super().search(request, binding=binding)
+        operation_id = request.get("operation_id")
+        valid_at: datetime | None = None
+        raw_valid_at = request.get("valid_at")
+        if isinstance(raw_valid_at, str):
+            try:
+                valid_at = parse_utc_timestamp(raw_valid_at)
+            except TimestampError:
+                valid_at = None  # the service rejects it before any lookup
+        token = _SEARCH_SCOPE.set(
+            _SearchScope(
+                coordinator=self._coordinator,
+                context=binding.expected,
+                operation_id=(
+                    operation_id if isinstance(operation_id, str) and operation_id else None
+                ),
+                valid_at=valid_at,
+            )
+        )
+        try:
+            return super().search(request, binding=binding)
+        finally:
+            _SEARCH_SCOPE.reset(token)
 
 
 class _Action(Protocol):

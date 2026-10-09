@@ -58,6 +58,7 @@ from ocor_runtime.memory.embeddings import (
     EmbeddingLifecycleCoordinator,
     EmbeddingModelPin,
     EmbeddingModelRegistry,
+    EmbeddingSearchService,
     MemoryEmbeddingError,
     ParallelLayout,
     RepresentationReceipt,
@@ -76,7 +77,7 @@ from ocor_runtime.memory.model import (
     MemoryReceipt,
     idempotency_key,
 )
-from ocor_runtime.memory.retrieval import MemorySearchResponse, RetrievalMode
+from ocor_runtime.memory.retrieval import MemorySearchResponse, MemorySearchService, RetrievalMode
 from ocor_runtime.memory.stores import (
     IndexEntry,
     MemoryPartition,
@@ -197,6 +198,28 @@ class RepresentationGrant:
             decision_ref=f"decision:representation:{partition.digest}:{pin.digest}",
             policy_bundle_digest=self.bundle or ctx.policy_bundle_digest,
         )
+
+
+@dataclass
+class RepAudit(t52.Audit):
+    """Representation audit store: append plus success-receipt lookup.
+
+    ``accept`` (when set) refuses the events it rejects, like a store that is
+    up for some writes only; ``lookup_fails`` makes the receipt lookup raise.
+    """
+
+    accept: Any = None
+    lookup_fails: bool = False
+
+    def record(self, event: Any) -> None:
+        if self.accept is not None and not self.accept(event):
+            raise OSError("audit store refused the event")
+        super().record(event)
+
+    def contains(self, audit_ref: str) -> bool:
+        if self.lookup_fails:
+            raise OSError("audit store unavailable")
+        return any(event.get("audit_ref") == audit_ref for event in self.events)
 
 
 class MemRepresentations:
@@ -341,7 +364,7 @@ class World(t52.World):
         self.representations = representations
         self.parallel = t52.TracingIndex(parallel)
         self.rep_policy = RepresentationGrant()
-        self.rep_audit = t52.Audit()
+        self.rep_audit = RepAudit()
         self.coordinator = self.build()
 
     def build(self, **overrides: Any) -> EmbeddingLifecycleCoordinator:
@@ -362,6 +385,21 @@ class World(t52.World):
         }
         arguments.update(overrides)
         return EmbeddingLifecycleCoordinator(**arguments)
+
+    def service(self, **overrides: Any) -> MemorySearchService:
+        """The search service of the embedding lifecycle (caller scope for representation lookups)."""
+
+        arguments: dict[str, Any] = {
+            "coordinator": self.coordinator,
+            "metadata": self.metadata,
+            "policy": self.policy,
+            "markings": self.markings,
+            "stop": self.stop,
+            "audit": self.audit,
+            "clock": self.clock,
+        }
+        arguments.update(overrides)
+        return EmbeddingSearchService(**arguments)
 
     def rebuild(self, item: AdmittedMemoryVersion, profile: VectorProfile = PROFILE_V2, *, ctx: GovernedContext = CALLER, op: str = "rebuild-1") -> RepresentationReceipt:
         return self.coordinator.rebuild(MemoryPartition.for_item(item.item).ref, profile, binding=binding(ctx), operation_id=op)
@@ -648,6 +686,7 @@ def _record(**changes: Any) -> RepresentationRecord:
         "pin": PIN_V2,
         "state": RepresentationState.ACTIVE,
         "manifest_digest": manifest_digest(descriptor.partition_digest, PIN_V2, [descriptor]),
+        "audit_ref": d("audit:rebuild-1"),
         "entries": ((descriptor.memory_version_ref, descriptor.store_ref),),
         "operation_id": "rebuild-1",
         "updated_at": format_utc_timestamp(NOW),
@@ -664,7 +703,10 @@ RECORD_MUTATIONS = [
     ("entry-shape", lambda m: {**m, "entries": [["only-one"]]}),
     ("entries-unsorted", lambda m: {**m, "entries": [["z", "a"], ["a", "z"]]}),
     ("active-without-manifest", lambda m: {**m, "manifest_digest": None}),
-    ("building-with-manifest", lambda m: {**m, "state": "BUILDING"}),
+    ("building-with-manifest", lambda m: {**m, "state": "BUILDING", "audit_ref": None}),
+    ("active-without-audit-ref", lambda m: {**m, "audit_ref": None}),
+    ("building-with-audit-ref", lambda m: {**m, "state": "BUILDING", "manifest_digest": None}),
+    ("audit-ref-not-digest", lambda m: {**m, "audit_ref": "audit:1"}),
     ("manifest-not-digest", lambda m: {**m, "manifest_digest": "abc"}),
     ("version-not-pin", lambda m: {**m, "representation_version": PIN_V1.representation_version}),
     ("operation-empty", lambda m: {**m, "operation_id": ""}),
@@ -901,7 +943,7 @@ def test_unit_every_refusal_writes_a_denial_event() -> None:
     world.rebuild(record)
     active = world.representations.record(partition.digest, PIN_V2.representation_version)
     key = (partition.digest, PIN_V2.representation_version)
-    world.representations.records[key] = dataclasses.replace(active, state=RepresentationState.BUILDING, manifest_digest=None)
+    world.representations.records[key] = dataclasses.replace(active, state=RepresentationState.BUILDING, manifest_digest=None, audit_ref=None)
     assert_denied(world, INVALIDATE, lambda: world.invalidate(record), "REPRESENTATION_NOT_READY", "REPRESENTATION_REBUILDING")
     assert_denied(world, SEARCH, lambda: world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=1), "REPRESENTATION_NOT_READY", "REPRESENTATION_REBUILDING")
     world.representations.records[key] = dataclasses.replace(active, pin=dataclasses.replace(PIN_V2, tokenizer_digest=d("tokenizer:other")))
@@ -1002,11 +1044,18 @@ def check_validity_window(world: World) -> None:
     assert names() == ["keep"]
     assert names(valid_at=NOW) == ["elapsed", "keep"]  # historic instant: the elapsed version was valid
     assert refs(world.search_v2("lighthouse beacon signal")) == ["urn:ocor:memory:keep:v1"]
+    # The search service hands its valid_at to the representation lookup: the
+    # version valid at that historic instant is found, the not-yet-valid one is not.
+    historic = world.search_v2("lighthouse beacon signal", valid_at=format_utc_timestamp(NOW))
+    assert sorted(refs(historic)) == ["urn:ocor:memory:elapsed:v1", "urn:ocor:memory:keep:v1"]
+    assert denials(world, SEARCH) == []
     assert_denied(world, SEARCH, lambda: names(valid_at="2026-01-01T00:00:00Z"), "MEMORY_SCHEMA_INVALID", "QUERY_INVALID")
     world.clock.advance(timedelta(hours=1))
     # The future version enters its window without any rebuild: the representation stays complete.
     assert names() == ["future", "keep"]
     assert sorted(refs(world.search_v2("lighthouse beacon signal"))) == ["urn:ocor:memory:future:v1", "urn:ocor:memory:keep:v1"]
+    # At the historic instant the future version was not yet valid.
+    assert sorted(refs(world.search_v2("lighthouse beacon signal", valid_at=format_utc_timestamp(NOW)))) == ["urn:ocor:memory:elapsed:v1", "urn:ocor:memory:keep:v1"]
 
 
 def test_unit_versions_outside_their_validity_window_never_occupy_a_candidate_slot() -> None:
@@ -1061,11 +1110,12 @@ class Backends:
         )
 
     def fresh(self, world: World, *, models: Sequence[Any] | None = None) -> World:
-        """New adapter instances and connections over the same backends and ledger."""
+        """New adapter instances and connections over the same backends, ledger and audit store."""
 
         clone = self.world(schema=world.metadata.schema, models=models)
         clone.ledger = world.ledger
         clone.clock = world.clock
+        clone.rep_audit = world.rep_audit
         clone.coordinator = clone.build()
         return clone
 
@@ -1267,7 +1317,7 @@ def test_an_unaudited_rebuild_never_becomes_active(backends: Backends) -> None:
     world.rep_audit.fail = True
     assert_error(lambda: world.rebuild(records[0]), "CONTROL_PLANE_UNAVAILABLE", "AUDIT_UNAVAILABLE")
     record = world.representations.record(MemoryPartition.for_item(records[0].item).digest, PIN_V2.representation_version)
-    assert record is not None and record.state is RepresentationState.BUILDING
+    assert record is not None and record.state is RepresentationState.BUILDING and record.audit_ref is None
     # Even the denial of the search cannot be audited: it still fails closed.
     assert_error(lambda: world.search_v2("supply route"), "CONTROL_PLANE_UNAVAILABLE", "AUDIT_UNAVAILABLE")
     world.rep_audit.fail = False
@@ -1602,3 +1652,184 @@ def _retokenized() -> FeatureHashingModel:
     model = FeatureHashingModel()
     model.pin = dataclasses.replace(model.pin, tokenizer_digest=d("tokenizer:other"))
     return model
+
+
+# --------------------------------------------------------------------------
+# Unaudited activations, caller correlation of search denials (repair 2)
+# --------------------------------------------------------------------------
+
+
+def strand_unaudited_active(world: World, record: AdmittedMemoryVersion) -> RepresentationRecord:
+    """The success receipt cannot be written and the compensating withdraw fails too."""
+
+    partition = MemoryPartition.for_item(record.item)
+    store = world.representations
+    original = store.put_record
+
+    def put_record(candidate: RepresentationRecord, *, expected_digest: str | None) -> None:
+        current = store.record(candidate.partition_digest, candidate.representation_version)
+        if current is not None and current.state is RepresentationState.ACTIVE and candidate.state is RepresentationState.BUILDING:
+            raise ConnectionError("representation store unavailable")
+        original(candidate, expected_digest=expected_digest)
+
+    world.rep_audit.accept = lambda event: str(event["action"]).endswith(".denied")
+    store.put_record = put_record
+    try:
+        assert_error(lambda: world.rebuild(record), "CONTROL_PLANE_UNAVAILABLE", "AUDIT_UNAVAILABLE")
+    finally:
+        del store.put_record
+        world.rep_audit.accept = None
+    stranded = store.record(partition.digest, PIN_V2.representation_version)
+    assert stranded is not None and stranded.state is RepresentationState.ACTIVE and stranded.audit_ref is not None
+    assert successes(world, REBUILD) == [] and not world.rep_audit.contains(stranded.audit_ref)
+    assert world.coordinator.metrics()[("withdraw", "INCOMPLETE")] == 1
+    return stranded
+
+
+def check_unaudited_activation_never_serves(world: World, fresh: Any = None) -> None:
+    records = populate(world)
+    partition = MemoryPartition.for_item(records[0].item)
+    vector = world.coordinator.embed_query(PROFILE_V2, "supply route")
+    stranded = strand_unaudited_active(world, records[0])
+    # Left ACTIVE in the store, but without a success receipt it never serves.
+    assert_denied(world, SEARCH, lambda: world.search_v2("supply route"), "REPRESENTATION_NOT_READY", "REPRESENTATION_UNAUDITED")
+    assert_denied(world, SEARCH, lambda: world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=3), "REPRESENTATION_NOT_READY", "REPRESENTATION_UNAUDITED")
+    assert_denied(world, INVALIDATE, lambda: world.invalidate(records[0]), "REPRESENTATION_NOT_READY", "REPRESENTATION_UNAUDITED")
+    if fresh is not None:
+        # Durable: a new coordinator over the same stores refuses it as well.
+        other = fresh(world)
+        assert_denied(other, SEARCH, lambda: other.search_v2("supply route"), "REPRESENTATION_NOT_READY", "REPRESENTATION_UNAUDITED")
+    # An unavailable receipt lookup fails closed.
+    world.rep_audit.lookup_fails = True
+    assert_denied(world, SEARCH, lambda: world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=3), "CONTROL_PLANE_UNAVAILABLE", "AUDIT_UNAVAILABLE")
+    world.rep_audit.lookup_fails = False
+    assert successes(world, REBUILD) == []
+    # A rebuild with a writable audit store recovers: one receipt, ACTIVE, served.
+    receipt = world.rebuild(records[0], op="rebuild-2")
+    final = world.representations.record(partition.digest, PIN_V2.representation_version)
+    assert final is not None and final.state is RepresentationState.ACTIVE and final.audit_ref == receipt.audit_ref != stranded.audit_ref
+    assert [(e["operation_id"], e["audit_ref"]) for e in successes(world, REBUILD)] == [("rebuild-2", receipt.audit_ref)]
+    served = refs(world.search_v2("supply route"))
+    assert served and set(served) <= {r.item.version_ref for r in records}
+    world.rep_audit.lookup_fails = True
+    assert_denied(world, SEARCH, lambda: world.search_v2("supply route"), "CONTROL_PLANE_UNAVAILABLE", "AUDIT_UNAVAILABLE")
+    world.rep_audit.lookup_fails = False
+
+
+def test_unit_an_unaudited_activation_never_serves_even_if_the_withdraw_fails() -> None:
+    check_unaudited_activation_never_serves(unit_world())
+
+
+def test_unit_an_active_record_without_audit_ref_never_serves_nor_looks_up() -> None:
+    world = unit_world()
+    records = populate(world)
+    world.rebuild(records[0])
+    partition = MemoryPartition.for_item(records[0].item)
+    key = (partition.digest, PIN_V2.representation_version)
+    # Only an in-process store can hold it: the record parser rejects it.
+    world.representations.records[key] = dataclasses.replace(world.representations.records[key], audit_ref=None)
+    world.rep_audit.lookup_fails = True  # a lookup would fail AUDIT_UNAVAILABLE instead
+    vector = world.coordinator.embed_query(PROFILE_V2, "supply route")
+    assert_denied(world, SEARCH, lambda: world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=3), "REPRESENTATION_NOT_READY", "REPRESENTATION_UNAUDITED")
+
+
+def test_unit_a_withdraw_lost_to_a_newer_operation_leaves_that_operation_s_record() -> None:
+    world = unit_world()
+    records = populate(world)
+    partition = MemoryPartition.for_item(records[0].item)
+    key = (partition.digest, PIN_V2.representation_version)
+
+    def accept(event: Any) -> bool:
+        if str(event["action"]).endswith(".denied"):
+            return True
+        # A newer operation takes the record over before the receipt is refused.
+        current = world.representations.records[key]
+        world.representations.put_record(dataclasses.replace(current, state=RepresentationState.BUILDING, manifest_digest=None, audit_ref=None, operation_id="newer"), expected_digest=current.digest)
+        return False
+
+    world.rep_audit.accept = accept
+    assert_error(lambda: world.rebuild(records[0]), "CONTROL_PLANE_UNAVAILABLE", "AUDIT_UNAVAILABLE")
+    world.rep_audit.accept = None
+    record = world.representations.records[key]
+    assert (record.operation_id, record.state) == ("newer", RepresentationState.BUILDING)
+    assert successes(world, REBUILD) == [] and world.coordinator.metrics()[("withdraw", "SUPERSEDED")] == 1
+    assert_denied(world, SEARCH, lambda: world.search_v2("supply route"), "REPRESENTATION_NOT_READY", "REPRESENTATION_REBUILDING")
+
+
+def test_unit_a_transiently_failing_withdraw_is_retried_within_its_bound() -> None:
+    world = unit_world()
+    records = populate(world)
+    partition = MemoryPartition.for_item(records[0].item)
+    store = world.representations
+    original = store.put_record
+    failures: list[str] = []
+
+    def put_record(candidate: RepresentationRecord, *, expected_digest: str | None) -> None:
+        current = store.record(candidate.partition_digest, candidate.representation_version)
+        if current is not None and current.state is RepresentationState.ACTIVE and candidate.state is RepresentationState.BUILDING and not failures:
+            failures.append(candidate.operation_id)
+            raise ConnectionError("transient")
+        original(candidate, expected_digest=expected_digest)
+
+    store.put_record = put_record  # type: ignore[method-assign]
+    world.rep_audit.accept = lambda event: str(event["action"]).endswith(".denied")
+    assert_error(lambda: world.rebuild(records[0]), "CONTROL_PLANE_UNAVAILABLE", "AUDIT_UNAVAILABLE")
+    world.rep_audit.accept = None
+    del store.put_record
+    record = store.record(partition.digest, PIN_V2.representation_version)
+    assert failures == ["rebuild-1"] and record.state is RepresentationState.BUILDING and record.audit_ref is None
+    assert ("withdraw", "INCOMPLETE") not in world.coordinator.metrics()
+    assert_denied(world, SEARCH, lambda: world.search_v2("supply route"), "REPRESENTATION_NOT_READY", "REPRESENTATION_REBUILDING")
+
+
+def check_search_denials_carry_the_caller(world: World) -> None:
+    records = populate(world)
+    partition = MemoryPartition.for_item(records[0].item)
+    vector = world.coordinator.embed_query(PROFILE_V2, "supply route")
+    world.rebuild(records[0])
+    world.admit("late", "supply route reopened")
+    error = assert_denied(world, SEARCH, lambda: world.search_v2("supply route", operation_id="search-77"), "REPRESENTATION_NOT_READY", "REPRESENTATION_INCOMPLETE")
+    event = world.rep_audit.events[-1]
+    assert error.correlation_id == CALLER.correlation_id
+    assert (event["correlation_id"], event["operation_id"], event["causation_id"], event["governed_context_digest"]) == (CALLER.correlation_id, "search-77", "search-77", CALLER.digest())
+    # A port call outside any search carries no caller: nothing is invented.
+    assert_denied(world, SEARCH, lambda: world.coordinator.vector_candidates(partition, PROFILE_V2, vector, limit=3), "REPRESENTATION_NOT_READY", "REPRESENTATION_INCOMPLETE")
+    event = world.rep_audit.events[-1]
+    assert (event["correlation_id"], event["operation_id"], event["causation_id"], event["governed_context_digest"]) == (None, None, None, None)
+    # Without a binding the search fails closed before any representation lookup.
+    before = list(world.rep_audit.events)
+    body = request(RetrievalMode.VECTOR, text="supply route", query_vector=vector, model=MODEL_V2)
+    assert_error(lambda: world.service().search(body, binding=None), "AUTHENTICATION_REQUIRED", "BINDING_MISSING")
+    assert world.rep_audit.events == before
+    # The scope of one search service never reaches another coordinator.
+    other = unit_world()
+    other_records = populate(other)
+    other.rebuild(other_records[0])
+    other.admit("late", "supply route reopened")
+    other_partition = MemoryPartition.for_item(other_records[0].item)
+    seen: list[str | None] = []
+    real = world.coordinator.vector_candidates
+
+    def nested(*args: Any, **kwargs: Any) -> Any:
+        with pytest.raises(MemoryAdmissionError):
+            other.coordinator.vector_candidates(other_partition, PROFILE_V2, vector, limit=3)
+        seen.append(other.rep_audit.events[-1]["correlation_id"])
+        return real(*args, **kwargs)
+
+    world.coordinator.vector_candidates = nested  # type: ignore[method-assign]
+    with pytest.raises(MemoryAdmissionError):
+        world.search_v2("supply route")
+    del world.coordinator.vector_candidates
+    assert seen and set(seen) == {None}
+
+
+def test_unit_search_denials_carry_the_caller_correlation() -> None:
+    check_search_denials_carry_the_caller(unit_world())
+
+
+def test_an_unaudited_activation_never_serves_on_real_backends(backends: Backends) -> None:
+    check_unaudited_activation_never_serves(backends.world(), backends.fresh)
+
+
+def test_search_denials_carry_the_caller_correlation_on_real_backends(backends: Backends) -> None:
+    check_search_denials_carry_the_caller(backends.world())
