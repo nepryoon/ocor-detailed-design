@@ -1,12 +1,12 @@
 {
   "assumptions": [
-    "No task completion or global requirement qualification from a candidate.",
-    "Original scanner unchanged; two new evidence paths and their G5 manifest are the sole planning allowlist extension.",
-    "REM18 underlying teardown defect remains open; current campaign removes only recorded session resources."
+    "OCOR-DEV-0050 completed only by sealed evidence merged on main after independent GO; no global requirement qualification.",
+    "Nessun gate, allowlist o criterio modificato in integrazione; diviso in due PR per rispettare scope task/ e piano governed/.",
+    "REM18 underlying teardown defect remains open."
   ],
-  "base_sha": "f0d684a834017614e3437ff08d43648f43fae3b9",
-  "baseline_commit": "f0d684a834017614e3437ff08d43648f43fae3b9",
-  "branch": "governed/state-sync-ocor-dev-0050-repair2",
+  "base_sha": "e459cd1dc99c9ee9f88e2644b0b7273e2fb44c4f",
+  "baseline_commit": "e459cd1dc99c9ee9f88e2644b0b7273e2fb44c4f",
+  "branch": "governed/state-sync-ocor-dev-0050-sealed",
   "changed_paths": [
     "reports/development/EXECUTION_STATE.json",
     "reports/development/MODEL_HANDOFF.json",
@@ -14,27 +14,44 @@
   ],
   "ci": {
     "state_sync_status": "CI_REQUIRED_BEFORE_EXACT_HEAD_MERGE",
-    "task_status": "NOT_EXECUTED_NEW_HEAD_NO_PR_BEFORE_VERDICT"
+    "task_status": "PASS_EXACT_HEAD_13_REQUIRED_PR182_PR185_MERGED"
   },
   "ci_observations": {
     "182": {
-      "failed": [
-        "supply-chain"
-      ],
-      "head_sha": "8e0cc2fdda112a1ab19c42f0570b55179e572812",
-      "raw_sha256": "cb5e5a3ecb99a732b2a6f27c01f5df4852e6f131b9c1ad1fc85bb6562799b97c",
-      "required_passed": 12,
+      "head_sha": "5660ce6366e214f572fa46daf3a3f2e0141db6ae",
+      "merge_commit": "bf33012939fcb6252ca31db136a2db0548eb861f",
+      "observed_at": "2026-10-09T04:10:56.315356+00:00",
+      "raw_observation_sha256": "20fd1dd021d5038e983e7bd98362f43afec4d6bee4c050731461d3fee5b5fe92",
+      "required_passed": 13,
       "required_total": 13,
       "run_ids": [
-        37875427535,
-        37875427538,
-        37875427540,
-        37875427565,
-        37875427566,
-        37875427602,
-        37875427628
+        37882091473,
+        37882091485,
+        37882091524,
+        37882091540,
+        37882091574,
+        37882091584,
+        37882091617
       ],
-      "state": "OPEN"
+      "state": "MERGED"
+    },
+    "185": {
+      "head_sha": "79a79120a75956f8a479e779fad962b65b77378f",
+      "merge_commit": "e459cd1dc99c9ee9f88e2644b0b7273e2fb44c4f",
+      "observed_at": "2026-10-09T04:21:11.873605+00:00",
+      "raw_observation_sha256": "75e85fbb05919323282fab8700f873b13b0b5970cf342e18ff6f9ac1919c69aa",
+      "required_passed": 13,
+      "required_total": 13,
+      "run_ids": [
+        37882797373,
+        37882797410,
+        37882797417,
+        37882797440,
+        37882797510,
+        37882797512,
+        37882797526
+      ],
+      "state": "MERGED"
     }
   },
   "claims": {
@@ -432,9 +449,15 @@
     }
   ],
   "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
-  "current_task": "OCOR-DEV-0050 repair2 candidate completed; external verifier pending",
-  "evidence_paths": [],
-  "exact_next_action": "Attendere il verifier esterno Grok4.7 via Cursor per OCOR-DEV-0050-88ed051dad54-2, HEAD esatto 88ed051dad5448f525680854025e79e4f161bceb. GO: sigillare soltanto la nuova riqualifica su governed/ocor-dev-0050-synthetic-secret-fixtures, aprire PR governata sostitutiva di182 (preservare sigilli storici), attendere13 check richiesti verdi su HEAD esatto, merge --match-head-commit e state sync. NO_GO: budget2 esaurito, escalation del solo0050, proseguire con REM17/lavoro pronto senza nuova riparazione. Poi qualifica REM17bc811af e integrazione0049 subordinata a chiusura verificataREM17; nessuna riparazione0049.",
+  "current_task": "OCOR-DEV-0050 sealed and merged; state sync",
+  "evidence_paths": [
+    "reports/evidence/G5/OCOR-DEV-0050.json",
+    "reports/evidence/G5/OCOR-DEV-0050.log",
+    "reports/evidence/G5/OCOR-DEV-0050.requalified.json",
+    "reports/evidence/G5/OCOR-DEV-0050.requalified.log",
+    "reports/evidence/G5/MANIFEST.json"
+  ],
+  "exact_next_action": "OCOR-DEV-REM-0017: qualifica del candidato bc811af (PR #169 draft, governed/ocor-dev-rem-0017-ci-provision-spire) secondo REM-0017-PRIORITY/REM-0017-CI-ARCHIVE-ACQUISITION/REM-0017-CI-CAMPAIGN-BUDGET (coppia di run CI autorizzata, 75/45 min, arresto su OOM/riavvio), poi verifica indipendente; integrazione OCOR-DEV-0049 (GO b14e4bf, PR #176) subordinata alla chiusura verificata di REM-0017, nessuna riparazione 0049. Se REM-0017 resta in attesa di un evento esterno: OCOR-DEV-0051:implementation (pronto: hard_dependencies 0023/0025/0050 completate). RVW-03, INFO-A, INFO-C, REM-0018 restano aperti e non bloccano G5.",
   "head_sha": "git:HEAD",
   "head_sha_resolver": "git rev-parse HEAD on versioned handoff branch",
   "independent_verification": {
@@ -442,11 +465,13 @@
     "request_id": "OCOR-DEV-0050-88ed051dad54-2",
     "roles": {
       "implementer": "Codex (OpenAI), repair cycles 1 and 2",
-      "independence": "external loop only; separate process, context and provider; task touched by Claude Code fallback",
+      "independence": "external loop only; separate process, context and provider",
+      "integration_agent": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva (quota Codex esaurita); seal 79a7912 by Codex",
       "original_implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva del loop",
       "verifier": "Grok 4.7 (Cursor CLI; verifier: cursor)"
     },
-    "status": "PENDING",
+    "status": "GO_FOR_EVIDENCE_SEAL",
+    "verdict_sha256": "c55f33c55012dbfd86e2610b037d0c65eca93995e63b56a45da309e3f78ffe21",
     "verifier": "cursor"
   },
   "local_full_suite": {
@@ -749,36 +774,58 @@
   "schema_version": "1.0",
   "security_observability_notes": "Only synthetic payload assembly changed; byte hashes, reasons and all198 node IDs identical. Product boundary/scanner/workflows unchanged; original sealed evidence immutable. Scoped ownership cleanup has zero Docker inventory delta.",
   "source_reference": {
-    "base_sha": "8e0cc2fdda112a1ab19c42f0570b55179e572812",
-    "branch": "governed/ocor-dev-0050-synthetic-secret-fixtures",
-    "changed_paths": [
-      "ocor-runtime/tests/tasks/test_ocor_dev_0050.py",
-      "reports/evidence/G5/MANIFEST.json",
-      "reports/evidence/G5/OCOR-DEV-0050.requalified.json",
-      "reports/evidence/G5/OCOR-DEV-0050.requalified.log",
-      "reports/planning/OCOR_PLAN_RUN_STATE.json",
-      "scripts/validate_ocor_development_plan.py"
-    ],
-    "code_commit": "b6b9f141ff0fec56e1fc8598d9ed9b9c8c903720",
-    "evidence_paths": [
-      "reports/evidence/G5/OCOR-DEV-0050.requalified.json",
-      "reports/evidence/G5/OCOR-DEV-0050.requalified.log",
-      "reports/evidence/G5/MANIFEST.json"
-    ],
-    "evidence_sha256": "8c2005e99673260e88d52c913cb51633b4840f1cce4050d271634360bf4de132",
-    "head_sha": "88ed051dad5448f525680854025e79e4f161bceb",
-    "integration_base_sha": "f0d684a834017614e3437ff08d43648f43fae3b9",
-    "raw_output_sha256": "88f723345441c04c179b767876afc74df38cb0fc19bb21f1f4c8ebe63f6820b0",
-    "repair_cycle": 2,
-    "request_id": "OCOR-DEV-0050-88ed051dad54-2",
-    "roles": {
-      "implementer": "Codex (OpenAI), repair cycles 1 and 2",
-      "independence": "external loop only; separate process, context and provider; task touched by Claude Code fallback",
-      "original_implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva del loop",
-      "verifier": "Grok 4.7 (Cursor CLI; verifier: cursor)"
+    "accepted_head": "88ed051dad5448f525680854025e79e4f161bceb",
+    "final_tree_equals_simulated_merge": "571332bbf49746bae948b50bfc6ac4e41effc50e",
+    "method": "Integrazione in due PR senza modificare byte verificati: #182 (task/, fast-forward a 5660ce6, antenato dell'HEAD verificato; solo file nel perimetro del task) e #185 (governed/, HEAD 79a7912 invariato: riqualifica, sigillo, manifest G5, allowlist +3 path, self-hash). Motivo: il primo run di #185 falliva tooling-policy (piano 36 PASS/1 FAIL authorized planning-only diff su model.py/test/OCOR-DEV-0050.json/.log, file posseduti dal task) e modificare l allowlist avrebbe cambiato un input sigillato della riqualifica. Eventi PR rigenerati con chiusura/riapertura perche il base.sha del payload restava stale (a184c34 per #182, 4f361c2 per #185); run stale annullati e non usati come qualifica.",
+    "pull_requests": {
+      "182": {
+        "head_sha": "5660ce6366e214f572fa46daf3a3f2e0141db6ae",
+        "merge_commit": "bf33012939fcb6252ca31db136a2db0548eb861f",
+        "observed_at": "2026-10-09T04:10:56.315356+00:00",
+        "raw_observation_sha256": "20fd1dd021d5038e983e7bd98362f43afec4d6bee4c050731461d3fee5b5fe92",
+        "required_passed": 13,
+        "required_total": 13,
+        "run_ids": [
+          37882091473,
+          37882091485,
+          37882091524,
+          37882091540,
+          37882091574,
+          37882091584,
+          37882091617
+        ],
+        "status": "MERGED_EXACT_HEAD_13_REQUIRED",
+        "superseded_attempts": "run 37881657719 e 37881850988 delivery-activation FAIL per base.sha stale a184c34 (three-dot include stato di main); non qualificanti"
+      },
+      "185": {
+        "head_sha": "79a79120a75956f8a479e779fad962b65b77378f",
+        "merge_commit": "e459cd1dc99c9ee9f88e2644b0b7273e2fb44c4f",
+        "observed_at": "2026-10-09T04:21:11.873605+00:00",
+        "raw_observation_sha256": "75e85fbb05919323282fab8700f873b13b0b5970cf342e18ff6f9ac1919c69aa",
+        "required_passed": 13,
+        "required_total": 13,
+        "run_ids": [
+          37882797373,
+          37882797410,
+          37882797417,
+          37882797440,
+          37882797510,
+          37882797512,
+          37882797526
+        ],
+        "status": "MERGED_EXACT_HEAD_13_REQUIRED",
+        "superseded_attempts": "run 37881289774 tooling-policy FAIL (base 4f361c2, file task non ancora su main) e 37882714033 (payload stale 4f361c2); non qualificanti"
+      }
     },
-    "status": "CANDIDATE_AWAITING_INDEPENDENT_VERIFICATION",
-    "worktree": ".ocor/worktrees/ocor-dev-0050-synthetic-secret-fixtures"
+    "seal_invariants_on_main": "PASS",
+    "sealed_manifest_sha256": "82adfc919120728935eb2fb368e8567f3d6058e1b13b62ac0f508012202dc765",
+    "sealed_raw_sha256": "88f723345441c04c179b767876afc74df38cb0fc19bb21f1f4c8ebe63f6820b0",
+    "sealed_record_sha256": "3441ba1d36568d296fa64d66c1174c07e832056b2f27f6221dc05ee2acc2a8c6",
+    "verdict": {
+      "request_id": "OCOR-DEV-0050-88ed051dad54-2",
+      "sha256": "c55f33c55012dbfd86e2610b037d0c65eca93995e63b56a45da309e3f78ffe21",
+      "verdict": "GO_FOR_EVIDENCE_SEAL"
+    }
   },
   "task_id": "OCOR-DEV-0050",
   "teardown": {
@@ -801,9 +848,8 @@
     "OCOR-DEV-REM-0017",
     "OCOR-DEV-0049",
     "OCOR-DEV-REM-0018",
-    "REM-0017-CI-ARCHIVE-ACQUISITION",
-    "OCOR-DEV-0050-CI-SYNTHETIC-FIXTURES"
+    "REM-0017-CI-ARCHIVE-ACQUISITION"
   ],
-  "updated_at": "2026-10-09T03:06:49.489804+00:00",
-  "worktree": ".ocor/worktrees/state-sync-ocor-dev-0050-repair2"
+  "updated_at": "2026-10-09T04:22:57Z",
+  "worktree": ".ocor/worktrees/state-sync-ocor-dev-0050-sealed"
 }
