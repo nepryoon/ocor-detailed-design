@@ -9,6 +9,16 @@
       "path": "OCOR-DEV-0050.requalified.log",
       "sha256": "88f723345441c04c179b767876afc74df38cb0fc19bb21f1f4c8ebe63f6820b0",
       "task_id": "OCOR-DEV-0050-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0051.json",
+      "sha256": "fb292268de8affef9a9686f9eaf01f7d942e8f7d435db8f7971d6d024b377be7",
+      "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "path": "OCOR-DEV-0051.log",
+      "sha256": "6c0a902e1b410f80fb9b4d502edbdb916a6f9d4a21db4760dcae30ea924c9750",
+      "task_id": "OCOR-DEV-0051-RAW"
     }
   ],
   "created_at": "2026-10-08T18:33:05Z",
@@ -121,6 +131,69 @@
       "requirement_id": "FR-140",
       "status": "PASS",
       "task_id": "OCOR-DEV-0050"
+    },
+    {
+      "case_id": "OCOR-DEV-0051-COMMIT-ALL-FOUR-STORES-WITH-BOUND-POINTERS",
+      "command": "admitted version committed to real PostgreSQL metadata, OpenBao-transit-encrypted content-addressed content, PostgreSQL full-text and Qdrant vector projections; version and pointers COMMITTED in one metadata transaction; every index entry carries the exact closed pointer (item/version, digests, representation version/digest, partition, marking, policy, scope, deletion epoch); receipt links the admission audit; backend IDs never cross the port; durable across fresh adapters",
+      "evidence_path": "OCOR-DEV-0051.json",
+      "raw_output_path": "OCOR-DEV-0051.log",
+      "requirement_id": "FR-115",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "case_id": "OCOR-DEV-0051-VERSIONED-HEAD-POINTER-AND-IMMUTABLE-REPRESENTATIONS",
+      "command": "head pointer advances only from n-1 to n (v3 before v2 refused, non-queryable); exact history readable; idempotent and concurrent re-commit converge to one row set; a different representation for a committed version is a stage conflict with zero writes",
+      "evidence_path": "OCOR-DEV-0051.json",
+      "raw_output_path": "OCOR-DEV-0051.log",
+      "requirement_id": "FR-115",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "case_id": "OCOR-DEV-0051-REJECTED-BEFORE-ANY-STORE-WRITE",
+      "command": "non-admitted, tampered, digest-mismatched, embedding-missing/unbound/dimension/digest-mismatched and non-rebuildable inputs refused with zero writes on every real backend; refusals carry the admission correlation id",
+      "evidence_path": "OCOR-DEV-0051.json",
+      "raw_output_path": "OCOR-DEV-0051.log",
+      "requirement_id": "FR-115",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "case_id": "OCOR-DEV-0051-COMPARTMENT-PARTITIONS-PHYSICAL-AND-LOGICAL",
+      "command": "every attribute of the ADD \u00a72.6 isolation tuple changes the partition; separate content addresses, PostgreSQL tables and Qdrant collections per partition; identical text/vectors never cross partitions; out-of-partition reads indistinguishable from absent; ciphertext moved across partitions does not open",
+      "evidence_path": "OCOR-DEV-0051.json",
+      "raw_output_path": "OCOR-DEV-0051.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "case_id": "OCOR-DEV-0051-PARTIAL-STORE-VISIBILITY-NON-QUERYABLE-AND-RECONCILED",
+      "command": "Qdrant paused mid-commit: PENDING version with physically present content/lexical entry is not queryable, countable or materialisable; grace window protects in-flight commits; reconcile retracts projections and content, retry commits; crash before the metadata switch rolled forward by reconcile; acknowledged-but-lost and wrong-pointer index writes refused by read-back",
+      "evidence_path": "OCOR-DEV-0051.json",
+      "raw_output_path": "OCOR-DEV-0051.log",
+      "requirement_id": "FR-115",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "case_id": "OCOR-DEV-0051-UNBOUND-REPRESENTATION-NON-QUERYABLE-AND-RECONCILED",
+      "command": "forged Qdrant points (fabricated ref, other-partition pointer, marking downgrade, never-staged version) outranking every bound entry and a tampered PostgreSQL lexical row never occupy result slots; reconcile removes exactly them; unbound backlog beyond the scan bound fails closed",
+      "evidence_path": "OCOR-DEV-0051.json",
+      "raw_output_path": "OCOR-DEV-0051.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "case_id": "OCOR-DEV-0051-ENCRYPTED-CONTENT-AND-METADATA-INTEGRITY-FAIL-CLOSED",
+      "command": "swapped ciphertext refused by OpenBao (CONTENT_UNSEALABLE); re-sealed foreign plaintext refused by digest (CONTENT_DIGEST_MISMATCH); metadata rewritten in place detected; committed projection drift blocks materialisation and is not hidden by re-commit",
+      "evidence_path": "OCOR-DEV-0051.json",
+      "raw_output_path": "OCOR-DEV-0051.log",
+      "requirement_id": "FR-115",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0051"
     }
   ],
   "schema_version": "1.0"
