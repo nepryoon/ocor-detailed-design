@@ -352,3 +352,25 @@ solo con decisione. Nessuna nuova riparazione0049, suo GO/sigillo esistente pres
 Rollback: nuovo revert del change set non integrato; preservare record storici sigillati.
 G5 resta pronto; prossima unità riacquisizione localeFuseki distinta e poi0050.
 E1=0,E2=0,zero Verified e claim NO-GO invariati. Nessun sigillo o merge di questo REM.
+
+
+## Riallineamento a main e richiesta di verifica — 2026-10-09
+
+Implementatore di riserva Claude Code (Anthropic, claude-opus-5-5; quota Codex
+esaurita); verifier previsto Grok 4.7 via Cursor CLI, processo e contesto separati.
+Nuovo record `repair-1-realign.json/.log` (supersede il solo candidato non sigillato
+`repair-1-archive.json`; tutti i raw precedenti restano invariati).
+
+- Merge di `origin/main` `7b63f61` (`730759b`): stato da main, voci di log REM
+  preservate, manifest G2 con entrambe le serie di riqualifiche. La ricetta
+  ADD→COPY entra con l'identità locale governata `6534156b…` già su main
+  (FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE, VF-001 di quel verdetto ora chiuso).
+- Deriva introdotta dal merge (0050: allowlist del validator di piano; 0075:
+  Dockerfile) chiusa con riqualifiche sullo stack reale: FULL REM 1299 PASS/zero
+  skip in 373.5 s, suite 0050 198 PASS, bootstrap di sviluppo con identità esatta,
+  readiness tipizzata e 7 fault bounded recuperati; deriva 0/171.
+- Candidato 0049 `df444af` in locale: terza interruzione per riavvio di containerd
+  nel nodo kind sul tick del CronJob di backup (1379 PASS prima dello stop): FAIL non
+  qualificante, DR `REM-0017-KIND-CONTAINERD-CRASH` aggiornata. La qualifica del
+  candidato è quella della CI sull'HEAD esatto.
+- E1=0, E2=0, zero Verified, claim NO-GO invariati; nessun sigillo o merge.

@@ -57,3 +57,38 @@ viene riscritto. G6/G7 e integrazione0049 restano soggetti alle dipendenze esist
 G5 è pronto:0050 e successivi raggiungibili possono proseguire. La riacquisizione
 locale Fuseki già autorizzata resta un'unità governata distinta dopo il Dockerfile.
 E1=0,E2=0,zero Verified; nessuna modifica inputs/ o promozione di claim.
+
+## Terza occorrenza e diagnosi bounded — 2026-10-09
+
+Contesto mutato rispetto alle occorrenze precedenti: HEAD REM riallineato a
+`origin/main` `7b63f61` (merge `730759b`, riqualifiche 0050/0075), stack
+ricreato da zero, nuovo cluster kind, stesse versioni e stessi byte approvati
+(`kindest/node:v1.33.1@sha256:0500722…`, helm/kind/kubectl del lock). Candidato
+immutabile `df444af855e884d7783612b302e008b90105fe13`: **1379 PASS, zero
+fail/skip prima dell'interruzione, 2531 s**; il supervisore ha rilevato il
+riavvio di containerd (`restarts: 1`, PID 111→8957) alle **05:30:01Z** nel test
+`test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness`,
+ha raccolto diagnostica e interrotto la campagna: **FAIL, non qualificante**.
+`campaign_result.json` SHA256 `79e79ab0eefd02099b2c229171ff6ef3eb55c51f1fe30eb286374e0337d4ab38`,
+diagnostica SHA256 `d771bd43c09fc55d7a7c5b2ed38e64c1ca7a78eb7f8e18d37e61c79c645cdaeb`;
+raw nel record `reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-realign.json`.
+Teardown senza cluster kind né container/volumi `ocor-bootstrap` residui.
+
+Correlazione osservata (non causa provata): tutte e tre le terminazioni cadono
+sul confine del tick `*/15` del CronJob di backup, con il `RunPodSandbox` del pod
+schedulato in corso mentre il job di backup manuale del test è attivo:
+13:15:00Z (`ocor-poc-backup-29857755`), 14:59:57Z (pod del backup manuale a 3 s
+dal tick delle 15:00) e 05:30:00Z (`ocor-poc-backup-29858730`). Il journal del
+kernel dell'host non registra segfault (il segnale è interno al nodo kind); il
+backtrace completo del core resta NOT_EXECUTED. Lo stesso candidato passa in CI
+sui runner GitHub (`fe82366`: 1491 PASS/4200.959 s; `bc811af`: 1491 PASS/4425.920 s,
+zero skip), quindi il difetto è riprodotto solo su questo host
+(kernel 7.0.0-38-generic, Docker locale).
+
+La riproduzione 3/3 nello stesso punto rende inutile un'ulteriore FULL locale
+nelle stesse condizioni. Resta riservato al Product Owner (opzione 2) un cambio
+di immagine/runtime del nodo kind o di profilo qualificante; nessuna modifica
+di 0049, del monitor o dei criteri è stata fatta per evitare il crash.
+La qualifica di REM-0017 è richiesta sulla CI dell'HEAD esatto (oggetto del REM)
+con questo limite locale dichiarato come NOT_EXECUTED/FAIL, non come PASS.
+Registrato da Claude Code (implementatore di riserva del loop).
