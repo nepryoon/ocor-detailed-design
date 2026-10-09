@@ -12,12 +12,12 @@
     },
     {
       "path": "OCOR-DEV-0051.json",
-      "sha256": "fb292268de8affef9a9686f9eaf01f7d942e8f7d435db8f7971d6d024b377be7",
+      "sha256": "52c29c96a9e429d691501ab324164f551f3af14c37e27464d9052874e8a2f8d5",
       "task_id": "OCOR-DEV-0051"
     },
     {
       "path": "OCOR-DEV-0051.log",
-      "sha256": "6c0a902e1b410f80fb9b4d502edbdb916a6f9d4a21db4760dcae30ea924c9750",
+      "sha256": "362e334d9e6db432bdae0809efbc4bf8092428317dac953d20f9eef144624e80",
       "task_id": "OCOR-DEV-0051-RAW"
     }
   ],
@@ -170,7 +170,7 @@
     },
     {
       "case_id": "OCOR-DEV-0051-PARTIAL-STORE-VISIBILITY-NON-QUERYABLE-AND-RECONCILED",
-      "command": "Qdrant paused mid-commit: PENDING version with physically present content/lexical entry is not queryable, countable or materialisable; grace window protects in-flight commits; reconcile retracts projections and content, retry commits; crash before the metadata switch rolled forward by reconcile; acknowledged-but-lost and wrong-pointer index writes refused by read-back",
+      "command": "Qdrant paused mid-commit: PENDING version with physically present content/lexical entry is not queryable, countable or materialisable; grace window protects in-flight commits; reconcile retracts projections and content, retry commits; crash before the metadata switch rolled forward by reconcile; acknowledged-but-lost and wrong-pointer index writes refused by read-back; repair 1 (VF-001): a substituted lexical document, a substituted vector and a vector one binary32 ulp off, each under the correct pointer, fail PROJECTION_UNVERIFIED before the visibility switch on real PostgreSQL/Qdrant, are not found by either body, are retracted (never rolled forward) by reconcile, and the honest re-commit binds; the binary32 read-back holds for 24 committed l2-unit vectors",
       "evidence_path": "OCOR-DEV-0051.json",
       "raw_output_path": "OCOR-DEV-0051.log",
       "requirement_id": "FR-115",
@@ -188,7 +188,7 @@
     },
     {
       "case_id": "OCOR-DEV-0051-ENCRYPTED-CONTENT-AND-METADATA-INTEGRITY-FAIL-CLOSED",
-      "command": "swapped ciphertext refused by OpenBao (CONTENT_UNSEALABLE); re-sealed foreign plaintext refused by digest (CONTENT_DIGEST_MISMATCH); metadata rewritten in place detected; committed projection drift blocks materialisation and is not hidden by re-commit",
+      "command": "swapped ciphertext refused by OpenBao (CONTENT_UNSEALABLE); re-sealed foreign plaintext refused by digest (CONTENT_DIGEST_MISMATCH); metadata rewritten in place detected; committed projection drift blocks materialisation and is not hidden by re-commit; repair 1: document/tsvector/vector body drift after commit blocks materialisation (PROJECTION_DRIFT) and restoring the body restores it (VF-001); a pass-through cipher at 1, 3, 12 and 48 bytes (unit) and at 1, 12 and 35 bytes on real PostgreSQL, and real OpenBao transit used with a fixed context, are refused CONTENT_NOT_ENCRYPTED with no content row (VF-002); chance plaintext inside one seal is resealed, persistent plaintext refused after SEAL_ATTEMPTS; 1, 2, 3 and 12 byte payloads commit encrypted by real OpenBao transit; a payload inside the fixed transit framing ('vault') fails closed (documented limit)",
       "evidence_path": "OCOR-DEV-0051.json",
       "raw_output_path": "OCOR-DEV-0051.log",
       "requirement_id": "FR-115",
