@@ -1,6 +1,6 @@
 # FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE
 
-Status: OPEN_PO_DECISION_REQUIRED — solo identità del bootstrap locale.
+Status: RESOLVED — decisione PO2026-10-08 eseguita; candidato in verifica indipendente, integrazione pending.
 Data: 2026-10-07. Change set REM-0017 WIP; implementatore Codex.
 
 ## Contesto osservato
@@ -45,3 +45,27 @@ Nessun test escluso, nessun record sigillato modificato, nessuna sostituzione
 tecnologica. REM-0017 resta WIP anche per TEST-INFRA-006 assente su main;
 0049 conserva NO_GO ciclo 6 e nessun ciclo 7 è autorizzato. Proseguire il
 lavoro eseguibile e non promuovere E1/E2/Verified o alcun claim.
+
+
+## Disposition2026-10-08 — autorizzazione ed esecuzione
+
+La decisione del Product Owner FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE adotta
+l’opzione2 dopo la modifica ADD→COPY già pubblicata in REM17bc811af. Questa
+unità separata aggiorna solo l’ID locale del services lock; host, data, vecchio
+valore, nuovo ID, base effettiva, SHA512 e hash della ricetta sono nel companion
+`infra/fuseki/local_identity.lock.json`. Lo schema chiuso e il checker restano
+invariati. La ricetta esatta è archiviata come dati in
+`reports/assurance/FUSEKI-LOCAL-IDENTITY-20261008/build_recipe.txt`; il Dockerfile
+di main resta quello precedente fino all’accettazione separata di REM17.
+
+Qualifica e otto riqualifiche sono candidate PASS; implementatore Codex/OpenAI,
+verifier Claude Code/Anthropic ancora da eseguire in processo e contesto separati.
+Il record macchina e i raw log conservano anche i tentativi non qualificanti.
+Il contesto storico sopra è preservato, senza attribuire alle sue date gli esiti
+successivi. Nessun cambiamento0049 o promozioneREM17; E1/E2/Verified0 e NO-GO
+invariati. Review, sigillo e CI esatta precedono il merge di questa unità.
+
+
+## Integrazione 2026-10-08T16:32:32.334323+00:00
+
+GO_FOR_EVIDENCE_SEAL indipendente Claude Code (claude-opus-5-5) su `1e808f3824a3fae42bf279ea3e05a8f3d71dfe13`; request `FUSEKI-LOCAL-IDENTITY-AFTER-CI-EXERCISE-1e808f3824a3-0`, verdetto SHA256 `f45427b97fe40cf4d58155324bc925bca0b26176520b3f063f4ef8444e27a970`. Candidato e otto riqualifiche sigillati; CI e merge pending. Tre finding low non bloccanti registrati nel candidato. Companion lock come snapshot storico di acquisizione, ricettaCOPY da REM17 non ancora integrata. Nessuna promozione di claim o completamentoREM17/0049.
