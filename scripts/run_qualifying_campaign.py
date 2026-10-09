@@ -1,0 +1,559 @@
+#!/usr/bin/env python3
+"""Run the complete runtime suite, stopping on stack failure or the governed 75-minute full-suite limit.
+
+In CI the suite runs as N >= 2 deterministic parts, each on its own runner and
+stack (45-minute part limit), and an aggregator proves that the union of the
+parts' JUnit equals ``pytest --collect-only`` on the same HEAD
+(PO decision REM-0017-CI-CAMPAIGN-DURATION, 2026-10-09).
+"""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import heapq
+import json
+import shutil
+import os
+import signal
+import subprocess
+import sys
+import time
+import xml.etree.ElementTree as ET
+from collections import Counter
+from pathlib import Path
+from typing import Any
+
+from bootstrap_ci_environment import SessionRecorder, collect_stack_diagnostics, redact_campaign_log
+
+
+FULL_SUITE_LIMIT_SECONDS = 4500
+PO_DECISION_THRESHOLD_SECONDS = 3600
+PART_LIMIT_SECONDS = 2700
+PART_REBALANCE_SECONDS = 1800
+PART_ARTIFACTS = ("partition.json", "campaign_result.json", "runtime_junit_post_approval.xml", "runtime_coverage.data")
+
+# Partition weights only; they never select or exclude a test. Mean seconds per
+# case of each test function >= 3 s in the GitHub-runner PASS of candidate
+# df444af (run on head f55b210, runtime JUnit SHA-256 4ba26f004afe9541...);
+# the Helm case waits for a real */15 CronJob tick, so it carries its worst case.
+DEFAULT_TEST_WEIGHT = 0.1
+# Nodes that may leave their module's part: the Helm case runs on its own kind
+# cluster and passed alone (CI run 37952580435, conditional-infrastructure-0049 part 1/4).
+SEPARABLE_NODES = frozenset({
+    "tests/tasks/test_ocor_dev_0049.py::test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness",
+})
+MEASURED_WEIGHTS = {
+    "tests.mission_thread.test_first_governed_slice::test_a_real_kafka_broker_restart_during_the_event_step_is_detected_and_recovers": 22,
+    "tests.mission_thread.test_first_governed_slice::test_causal_receipt_reproduces_identically_with_the_same_pinned_inputs": 11,
+    "tests.mission_thread.test_first_governed_slice::test_mission_thread_produces_correlated_receipts_across_all_governed_components": 11,
+    "tests.tasks.test_ocor_dev_0019::test_campaign_uses_real_healthy_kafka": 21,
+    "tests.tasks.test_ocor_dev_0021::test_paused_opa_is_denied_within_the_bounded_timeout_with_audit_evidence": 3,
+    "tests.tasks.test_ocor_dev_0021::test_paused_openbao_is_denied_within_the_bounded_timeout_with_audit_evidence": 3,
+    "tests.tasks.test_ocor_dev_0025::test_saga_reports_deletion_incomplete_when_typedb_is_paused_then_recovers": 22,
+    "tests.tasks.test_ocor_dev_0040::test_a_registered_schema_event_publishes_and_is_consumed_preserving_all_fields": 10,
+    "tests.tasks.test_ocor_dev_0040::test_a_replayed_idempotency_key_is_a_safe_no_op_not_a_duplicate_publish": 10,
+    "tests.tasks.test_ocor_dev_0040::test_an_out_of_order_aggregate_effect_is_quarantined_and_never_published": 10,
+    "tests.tasks.test_ocor_dev_0040::test_an_unknown_schema_is_quarantined_and_never_published": 7,
+    "tests.tasks.test_ocor_dev_0040::test_missing_governed_context_is_quarantined_before_publication": 7,
+    "tests.tasks.test_ocor_dev_0040::test_partition_order_is_preserved_for_a_single_aggregate": 14,
+    "tests.tasks.test_ocor_dev_0041::test_a_failed_publish_is_recorded_as_an_immutable_permanent_dead_letter": 6,
+    "tests.tasks.test_ocor_dev_0041::test_a_poisoned_event_cannot_be_replayed_without_explicit_operator_release": 6,
+    "tests.tasks.test_ocor_dev_0041::test_a_valid_event_publishes_through_backpressure_and_is_delivered": 10,
+    "tests.tasks.test_ocor_dev_0041::test_a_valid_replay_preserves_the_original_event_id_and_never_double_publishes": 9,
+    "tests.tasks.test_ocor_dev_0041::test_backpressure_refuses_admission_once_a_tenant_is_at_its_bounded_quota": 7,
+    "tests.tasks.test_ocor_dev_0041::test_operator_release_still_cannot_replay_past_an_incompatible_schema": 7,
+    "tests.tasks.test_ocor_dev_0041::test_repeated_failures_of_the_same_event_are_classified_poison": 7,
+    "tests.tasks.test_ocor_dev_0041::test_replay_of_lost_marking_is_blocked_exactly_like_a_fresh_publish": 7,
+    "tests.tasks.test_ocor_dev_0048::test_client_rejects_peer_with_different_spiffe_id": 6,
+    "tests.tasks.test_ocor_dev_0048::test_installed_bundle_expiry_fails_closed_at_decision_time": 3,
+    "tests.tasks.test_ocor_dev_0048::test_paused_opa_fails_closed_within_bounded_timeout": 3,
+    "tests.tasks.test_ocor_dev_0048::test_repair4_bundle_expiry_during_real_install": 3,
+    "tests.tasks.test_ocor_dev_0048::test_repair4_decision_capped_at_canonical_authority": 4,
+    "tests.tasks.test_ocor_dev_0048::test_repair4_expiry_during_real_secret_read": 3,
+    "tests.tasks.test_ocor_dev_0048::test_repair4_openbao_scheduled_deletion_bounds_lease": 4,
+    "tests.tasks.test_ocor_dev_0048::test_repair4_openbao_token_bounds_lease": 5,
+    "tests.tasks.test_ocor_dev_0048::test_repair4_queued_delegation_expires": 3,
+    "tests.tasks.test_ocor_dev_0048::test_repair4_svid_bounds_identity_and_secret": 19,
+    "tests.tasks.test_ocor_dev_0048::test_repair4_svid_bounds_policy_and_rejects_expired_context": 14,
+    "tests.tasks.test_ocor_dev_0048::test_repair4_token_expiry_during_real_authentication": 3,
+    "tests.tasks.test_ocor_dev_0048::test_repair5_grant_cannot_be_transferred_to_another_workload": 7,
+    "tests.tasks.test_ocor_dev_0049::test_backup_seals_an_encrypted_signed_immutable_recovery_point": 11,
+    "tests.tasks.test_ocor_dev_0049::test_capture_fails_explicitly_when_the_database_is_unreachable": 13,
+    "tests.tasks.test_ocor_dev_0049::test_concurrent_seals_each_download_their_own_index_snapshot": 4,
+    "tests.tasks.test_ocor_dev_0049::test_custodian_signed_coherent_receipt_is_accepted": 11,
+    "tests.tasks.test_ocor_dev_0049::test_custodian_signed_incoherent_receipt_blocks_readiness_reopen_and_admission": 10,
+    "tests.tasks.test_ocor_dev_0049::test_custodian_signed_receipt_incoherent_with_its_checkpoint_is_refused": 10,
+    "tests.tasks.test_ocor_dev_0049::test_custodian_signed_receipt_time_branches": 10,
+    "tests.tasks.test_ocor_dev_0049::test_custodian_signed_receipt_unbound_from_its_recovery_point_is_refused": 10,
+    "tests.tasks.test_ocor_dev_0049::test_custodian_signed_receipt_with_coherent_details_is_accepted": 10,
+    "tests.tasks.test_ocor_dev_0049::test_dependency_fault_blocks_readiness_and_degrades_posture": 13,
+    "tests.tasks.test_ocor_dev_0049::test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness": 1200,
+    "tests.tasks.test_ocor_dev_0049::test_inconsistent_deletion_journal_blocks_materialisation_and_readiness": 29,
+    "tests.tasks.test_ocor_dev_0049::test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate": 11,
+    "tests.tasks.test_ocor_dev_0049::test_mutative_path_reopens_only_by_a_human_bound_to_the_passed_receipt": 6,
+    "tests.tasks.test_ocor_dev_0049::test_new_release_is_ready_only_after_its_own_backup_and_tested_restore": 40,
+    "tests.tasks.test_ocor_dev_0049::test_open_public_egress_blocks_readiness": 3,
+    "tests.tasks.test_ocor_dev_0049::test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested": 24,
+    "tests.tasks.test_ocor_dev_0049::test_policy_digest_in_logs_and_traces_covers_the_complete_opa_inventory": 14,
+    "tests.tasks.test_ocor_dev_0049::test_quota_exceeded_backpressures_without_semantic_downgrade": 16,
+    "tests.tasks.test_ocor_dev_0049::test_readiness_turns_ready_only_with_a_signed_passed_restore_receipt": 5,
+    "tests.tasks.test_ocor_dev_0049::test_receipt_memory_branch_must_match_its_recovery_point": 10,
+    "tests.tasks.test_ocor_dev_0049::test_release_drift_blocks_readiness_and_mutative_commands": 30,
+    "tests.tasks.test_ocor_dev_0049::test_restart_under_another_release_profile_or_pins_blocks_readiness_reopen_and_admission": 4,
+    "tests.tasks.test_ocor_dev_0049::test_restart_under_the_tested_release_is_ready_and_reopenable": 4,
+    "tests.tasks.test_ocor_dev_0049::test_restore_replay_is_deterministic": 15,
+    "tests.tasks.test_ocor_dev_0049::test_restore_scope_mismatch_blocks_materialisation": 33,
+    "tests.tasks.test_ocor_dev_0049::test_scanner_failure_denies_every_admission_until_the_scan_recovers": 10,
+    "tests.tasks.test_ocor_dev_0049::test_seal_and_restore_tied_epoch_tombstones_are_locale_independent": 248,
+    "tests.tasks.test_ocor_dev_0049::test_tampered_recovery_point_is_rejected_before_restore": 7,
+    "tests.tasks.test_ocor_dev_0049::test_tampered_restore_receipt_blocks_readiness": 5,
+}
+
+
+class CampaignError(RuntimeError):
+    """The campaign cannot supply qualifying evidence."""
+
+
+
+def check_deadline(elapsed: float, *, limit: int = FULL_SUITE_LIMIT_SECONDS, threshold: int = PO_DECISION_THRESHOLD_SECONDS) -> bool:
+    if elapsed >= limit:
+        raise CampaignError(f"{limit // 60}-minute campaign limit reached")
+    return elapsed > threshold
+
+
+def junit_identity(nodeid: str) -> tuple[str, str]:
+    """(classname, name) that pytest's junitxml reports for a node ID."""
+    path, bracket, params = nodeid.partition("[")
+    names = path.split("::")
+    names[0] = names[0].replace("/", ".")
+    if names[0].endswith(".py"):
+        names[0] = names[0][:-3]
+    names[-1] += bracket + params
+    return ".".join(names[:-1]), names[-1]
+
+
+def node_weight(nodeid: str) -> float:
+    classname, name = junit_identity(nodeid)
+    return MEASURED_WEIGHTS.get(f"{classname}::{name.split('[', 1)[0]}", DEFAULT_TEST_WEIGHT)
+
+
+def collection_digest(nodeids: list[str]) -> str:
+    return hashlib.sha256("\n".join(nodeids).encode()).hexdigest()
+
+
+def partition_digest(parts: list[list[str]]) -> str:
+    return hashlib.sha256(json.dumps(parts).encode()).hexdigest()
+
+
+def collect_nodeids(directory: Path, selection: list[str]) -> list[str]:
+    """Node IDs pytest collects in ``directory``; any collection error fails closed."""
+    result = subprocess.run([sys.executable, "-m", "pytest", "--collect-only", "-q", "-p", "no:cacheprovider", *selection],
+                            cwd=directory, capture_output=True, text=True, timeout=600, check=False)
+    nodeids = [line for line in result.stdout.splitlines() if "::" in line and not line.startswith(" ")]
+    if result.returncode or not nodeids or len(nodeids) != len(set(nodeids)):
+        raise CampaignError(f"pytest collection failed (exit {result.returncode}): {result.stdout[-2000:]}{result.stderr[-2000:]}")
+    return nodeids
+
+
+def partition_units(nodeids: list[str]) -> list[list[str]]:
+    """Whole test modules in collection order; only proven-separable nodes stand alone.
+
+    Modules may carry order-dependent state between their tests (CI run
+    37952580435: splitting test_ocor_dev_0049 by node broke its restore and
+    readiness state), so a module is never split across parts.
+    """
+    units: dict[str, list[str]] = {}
+    for node in nodeids:
+        units.setdefault(node if node in SEPARABLE_NODES else node.split("::", 1)[0], []).append(node)
+    return list(units.values())
+
+
+def partition(nodeids: list[str], count: int) -> list[list[str]]:
+    """Longest-processing-time assignment of whole units; ties broken by first node ID and part index.
+
+    Each part keeps pytest's collection order, so relative order is unchanged.
+    """
+    if count < 2:
+        raise CampaignError("the suite must run in at least 2 parts")
+    if len(nodeids) != len(set(nodeids)) or len(nodeids) < count:
+        raise CampaignError(f"cannot partition {len(nodeids)} collected tests into {count} nonempty parts")
+    if len({junit_identity(node) for node in nodeids}) != len(nodeids):
+        raise CampaignError("collected node IDs are not uniquely identifiable in JUnit")
+    units = partition_units(nodeids)
+    if len(units) < count:
+        raise CampaignError(f"cannot partition {len(units)} units into {count} nonempty parts")
+    loads = [(0.0, index) for index in range(count)]
+    assigned: list[list[str]] = [[] for _ in range(count)]
+    for unit in sorted(units, key=lambda item: (-sum(map(node_weight, item)), item[0])):
+        load, index = heapq.heappop(loads)
+        assigned[index].extend(unit)
+        heapq.heappush(loads, (load + sum(map(node_weight, unit)), index))
+    order = {node: position for position, node in enumerate(nodeids)}
+    parts = [sorted(part, key=order.__getitem__) for part in assigned]
+    if not all(parts):
+        raise CampaignError("a part received no tests")
+    return parts
+
+
+def junit_cases(path: Path) -> list[tuple[str, str]]:
+    """Every executed case; a case with failure, error or skip is nonqualifying."""
+    check_junit(path)
+    cases = []
+    for case in ET.parse(path).getroot().iter("testcase"):
+        if any(child.tag in ("failure", "error", "skipped") for child in case):
+            raise CampaignError(f"nonqualifying JUnit case: {case.get('classname')}::{case.get('name')}")
+        cases.append((case.get("classname", ""), case.get("name", "")))
+    return cases
+
+
+def combine_coverage(suite: Path, files: list[Path], output: Path) -> None:
+    data = output / "runtime_coverage.combined"
+    copies = []
+    for index, source in enumerate(files, start=1):
+        copies.append(output / f"runtime_coverage.part-{index}")
+        shutil.copyfile(source, copies[-1])
+    for command in ([sys.executable, "-m", "coverage", "combine", f"--data-file={data}", *map(str, copies)],
+                    [sys.executable, "-m", "coverage", "json", f"--data-file={data}", "-o", str(output / "runtime_coverage_post_approval.json")]):
+        result = subprocess.run(command, cwd=suite, capture_output=True, text=True, timeout=600, check=False)
+        if result.returncode:
+            raise CampaignError(f"coverage aggregation failed: {result.stdout[-1000:]}{result.stderr[-1000:]}")
+
+
+def aggregate(parts_dir: Path, suite_repository: Path, count: int, output: Path, *, required_modules: list[str]) -> dict[str, Any]:
+    """Accept the parts only if their union is exactly the suite collected on this HEAD."""
+    output.mkdir(parents=True, exist_ok=True)
+    try:
+        suite = suite_repository / "ocor-runtime"
+        collected = collect_nodeids(suite, ["tests/"])
+        expected = partition(collected, count)
+        found: dict[int, Path] = {}
+        for meta_path in sorted(parts_dir.rglob("partition.json")):
+            meta = json.loads(meta_path.read_text())
+            index = meta.get("shard_index")
+            if meta.get("shard_count") != count or not isinstance(index, int) or not 1 <= index <= count or index in found:
+                raise CampaignError(f"invalid or repeated shard metadata: {meta_path}")
+            found[index] = meta_path.parent
+        if sorted(found) != list(range(1, count + 1)):
+            raise CampaignError(f"expected parts 1..{count}, found {sorted(found)}")
+        executed: list[tuple[str, str]] = []
+        parts: list[dict[str, Any]] = []
+        durations: list[float] = []
+        cases_by_part = []
+        for index in range(1, count + 1):
+            directory = found[index]
+            if missing_files := [name for name in PART_ARTIFACTS if not (directory / name).is_file()]:
+                raise CampaignError(f"part {index} lacks {missing_files} (coverage data is mandatory)")
+            meta = json.loads((directory / "partition.json").read_text())
+            if meta.get("collected_sha256") != collection_digest(collected) or meta.get("collected_count") != len(collected):
+                raise CampaignError(f"part {index} ran a different collection than this HEAD")
+            if meta.get("selected") != expected[index - 1] or meta.get("partition_sha256") != partition_digest(expected):
+                raise CampaignError(f"part {index} selection differs from the deterministic partition")
+            result = json.loads((directory / "campaign_result.json").read_text())
+            if result.get("status") != "PASS" or result.get("shard_index") != index or result.get("shard_count") != count:
+                raise CampaignError(f"part {index} campaign is not PASS for this shard")
+            duration = float(result["duration_seconds"])
+            check_deadline(duration, limit=PART_LIMIT_SECONDS, threshold=PART_REBALANCE_SECONDS)
+            cases = junit_cases(directory / "runtime_junit_post_approval.xml")
+            cases_by_part.append(directory / "runtime_junit_post_approval.xml")
+            executed.extend(cases)
+            durations.append(duration)
+            parts.append({"shard_index": index, "tests": len(cases), "duration_seconds": duration,
+                          "selected_sha256": hashlib.sha256(json.dumps(expected[index - 1]).encode()).hexdigest()})
+        wanted = {junit_identity(node) for node in collected}
+        occurrences = Counter(executed)
+        seen = set(occurrences)
+        duplicated = sorted(case for case, times in occurrences.items() if times > 1)
+        discrepancies = {"missing": sorted("::".join(case) for case in wanted - seen),
+                         "duplicated": ["::".join(case) for case in duplicated],
+                         "unexpected": sorted("::".join(case) for case in seen - wanted)}
+        for key, cases_found in discrepancies.items():
+            if cases_found:
+                raise CampaignError(f"union of parts has {key} tests: {cases_found[:20]}")
+        union = {"collected": len(collected), "executed": len(executed), **discrepancies}
+        modules = {part for classname, _ in executed for part in classname.split(".")}
+        if absent := set(required_modules) - modules:
+            raise CampaignError(f"required guard not executed: {sorted(absent)}")
+        merged = ET.Element("testsuites")
+        for index, path in enumerate(cases_by_part, start=1):
+            root = ET.parse(path).getroot()
+            for suite_element in ([root] if root.tag == "testsuite" else list(root.iter("testsuite"))):
+                suite_element.set("name", f"{suite_element.get('name', 'pytest')}-part-{index}")
+                merged.append(suite_element)
+        ET.ElementTree(merged).write(output / "runtime_junit_post_approval.xml", encoding="utf-8", xml_declaration=True)
+        check_junit(output / "runtime_junit_post_approval.xml", required_modules=required_modules)
+        combine_coverage(suite, [found[index] / "runtime_coverage.data" for index in range(1, count + 1)], output)
+        longest = max(durations)
+        summary = {"status": "PASS", "mode": "AGGREGATE", "shard_count": count, "parts": parts, "union": union,
+                   "counts": {"tests": len(executed), "failures": 0, "errors": 0, "skipped": 0},
+                   "collected_sha256": collection_digest(collected), "partition_sha256": partition_digest(expected),
+                   "required_modules": required_modules, "longest_part_seconds": longest,
+                   "rebalance_required": longest > PART_REBALANCE_SECONDS}
+        (output / "campaign_result.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n")
+        return summary
+    except (CampaignError, OSError, ValueError, KeyError, TypeError, ET.ParseError, subprocess.SubprocessError) as exc:
+        (output / "campaign_result.json").write_text(json.dumps({"status": "FAIL", "mode": "AGGREGATE", "error": str(exc)}, indent=2, sort_keys=True) + "\n")
+        if isinstance(exc, CampaignError):
+            raise
+        raise CampaignError(str(exc)) from exc
+
+
+def check_stack(initial: dict[str, Any], current: dict[str, Any]) -> None:
+    if not initial or initial.keys() != current.keys():
+        raise CampaignError("mandatory stack disappeared")
+    for name, before in initial.items():
+        after = current[name]
+        if (after["Id"] != before["Id"] or after["RestartCount"] != before["RestartCount"]
+                or after["State"].get("StartedAt") != before["State"].get("StartedAt")
+                or not after["State"]["Running"] or after["State"].get("OOMKilled")):
+            raise CampaignError(f"service restarted, stopped or OOM killed: {name}")
+
+
+def check_junit(path: Path, *, required_modules: list[str] | None = None) -> dict[str, int]:
+    try:
+        tree = ET.parse(path).getroot()
+        suites = [tree] if tree.tag == "testsuite" else list(tree.iter("testsuite"))
+        counts = {key: sum(int(suite.get(key, "0")) for suite in suites) for key in ("tests", "failures", "errors", "skipped")}
+        if not counts["tests"] or any(counts[key] for key in ("failures", "errors", "skipped")) or list(tree.iter("skipped")):
+            raise CampaignError(f"nonqualifying JUnit: {counts}")
+        modules = {part for case in tree.iter("testcase") for part in case.get("classname", "").split(".")}
+        if missing := set(required_modules or []) - modules:
+            raise CampaignError(f"required guard not executed: {sorted(missing)}")
+        return counts
+    except (OSError, ET.ParseError, ValueError) as exc:
+        raise CampaignError("JUnit absent or invalid") from exc
+
+
+def verify_revision(repository: Path, expected_head: str) -> None:
+    head = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repository, capture_output=True, text=True, timeout=10, check=True).stdout.strip()
+    if head != expected_head:
+        raise CampaignError(f"candidate HEAD mismatch: {head}")
+    dirty = subprocess.run(["git", "status", "--porcelain", "--untracked-files=no"], cwd=repository, capture_output=True, text=True, timeout=10, check=True).stdout
+    if dirty:
+        raise CampaignError("candidate has tracked changes")
+
+
+def inspect_stack() -> dict[str, Any]:
+    ids = subprocess.run(["docker", "ps", "-aq", "--filter", "label=com.docker.compose.project=ocor-bootstrap"], capture_output=True, text=True, timeout=10, check=True).stdout.split()
+    if not ids:
+        return {}
+    raw = subprocess.run(["docker", "inspect", *ids], capture_output=True, text=True, timeout=10, check=True).stdout
+    return {entry["Name"]: entry for entry in json.loads(raw)}
+
+
+def inspect_kubernetes_runtimes() -> dict[str, dict[str, Any]]:
+    """Observe systemd inside only the disposable OCOR kind nodes.
+
+    A containerd restart does not change Docker's container RestartCount.
+    Nodes may appear and disappear as the Kubernetes fixture starts and tears down.
+    """
+    ids = subprocess.run(["docker", "ps", "-q", "--filter", "label=io.x-k8s.kind.cluster=ocor-poc"],
+                         capture_output=True, text=True, timeout=10, check=True).stdout.split()
+    if not ids:
+        return {}
+    raw = subprocess.run(["docker", "inspect", *ids], capture_output=True, text=True, timeout=10, check=True).stdout
+    current = {}
+    for node in json.loads(raw):
+        if (not node["Name"].startswith("/ocor-poc-")
+                or node["Config"]["Labels"].get("io.x-k8s.kind.cluster") != "ocor-poc"):
+            raise CampaignError("Kubernetes node outside owned scope")
+        for service in ("containerd", "kubelet"):
+            result = subprocess.run(["docker", "exec", node["Id"], "systemctl", "show", service,
+                                     "--property=ActiveState,MainPID,NRestarts"],
+                                    capture_output=True, text=True, timeout=10, check=True)
+            values = dict(line.split("=", 1) for line in result.stdout.splitlines() if "=" in line)
+            current[node["Id"] + ":" + service] = {
+                "restarts": int(values["NRestarts"]), "active": values["ActiveState"], "pid": int(values["MainPID"]),
+                # The immutable fixture connects this network only after
+                # kind create --wait succeeds, before any workload dispatch.
+                "admitted": "ocor-bootstrap_ocor-bootstrap" in node.get("NetworkSettings", {}).get("Networks", {})}
+    return current
+
+
+def check_kubernetes_runtimes(history: dict[str, dict[str, Any]], current: dict[str, dict[str, Any]]) -> None:
+    for identity, after in current.items():
+        before = history.get(identity)
+        initializing_kubelet = identity.endswith(":kubelet") and not after.get("admitted", True) and before is None
+        if (after["restarts"] != 0 or after["active"] == "failed"
+                or (after.get("admitted", False) and (after["active"] != "active" or after["pid"] <= 0))
+                or (before is not None and (after["active"] != "active" or after["pid"] != before["pid"]))):
+            raise CampaignError(f"Kubernetes service restarted or failed: {identity}")
+        if not initializing_kubelet and after["active"] == "active" and after["pid"] > 0:
+            history[identity] = after
+
+
+def collect_kubernetes_diagnostics(output: Path) -> None:
+    """Collect before SIGINT allows the fixture to remove its owned kind node."""
+    with output.open("w") as log:
+        try:
+            current = inspect_kubernetes_runtimes()
+            log.write(json.dumps(current, sort_keys=True) + "\n")
+            for node in sorted({key.split(":", 1)[0] for key in current}):
+                for command in (["docker", "stats", "--no-stream", node],
+                                ["docker", "exec", node, "journalctl", "-u", "containerd", "-u", "kubelet", "--no-pager", "-n", "200"]):
+                    result = subprocess.run(command, capture_output=True, text=True, timeout=20, check=False)
+                    log.write(result.stdout + result.stderr)
+        except (OSError, subprocess.SubprocessError, CampaignError, KeyError, ValueError) as exc:
+            log.write(f"Kubernetes diagnostics incomplete: {exc}\n")
+
+
+def stop(process: subprocess.Popen[Any], *, resume: bool = False) -> None:
+    if process.poll() is not None:
+        return
+    os.killpg(process.pid, signal.SIGINT)
+    if resume:
+        os.killpg(process.pid, signal.SIGCONT)
+    try:
+        process.wait(timeout=60)
+    except subprocess.TimeoutExpired:
+        os.killpg(process.pid, signal.SIGKILL)
+        process.wait(timeout=10)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--execute", action="store_true")
+    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--repository", type=Path, help="separate, immutable candidate checkout; always runs its FULL suite")
+    parser.add_argument("--expected-head", help="exact candidate commit, required with --repository")
+    parser.add_argument("--shard-count", type=int, help="number N >= 2 of deterministic CI parts")
+    parser.add_argument("--shard-index", type=int, help="1-based part executed on this runner's own stack")
+    parser.add_argument("--aggregate", type=Path, metavar="PARTS_DIR", help="verify the parts' union against --collect-only")
+    args = parser.parse_args()
+    if bool(args.repository) != bool(args.expected_head):
+        parser.error("--repository and --expected-head must be supplied together")
+    if args.shard_count is not None and args.shard_count < 2:
+        parser.error("--shard-count must be at least 2")
+    if args.shard_index is not None and (args.shard_count is None or args.aggregate or not 1 <= args.shard_index <= args.shard_count):
+        parser.error("--shard-index requires --shard-count and must be within 1..N")
+    if args.aggregate and (args.shard_count is None or not args.execute):
+        parser.error("--aggregate requires --shard-count and --execute")
+    if args.shard_count is not None and args.shard_index is None and not args.aggregate:
+        parser.error("--shard-count requires --shard-index or --aggregate")
+    repository = Path(__file__).resolve().parents[1]
+    suite_repository = args.repository.resolve() if args.repository else repository
+    required_modules = ["test_ocor_dev_0048"]
+    if args.repository or (suite_repository / "ocor-runtime/tests/tasks/test_ocor_dev_0049.py").is_file():
+        required_modules.append("test_ocor_dev_0049")
+    if not args.execute:
+        if args.expected_head:
+            verify_revision(suite_repository, args.expected_head)
+        print(json.dumps({"status": "PASS", "mode": "CHECK_ONLY", "repository": str(suite_repository), "suite": "ocor-runtime/tests/", "limit_seconds": FULL_SUITE_LIMIT_SECONDS}))
+        return 0
+    output = args.output_dir.resolve()
+    output.mkdir(parents=True, exist_ok=True)
+    if args.aggregate:
+        try:
+            if args.expected_head:
+                verify_revision(suite_repository, args.expected_head)
+            summary = aggregate(args.aggregate.resolve(), suite_repository, args.shard_count, output, required_modules=required_modules)
+            if args.expected_head:
+                verify_revision(suite_repository, args.expected_head)
+        except (CampaignError, OSError, subprocess.SubprocessError) as exc:
+            (output / "campaign_result.json").write_text(json.dumps({"status": "FAIL", "mode": "AGGREGATE", "error": str(exc)}, indent=2, sort_keys=True) + "\n")
+            print(json.dumps({"status": "FAIL", "error": str(exc)}))
+            return 1
+        print(json.dumps(summary))
+        return 0
+    junit = output / "runtime_junit_post_approval.xml"
+    sharded = args.shard_index is not None
+    limit, threshold = (PART_LIMIT_SECONDS, PART_REBALANCE_SECONDS) if sharded else (FULL_SUITE_LIMIT_SECONDS, PO_DECISION_THRESHOLD_SECONDS)
+    selection = ["tests/"]
+    command = [sys.executable, "-m", "pytest", "-v", "--cov=src", "--cov-report=term-missing", f"--cov-report=json:{output / 'runtime_coverage_post_approval.json'}", f"--junitxml={junit}"]
+    process: subprocess.Popen[Any] | None = None
+    recorder: SessionRecorder | None = None
+    decision_required = False
+    try:
+        if args.expected_head:
+            verify_revision(suite_repository, args.expected_head)
+        if sharded:
+            # Select explicit node IDs (never deselect) and prove pytest collects
+            # exactly that selection before any test runs.
+            collected = collect_nodeids(suite_repository / "ocor-runtime", ["tests/"])
+            parts = partition(collected, args.shard_count)
+            selection = parts[args.shard_index - 1]
+            if collect_nodeids(suite_repository / "ocor-runtime", selection) != selection:
+                raise CampaignError("part selection does not collect exactly its node IDs")
+            (output / "partition.json").write_text(json.dumps({
+                "collected_count": len(collected), "collected_sha256": collection_digest(collected),
+                "partition_sha256": partition_digest(parts), "selected": selection,
+                "selected_weight_seconds": sum(node_weight(node) for node in selection),
+                "shard_count": args.shard_count, "shard_index": args.shard_index}, indent=2, sort_keys=True) + "\n")
+            required_modules = []
+        command.extend(selection)
+        initial = inspect_stack()
+        if len(initial) != 11:
+            raise CampaignError(f"expected 11 mandatory containers, found {len(initial)}")
+        check_stack(initial, initial)
+        recorder = SessionRecorder(repository)
+        kubernetes_history: dict[str, dict[str, Any]] = {}
+        start = time.monotonic()
+        with (output / "post_remediation_runtime.log").open("w") as log:
+            process = subprocess.Popen(command, cwd=suite_repository / "ocor-runtime", stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+            while process.poll() is None:
+                check_stack(initial, inspect_stack())
+                current = inspect_kubernetes_runtimes()
+                with (output / "kubernetes-runtime.log").open("a") as runtime_log:
+                    runtime_log.write(json.dumps(current, sort_keys=True) + "\n")
+                check_kubernetes_runtimes(kubernetes_history, current)
+                decision_required = check_deadline(time.monotonic() - start, limit=limit, threshold=threshold) or decision_required
+                time.sleep(5)
+            check_stack(initial, inspect_stack())
+            check_kubernetes_runtimes(kubernetes_history, inspect_kubernetes_runtimes())
+        decision_required = check_deadline(time.monotonic() - start, limit=limit, threshold=threshold) or decision_required
+        if process.returncode:
+            raise CampaignError(f"pytest exit code {process.returncode}")
+        if args.expected_head:
+            verify_revision(suite_repository, args.expected_head)
+        result = {"status": "PASS", "counts": check_junit(junit, required_modules=required_modules), "duration_seconds": time.monotonic() - start, "candidate_head": args.expected_head, "required_modules": required_modules, "po_decision_required": decision_required}
+        if sharded:
+            if sorted(junit_cases(junit)) != sorted(junit_identity(node) for node in selection):
+                raise CampaignError("part JUnit differs from its selection")
+            shutil.copyfile(suite_repository / "ocor-runtime/.coverage", output / "runtime_coverage.data")
+            result.update({"shard_index": args.shard_index, "shard_count": args.shard_count, "limit_seconds": limit,
+                           "rebalance_required": decision_required, "po_decision_required": False})
+        (output / "campaign_result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+        print(json.dumps(result))
+        return 0
+    except (CampaignError, OSError, subprocess.SubprocessError, KeyError, ValueError) as exc:
+        # Suspend the owned pytest process group immediately. Preserve the node
+        # for diagnostics, then deliver SIGINT before resuming fixture teardown.
+        frozen = False
+        if process is not None and process.poll() is None:
+            try:
+                os.killpg(process.pid, signal.SIGSTOP)
+                frozen = True
+            except ProcessLookupError:
+                pass
+        try:
+            collect_kubernetes_diagnostics(output / "kubernetes-diagnostics.log")
+            if (repository / ".ocor/bootstrap.env").exists():
+                redact_campaign_log(repository, output / "kubernetes-diagnostics.log")
+        finally:
+            if process is not None:
+                stop(process, resume=frozen)
+        collect_stack_diagnostics(repository, output / "docker-stats.log")
+        result = {"status": "FAIL", "error": str(exc), "po_decision_required": decision_required}
+        (output / "campaign_result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+        print(json.dumps(result))
+        return 1
+    finally:
+        if process is not None:
+            stop(process)
+        recorder_error = None
+        if recorder is not None:
+            try:
+                recorder.finish()
+            except (OSError, ValueError, subprocess.SubprocessError, RuntimeError, KeyError, TypeError, AttributeError) as exc:
+                recorder_error = str(exc)
+                (output / "campaign_result.json").write_text(json.dumps({"status": "FAIL", "error": recorder_error}, indent=2, sort_keys=True) + "\n")
+        if process is not None:
+            redact_campaign_log(repository, output / "post_remediation_runtime.log")
+            if junit.exists():
+                redact_campaign_log(repository, junit)
+        if recorder_error is not None:
+            print(json.dumps({"status": "FAIL", "error": recorder_error}))
+            return 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
