@@ -374,3 +374,41 @@ Nuovo record `repair-1-realign.json/.log` (supersede il solo candidato non sigil
   qualificante, DR `REM-0017-KIND-CONTAINERD-CRASH` aggiornata. La qualifica del
   candidato è quella della CI sull'HEAD esatto.
 - E1=0, E2=0, zero Verified, claim NO-GO invariati; nessun sigillo o merge.
+
+
+## Suite completa in parti parallele (REM-0017-CI-CAMPAIGN-DURATION) — 2026-10-09
+
+Implementatore di riserva Claude Code (Anthropic, claude-opus-5-5; quota Codex
+esaurita); verifier previsto Grok 4.7 via Cursor CLI, processo e contesto separati.
+Nuovo record `repair-1-parallel.json/.log` (supersede il solo candidato non
+sigillato `repair-1-realign.json`; tutti i raw precedenti restano invariati).
+
+- Decisione PO del 2026-10-09: `rccad-methodology`, `delivery-activation` e
+  `validation-closure` eseguono la suite completa in 3 parti,
+  `conditional-infrastructure-0049` in 4 (con 3 parti le due parti grandi del
+  candidato arrivano a ~1190 s di test, circa 28 minuti con la variabilità di ~40%
+  già osservata sui runner, troppo vicino alla soglia di ribilanciamento dei 30).
+  Ogni parte ha runner e stack propri, stessa ricetta e cache, tetto 45 minuti.
+- Partizione LPT per node ID con pesi misurati sulla PASS CI del candidato
+  (`f55b210`), Helm al caso peggiore 1200 s; ordine di collezione preservato. Ogni
+  parte seleziona node ID espliciti e prova con `--collect-only` che pytest
+  raccoglie esattamente la selezione prima di eseguire; nessuna deselezione.
+- Gli aggregatori mantengono i nomi dei check obbligatori (ruleset 23412233
+  invariato), girano con `if: always()`, rifiutano parti mancanti, fallite o
+  cancellate e accettano solo un'unione dei JUnit identica a `--collect-only`
+  sullo stesso HEAD (nessun mancante, duplicato o inatteso; zero skip/fail/error;
+  guardie 0048/0049). JUnit unito e coverage combinata alimentano il report di
+  closure invariato. L'aggregatore 0049 non provisiona stack.
+- TDD: 26 nuovi casi positivi e negativi (RED su `9071582`, poi GREEN); il test
+  del pinning della cache Fuseki ora enumera esattamente i 7 job con stack.
+- Locale, ricetta CI, 3 parti in sequenza su un solo stack (deviazione dichiarata):
+  HEAD `7fabb32` 1363 PASS (167/167/146 s) e suite 0050 198 PASS; HEAD finale del
+  codice `15531a8` 1363 PASS (168/163/143 s); unione esatta, zero skip, teardown
+  senza residui `ocor-bootstrap`. Un tentativo interrotto (`aborted-1`) è non
+  qualificante e conservato nel raw.
+- L'allowlist del piano ammette 4 percorsi esatti; poiché il validatore è input
+  della riqualifica 0050, nuova riqualifica `OCOR-DEV-0050.rem0017-parallel-requalified`.
+- Le parti del candidato 0049 e le durate reali per runner sono dimostrate solo
+  dalla CI dell'HEAD esatto (coppia di run autorizzata). DR `REM-0017-CI-CAMPAIGN-DURATION`
+  chiusa come risolta; DR `REM-0017-KIND-CONTAINERD-CRASH` prosegue con l'opzione 1.
+- E1=0, E2=0, zero Verified, claim NO-GO invariati; nessun sigillo o merge.
