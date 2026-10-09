@@ -600,6 +600,127 @@
       "status": "FAIL"
     }
   ],
+  "independent_verification": {
+    "commands": [
+      {
+        "command": "git worktree add --detach /tmp/ocor-verify-OCOR-DEV-0050-88ed051dad54-2/wt 88ed051dad5448f525680854025e79e4f161bceb",
+        "exit_code": 0,
+        "summary": "Worktree detached all'HEAD esatto 88ed051dad5448f525680854025e79e4f161bceb. Un secondo worktree detached al sealed head 8e0cc2fdda112a1ab19c42f0570b55179e572812 e stato usato solo per lo scanner RED."
+      },
+      {
+        "command": "sha256sum -c inputs/normative/SHA256SUMS",
+        "exit_code": 0,
+        "summary": "8/8 OK. Il diff base_sha..HEAD non tocca inputs/."
+      },
+      {
+        "command": "git diff --name-only 8e0cc2fdda112a1ab19c42f0570b55179e572812..88ed051dad5448f525680854025e79e4f161bceb",
+        "exit_code": 0,
+        "summary": "Sei path: test_ocor_dev_0050.py (expected_file_areas), MANIFEST.json e i due file di riqualifica (scope governed dichiarato), validate_ocor_development_plan.py e OCOR_PLAN_RUN_STATE.json (allowlist e self-hash). model.py, workflow scanner e OCOR-DEV-0050.json/.log sono byte-identici al sealed head. Il diff semantico del plan state e solo l'hash dello script, che coincide col file."
+      },
+      {
+        "command": "confronto AST dei payload parametrizzati e pytest --collect-only sul test 0050 a base e HEAD",
+        "exit_code": 0,
+        "summary": "33 payload e reason code identici; le tre join a runtime ricostruiscono gli stessi byte. 198 node id identici e nello stesso ordine."
+      },
+      {
+        "command": "scanner estratto invariato da .github/workflows/ocor-supply-chain.yml su HEAD e sul sealed head",
+        "exit_code": 0,
+        "summary": "Codice estratto sha256 34738efbe7ad7e4fbe60cb6f9a9d5779bce8066d34384b07f86fed9a9fbba586, uguale al fingerprint del record. HEAD: static/secrets/dependencies/summary blocking_findings=0, exit 0, stdout sha256 3e2a8daf343f9a03ca0b6380bd2ab1fcebafd73aa39401108d05a4299fc06764. Sealed head: exit 1, secrets.json sha256 695edaa35844646890c6d2d19b37ab981b589a28b480fa9e66ebd9c4753ac1ee, tre finding PRIVATE_KEY/AWS_ACCESS_KEY/PRIVATE_KEY sulle righe 670, 671 e 955."
+      },
+      {
+        "command": "python3 evidence consistency check della richiesta su OCOR-DEV-0050.requalified.json/.log e MANIFEST.json",
+        "exit_code": 0,
+        "summary": "PASS. commit b6b9f141ff0fec56e1fc8598d9ed9b9c8c903720 antenato di HEAD; diff successivo solo i tre file di evidenza; raw sha256 88f723345441c04c179b767876afc74df38cb0fc19bb21f1f4c8ebe63f6820b0; predecessore sigillato invariato; claims E1=0 E2=0 PoC_GO=NO-GO Production_readiness=NO_GO runtime_conformance=NOT_ESTABLISHED; JUnit registrato 198 e 1299 con zero failure/error/skip."
+      },
+      {
+        "command": "uv sync --directory ocor-runtime --frozen --extra test --extra lint",
+        "exit_code": 0,
+        "summary": "CPython 3.12.11, ambiente isolato nel worktree, 43 pacchetti dal lock."
+      },
+      {
+        "command": "python3 scripts/validate_language_policy.py",
+        "exit_code": 0,
+        "summary": "PASS: nessuna estensione monitorata fuori dall'area autorizzata."
+      },
+      {
+        "command": "python3 scripts/validate_ocor_change_scope.py --base origin/main --branch governed/ocor-dev-0050-synthetic-secret-fixtures",
+        "exit_code": 0,
+        "summary": "PASS: 9 path sul three-dot da origin/main, superfici immutabili intatte, ledger stabile. Il branch governed non applica il confine task/ di expected_file_areas; il delta di riparazione resta nei sei path sopra."
+      },
+      {
+        "command": "python3 scripts/validate_evidence_input_drift.py",
+        "exit_code": 0,
+        "summary": "PASS: 167 input e 63 task, zero drift."
+      },
+      {
+        "command": "python3 scripts/validate_ocor_development_plan.py --base-ref HEAD --authorized-extension",
+        "exit_code": 0,
+        "summary": "PASS 37, NOT_EXECUTED 2 opzionali preesistenti, 0 FAIL. Il comando riscrive nel worktree l'etichetta di base del report da origin/main a HEAD e il relativo hash di stato; i conteggi restano invariati e il worktree e stato rimosso senza toccare il repository."
+      },
+      {
+        "command": "python3 scripts/validate_runtime_evidence.py --task OCOR-DEV-0050 --non-skipped --manifest reports/evidence/G5/MANIFEST.json",
+        "exit_code": 0,
+        "summary": "PASS: evidenza qualificante OCOR-DEV-0050."
+      },
+      {
+        "command": "python3 scripts/validate_rccad.py --base-ref origin/main",
+        "exit_code": 0,
+        "summary": "PASS_LOCAL_PRECHECK, findings vuoti, AFF-001..AFF-010 PASS_STATIC_PRECHECK, dynamic_assurance CI_REQUIRED come esito locale del validator."
+      },
+      {
+        "command": "uv run --project ocor-runtime --frozen --extra test --extra lint ruff check .",
+        "exit_code": 0,
+        "summary": "All checks passed."
+      },
+      {
+        "command": "uv run --project ocor-runtime --frozen --extra test --extra lint mypy --strict",
+        "exit_code": 0,
+        "summary": "Success: no issues found in 70 source files."
+      },
+      {
+        "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest -q ocor-runtime/tests/tasks/test_ocor_dev_0050.py",
+        "exit_code": 0,
+        "summary": "198 passed in 4.69s, zero skip."
+      },
+      {
+        "command": "python3 scripts/reset_test_environment.py --execute",
+        "exit_code": 1,
+        "summary": "Teardown iniziale fallito: nel worktree detached manca .ocor/bootstrap.env e compose non interpola. Nessun container ocor-bootstrap era presente. Il file della checkout principale non e stato modificato."
+      },
+      {
+        "command": "python3 scripts/bootstrap_development_environment.py --execute --timeout 600 && initialize_services.py && load_fixtures.py && verify_external_services.py --execute --typed",
+        "exit_code": 0,
+        "summary": "Bootstrap PASS con env generato nel worktree. Init e fixture CREATED. Health typed di 11 servizi READY, zero OOM e zero restart. Immagine Fuseki locale sha256:6534156b8d8f16b28faf0c336096e5c6a751794828525a8ef42c60ef46c9cc2b uguale al lock; nessun fetch, Dockerfile su archive.apache.org con sha512sum -c. Identita control-plane spiffe://ocor.test/ocor/control-plane registrata e lasciata attiva; qualify.py --workload-svid crea e poi cancella solo l'entry ocor-dev-0077."
+      },
+      {
+        "command": "PATH=<toolchain node 20.20.2> OCOR_LIVE_POSTGRES_DSN=postgresql://ocor:<worktree-env>@127.0.0.1:55433/ocor uv run --project ocor-runtime --frozen --extra test --extra lint pytest -q --junitxml=/tmp/ocor-verify-OCOR-DEV-0050-88ed051dad54-2/full-junit.xml ocor-runtime/tests/",
+        "exit_code": 0,
+        "summary": "Run qualificante: 1299 passed in 364.34s, JUnit tests=1299 failures=0 errors=0 skipped=0. test_ocor_dev_0048.py: 196 passed, zero skip. Node v20.20.2 e tsc 7.0.2 dalla toolchain isolata. Nessun OOM e nessun restart dei servizi bootstrap. Due run precedenti non qualificanti (monitor che trattava la pause di fault-injection come abort; PATH con Node v24.5.0 e SVID control-plane assente) non sono usate come esito."
+      },
+      {
+        "command": "python3 scripts/reset_test_environment.py --execute && docker rm ocor-spike-0023-ef5c2af26ed1",
+        "exit_code": 0,
+        "summary": "Teardown ocor-bootstrap con volumi e rete rimossi. Rimosso anche il container spike creato durante una run interrotta. Inventario container uguale a quello precedente la verifica; checkout principale pulita e bootstrap.env del 2026-10-07 non modificato."
+      }
+    ],
+    "findings": [],
+    "implementer": "Codex (OpenAI), repair cycles 1 and 2; integration",
+    "integration_condition": "Merge subordinato ai check obbligatori verdi sul commit di sigillo esatto; il verdetto qualifica il candidato indicato, con soli metadati di sigillo e manifest successivi.",
+    "not_executed": [],
+    "original_implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva",
+    "review_type": "TASK_EVIDENCE",
+    "verdict_created_at": "2026-10-09T03:49:05Z",
+    "verdict_file_sha256": "c55f33c55012dbfd86e2610b037d0c65eca93995e63b56a45da309e3f78ffe21",
+    "verdict_head_sha": "88ed051dad5448f525680854025e79e4f161bceb",
+    "verdict_request_id": "OCOR-DEV-0050-88ed051dad54-2",
+    "verdict_status": "GO_FOR_EVIDENCE_SEAL",
+    "verifier": "Grok 4.7 (Cursor CLI)",
+    "verifier_configuration": {
+      "independence_limits": "Processo e contesto separati. Implementatore dei cicli di riparazione 1 e 2: Codex (OpenAI). Verifier: Grok 4.7 tramite Cursor CLI. Fornitori diversi. Il task e stato toccato in origine da Claude Code (Anthropic) come implementatore di riserva.",
+      "model": "Grok 4.7",
+      "process": "Cursor CLI, contesto pulito, esecuzione non interattiva"
+    }
+  },
   "inputs": {
     "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
     "ocor-runtime/src/ocor_runtime/memory/model.py": "6988c22f78b14a961027bb6cf3b3552882801e2f06cd54ba5513cc40bc8292ce",
@@ -894,7 +1015,8 @@
   },
   "rollback_procedure_verified": "Mechanical review: revert5660ce6 to restore the original synthetic byte literals; model.py and durable journal schema never changed. Original task rollback remains in preserved sealed predecessor. No data migration.",
   "schema_version": "1.0",
-  "status": "CANDIDATE_AWAITING_INDEPENDENT_VERIFICATION",
+  "sealed_at": "2026-10-09T03:52:00.072315+00:00",
+  "status": "SEALED",
   "supersedes": "29491c874905660314f2fd366fefb64a55ec8775",
   "task_id": "OCOR-DEV-0050",
   "tdd": {
