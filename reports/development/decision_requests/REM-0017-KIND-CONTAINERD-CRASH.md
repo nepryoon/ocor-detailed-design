@@ -92,3 +92,13 @@ di 0049, del monitor o dei criteri è stata fatta per evitare il crash.
 La qualifica di REM-0017 è richiesta sulla CI dell'HEAD esatto (oggetto del REM)
 con questo limite locale dichiarato come NOT_EXECUTED/FAIL, non come PASS.
 Registrato da Claude Code (implementatore di riserva del loop).
+
+## Decisione del Product Owner — 2026-10-09
+
+La decisione `REM-0017-CI-CAMPAIGN-DURATION` stabilisce che la diagnosi di
+questo crash prosegue secondo l'opzione 1 (diagnosi bounded nel solo ambiente
+disposable, senza cambi di immagine o versione). L'opzione 2 resta riservata al
+Product Owner. Con la suite in parti, in CI il caso Helm gira in una parte
+propria, su un runner e uno stack propri; questo non cambia il caso, i criteri
+o il monitor di containerd. Nessuna diagnosi aggiuntiva eseguita in questa
+iterazione: backtrace del core ancora NOT_EXECUTED.

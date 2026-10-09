@@ -1,6 +1,7 @@
 # REM-0017-CI-CAMPAIGN-DURATION
 
-Status: OPEN_PO_DECISION_REQUIRED (non bloccante per run entro il tetto vigente).
+Status: RESOLVED_BY_PO_DECISION (2026-10-09, decisione `REM-0017-CI-CAMPAIGN-DURATION`).
+Stato precedente: OPEN_PO_DECISION_REQUIRED (non bloccante per run entro il tetto vigente).
 
 ## Contesto e misura
 
@@ -66,3 +67,44 @@ Nessun tetto modificato, nessun caso escluso o saltato. Un run CI che superi
 4500 s è FAIL e non qualifica REM-0017; in quel caso si registra la misura
 e si prosegue con il lavoro G5 pronto, senza aumentare il budget.
 Registrato da Claude Code (implementatore di riserva del loop).
+
+## Decisione del Product Owner e attuazione — 2026-10-09
+
+Decisione `REM-0017-CI-CAMPAIGN-DURATION` (2026-10-09): ogni job CI che esegue
+la suite completa la esegue in N >= 2 parti parallele, con partizione
+deterministica e riproducibile, ciascuna su un runner proprio con lo stack
+completo fissato e la stessa ricetta (cache dell'archivio inclusa), zero skip,
+teardown fail-closed e arresto immediato su riavvio/OOM; un aggregatore con il
+nome del check obbligatorio verifica che l'unione dei JUnit coincida
+esattamente con `pytest --collect-only` sullo stesso HEAD. Tetti: 45 minuti per
+parte in CI (oltre 30 minuti si aumenta N e si ribilancia), 75 minuti per la
+suite completa locale. Ruleset 23412233 invariato.
+
+Attuazione sul branch `governed/ocor-dev-rem-0017-ci-provision-spire`:
+
+- `scripts/run_qualifying_campaign.py`: modalità `--shard-index/--shard-count`
+  (selezione esplicita di node ID, mai deselezione; prova che pytest raccoglie
+  esattamente la selezione prima di eseguire; tetto 2700 s, segnale di
+  ribilanciamento oltre 1800 s; dati di coverage conservati) e modalità
+  `--aggregate` (parti 1..N tutte presenti e PASS, stessa collezione e stessa
+  partizione ricalcolata, nessun caso mancante/duplicato/inatteso, zero
+  skip/failure/error per caso, guardie 0048/0049 presenti, JUnit unito e
+  coverage combinata per il report di closure invariato).
+- Partizione: assegnazione LPT per singolo node ID con pesi misurati (media per
+  funzione di test >= 3 s nella PASS CI del candidato su `f55b210`; il caso Helm
+  porta il caso peggiore 1200 s per l'attesa del tick `*/15`), spareggio per
+  node ID e indice, ordine di collezione preservato in ogni parte. I pesi non
+  selezionano né escludono test.
+- Workflow: `rccad-methodology`, `delivery-activation`, `validation-closure` in
+  3 parti; `conditional-infrastructure-0049` in 4 parti (con 3 parti le due
+  parti grandi arrivano a ~1190 s di test, vicino alla soglia dei 30 minuti con
+  la variabilità di ~40% dei runner già osservata). Gli aggregatori rifiutano
+  parti mancanti, fallite o cancellate (`if: always()` più controllo esplicito
+  di `needs.*.result`, così un'aggregazione saltata non diventa verde).
+- Test: 26 nuovi casi positivi e negativi in
+  `reports/tests/test_qualifying_campaign_guard.py` (RED dimostrato, poi GREEN).
+
+Nessun test escluso, saltato o deselezionato; nessun gate, tetto o criterio
+indebolito. La coppia di run CI autorizzata si esegue sull'HEAD finale del REM.
+Registrato da Claude Code (implementatore di riserva del loop); verifier
+previsto Grok 4.7 via Cursor CLI.
