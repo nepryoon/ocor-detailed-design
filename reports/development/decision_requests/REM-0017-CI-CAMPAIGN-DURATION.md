@@ -111,8 +111,8 @@ previsto Grok 4.7 via Cursor CLI.
 
 ## Addendum — vincolo d'ordine del modulo 0049 (presa d'atto richiesta, non bloccante)
 
-Status dell'addendum: OPEN_PO_ACKNOWLEDGEMENT_REQUIRED — non blocca REM-0017
-finché ogni parte resta entro il tetto di 45 minuti.
+Status dell'addendum: OPEN_PO_DECISION_REQUIRED — blocca la qualifica di REM-0017
+(vedi la misura CI del 2026-10-09 in fondo); non blocca G5.
 
 Il primo run CI dell'HEAD `4e97cd3` (run `37952580435`) ha diviso
 `test_ocor_dev_0049.py` per singolo test: la parte con il solo caso Helm è PASS
@@ -143,3 +143,39 @@ Opzioni:
 
 Nessuna di queste opzioni è eseguita. Registrato da Claude Code
 (implementatore di riserva del loop).
+
+### Misura CI sull'HEAD corretto `99f9ee5` — 2026-10-09
+
+Run `37961535016` (closure), `37961535129` (RCCAD), `37961535168` (delivery),
+tentativo 1. `rccad-methodology`, `delivery-activation` e tutte le parti di
+`validation-closure` PASS. Job 0049 in 3 parti:
+
+- parte 2 (caso Helm da solo) PASS, 1 caso, 1106 s;
+- parte 3 (tutti gli altri moduli) PASS, 1101 casi, 445 s;
+- parte 1 (resto del modulo 0049, 389 casi in ordine) **FAIL al tetto**:
+  388 PASS, zero fail/error/skip, fermata dal supervisore a 2716 s con
+  "45-minute campaign limit reached"; un caso non eseguito.
+  `campaign_result.json` SHA256 `d469b6a502a0557d3c1ab74b9674504cdb44e8cd37cfb029fb3ab5c14709075d`,
+  log SHA256 `72a3622347f6ecb53a6da3ea5153ca19c972c10447e947e83e3b178af66e739a`,
+  check-runs SHA256 `d42ed8dc331543be3218c8c9c0d2f953252c5930a6912d24b5dd13ecdb74f533`.
+
+Gli aggregatori `conditional-infrastructure-0049` e `validation-closure` hanno
+rifiutato la parte fallita (fail-closed). Il run non è qualificante. Non è un
+guasto infrastrutturale, quindi non si usa il rerun.
+
+Il resto del modulo 0049 dura circa 45 minuti sul runner (in locale 1780 s) ed è
+indivisibile senza toccare il candidato sigillato: la regola "oltre 30 minuti
+aumenta N" non può ridurlo e il tetto di 45 minuti lo boccia. Decisione richiesta
+(opzioni dell'addendum, aggiornate):
+
+1. Tetto specifico per l'unità indivisibile `test_ocor_dev_0049` (resto del
+   modulo), per esempio 60 minuti, restando 45 per ogni altra parte e 75 per la
+   suite locale; arresto su riavvio/OOM e zero skip invariati. Raccomandata:
+   l'unica che non tocca test o candidato sigillato; misura 2716 s per 388/389.
+2. Autorizzare la correzione dell'isolamento dei test di 0049 (nuovo ciclo su
+   0049 e riqualifica), che rende il modulo divisibile.
+3. Escluso: runner più veloci a pagamento (vietati dal mandato).
+
+Impatto: REM-0017 resta non qualificato; integrazione di 0049 e task G6
+restano bloccati come oggi. G5 prosegue (`OCOR-DEV-0052`). Nessun tetto,
+test o criterio cambiato. Registrato da Claude Code (implementatore di riserva).

@@ -425,3 +425,12 @@ parte 3 1101 PASS in 453 s; parte Helm NOT_EXECUTED su questo host. Il resto di
 0049 è indivisibile e sui runner può superare i 30 minuti: addendum di presa
 d'atto nella DR `REM-0017-CI-CAMPAIGN-DURATION`. Record `repair-1-parallel`
 rigenerato (versione mai sottoposta a verifica, storia in git).
+
+### CI sull'HEAD corretto `99f9ee5` — 2026-10-09
+
+Tutti i check verdi tranne `conditional-infrastructure-0049` e `validation-closure`:
+la parte con il resto del modulo 0049 (unità indivisibile) completa 388/389 casi
+senza fallimenti e si ferma al tetto di 45 minuti (2716 s). Parte Helm 1106 s PASS,
+altri moduli 445 s PASS; aggregatori fail-closed. Non qualificante; decision request
+nell'addendum della DR `REM-0017-CI-CAMPAIGN-DURATION` (opzione raccomandata: tetto
+specifico per l'unità 0049). Nessuna richiesta di verifica indipendente inviata.

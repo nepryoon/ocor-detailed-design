@@ -4789,3 +4789,9 @@ Gate documentali: rccad PASS_LOCAL_PRECHECK, scope/language/ruff PASS, mypy 69 s
 - Addendum alla DR REM-0017-CI-CAMPAIGN-DURATION: il resto di 0049 è indivisibile e sui runner può superare i 30 minuti (2013–2797 s di test misurati): presa d'atto richiesta al PO, non bloccante entro il tetto di 45 minuti. Nessun tetto, test o criterio cambiato.
 - Gate su `12836ed`: ruff, mypy strict, RCCAD, scope, language, piano, deriva 0, digest 8/8, harness 14 PASS, 134 test di report PASS. Claims invariati: E1=0, E2=0, zero Verified, NO-GO.
 - Prossima azione: CI sull'HEAD corretto (tentativo qualificante, al più un rerun per guasto infrastrutturale), poi richiesta di verifica indipendente REM-0017 (verifier Grok 4.7 via Cursor).
+
+## 2026-10-09T17:35:44Z — REM-0017: CI sull'HEAD corretto, unità 0049 oltre il tetto (Claude Code, riserva)
+
+- HEAD `99f9ee5`, run 37961535016/37961535129/37961535168: rccad, delivery e parti di closure PASS; job 0049 in 3 parti: Helm PASS (1106 s), altri moduli PASS (1101 casi, 445 s), resto del modulo 0049 FAIL al tetto (388/389 PASS, zero fail/skip, 2716 s). Aggregatori fail-closed. Non qualificante, nessun rerun (non è guasto infrastrutturale).
+- Decision request nell'addendum della DR REM-0017-CI-CAMPAIGN-DURATION (OPEN_PO_DECISION_REQUIRED): tetto specifico per l'unità indivisibile 0049 (raccomandata) o correzione dell'isolamento dei test 0049. Nessuna richiesta di verifica inviata; REM-0017 resta non qualificato.
+- Secondo REM-0017-PRIORITY si prosegue con G5: OCOR-DEV-0052:implementation.
