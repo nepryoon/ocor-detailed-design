@@ -4748,3 +4748,11 @@ Gate documentali: rccad PASS_LOCAL_PRECHECK, scope/language/ruff PASS, mypy 69 s
 - Locale sulla ricetta CI: suite principale 1363 PASS in 3 parti con unione esatta; candidato parte 1 389 PASS in 1780 s e parte 3 1101 PASS; riqualifica 0050 (allowlist del piano) 198 PASS. Volumi anonimi di sessione (REM-0018) rimossi solo se non montati.
 - Claims invariati: E1=0, E2=0, zero Verified, runtime NOT_ESTABLISHED, PoC/Production NO-GO. Nessuna modifica a `inputs/`.
 - Prossima azione: OCOR-DEV-0052:implementation (G5, pronto).
+
+## 2026-10-09T18:05:00Z — Presa d'atto PO sul vincolo d'ordine di 0049: registrazione OCOR-DEV-REM-0019 (implementatore di riserva Claude Code)
+
+- Implementatore di riserva Claude Code (Anthropic, claude-opus-5-5; quota Codex esaurita). Change set di solo stato.
+- Presa d'atto PO (2026-10-09) sull'addendum di REM-0017-CI-CAMPAIGN-DURATION registrata: modulo `test_ocor_dev_0049.py` indivisibile in CI in ordine di collezione, caso Helm in parte propria, partizione a 3 parti accettata. La parte "0049 senza Helm" oltre 45 minuti e' FAIL con richiesta di decisione: la misura (2716 s, run 37961535016) e' gia' registrata nel blocker `REM-0017-CI-0049-REMAINDER-CAP`, che resta OPEN_PO_DECISION_REQUIRED; nessun tetto alzato.
+- Nuova voce di remediation `OCOR-DEV-REM-0019` (primo ID libero verificato con grep su tutti i ref): dipendenza d'ordine fra i test di 0049, obiettivo test eseguibili da soli e in qualsiasi ordine senza cambiare comportamento, casi o criteri; esecuzione subordinata a decisione PO dedicata; dipendenza dei task G6 (0060-0066), non blocca G5.
+- Claims invariati: E1=0, E2=0, zero Verified, runtime NOT_ESTABLISHED, PoC/Production NO-GO. Nessuna modifica a `inputs/`, test, gate o PR #169/#176.
+- Prossima azione: OCOR-DEV-0052:implementation (G5, pronto).

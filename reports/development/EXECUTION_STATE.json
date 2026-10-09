@@ -1,51 +1,11 @@
 {
   "active_iteration": {
-    "branch": "governed/state-sync-rem-0017-parallel-cap",
-    "change_set": "CC-OCOR-DELIVERY-COMPLETION__REM_0017_PARALLEL_CAMPAIGN_STATE_SYNC",
+    "branch": "governed/state-sync-rem-0019-0049-test-isolation",
+    "change_set": "CC-OCOR-DELIVERY-COMPLETION__REM_0019_REGISTRATION_STATE_SYNC",
     "decision_id": "DEC-210",
-    "phase": "REM_0017_PARALLEL_CAMPAIGN_EXECUTED_0049_UNIT_AT_CAP",
-    "source_reference": {
-      "ci": {
-        "corrected_head_99f9ee5": {
-          "check_runs_sha256": "d42ed8dc331543be3218c8c9c0d2f953252c5930a6912d24b5dd13ecdb74f533",
-          "head": "99f9ee505b1a13fe23c0dbbe79c44e8c069f7343",
-          "part1_campaign_result_sha256": "d469b6a502a0557d3c1ab74b9674504cdb44e8cd37cfb029fb3ab5c14709075d",
-          "part1_log_sha256": "72a3622347f6ecb53a6da3ea5153ca19c972c10447e947e83e3b178af66e739a",
-          "qualifying": false,
-          "result": "all checks PASS except conditional-infrastructure-0049 and validation-closure: 0049 remainder part 388/389 PASS, zero fail/skip, stopped at the 45-minute part cap (2716 s); Helm part PASS 1106 s; other modules PASS 1101 cases 445 s; aggregators fail-closed",
-          "run_ids": [
-            37961535016,
-            37961535129,
-            37961535168
-          ]
-        },
-        "docs_only_head_7d8e0fd": {
-          "head": "7d8e0fde9386ffc38a857eef50028a444155b9ed",
-          "result": "cancelled immediately: documentation-only push, not a qualifying attempt",
-          "run_ids": [
-            37967399284,
-            37967399287,
-            37967399541,
-            37967399304,
-            37967399335
-          ]
-        },
-        "first_attempt_4e97cd3": {
-          "check_runs_sha256": "8863e8732a266e596521e2d0419ef3e958de1bad83c88f4bdb08fb060050fbf0",
-          "head": "4e97cd3a949955b673188aaa5d823a3fb62c1881",
-          "qualifying": false,
-          "result": "rccad/delivery PASS (union 1363/1363); 0049 node-level split FAIL in parts 2-4 (order-dependent state in test_ocor_dev_0049); fixed in 12836ed",
-          "run_ids": [
-            37952580435,
-            37952580531,
-            37952580779
-          ]
-        }
-      },
-      "rem_branch_head": "7d8e0fde9386ffc38a857eef50028a444155b9ed"
-    },
-    "task_id": "OCOR-DEV-REM-0017",
-    "worktree": ".ocor/worktrees/state-sync-rem-0017-parallel-cap"
+    "phase": "REM_0019_REGISTERED",
+    "task_id": "OCOR-DEV-REM-0019",
+    "worktree": ".ocor/worktrees/state-sync-rem-0019"
   },
   "backlog_escalations": {
     "OCOR-DEV-0048": {
@@ -1551,7 +1511,7 @@
       "verifier_decision": "OCOR-DEV-0049-VERIFIER-CURSOR (2026-10-07)"
     }
   },
-  "baseline_commit": "260c480c85cc7af041428beb6c5b56f1c2352858",
+  "baseline_commit": "69a5c047cca049fe8d37f66c01c664a4d1f891ec",
   "blockers": [
     {
       "id": "GITHUB-BRANCH-PROTECTION-001",
@@ -2653,10 +2613,38 @@
         "Authorize a test-isolation fix of 0049 (new cycle and requalification) to make the module divisible",
         "Excluded: faster paid runners (forbidden by the mandate)"
       ],
+      "po_acknowledgement": {
+        "date": "2026-10-09",
+        "decision": "Presa d'atto PO sul vincolo d'ordine di 0049",
+        "effect": "Accettata la partizione a 3 parti del job 0049 (modulo indivisibile in ordine di collezione, caso Helm in parte propria). Se la parte '0049 senza Helm' supera 45 minuti il run e' FAIL e si chiede decisione con le durate misurate, senza alzare il tetto: misura gia' registrata (2716 s, run 37961535016); la decisione resta richiesta.",
+        "remediation_registered": "OCOR-DEV-REM-0019"
+      },
       "po_question": "L'unit\u00e0 indivisibile test_ocor_dev_0049 (resto del modulo, 389 casi) supera il tetto di 45 minuti per parte sui runner GitHub (388/389 PASS a 2716 s). Autorizzi un tetto specifico per questa unit\u00e0 (es. 60 minuti) oppure la correzione dell'isolamento dei test di 0049?",
       "recorded_at": "2026-10-09T17:37:20Z",
       "scope": "test_ocor_dev_0049 of the sealed candidate df444af carries order-dependent restore/readiness state, so the module is one indivisible part; on GitHub runners it needs ~45 min (388/389 PASS at the 2716 s cap), locally 1780 s. Raising N cannot shorten it.",
       "status": "OPEN_PO_DECISION_REQUIRED"
+    },
+    {
+      "blocked_tasks": [
+        "OCOR-DEV-0060",
+        "OCOR-DEV-0061",
+        "OCOR-DEV-0062",
+        "OCOR-DEV-0063",
+        "OCOR-DEV-0064",
+        "OCOR-DEV-0065",
+        "OCOR-DEV-0066"
+      ],
+      "decision": "Presa d'atto PO sul vincolo d'ordine di 0049 (2026-10-09)",
+      "id": "OCOR-DEV-REM-0019",
+      "non_blocking": false,
+      "recorded_at": "2026-10-09T18:05:00Z",
+      "scope": "Dipendenza d'ordine fra i test di ocor-runtime/tests/tasks/test_ocor_dev_0049.py (stato restore/readiness condiviso): difetto di qualit\u00e0. Obiettivo: ogni test di 0049 eseguibile da solo e in qualsiasi ordine, senza cambiare comportamento, casi o criteri. La modifica dei test di 0049 richiede una decisione PO dedicata al momento dell'esecuzione. Da chiudere prima di G6; non blocca G5.",
+      "source_reference": {
+        "observation": "run 37952580435/37952580531/37952580779 su 4e97cd3: split per nodo FAIL nelle parti 2-4 di conditional-infrastructure-0049",
+        "path": "reports/development/EXECUTION_STATE.json"
+      },
+      "status": "OPEN_EXECUTION_REQUIRES_PO_DECISION",
+      "verified_free_id": "grep REM-0019 su tutti i ref locali e origin: nessuna occorrenza (2026-10-09)"
     }
   ],
   "claims": {
@@ -3670,7 +3658,7 @@
       "status": "MERGED"
     }
   },
-  "next_executable_action": "OCOR-DEV-0052:implementation (pronto: hard_dependencies completate; 0053 anch'esso pronto), branch task/ da origin/main in worktree nuovo. OCOR-DEV-REM-0017 fermo su decisione PO REM-0017-CI-0049-REMAINDER-CAP (addendum della DR REM-0017-CI-CAMPAIGN-DURATION sul branch governed/ocor-dev-rem-0017-ci-provision-spire, PR #169 draft, head 7d8e0fd): l'unit\u00e0 indivisibile test_ocor_dev_0049 (resto del modulo) supera il tetto di 45 minuti per parte (388/389 PASS a 2716 s, run 37961535016). Integrazione OCOR-DEV-0049 (GO b14e4bf, PR #176) subordinata alla chiusura verificata di REM-0017. RVW-03, INFO-A, INFO-C, REM-0018 aperti e non bloccano G5.",
+  "next_executable_action": "OCOR-DEV-0052:implementation (G5, pronto; 0053 anch'esso pronto), branch task/ da origin/main in worktree nuovo. OCOR-DEV-REM-0017 fermo su decisione PO REM-0017-CI-0049-REMAINDER-CAP (presa d'atto PO 2026-10-09 registrata; decisione sul tetto ancora richiesta). OCOR-DEV-REM-0019 (isolamento test 0049) aperto, dipendenza G6, esecuzione subordinata a decisione PO dedicata. Integrazione OCOR-DEV-0049 (GO b14e4bf, PR #176) subordinata alla chiusura verificata di REM-0017. RVW-03, INFO-A, INFO-C, REM-0018 aperti e non bloccano G5.",
   "ready_set_observation": {
     "basis": "approved hard_dependencies and completed_evidence_tasks on origin/main after this sync",
     "observed_at": "2026-10-09T14:40:20Z",
@@ -4207,7 +4195,7 @@
   "schema_version": "1.0",
   "state_sync_ci": {
     "final_head_rule": "13 required SUCCESS on exact final HEAD; merge --match-head-commit; do not transfer prior CI.",
-    "qualification_scope": "Soli stato/handoff/log del sigillo/merge 0051.",
+    "qualification_scope": "Soli stato/handoff/log: registrazione OCOR-DEV-REM-0019 e presa d'atto PO.",
     "status": "CI_REQUIRED_BEFORE_EXACT_HEAD_MERGE"
   },
   "state_sync_ci_history": [
@@ -4877,5 +4865,5 @@
     "loop_status": "CONTINUE",
     "reason": "0049 GO_FOR_EVIDENCE_SEAL, PR176 CI FAIL/non mergiata; REM17 prioritario eseguibile con budget PO, G5 pronto. Nessun ciclo9."
   },
-  "updated_at": "2026-10-09T17:37:20Z"
+  "updated_at": "2026-10-09T18:05:00Z"
 }

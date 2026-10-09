@@ -2,11 +2,12 @@
   "assumptions": [
     "REM-0017 parallel campaign implemented; qualification blocked only by the indivisible 0049 unit exceeding the 45-minute part cap.",
     "No test, cap, criterion, ruleset or sealed record changed; E1=0, E2=0, NO-GO claims unchanged.",
-    "REM18 underlying teardown defect remains open."
+    "REM18 underlying teardown defect remains open.",
+    "OCOR-DEV-REM-0019 registered only; 0049 tests unchanged until a dedicated PO decision."
   ],
-  "base_sha": "260c480c85cc7af041428beb6c5b56f1c2352858",
-  "baseline_commit": "260c480c85cc7af041428beb6c5b56f1c2352858",
-  "branch": "governed/state-sync-rem-0017-parallel-cap",
+  "base_sha": "69a5c047cca049fe8d37f66c01c664a4d1f891ec",
+  "baseline_commit": "69a5c047cca049fe8d37f66c01c664a4d1f891ec",
+  "branch": "governed/state-sync-rem-0019-0049-test-isolation",
   "changed_paths": [
     "reports/development/EXECUTION_STATE.json",
     "reports/development/MODEL_HANDOFF.json",
@@ -83,12 +84,12 @@
     }
   ],
   "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
-  "current_task": "OCOR-DEV-REM-0017: PO decision REM-0017-CI-CAMPAIGN-DURATION executed; 0049 indivisible unit at the 45-minute part cap; PO decision requested",
+  "current_task": "OCOR-DEV-REM-0019: registrazione (presa d'atto PO sul vincolo d'ordine di 0049); prossimo OCOR-DEV-0052:implementation",
   "evidence_paths": [
     "reports/development/EXECUTION_STATE.json",
     "reports/development/ITERATION_LOG.md"
   ],
-  "exact_next_action": "OCOR-DEV-0052:implementation (pronto: hard_dependencies completate; 0053 anch'esso pronto), branch task/ da origin/main in worktree nuovo. OCOR-DEV-REM-0017 fermo su decisione PO REM-0017-CI-0049-REMAINDER-CAP (addendum della DR REM-0017-CI-CAMPAIGN-DURATION sul branch governed/ocor-dev-rem-0017-ci-provision-spire, PR #169 draft, head 7d8e0fd): l'unit\u00e0 indivisibile test_ocor_dev_0049 (resto del modulo) supera il tetto di 45 minuti per parte (388/389 PASS a 2716 s, run 37961535016). Integrazione OCOR-DEV-0049 (GO b14e4bf, PR #176) subordinata alla chiusura verificata di REM-0017. RVW-03, INFO-A, INFO-C, REM-0018 aperti e non bloccano G5.",
+  "exact_next_action": "OCOR-DEV-0052:implementation (G5, pronto; 0053 anch'esso pronto), branch task/ da origin/main in worktree nuovo. OCOR-DEV-REM-0017 fermo su decisione PO REM-0017-CI-0049-REMAINDER-CAP (presa d'atto PO 2026-10-09 registrata; decisione sul tetto ancora richiesta). OCOR-DEV-REM-0019 (isolamento test 0049) aperto, dipendenza G6, esecuzione subordinata a decisione PO dedicata. Integrazione OCOR-DEV-0049 (GO b14e4bf, PR #176) subordinata alla chiusura verificata di REM-0017. RVW-03, INFO-A, INFO-C, REM-0018 aperti e non bloccano G5.",
   "head_sha": "git:HEAD",
   "head_sha_resolver": "git rev-parse HEAD on versioned handoff branch",
   "independent_verification": {
@@ -106,7 +107,7 @@
   },
   "local_full_suite": "Branch REM: CI-recipe parts on 12836ed \u2014 main 1363 PASS (exact union); candidate part 1 389 PASS 1780 s, part 3 1101 PASS; Helm part NOT_EXECUTED locally",
   "local_gate_results": "see ITERATION_LOG entry of this sync (RCCAD, scope, language, plan, drift, digest)",
-  "migration_rollback_result": "State-only change; rollback = revert the state-sync merge commit. PR #169 untouched.",
+  "migration_rollback_result": "State-only change; rollback = revert the state-sync merge commit.",
   "rem_0017_candidate": {
     "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
     "branch_evidence_paths": [
@@ -184,7 +185,7 @@
       }
     ]
   },
-  "task_id": "OCOR-DEV-REM-0017",
+  "task_id": "OCOR-DEV-REM-0019",
   "teardown": {
     "added": {
       "container": [],
@@ -199,16 +200,18 @@
     }
   },
   "unresolved_blockers": [
-    "RVW-03",
     "INFO-A",
     "INFO-C",
-    "OCOR-DEV-REM-0017",
     "OCOR-DEV-0049",
+    "OCOR-DEV-REM-0017",
     "OCOR-DEV-REM-0018",
+    "OCOR-DEV-REM-0019",
+    "REM-0017-CI-0049-REMAINDER-CAP",
     "REM-0017-CI-ARCHIVE-ACQUISITION",
     "REM-0017-CI-CAMPAIGN-DURATION",
-    "REM-0017-KIND-CONTAINERD-CRASH"
+    "REM-0017-KIND-CONTAINERD-CRASH",
+    "RVW-03"
   ],
-  "updated_at": "2026-10-09T14:40:20Z",
-  "worktree": ".ocor/worktrees/state-sync-ocor-dev-0051-sealed"
+  "updated_at": "2026-10-09T18:05:00Z",
+  "worktree": ".ocor/worktrees/state-sync-rem-0019"
 }
