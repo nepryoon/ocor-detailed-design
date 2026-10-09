@@ -1,39 +1,58 @@
 {
   "assumptions": [
-    "OCOR-DEV-0051 completed only by sealed evidence merged on main after independent GO; component-level FR-115/FR-119 only, no global requirement qualification.",
-    "REM-0017-CI-CAMPAIGN-DURATION decided by the PO on 2026-10-09; execution belongs to the REM-0017 change set.",
+    "REM-0017 parallel campaign implemented; qualification blocked only by the indivisible 0049 unit exceeding the 45-minute part cap.",
+    "No test, cap, criterion, ruleset or sealed record changed; E1=0, E2=0, NO-GO claims unchanged.",
     "REM18 underlying teardown defect remains open."
   ],
-  "base_sha": "0f76347213bc76a5ced53ada485fd5a852b0f8fc",
-  "baseline_commit": "0f76347213bc76a5ced53ada485fd5a852b0f8fc",
-  "branch": "governed/state-sync-ocor-dev-0051-sealed",
+  "base_sha": "260c480c85cc7af041428beb6c5b56f1c2352858",
+  "baseline_commit": "260c480c85cc7af041428beb6c5b56f1c2352858",
+  "branch": "governed/state-sync-rem-0017-parallel-cap",
   "changed_paths": [
     "reports/development/EXECUTION_STATE.json",
     "reports/development/MODEL_HANDOFF.json",
     "reports/development/ITERATION_LOG.md"
   ],
   "ci": {
-    "state_sync_status": "CI_REQUIRED_BEFORE_EXACT_HEAD_MERGE",
-    "task_status": "PASS_EXACT_HEAD_13_REQUIRED_PR188_MERGED"
+    "rem_0017_status": "NOT_QUALIFIED_0049_UNIT_AT_PART_CAP",
+    "state_sync_status": "CI_REQUIRED_BEFORE_EXACT_HEAD_MERGE"
   },
   "ci_observations": {
-    "188": {
-      "head_sha": "cc1d53a858469a7a547fe20fd7264eb8d0e299cc",
-      "merge_commit": "0f76347213bc76a5ced53ada485fd5a852b0f8fc",
-      "observed_at": "2026-10-09T14:39:57.106887+00:00",
-      "raw_observation_sha256": "80ea8771e74321103476f4a9ca9e9b03b578a8aca21ca7b279472f64427417c2",
-      "required_passed": 13,
-      "required_total": 13,
-      "run_ids": [
-        37943402246,
-        37943402250,
-        37943402254,
-        37943402259,
-        37943402262,
-        37943402286,
-        37943402376
-      ],
-      "state": "MERGED"
+    "rem_0017": {
+      "corrected_head_99f9ee5": {
+        "check_runs_sha256": "d42ed8dc331543be3218c8c9c0d2f953252c5930a6912d24b5dd13ecdb74f533",
+        "head": "99f9ee505b1a13fe23c0dbbe79c44e8c069f7343",
+        "part1_campaign_result_sha256": "d469b6a502a0557d3c1ab74b9674504cdb44e8cd37cfb029fb3ab5c14709075d",
+        "part1_log_sha256": "72a3622347f6ecb53a6da3ea5153ca19c972c10447e947e83e3b178af66e739a",
+        "qualifying": false,
+        "result": "all checks PASS except conditional-infrastructure-0049 and validation-closure: 0049 remainder part 388/389 PASS, zero fail/skip, stopped at the 45-minute part cap (2716 s); Helm part PASS 1106 s; other modules PASS 1101 cases 445 s; aggregators fail-closed",
+        "run_ids": [
+          37961535016,
+          37961535129,
+          37961535168
+        ]
+      },
+      "docs_only_head_7d8e0fd": {
+        "head": "7d8e0fde9386ffc38a857eef50028a444155b9ed",
+        "result": "cancelled immediately: documentation-only push, not a qualifying attempt",
+        "run_ids": [
+          37967399284,
+          37967399287,
+          37967399541,
+          37967399304,
+          37967399335
+        ]
+      },
+      "first_attempt_4e97cd3": {
+        "check_runs_sha256": "8863e8732a266e596521e2d0419ef3e958de1bad83c88f4bdb08fb060050fbf0",
+        "head": "4e97cd3a949955b673188aaa5d823a3fb62c1881",
+        "qualifying": false,
+        "result": "rccad/delivery PASS (union 1363/1363); 0049 node-level split FAIL in parts 2-4 (order-dependent state in test_ocor_dev_0049); fixed in 12836ed",
+        "run_ids": [
+          37952580435,
+          37952580531,
+          37952580779
+        ]
+      }
     }
   },
   "claims": {
@@ -64,13 +83,12 @@
     }
   ],
   "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
-  "current_task": "OCOR-DEV-0051 sealed and merged; state sync",
+  "current_task": "OCOR-DEV-REM-0017: PO decision REM-0017-CI-CAMPAIGN-DURATION executed; 0049 indivisible unit at the 45-minute part cap; PO decision requested",
   "evidence_paths": [
-    "reports/evidence/G5/OCOR-DEV-0051.json",
-    "reports/evidence/G5/OCOR-DEV-0051.log",
-    "reports/evidence/G5/MANIFEST.json"
+    "reports/development/EXECUTION_STATE.json",
+    "reports/development/ITERATION_LOG.md"
   ],
-  "exact_next_action": "OCOR-DEV-REM-0017: implementare la decisione PO REM-0017-CI-CAMPAIGN-DURATION (2026-10-09) sul branch governed/ocor-dev-rem-0017-ci-provision-spire (PR #169 draft, head 7412798): suite completa di rccad-methodology, delivery-activation, validation-closure e conditional-infrastructure-0049 in N>=2 parti parallele (partenza 3) con partizione deterministica, stack completo per parte, zero skip, teardown fail-closed, arresto su riavvio/OOM; job aggregatore con il nome del check obbligatorio che confronta i JUnit con pytest --collect-only (nessun mancante/duplicato, zero skip/fail/error); tetto 45 min per parte in CI (oltre 30 min aumentare N); ruleset 23412233 invariato; chiudere la DR REM-0017-CI-CAMPAIGN-DURATION come risolta; poi la coppia di run CI autorizzata e la verifica indipendente. REM-0017-KIND-CONTAINERD-CRASH: diagnosi secondo l'opzione 1, senza cambi di immagine o versione. Integrazione OCOR-DEV-0049 (GO b14e4bf, PR #176) subordinata alla chiusura verificata di REM-0017. Se REM-0017 resta in attesa di un evento esterno: OCOR-DEV-0052:implementation (pronto: hard_dependencies completate; 0053 pronto). RVW-03, INFO-A, INFO-C, REM-0018 aperti e non bloccano G5.",
+  "exact_next_action": "OCOR-DEV-0052:implementation (pronto: hard_dependencies completate; 0053 anch'esso pronto), branch task/ da origin/main in worktree nuovo. OCOR-DEV-REM-0017 fermo su decisione PO REM-0017-CI-0049-REMAINDER-CAP (addendum della DR REM-0017-CI-CAMPAIGN-DURATION sul branch governed/ocor-dev-rem-0017-ci-provision-spire, PR #169 draft, head 7d8e0fd): l'unit\u00e0 indivisibile test_ocor_dev_0049 (resto del modulo) supera il tetto di 45 minuti per parte (388/389 PASS a 2716 s, run 37961535016). Integrazione OCOR-DEV-0049 (GO b14e4bf, PR #176) subordinata alla chiusura verificata di REM-0017. RVW-03, INFO-A, INFO-C, REM-0018 aperti e non bloccano G5.",
   "head_sha": "git:HEAD",
   "head_sha_resolver": "git rev-parse HEAD on versioned handoff branch",
   "independent_verification": {
@@ -86,15 +104,22 @@
     "verdict_sha256": "c2fc97c1de45d87e98d6b4eaf1645ae3850c2caec4382d200b0181b1a59d5b11",
     "verifier": "cursor"
   },
-  "local_full_suite": "NOT_EXECUTED in this state-only iteration",
+  "local_full_suite": "Branch REM: CI-recipe parts on 12836ed \u2014 main 1363 PASS (exact union); candidate part 1 389 PASS 1780 s, part 3 1101 PASS; Helm part NOT_EXECUTED locally",
   "local_gate_results": "see ITERATION_LOG entry of this sync (RCCAD, scope, language, plan, drift, digest)",
   "migration_rollback_result": "State-only change; rollback = revert the state-sync merge commit. PR #169 untouched.",
   "rem_0017_candidate": {
     "branch": "governed/ocor-dev-rem-0017-ci-provision-spire",
+    "branch_evidence_paths": [
+      "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-parallel.json",
+      "reports/assurance/OCOR-DEV-REM-0017-RCCAD/repair-1-parallel.log",
+      "reports/evidence/G5/OCOR-DEV-0050.rem0017-parallel-requalified.json",
+      "reports/development/decision_requests/REM-0017-CI-CAMPAIGN-DURATION.md"
+    ],
     "draft": true,
-    "head_sha": "741279862edae172fd8c1b16b584c1852145f7ae",
+    "head_sha": "7d8e0fde9386ffc38a857eef50028a444155b9ed",
     "pull_request": 169,
-    "status": "PO_DECISION_RECEIVED_EXECUTION_PENDING (REM-0017-CI-CAMPAIGN-DURATION)",
+    "status": "NOT_QUALIFIED_PO_DECISION_REQUIRED (REM-0017-CI-0049-REMAINDER-CAP)",
+    "verify_request": "NOT_SENT: no qualifying exact-head CI",
     "worktree": ".ocor/worktrees/ocor-dev-rem-0017-ci-provision-spire"
   },
   "requirement_ids": [],
