@@ -373,13 +373,13 @@ jobs:
     # A passing run exercises the guard; it does not accept the candidate's integration.
     # One deterministic part of the complete suite on its own runner and full
     # pinned stack (PO decision REM-0017-CI-CAMPAIGN-DURATION, 45-minute part limit).
-    name: conditional-infrastructure-0049 part ${{ matrix.part }}/4
+    name: conditional-infrastructure-0049 part ${{ matrix.part }}/3
     runs-on: ubuntu-24.04
     timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:
-        part: [1, 2, 3, 4]
+        part: [1, 2, 3]
     env:
       PYTHONHASHSEED: "0"
       TZ: UTC
@@ -506,7 +506,7 @@ jobs:
       - name: Run this part of the immutable candidate FULL suite with TEST-INFRA-005 and 006
         run: |
           set -euo pipefail
-          .ocor/candidate-0049/ocor-runtime/.venv/bin/python scripts/run_qualifying_campaign.py --execute --repository .ocor/candidate-0049 --expected-head df444af855e884d7783612b302e008b90105fe13 --shard-index ${{ matrix.part }} --shard-count 4 --output-dir reports/tests/candidate-0049-part-${{ matrix.part }}
+          .ocor/candidate-0049/ocor-runtime/.venv/bin/python scripts/run_qualifying_campaign.py --execute --repository .ocor/candidate-0049 --expected-head df444af855e884d7783612b302e008b90105fe13 --shard-index ${{ matrix.part }} --shard-count 3 --output-dir reports/tests/candidate-0049-part-${{ matrix.part }}
 
       - name: Teardown candidate-owned resources and the disposable stack
         if: always()
@@ -588,7 +588,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p reports/tests
-          .ocor/candidate-0049/ocor-runtime/.venv/bin/python scripts/run_qualifying_campaign.py --execute --aggregate reports/tests/candidate-0049-parts --repository .ocor/candidate-0049 --expected-head df444af855e884d7783612b302e008b90105fe13 --shard-count 4 --output-dir reports/tests/candidate-0049 | tee reports/tests/ci_candidate_aggregate.log
+          .ocor/candidate-0049/ocor-runtime/.venv/bin/python scripts/run_qualifying_campaign.py --execute --aggregate reports/tests/candidate-0049-parts --repository .ocor/candidate-0049 --expected-head df444af855e884d7783612b302e008b90105fe13 --shard-count 3 --output-dir reports/tests/candidate-0049 | tee reports/tests/ci_candidate_aggregate.log
 
       - name: Upload candidate guard execution (not an evidence seal)
         if: always()

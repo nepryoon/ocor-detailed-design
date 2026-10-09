@@ -37,6 +37,11 @@ PART_ARTIFACTS = ("partition.json", "campaign_result.json", "runtime_junit_post_
 # df444af (run on head f55b210, runtime JUnit SHA-256 4ba26f004afe9541...);
 # the Helm case waits for a real */15 CronJob tick, so it carries its worst case.
 DEFAULT_TEST_WEIGHT = 0.1
+# Nodes that may leave their module's part: the Helm case runs on its own kind
+# cluster and passed alone (CI run 37952580435, conditional-infrastructure-0049 part 1/4).
+SEPARABLE_NODES = frozenset({
+    "tests/tasks/test_ocor_dev_0049.py::test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness",
+})
 MEASURED_WEIGHTS = {
     "tests.mission_thread.test_first_governed_slice::test_a_real_kafka_broker_restart_during_the_event_step_is_detected_and_recovers": 22,
     "tests.mission_thread.test_first_governed_slice::test_causal_receipt_reproduces_identically_with_the_same_pinned_inputs": 11,
@@ -150,8 +155,21 @@ def collect_nodeids(directory: Path, selection: list[str]) -> list[str]:
     return nodeids
 
 
+def partition_units(nodeids: list[str]) -> list[list[str]]:
+    """Whole test modules in collection order; only proven-separable nodes stand alone.
+
+    Modules may carry order-dependent state between their tests (CI run
+    37952580435: splitting test_ocor_dev_0049 by node broke its restore and
+    readiness state), so a module is never split across parts.
+    """
+    units: dict[str, list[str]] = {}
+    for node in nodeids:
+        units.setdefault(node if node in SEPARABLE_NODES else node.split("::", 1)[0], []).append(node)
+    return list(units.values())
+
+
 def partition(nodeids: list[str], count: int) -> list[list[str]]:
-    """Longest-processing-time assignment; ties broken by node ID and part index.
+    """Longest-processing-time assignment of whole units; ties broken by first node ID and part index.
 
     Each part keeps pytest's collection order, so relative order is unchanged.
     """
@@ -161,12 +179,15 @@ def partition(nodeids: list[str], count: int) -> list[list[str]]:
         raise CampaignError(f"cannot partition {len(nodeids)} collected tests into {count} nonempty parts")
     if len({junit_identity(node) for node in nodeids}) != len(nodeids):
         raise CampaignError("collected node IDs are not uniquely identifiable in JUnit")
+    units = partition_units(nodeids)
+    if len(units) < count:
+        raise CampaignError(f"cannot partition {len(units)} units into {count} nonempty parts")
     loads = [(0.0, index) for index in range(count)]
     assigned: list[list[str]] = [[] for _ in range(count)]
-    for node in sorted(nodeids, key=lambda item: (-node_weight(item), item)):
+    for unit in sorted(units, key=lambda item: (-sum(map(node_weight, item)), item[0])):
         load, index = heapq.heappop(loads)
-        assigned[index].append(node)
-        heapq.heappush(loads, (load + node_weight(node), index))
+        assigned[index].extend(unit)
+        heapq.heappush(loads, (load + sum(map(node_weight, unit)), index))
     order = {node: position for position, node in enumerate(nodeids)}
     parts = [sorted(part, key=order.__getitem__) for part in assigned]
     if not all(parts):

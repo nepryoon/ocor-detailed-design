@@ -489,7 +489,37 @@ HELM = 'tests/tasks/test_ocor_dev_0049.py::test_helm_profile_on_kubernetes_backs
 NODEIDS = [HELM] + [f'tests/tasks/test_ocor_dev_00{n:02d}.py::test_case[{k}]' for n in range(10, 20) for k in range(7)] + [
     'tests/runtime/test_surface.py::TestSandbox::test_rejects[sum(*[1, 2])]',
     'tests/tasks/test_ocor_dev_0048.py::test_repair4_svid_bounds_identity_and_secret',
+    'tests/tasks/test_ocor_dev_0049.py::test_restore_replay_is_deterministic',
+    'tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_receipt_time_branches[future]',
 ]
+
+
+def module_of(node):
+    return node.split('::', 1)[0]
+
+
+def test_modules_are_never_split_except_proven_separable_nodes():
+    # CI run 37952580435 (head 4e97cd3): splitting test_ocor_dev_0049 by node broke
+    # its order-dependent restore/readiness state; modules stay whole and ordered.
+    for count in (2, 3, 4):
+        parts = GUARD.partition(NODEIDS, count)
+        owner = {}
+        for index, part in enumerate(parts):
+            for node in part:
+                if node in GUARD.SEPARABLE_NODES:
+                    continue
+                assert owner.setdefault(module_of(node), index) == index, node
+    parts = GUARD.partition(NODEIDS, 3)
+    helm_part = next(part for part in parts if HELM in part)
+    assert helm_part == [HELM]
+    rest = next(part for part in parts if 'tests/tasks/test_ocor_dev_0049.py::test_restore_replay_is_deterministic' in part)
+    assert rest.index('tests/tasks/test_ocor_dev_0049.py::test_restore_replay_is_deterministic') < rest.index(
+        'tests/tasks/test_ocor_dev_0049.py::test_custodian_signed_receipt_time_branches[future]')
+
+
+def test_partition_requires_more_units_than_parts():
+    with pytest.raises(GUARD.CampaignError, match='units'):
+        GUARD.partition(['a.py::t1', 'a.py::t2', 'a.py::t3'], 2)
 
 
 def test_partition_is_deterministic_complete_disjoint_and_balanced():
@@ -502,7 +532,8 @@ def test_partition_is_deterministic_complete_disjoint_and_balanced():
     order = {node: index for index, node in enumerate(NODEIDS)}
     assert all(part == sorted(part, key=order.__getitem__) for part in parts)
     loads = [sum(GUARD.node_weight(node) for node in part) for part in parts]
-    assert max(loads) - min(loads) <= max(GUARD.node_weight(node) for node in NODEIDS)
+    units = GUARD.partition_units(NODEIDS)
+    assert max(loads) - min(loads) <= max(sum(GUARD.node_weight(node) for node in unit) for unit in units)
     assert GUARD.node_weight(HELM) > GUARD.DEFAULT_TEST_WEIGHT
 
 
@@ -512,7 +543,7 @@ def test_partition_requires_at_least_two_parts(count):
         GUARD.partition(NODEIDS, count)
 
 
-@pytest.mark.parametrize('nodeids', [[], ['a.py::t', 'a.py::t'], ['a.py::t']])
+@pytest.mark.parametrize('nodeids', [[], ['a.py::t', 'a.py::t'], ['a.py::t'], ['a.py::t', 'a.py::u']])
 def test_partition_rejects_empty_duplicate_or_too_small_collections(nodeids):
     with pytest.raises(GUARD.CampaignError):
         GUARD.partition(nodeids, 2)
