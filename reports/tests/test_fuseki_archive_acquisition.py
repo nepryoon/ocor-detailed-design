@@ -153,12 +153,20 @@ def test_verified_copy_is_rechecked_and_context_is_removed(tmp_path, monkeypatch
 def test_ci_cache_actions_are_exact_key_pinned_in_every_stack_job():
     import yaml
     repo = Path(__file__).resolve().parents[2]
-    jobs = []
+    jobs = {}
     for name in ('ocor-rccad.yml', 'ocor-delivery-activation.yml', 'ocor-validation-closure.yml'):
         workflow = yaml.safe_load((repo / '.github/workflows' / name).read_text())
-        jobs.extend(workflow['jobs'].values())
-    assert len(jobs) == 4
-    for job in jobs:
+        jobs.update(workflow['jobs'])
+    # Every job that provisions the stack: each parallel part and each aggregator that still runs gates on the stack.
+    provisioning_jobs = {name for name, job in jobs.items()
+                         if any(s.get('name') == 'Provision the full pinned disposable stack' for s in job['steps'])}
+    assert provisioning_jobs == {
+        'rccad-methodology-part', 'rccad-methodology', 'delivery-activation-part', 'delivery-activation',
+        'validation-closure-part', 'validation-closure', 'conditional-infrastructure-0049-part'}
+    # The 0049 aggregator only verifies the parts' union and never provisions or restores a stack.
+    assert set(jobs) - provisioning_jobs == {'conditional-infrastructure-0049'}
+    assert not any('cache' in s.get('uses', '') for s in jobs['conditional-infrastructure-0049']['steps'])
+    for job in (jobs[name] for name in sorted(provisioning_jobs)):
         steps = job['steps']
         restore = next(s for s in steps if s.get('id') == 'fuseki-cache')
         save = next(s for s in steps if s.get('uses', '').startswith('actions/cache/save@'))

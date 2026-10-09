@@ -215,7 +215,8 @@ def aggregate(parts_dir: Path, suite_repository: Path, count: int, output: Path,
         if sorted(found) != list(range(1, count + 1)):
             raise CampaignError(f"expected parts 1..{count}, found {sorted(found)}")
         executed: list[tuple[str, str]] = []
-        parts = []
+        parts: list[dict[str, Any]] = []
+        durations: list[float] = []
         cases_by_part = []
         for index in range(1, count + 1):
             directory = found[index]
@@ -234,19 +235,20 @@ def aggregate(parts_dir: Path, suite_repository: Path, count: int, output: Path,
             cases = junit_cases(directory / "runtime_junit_post_approval.xml")
             cases_by_part.append(directory / "runtime_junit_post_approval.xml")
             executed.extend(cases)
+            durations.append(duration)
             parts.append({"shard_index": index, "tests": len(cases), "duration_seconds": duration,
                           "selected_sha256": hashlib.sha256(json.dumps(expected[index - 1]).encode()).hexdigest()})
         wanted = {junit_identity(node) for node in collected}
         occurrences = Counter(executed)
         seen = set(occurrences)
         duplicated = sorted(case for case, times in occurrences.items() if times > 1)
-        union = {"collected": len(collected), "executed": len(executed),
-                 "missing": sorted("::".join(case) for case in wanted - seen),
-                 "duplicated": ["::".join(case) for case in duplicated],
-                 "unexpected": sorted("::".join(case) for case in seen - wanted)}
-        for key in ("missing", "duplicated", "unexpected"):
-            if union[key]:
-                raise CampaignError(f"union of parts has {key} tests: {union[key][:20]}")
+        discrepancies = {"missing": sorted("::".join(case) for case in wanted - seen),
+                         "duplicated": ["::".join(case) for case in duplicated],
+                         "unexpected": sorted("::".join(case) for case in seen - wanted)}
+        for key, cases_found in discrepancies.items():
+            if cases_found:
+                raise CampaignError(f"union of parts has {key} tests: {cases_found[:20]}")
+        union = {"collected": len(collected), "executed": len(executed), **discrepancies}
         modules = {part for classname, _ in executed for part in classname.split(".")}
         if absent := set(required_modules) - modules:
             raise CampaignError(f"required guard not executed: {sorted(absent)}")
@@ -259,7 +261,7 @@ def aggregate(parts_dir: Path, suite_repository: Path, count: int, output: Path,
         ET.ElementTree(merged).write(output / "runtime_junit_post_approval.xml", encoding="utf-8", xml_declaration=True)
         check_junit(output / "runtime_junit_post_approval.xml", required_modules=required_modules)
         combine_coverage(suite, [found[index] / "runtime_coverage.data" for index in range(1, count + 1)], output)
-        longest = max(part["duration_seconds"] for part in parts)
+        longest = max(durations)
         summary = {"status": "PASS", "mode": "AGGREGATE", "shard_count": count, "parts": parts, "union": union,
                    "counts": {"tests": len(executed), "failures": 0, "errors": 0, "skipped": 0},
                    "collected_sha256": collection_digest(collected), "partition_sha256": partition_digest(expected),
