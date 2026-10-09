@@ -511,6 +511,157 @@
       "status": "FAIL_GENERATED_REPORTS_OUTSIDE_TASK_SCOPE"
     }
   ],
+  "independent_verification": {
+    "commands": [
+      {
+        "command": "git worktree add --detach /tmp/ocor-verify-OCOR-DEV-0050-45b562039072-1/wt 45b5620390729dad9b4c5d647c3a1e7eb923a7cd",
+        "exit_code": 0,
+        "summary": "Worktree detached all'HEAD esatto 45b5620390729dad9b4c5d647c3a1e7eb923a7cd; rimosso con git worktree remove --force a fine verifica"
+      },
+      {
+        "command": "sha256sum -c inputs/normative/SHA256SUMS",
+        "exit_code": 0,
+        "summary": "8/8 OK; inputs/ immutato"
+      },
+      {
+        "command": "git diff --name-status 46ba54c0d1449b8a58f9b9bafda17df47919828e..45b5620390729dad9b4c5d647c3a1e7eb923a7cd e origin/main...HEAD",
+        "exit_code": 0,
+        "summary": "5 path aggiunti: model.py, test_ocor_dev_0050.py, reports/evidence/G5/OCOR-DEV-0050.json, OCOR-DEV-0050.log, MANIFEST.json. Nessun file preesistente modificato; nessun record sigillato toccato"
+      },
+      {
+        "command": "python3 ~/.ocor-codex/ocor-dev-0050-repair1/check_evidence.py <worktree> 45b5620390729dad9b4c5d647c3a1e7eb923a7cd",
+        "exit_code": 0,
+        "summary": "PASS: commit 29491c874905660314f2fd366fefb64a55ec8775 antenato, diff successivo solo evidenze G5, hash input/tree/raw/manifest coerenti, JUnit task 198 e suite 1299/0/0"
+      },
+      {
+        "command": "ricalcolo indipendente sha256 di model.py, test, inputs tree, raw log, manifest e conteggi JUnit dal raw log",
+        "exit_code": 0,
+        "summary": "Tutti gli hash coincidono con il record. requirement_id presenti: FR-006, FR-113, FR-140, NFR-006, NFR-016, NFR-048. Nessun PASS su BR-003. claims E1=0 E2=0 PoC_GO=NO-GO Production_readiness=NO_GO runtime_conformance=NOT_ESTABLISHED. status CANDIDATE_AWAITING_INDEPENDENT_VERIFICATION"
+      },
+      {
+        "command": "confronto hash dei raw di campagna in ~/.ocor-codex/ocor-dev-0050-repair1",
+        "exit_code": 0,
+        "summary": "Primo FULL: pytest 1299/0 skip ma campaign-result FAIL per 18 volumi anonimi, junit diverso e non usato come qualificante. Secondo FULL: junit 0b09c907\u2026 1299/0/0, inventory added vuoto, cleanup residual PASS. Hash storici del record coincidono. REM-0018 resta OPEN"
+      },
+      {
+        "command": "sonda MemoryAdmissionService su journal JSONL: replay byte diversi, proibiti, tipo invalido, registry vuoto, pattern e classe dopo stretta, conflitto di digest",
+        "exit_code": 0,
+        "summary": "13/13. Receipt restituita solo a byte identici. Payload diverso o proibito rifiutato prima della receipt con journal byte-identico e policy.calls=0. Con digest coincidente, pattern e classe proibiti danno PROHIBITED_PAYLOAD_PROBE e PROHIBITED_CONTENT_CLASS. Registry vuoto: CONTENT_SCHEMA_UNKNOWN. Digest diverso: MEMORY_IDEMPOTENCY_CONFLICT/IDEMPOTENCY_DIGEST_MISMATCH, zero append"
+      },
+      {
+        "command": "uv run --project ocor-runtime --frozen --extra test --extra lint pytest -q -p no:cacheprovider -rs ocor-runtime/tests/tasks/test_ocor_dev_0050.py",
+        "exit_code": 0,
+        "summary": "198 passed, 0 skipped, 4.72s. uv 0.12.5, Python 3.12.11"
+      },
+      {
+        "command": "uv run --project ocor-runtime --frozen --extra test --extra lint ruff check .",
+        "exit_code": 0,
+        "summary": "All checks passed"
+      },
+      {
+        "command": "uv run --project ocor-runtime --frozen --extra test --extra lint mypy --strict",
+        "exit_code": 0,
+        "summary": "Success: no issues found in 70 source files"
+      },
+      {
+        "command": "python3 scripts/validate_runtime_evidence.py --task OCOR-DEV-0050 --non-skipped --manifest reports/evidence/G5/MANIFEST.json",
+        "exit_code": 0,
+        "summary": "PASS: qualifying task evidence for OCOR-DEV-0050"
+      },
+      {
+        "command": "python3 scripts/validate_rccad.py --base-ref origin/main",
+        "exit_code": 0,
+        "summary": "PASS_LOCAL_PRECHECK, findings vuoti, dynamic_assurance CI_REQUIRED"
+      },
+      {
+        "command": "python3 scripts/validate_language_policy.py",
+        "exit_code": 0,
+        "summary": "PASS: nessun file tracciato fuori dall'area autorizzata"
+      },
+      {
+        "command": "python3 scripts/validate_evidence_input_drift.py",
+        "exit_code": 0,
+        "summary": "PASS: 167 input, 63 task, 0 drift"
+      },
+      {
+        "command": "python3 scripts/validate_ocor_change_scope.py --base origin/main --branch task/OCOR-DEV-0050-governed-memory-item-admission-immutable-versions",
+        "exit_code": 0,
+        "summary": "PASS: 5 path, superfici immutabili intatte"
+      },
+      {
+        "command": "python3 scripts/validate_ocor_development_plan.py --base-ref HEAD --authorized-extension",
+        "exit_code": 0,
+        "summary": "verdict PASS, 37 PASS, 2 NOT_EXECUTED opzionali (markdownlint e renderer Mermaid assenti; fallback locale eseguito, non contati come PASS)"
+      },
+      {
+        "command": "python3 scripts/verify.py --json",
+        "exit_code": 0,
+        "summary": "PASS 14, FAIL 0, NOT_EXECUTED 0; evidence fence E1=0 senza claim non supportati"
+      },
+      {
+        "command": "python3 scripts/reset_test_environment.py --execute && python3 scripts/bootstrap_development_environment.py --execute --timeout 600 (primo tentativo, env copiato)",
+        "exit_code": 2,
+        "summary": "Reset PASS. Bootstrap FAIL: SPIRE ha rifiutato la CA della checkout principale (certificate cannot be validated). Env principale non modificato. Tentativo non qualificante"
+      },
+      {
+        "command": "python3 scripts/reset_test_environment.py --execute && python3 scripts/bootstrap_development_environment.py --execute --timeout 600 (CA usa e getta nel worktree)",
+        "exit_code": 0,
+        "summary": "Stack ocor-bootstrap avviato. Fuseki image Id sha256:6534156b8d8f16b28faf0c336096e5c6a751794828525a8ef42c60ef46c9cc2b uguale a services.lock.json build.output_sha256 (identity HIT, nessun rebuild). Dockerfile ARG FUSEKI_URL=https://archive.apache.org/dist/jena/binaries/apache-jena-fuseki-6.2.0.tar.gz e SHA512 identici al lock; nessun mirror di terze parti"
+      },
+      {
+        "command": "python3 deploy/bootstrap/init/initialize_services.py --env-file <worktree>/.ocor/bootstrap.env",
+        "exit_code": 0,
+        "summary": "Inizializzazione CREATED"
+      },
+      {
+        "command": "python3 deploy/bootstrap/fixtures/load_fixtures.py --env-file <worktree>/.ocor/bootstrap.env",
+        "exit_code": 0,
+        "summary": "PASS"
+      },
+      {
+        "command": "python3 ~/.ocor-codex/ocor-dev-0050/register_control_plane.py",
+        "exit_code": 0,
+        "summary": "SVID spiffe://ocor.test/ocor/control-plane fetched; materiale privato non registrato"
+      },
+      {
+        "command": "python3 scripts/verify_external_services.py --execute --typed",
+        "exit_code": 0,
+        "summary": "PASS: terminusdb, typedb, fuseki, opa-keycloak, openbao, spiffe-spire, postgresql, kafka, qdrant READY. 11 container ocor-bootstrap, oom=false, restart=0"
+      },
+      {
+        "command": "npm --prefix ocor-runtime/sdk/typescript ci && npm --prefix ocor-runtime/sdk/typescript run build",
+        "exit_code": 0,
+        "summary": "SDK TypeScript compilato con node 20.20.2 e tsc del toolchain pinnato"
+      },
+      {
+        "command": "OCOR_LIVE_POSTGRES_DSN=<bootstrap PostgreSQL> uv run --project ocor-runtime --frozen --extra test --extra lint pytest -rs --junitxml=<junit> ocor-runtime/tests/",
+        "exit_code": 0,
+        "summary": "1299 passed, 0 failed, 0 skipped, 386.90s. test_ocor_dev_0048: 196 passed, 0 skipped. test_ocor_dev_0050: 198 passed, 0 skipped. Nessun OOM e restart 0 sui 11 container. La suite ha creato 18 volumi anonimi, stesso residuo preesistente REM-0018, non attribuito a 0050 e non trattato come chiusura"
+      },
+      {
+        "command": "python3 scripts/reset_test_environment.py --execute && docker volume rm <18 volumi anonimi di sessione>",
+        "exit_code": 0,
+        "summary": "Teardown ocor-bootstrap: container e rete rimossi. 18 volumi anonimi di sessione rimossi. Delta residuo 0. Container storici ocor-spike non toccati. Env della checkout principale invariato"
+      }
+    ],
+    "findings": [],
+    "implementer": "Codex (OpenAI), repair cycle 1",
+    "integration_condition": "Merge subordinato ai check obbligatori verdi sul commit di sigillo esatto; il verdetto qualifica il candidato indicato, con soli metadati di sigillo e manifest successivi.",
+    "not_executed": [],
+    "original_implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva",
+    "review_type": "TASK_EVIDENCE",
+    "verdict_created_at": "2026-10-08T19:11:45Z",
+    "verdict_file_sha256": "df26cd0b7157ab6ed65f3d8eae1fcd1ed643178304456a1acff007f5c199e762",
+    "verdict_head_sha": "45b5620390729dad9b4c5d647c3a1e7eb923a7cd",
+    "verdict_request_id": "OCOR-DEV-0050-45b562039072-1",
+    "verdict_status": "GO_FOR_EVIDENCE_SEAL",
+    "verifier": "Grok 4.7 (Cursor CLI)",
+    "verifier_configuration": {
+      "independence_limits": "processo e contesto separati; implementatore della riparazione Codex (OpenAI), implementatore originale Claude Code (Anthropic, claude-opus-5-5), verifier Grok 4.7 tramite Cursor CLI; fornitori di modello diversi",
+      "model": "Grok 4.7",
+      "process": "Cursor CLI, contesto pulito, sessione non interattiva"
+    }
+  },
   "inputs": {
     "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
     "ocor-runtime/src/ocor_runtime/memory/model.py": "6988c22f78b14a961027bb6cf3b3552882801e2f06cd54ba5513cc40bc8292ce",
@@ -518,9 +669,9 @@
   },
   "inputs_tree_definition": "git rev-parse <commit>:inputs (tree della directory inputs/ immutabile)",
   "normative_interpretations": [
-    "Capability matrix content (which pairs are unsupported) is not enumerated by ADD/LLD: chosen fail-closed from the change-control §5 minimum authority treatment; changing it requires only editing CAPABILITY_MATRIX.",
-    "Content-class registry (urn:ocor:memory-content:<class>:<version>) and payload markers are boundary configuration; prohibited classes from ADD v1.3 Part II §2.4 are always refused.",
-    "Instruction eligibility admitted only for PROCEDURAL kind with a separate approval by a principal other than the owner, bound to the exact item and content digest (LLD §2.8.5); model-generated content never eligible at admission.",
+    "Capability matrix content (which pairs are unsupported) is not enumerated by ADD/LLD: chosen fail-closed from the change-control \u00a75 minimum authority treatment; changing it requires only editing CAPABILITY_MATRIX.",
+    "Content-class registry (urn:ocor:memory-content:<class>:<version>) and payload markers are boundary configuration; prohibited classes from ADD v1.3 Part II \u00a72.4 are always refused.",
+    "Instruction eligibility admitted only for PROCEDURAL kind with a separate approval by a principal other than the owner, bound to the exact item and content digest (LLD \u00a72.8.5); model-generated content never eligible at admission.",
     "Admission enters the lifecycle at PROPOSED/ACTIVE/QUARANTINED only; later statuses are lifecycle transitions (OCOR-DEV-0055).",
     "created_at must lie within +/-30 s of the trusted boundary clock; expiry/validity/evidence retention evaluated on the boundary clock, never on caller values."
   ],
@@ -759,7 +910,7 @@
   ],
   "residual_risks": [
     "Policy/Authority and reference resolution are ports; this task exercises them with explicit fixture registries. Binding to the real OPA/Keycloak control plane (OCOR-DEV-0048) and to the real metadata/content stores (OCOR-DEV-0051) is out of this task's expected_file_areas.",
-    "Quota and payload-size backpressure (ADD v1.3 Part II §2.13) are not enforced here; OCOR-DEV-0059 owns memory quotas.",
+    "Quota and payload-size backpressure (ADD v1.3 Part II \u00a72.13) are not enforced here; OCOR-DEV-0059 owns memory quotas.",
     "Projection scheduling (full-text/vector) is not performed; OCOR-DEV-0051/0052/0053 own projections.",
     "Payload secret detection is pattern-based and cannot be complete; the closed content-class registry is the primary control.",
     "Test-level anonymous Docker volume leaks in pre-existing Kafka/C5 spike harnesses remain an open OCOR-DEV-REM-0018 obligation, not repaired in0050 scope. A content-addressed live ownership recorder removes only session-owned resources during qualifying campaign teardown."
@@ -773,7 +924,8 @@
   },
   "rollback_procedure_verified": "New revert commit of repair29491c8 plus restoring previous candidate references if needed. No migration, overwrite or deletion of admitted journal data; unchanged durable key and item/version formats. Mechanically reviewed only.",
   "schema_version": "1.0",
-  "status": "CANDIDATE_AWAITING_INDEPENDENT_VERIFICATION",
+  "sealed_at": "2026-10-09T02:35:36.092862+00:00",
+  "status": "SEALED",
   "task_id": "OCOR-DEV-0050",
   "tdd": {
     "GREEN": {
