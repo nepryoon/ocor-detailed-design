@@ -1,0 +1,617 @@
+{
+  "claims": {
+    "E1": 0,
+    "E2": 0,
+    "PoC_GO": "NO-GO",
+    "Production_readiness": "NO_GO",
+    "runtime_conformance": "NOT_ESTABLISHED"
+  },
+  "commands": [
+    {
+      "command": "OCOR_LIVE_POSTGRES_DSN=<local generated credential> /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0053/ocor-runtime/.venv/bin/python -m pytest -q -p no:cacheprovider -rs --junitxml=/home/luca/.ocor-codex/ocor-dev-0053/task-junit-1.xml ocor-runtime/tests/tasks/test_ocor_dev_0053.py",
+      "duration_seconds": 21.2,
+      "exit_code": 0,
+      "label": "task-run-1",
+      "raw_sha256": "21e8613fa73d14357f09b11a6d24d8d5d41cb57b7f64c70fd3748a1608908cf6",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 73,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "OCOR_LIVE_POSTGRES_DSN=<local generated credential> /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0053/ocor-runtime/.venv/bin/python -m pytest -q -p no:cacheprovider -rs --junitxml=/home/luca/.ocor-codex/ocor-dev-0053/task-junit-2.xml ocor-runtime/tests/tasks/test_ocor_dev_0053.py",
+      "duration_seconds": 20.9,
+      "exit_code": 0,
+      "label": "task-run-2",
+      "raw_sha256": "2737e992cea26ac2bf877aa78465a6a87055599665734f766d5092d91e7d97f4",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 73,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "OCOR_LIVE_POSTGRES_DSN=<local generated credential> /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0053/ocor-runtime/.venv/bin/python -m pytest -q -p no:cacheprovider -rs --junitxml=/home/luca/.ocor-codex/ocor-dev-0053/task-junit-3.xml ocor-runtime/tests/tasks/test_ocor_dev_0053.py",
+      "duration_seconds": 21.9,
+      "exit_code": 0,
+      "label": "task-run-3",
+      "raw_sha256": "8361463d91c394f099daa7aecec8c3a24cf6c8860dd7d9a2ec87694a8762f62d",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 73,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "OCOR_LIVE_POSTGRES_DSN=<local generated credential> uv run --directory ocor-runtime --frozen --extra test --extra lint pytest -q -rs --junitxml=/home/luca/.ocor-codex/ocor-dev-0053/task-junit-uv.xml tests/tasks/test_ocor_dev_0053.py",
+      "duration_seconds": 21.2,
+      "exit_code": 0,
+      "label": "task-validation-command",
+      "raw_sha256": "21e8613fa73d14357f09b11a6d24d8d5d41cb57b7f64c70fd3748a1608908cf6",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 73,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "docker ps -a / volume ls / network ls before and after; added resources must be zero",
+      "exit_code": 0,
+      "label": "task-teardown-delta",
+      "raw_sha256": "6d8dcb7b331d519461dc43af0f262d03f23bfa2f8c8a7ef50802dd5495cc34de",
+      "status": "PASS"
+    },
+    {
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0053/ocor-runtime/.venv/bin/python /home/luca/.ocor-codex/ocor-dev-0053/mutation_probe.py /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0053 /home/luca/.ocor-codex/ocor-dev-0053/mutation-probe.json",
+      "duration_seconds": 547.6,
+      "exit_code": 0,
+      "label": "mutation-probe",
+      "raw_sha256": "0a9a8efb3bf674e683221a23f32b3bdd68b83f71183df85bffdf60671b7ec415",
+      "status": "PASS"
+    },
+    {
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0053/ocor-runtime/.venv/bin/python full_suite.py (guarded: 75-min cap, abort on restart/OOM/exit; docker events recorder running) -> OCOR_LIVE_POSTGRES_DSN=<local generated credential> /home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0053/ocor-runtime/.venv/bin/python -m pytest -v --junitxml=<log_dir>/full2/junit.xml tests/ (cwd ocor-runtime)",
+      "duration_seconds": 512.7,
+      "exit_code": 0,
+      "label": "full-suite-recorded",
+      "raw_sha256": "46c2b4afc8ab82dae922d80d1595f9e28727fa0852267e60f0f9387f1299714d",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1501,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "docker events recorder during full-suite-recorded: every residual resource attributed to the container that created/mounted it; none may belong to the OCOR-DEV-0053 harness; no container/network residue; nothing pre-existing removed",
+      "exit_code": 0,
+      "label": "full-resource-attribution",
+      "raw_sha256": "7e386d0b72a0d12b7128bffac9d34c8c9bccb40e7ee1c1dbd52a1d9d93e8412a",
+      "status": "PASS"
+    },
+    {
+      "command": "remove exactly the run-created, anonymous, unmounted volumes attributed above (STACK-HYGIENE session cleanup); inventory must equal the pre-run inventory",
+      "exit_code": 0,
+      "label": "full-resource-cleanup",
+      "raw_sha256": "23baf1933765f3fc342d4594b2708a376b82180f22c43131d959a0789f3df09c",
+      "status": "PASS"
+    },
+    {
+      "command": "uv sync --directory ocor-runtime --frozen --extra test --extra lint",
+      "duration_seconds": 0.0,
+      "exit_code": 0,
+      "label": "sync-lint",
+      "raw_sha256": "d896bfaae7a10ec97ec9e45157f975ff0aa08b18406d27bfb01be9aa0e4ae74d",
+      "status": "PASS"
+    },
+    {
+      "command": "ruff check .",
+      "duration_seconds": 0.0,
+      "exit_code": 0,
+      "label": "ruff",
+      "raw_sha256": "82b3e6a6c090a57601d22943bd23fca9218d1031dbe5a7b754092f9a156b4f18",
+      "status": "PASS"
+    },
+    {
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0053/ocor-runtime/.venv/bin/python -m mypy --strict",
+      "duration_seconds": 0.2,
+      "exit_code": 0,
+      "label": "mypy",
+      "raw_sha256": "25499469eab292b707aaafb426bb37ffc20ebb6f29a73f5d9ab147221e899cc4",
+      "status": "PASS"
+    },
+    {
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0053/ocor-runtime/.venv/bin/python scripts/verify.py --json",
+      "duration_seconds": 0.5,
+      "exit_code": 0,
+      "label": "harness",
+      "raw_sha256": "61736e49983a32531b3c8362f960d943a8a7f7f437ca98e91c1f3c3f8762b413",
+      "status": "PASS"
+    },
+    {
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0053/ocor-runtime/.venv/bin/python scripts/validate_ocor_development_plan.py --base-ref HEAD --authorized-extension",
+      "duration_seconds": 0.1,
+      "exit_code": 0,
+      "label": "plan",
+      "raw_sha256": "c0753802bc31d2d19a9a5b77de8467f7b382f8b05832abf72af1a624819b6cba",
+      "status": "PASS"
+    },
+    {
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0053/ocor-runtime/.venv/bin/python scripts/validate_rccad.py --base-ref origin/main",
+      "duration_seconds": 0.2,
+      "exit_code": 0,
+      "label": "rccad",
+      "raw_sha256": "0043e5c71880b8696f14cc449b0e908f5418b4864e06a71d3fb4d4f212543c3f",
+      "status": "PASS"
+    },
+    {
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0053/ocor-runtime/.venv/bin/python scripts/validate_language_policy.py",
+      "duration_seconds": 0.0,
+      "exit_code": 0,
+      "label": "language",
+      "raw_sha256": "ca6cb78dcbe21415365ecd6578a2eb0bf3d22bdcd7ddbae94e31fe19f67cd29d",
+      "status": "PASS"
+    },
+    {
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0053/ocor-runtime/.venv/bin/python scripts/validate_evidence_input_drift.py",
+      "duration_seconds": 0.1,
+      "exit_code": 0,
+      "label": "drift",
+      "raw_sha256": "482b83189a8c09e65dc651eb66f6b52f5c8e96e002d2a10f3fb656fc62414990",
+      "status": "PASS"
+    },
+    {
+      "command": "/home/luca/projects/ocor-detailed-design/.ocor/worktrees/ocor-dev-0053/ocor-runtime/.venv/bin/python scripts/validate_ocor_change_scope.py --base origin/main --branch task/OCOR-DEV-0053-embedding-lifecycle-deterministic-rebuild",
+      "duration_seconds": 0.1,
+      "exit_code": 0,
+      "label": "scope",
+      "raw_sha256": "1f5c61cd03b540d858259695016230223b2d8d9b1d4ce3237ab008a6d38ca284",
+      "status": "PASS"
+    },
+    {
+      "command": "sha256sum -c inputs/normative/SHA256SUMS",
+      "duration_seconds": 0.0,
+      "exit_code": 0,
+      "label": "inputs",
+      "raw_sha256": "0a2036313a8b8deca46e664d2621879f4e0191c98eb287e2aeeb7171aae53c34",
+      "status": "PASS"
+    },
+    {
+      "command": "captured artifact: JUnit XML captured verbatim from task-run-3 (the last of three consecutive task runs)",
+      "exit_code": 0,
+      "label": "task-junit",
+      "raw_sha256": "c9d16f041844b733702db89d3dab4de865371375a8d99a6e83e567542d313780",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 73,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "captured artifact: JUnit XML captured verbatim from the guarded, event-recorded full-suite run (full-suite-recorded)",
+      "exit_code": 0,
+      "label": "full-suite-junit",
+      "raw_sha256": "b14effd4b87d531dea402757f372964d18e6b85276709d962022bfd334c9e61a",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 1501,
+        "skipped": 0
+      },
+      "status": "PASS"
+    },
+    {
+      "command": "captured artifact: full_suite.py supervisor result of full-suite-recorded (cap, stack restart/OOM guard)",
+      "exit_code": 0,
+      "label": "full-suite-runner-result",
+      "raw_sha256": "52f7068ec1ee10b9b07089674e1d6c15ea3cbec4707caffd0104e70bb14f8097",
+      "status": "PASS"
+    },
+    {
+      "command": "captured artifact: every mutant of embeddings.py must make the task suite fail",
+      "exit_code": 0,
+      "label": "mutation-probe-result",
+      "raw_sha256": "43eb78a67e6db0049b7b1bcf707fb0ced794938c606bcac335d9c8a6700c3f03",
+      "result": {
+        "failed": 0,
+        "killed": 27,
+        "mutants": 27
+      },
+      "status": "PASS"
+    }
+  ],
+  "commit": "868b2480c667c134ca96efa938043ffc4b6df905",
+  "created_at": "2026-10-09T20:27:32Z",
+  "design": [
+    "EmbeddingModelPin fixes model ref, version and digest, tokenizer ref and digest, dimensions (1..4096) and normalization profile (l2-unit only, because vector layouts rank by cosine). EmbeddingModelRegistry resolves a retrieval VectorProfile to exactly one registered pin by its representation version; anything else is UNSUPPORTED_CAPABILITY/EMBEDDING_MODEL_UNPINNED. Model outputs must be finite numbers of exactly the pinned dimensions, representable and non-vanishing at binary32 and unit-norm; every embedding is computed twice and must be identical (EMBEDDING_NONDETERMINISTIC) and the model must still serve its pin (EMBEDDING_MODEL_DRIFT).",
+    "EmbeddingDescriptor (LLD v1.1 §2.8.4) binds memory_version_ref, item digest, content digest, partition digest, purpose and marking to the full pin, the representation version, the binary64 embedding digest and the stored binary32 vector digest; its canonical digest is its content-addressed store ref and it is the payload of its index entry. Raw vectors never leave the module or appear in receipts or responses.",
+    "EmbeddingLifecycleCoordinator extends the 0051 store coordinator without changing its commits, reads or reconciliation. rebuild(partition_ref, profile) runs under an authenticated binding whose GCS matches the partition tuple (tenant, organization, domain, purpose, policy bundle, ontology release; compartments included; marking dominated) and a permitted live RepresentationPolicy decision on the context bundle; it marks the record BUILDING (compare-and-set), re-embeds every current, ACTIVE, unexpired, undeleted, VECTOR-bearing version in canonical (item, version) order from content read through read_version (committed, projections bound, decrypted and digest-checked), writes each entry to the parallel layout, reads it back (descriptor payload and binary32 digest) and registers the descriptor, sweeps stale descriptors and stray entries, writes the audit receipt and only then activates the record with the manifest. The manifest digest covers lineage, partition, representation version, pin and sorted (version ref, descriptor ref) pairs, never time.",
+    "Parallel layouts are keyed by the digest of the parallel lineage and the representation version (ParallelLayout), per partition: distinct from every native layout, so the store coordinator's reconciliation and native pointers never touch them, and there is no cross-compartment collection, centroid or cache.",
+    "vector_candidates resolves the profile to a pin first (also for the native path) and checks the query dimensions. Without a parallel record the native path of 0051 answers unchanged. With one: BUILDING fails REPRESENTATION_REBUILDING; another pin fails REPRESENTATION_VERSION_MIXED; any current eligible version without its descriptor fails REPRESENTATION_INCOMPLETE; an entry of another representation version in the layout fails REPRESENTATION_VERSION_MIXED; non-descriptors, foreign, shadow and non-manifest entries are skipped; descriptors of versions no longer current are skipped; a manifest member whose registered descriptor or persisted vector no longer binds fails PROJECTION_DRIFT. Bounded scanning keeps the 0051 UNBOUND_BACKLOG fail-closed bound.",
+    "invalidate removes descriptors and entries of versions that are no longer current and eligible (revocation, expiry, reclassification, supersession, deletion) and rewrites the manifest with an audit receipt; rebuild performs the same sweep. Metrics use a bounded label set (operation x OK or a Problem reason code)."
+  ],
+  "environment": {
+    "acquired_at": "2026-10-09T20:27:32.898374+00:00",
+    "backend_images": {
+      "ocor-bootstrap-fuseki-1": {
+        "image_id": "sha256:6534156b8d8f16b28faf0c336096e5c6a751794828525a8ef42c60ef46c9cc2b",
+        "image_ref": "ocor/jena-fuseki:6.2.0",
+        "oom_killed": false,
+        "restart_count": 0,
+        "status": "running"
+      },
+      "ocor-bootstrap-kafka-1": {
+        "image_id": "sha256:24cdd3a7fa89d2bed150560ebea81ff1943badfa61e51d66bb541a6b0d7fb047",
+        "image_ref": "confluentinc/cp-kafka@sha256:24cdd3a7fa89d2bed150560ebea81ff1943badfa61e51d66bb541a6b0d7fb047",
+        "oom_killed": false,
+        "restart_count": 0,
+        "status": "running"
+      },
+      "ocor-bootstrap-keycloak-1": {
+        "image_id": "sha256:9d1f1b2b7261ff53c66cb1092dfcdc34a5fb77e81f9e6a6e75b8b6a795de8067",
+        "image_ref": "quay.io/keycloak/keycloak@sha256:9d1f1b2b7261ff53c66cb1092dfcdc34a5fb77e81f9e6a6e75b8b6a795de8067",
+        "oom_killed": false,
+        "restart_count": 0,
+        "status": "running"
+      },
+      "ocor-bootstrap-opa-1": {
+        "image_id": "sha256:39daf255ae7f25d81103f03a0c18308a50b7b5bb67907bed6166f70e24a970ff",
+        "image_ref": "openpolicyagent/opa@sha256:39daf255ae7f25d81103f03a0c18308a50b7b5bb67907bed6166f70e24a970ff",
+        "oom_killed": false,
+        "restart_count": 0,
+        "status": "running"
+      },
+      "ocor-bootstrap-openbao-1": {
+        "image_id": "sha256:11fd73a2102cda9c55d5d881a8c3210303146a7ec1e8ac76f526e175c6d24641",
+        "image_ref": "quay.io/openbao/openbao@sha256:11fd73a2102cda9c55d5d881a8c3210303146a7ec1e8ac76f526e175c6d24641",
+        "oom_killed": false,
+        "restart_count": 0,
+        "status": "running"
+      },
+      "ocor-bootstrap-postgresql-1": {
+        "image_id": "sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+        "image_ref": "postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20",
+        "oom_killed": false,
+        "restart_count": 0,
+        "status": "running"
+      },
+      "ocor-bootstrap-qdrant-1": {
+        "image_id": "sha256:d122138f76868edba68d36cb0833139c1d1761f00f09e48e61f8314196e6a4c6",
+        "image_ref": "qdrant/qdrant@sha256:d122138f76868edba68d36cb0833139c1d1761f00f09e48e61f8314196e6a4c6",
+        "oom_killed": false,
+        "restart_count": 0,
+        "status": "running"
+      },
+      "ocor-bootstrap-spire-agent-1": {
+        "image_id": "sha256:41b0dcd8b258a69db9e2768292a060766fb76fd866e4bc925849981ea1b825ff",
+        "image_ref": "ghcr.io/spiffe/spire-agent@sha256:41b0dcd8b258a69db9e2768292a060766fb76fd866e4bc925849981ea1b825ff",
+        "oom_killed": false,
+        "restart_count": 0,
+        "status": "running"
+      },
+      "ocor-bootstrap-spire-server-1": {
+        "image_id": "sha256:4082f30d3e0ddc4000a171392c4ea174345ee44d161ee917c70b97b2ecfba141",
+        "image_ref": "ghcr.io/spiffe/spire-server@sha256:4082f30d3e0ddc4000a171392c4ea174345ee44d161ee917c70b97b2ecfba141",
+        "oom_killed": false,
+        "restart_count": 0,
+        "status": "running"
+      },
+      "ocor-bootstrap-terminusdb-1": {
+        "image_id": "sha256:58f829d5a96b3bc8e63811270c766ea4603fae0c948dced724de481461b4d073",
+        "image_ref": "terminusdb/terminusdb-server@sha256:58f829d5a96b3bc8e63811270c766ea4603fae0c948dced724de481461b4d073",
+        "oom_killed": false,
+        "restart_count": 0,
+        "status": "running"
+      },
+      "ocor-bootstrap-typedb-1": {
+        "image_id": "sha256:7555df2fffd5354553143facbfc81a58ce7036e4cc8b3b50bc7139faff4a721f",
+        "image_ref": "typedb/typedb@sha256:7555df2fffd5354553143facbfc81a58ce7036e4cc8b3b50bc7139faff4a721f",
+        "oom_killed": false,
+        "restart_count": 0,
+        "status": "running"
+      }
+    },
+    "backend_under_test": {
+      "admission_and_retrieval": "records produced by the real OCOR-DEV-0050 MemoryAdmissionService, committed by the real OCOR-DEV-0051 store coordinator (inherited by EmbeddingLifecycleCoordinator) and searched by the real OCOR-DEV-0052 MemorySearchService; lifecycle versions after admission (REVOKED, DELETION_PENDING, reclassification) appended through the ledger port and committed by the real coordinator, as the lifecycle coordinator (OCOR-DEV-0055) will",
+      "content_cipher": "OpenBao quay.io/openbao/openbao@sha256:11fd73a2102cda9c55d5d881a8c3210303146a7ec1e8ac76f526e175c6d24641 disposable dev server per test module with a generated root token (never logged); transit key aes256-gcm96 derived=true; removed in teardown; image asserted equal to the lock",
+      "content_store": "same PostgreSQL: content-addressed bytea objects sealed by OpenBao transit (no object-store service is pinned in infra/services.lock.json)",
+      "embedding_models": "governed deterministic fixtures, GPU 0: v1 = the 0051 fixture hash model (8 dimensions, l2-unit) pinned with model/version/digest/tokenizer; v2 = signed feature hashing of lower-cased word tokens (16 dimensions, l2-unit) whose model digest pins algorithm, seed, dimensions and tokenizer",
+      "lexical_index": "same PostgreSQL: one table per partition and lexical representation version (0051 adapter)",
+      "metadata_store": "PostgreSQL 16 of the ocor-bootstrap stack (postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20) via OCOR_LIVE_POSTGRES_DSN; one isolated schema ocor_t0053_<random> per test world (metadata, content, lexical tables, representation_records, embedding_descriptors), dropped after each test",
+      "policy_and_audit": "explicit test ports for RepresentationPolicy/MemoryRetrievalPolicy decisions (recorded per test), stop epoch and audit sinks; the OPA decision itself is not the subject of this task",
+      "representation_store": "PostgresRepresentationStore (test adapter on the same PostgreSQL schema): compare-and-set representation records and content-addressed embedding descriptors",
+      "vector_index": "Qdrant qdrant/qdrant@sha256:d122138f76868edba68d36cb0833139c1d1761f00f09e48e61f8314196e6a4c6 provisioned per test module by OCOR-DEV-0023's sealed spikes/vector_partition/oracle.py QdrantHarness (tmpfs storage, removed in teardown); native layouts and parallel layouts are separate collections per partition and layout key, created by the 0051 adapter with one segment and a 1 MiB WAL and deleted after each test; image asserted equal to the lock"
+    },
+    "branch": "task/OCOR-DEV-0053-embedding-lifecycle-deterministic-rebuild",
+    "host": "nepryoon",
+    "mypy": "2.3.1 strict (pyproject [tool.mypy])",
+    "node": "20.20.2",
+    "platform": "Linux-7.0.0-38-generic-x86_64-with-glibc2.43",
+    "python": "3.12.11 (ocor-runtime/.venv synced with uv 0.12.5 --frozen --extra test --extra lint)",
+    "regression_stack": "ocor-bootstrap (11 services READY via verify_external_services.py --execute --typed) after reset_test_environment.py --execute and bootstrap_development_environment.py --execute; stack images observed after the full suite below",
+    "ruff": "0.13.1",
+    "services_lock_sha256": "6d0c8678521ca7f3831324dddb6df9796cd129b941746386809688bd558c98c2",
+    "toolchain_lock_sha256": "452f08187674b3c1dfcd8b6f3410bc1f152f32abd58f520d3f4ccd09c3ef2931",
+    "typescript_sdk": "npm ci + build in ocor-runtime/sdk/typescript (steps sdk-ci, sdk-build)",
+    "uv": "0.12.5",
+    "worktree": ".ocor/worktrees/ocor-dev-0053"
+  },
+  "inputs": {
+    "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
+    "ocor-runtime/src/ocor_runtime/memory/embeddings.py": "d194a6afdcf991090e6398b880d26568bbed8e0ca6ae61e39c75bc680bf6327f",
+    "ocor-runtime/tests/tasks/test_ocor_dev_0053.py": "d0962261f95b8aef277d8866d7ebc1ada4118412a4fd251d996199cad1f4a632"
+  },
+  "inputs_tree_definition": "git rev-parse <commit>:inputs (tree della directory inputs/ immutabile)",
+  "normative_interpretations": [
+    "Representation version for retrieval is the 0051 VectorProfile digest (model ref, model digest, dimensions, normalization); tokenizer and model version are bound by the pin and the descriptor, and a representation built under a different pin for the same profile is treated as a mixed version (fail closed) rather than silently reused.",
+    "A parallel rebuild covers exactly the current ACTIVE, unexpired, undeleted versions that declared a VECTOR representation at admission; versions that are not ACTIVE are never embedded, and items without a VECTOR representation are not given one by an upgrade.",
+    "While a parallel representation of a version exists for a partition, it is the only source of that version's candidates in that partition (one representation per query and partition, no merging of native and parallel layouts); partitions without one keep the native representation.",
+    "Representation generation requires a GCS equal to the partition on tenant, organization, domain, purpose, policy bundle and ontology release (stricter than retrieval, which can open cross-domain or compatible purposes with explicit Authority): generation is a write of derived data and has no separate approved cross-boundary profile.",
+    "Descriptors and parallel entries are derived, rebuildable data (ADD v1.3 Part II §2.6 indexes are rebuildable projections): a corrupted descriptor row is replaced by the recomputed one during rebuild, never trusted."
+  ],
+  "observations": [],
+  "raw_output_format": "JSONL: una riga per comando/artefatto/osservazione con label, command, exit_code, sha256 dei byte UTF-8 archiviati e output integrale; le credenziali locali generate (valori di .ocor/bootstrap.env) sono sostituite da <redacted:NAME> prima dell'archiviazione e dell'hash, gli originali restano solo fuori da Git; DSN mostrato come <local generated credential>",
+  "raw_output_redactions": {},
+  "raw_output_sha256": "740b34dcdfc5deca90ef4e8b4fc6ac699b84e43f13dbc7d47dcbf83dd09865be",
+  "repair_cycle": 0,
+  "reproducible_check": {
+    "command": "python3 ~/.ocor-codex/ocor-dev-0053/check_evidence.py <repo> <head>",
+    "scope": "inputs (file e tree) a commit e HEAD, diff dopo il commit limitato alle evidenze, hash del raw log e di ogni voce JSONL, coppie comando/raw, hash del manifest e preservazione delle voci G5 preesistenti, conteggi per caso dalla JUnit nel raw log, tre run del task, suite completa, mutanti tutti uccisi, validate_runtime_evidence --non-skipped"
+  },
+  "requirement_coverage_note": "Component-level evidence only for the embedding-lifecycle behaviours named in each case: FR-119 (policy applied to embeddings and indexes: authorized GCS for generation, per-partition layouts, unpinned/mixed representations fail closed, invalidation before materialisation) and FR-131 (marking and purpose propagated to every embedding descriptor). Full verification of FR-119/FR-131 and of FGM-07 is allocated to G6 (OCOR-DEV-0061, reports/evidence/G6/<REQ>.json); BR-003 end-to-end mission-thread evidence is NOT_EXECUTED here (OCOR-DEV-0065/0069). E1=0/E2=0 and zero global Verified remain unchanged.",
+  "requirement_results": [
+    {
+      "case_id": "OCOR-DEV-0053-PARALLEL-VERSIONED-REPRESENTATION-DETERMINISTIC-REBUILD",
+      "command": "on real PostgreSQL (metadata, encrypted content, full-text, representation records/descriptors), Qdrant (native and parallel vector layouts) and OpenBao transit: a model upgrade (pinned v1 fixture hash -> pinned v2 feature hashing) builds a parallel representation version of every current ACTIVE vector-bearing version, searched only under its own pin (VECTOR and HYBRID) while the native v1 representation answers byte-identically; every byte of metadata, content, lexical tables, native vectors and head pointers is unchanged; the manifest, descriptors and stored binary32 vectors are identical across repeated rebuilds, fresh adapters and a fresh world with reversed admission order",
+      "real_backend_tests": [
+        "test_hybrid_retrieval_uses_the_parallel_vector_factor_with_its_pin",
+        "test_model_upgrade_builds_a_parallel_representation_bound_to_every_pin",
+        "test_qualifying_backends_are_real_and_pinned",
+        "test_rebuild_is_deterministic_across_runs_adapters_and_fresh_stores",
+        "test_rebuild_never_changes_immutable_memory_or_native_projections",
+        "test_retrieval_of_a_rebuilt_representation_is_durable_across_fresh_adapters",
+        "test_unit_doubles_are_not_used_by_qualifying_worlds"
+      ],
+      "requirement_id": "FR-119",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 10,
+        "skipped": 0
+      },
+      "status": "PASS",
+      "tests": [
+        "test_hybrid_retrieval_uses_the_parallel_vector_factor_with_its_pin",
+        "test_manifest_digest_depends_on_sources_and_pin_only",
+        "test_model_upgrade_builds_a_parallel_representation_bound_to_every_pin",
+        "test_parallel_layouts_never_share_a_native_layout_key",
+        "test_qualifying_backends_are_real_and_pinned",
+        "test_rebuild_is_deterministic_across_runs_adapters_and_fresh_stores",
+        "test_rebuild_never_changes_immutable_memory_or_native_projections",
+        "test_retrieval_of_a_rebuilt_representation_is_durable_across_fresh_adapters",
+        "test_unit_doubles_are_not_used_by_qualifying_worlds",
+        "test_unit_rebuild_and_search_branch_logic"
+      ],
+      "unit_fixture_tests": [
+        "test_manifest_digest_depends_on_sources_and_pin_only",
+        "test_parallel_layouts_never_share_a_native_layout_key",
+        "test_unit_rebuild_and_search_branch_logic"
+      ]
+    },
+    {
+      "case_id": "OCOR-DEV-0053-INTERRUPTED-OR-UNAUDITED-REBUILD-FAILS-CLOSED",
+      "command": "a Qdrant outage mid-rebuild, a failing audit sink, an acknowledged-but-unwritten index or descriptor write, an unavailable, non-deterministic or drifting model leave the representation BUILDING: retrieval of that version fails closed (REPRESENTATION_REBUILDING) while the native representation is unaffected; resuming converges to the clean manifest; concurrent rebuilds serialise through a compare-and-set record and converge",
+      "real_backend_tests": [
+        "test_an_interrupted_rebuild_fails_retrieval_closed_then_resumes_to_the_same_manifest",
+        "test_an_unaudited_rebuild_never_becomes_active",
+        "test_concurrent_rebuilds_serialise_through_the_record_and_converge"
+      ],
+      "requirement_id": "FR-119",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 19,
+        "skipped": 0
+      },
+      "status": "PASS",
+      "tests": [
+        "test_a_rebuild_of_an_active_representation_blocks_retrieval_until_it_completes",
+        "test_an_interrupted_rebuild_fails_retrieval_closed_then_resumes_to_the_same_manifest",
+        "test_an_unaudited_rebuild_never_becomes_active",
+        "test_concurrent_rebuilds_serialise_through_the_record_and_converge",
+        "test_model_outage_nondeterminism_and_drift_fail_closed",
+        "test_representation_records_are_closed_and_canonical",
+        "test_unacknowledged_index_or_descriptor_writes_leave_the_representation_building"
+      ],
+      "unit_fixture_tests": [
+        "test_a_rebuild_of_an_active_representation_blocks_retrieval_until_it_completes",
+        "test_model_outage_nondeterminism_and_drift_fail_closed",
+        "test_representation_records_are_closed_and_canonical",
+        "test_unacknowledged_index_or_descriptor_writes_leave_the_representation_building"
+      ]
+    },
+    {
+      "case_id": "OCOR-DEV-0053-UNPINNED-MODEL-OR-DIMENSIONS-FAIL-RETRIEVAL",
+      "command": "a vector profile whose model digest, model ref, dimensions or normalization is not exactly a registered pin fails retrieval through the real search service and rebuild with UNSUPPORTED_CAPABILITY/EMBEDDING_MODEL_UNPINNED and writes nothing; query vectors and model outputs of other dimensions fail with EMBEDDING_DIMENSION_MISMATCH; a boundary without the v1 pin refuses even the native representation; pins are closed records",
+      "real_backend_tests": [
+        "test_unpinned_models_and_dimensions_fail_rebuild_and_retrieval"
+      ],
+      "requirement_id": "FR-119",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 25,
+        "skipped": 0
+      },
+      "status": "PASS",
+      "tests": [
+        "test_a_unit_model_output_of_the_pinned_dimensions_is_accepted",
+        "test_a_valid_pin_names_its_representation_version_and_maximum_dimensions_are_accepted",
+        "test_embedding_pins_are_closed_and_validated",
+        "test_model_output_must_fit_its_pin",
+        "test_operation_id_and_limit_are_validated",
+        "test_query_embedding_uses_exactly_the_pinned_model",
+        "test_the_registry_resolves_only_exactly_pinned_profiles",
+        "test_unpinned_models_and_dimensions_fail_rebuild_and_retrieval"
+      ],
+      "unit_fixture_tests": [
+        "test_a_unit_model_output_of_the_pinned_dimensions_is_accepted",
+        "test_a_valid_pin_names_its_representation_version_and_maximum_dimensions_are_accepted",
+        "test_embedding_pins_are_closed_and_validated",
+        "test_model_output_must_fit_its_pin",
+        "test_operation_id_and_limit_are_validated",
+        "test_query_embedding_uses_exactly_the_pinned_model",
+        "test_the_registry_resolves_only_exactly_pinned_profiles"
+      ]
+    },
+    {
+      "case_id": "OCOR-DEV-0053-MIXED-REPRESENTATION-VERSIONS-FAIL-RETRIEVAL",
+      "command": "a current version embedded only in the old representation (REPRESENTATION_INCOMPLETE), a representation built with another pin for the same profile and an entry of another representation version inside the layout (REPRESENTATION_VERSION_MIXED) fail retrieval instead of mixing versions; a replaced Qdrant vector or an altered descriptor row fails closed (PROJECTION_DRIFT); foreign, shadow and stray entries never occupy a candidate slot; an incremental rebuild restores service",
+      "real_backend_tests": [
+        "test_mixed_representation_versions_fail_retrieval",
+        "test_tampered_descriptors_or_vectors_fail_retrieval_closed"
+      ],
+      "requirement_id": "FR-119",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 12,
+        "skipped": 0
+      },
+      "status": "PASS",
+      "tests": [
+        "test_an_index_entry_binds_only_its_descriptor_and_binary32_vector",
+        "test_an_unbound_backlog_beyond_the_scan_bound_fails_closed",
+        "test_descriptors_are_closed_records",
+        "test_foreign_or_stale_descriptors_never_occupy_a_candidate_slot",
+        "test_mixed_representation_versions_fail_retrieval",
+        "test_tampered_descriptors_or_vectors_fail_retrieval_closed"
+      ],
+      "unit_fixture_tests": [
+        "test_an_index_entry_binds_only_its_descriptor_and_binary32_vector",
+        "test_an_unbound_backlog_beyond_the_scan_bound_fails_closed",
+        "test_descriptors_are_closed_records",
+        "test_foreign_or_stale_descriptors_never_occupy_a_candidate_slot"
+      ]
+    },
+    {
+      "case_id": "OCOR-DEV-0053-INVALIDATION-BEFORE-MATERIALISATION",
+      "command": "revoked, expired (boundary clock), reclassified and deletion-pending versions never reach a candidate slot, a result, a count or an explanation before any invalidation run; invalidate removes their descriptors and parallel entries with an audit receipt; the reclassified version is embedded only in its own SECRET partition after a rebuild under a SECRET GCS",
+      "real_backend_tests": [
+        "test_revocation_expiry_reclassification_and_deletion_invalidate_before_materialisation"
+      ],
+      "requirement_id": "FR-119",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 2,
+        "skipped": 0
+      },
+      "status": "PASS",
+      "tests": [
+        "test_invalidation_requires_an_active_representation_of_the_same_pin",
+        "test_revocation_expiry_reclassification_and_deletion_invalidate_before_materialisation"
+      ],
+      "unit_fixture_tests": [
+        "test_invalidation_requires_an_active_representation_of_the_same_pin"
+      ]
+    },
+    {
+      "case_id": "OCOR-DEV-0053-AUTHORIZED-GCS-AND-CROSS-COMPARTMENT-NON-INTERFERENCE",
+      "command": "representation generation requires an authenticated binding and a GCS whose tenant, organization, domain, purpose, policy bundle and ontology release match the partition, whose compartments include it and whose marking dominates it, plus a permitted live policy decision on the context bundle; refusals write nothing; each partition has its own parallel collection and a caller authorized for one compartment searches only that layout",
+      "real_backend_tests": [
+        "test_parallel_representations_never_cross_compartments",
+        "test_rebuild_requires_an_authorized_gcs_and_a_live_policy_decision"
+      ],
+      "requirement_id": "FR-119",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 4,
+        "skipped": 0
+      },
+      "status": "PASS",
+      "tests": [
+        "test_markings_outside_the_lattice_and_invalid_decisions_fail_closed",
+        "test_metrics_use_a_bounded_label_set",
+        "test_parallel_representations_never_cross_compartments",
+        "test_rebuild_requires_an_authorized_gcs_and_a_live_policy_decision"
+      ],
+      "unit_fixture_tests": [
+        "test_markings_outside_the_lattice_and_invalid_decisions_fail_closed",
+        "test_metrics_use_a_bounded_label_set"
+      ]
+    },
+    {
+      "case_id": "OCOR-DEV-0053-MARKING-AND-PURPOSE-PROPAGATION-TO-EMBEDDINGS",
+      "command": "every embedding descriptor carries the source item's marking and purpose and its partition digest (compartments, marking, purpose, policy bundle, ontology, scope bindings); a reclassified version is never served from the old marking's representation and is embedded only in its own partition; the marking cannot be dropped without changing the descriptor digest and store ref",
+      "real_backend_tests": [
+        "test_model_upgrade_builds_a_parallel_representation_bound_to_every_pin",
+        "test_parallel_representations_never_cross_compartments",
+        "test_revocation_expiry_reclassification_and_deletion_invalidate_before_materialisation"
+      ],
+      "requirement_id": "FR-131",
+      "result": {
+        "failed": 0,
+        "not_executed": 0,
+        "passed": 4,
+        "skipped": 0
+      },
+      "status": "PASS",
+      "tests": [
+        "test_descriptor_binds_source_partition_purpose_marking_and_full_pin",
+        "test_model_upgrade_builds_a_parallel_representation_bound_to_every_pin",
+        "test_parallel_representations_never_cross_compartments",
+        "test_revocation_expiry_reclassification_and_deletion_invalidate_before_materialisation"
+      ],
+      "unit_fixture_tests": [
+        "test_descriptor_binds_source_partition_purpose_marking_and_full_pin"
+      ]
+    }
+  ],
+  "residual_risks": [
+    "The embedding models are deterministic governed fixtures (no learned model); semantic quality of embeddings is not claimed. The real embedding worker is a port; its pin must match the registry at every call.",
+    "The PostgreSQL representation store and the Qdrant/PostgreSQL adapters are test adapters (0051 adapters plus PostgresRepresentationStore in the task test module); no production adapter under memory/adapters/ exists yet.",
+    "Completeness of a parallel representation is checked per query against the metadata authority (one metadata scan of each authorized partition holding a parallel record); this is bounded by PoC volumes, not optimised.",
+    "Lifecycle transitions are produced in tests through the ledger port; the lifecycle coordinator is OCOR-DEV-0055 and the deletion saga (which will call invalidate/remove parallel entries) is OCOR-DEV-0056; backup/restore of representation records is OCOR-DEV-0058.",
+    "Test-level anonymous Docker volume leaks in pre-existing suites remain allocated to OCOR-DEV-REM-0018 (see the full-suite resource attribution); the 0053 task suite itself leaves no container, volume or network (task-teardown-delta)."
+  ],
+  "result": "PASS",
+  "roles": {
+    "implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva del loop (quota Codex esaurita)",
+    "independence": "external loop only; implementer did not run or simulate the verification",
+    "verifier": "Grok 4.7 via Cursor CLI (verifier: cursor), processo e contesto separati, fornitore diverso"
+  },
+  "rollback_procedure_verified": "Mechanical review: the task adds two new files only (memory/embeddings.py, tests/tasks/test_ocor_dev_0053.py) plus evidence; rollback is a revert commit of the task commits. No persisted data migration: test schemas, Qdrant collections and OpenBao mounts are disposable and removed in teardown; no existing module imports embeddings.py.",
+  "schema_version": "1.0",
+  "status": "CANDIDATE_AWAITING_INDEPENDENT_VERIFICATION",
+  "task_id": "OCOR-DEV-0053",
+  "tdd": {
+    "GREEN": {
+      "command": "task-run-1..3 and task-validation-command (JUnit counts in commands)",
+      "raw_label": "task-run-3, task-junit"
+    },
+    "RED": {
+      "command": "pytest -q -p no:cacheprovider tests/tasks/test_ocor_dev_0053.py with ocor-runtime/src/ocor_runtime/memory/embeddings.py moved out of the worktree",
+      "exit_code": 2,
+      "observed": "collection error: ModuleNotFoundError ocor_runtime.memory.embeddings (pins, registry, descriptors, parallel layouts, representation records and the lifecycle coordinator did not exist)",
+      "raw_label": "tdd-red",
+      "raw_sha256": "5292350396246e22917e48334a92446ec7f2791228bc06d782581c763207cacc"
+    },
+    "REFACTOR": "First GREEN exposed three wrong test oracles (native call log not cleared before the immutability window, a SECRET caller also reading the dominated RESTRICTED partition, the hybrid vector factor asserted as a threshold instead of the exact cosine) and one implementation gap (a corrupted descriptor row blocked every later rebuild): descriptors are derived data, so a mismatching row is now replaced and re-verified. The redundant partition check in hit binding was removed after the mutation probe showed it unreachable behind manifest membership and currency checks; an unreachable source-digest re-check after read_version was removed.",
+    "mutation_probe": "27 mutants of embeddings.py (registry fallback, output and query dimension checks, unit-norm, determinism and model-drift checks, BUILDING guard, record pin check, completeness check, mixed-entry check, manifest membership, currency of hits, drift re-read of hits, eligibility head/lifecycle/expiry, read-back verification, stale sweep, audit before activation, GCS compartments/marking/tenant, policy permit, time in the manifest, descriptor marking, native layout reuse, missing BUILDING record), each run against the task suite on the real backends: all killed (raw label mutation-probe-result)",
+    "ordering_note": "The RED run was captured on the final test file with embeddings.py removed; the implementation draft preceded the recorded RED run in this session, so no claim of strict test-first authorship is made. The mutation probe is the behaviour-level red evidence for each guard."
+  }
+}
