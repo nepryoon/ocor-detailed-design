@@ -481,3 +481,249 @@ def test_admitted_node_must_have_running_kubelet_on_first_observation(active, pi
     with pytest.raises(GUARD.CampaignError):
         GUARD.check_kubernetes_runtimes({}, {'node:kubelet': {
             'restarts': 0, 'active': active, 'pid': pid, 'admitted': True}})
+
+
+# --- Parallel CI parts (PO decision REM-0017-CI-CAMPAIGN-DURATION, 2026-10-09) ---
+
+HELM = 'tests/tasks/test_ocor_dev_0049.py::test_helm_profile_on_kubernetes_backs_up_restores_and_gates_readiness'
+NODEIDS = [HELM] + [f'tests/tasks/test_ocor_dev_00{n:02d}.py::test_case[{k}]' for n in range(10, 20) for k in range(7)] + [
+    'tests/runtime/test_surface.py::TestSandbox::test_rejects[sum(*[1, 2])]',
+    'tests/tasks/test_ocor_dev_0048.py::test_repair4_svid_bounds_identity_and_secret',
+]
+
+
+def test_partition_is_deterministic_complete_disjoint_and_balanced():
+    parts = GUARD.partition(NODEIDS, 3)
+    assert parts == GUARD.partition(list(NODEIDS), 3)
+    assert GUARD.partition_digest(parts) == GUARD.partition_digest(GUARD.partition(NODEIDS, 3))
+    assert len(parts) == 3 and all(parts)
+    flat = [node for part in parts for node in part]
+    assert sorted(flat) == sorted(NODEIDS) and len(flat) == len(set(flat))
+    order = {node: index for index, node in enumerate(NODEIDS)}
+    assert all(part == sorted(part, key=order.__getitem__) for part in parts)
+    loads = [sum(GUARD.node_weight(node) for node in part) for part in parts]
+    assert max(loads) - min(loads) <= max(GUARD.node_weight(node) for node in NODEIDS)
+    assert GUARD.node_weight(HELM) > GUARD.DEFAULT_TEST_WEIGHT
+
+
+@pytest.mark.parametrize('count', [0, 1])
+def test_partition_requires_at_least_two_parts(count):
+    with pytest.raises(GUARD.CampaignError, match='at least 2'):
+        GUARD.partition(NODEIDS, count)
+
+
+@pytest.mark.parametrize('nodeids', [[], ['a.py::t', 'a.py::t'], ['a.py::t']])
+def test_partition_rejects_empty_duplicate_or_too_small_collections(nodeids):
+    with pytest.raises(GUARD.CampaignError):
+        GUARD.partition(nodeids, 2)
+
+
+def test_junit_identity_matches_real_pytest_junit(tmp_path):
+    import subprocess
+    import xml.etree.ElementTree as ET
+    package = tmp_path / 'tests/tasks'
+    package.mkdir(parents=True)
+    (package / 'test_sample.py').write_text(
+        'import pytest\n'
+        'def test_plain():\n    pass\n'
+        'class TestGroup:\n    @pytest.mark.parametrize("v", ["sum(*[1, 2])", "a::b", "x/y"])\n'
+        '    def test_param(self, v):\n        pass\n')
+    junit = tmp_path / 'run.xml'
+    collected = GUARD.collect_nodeids(tmp_path, ['tests/'])
+    assert len(collected) == 4
+    subprocess.run([sys.executable, '-m', 'pytest', '-q', '-p', 'no:cacheprovider', f'--junitxml={junit}', *collected],
+                   cwd=tmp_path, check=True, capture_output=True)
+    reported = sorted((case.get('classname'), case.get('name')) for case in ET.parse(junit).getroot().iter('testcase'))
+    assert reported == sorted(GUARD.junit_identity(node) for node in collected)
+
+
+def test_collection_failure_is_not_an_empty_selection(tmp_path):
+    (tmp_path / 'tests').mkdir()
+    (tmp_path / 'tests/test_broken.py').write_text('raise RuntimeError("import failure")\n')
+    with pytest.raises(GUARD.CampaignError, match='collection'):
+        GUARD.collect_nodeids(tmp_path, ['tests/'])
+
+
+def test_part_budget_is_45_minutes_and_30_minutes_requires_rebalancing():
+    assert GUARD.check_deadline(1799, limit=GUARD.PART_LIMIT_SECONDS, threshold=GUARD.PART_REBALANCE_SECONDS) is False
+    assert GUARD.check_deadline(1801, limit=GUARD.PART_LIMIT_SECONDS, threshold=GUARD.PART_REBALANCE_SECONDS) is True
+    with pytest.raises(GUARD.CampaignError, match='45-minute'):
+        GUARD.check_deadline(2700, limit=GUARD.PART_LIMIT_SECONDS, threshold=GUARD.PART_REBALANCE_SECONDS)
+
+
+def junit_xml(nodes, *, outcome=None):
+    cases = []
+    for node in nodes:
+        classname, name = GUARD.junit_identity(node)
+        body = f'<{outcome} message="x"/>' if outcome else ''
+        cases.append(f'<testcase classname="{classname}" name="{name}" time="1.0">{body}</testcase>')
+    counts = {key: (len(nodes) if outcome == key[:-1] or (outcome == 'skipped' and key == 'skipped') else 0) for key in ('failures', 'errors', 'skipped')}
+    attrs = ' '.join(f'{key}="{value}"' for key, value in counts.items())
+    return f'<testsuites><testsuite name="pytest" tests="{len(nodes)}" {attrs}>{"".join(cases)}</testsuite></testsuites>'
+
+
+def write_parts(root, nodeids, count, *, mutate=None):
+    import json
+    from xml.sax.saxutils import quoteattr
+    parts = GUARD.partition(nodeids, count)
+    collected = GUARD.collection_digest(nodeids)
+    for index, selected in enumerate(parts, start=1):
+        part = root / f'ocor-full-part-{index}-sha' / f'part-{index}'
+        part.mkdir(parents=True)
+        executed = list(selected)
+        meta = {'collected_count': len(nodeids), 'collected_sha256': collected, 'partition_sha256': GUARD.partition_digest(parts),
+                'selected': selected, 'shard_count': count, 'shard_index': index}
+        result = {'status': 'PASS', 'duration_seconds': 600.0 + index, 'shard_index': index, 'shard_count': count}
+        outcome = None
+        if mutate:
+            executed, meta, result, outcome = mutate(index, executed, meta, result)
+        (part / 'partition.json').write_text(json.dumps(meta))
+        (part / 'campaign_result.json').write_text(json.dumps(result))
+        (part / 'runtime_junit_post_approval.xml').write_text(junit_xml(executed, outcome=outcome).replace('name="test_rejects[sum(*[1, 2])]"', 'name=' + quoteattr('test_rejects[sum(*[1, 2])]')))
+        (part / 'runtime_coverage.data').write_text('coverage')
+    return parts
+
+
+def stub_aggregation(tmp_path, monkeypatch):
+    monkeypatch.setattr(GUARD, 'collect_nodeids', lambda directory, selection: list(NODEIDS))
+    monkeypatch.setattr(GUARD, 'combine_coverage', lambda suite, files, output: (output / 'runtime_coverage_post_approval.json').write_text('{"totals": {}}'))
+    return tmp_path / 'parts', tmp_path / 'aggregate'
+
+
+def test_aggregate_accepts_exact_union_and_merges_junit(tmp_path, monkeypatch):
+    import json
+    parts_dir, output = stub_aggregation(tmp_path, monkeypatch)
+    write_parts(parts_dir, NODEIDS, 3)
+    result = GUARD.aggregate(parts_dir, tmp_path, 3, output, required_modules=['test_ocor_dev_0048', 'test_ocor_dev_0049'])
+    assert result['status'] == 'PASS'
+    assert result['union'] == {'collected': len(NODEIDS), 'executed': len(NODEIDS), 'missing': [], 'duplicated': [], 'unexpected': []}
+    assert [part['shard_index'] for part in result['parts']] == [1, 2, 3]
+    assert GUARD.check_junit(output / 'runtime_junit_post_approval.xml')['tests'] == len(NODEIDS)
+    assert json.loads((output / 'campaign_result.json').read_text())['status'] == 'PASS'
+
+
+def drop_first(index, executed, meta, result):
+    # Parts 1 and 2 hold one heavy case each; drop from the part with many cases.
+    return (executed[1:] if index == 3 else executed), meta, result, None
+
+
+def duplicate_into_two(index, executed, meta, result):
+    return (executed + [HELM] if HELM not in executed else executed), meta, result, None
+
+
+def add_unexpected(index, executed, meta, result):
+    return (executed + ['tests/tasks/test_extra.py::test_unknown'] if index == 2 else executed), meta, result, None
+
+
+def skipped_part(index, executed, meta, result):
+    return executed, meta, result, ('skipped' if index == 3 else None)
+
+
+def failed_part(index, executed, meta, result):
+    return executed, meta, result, ('failure' if index == 1 else None)
+
+
+def foreign_collection(index, executed, meta, result):
+    return executed, {**meta, 'collected_sha256': '0' * 64} if index == 2 else meta, result, None
+
+
+def changed_selection(index, executed, meta, result):
+    return executed, {**meta, 'selected': meta['selected'][1:]} if index == 1 else meta, result, None
+
+
+def failed_campaign(index, executed, meta, result):
+    return executed, meta, ({**result, 'status': 'FAIL'} if index == 2 else result), None
+
+
+def overlong_part(index, executed, meta, result):
+    return executed, meta, ({**result, 'duration_seconds': 2700.0} if index == 3 else result), None
+
+
+def wrong_count(index, executed, meta, result):
+    return executed, {**meta, 'shard_count': 2} if index == 1 else meta, result, None
+
+
+@pytest.mark.parametrize('mutate,reason', [
+    (drop_first, 'missing'), (duplicate_into_two, 'duplicated'), (add_unexpected, 'unexpected'),
+    (skipped_part, 'nonqualifying JUnit'), (failed_part, 'nonqualifying JUnit'), (foreign_collection, 'collection'),
+    (changed_selection, 'partition'), (failed_campaign, 'not PASS'), (overlong_part, '45-minute'), (wrong_count, 'shard'),
+])
+def test_aggregate_rejects_every_nonqualifying_union(tmp_path, monkeypatch, mutate, reason):
+    import json
+    parts_dir, output = stub_aggregation(tmp_path, monkeypatch)
+    write_parts(parts_dir, NODEIDS, 3, mutate=mutate)
+    with pytest.raises(GUARD.CampaignError, match=reason):
+        GUARD.aggregate(parts_dir, tmp_path, 3, output, required_modules=['test_ocor_dev_0048'])
+    assert json.loads((output / 'campaign_result.json').read_text())['status'] == 'FAIL'
+
+
+def test_aggregate_rejects_a_missing_part(tmp_path, monkeypatch):
+    import shutil
+    parts_dir, output = stub_aggregation(tmp_path, monkeypatch)
+    write_parts(parts_dir, NODEIDS, 3)
+    shutil.rmtree(parts_dir / 'ocor-full-part-2-sha')
+    with pytest.raises(GUARD.CampaignError, match='parts'):
+        GUARD.aggregate(parts_dir, tmp_path, 3, output, required_modules=[])
+
+
+def test_aggregate_rejects_missing_required_module(tmp_path, monkeypatch):
+    parts_dir, output = stub_aggregation(tmp_path, monkeypatch)
+    write_parts(parts_dir, NODEIDS, 3)
+    with pytest.raises(GUARD.CampaignError, match='required guard'):
+        GUARD.aggregate(parts_dir, tmp_path, 3, output, required_modules=['test_ocor_dev_0099'])
+
+
+def test_aggregate_rejects_missing_coverage_data(tmp_path, monkeypatch):
+    parts_dir, output = stub_aggregation(tmp_path, monkeypatch)
+    write_parts(parts_dir, NODEIDS, 3)
+    (parts_dir / 'ocor-full-part-1-sha/part-1/runtime_coverage.data').unlink()
+    with pytest.raises(GUARD.CampaignError, match='coverage'):
+        GUARD.aggregate(parts_dir, tmp_path, 3, output, required_modules=[])
+
+
+def test_aggregate_flags_rebalancing_above_30_minutes(tmp_path, monkeypatch):
+    parts_dir, output = stub_aggregation(tmp_path, monkeypatch)
+    write_parts(parts_dir, NODEIDS, 3, mutate=lambda i, e, m, r: (e, m, {**r, 'duration_seconds': 1900.0} if i == 1 else r, None))
+    assert GUARD.aggregate(parts_dir, tmp_path, 3, output, required_modules=[])['rebalance_required'] is True
+
+
+def test_part_runs_only_its_verified_selection(tmp_path, monkeypatch):
+    output, json = stub_completed_campaign(tmp_path, monkeypatch, seconds=10)
+    monkeypatch.setattr(sys, 'argv', ['campaign.py', '--execute', '--output-dir', str(output), '--shard-index', '2', '--shard-count', '3'])
+    selected = GUARD.partition(NODEIDS, 3)[1]
+    calls = []
+    def collect(directory, selection):
+        calls.append(list(selection))
+        return list(NODEIDS) if selection == ['tests/'] else list(selection)
+    monkeypatch.setattr(GUARD, 'collect_nodeids', collect)
+    launched = []
+    def launch(command, *, stdout, **kwargs):
+        launched.append(command)
+        stdout.write('ok\n')
+        (output / 'runtime_junit_post_approval.xml').write_text(junit_xml(selected))
+        (Path(kwargs['cwd']) / '.coverage').write_text('data')
+        class Process:
+            returncode = 0
+            def poll(self):
+                return 0
+        return Process()
+    monkeypatch.setattr(GUARD.subprocess, 'Popen', launch)
+    (tmp_path / 'ocor-runtime').mkdir()
+    assert GUARD.main() == 0
+    assert calls == [['tests/'], selected]
+    assert launched[0][-len(selected):] == selected and 'tests/' not in launched[0]
+    meta = json.loads((output / 'partition.json').read_text())
+    assert meta['shard_index'] == 2 and meta['selected'] == selected
+    result = json.loads((output / 'campaign_result.json').read_text())
+    assert result['status'] == 'PASS' and result['shard_index'] == 2 and result['counts']['tests'] == len(selected)
+    assert (output / 'runtime_coverage.data').read_text() == 'data'
+
+
+def test_part_whose_selection_collects_differently_fails_before_execution(tmp_path, monkeypatch):
+    output, json = stub_completed_campaign(tmp_path, monkeypatch, seconds=10)
+    monkeypatch.setattr(sys, 'argv', ['campaign.py', '--execute', '--output-dir', str(output), '--shard-index', '1', '--shard-count', '3'])
+    monkeypatch.setattr(GUARD, 'collect_nodeids', lambda directory, selection: list(NODEIDS) if selection == ['tests/'] else list(selection)[1:])
+    monkeypatch.setattr(GUARD.subprocess, 'Popen', lambda *a, **k: pytest.fail('a divergent selection must never execute'))
+    (tmp_path / 'ocor-runtime').mkdir()
+    assert GUARD.main() == 1
+    assert 'selection' in json.loads((output / 'campaign_result.json').read_text())['error']
