@@ -20,7 +20,9 @@ Implements the ``MemoryMetadataStore``, ``MemoryContentStore``,
   backend identifiers never cross the ports.
 * ``MemoryStoreCoordinator.commit`` stages metadata and pointers as
   ``PENDING``, writes the encrypted content-addressed payload and each
-  projection, re-reads every write instead of trusting an acknowledgement, and
+  projection, re-reads every write instead of trusting an acknowledgement --
+  the pointer and the indexed body (the searched document, the ranked vector at
+  the binary32 precision the vector index persists) must both bind -- and
   only then flips the version and all its pointers to ``COMMITTED`` in a single
   metadata transaction that also advances the item's versioned head pointer.
   A version that is ``PENDING`` -- partial store visibility -- is never
@@ -68,6 +70,10 @@ PARTITION_PREFIX = "urn:ocor:memory-partition:"
 REPRESENTATION_PREFIX = "urn:ocor:memory-representation:"
 CONTENT_OBJECT_PREFIX = "urn:ocor:memory-content-object:"
 VECTOR_ENCODING = b"ocor-memory-vector:f64be:"
+STORED_VECTOR_ENCODING = b"ocor-memory-vector:f32be:"
+# Fresh seals tried before short plaintext found inside the ciphertext is
+# treated as a non-encrypting cipher rather than a coincidence.
+SEAL_ATTEMPTS = 32
 
 
 class MemoryStoreError(MemoryAdmissionError):
@@ -299,6 +305,45 @@ def vector_digest(values: Sequence[float]) -> str:
     return _sha256(VECTOR_ENCODING + struct.pack(f">{len(values)}d", *values))
 
 
+def stored_vector_digest(values: Sequence[float]) -> str:
+    """Digest of the vector as a vector index persists it: IEEE-754 binary32 big-endian.
+
+    Vector indexes store binary32 components, so the projection is bound at that
+    precision; the binary64 embedding itself is bound by ``embedding_digest``.
+    """
+
+    try:
+        packed = struct.pack(f">{len(values)}f", *values)
+    except (OverflowError, struct.error) as exc:
+        raise MemoryStoreError(
+            "MEMORY_SCHEMA_INVALID",
+            "EMBEDDING_INVALID",
+            "embedding is not representable at the vector index precision",
+        ) from exc
+    return _sha256(STORED_VECTOR_ENCODING + packed)
+
+
+def lexical_representation_digest(representation_version: str, document: str) -> str:
+    return canonical_digest(
+        {
+            "representation_version": representation_version,
+            "document_digest": _sha256(document.encode()),
+        }
+    )
+
+
+def vector_representation_digest(
+    representation_version: str, embedding_digest: str, values: Sequence[float]
+) -> str:
+    return canonical_digest(
+        {
+            "representation_version": representation_version,
+            "embedding_digest": embedding_digest,
+            "stored_vector_digest": stored_vector_digest(values),
+        }
+    )
+
+
 def lexical_document(payload: bytes) -> str:
     """The full-text document is the strict UTF-8 payload, so it is rebuildable."""
 
@@ -347,6 +392,13 @@ def validate_embedding(item: GovernedMemoryItem, vector: Sequence[float]) -> tup
     if not any(values):
         raise MemoryStoreError(
             "MEMORY_SCHEMA_INVALID", "EMBEDDING_INVALID", "embedding must not be the zero vector"
+        )
+    stored_vector_digest(values)
+    if not any(struct.unpack(f">{len(values)}f", struct.pack(f">{len(values)}f", *values))):
+        raise MemoryStoreError(
+            "MEMORY_SCHEMA_INVALID",
+            "EMBEDDING_INVALID",
+            "embedding vanishes at the vector index precision",
         )
     if item.embedding_digest is None or not hmac.compare_digest(
         vector_digest(values), item.embedding_digest
@@ -704,6 +756,19 @@ class IndexHit:
     score: float
 
 
+@dataclass(frozen=True, slots=True)
+class IndexEntry:
+    """One stored entry read back from the backend: pointer payload and indexed body.
+
+    ``body`` is the document the lexical index searches or the vector the
+    vector index ranks, exactly as persisted; ``None`` when the backend cannot
+    return it consistently.
+    """
+
+    payload: Mapping[str, object]
+    body: str | tuple[float, ...] | None
+
+
 class MemoryLexicalIndexPort(Protocol):
     """Policy-partitioned full-text projection (rebuildable)."""
 
@@ -732,6 +797,11 @@ class MemoryLexicalIndexPort(Protocol):
         self, partition: MemoryPartition, representation_version: str, store_ref: str
     ) -> Mapping[str, object] | None:
         """The stored payload of one entry, read from the backend."""
+
+    def read_back(
+        self, partition: MemoryPartition, representation_version: str, store_ref: str
+    ) -> IndexEntry | None:
+        """The stored payload and the indexed body of one entry, read from the backend."""
 
     def entries(
         self, partition: MemoryPartition, representation_version: str
@@ -772,6 +842,11 @@ class MemoryVectorIndexPort(Protocol):
         self, partition: MemoryPartition, representation_version: str, store_ref: str
     ) -> Mapping[str, object] | None:
         """The stored payload of one entry, read from the backend."""
+
+    def read_back(
+        self, partition: MemoryPartition, representation_version: str, store_ref: str
+    ) -> IndexEntry | None:
+        """The stored payload and the indexed body of one entry, read from the backend."""
 
     def entries(
         self, partition: MemoryPartition, representation_version: str
@@ -867,6 +942,21 @@ class _Outcome(StrEnum):
     COMPLETED = "COMPLETED"
     RETRACTED = "RETRACTED"
     DEFERRED = "DEFERRED"
+
+
+def _persisted_vector(body: object, dimensions: int | None) -> tuple[float, ...] | None:
+    if isinstance(body, (str, bytes)) or not isinstance(body, Sequence):
+        return None
+    if dimensions is None or len(body) != dimensions:
+        return None
+    values: list[float] = []
+    for value in body:
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            return None
+        if not math.isfinite(value):
+            return None
+        values.append(float(value))
+    return tuple(values)
 
 
 def _not_visible() -> MemoryStoreError:
@@ -1027,7 +1117,7 @@ class MemoryStoreCoordinator:
             )
         partition = MemoryPartition.for_item(item)
         pointers = tuple(
-            self._pointer(item, record.item_digest, partition, kind, document)
+            self._pointer(item, record.item_digest, partition, kind, document, vector)
             for kind in sorted(kinds, key=lambda k: k.value)
         )
         staged = StagedVersion(
@@ -1050,17 +1140,16 @@ class MemoryStoreCoordinator:
         partition: MemoryPartition,
         kind: RepresentationKind,
         document: str | None,
+        vector: tuple[float, ...] | None,
     ) -> RepresentationPointer:
         if kind is RepresentationKind.FULL_TEXT:
             assert document is not None
             version = self._limits.lexical_profile.representation_version
-            representation = canonical_digest(
-                {"representation_version": version, "document_digest": _sha256(document.encode())}
-            )
+            representation = lexical_representation_digest(version, document)
         elif kind is RepresentationKind.VECTOR:
-            assert item.embedding_digest is not None
+            assert item.embedding_digest is not None and vector is not None
             version = VectorProfile.for_item(item).representation_version
-            representation = item.embedding_digest
+            representation = vector_representation_digest(version, item.embedding_digest, vector)
         else:
             version = structured_representation_version(item)
             representation = item_digest
@@ -1089,12 +1178,40 @@ class MemoryStoreCoordinator:
     def _write_content(self, staged: StagedVersion, content_digest: str, payload: bytes) -> None:
         context = self._cipher_context(staged, content_digest)
         if self._content.get(staged.content_object_ref) is None:
-            sealed = self._cipher.seal(context=context, plaintext=bytes(payload))
-            # Plaintext surviving verbatim in the stored object means no encryption.
-            if len(payload) >= 16 and bytes(payload) in sealed.ciphertext:
-                raise MemoryStoreCorrupted("CONTENT_NOT_ENCRYPTED", "cipher returned plaintext")
+            sealed = self._seal(context, bytes(payload))
             self._content.put(staged.content_object_ref, staged.partition.digest, sealed)
         self._read_content(staged, content_digest)
+
+    def _seal(self, context: Mapping[str, str], plaintext: bytes) -> SealedContent:
+        """Seal before any write; refuse output that is not context-bound ciphertext.
+
+        Plaintext found verbatim inside the ciphertext, at any length, is
+        refused.  Short plaintext can occur by chance in genuine ciphertext,
+        so a fresh seal is tried up to ``SEAL_ATTEMPTS`` times; a cipher that
+        keeps the plaintext (or an empty payload, contained in everything)
+        fails closed.  The object must also refuse to open under another
+        content address, which a pass-through cipher cannot do.
+        """
+
+        for _ in range(SEAL_ATTEMPTS):
+            sealed = self._cipher.seal(context=context, plaintext=plaintext)
+            if plaintext not in bytes(sealed.ciphertext):
+                break
+        else:
+            raise MemoryStoreCorrupted(
+                "CONTENT_NOT_ENCRYPTED", "cipher output contains the plaintext"
+            )
+        foreign = dict(context)
+        foreign["content_digest"] = canonical_digest(
+            {"foreign_context_of": context["content_digest"]}
+        )
+        try:
+            self._cipher.open(context=foreign, sealed=sealed)
+        except Exception:  # noqa: BLE001 -- refusing the foreign context is the expected outcome
+            return sealed
+        raise MemoryStoreCorrupted(
+            "CONTENT_NOT_ENCRYPTED", "sealed content opens outside its context"
+        )
 
     def _read_content(self, staged: StagedVersion, content_digest: str) -> bytes:
         sealed = self._content.get(staged.content_object_ref)
@@ -1131,19 +1248,48 @@ class MemoryStoreCoordinator:
             )
         else:
             return  # STRUCTURED is the metadata record itself.
-        if not self._projection_bound(partition, pointer):
+        if not self._projection_bound(partition, item, pointer):
             raise _not_ready("PROJECTION_UNVERIFIED", "projection read-back does not match")
 
     def _index(self, kind: RepresentationKind) -> MemoryLexicalIndexPort | MemoryVectorIndexPort:
         return self._lexical if kind is RepresentationKind.FULL_TEXT else self._vector
 
-    def _projection_bound(self, partition: MemoryPartition, pointer: RepresentationPointer) -> bool:
+    def _projection_bound(
+        self,
+        partition: MemoryPartition,
+        item: GovernedMemoryItem,
+        pointer: RepresentationPointer,
+    ) -> bool:
+        """Read the entry back: its pointer and its indexed body must both bind.
+
+        The body -- the searched document or the ranked vector -- is re-read
+        from the backend and digested; an acknowledged write whose body differs
+        from the representation digest of the pointer is not bound.
+        """
+
         if pointer.representation_kind is RepresentationKind.STRUCTURED:
             return True
-        stored = self._index(pointer.representation_kind).get(
+        stored = self._index(pointer.representation_kind).read_back(
             partition, pointer.representation_version, pointer.store_ref
         )
-        return stored is not None and dict(stored) == pointer.to_mapping()
+        if stored is None or dict(stored.payload) != pointer.to_mapping():
+            return False
+        body = stored.body
+        if pointer.representation_kind is RepresentationKind.FULL_TEXT:
+            if not isinstance(body, str):
+                return False
+            actual = lexical_representation_digest(pointer.representation_version, body)
+        else:
+            values = _persisted_vector(body, item.embedding_dimensions)
+            if values is None or item.embedding_digest is None:
+                return False
+            try:
+                actual = vector_representation_digest(
+                    pointer.representation_version, item.embedding_digest, values
+                )
+            except MemoryStoreError:
+                return False
+        return hmac.compare_digest(actual, pointer.representation_digest)
 
     def _receipt(self, stored: StoredVersion) -> StoreCommitReceipt:
         staged = stored.staged
@@ -1183,8 +1329,8 @@ class MemoryStoreCoordinator:
             raise _not_ready("VERSION_NOT_COMMITTED", "memory version is partially stored")
         item = self._verify_committed(stored)
         for pointer in stored.staged.pointers:
-            if not self._projection_bound(partition, pointer):
-                raise _not_ready("PROJECTION_DRIFT", "a committed projection is missing")
+            if not self._projection_bound(partition, item, pointer):
+                raise _not_ready("PROJECTION_DRIFT", "a committed projection does not bind")
         payload = self._read_content(stored.staged, item.content_digest)
         return MaterializedVersion(
             item=item,
@@ -1376,7 +1522,7 @@ class MemoryStoreCoordinator:
         item = staged.verify()
         try:
             self._read_content(staged, item.content_digest)
-            complete = all(self._projection_bound(partition, p) for p in staged.pointers)
+            complete = all(self._projection_bound(partition, item, p) for p in staged.pointers)
         except MemoryStoreError:
             complete = False
         if complete:
@@ -1447,6 +1593,7 @@ class MemoryStoreCoordinator:
 __all__ = [
     "BoundHit",
     "ContentCipher",
+    "IndexEntry",
     "IndexHit",
     "LexicalProfile",
     "MaterializedVersion",
@@ -1469,9 +1616,12 @@ __all__ = [
     "VersionState",
     "content_object_ref",
     "lexical_document",
+    "lexical_representation_digest",
     "predecessor_not_committed",
     "stage_conflict",
+    "stored_vector_digest",
     "structured_representation_version",
     "validate_embedding",
     "vector_digest",
+    "vector_representation_digest",
 ]

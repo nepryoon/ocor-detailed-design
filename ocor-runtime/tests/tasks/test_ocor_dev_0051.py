@@ -35,6 +35,7 @@ import hashlib
 import json
 import os
 import secrets
+import struct
 import subprocess
 import sys
 import threading
@@ -68,6 +69,7 @@ from ocor_runtime.memory.model import (
     memory_version_ref,
 )
 from ocor_runtime.memory.stores import (
+    IndexEntry,
     IndexHit,
     LexicalProfile,
     MemoryPartition,
@@ -75,6 +77,7 @@ from ocor_runtime.memory.stores import (
     MemoryStoreCorrupted,
     MemoryStoreError,
     RepresentationPointer,
+    SEAL_ATTEMPTS,
     SealedContent,
     StagedVersion,
     StoredVersion,
@@ -83,10 +86,13 @@ from ocor_runtime.memory.stores import (
     VersionState,
     content_object_ref,
     lexical_document,
+    lexical_representation_digest,
     predecessor_not_committed,
     stage_conflict,
+    stored_vector_digest,
     validate_embedding,
     vector_digest,
+    vector_representation_digest,
 )
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
@@ -417,6 +423,13 @@ class MemIndex:
         entry = self.entries_by_layout.get((partition.digest, representation_version), {}).get(store_ref)
         return None if entry is None else entry[0]
 
+    def read_back(self, partition: MemoryPartition, representation_version: str, store_ref: str) -> IndexEntry | None:
+        entry = self.entries_by_layout.get((partition.digest, representation_version), {}).get(store_ref)
+        if entry is None:
+            return None
+        payload, data = entry
+        return IndexEntry(payload, data if isinstance(data, str) else tuple(data))
+
     def entries(self, partition: MemoryPartition, representation_version: str) -> Sequence[IndexHit]:
         layout = self.entries_by_layout.get((partition.digest, representation_version), {})
         return [IndexHit(ref, payload, 0.0) for ref, (payload, _) in layout.items()]
@@ -533,6 +546,9 @@ def test_embedding_must_be_exactly_the_digested_vector() -> None:
         ([True] * DIMENSIONS, "EMBEDDING_INVALID"),
         ("abcdefgh", "EMBEDDING_INVALID"),
         ([v * 2 for v in vector], "EMBEDDING_DIGEST_MISMATCH"),
+        # Not representable at the binary32 precision the vector index persists.
+        ([1e300, *vector[1:]], "EMBEDDING_INVALID"),
+        ([1e-60] * DIMENSIONS, "EMBEDDING_INVALID"),
     ]
     for bad, detail in cases:
         with pytest.raises(MemoryStoreError) as caught:
@@ -618,6 +634,96 @@ def test_unbound_backlog_beyond_the_scan_bound_fails_closed() -> None:
     hits = coordinator.lexical_candidates(partition, "backlog pump", limit=1)
     assert [hit.memory_version_ref for hit in hits] == [record.item.version_ref]
     assert version == hits[0].representation_version
+
+
+class PassThroughCipher:
+    """Defective cipher: the 'ciphertext' is the plaintext, opening ignores the context."""
+
+    def __init__(self) -> None:
+        self.seals = 0
+
+    def seal(self, *, context: Mapping[str, str], plaintext: bytes) -> SealedContent:
+        self.seals += 1
+        return SealedContent("urn:ocor:memory-key:none", bytes(plaintext))
+
+    def open(self, *, context: Mapping[str, str], sealed: SealedContent) -> bytes:
+        return bytes(sealed.ciphertext)
+
+
+class PlaintextPrefixCipher(FixtureCipher):
+    """Context-bound cipher that leaks the plaintext in front of the first ``leaks`` seals."""
+
+    def __init__(self, leaks: int) -> None:
+        self.leaks = leaks
+        self.seals = 0
+
+    def seal(self, *, context: Mapping[str, str], plaintext: bytes) -> SealedContent:
+        self.seals += 1
+        sealed = super().seal(context=context, plaintext=plaintext)
+        if self.seals > self.leaks:
+            return sealed
+        return SealedContent(sealed.key_ref, bytes(plaintext) + b"|" + sealed.ciphertext)
+
+    def open(self, *, context: Mapping[str, str], sealed: SealedContent) -> bytes:
+        body = sealed.ciphertext
+        tag = hashlib.sha256(canonical_bytes(dict(context))).digest()
+        return super().open(context=context, sealed=SealedContent(sealed.key_ref, body[body.find(tag):] if tag in body else body))
+
+
+class ContextBlindCipher:
+    """Opaque reversible transform that never checks the context it is opened under."""
+
+    def seal(self, *, context: Mapping[str, str], plaintext: bytes) -> SealedContent:
+        return SealedContent("urn:ocor:memory-key:blind", bytes(b ^ 0xA5 for b in plaintext)[::-1])
+
+    def open(self, *, context: Mapping[str, str], sealed: SealedContent) -> bytes:
+        return bytes(b ^ 0xA5 for b in sealed.ciphertext[::-1])
+
+
+def unit_coordinator(world: UnitWorld, cipher: Any) -> MemoryStoreCoordinator:
+    return MemoryStoreCoordinator(
+        ledger=world.admission.ledger,
+        metadata=world.metadata,
+        content=world.content,
+        cipher=cipher,
+        lexical=world.lexical,  # type: ignore[arg-type]
+        vector=world.vector,  # type: ignore[arg-type]
+        clock=world.admission.clock,
+    )
+
+
+@pytest.mark.parametrize("text", ["Z", "abc", "short secret", "a much longer memory payload beyond sixteen bytes"], ids=["1B", "3B", "12B", "48B"])
+def test_a_cipher_that_keeps_the_plaintext_is_refused_at_every_length(text: str) -> None:
+    world = UnitWorld()
+    record, payload, vector = world.admission.admit(f"mem-pt-{len(text)}", text)
+    cipher = PassThroughCipher()
+    assert_store_error(lambda: unit_coordinator(world, cipher).commit(record, payload=payload, embedding=vector), "INTERNAL_ERROR", "CONTENT_NOT_ENCRYPTED")
+    assert world.content.objects == {} and cipher.seals == SEAL_ATTEMPTS
+    assert world.lexical.writes == world.vector.writes == 0
+
+
+def test_plaintext_inside_a_seal_is_resealed_then_refused_if_it_persists() -> None:
+    world = UnitWorld()
+    record, payload, vector = world.admission.admit("mem-reseal-ok", "reseal text")
+    transient = PlaintextPrefixCipher(leaks=1)
+    assert unit_coordinator(world, transient).commit(record, payload=payload, embedding=vector).state == "COMMITTED"
+    assert transient.seals == 2
+    (_, stored), = world.content.objects.values()
+    assert payload not in stored.ciphertext
+
+    world = UnitWorld()
+    record, payload, vector = world.admission.admit("mem-reseal-no", "reseal text")
+    persistent = PlaintextPrefixCipher(leaks=SEAL_ATTEMPTS)
+    assert_store_error(lambda: unit_coordinator(world, persistent).commit(record, payload=payload, embedding=vector), "INTERNAL_ERROR", "CONTENT_NOT_ENCRYPTED")
+    assert persistent.seals == SEAL_ATTEMPTS and world.content.objects == {}
+
+
+def test_a_ciphertext_that_opens_outside_its_context_is_refused() -> None:
+    world = UnitWorld()
+    record, payload, vector = world.admission.admit("mem-blind", "blind cipher text")
+    error = assert_store_error(lambda: unit_coordinator(world, ContextBlindCipher()).commit(record, payload=payload, embedding=vector), "INTERNAL_ERROR", "CONTENT_NOT_ENCRYPTED")
+    assert "outside its context" in str(error)
+    assert world.content.objects == {} and world.lexical.writes == 0
 
 
 def test_query_inputs_are_validated() -> None:
@@ -1003,6 +1109,23 @@ class PostgresLexicalIndex:
             row = conn.execute(f'SELECT payload FROM "{s}"."{table}" WHERE store_ref = %s', (store_ref,)).fetchone()
         return None if row is None else json.loads(row[0])
 
+    def read_back(self, partition: MemoryPartition, representation_version: str, store_ref: str) -> IndexEntry | None:
+        """Payload and searched document; a tsvector not derived from the document is no body."""
+
+        s, table = self._s.schema, self.table(partition, representation_version)
+        with self._s.connect() as conn:
+            config = self._layout(conn, table)
+            if config is None:
+                return None
+            row = conn.execute(
+                f'SELECT payload, document, tsv = to_tsvector(%s::regconfig, document) FROM "{s}"."{table}" '
+                "WHERE store_ref = %s",
+                (config, store_ref),
+            ).fetchone()
+        if row is None:
+            return None
+        return IndexEntry(json.loads(row[0]), str(row[1]) if row[2] else None)
+
     def entries(self, partition: MemoryPartition, representation_version: str) -> Sequence[IndexHit]:
         s, table = self._s.schema, self.table(partition, representation_version)
         with self._s.connect() as conn:
@@ -1093,6 +1216,26 @@ class QdrantVectorIndex:
         self._require(status, "get point")
         payload = data["result"]["payload"]
         return payload["pointer"] if payload.get("store_ref") == store_ref else None
+
+    def read_back(self, partition: MemoryPartition, representation_version: str, store_ref: str) -> IndexEntry | None:
+        """Payload and the vector Qdrant persisted and ranks (binary32)."""
+
+        name = self.collection(partition, representation_version)
+        status, data = self._call(
+            "POST", f"/collections/{name}/points",
+            {"ids": [self.point_id(store_ref)], "with_payload": True, "with_vector": True},
+        )
+        if status == 404:
+            return None
+        self._require(status, "retrieve point")
+        points = data["result"]
+        if not points:
+            return None
+        payload = points[0].get("payload") or {}
+        if payload.get("store_ref") != store_ref or not isinstance(payload.get("pointer"), dict):
+            return None
+        vector = points[0].get("vector")
+        return IndexEntry(payload["pointer"], tuple(vector) if isinstance(vector, list) else None)
 
     def entries(self, partition: MemoryPartition, representation_version: str) -> Sequence[IndexHit]:
         name = self.collection(partition, representation_version)
@@ -1301,7 +1444,14 @@ def test_commit_writes_metadata_content_lexical_and_vector_with_bound_pointers(s
         assert pointer["memory_version_ref"] == record.item.version_ref
         assert pointer["item_digest"] == record.item_digest
         assert pointer["partition_digest"] == partition.digest
-    assert pointers["VECTOR"]["representation_digest"] == record.item.embedding_digest
+    # The vector pointer binds the embedding digest and the vector as indexed (binary32).
+    assert record.item.embedding_digest is not None and vector is not None
+    assert pointers["VECTOR"]["representation_digest"] == vector_representation_digest(
+        pointers["VECTOR"]["representation_version"], record.item.embedding_digest, vector
+    )
+    assert pointers["FULL_TEXT"]["representation_digest"] == lexical_representation_digest(
+        pointers["FULL_TEXT"]["representation_version"], payload.decode()
+    )
     assert pointers["VECTOR"]["representation_version"] == VectorProfile.for_item(record.item).representation_version
     assert pointers["FULL_TEXT"]["representation_version"] == LexicalProfile().representation_version
 
@@ -1691,3 +1841,192 @@ def test_projection_drift_on_a_committed_version_blocks_materialisation(stack: S
     assert coordinator.commit(record, payload=payload, embedding=vector).state == "COMMITTED"
     assert_store_error(lambda: coordinator.read_version(partition, "mem-drift", 1), "REPRESENTATION_NOT_READY", "PROJECTION_DRIFT")
 
+
+
+# --------------------------------------------------------------------------
+# Read-back of the indexed body and content encryption (repair cycle 1)
+# --------------------------------------------------------------------------
+
+SUBSTITUTED_DOCUMENT = "unrelated lexicon token zzzqqq"
+
+
+class PersistAnotherDocument(PostgresLexicalIndex):
+    """Real PostgreSQL index that keeps the pointer but indexes another document."""
+
+    def upsert(self, partition: MemoryPartition, profile: LexicalProfile, store_ref: str, payload: Mapping[str, object], document: str) -> None:
+        super().upsert(partition, profile, store_ref, payload, SUBSTITUTED_DOCUMENT)
+
+
+class PersistBasisVector(QdrantVectorIndex):
+    """Real Qdrant index that keeps the pointer but persists another vector."""
+
+    def upsert(self, partition: MemoryPartition, profile: VectorProfile, store_ref: str, payload: Mapping[str, object], vector: Sequence[float]) -> None:
+        super().upsert(partition, profile, store_ref, payload, [1.0] + [0.0] * (len(vector) - 1))
+
+
+def one_binary32_ulp(value: float) -> float:
+    bits = struct.unpack(">I", struct.pack(">f", value))[0]
+    return float(struct.unpack(">f", struct.pack(">I", bits + 1))[0])
+
+
+class PersistOneUlpOff(QdrantVectorIndex):
+    """Real Qdrant index whose persisted vector differs by one binary32 ulp in one component."""
+
+    def upsert(self, partition: MemoryPartition, profile: VectorProfile, store_ref: str, payload: Mapping[str, object], vector: Sequence[float]) -> None:
+        super().upsert(partition, profile, store_ref, payload, [one_binary32_ulp(vector[0]), *vector[1:]])
+
+
+@pytest.mark.parametrize(
+    ("lexical_type", "vector_type"),
+    [(PersistAnotherDocument, QdrantVectorIndex), (PostgresLexicalIndex, PersistBasisVector), (PostgresLexicalIndex, PersistOneUlpOff)],
+    ids=["substituted-document", "substituted-vector", "vector-one-ulp"],
+)
+def test_a_substituted_projection_body_is_never_committed(stack: Stack, lexical_type: type[PostgresLexicalIndex], vector_type: type[QdrantVectorIndex]) -> None:
+    item_id = f"mem-body-{lexical_type.__name__}-{vector_type.__name__}".lower()
+    text = f"bridge B-7 load limit {vector_type.__name__} {lexical_type.__name__}"
+    record, payload, vector = stack.admission.admit(item_id, text, compartment="mike")
+    assert vector is not None
+    partition = partition_of(record)
+    defective = MemoryStoreCoordinator(
+        ledger=stack.admission.ledger,
+        metadata=stack.postgres,
+        content=stack.content,
+        cipher=stack.cipher,
+        lexical=lexical_type(stack.postgres),
+        vector=vector_type(stack.vector.endpoint, stack.vector.namespace),
+        clock=stack.clock,
+    )
+    assert_store_error(lambda: defective.commit(record, payload=payload, embedding=vector), "REPRESENTATION_NOT_READY", "PROJECTION_UNVERIFIED")
+    # Fails before the visibility switch: PENDING, not materialisable, no hit by either body.
+    assert stack.sql("SELECT state FROM {s}.versions WHERE memory_item_id = %s", (item_id,)) == [("PENDING",)]
+    coordinator = stack.coordinator()
+    assert_store_error(lambda: coordinator.read_version(partition, item_id, 1), "REPRESENTATION_NOT_READY", "VERSION_NOT_COMMITTED")
+    profile = VectorProfile.for_item(record.item)
+
+    def refs(hits: Sequence[Any]) -> list[str]:
+        return [hit.memory_version_ref for hit in hits]
+
+    # Other cases of this test commit honestly into the same partition: assert absence.
+    assert record.item.version_ref not in refs(coordinator.lexical_candidates(partition, text, limit=16))
+    assert coordinator.lexical_candidates(partition, "zzzqqq", limit=16) == ()
+    assert record.item.version_ref not in refs(coordinator.vector_candidates(partition, profile, vector, limit=16))
+    assert record.item.version_ref not in refs(coordinator.vector_candidates(partition, profile, [1.0] + [0.0] * (DIMENSIONS - 1), limit=16))
+    # Reconciliation never rolls the substituted body forward: it is retracted.
+    with stack.later(timedelta(minutes=6)):
+        report = coordinator.reconcile()
+    assert record.item.version_ref in report.retracted and record.item.version_ref not in report.completed
+    # The honest commit afterwards binds the real document and vector.
+    assert coordinator.commit(record, payload=payload, embedding=vector).state == "COMMITTED"
+    assert coordinator.read_version(partition, item_id, 1).payload == payload
+    assert refs(coordinator.lexical_candidates(partition, text, limit=1)) == [record.item.version_ref]
+    assert refs(coordinator.vector_candidates(partition, profile, vector, limit=1)) == [record.item.version_ref]
+    assert coordinator.lexical_candidates(partition, "zzzqqq", limit=16) == ()
+
+
+def test_the_binary32_read_back_holds_for_every_committed_l2_unit_vector(stack: Stack) -> None:
+    coordinator = stack.coordinator()
+    records = [stack.admission.admit(f"mem-f32-{n}", f"sensor S-{n} drift report {n * 7919}", compartment="november") for n in range(24)]
+    for record, payload, vector in records:
+        assert coordinator.commit(record, payload=payload, embedding=vector).state == "COMMITTED"
+    partition = partition_of(records[0][0])
+    for record, _, vector in records:
+        assert vector is not None
+        stored = stack.postgres.get(record.item.memory_item_id, 1)
+        assert stored is not None
+        pointer = next(p for p in stored.staged.pointers if p.representation_kind.value == "VECTOR")
+        entry = stack.vector.read_back(partition, pointer.representation_version, pointer.store_ref)
+        assert entry is not None and isinstance(entry.body, tuple)
+        assert stored_vector_digest(entry.body) == stored_vector_digest(vector)
+        assert coordinator.read_version(partition, record.item.memory_item_id, 1).item == record.item
+
+
+def test_body_drift_after_commit_blocks_materialisation(stack: Stack) -> None:
+    record, payload, vector = stack.admission.admit("mem-body-drift", "water point W-9 contaminated", compartment="oscar")
+    assert vector is not None
+    coordinator = stack.coordinator()
+    coordinator.commit(record, payload=payload, embedding=vector)
+    partition = partition_of(record)
+    stored = stack.postgres.get("mem-body-drift", 1)
+    assert stored is not None
+    lexical = next(p for p in stored.staged.pointers if p.representation_kind.value == "FULL_TEXT")
+    table = stack.lexical.table(partition, lexical.representation_version)
+
+    def drifted() -> None:
+        assert_store_error(lambda: coordinator.read_version(partition, "mem-body-drift", 1), "REPRESENTATION_NOT_READY", "PROJECTION_DRIFT")
+
+    # Document and tsvector replaced together.
+    stack.sql(f"UPDATE {{s}}.\"{table}\" SET document = %s, tsv = to_tsvector('simple', %s) WHERE store_ref = %s", (SUBSTITUTED_DOCUMENT, SUBSTITUTED_DOCUMENT, lexical.store_ref))
+    drifted()
+    stack.sql(f"UPDATE {{s}}.\"{table}\" SET document = %s, tsv = to_tsvector('simple', %s) WHERE store_ref = %s", (payload.decode(), payload.decode(), lexical.store_ref))
+    assert coordinator.read_version(partition, "mem-body-drift", 1).payload == payload
+    # Only the searched tsvector replaced: the document alone is not the indexed body.
+    stack.sql(f"UPDATE {{s}}.\"{table}\" SET tsv = to_tsvector('simple', %s) WHERE store_ref = %s", (SUBSTITUTED_DOCUMENT, lexical.store_ref))
+    drifted()
+    stack.sql(f"UPDATE {{s}}.\"{table}\" SET tsv = to_tsvector('simple', document) WHERE store_ref = %s", (lexical.store_ref,))
+    assert coordinator.read_version(partition, "mem-body-drift", 1).payload == payload
+
+    # Vector overwritten in place under the same point id and pointer payload.
+    vector_pointer = next(p for p in stored.staged.pointers if p.representation_kind.value == "VECTOR")
+    profile = VectorProfile.for_item(record.item)
+    PersistOneUlpOff(stack.vector.endpoint, stack.vector.namespace).upsert(partition, profile, vector_pointer.store_ref, vector_pointer.to_mapping(), vector)
+    drifted()
+    stack.vector.upsert(partition, profile, vector_pointer.store_ref, vector_pointer.to_mapping(), vector)
+    assert coordinator.read_version(partition, "mem-body-drift", 1).payload == payload
+
+
+class LiveContextBlindCipher(OpenBaoTransitCipher):
+    """Real OpenBao transit used with one fixed context: ciphertext, but not bound to its address."""
+
+    FIXED = {"content_object_ref": "fixed", "partition_digest": "fixed", "content_digest": "fixed"}
+
+    def seal(self, *, context: Mapping[str, str], plaintext: bytes) -> SealedContent:
+        return super().seal(context=self.FIXED, plaintext=plaintext)
+
+    def open(self, *, context: Mapping[str, str], sealed: SealedContent) -> bytes:
+        return super().open(context=self.FIXED, sealed=sealed)
+
+
+@pytest.mark.parametrize(
+    ("text", "cipher_kind"),
+    [("short secret", "pass-through"), ("Z", "pass-through"), ("a payload well beyond sixteen bytes", "pass-through"), ("fixed context", "context-blind")],
+    ids=["12B-pass-through", "1B-pass-through", "long-pass-through", "context-blind-openbao"],
+)
+def test_content_that_is_not_context_bound_ciphertext_never_reaches_postgres(stack: Stack, text: str, cipher_kind: str) -> None:
+    item_id = f"mem-enc-{cipher_kind}-{len(text)}"
+    record, payload, vector = stack.admission.admit(item_id, text, compartment="papa")
+    cipher: Any = PassThroughCipher() if cipher_kind == "pass-through" else LiveContextBlindCipher(stack.bao)
+    coordinator = MemoryStoreCoordinator(
+        ledger=stack.admission.ledger,
+        metadata=stack.postgres,
+        content=stack.content,
+        cipher=cipher,
+        lexical=stack.lexical,
+        vector=stack.vector,
+        clock=stack.clock,
+    )
+    assert_store_error(lambda: coordinator.commit(record, payload=payload, embedding=vector), "INTERNAL_ERROR", "CONTENT_NOT_ENCRYPTED")
+    ref = content_object_ref(partition_of(record), record.item.content_digest)
+    assert stack.sql("SELECT count(*) FROM {s}.content WHERE object_ref = %s", (ref,)) == [(0,)]
+    assert stack.sql("SELECT state FROM {s}.versions WHERE memory_item_id = %s", (item_id,)) == [("PENDING",)]
+    assert stack.coordinator().lexical_candidates(partition_of(record), text, limit=5) == ()
+
+
+@pytest.mark.parametrize("text", ["Z", "ok", "abc", "short secret"], ids=["1B", "2B", "3B", "12B"])
+def test_short_payloads_are_encrypted_by_the_real_transit_cipher(stack: Stack, text: str) -> None:
+    item_id = f"mem-short-{len(text)}"
+    record, payload, vector = stack.admission.admit(item_id, text, compartment="quebec")
+    coordinator = stack.coordinator()
+    assert coordinator.commit(record, payload=payload, embedding=vector).state == "COMMITTED"
+    ref = content_object_ref(partition_of(record), record.item.content_digest)
+    ciphertext = bytes(stack.sql("SELECT ciphertext FROM {s}.content WHERE object_ref = %s", (ref,))[0][0])
+    assert payload not in ciphertext and ciphertext.startswith(b"vault:v1:")
+    assert coordinator.read_version(partition_of(record), item_id, 1).payload == payload
+
+
+def test_a_payload_inside_the_fixed_cipher_framing_fails_closed(stack: Stack) -> None:
+    """Documented limit: plaintext equal to part of the transit framing can never be told apart."""
+
+    record, payload, vector = stack.admission.admit("mem-framing", "vault", compartment="romeo")
+    assert_store_error(lambda: stack.coordinator().commit(record, payload=payload, embedding=vector), "INTERNAL_ERROR", "CONTENT_NOT_ENCRYPTED")
+    ref = content_object_ref(partition_of(record), record.item.content_digest)
+    assert stack.sql("SELECT count(*) FROM {s}.content WHERE object_ref = %s", (ref,)) == [(0,)]
