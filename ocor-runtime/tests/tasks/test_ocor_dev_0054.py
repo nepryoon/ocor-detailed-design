@@ -1233,6 +1233,32 @@ def test_derived_memory_and_dissent_cannot_be_admitted_or_rewritten_around_the_s
     assert records
 
 
+def test_a_directly_admitted_dissent_cannot_be_rewritten_by_a_new_version(live: CWorld) -> None:
+    text = claims(("bridge-7", "status", "closed"))
+    dissent = live.admit(
+        "challenger-dissent-1", text, vector=False, bindings=PROJECT, kind="DISSENT",
+        source_kind="HUMAN_INPUT", taint=("HUMAN_SUPPLIED",), content_schema="urn:ocor:memory-content:dissent:1.0",
+    )
+    forged = claims(("bridge-7", "status", "open")).encode()
+
+    def next_version(payload: bytes, **changes: Any) -> dict[str, Any]:
+        mapping = dissent.item.to_mapping()
+        mapping.update(
+            memory_version=2,
+            supersedes_ref=dissent.item.version_ref,
+            content_digest=d(payload),
+            created_at=format_utc_timestamp(live.clock.now()),
+        )
+        mapping.update(changes)
+        return mapping
+
+    refused(lambda: _direct(live, next_version(forged), forged, "op-dissent-rewrite"), "POLICY_DENIED", "ADMISSION_DENIED")
+    assert live.ledger.latest_version("challenger-dissent-1") == 1
+    # A new version that keeps the dissent content (here: a lower confidence) is decided by the wrapped policy.
+    _direct(live, next_version(text.encode(), confidence=0.5), text.encode(), "op-dissent-same")
+    assert live.ledger.latest_version("challenger-dissent-1") == 2
+
+
 # --------------------------------------------------------------------------
 # Idempotency, cross-run persistence and fault injection (qualifying)
 # --------------------------------------------------------------------------
@@ -1340,7 +1366,64 @@ def test_no_receipt_without_audit_and_completion_record(backends: Backends, faul
     assert canonical_digest(dict(record.audit_event)) == outcome.receipt["audit_ref"]
 
 
-def test_a_derived_slot_held_by_another_derivation_fails_closed(live: CWorld) -> None:
+def test_a_squatted_derived_slot_fails_closed_and_is_never_adopted(live: CWorld) -> None:
+    a = live.source("sq-a", ("depot", "fuel", "low"))
+    b = live.source("sq-b", ("depot", "fuel", "low"))
+    jobs: list[MemoryConsolidationJob] = []
+    original = live.grant.authorize_consolidation
+
+    def capture(job: MemoryConsolidationJob, ctx: GovernedContext) -> MemoryPolicyDecision:
+        jobs.append(job)
+        return original(job, ctx)
+
+    live.grant.authorize_consolidation = capture  # type: ignore[method-assign]
+    live.grant.permitted = False
+    body = consolidation_request(refs_of([a, b]))
+    refused(lambda: live.consolidator().consolidate(body, binding=r.binding(CTX)), "POLICY_DENIED", "CONSOLIDATION_DENIED")
+    slot = "consolidated-" + jobs[0].digest.removeprefix("urn:sha256:")[:32]
+    squatter = live.source(slot, ("depot", "fuel", "high"))
+    live.grant.permitted = True
+    refused(lambda: live.consolidator().consolidate(body, binding=r.binding(CTX)), "MEMORY_IDEMPOTENCY_CONFLICT", "DERIVED_SLOT_OCCUPIED")
+    assert live.jobs.records() == ()
+    assert live.ledger.latest_version(slot) == 1 and live.item(memory_version_ref(slot, 1)) == squatter
+
+
+def test_the_job_journal_chain_and_entry_digests_are_verified(tmp_path: Path) -> None:
+    def record(op: str) -> Any:
+        from ocor_runtime.memory.consolidation import ConsolidationJobRecord
+
+        event = {"action": "consolidateMemory", "operation_id": op, "job_digest": d(f"job:{op}")}
+        outcome = ConsolidationOutcome(
+            receipt={"operation_id": op, "operation_kind": "consolidateMemory", "status": "COMPLETED",
+                     "governed_context_digest": CTX.digest(), "audit_ref": canonical_digest(event)},
+            operation_kind="consolidateMemory", job_ref=f"urn:ocor:memory-consolidation-job:{op}",
+            job_digest=d(f"job:{op}"), derived_ref=memory_version_ref(op, 1), dissent_refs=(), lifecycle_status="ACTIVE",
+        )
+        return ConsolidationJobRecord(tenant_id="tenant-a", operation_id=op, outcome=outcome, audit_event=event)
+
+    path = tmp_path / "jobs.jsonl"
+    ledger = JournalConsolidationJobLedger(path)
+    ledger.append(record("op-1"))
+    ledger.append(record("op-2"))
+    with pytest.raises(MemoryConsolidationError):
+        ledger.append(record("op-1"))
+    assert JournalConsolidationJobLedger(path).get("tenant-a", "op-2") is not None
+    first, second = path.read_bytes().splitlines(keepends=True)
+    # Dropping an entry breaks the chain even though every remaining entry is intact.
+    path.write_bytes(second)
+    with pytest.raises(ConsolidationLedgerCorrupted, match="chain"):
+        JournalConsolidationJobLedger(path)
+    # An entry whose recorded digest does not bind its body is refused.
+    entry = json.loads(first)
+    entry["digest"] = d("forged")
+    path.write_bytes(json.dumps(entry).encode() + b"\n")
+    with pytest.raises(ConsolidationLedgerCorrupted, match="digest"):
+        JournalConsolidationJobLedger(path)
+    path.write_bytes(first + second)
+    assert JournalConsolidationJobLedger(path).get("tenant-a", "op-1") is not None
+
+
+def test_distinct_jobs_never_share_derived_slots(live: CWorld) -> None:
     records = convoy_sources(live)
     service = live.consolidator()
     outcome = service.consolidate(consolidation_request(refs_of(records)), binding=r.binding(CTX))

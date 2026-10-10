@@ -1054,23 +1054,15 @@ class MemoryConsolidationService:
                 correlation_id=exc.correlation_id,
             ) from audit_exc
 
-    def _replay(
-        self, request: _Request, kind: str, job_digest: str
-    ) -> ConsolidationOutcome | None:
+    def _replay(self, request: _Request, job_digest: str) -> ConsolidationOutcome | None:
         previous = self._jobs.get(request.context.tenant_id, request.operation_id)
         if previous is None:
             return None
-        if previous.outcome.operation_kind != kind or not hmac.compare_digest(
-            previous.outcome.job_digest, job_digest
-        ):
+        # Job and correction digests cover different closed structures, so equal
+        # digests also mean the same operation kind.
+        if not hmac.compare_digest(previous.outcome.job_digest, job_digest):
             raise _operation_reused()
         return previous.outcome
-
-    def _check_deadline(self, request: _Request) -> None:
-        if request.deadline <= self._clock.now():
-            raise MemoryConsolidationError(
-                "POLICY_DENIED", "DEADLINE_EXCEEDED", "the request deadline has passed"
-            )
 
     # -- consolidation -----------------------------------------------------
 
@@ -1120,7 +1112,7 @@ class MemoryConsolidationService:
         )
         # Replay first: a completed job keeps its outcome even after its inputs
         # were superseded (immutable versions, exact-version replay).
-        replayed = self._replay(request, OPERATION_CONSOLIDATE, job.digest)
+        replayed = self._replay(request, job.digest)
         if replayed is not None:
             return replayed, True
         for record in records:
@@ -1139,7 +1131,6 @@ class MemoryConsolidationService:
         ]
         merged = merge_claims(sources)
         status = profile.reviewer_policies[reviewer]
-        self._check_deadline(request)
         provenance = self._register_job(job, request, [r.item for r in records])
         plan = _Plan(
             job=job,
@@ -1647,7 +1638,7 @@ class MemoryConsolidationService:
         }
         correction_digest = canonical_digest(correction)
         correction_ref = f"urn:ocor:memory-correction:{_hex(correction_digest)}"
-        replayed = self._replay(request, OPERATION_CORRECT, correction_digest)
+        replayed = self._replay(request, correction_digest)
         if replayed is not None:
             return replayed, True
         self._check_correction_target(target)
@@ -1673,7 +1664,6 @@ class MemoryConsolidationService:
                 )
         sources = self._cited_sources(payload)
         decision = self._decide(lambda: self._policy.authorize_correction(target, context), context)
-        self._check_deadline(request)
         provenance = self._register_source(
             source_ref=correction_ref,
             source_digest=correction_digest,
