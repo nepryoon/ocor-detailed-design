@@ -1605,6 +1605,16 @@ def profile_override(work: Path, mutate) -> Path:
 # --------------------------------------------------------------------------- live compose stack
 
 
+def start_ops(st: Stack, project: str, vault: Path) -> str:
+    """Start the Compose ops carrier of the profile on `vault`; return its container."""
+    container = f"{project}-ocor-ops-1"
+    result = st.compose(project, "--profile", "observability", "up", "-d", vault=vault)
+    assert result.returncode == 0, result.stderr
+    wait_for(lambda: http_from(container, "http://ocor-ops:8080/livez")[0] == 200, 60,
+             message="ops agent did not start listening")
+    return container
+
+
 @pytest.fixture(scope="module")
 def stack(tmp_path_factory):
     env = require_live_environment()
@@ -1614,12 +1624,12 @@ def stack(tmp_path_factory):
     st = Stack(env, vault, work)
     st.ops_project = f"ocor-poc-ops-{uuid.uuid4().hex[:6]}"
     st.ops = f"{st.ops_project}-ocor-ops-1"
+    # The agent file mounted by standalone agents is written here, not by whichever test
+    # starts the first one (REM-0019: every test runs alone and in any order).
+    (work / "agent.py").write_text(agent_source(), encoding="utf-8")
     load_drill_fixture(env, consistent=True)
     try:
-        result = st.compose(st.ops_project, "--profile", "observability", "up", "-d")
-        assert result.returncode == 0, result.stderr
-        wait_for(lambda: http_from(st.ops, "http://ocor-ops:8080/livez")[0] == 200, 60,
-                 message="ops agent did not start listening")
+        assert start_ops(st, st.ops_project, vault) == st.ops
         yield st
     finally:
         leftover = remove_run_resources(st)
@@ -1629,13 +1639,114 @@ def stack(tmp_path_factory):
         assert not leftover_resources(st.projects, STARTED_CONTAINERS), "resources survived the forced removal"
 
 
-def test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested(stack):
-    status, body = http_from(stack.ops, "http://ocor-ops:8080/livez")
+def _seal_and_restore(stack, vault: Path, ops: str) -> dict:
+    """Backup of the drill fixture and isolated restore into `vault`; returns the PASSED
+    receipt once the ops carrier `ops` has verified it."""
+    load_drill_fixture(stack.env, consistent=True)
+    for stage, service in (("backup", "ocor-backup-seal"), ("restore-drill", "ocor-restore-finalize")):
+        project = f"ocor-poc-tested-{uuid.uuid4().hex[:6]}"
+        code, logs = stack.run_stage(project, stage, service, vault=vault)
+        stack.down(project)
+        assert code == 0, logs
+    receipt = latest_receipt(vault)
+    assert receipt["outcome"] == "PASSED", receipt
+    digest = receipt_digest(vault)
+    wait_for(lambda: posture(ops)["restore"]["receipt_digest"] == digest, 30,
+             message="the ops carrier must verify the tested restore")
+    return receipt
+
+
+@pytest.fixture(scope="module")
+def tested(stack):
+    """REM-0019: the shared vault holds a sealed recovery point and the PASSED receipt of its
+    isolated restore, produced here rather than by earlier tests, so every test that needs a
+    tested restore of the shared ops carrier requests it and runs alone or in any order."""
+    stack.replay_digest = _seal_and_restore(stack, stack.vault, stack.ops)["replay_digest"]
+    return stack
+
+
+@pytest.fixture
+def fresh_tested_ops(stack):
+    """A Compose ops carrier on its own vault, sealed and restore-tested right before the test:
+    its recovery point is within the RPO however long the module has been running (REM-0019)."""
+    vault = stack.work / f"vault-fresh-{uuid.uuid4().hex[:6]}"
+    vault.mkdir()
+    project = f"ocor-poc-ops-{uuid.uuid4().hex[:6]}"
+    try:
+        ops = start_ops(stack, project, vault)
+        _seal_and_restore(stack, vault, ops)
+        yield ops
+    finally:
+        stack.down(project)
+
+
+def _reopen_pending(container: str) -> bool:
+    return "recovery_reopen_pending" in posture(container)["faults"]
+
+
+@pytest.fixture
+def reopen_pending(tested):
+    """Shared ops carrier right after a tested restore: gate passed, mutative path closed until
+    a human reopens it. A prior human reopening is superseded by a new tested restore of the
+    same recovery point (the behaviour asserted by test_restore_replay_is_deterministic)."""
+    if not _reopen_pending(tested.ops):
+        project = f"ocor-poc-restore-{uuid.uuid4().hex[:6]}"
+        code, logs = tested.run_stage(project, "restore-drill", "ocor-restore-finalize")
+        tested.down(project)
+        assert code == 0, logs
+        current = receipt_digest(tested.vault)
+        wait_for(lambda: posture(tested.ops)["restore"]["receipt_digest"] == current
+                 and _reopen_pending(tested.ops), 30, message="a new tested restore closes the mutative path")
+    return tested
+
+
+@pytest.fixture
+def reopened(tested):
+    """Shared ops carrier READY with the mutative path reopened by a human for its receipt."""
+    wait_for(lambda: readyz(tested.ops)[0] == 200, 60, message="precondition: READY")
+    if _reopen_pending(tested.ops):
+        governed_reopen(tested, tested.ops, tested.vault)
+    return tested
+
+
+@pytest.fixture
+def fault_observed(tested):
+    """The shared ops carrier has emitted the telemetry of a dependency fault and of its
+    recovery to READY, provoked here (qdrant paused, then resumed) instead of relying on
+    the dependency-fault tests having run before (REM-0019)."""
+    container = "ocor-bootstrap-qdrant-1"
+    wait_for(lambda: readyz(tested.ops)[0] == 200, 60, message="precondition: READY before the fault")
+    subprocess.run(["docker", "pause", container], check=True, capture_output=True)
+    try:
+        wait_for(lambda: "DEPENDENCY_DOWN:qdrant" in readyz(tested.ops)[1]["reasons"], 30,
+                 message="readiness must block while qdrant is paused")
+    finally:
+        subprocess.run(["docker", "unpause", container], check=False, capture_output=True)
+    wait_for(lambda: readyz(tested.ops)[0] == 200, 60, message="readiness must recover after qdrant")
+    return tested
+
+
+@pytest.fixture
+def untested_ops(stack):
+    """A Compose ops carrier started on its own empty vault: no recovery point and no receipt,
+    whatever other tests left in the shared vault (REM-0019)."""
+    vault = stack.work / f"vault-untested-{uuid.uuid4().hex[:6]}"
+    vault.mkdir()
+    project = f"ocor-poc-ops-{uuid.uuid4().hex[:6]}"
+    try:
+        yield start_ops(stack, project, vault)
+    finally:
+        stack.down(project)
+
+
+def test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested(untested_ops):
+    ops = untested_ops
+    status, body = http_from(ops, "http://ocor-ops:8080/livez")
     assert (status, json.loads(body)["status"]) == (200, "ALIVE")
-    status, ready = wait_for(lambda: scanned(r := readyz(stack.ops)) and r, 30)
+    status, ready = wait_for(lambda: scanned(r := readyz(ops)) and r, 30)
     assert status == 503
     assert ready["reasons"] == ["RESTORE_UNTESTED"], "all ten dependencies must be up; only the restore is missing"
-    m = metrics(stack.ops)
+    m = metrics(ops)
     for dependency in BOOTSTRAP_SERVICES:
         assert m[f'ocor_dependency_up{{dependency="{dependency}"}}'] == 1.0
         for q in ("0.5", "0.95", "0.99"):
@@ -1644,10 +1755,10 @@ def test_ops_process_serves_health_and_blocks_readiness_until_restore_is_tested(
     assert m["ocor_egress_public_reachable"] == 0.0
     # Untested restore: the recovery gate has not passed, so no traffic is admitted
     # (verdict OCOR-DEV-0049-7fd4f7728801-2 VF-001); the posture names the condition.
-    assert_admission(stack.ops, admitted=[], fault="restore_not_verified")
-    assert "restore_not_verified" in posture(stack.ops)["faults"]
+    assert_admission(ops, admitted=[], fault="restore_not_verified")
+    assert "restore_not_verified" in posture(ops)["faults"]
     assert m['ocor_safe_degraded_fault_active{fault="restore_not_verified"}'] == 1.0
-    mounted = subprocess.run(["docker", "exec", stack.ops, "cat", "/etc/ocor/profile.json"],
+    mounted = subprocess.run(["docker", "exec", ops, "cat", "/etc/ocor/profile.json"],
                              capture_output=True, text=True, check=True).stdout
     assert json.loads(mounted) == helm_profile(), "the running process consumes the governed profile"
 
@@ -1666,10 +1777,12 @@ def drill_live_items(live: list[int]) -> dict:
 
 def test_backup_seals_an_encrypted_signed_immutable_recovery_point(stack):
     project = f"ocor-poc-backup-{uuid.uuid4().hex[:6]}"
-    code, logs = stack.run_stage(project, "backup", "ocor-backup-seal")
+    vault = stack.work / f"vault-backup-{uuid.uuid4().hex[:6]}"  # REM-0019: its own vault
+    vault.mkdir()
+    code, logs = stack.run_stage(project, "backup", "ocor-backup-seal", vault=vault)
     assert code == 0, logs
     stack.down(project)  # workload fault domain removed, including its volumes
-    points = sorted((stack.vault / "recovery-points").iterdir())
+    points = sorted((vault / "recovery-points").iterdir())
     assert len(points) == 1
     rp = points[0]
     raw = (rp / "manifest.json").read_bytes()
@@ -1778,9 +1891,12 @@ def transit_verify(env: dict[str, str], data: bytes, signature: str) -> bool:
     return bool(json.loads(urllib.request.urlopen(request, timeout=10).read())["data"]["valid"])
 
 
-def test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate(stack):
+def test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate(stack, tested):
+    # REM-0019: the sealed recovery point of the tested vault, restored in a copy without receipts.
+    vault = _copy_vault(stack, f"restore-{uuid.uuid4().hex[:6]}")
+    shutil.rmtree(vault / "restore-receipts")
     project = f"ocor-poc-restore-{uuid.uuid4().hex[:6]}"
-    code, logs = stack.run_stage_detached(project, "restore-drill", "ocor-restore-finalize")
+    code, logs = stack.run_stage_detached(project, "restore-drill", "ocor-restore-finalize", vault=vault)
     assert code == 0, logs
     # Positive case of the per-item scope oracle: the restored index carries exactly the
     # tenant, compartments, marking and GCS binding of the authoritative metadata.
@@ -1802,10 +1918,10 @@ def test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate(stack)
                              "find", "/r", "-type", "f"], capture_output=True, text=True, check=True).stdout
     assert staged.strip() == "", "decrypted plaintext must be erased after the restore"
     stack.down(project)
-    receipt = latest_receipt(stack.vault)
+    receipt = latest_receipt(vault)
     assert receipt["outcome"] == "PASSED"
     assert receipt["replayed_event_ids"] == ["evt-del-m2", "evt-del-m4"], "original ids, journal order"
-    manifest = json.loads((stack.vault / "recovery-points" / receipt["recovery_point"] / "manifest.json").read_bytes())
+    manifest = json.loads((vault / "recovery-points" / receipt["recovery_point"] / "manifest.json").read_bytes())
     assert sequence_digest(receipt["replayed_event_ids"]) == manifest["memory"]["journalCheckpoints"][
         "event_ids_digest"], "the replayed sequence is the signed one"
     assert (receipt["replay_digest"], receipt["restored_scope_digest"]) == (
@@ -1819,22 +1935,22 @@ def test_isolated_restore_replays_tombstones_and_passes_the_recovery_gate(stack)
     steps = [s["step"] for s in receipt["steps"]]
     assert steps.index("replay_memory_deletion_tombstones_before_reopen_retrieval") < steps.index(
         "rebuild_logic_projection_and_w3c_boundary")
-    stack.replay_digest = receipt["replay_digest"]
 
 
-def test_readiness_turns_ready_only_with_a_signed_passed_restore_receipt(stack):
-    status, ready = wait_for(lambda: (r := readyz(stack.ops))[0] == 200 and r, 30,
+def test_readiness_turns_ready_only_with_a_signed_passed_restore_receipt(fresh_tested_ops):
+    ops = fresh_tested_ops
+    status, ready = wait_for(lambda: (r := readyz(ops))[0] == 200 and r, 30,
                              message="readiness must turn READY after the tested restore")
     assert ready["reasons"] == ["READY"]
-    m = metrics(stack.ops)
+    m = metrics(ops)
     assert m["ocor_restore_tested"] == 1.0
     assert m["ocor_recovery_point_within_rpo"] == 1.0
-    health = wait_for(lambda: subprocess.run(["docker", "inspect", "-f", "{{.State.Health.Status}}", stack.ops],
+    health = wait_for(lambda: subprocess.run(["docker", "inspect", "-f", "{{.State.Health.Status}}", ops],
                                              capture_output=True, text=True).stdout.strip() == "healthy", 30)
     assert health
 
 
-def test_mutative_path_reopens_only_by_a_human_bound_to_the_passed_receipt(stack):
+def test_mutative_path_reopens_only_by_a_human_bound_to_the_passed_receipt(stack, reopen_pending):
     """ADD v1.3 §6.5 step 10: after the recovery gate, reads reopen but the mutative
     path stays closed until a named human authorizes it for that exact receipt."""
     assert_admission(stack.ops, admitted=["exact_consistency_read", "read"], fault="recovery_reopen_pending")
@@ -1855,7 +1971,7 @@ def test_mutative_path_reopens_only_by_a_human_bound_to_the_passed_receipt(stack
     assert metrics(stack.ops)["ocor_recovery_reopen_authorized"] == 1.0
 
 
-def test_restore_replay_is_deterministic(stack):
+def test_restore_replay_is_deterministic(stack, tested):
     previous = receipt_digest(stack.vault)
     project = f"ocor-poc-restore-{uuid.uuid4().hex[:6]}"
     code, logs = stack.run_stage(project, "restore-drill", "ocor-restore-finalize")
@@ -1883,7 +1999,7 @@ def _copy_vault(stack, name: str) -> Path:
 
 @pytest.mark.parametrize("target,expected", [
     ("object", "CIPHERTEXT_DIGEST_MISMATCH"), ("manifest", "SIGNATURE_INVALID")])
-def test_tampered_recovery_point_is_rejected_before_restore(stack, target, expected):
+def test_tampered_recovery_point_is_rejected_before_restore(stack, tested, target, expected):
     vault = _copy_vault(stack, f"tampered-{target}")
     shutil.rmtree(vault / "restore-receipts")
     rp = next((vault / "recovery-points").iterdir())
@@ -1928,7 +2044,7 @@ def _standalone_readyz(name: str) -> tuple[int, dict]:
     return status, json.loads(body)
 
 
-def test_tampered_restore_receipt_blocks_readiness(stack):
+def test_tampered_restore_receipt_blocks_readiness(stack, tested):
     vault = _copy_vault(stack, "tampered-receipt")
     receipt = sorted((vault / "restore-receipts").glob("*.json"))[-1]
     receipt.write_bytes(receipt.read_bytes().replace(b'"PASSED"', b'"PASSES"'))
@@ -1967,7 +2083,7 @@ def write_signed_receipt(env: dict[str, str], vault: Path, receipt: dict, name: 
 
 
 @pytest.fixture(scope="module")
-def coherence_ops(stack):
+def coherence_ops(stack, tested):
     """One running agent on a copy of the tested vault, used to observe the decision on
     validly signed receipts of every coherence branch (VF-002)."""
     vault = _copy_vault(stack, "coherence")
@@ -2231,7 +2347,7 @@ def test_custodian_signed_receipt_incoherent_with_its_checkpoint_is_refused(stac
 
 @pytest.mark.parametrize("case,mutate,expected", BINDING_MUTATIONS, ids=[c[0] for c in BINDING_MUTATIONS])
 def test_restart_under_another_release_profile_or_pins_blocks_readiness_reopen_and_admission(
-        stack, case, mutate, expected):
+        stack, tested, case, mutate, expected):
     """Verdict OCOR-DEV-0049-02ac643eb3c7-3 VF-001: the agent restarted with a different
     release, pin set or profile keeps the signed receipt and recovery point of the
     previous one; that restore was not tested for it, so readiness, /reopen and every
@@ -2255,7 +2371,7 @@ def test_restart_under_another_release_profile_or_pins_blocks_readiness_reopen_a
         subprocess.run(["docker", "rm", "-f", "-v", name], capture_output=True, check=False)
 
 
-def test_restart_under_the_tested_release_is_ready_and_reopenable(stack):
+def test_restart_under_the_tested_release_is_ready_and_reopenable(stack, tested):
     """Positive counterpart of VF-001: a restart with exactly the release, profile and pins
     of the tested restore verifies the same receipt and can be reopened."""
     path = stack.work / "restart-same.json"
@@ -2271,7 +2387,7 @@ def test_restart_under_the_tested_release_is_ready_and_reopenable(stack):
         subprocess.run(["docker", "rm", "-f", "-v", name], capture_output=True, check=False)
 
 
-def test_new_release_is_ready_only_after_its_own_backup_and_tested_restore(stack):
+def test_new_release_is_ready_only_after_its_own_backup_and_tested_restore(stack, tested):
     """Release fence end to end on Compose: under a new release the old receipt is refused,
     the old recovery point is not restored (compatibility before restore), and only a
     backup and recovery-gate pass of the new release make the same process READY."""
@@ -2460,7 +2576,7 @@ FAULTS = [
 
 
 @pytest.mark.parametrize("victim,fault,denied,admitted", FAULTS, ids=[f[0] for f in FAULTS])
-def test_dependency_fault_blocks_readiness_and_degrades_posture(stack, victim, fault, denied, admitted):
+def test_dependency_fault_blocks_readiness_and_degrades_posture(stack, reopened, victim, fault, denied, admitted):
     container = f"ocor-bootstrap-{victim}-1"
     wait_for(lambda: readyz(stack.ops)[0] == 200, 60, message="precondition: READY before the fault")
     before = metrics(stack.ops).get(
@@ -2497,7 +2613,7 @@ def test_dependency_fault_blocks_readiness_and_degrades_posture(stack, victim, f
     assert json.loads(posture)["faults"] == []
 
 
-def test_emergency_stop_denies_mutative_capabilities_within_10_seconds(stack):
+def test_emergency_stop_denies_mutative_capabilities_within_10_seconds(stack, reopened):
     code, _ = http_from(stack.ops, "http://ocor-ops:8080/emergency-stop", "POST",
                         {"Authorization": "Bearer wrong-token"})
     assert code == 401
@@ -2592,7 +2708,7 @@ def test_default_deny_admits_only_allowlisted_destination_port_pairs(stack):
     assert control.stdout.strip() == "CONNECTED", "positive control failed: host egress unavailable"
 
 
-def test_open_public_egress_blocks_readiness(stack):
+def test_open_public_egress_blocks_readiness(stack, tested):
     """The agent placed on a network WITH public egress must refuse readiness."""
     name = _standalone_ops(stack, stack.vault, BOOTSTRAP_NETWORK)
     try:
@@ -2733,7 +2849,7 @@ def test_compose_containers_run_the_governed_pins(stack):
                                           text=True, check=True).stdout.strip()
 
 
-def test_logs_and_traces_carry_governed_fields_and_no_secrets(stack):
+def test_logs_and_traces_carry_governed_fields_and_no_secrets(stack, fault_observed):
     logs = subprocess.run(["docker", "logs", stack.ops], capture_output=True, text=True, check=True).stdout
     records = [json.loads(line) for line in logs.splitlines() if line.startswith("{")]
     assert records
