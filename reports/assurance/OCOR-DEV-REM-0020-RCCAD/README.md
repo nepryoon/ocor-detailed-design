@@ -1,7 +1,11 @@
 # OCOR-DEV-REM-0020-RCCAD — MemorySearchService: predicati nell'indice, fattori HYBRID reali, stop epoch, dinieghi auditati
 
-- **Status**: `CANDIDATE_AWAITING_INDEPENDENT_VERIFICATION` (verifier: Grok 4.7 via Cursor CLI,
-  processo, contesto e fornitore separati; Claude Code non verifica questo change set)
+- **Status**: `SEALED` (2026-10-10T03:26:23.212571+00:00) dopo il verdetto `GO_FOR_EVIDENCE_SEAL`
+  `OCOR-DEV-REM-0020-4f1c4ef439a1-0` (verifier: Grok 4.7 via Cursor CLI, processo, contesto e fornitore
+  separati; Claude Code non verifica questo change set), nessun finding e nessun `NOT_EXECUTED`
+  sull'HEAD `4f1c4ef439a1c0fc6c2a42742c8069756373af8e`; SHA256 del verdetto `9f7c58a8ef2957e7bbcf46ea4f52996233f0268972bf85c57bc391464c29e970`.
+  Sigillati anche le tre riqualifiche 0050/0051/0052: cambiano soltanto i metadati del sigillo e
+  gli hash nel manifest G5 e nel record
 - **Fonte**: decisione del Product Owner `OCOR-DEV-0052-INDEPENDENT-REVIEW` (2026-10-09),
   revisione indipendente del merge `ae296eb` (PR #192). Il GO e il sigillo di `OCOR-DEV-0052`
   restano storici: la correzione avviene con supersession esplicita.
