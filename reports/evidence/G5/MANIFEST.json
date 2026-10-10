@@ -52,12 +52,12 @@
     },
     {
       "path": "OCOR-DEV-0055.json",
-      "sha256": "a6433735656329f53ac7402b70239260b39b436a15567d89f586e9e1b26d0532",
+      "sha256": "c66b92febce01cc23b0b1daf9147e2b17eefa41fa9e4e3caf36c43a409b8f055",
       "task_id": "OCOR-DEV-0055"
     },
     {
       "path": "OCOR-DEV-0055.log",
-      "sha256": "61a6d4ce7a37ec8760cc30fe6cb77d63079f3e9623940f6e17ab97cb36a9b44b",
+      "sha256": "45c6f9fdeec9b8082413fbe228ca77bc202c4f0933052915466f0d2185a7ea2d",
       "task_id": "OCOR-DEV-0055-RAW"
     }
   ],
@@ -444,7 +444,7 @@
     },
     {
       "case_id": "OCOR-DEV-0055-REVOCATION-AND-EXPIRY-DETERMINISTICALLY-EXCLUDE",
-      "command": "FGM-10 on real PostgreSQL 16 (metadata, encrypted content, full-text index, representation descriptors), Qdrant 1.15.1 (native and parallel vector indexes) and OpenBao 2.6.2 transit: a revocation is version n+1 (supersedes_ref = head, same content, lifecycle_status REVOKED) committed through the real 0053 coordinator; version n stays byte-identical; the item leaves STRUCTURED, FULL_TEXT, VECTOR, HYBRID and the parallel v2 representation (descriptor invalidated) while every other hit is unchanged; expiry sweeps select by expires_at then item id, are bounded by a limit (rest deferred), are idempotent and identical on a twin world; REVOKED/EXPIRED never re-open (FSM of ADD v1.3 Part II \u00a72.10 parsed from the normative text and compared exactly); re-opening a QUARANTINED item needs a readable, unchanged stop epoch while an exclusion never waits on the stop state",
+      "command": "FGM-10 on real PostgreSQL 16 (metadata, encrypted content, full-text index, representation descriptors), Qdrant 1.15.1 (native and parallel vector indexes) and OpenBao 2.6.2 transit: a revocation is version n+1 (supersedes_ref = head, same content, lifecycle_status REVOKED) committed through the real 0053 coordinator; version n stays byte-identical; the item leaves STRUCTURED, FULL_TEXT, VECTOR, HYBRID and the parallel v2 representation (descriptor invalidated) while every other hit is unchanged; expiry sweeps select by expires_at then item id, are bounded by a limit (rest deferred), are idempotent and identical on a twin world; REVOKED/EXPIRED never re-open (FSM of ADD v1.3 Part II \u00a72.10 parsed from the normative text and compared exactly); re-opening a QUARANTINED item needs a readable stop epoch that is unchanged when re-read after the content read, right before the append (an epoch changed inside read_version refuses with nothing written), while an exclusion never waits on the stop state; REVOKED, EXPIRED or SUPERSEDED committed by this coordinator while retrieval reads the item's content leaves no hit in any mode (CANDIDATE_CHANGED, audited denial, no receipt) and a read without changes returns the unchanged result",
       "evidence_path": "OCOR-DEV-0055.json",
       "raw_output_path": "OCOR-DEV-0055.log",
       "requirement_id": "FR-118",
@@ -462,7 +462,7 @@
     },
     {
       "case_id": "OCOR-DEV-0055-LEGAL-HOLD-BLOCKS-DELETION-AND-RESTORES-PRIOR-DISPOSITION",
-      "command": "FGM-11 on the real backends: LEGAL_HOLD records legal_hold_ref and prior_lifecycle_status and needs an active hold of the item's tenant (unknown, foreign or released holds refused); while held, requestMemoryDeletion, a forgetting transition and the retention sweep are refused or report the item as held, and content, native entries and ledger stay unchanged; leaving the hold needs the registry to report it released (outage fails closed) and restores exactly the prior disposition (ACTIVE becomes searchable again, REVOKED stays excluded), or enters deletion",
+      "command": "FGM-11 on the real backends: LEGAL_HOLD records legal_hold_ref and prior_lifecycle_status and needs an active hold of the item's tenant (unknown, foreign or released holds refused); while held, requestMemoryDeletion, a forgetting transition and the retention sweep are refused or report the item as held, and content, native entries and ledger stay unchanged; leaving the hold needs the registry to report it released (outage fails closed) and restores exactly the prior disposition (ACTIVE becomes searchable again, REVOKED stays excluded; a release to ACTIVE with the stop epoch changed during the content read is refused with nothing written), or enters deletion",
       "evidence_path": "OCOR-DEV-0055.json",
       "raw_output_path": "OCOR-DEV-0055.log",
       "requirement_id": "FR-135",
@@ -471,7 +471,7 @@
     },
     {
       "case_id": "OCOR-DEV-0055-DELETION-SAGA-PURGES-AND-WRITES-NON-CONTENT-TOMBSTONE",
-      "command": "FGM-12 on the real backends: the saga reserves a deletion epoch, commits a content-free DELETION_PENDING version (retrieval closed at once), purges native lexical/vector entries of every version, parallel descriptors and private content objects in every partition of the item (also after reclassification), retains an object still referenced by an undeleted item, re-reads the residue and only then commits DELETED with a durable, hash-chained, content-free tombstone; old exact versions fail closed; a failing replica participant leaves DELETION_INCOMPLETE (FAILED receipt, residue counts, absent from retrieval) until a governed retry under the same epoch completes it; unsupported deletion scopes and non-trigger reasons are refused",
+      "command": "FGM-12 on the real backends: the saga reserves a deletion epoch, commits a content-free DELETION_PENDING version (retrieval closed at once), purges native lexical/vector entries of every version, parallel descriptors and private content objects in every partition of the item (also after reclassification), retains an object still referenced by an undeleted item, re-reads the residue and only then commits DELETED with a durable, hash-chained, content-free tombstone; old exact versions fail closed; a failing replica participant leaves DELETION_INCOMPLETE (FAILED receipt, residue counts, absent from retrieval) until a governed retry under the same epoch completes it; unsupported deletion scopes and non-trigger reasons are refused; a saga started while retrieval reads the item's content leaves no hit",
       "evidence_path": "OCOR-DEV-0055.json",
       "raw_output_path": "OCOR-DEV-0055.log",
       "requirement_id": "FR-135",
