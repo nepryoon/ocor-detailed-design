@@ -1153,8 +1153,8 @@ def test_a_stop_epoch_changed_during_the_content_read_refuses_reopening_before_a
     reads = world.lc_stop.reads
     fired = _during_read(world, "q", lambda: setattr(world.lc_stop, "epoch", world.lc_stop.epoch + 1))
     assert_error(lambda: world.move("q", "ACTIVE", reason="REVIEW_PASSED"), "STOP_EPOCH_MISMATCH", "STOP_EPOCH_CHANGED")
-    assert fired == ["q:v1"]  # the epoch moved inside the only content read, after both pre-I/O reads
-    assert world.lc_stop.reads - reads == 3
+    assert fired == ["q:v1"]  # the epoch moved inside the only content read
+    assert world.lc_stop.reads - reads == 2  # read before the content I/O and right before the append
     assert world.status("q") == "QUARANTINED" and world.ledger.latest_version("q") == 1
     assert ledger_snapshot(world) == ledger and world.metadata.get("q", 2) is None
     assert denials(world) == [("STOP_EPOCH_MISMATCH", "STOP_EPOCH_CHANGED")]

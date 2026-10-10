@@ -1235,10 +1235,9 @@ class MemoryLifecycleCoordinator:
         decision = self._decide(plan.action, plan.head.item, plan.target, context)
         stop_epoch = self._stop_epoch(context) if plan.target is S.ACTIVE else None
         record = self._version(plan, decision, deletion_epoch=None)
-        self._require_stop_epoch(context, stop_epoch)
         # Content and embedding are re-derived and verified before any write.
         content = self._content_of(record)
-        # Re-opening is re-checked after the content I/O, right before the append.
+        # Re-opening re-reads the stop epoch after the content I/O, right before the append.
         # The stop epoch comes from an external control plane, so this check and
         # the append are not atomic: the residual window is tracked towards FGM-17.
         self._require_stop_epoch(context, stop_epoch)
