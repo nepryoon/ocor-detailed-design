@@ -448,6 +448,119 @@
     "VF-002": "fixed: the complete eligibility check (_eligible: committed exact head, ACTIVE, no deletion epoch, partition, kind/scope/capability, validity, expiry, compartments, marking, filters, live materialisation policy) and the stage-digest comparison run before the read (unchanged), after the read of each hit (after the stop-epoch check) and once more over every ranked hit right before the receipt is written; a changed version fails closed with REPRESENTATION_NOT_READY/CANDIDATE_CHANGED, the same code as the pre-read check, and the refusal is recorded as searchMemory.denied (REM-0020 F5 path).",
     "unchanged": "public OpenAPI contract, query contracts, RankingProfile and their digests, MemorySearchResponse shape, the stop-epoch checks and their order (a stop wins over a candidate change), ranking and pool semantics of REM-0020; no port changes."
   },
+  "independent_verification": {
+    "commands": [
+      {
+        "command": "sha256sum -c inputs/normative/SHA256SUMS",
+        "exit_code": 0,
+        "summary": "8/8 OK sul worktree detached 3845e4af e riletto sulla checkout principale allo stesso contenuto di inputs/ (diff inputs vuoto)."
+      },
+      {
+        "command": "git diff --name-only 06620513d7543f084112854858e38fc54b6bd0c4..3845e4af0fc110aa3cc571e4517533d507c124c1",
+        "exit_code": 0,
+        "summary": "12 percorsi: retrieval.py, test_ocor_dev_rem_0021.py, assurance REM-0021, riqualifiche 0050/0052 rem0021, MANIFEST.json, OCOR_PLAN_RUN_STATE.json, allowlist di validate_ocor_development_plan.py. Diff inputs/ vuoto. I predecessori sigillati OCOR-DEV-0050.requalified-rem0020.json/.log e OCOR-DEV-0052.requalified.json/.log sono byte-identici a origin/main."
+      },
+      {
+        "command": "scripts/reset_test_environment.py --execute && scripts/bootstrap_development_environment.py --execute && initialize_services.py && load_fixtures.py && scripts/verify_external_services.py --execute --typed",
+        "exit_code": 0,
+        "summary": "La CA SPIRE della checkout principale e scaduta il 2026-10-08 e non e stata modificata. Il primo bootstrap che la riusava e fallito. Stack sano ottenuto con CA e .ocor/bootstrap.env generati solo nel worktree. Un join token stantio esportato nella shell ha fatto fallire l'agent dopo un reset; corretto unsetting OCOR_* e ricreando l'agent prima della suite qualificata. Health finale: 11 READY, status PASS, OOMKilled=false. Entry spiffe://ocor.test/ocor/control-plane registrata e SVID fetched prima della suite qualificata."
+      },
+      {
+        "command": "OCOR_LIVE_POSTGRES_DSN=<ocor-bootstrap-postgres> uv run --directory ocor-runtime --frozen --extra test --extra lint pytest -q -rs tests/tasks/test_ocor_dev_rem_0021.py tests/tasks/test_ocor_dev_rem_0020.py tests/tasks/test_ocor_dev_0052.py tests/tasks/test_ocor_dev_0050.py tests/tasks/test_ocor_dev_0051.py tests/tasks/test_ocor_dev_0053.py tests/tasks/test_ocor_dev_0054.py",
+        "exit_code": 0,
+        "summary": "607 passed, 0 failed, 0 skipped, 3 warnings in 229.55s. JUnit tests=607 failures=0 errors=0 skipped=0. Include REM-0021 (42), R2-R6 di REM-0020 e 0050-0054."
+      },
+      {
+        "command": "RED: worktree detached 7c46daf6d20029aadf6858ad3ccf8c8605056d7d pytest -q tests/tasks/test_ocor_dev_rem_0021.py",
+        "exit_code": 1,
+        "summary": "28 failed, 14 passed, 0 skipped in 17.86s. JUnit tests=42 failures=28 errors=0 skipped=0. Tutti i 28 fallimenti sono Failed: DID NOT RAISE MemoryRetrievalError. Il file di test e identico a HEAD; retrieval.py a quel commit non ha _require_unchanged."
+      },
+      {
+        "command": "probe live PostgreSQL 16.14 + Qdrant pinnato + OpenBao pinnato: revoca e DELETION_PENDING durante read_version, revoca di un hit precedente durante una lettura successiva, non-hit oltre top_k, stop epoch prevale sulla revoca simultanea",
+        "exit_code": 0,
+        "summary": "PROBE_OK. REVOKED head (2, COMMITTED, REVOKED, deletion None) visto da una connessione nuova: nessun hit, CANDIDATE_CHANGED, diniego auditato. DELETION_PENDING con deletion_epoch=1 stesso esito. Tre item: la revoca del primo durante la terza lettura elimina l'hit. Un cambiamento fuori da top_k non fa fallire la ricerca e i fattori di score restano valori reali > 0. Stop+revoca durante HYBRID produce STOP_EPOCH_MISMATCH. Spike del probe rimossi."
+      },
+      {
+        "command": "ruff check .",
+        "exit_code": 0,
+        "summary": "ruff 0.13.1, all checks passed"
+      },
+      {
+        "command": "ocor-runtime/.venv/bin/python -m mypy --strict",
+        "exit_code": 0,
+        "summary": "Prima invocazione exit 1: No module named mypy, perche un uv sync del bootstrap aveva lasciato il venv senza extra lint. Dopo uv sync --frozen --extra test --extra lint: Success, 74 source files."
+      },
+      {
+        "command": "python3 scripts/validate_language_policy.py",
+        "exit_code": 0,
+        "summary": "PASS"
+      },
+      {
+        "command": "python3 scripts/validate_ocor_change_scope.py --base origin/main --branch governed/ocor-dev-rem-0021-retrieval-post-read-eligibility",
+        "exit_code": 0,
+        "summary": "PASS: 12 changed paths; immutable surfaces untouched; task ledger stable"
+      },
+      {
+        "command": "python3 scripts/validate_rccad.py --base-ref origin/main",
+        "exit_code": 0,
+        "summary": "PASS_LOCAL_PRECHECK, dynamic_assurance CI_REQUIRED, findings vuoti"
+      },
+      {
+        "command": "python3 scripts/validate_ocor_development_plan.py --base-ref origin/main --authorized-extension",
+        "exit_code": 0,
+        "summary": "PASS 37, NOT_EXECUTED 2 (markdownlint e renderer Mermaid opzionali del validator, exit 0). Non sono controlli obbligatori del verifier."
+      },
+      {
+        "command": "python3 scripts/validate_evidence_input_drift.py",
+        "exit_code": 0,
+        "summary": "PASS: 178 input, 68 task, 0 drift"
+      },
+      {
+        "command": "for t in OCOR-DEV-0050 OCOR-DEV-0051 OCOR-DEV-0052 OCOR-DEV-0053 OCOR-DEV-0054; do python3 scripts/validate_runtime_evidence.py --task $t --non-skipped --manifest reports/evidence/G5/MANIFEST.json; done",
+        "exit_code": 0,
+        "summary": "PASS per 0050, 0051, 0052, 0053 e 0054"
+      },
+      {
+        "command": "python3 ~/.ocor-codex/rem-0021/check_evidence.py <worktree> 3845e4af0fc110aa3cc571e4517533d507c124c1",
+        "exit_code": 0,
+        "summary": "PASS, errors vuoti. commit di codice 0e76db2ac62d9b0225e4badb9ba5d9155cb15b67, head 3845e4af0fc110aa3cc571e4517533d507c124c1, task_cases 607, full_suite_cases 1708, mutants 6. Claim fence dei tre record: E1=0, E2=0, PoC_GO=NO-GO, Production_readiness=NO_GO, runtime_conformance=NOT_ESTABLISHED."
+      },
+      {
+        "command": "PATH=<node-v24> OCOR_LIVE_POSTGRES_DSN=<ocor-bootstrap-postgres> uv run --directory ocor-runtime --frozen --extra test --extra lint pytest -q -rs tests/",
+        "exit_code": 1,
+        "summary": "Run non qualificante, prima della registrazione SPIRE e con node v24.5.0 sul PATH: 10 failed, 1512 passed, 186 errors, 0 skipped in 542.99s. 8 fallimenti in test_ocor_dev_0007 per v24.5.0!=v20.20.2. 0048: 8 passed, 2 failed, 186 errors, 0 skipped (fetch SVID fallito e entry control-plane assente). Nessun servizio OOMKilled. Non usata come esito del gate."
+      },
+      {
+        "command": "PATH=/home/luca/.ocor-codex/c5resume/toolchain/node-v20.20.2-linux-x64/bin:$PATH OCOR_LIVE_POSTGRES_DSN=<ocor-bootstrap-postgres> uv run --directory ocor-runtime --frozen --extra test --extra lint pytest -q -rs tests/",
+        "exit_code": 0,
+        "summary": "Suite qualificata dopo entry SPIRE spiffe://ocor.test/ocor/control-plane e node v20.20.2: 1708 passed, 0 failed, 0 skipped, 3 warnings in 679.56s. JUnit tests=1708 failures=0 errors=0 skipped=0. test_ocor_dev_0048.py 196/196, test_ocor_dev_0007.py 51/51, REM-0021 42/42. Nessun servizio OOMKilled."
+      },
+      {
+        "command": "python3 scripts/reset_test_environment.py --execute && docker volume rm <34 volumi anonimi creati durante le suite>",
+        "exit_code": 0,
+        "summary": "Teardown ocor-bootstrap PASS. 34 volumi anonimi comparsi rispetto allo snapshot pre-suite rimossi; delta residuo 0. Container ocor-spike del probe gia assenti. Worktree detached wt e red rimossi. Checkout principale ancora a 06620513, working tree pulito. Nessun container eci-dev-control-plane o open-webui presente prima o dopo."
+      }
+    ],
+    "findings": [],
+    "implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva del loop (quota Codex esaurita), ciclo 0 e integrazione di OCOR-DEV-REM-0021",
+    "integration_condition": "Merge subordinato ai check obbligatori verdi sul commit di sigillo esatto; il verdetto qualifica il candidato indicato, con soli metadati di sigillo e hash successivi.",
+    "not_executed": [],
+    "original_implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva",
+    "prior_verdicts": [],
+    "repair_cycle": 0,
+    "review_type": "REMEDIATION",
+    "verdict_created_at": "2026-10-10T09:15:22Z",
+    "verdict_file_sha256": "9c8c01387ff21cc2e6238baea77882904555373bf1af53a08782d2160c0f8d67",
+    "verdict_head_sha": "3845e4af0fc110aa3cc571e4517533d507c124c1",
+    "verdict_request_id": "OCOR-DEV-REM-0021-3845e4af0fc1-0",
+    "verdict_status": "GO_FOR_EVIDENCE_SEAL",
+    "verifier": "Grok 4.7 (Cursor CLI)",
+    "verifier_configuration": {
+      "independence_limits": "Processo e contesto separati. Implementatore del ciclo 0: Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva (quota Codex esaurita). Verifier: Grok 4.7 (xAI) via Cursor CLI. Fornitori di modello diversi. Claude Code non verifica questo change set.",
+      "model": "Grok 4.7",
+      "process": "Cursor CLI, contesto pulito, sessione non interattiva"
+    }
+  },
   "inputs": {
     "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
     "ocor-runtime/src/ocor_runtime/memory/retrieval.py": "72a8de786996d52b3beee3f3c0b516d409480396066005bd32ebe2d94fa41d76",
@@ -481,14 +594,16 @@
   },
   "requalifications": [
     {
+      "candidate_record_sha256": "1f8f55bd08bda657c07824a38abb3c2c8c209d188f1ca48e656dedfb9e781201",
       "record": "reports/evidence/G5/OCOR-DEV-0050.requalified-rem0021.json",
-      "record_sha256": "1f8f55bd08bda657c07824a38abb3c2c8c209d188f1ca48e656dedfb9e781201",
+      "record_sha256": "7b2d4de2c4bf271a91e4a9a3c1e3eae299f80aaa10c8ffc770dece8c472cced2",
       "supersedes_record": "reports/evidence/G5/OCOR-DEV-0050.requalified-rem0020.json",
       "task_id": "OCOR-DEV-0050"
     },
     {
+      "candidate_record_sha256": "ec807a3ca2dbb5571be98065ba1b3395b21a4ea64b913b2193c1339af64d8606",
       "record": "reports/evidence/G5/OCOR-DEV-0052.requalified-rem0021.json",
-      "record_sha256": "ec807a3ca2dbb5571be98065ba1b3395b21a4ea64b913b2193c1339af64d8606",
+      "record_sha256": "9d146f35a8de3eeccc1bd9550af8d1fe06911d1121f96cc1b482400231efe6b6",
       "supersedes_record": "reports/evidence/G5/OCOR-DEV-0052.requalified.json",
       "task_id": "OCOR-DEV-0052"
     }
@@ -584,7 +699,8 @@
   },
   "rollback_procedure_verified": "Mechanical review: revert the change-set commits. No persisted-data migration and no port change: test schemas, Qdrant collections and OpenBao mounts are disposable. Reverting restores the REM-0020 records (0050.requalified-rem0020, 0052.requalified) as the most recent ones once the REM-0021 requalification records are removed with the revert.",
   "schema_version": "1.0",
-  "status": "CANDIDATE_AWAITING_INDEPENDENT_VERIFICATION",
+  "sealed_at": "2026-10-10T09:17:13.104114+00:00",
+  "status": "SEALED",
   "task_id": "OCOR-DEV-REM-0021",
   "tdd": {
     "GREEN": {

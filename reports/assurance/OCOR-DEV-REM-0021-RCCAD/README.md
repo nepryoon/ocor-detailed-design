@@ -1,7 +1,11 @@
 # OCOR-DEV-REM-0021-RCCAD — MemorySearchService: idoneità rivalidata dopo ogni lettura di contenuto
 
-- **Status**: `CANDIDATE_AWAITING_INDEPENDENT_VERIFICATION` (verifier: Grok 4.7 via Cursor CLI,
-  processo, contesto e fornitore separati; Claude Code non verifica questo change set).
+- **Status**: `SEALED` (2026-10-10T09:17:13.104114+00:00) dopo il verdetto `GO_FOR_EVIDENCE_SEAL`
+  `OCOR-DEV-REM-0021-3845e4af0fc1-0` (verifier: Grok 4.7 via Cursor CLI, processo, contesto e fornitore
+  separati; Claude Code non verifica questo change set), nessun finding e nessun `NOT_EXECUTED`
+  sull'HEAD `3845e4af0fc110aa3cc571e4517533d507c124c1`; SHA256 del verdetto `9c8c01387ff21cc2e6238baea77882904555373bf1af53a08782d2160c0f8d67`.
+  Sigillate anche le riqualifiche 0050/0052: cambiano soltanto i metadati del sigillo e gli hash
+  nel manifest G5 e nel record.
 - **Fonte**: finding `VF-002` (alta, bloccante) del verdetto indipendente
   `OCOR-DEV-0055-38b7734bd97f-0` (`NO_GO`, 2026-10-10): durante una ricerca `FULL_TEXT`, una
   revoca committata mentre veniva letto il contenuto di `x` lasciava comunque
