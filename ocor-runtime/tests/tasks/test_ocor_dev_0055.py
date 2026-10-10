@@ -455,6 +455,12 @@ def test_missing_binding_unknown_and_invisible_items_are_refused_alike() -> None
     hidden = assert_error(lambda: world.move("item", "REVOKED", ctx=OUTSIDER), "MEMORY_NOT_FOUND", "ITEM_NOT_VISIBLE")
     assert str(unknown) == str(hidden)
     assert world.status("item") == "ACTIVE"
+    for foreign in (
+        t52.context(compartments=("alpha", "bravo"), tenant="tenant-b"),
+        t52.context(compartments=("alpha", "bravo"), organization="org-b"),
+        t52.context(compartments=("alpha", "bravo"), domain="domain-intel"),
+    ):
+        assert_error(lambda: world.move("item", "REVOKED", ctx=foreign), "MEMORY_NOT_FOUND", "ITEM_NOT_VISIBLE")
     other_purpose = t52.context(compartments=("alpha", "bravo"), purpose="logistics")
     assert_error(lambda: world.move("item", "REVOKED", ctx=other_purpose), "MEMORY_NOT_FOUND", "ITEM_NOT_VISIBLE")
     secret_item = t52.context(marking=t52.M_SECRET)
@@ -599,11 +605,19 @@ def test_the_tombstone_journal_survives_reopen_and_detects_tampering(tmp_path: P
         [lines[1], lines[0]],  # reordering
         [lines[0], lines[1].replace(b"COMPLETED", b"STARTED\x22")],  # rewrite
         [lines[0], lines[1][:-5]],  # torn write
+        [lines[0], lines[1].rstrip(b"\n")],  # complete entry, unacknowledged (no newline)
     ):
         broken = tmp_path / f"broken-{uuid.uuid4().hex}.jsonl"
         broken.write_bytes(b"".join(tampered))
         with pytest.raises(MemoryLifecycleError):
             JournalTombstoneStore(broken)
+    # A self-consistent entry chained to the wrong predecessor is refused by the chain alone.
+    relinked = json.loads(lines[1])
+    body = {"seq": relinked["seq"], "prev": "urn:sha256:" + "1" * 64, "entry": relinked["entry"]}
+    broken = tmp_path / "relinked.jsonl"
+    broken.write_bytes(lines[0] + canonical_bytes(dict(body, entry_digest=canonical_digest(body))) + b"\n")
+    with pytest.raises(MemoryLifecycleError):
+        JournalTombstoneStore(broken)
     chained = json.loads(lines[1])
     chained["entry"]["reason_code"] = "QUOTA_PRESSURE"
     broken = tmp_path / "rewritten.jsonl"
@@ -828,12 +842,15 @@ def test_expiry_is_deterministic_bounded_and_never_reopens(backends: Backends) -
     world.admit("mid", TEXT + " mid", expires_at=NOW + timedelta(hours=2))
     world.admit("future", TEXT + " future", expires_at=NOW + timedelta(days=30))
     world.admit("forever", TEXT + " forever")
+    world.admit("gone", TEXT + " gone", expires_at=NOW + timedelta(minutes=30))
+    world.move("gone", "REVOKED")
     world.clock.advance(timedelta(hours=4))
     # Retrieval already excludes elapsed items on the boundary clock.
     assert sorted(r.split(":")[3] for r in t52.refs(world.search(RetrievalMode.FULL_TEXT))) == ["forever", "future"]
     first = world.lifecycle.enforce_expiry(binding=t52.binding(), operation_id="expiry-1", limit=1)
     assert first.processed == ("urn:ocor:memory:early:v2",)
     assert first.deferred == ("urn:ocor:memory:mid:v1", "urn:ocor:memory:late:v1")
+    assert world.status("gone") == "REVOKED" and world.ledger.latest_version("gone") == 2
     second = world.lifecycle.enforce_expiry(binding=t52.binding(), operation_id="expiry-2")
     assert second.processed == ("urn:ocor:memory:mid:v2", "urn:ocor:memory:late:v2") and not second.deferred
     replay = world.lifecycle.enforce_expiry(binding=t52.binding(), operation_id="expiry-2")
@@ -841,7 +858,9 @@ def test_expiry_is_deterministic_bounded_and_never_reopens(backends: Backends) -
     assert {n: world.status(n) for n in ("early", "mid", "late", "future", "forever")} == {
         "early": "EXPIRED", "mid": "EXPIRED", "late": "EXPIRED", "future": "ACTIVE", "forever": "ACTIVE"
     }
-    assert world.lc_audit.events[-1]["action"] == "enforceMemoryExpiry"
+    sweep_event = world.lc_audit.events[-1]
+    assert sweep_event["action"] == "enforceMemoryExpiry" and sweep_event["processed"] == []
+    assert replay.audit_ref == canonical_digest(sweep_event)
     assert_error(lambda: world.move("early", "ACTIVE"), "LIFECYCLE_TRANSITION_INVALID", "TRANSITION_NOT_DECLARED")
     assert sorted(r.split(":")[3] for r in t52.refs(world.search(RetrievalMode.FULL_TEXT))) == ["forever", "future"]
     # The same sweep on a second world selects in exactly the same order.
@@ -959,6 +978,9 @@ def test_the_deletion_saga_purges_every_store_and_writes_a_non_content_tombstone
     found = world.every_mode("north", v2=True)
     assert all(not any(r.startswith("urn:ocor:memory:x:") for r in refs) for refs in found.values())
     assert "urn:ocor:memory:twin:v1" in found["FULL_TEXT"]
+    # Once the twin is forgotten too, nothing references the object any more: it is purged.
+    assert world.delete("twin").lifecycle_status == "DELETED"
+    assert not content_present(world, twin) and world.tombstones.entries("twin")[-1].retained_shared_objects == 0
     # Replay returns the same receipt; a second deletion of a DELETED item is refused.
     again = world.delete("x", op="forget-x")
     assert again.to_mapping() == receipt.to_mapping() and world.ledger.latest_version("x") == 4
@@ -1019,14 +1041,19 @@ def test_an_interrupted_transition_or_saga_is_completed_by_its_replay(backends: 
     assert not any(r.startswith("urn:ocor:memory:x:") for r in world.every_mode()["HYBRID"])
     # Crash inside the saga after DELETION_PENDING: retrieval already fails closed, the replay finishes.
     participant = world.lifecycle._participants[0]
-    real_residue = participant.residue
-    participant.residue = lambda target: (_ for _ in ()).throw(KeyboardInterrupt())  # type: ignore[method-assign]
+    real_purge = participant.purge
+    participant.purge = lambda target: (_ for _ in ()).throw(KeyboardInterrupt())  # type: ignore[method-assign]
     with pytest.raises(KeyboardInterrupt):
         world.delete("y", op="forget-y")
-    assert world.status("y") == "DELETION_PENDING"
+    assert world.status("y") == "DELETION_PENDING" and native_entries(world, items["y"]) == {"lexical": 1, "vector": 1}
+    # Nothing purged yet, but the pending item is already out of every backend query.
+    partition = MemoryPartition.for_item(items["y"].item)
+    lexical_version = world.coordinator._limits.lexical_profile.representation_version
+    raw = world.lexical.inner.search_eligible(partition, lexical_version, TEXT, where=_predicate(world), limit=50, offset=0)
+    assert all(":y:" not in str(h.payload["memory_version_ref"]) for h in raw) and raw
     assert not any(r.startswith("urn:ocor:memory:y:") for r in world.every_mode()["FULL_TEXT"])
     assert_error(lambda: world.delete("y", op="other"), "LIFECYCLE_TRANSITION_INVALID", "DELETION_IN_PROGRESS")
-    participant.residue = real_residue  # type: ignore[method-assign]
+    participant.purge = real_purge  # type: ignore[method-assign]
     done = world.delete("y", op="forget-y")
     assert done.lifecycle_status == "DELETED" and not content_present(world, items["y"])
     assert [e.phase for e in world.tombstones.entries("y")] == ["STARTED", "COMPLETED"]
@@ -1040,22 +1067,37 @@ def test_retention_forgets_deterministically_and_protects_held_items(backends: B
     world.admit("held", TEXT + " h")
     world.move("held", "LEGAL_HOLD", hold=HOLD)
     world.admit("proposed", TEXT + " p", lifecycle="PROPOSED")
+    world.admit("revised", TEXT + " r")
     world.clock.advance(timedelta(days=20))  # inside the 30-day evidence retention of the fixtures
     world.admit("young", TEXT + " y")
+    world.move("revised", "REVOKED")  # version 2 is created 20 days after the first admission
     world.clock.advance(timedelta(days=350))  # 370 days after the first admissions, 350 after "young"
     report = world.lifecycle.enforce_retention(binding=t52.binding(), operation_id="retention-1", limit=1)
     assert report.processed == ("urn:ocor:memory:a-old:v3",)  # due instant, then item id
-    assert report.deferred == ("urn:ocor:memory:b-old:v1",)
+    assert report.deferred == ("urn:ocor:memory:b-old:v1", "urn:ocor:memory:revised:v2")
     assert report.held == ("urn:ocor:memory:held:v2",)
     assert report.unresolved == ("urn:ocor:memory:proposed:v1",)
     rest = world.lifecycle.enforce_retention(binding=t52.binding(), operation_id="retention-2")
-    assert rest.processed == ("urn:ocor:memory:b-old:v3",) and rest.held == ("urn:ocor:memory:held:v2",)
+    assert rest.processed == ("urn:ocor:memory:b-old:v3", "urn:ocor:memory:revised:v4")
+    assert rest.held == ("urn:ocor:memory:held:v2",)
     assert {n: world.status(n) for n in ("a-old", "b-old", "held", "proposed", "young")} == {
         "a-old": "DELETED", "b-old": "DELETED", "held": "LEGAL_HOLD", "proposed": "PROPOSED", "young": "ACTIVE"
     }
     assert [e.deletion_epoch for e in world.tombstones.entries("a-old")] == [1, 1]
     assert [e.deletion_epoch for e in world.tombstones.entries("b-old")] == [2, 2]
     assert content_present(world, world.ledger.get("held", 1))  # type: ignore[arg-type]
+
+
+def test_a_non_reproducible_embedding_refuses_the_transition_before_any_write(backends: Backends) -> None:
+    world = backends.world()
+    world.admit("x", TEXT)
+    real = world.coordinator.embed_query
+    world.coordinator.embed_query = lambda profile, text: tuple(reversed(real(profile, text)))  # type: ignore[method-assign]
+    before = ledger_snapshot(world)
+    assert_error(lambda: world.move("x", "REVOKED"), "REPRESENTATION_NOT_READY", "EMBEDDING_NOT_REPRODUCIBLE")
+    assert ledger_snapshot(world) == before and world.metadata.head("x") == 1
+    world.coordinator.embed_query = real  # type: ignore[method-assign]
+    assert world.move("x", "REVOKED").lifecycle_status == "REVOKED"
 
 
 def test_retention_with_an_unconfigured_horizon_is_reported_never_deleted(backends: Backends) -> None:

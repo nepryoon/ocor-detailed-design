@@ -1233,26 +1233,39 @@ class MemoryLifecycleCoordinator:
                 "STOP_EPOCH_CHANGED",
                 "the stop epoch changed before the item could be re-opened",
             )
+        # Content and embedding are re-derived and verified before any write.
+        content = self._content_of(record)
         self._append(record)
-        self._commit_content_version(record, plan.request.binding)
+        self._commit_content_version(record, plan.request.binding, content)
         return self._receipt(record, plan.request, record)
 
+    def _content_of(
+        self, record: AdmittedMemoryVersion
+    ) -> tuple[bytes, tuple[float, ...] | None]:
+        """The verified content of the predecessor and the re-derived embedding."""
+
+        item = record.item
+        previous = self._ledger.get(item.memory_item_id, item.memory_version - 1)
+        assert previous is not None
+        source = previous.item
+        materialized = self._store.read_version(
+            MemoryPartition.for_item(source), source.memory_item_id, source.memory_version
+        )
+        return materialized.payload, self._embedding(item, materialized.payload)
+
     def _commit_content_version(
-        self, record: AdmittedMemoryVersion, binding: VerifiedGovernedContextBinding
+        self,
+        record: AdmittedMemoryVersion,
+        binding: VerifiedGovernedContextBinding,
+        content: tuple[bytes, tuple[float, ...] | None] | None = None,
     ) -> None:
         """Commit a lifecycle version with the (unchanged) content of its predecessor."""
 
         item = record.item
         stored = self._metadata.get(item.memory_item_id, item.memory_version)
         if stored is None or stored.state is not VersionState.COMMITTED:
-            previous = self._ledger.get(item.memory_item_id, item.memory_version - 1)
-            assert previous is not None
-            source = previous.item
-            materialized = self._store.read_version(
-                MemoryPartition.for_item(source), source.memory_item_id, source.memory_version
-            )
-            embedding = self._embedding(item, materialized.payload)
-            self._store.commit(record, payload=materialized.payload, embedding=embedding)
+            payload, embedding = content if content is not None else self._content_of(record)
+            self._store.commit(record, payload=payload, embedding=embedding)
         self._invalidate_representations(record, binding)
 
     def _embedding(self, item: GovernedMemoryItem, payload: bytes) -> tuple[float, ...] | None:
@@ -1424,8 +1437,6 @@ class MemoryLifecycleCoordinator:
                 "OPERATION_REUSED",
                 "operation_id is bound to another lifecycle request",
             )
-        if not self._visible(first.item, request.context):
-            raise _not_found()
         if first.item.lifecycle_status is S.DELETION_PENDING:
             return self._resume_saga(first, request)
         self._commit_content_version(first, request.binding)
@@ -1843,15 +1854,13 @@ class MemoryLifecycleCoordinator:
             if head.item.lifecycle_status is S.LEGAL_HOLD:
                 held.append(head.item.version_ref)
                 continue
-            if kind == OPERATION_RETENTION and S.DELETION_PENDING not in TRANSITIONS[
-                head.item.lifecycle_status
-            ]:
+            target = S.EXPIRED if kind == OPERATION_EXPIRY else S.DELETION_PENDING
+            if target not in TRANSITIONS[head.item.lifecycle_status]:
                 unresolved.append(head.item.version_ref)
                 continue
             if limit is not None and len(processed) + len(incomplete) >= limit:
                 deferred.append(head.item.version_ref)
                 continue
-            target = S.EXPIRED if kind == OPERATION_EXPIRY else S.DELETION_PENDING
             reason = "EXPIRY" if kind == OPERATION_EXPIRY else "RETENTION_ELAPSED"
             item_op = f"{operation_id}:{item_id}"
             request = _Request(
