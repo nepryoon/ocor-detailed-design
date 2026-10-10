@@ -56,6 +56,12 @@ Implements the ``MemorySearchPort`` (``searchMemory``) slice of the
   materialisation, after every materialised hit and right before the receipt
   is written; a kill switch or delegation revocation in between fails the
   request closed with ``STOP_EPOCH_MISMATCH`` and no hit.
+* Eligibility is re-validated before and after the content read of every hit
+  and once more over every hit right before the receipt is written (exact
+  committed head, ``ACTIVE``, no deletion epoch, same stage digest, live
+  materialisation policy): a revocation, quarantine, correction or policy
+  change committed while content is read fails the request closed with
+  ``CANDIDATE_CHANGED`` and no hit (OCOR-DEV-REM-0021).
 * Every refusal after planning is recorded as an audited denial
   (``searchMemory.denied``); no success receipt is written for it.
 
@@ -1382,13 +1388,7 @@ class MemorySearchService:
         for rank, (candidate, score, factors) in enumerate(ranked, start=1):
             staged = candidate.stored.staged
             # Re-check the exact version right before its content is read.
-            fresh = self._eligible(plan, staged.memory_item_id, staged.memory_version)
-            if fresh is None or fresh.stored.staged.stage_digest != staged.stage_digest:
-                raise MemoryRetrievalError(
-                    "REPRESENTATION_NOT_READY",
-                    "CANDIDATE_CHANGED",
-                    "a ranked version changed before materialisation",
-                )
+            self._require_unchanged(plan, candidate)
             materialized = self._coordinator.read_version(
                 candidate.partition, staged.memory_item_id, staged.memory_version
             )
@@ -1399,6 +1399,7 @@ class MemorySearchService:
                 )
             # A stop or revocation during the read leaves no hit behind.
             self._require_stop_epoch(plan)
+            self._require_unchanged(plan, candidate)
             marking = self._markings.join([item.classification_marking_ref])
             explanation_ref: str | None = None
             if query.include_explanation:
@@ -1457,6 +1458,9 @@ class MemorySearchService:
             ],
         }
         audit_ref = canonical_digest(receipt)
+        # A hit changed while a later one was read leaves no hit behind either.
+        for candidate, _score, _factors in ranked:
+            self._require_unchanged(plan, candidate)
         self._require_stop_epoch(plan)
         try:
             self._audit.record(MappingProxyType({**receipt, "audit_ref": audit_ref}))
@@ -1474,6 +1478,18 @@ class MemorySearchService:
             receipt=MappingProxyType(receipt),
             explanations=MappingProxyType(explanations),
         )
+
+    def _require_unchanged(self, plan: _Plan, candidate: _Candidate) -> None:
+        """Fail closed unless the exact ranked version is still eligible as staged."""
+
+        staged = candidate.stored.staged
+        fresh = self._eligible(plan, staged.memory_item_id, staged.memory_version)
+        if fresh is None or fresh.stored.staged.stage_digest != staged.stage_digest:
+            raise MemoryRetrievalError(
+                "REPRESENTATION_NOT_READY",
+                "CANDIDATE_CHANGED",
+                "a ranked version changed before its hit was returned",
+            )
 
     def _require_stop_epoch(self, plan: _Plan) -> None:
         if self._stop_epoch(plan.context) != plan.stop_epoch:
