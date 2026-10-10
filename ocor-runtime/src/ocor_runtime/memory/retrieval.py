@@ -19,6 +19,13 @@ Implements the ``MemorySearchPort`` (``searchMemory``) slice of the
   the partition tuple.  Indexes are queried only inside those partitions, so an
   unauthorized item never enters an ANN graph, a lexical ranking, score
   normalization, a count, a page or an explanation.
+* The eligibility predicates -- requested kinds and scopes, the structured
+  filters, head version, ``ACTIVE``, validity at ``valid_at`` and expiry on the
+  boundary clock -- run inside every index and metadata query (version 2
+  ports, ``EligibilityPredicate``), so ineligible versions never occupy a
+  candidate slot; the complete re-validation below is kept as defence in
+  depth.  Backpressure is raised only by the declared ``max_candidates`` bound
+  on candidates dropped after the query (OCOR-DEV-REM-0020).
 * Policy is evaluated again for every candidate before materialisation: the
   exact committed version must still be the item's head, ``ACTIVE``, valid at
   ``valid_at``, unexpired on the boundary clock, without deletion epoch, of a
@@ -27,11 +34,16 @@ Implements the ``MemorySearchPort`` (``searchMemory``) slice of the
   structured filters, and permitted by ``authorize_materialization``.  A
   candidate failing any check is dropped before it can occupy a candidate
   slot, so the pool always holds exactly the best eligible candidates.
+  ``STRUCTURED`` re-validates lazily in rank order and returns the
+  deterministic top-k of the eligible set, whatever the partition size.
 * Ranking keeps lexical, vector, recency, confidence, source-quality,
   diversity and policy factors separately (``score_factors``).  Lexical scores
   are normalised over the eligible candidate pool only; vector scores are the
-  cosine similarity of the pinned representation.  Scores are retrieval
-  evidence, never confidence in truth or Authority.
+  cosine similarity of the pinned representation.  In ``HYBRID`` every
+  candidate of the union of the two pools is scored by both backends on its
+  own committed entries, so no factor is a default; a candidate without the
+  pinned representation of one mode is not rankable and is dropped.  Scores
+  are retrieval evidence, never confidence in truth or Authority.
 * Every response pins the query (``query_digest``), the query contract, the
   representation versions searched, the ranking profile digest, the
   authorization and filters, and every returned item/version with its item and
@@ -41,8 +53,11 @@ Implements the ``MemorySearchPort`` (``searchMemory``) slice of the
   from the metadata authority and the partitioned projections, so no cache can
   carry influence between requesters (ADD v1.3 Part II §2.8).
 * The stop epoch read when the plan is made must still hold before
-  materialisation; a kill switch or delegation revocation in between fails the
+  materialisation, after every materialised hit and right before the receipt
+  is written; a kill switch or delegation revocation in between fails the
   request closed with ``STOP_EPOCH_MISMATCH`` and no hit.
+* Every refusal after planning is recorded as an audited denial
+  (``searchMemory.denied``); no success receipt is written for it.
 
 The module is backend-free (``OCOR_LANGUAGE_POLICY.md`` row 8): stores,
 indexes, policy, stop state and audit are ports.  Memory retrieval never
@@ -92,13 +107,17 @@ from .model import (
 )
 from .stores import (
     BoundHit,
+    EligibilityMetadataStore,
+    EligibilityPredicate,
     LexicalProfile,
     MemoryMetadataStore,
     MemoryPartition,
     MemoryStoreCoordinator,
+    RepresentationPointer,
     StoredVersion,
     VectorProfile,
     VersionState,
+    eligibility_scope,
     vector_digest,
 )
 
@@ -611,6 +630,7 @@ class _Plan:
     valid_at: datetime
     stop_epoch: int
     binding_ref: str
+    predicate: EligibilityPredicate
 
     @property
     def partition_digests(self) -> frozenset[str]:
@@ -624,6 +644,9 @@ class _Candidate:
     partition: MemoryPartition
     lexical: float | None = None
     vector: float | None = None
+    # False until the exact version has passed ``_eligible`` (STRUCTURED
+    # candidates are re-validated lazily, in rank order).
+    validated: bool = True
 
 
 FACTOR_NAMES = (
@@ -635,6 +658,20 @@ FACTOR_NAMES = (
     "diversity",
     "policy",
 )
+
+
+def _pointer(
+    candidate: _Candidate, kind: str, representation_version: str
+) -> RepresentationPointer | None:
+    return next(
+        (
+            pointer
+            for pointer in candidate.stored.staged.pointers
+            if pointer.representation_kind.value == kind
+            and pointer.representation_version == representation_version
+        ),
+        None,
+    )
 
 
 # --------------------------------------------------------------------------
@@ -724,13 +761,21 @@ class MemorySearchService:
         except MemoryAdmissionError as exc:
             self._record_denial(query, context, gcs_digest, binding.binding_ref, exc, now)
             raise
-        candidates = self._candidates(plan)
-        ranked = self._rank(plan, candidates)
-        if self._clock.now() >= deadline:
-            raise MemoryRetrievalError(
-                "POLICY_DENIED", "DEADLINE_EXCEEDED", "retrieval deadline has passed"
+        try:
+            with eligibility_scope(plan.predicate):
+                candidates = self._candidates(plan)
+            ranked = self._rank(plan, candidates)
+            if self._clock.now() >= deadline:
+                raise MemoryRetrievalError(
+                    "POLICY_DENIED", "DEADLINE_EXCEEDED", "retrieval deadline has passed"
+                )
+            return self._materialize(plan, ranked)
+        except MemoryAdmissionError as exc:
+            # Every refusal after planning is a denial of an authorized search.
+            self._record_denial(
+                query, context, gcs_digest, binding.binding_ref, exc, self._clock.now()
             )
-        return self._materialize(plan, ranked)
+            raise
 
     # -- request -------------------------------------------------------------
 
@@ -895,6 +940,19 @@ class MemorySearchService:
                 key=lambda partition: partition.digest,
             )
         )
+        filters = query.filters
+        predicate = EligibilityPredicate(
+            memory_kinds=frozenset(kind.value for kind in query.memory_kinds),
+            memory_scopes=frozenset(scope.value for scope in query.memory_scopes),
+            valid_at=valid_at,
+            now=now,
+            source_kinds=None
+            if filters.source_kinds is None
+            else frozenset(kind.value for kind in filters.source_kinds),
+            content_schema_refs=filters.content_schema_refs,
+            min_confidence=filters.min_confidence,
+            exclude_taint_labels=filters.exclude_taint_labels,
+        )
         return _Plan(
             query=query,
             context=context,
@@ -905,6 +963,7 @@ class MemorySearchService:
             valid_at=valid_at,
             stop_epoch=stop_epoch,
             binding_ref=binding_ref,
+            predicate=predicate,
         )
 
     def _stop_epoch(self, context: GovernedContext) -> int:
@@ -1077,12 +1136,13 @@ class MemorySearchService:
     ) -> list[tuple[_Candidate, float]]:
         """The ``pool`` best eligible candidates of every authorized partition.
 
-        Ineligible index hits are dropped before they count, and the page is
-        widened until ``pool`` eligible candidates are found or the partition is
-        exhausted, so ineligible items never displace an eligible one.  A
-        partition whose eligible pool cannot be filled within
-        ``max_candidates`` fails closed (backpressure) instead of returning a
-        silently different ranking.
+        The eligibility predicates already run inside the index query; hits
+        dropped by the post-query re-validation (live policy, races) are
+        skipped before they count, and the page is widened until ``pool``
+        eligible candidates are found or the partition is exhausted, so a
+        dropped item never displaces an eligible one.  A partition whose
+        drops exceed the declared ``max_candidates`` bound fails closed
+        (backpressure) instead of returning a silently different ranking.
         """
 
         pool = self._pool(plan)
@@ -1137,9 +1197,8 @@ class MemorySearchService:
                 ),
                 self._lexical_profile.representation_version,
             )
-            top = max((score for _, score in lexical), default=0.0)
             for candidate, score in lexical:
-                candidate.lexical = score / top if top > 0 else 0.0
+                candidate.lexical = score
                 merged[candidate.stored.staged.memory_version_ref] = candidate
         if query.mode in (RetrievalMode.VECTOR, RetrievalMode.HYBRID):
             profile, vector = query.vector_profile, query.vector
@@ -1155,29 +1214,97 @@ class MemorySearchService:
                 ref = candidate.stored.staged.memory_version_ref
                 existing = merged.setdefault(ref, candidate)
                 existing.vector = max(0.0, min(1.0, score))
+        if query.mode is RetrievalMode.HYBRID:
+            self._complete_hybrid(plan, merged)
+        # Lexical scores are normalised over the eligible candidates only.
+        top = max((c.lexical for c in merged.values() if c.lexical is not None), default=0.0)
+        for candidate in merged.values():
+            if candidate.lexical is not None:
+                candidate.lexical = candidate.lexical / top if top > 0 else 0.0
         return list(merged.values())
 
+    def _complete_hybrid(self, plan: _Plan, merged: dict[str, _Candidate]) -> None:
+        """Compute the real missing factor of every candidate of the pool union.
+
+        A candidate found by one index only is scored by the other index on
+        its own committed entry, so every recorded factor is the backend's
+        value and the ranking is the one its real factors give.  A candidate
+        without an entry in the pinned representation of the other mode has
+        no such value and is not rankable under the hybrid contract: it is
+        dropped, never given a fabricated factor.
+        """
+
+        query = plan.query
+        profile, vector, text = query.vector_profile, query.vector, query.text
+        assert profile is not None and vector is not None and text is not None
+        lexical_version = self._lexical_profile.representation_version
+        missing: dict[tuple[str, str], list[tuple[_Candidate, RepresentationPointer]]] = {}
+        partitions: dict[str, MemoryPartition] = {}
+        for ref, candidate in sorted(merged.items()):
+            wanted: list[tuple[str, RepresentationPointer | None]] = []
+            if candidate.lexical is None:
+                wanted.append(("FULL_TEXT", _pointer(candidate, "FULL_TEXT", lexical_version)))
+            if candidate.vector is None:
+                wanted.append(
+                    ("VECTOR", _pointer(candidate, "VECTOR", profile.representation_version))
+                )
+            if any(pointer is None for _, pointer in wanted):
+                del merged[ref]
+                continue
+            partitions[candidate.partition.digest] = candidate.partition
+            for kind, pointer in wanted:
+                assert pointer is not None
+                missing.setdefault((kind, candidate.partition.digest), []).append(
+                    (candidate, pointer)
+                )
+        for (kind, digest), entries in sorted(missing.items()):
+            partition = partitions[digest]
+            pointers = [pointer for _, pointer in entries]
+            if kind == "FULL_TEXT":
+                scores = self._coordinator.lexical_scores(partition, text, pointers)
+                for candidate, pointer in entries:
+                    candidate.lexical = scores[pointer.store_ref]
+            else:
+                scores = self._coordinator.vector_scores(partition, profile, vector, pointers)
+                for candidate, pointer in entries:
+                    candidate.vector = max(0.0, min(1.0, scores[pointer.store_ref]))
+
     def _structured(self, plan: _Plan) -> list[_Candidate]:
+        """Every committed head version matching the plan's predicate, in metadata order.
+
+        The predicate runs inside the metadata query; the exact versions are
+        re-validated lazily in rank order, so the result is the deterministic
+        top-k of the eligible set whatever the partition size.
+        """
+
+        metadata = self._metadata
+        if not isinstance(metadata, EligibilityMetadataStore):
+            raise MemoryRetrievalError(
+                "REPRESENTATION_NOT_READY",
+                "METADATA_PREDICATES_UNSUPPORTED",
+                "the metadata store cannot evaluate eligibility predicates",
+            )
         candidates: list[_Candidate] = []
         for partition in plan.partitions:
-            for stored in self._metadata.versions_in(partition.digest):
-                if stored.state is not VersionState.COMMITTED:
+            for stored in metadata.eligible_versions(partition.digest, plan.predicate):
+                staged = stored.staged
+                if (
+                    stored.state is not VersionState.COMMITTED
+                    or staged.partition.digest != partition.digest
+                ):
                     continue
                 if RepresentationKind.STRUCTURED.value not in {
-                    p.representation_kind.value for p in stored.staged.pointers
+                    p.representation_kind.value for p in staged.pointers
                 }:
                     continue
-                candidate = self._eligible(
-                    plan, stored.staged.memory_item_id, stored.staged.memory_version
+                candidates.append(
+                    _Candidate(
+                        stored=stored,
+                        item=staged.verify(),
+                        partition=partition,
+                        validated=False,
+                    )
                 )
-                if candidate is not None:
-                    candidates.append(candidate)
-                    if len(candidates) > self._limits.max_candidates:
-                        raise MemoryRetrievalError(
-                            "REPRESENTATION_NOT_READY",
-                            "RETRIEVAL_BACKPRESSURE",
-                            "structured candidate set exceeds the configured bound",
-                        )
         return candidates
 
     # -- ranking -------------------------------------------------------------
@@ -1226,6 +1353,14 @@ class MemorySearchService:
             assert best is not None
             score, ref = best
             chosen = remaining.pop(ref)
+            if not chosen.validated:
+                # Dropping an ineligible version before it is chosen leaves the
+                # ranking of the eligible ones exactly as if it never existed.
+                staged = chosen.stored.staged
+                fresh = self._eligible(plan, staged.memory_item_id, staged.memory_version)
+                if fresh is None or fresh.stored.staged.stage_digest != staged.stage_digest:
+                    continue
+                chosen.validated = True
             factors = dict(base[ref][1])
             factors["diversity"] = 1.0 / (
                 1.0 + profile.diversity_penalty * per_source[chosen.item.source_ref]
@@ -1239,12 +1374,7 @@ class MemorySearchService:
     def _materialize(
         self, plan: _Plan, ranked: list[tuple[_Candidate, float, dict[str, float]]]
     ) -> MemorySearchResponse:
-        if self._stop_epoch(plan.context) != plan.stop_epoch:
-            raise MemoryRetrievalError(
-                "STOP_EPOCH_MISMATCH",
-                "STOP_EPOCH_CHANGED",
-                "stop epoch changed before materialisation",
-            )
+        self._require_stop_epoch(plan)
         query = plan.query
         hits: list[MemoryHit] = []
         explanations: dict[str, Mapping[str, object]] = {}
@@ -1267,6 +1397,8 @@ class MemorySearchService:
                 raise MemoryRetrievalError(
                     "INTERNAL_ERROR", "MATERIALIZED_DIGEST_MISMATCH", "item digest mismatch"
                 )
+            # A stop or revocation during the read leaves no hit behind.
+            self._require_stop_epoch(plan)
             marking = self._markings.join([item.classification_marking_ref])
             explanation_ref: str | None = None
             if query.include_explanation:
@@ -1325,6 +1457,7 @@ class MemorySearchService:
             ],
         }
         audit_ref = canonical_digest(receipt)
+        self._require_stop_epoch(plan)
         try:
             self._audit.record(MappingProxyType({**receipt, "audit_ref": audit_ref}))
         except Exception as exc:  # noqa: BLE001 -- no audit, no answer
@@ -1341,6 +1474,14 @@ class MemorySearchService:
             receipt=MappingProxyType(receipt),
             explanations=MappingProxyType(explanations),
         )
+
+    def _require_stop_epoch(self, plan: _Plan) -> None:
+        if self._stop_epoch(plan.context) != plan.stop_epoch:
+            raise MemoryRetrievalError(
+                "STOP_EPOCH_MISMATCH",
+                "STOP_EPOCH_CHANGED",
+                "stop epoch changed after the plan was made",
+            )
 
     def _representation_versions(self, query: SearchQuery) -> dict[str, str]:
         versions: dict[str, str] = {}

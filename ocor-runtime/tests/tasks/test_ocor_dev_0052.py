@@ -227,7 +227,11 @@ class Audit:
 
 
 class TracingIndex:
-    """Wraps an index port and records every backend call by partition."""
+    """Wraps an index port and records every backend call by partition.
+
+    The version 2 methods are declared explicitly: the coordinator recognises
+    a version 2 index structurally and fails closed on any other wrapper.
+    """
 
     def __init__(self, inner: Any) -> None:
         self.inner = inner
@@ -244,6 +248,18 @@ class TracingIndex:
             return target(partition, *args, **kwargs)
 
         return traced
+
+    def search_eligible(self, partition: MemoryPartition, representation_version: str, query: Any, **kwargs: Any) -> Any:
+        self.calls.append(("search_eligible", partition.digest, representation_version))
+        return self.inner.search_eligible(partition, representation_version, query, **kwargs)
+
+    def score_entries(self, partition: MemoryPartition, representation_version: str, query: Any, store_refs: Sequence[str]) -> Any:
+        self.calls.append(("score_entries", partition.digest, representation_version))
+        return self.inner.score_entries(partition, representation_version, query, store_refs)
+
+    def retire(self, partition: MemoryPartition, representation_version: str, memory_item_id: str, below_version: int) -> None:
+        self.calls.append(("retire", partition.digest, representation_version))
+        self.inner.retire(partition, representation_version, memory_item_id, below_version)
 
 
 # --------------------------------------------------------------------------
@@ -487,8 +503,13 @@ def assert_retrieval_error(action: Any, reason: str, detail: str) -> MemoryRetri
     return caught.value
 
 
+INDEX_LOOKUPS = frozenset({"search", "search_eligible", "score_entries"})
+
+
 def searches(world: World) -> list[tuple[str, str, str]]:
-    return [call for call in world.lexical.calls + world.vector.calls if call[0] == "search"]
+    """Every index read that ranks or scores entries (lookups, never writes)."""
+
+    return [call for call in world.lexical.calls + world.vector.calls if call[0] in INDEX_LOOKUPS]
 
 
 # --------------------------------------------------------------------------
@@ -635,7 +656,8 @@ def test_a_stop_epoch_change_before_materialisation_returns_no_hit() -> None:
         lambda: world.service().search(request(RetrievalMode.FULL_TEXT, text="alpha"), binding=binding()),
         "STOP_EPOCH_MISMATCH", "STOP_EPOCH_CHANGED",
     )
-    assert world.audit.events == []
+    # OCOR-DEV-REM-0020 F5: the refusal is an audited denial, never a success receipt.
+    assert [(e["action"], e["reason_code"]) for e in world.audit.events] == [("searchMemory.denied", "STOP_EPOCH_MISMATCH")]
 
 
 @pytest.mark.parametrize(
@@ -664,10 +686,18 @@ def test_ineligible_hits_are_skipped_until_the_pool_is_full_then_backpressure() 
     for n in range(6):
         world.admit(f"q-{n}", "shared token quarantined", lifecycle="QUARANTINED")
     world.admit("active-1", "shared item")
+    # OCOR-DEV-REM-0020 F1: lifecycle is an index predicate, so quarantined
+    # versions never reach the pool and cost nothing against the declared bound.
+    tight = world.service(ranking_profiles=(RankingProfile(candidate_pool=1),), limits=RetrievalLimits(max_candidates=4))
+    response = tight.search(request(RetrievalMode.FULL_TEXT, text="shared token", top_k=1), binding=binding())
+    assert refs(response) == ["urn:ocor:memory:active-1:v1"]
+    # Only a post-query drop (here a live policy denial) consumes the bound.
+    for n in range(6):
+        world.admit(f"denied-{n}", "shared token denied")
+        world.policy.denied_items.add(f"denied-{n}")
     service = world.service(ranking_profiles=(RankingProfile(candidate_pool=1),), limits=RetrievalLimits(max_candidates=8))
     response = service.search(request(RetrievalMode.FULL_TEXT, text="shared token", top_k=1), binding=binding())
     assert refs(response) == ["urn:ocor:memory:active-1:v1"]
-    tight = world.service(ranking_profiles=(RankingProfile(candidate_pool=1),), limits=RetrievalLimits(max_candidates=4))
     assert_retrieval_error(
         lambda: tight.search(request(RetrievalMode.FULL_TEXT, text="shared token", top_k=1), binding=binding()),
         "REPRESENTATION_NOT_READY", "RETRIEVAL_BACKPRESSURE",
@@ -1154,7 +1184,8 @@ def test_a_delegation_revoked_or_kill_switch_raised_mid_search_leaves_no_influen
     body = request(RetrievalMode.HYBRID, text="artillery position")
     world.stop.bump_after = 1
     assert_retrieval_error(lambda: service.search(body, binding=binding()), "STOP_EPOCH_MISMATCH", "STOP_EPOCH_CHANGED")
-    assert world.audit.events == []
+    # OCOR-DEV-REM-0020 F5: audited denial, no success receipt and no hit.
+    assert [(e["action"], e["reason_code"]) for e in world.audit.events] == [("searchMemory.denied", "STOP_EPOCH_MISMATCH")]
 
     class RevokedAfterPlan(GrantPolicy):
         def authorize_materialization(self, item: GovernedMemoryItem, ctx: GovernedContext) -> MemoryPolicyDecision:
@@ -1167,7 +1198,7 @@ def test_a_delegation_revoked_or_kill_switch_raised_mid_search_leaves_no_influen
     assert_retrieval_error(
         lambda: world.service().search(body, binding=binding()), "REPRESENTATION_NOT_READY", "CANDIDATE_CHANGED"
     )
-    assert world.audit.events == []
+    assert [(e["action"], e["detail_code"]) for e in world.audit.events[1:]] == [("searchMemory.denied", "CANDIDATE_CHANGED")]
 
 
 def test_partial_and_drifted_projections_are_never_materialised(backends: Backends) -> None:
@@ -1199,7 +1230,10 @@ def test_partial_and_drifted_projections_are_never_materialised(backends: Backen
     with pytest.raises(Exception) as caught:
         service.search(request(RetrievalMode.FULL_TEXT, text="river ford depth"), binding=binding())
     assert getattr(caught.value, "reason_code", None) == "REPRESENTATION_NOT_READY"
-    assert len(world.audit.events) == audit_before
+    # OCOR-DEV-REM-0020 F5: one audited denial and no success receipt.
+    assert [(e["action"], e["reason_code"]) for e in world.audit.events[audit_before:]] == [
+        ("searchMemory.denied", "REPRESENTATION_NOT_READY")
+    ]
 
 
 def test_retrieval_is_durable_across_fresh_adapters(backends: Backends) -> None:
