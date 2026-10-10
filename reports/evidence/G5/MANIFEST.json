@@ -39,6 +39,16 @@
       "path": "OCOR-DEV-0053.log",
       "sha256": "e0b2072bd37ba3803e38f9c7aff21fcb1cc0325e47f24043bb2e2f5c14cc6c46",
       "task_id": "OCOR-DEV-0053-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0054.json",
+      "sha256": "3016cddfac0fbdc7a3131853462cf43f9d68df8dd7202b8bcbc11993eab869c6",
+      "task_id": "OCOR-DEV-0054"
+    },
+    {
+      "path": "OCOR-DEV-0054.log",
+      "sha256": "3b8625382753f711a19e783af94ca7c16d1cbd9190fcdfc95efca7cf467047f1",
+      "task_id": "OCOR-DEV-0054-RAW"
     }
   ],
   "created_at": "2026-10-08T18:33:05Z",
@@ -358,6 +368,69 @@
       "requirement_id": "FR-118",
       "status": "PASS",
       "task_id": "OCOR-DEV-0052"
+    },
+    {
+      "case_id": "OCOR-DEV-0054-CONSOLIDATION-NEW-DERIVED-ITEM-CITES-IMMUTABLE-SOURCES",
+      "command": "FGM-03 on real PostgreSQL (metadata, encrypted content, full-text), Qdrant and OpenBao transit: WORKING run memory consolidates into a NEW EPISODIC and a NEW SEMANTIC item (MEMORY_CONSOLIDATION, consolidates_refs = the exact input versions, derived_from_refs, job ref/digest as source, uncertainty record bound by uncertainty_ref, confidence never above the weakest input, union taint, conservative marking join, scope owner shared by every input); the payload cites every input by version ref, item digest and content digest; every input keeps its item digest, its stored bytes and its head; a reviewed profile yields PROPOSED outputs only; the request and receipt follow the OpenAPI MemoryConsolidationRequest/OperationReceipt",
+      "evidence_path": "OCOR-DEV-0054.json",
+      "raw_output_path": "OCOR-DEV-0054.log",
+      "requirement_id": "FR-118",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0054"
+    },
+    {
+      "case_id": "OCOR-DEV-0054-CONFLICT-PRESERVED-AS-DISSENT-WITHOUT-MAJORITY-MERGE",
+      "command": "FGM-13 on the real backends: five reports 'open' against one 'closed' produce no statement for that key but an UNRESOLVED conflict keeping both alternatives with their own supporting versions, ordered by value and never by support, a separate DISSENT item (MEMORY_CONSOLIDATION, consolidates_refs = exactly the conflicting inputs) cited by the summary in derived_from_refs and conflicts[].dissent_ref, and a confidence reduced by the conflict; three-way and tied disagreements keep every alternative; agreed keys still become statements citing every supporting version",
+      "evidence_path": "OCOR-DEV-0054.json",
+      "raw_output_path": "OCOR-DEV-0054.log",
+      "requirement_id": "FR-010",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0054"
+    },
+    {
+      "case_id": "OCOR-DEV-0054-CORRECTION-NEW-VERSION-KEEPS-SOURCES-CONFLICTS-AND-DISSENT",
+      "command": "FGM-09 on the real backends: a correction of an agreed statement is version 2 of the consolidated item (supersedes_ref and correction_of_ref = version 1), with the same consolidates/derived_from lineage, the same cited sources and the same conflicts and dissent refs; version 1, every source and every DISSENT item keep their item digest, stored bytes and head; the correction envelope is closed",
+      "evidence_path": "OCOR-DEV-0054.json",
+      "raw_output_path": "OCOR-DEV-0054.log",
+      "requirement_id": "FR-118",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0054"
+    },
+    {
+      "case_id": "OCOR-DEV-0054-CORRECTION-CANNOT-ERASE-DISSENT-REWRITE-SOURCES-OR-BECOME-AUTHORITY",
+      "command": "on the real backends: a correction that resolves either side of a conflict (DISSENT_ERASURE), cites a source outside the corrected version or an invented one (CORRECTION_SOURCE_REWRITE), targets a DISSENT item (DISSENT_IMMUTABLE), a plain memory item, an unknown or a superseded version, or is denied/unauthorized is refused, audited and writes nothing; a correction, a DISSENT content rewrite or a fabricated consolidation item submitted through plain admission is denied by the consolidation guard; REFLECTION output carries MODEL_GENERATED and is never instruction-eligible; no output is ever instruction-eligible and the module has no canonical, approval, lease, action or promotion path",
+      "evidence_path": "OCOR-DEV-0054.json",
+      "raw_output_path": "OCOR-DEV-0054.log",
+      "requirement_id": "FR-174",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0054"
+    },
+    {
+      "case_id": "OCOR-DEV-0054-APPROVED-PROFILES-LIVE-POLICY-AND-BUDGET-FAIL-CLOSED",
+      "command": "only approved profiles run (unknown algorithm, drifted algorithm digest, unapproved reviewer policy, unapproved or never-consolidated target kind such as PROCEDURAL/WORKING/DISSENT are refused); policy denial, outage, stale bundle and invalid decisions fail closed before any content read; input-count and byte budgets, an elapsed or elapsing deadline and unparseable inputs refuse before any write; every denial is audited with correlation and without payload content, and an unaudited denial fails closed; metrics use a bounded label set",
+      "evidence_path": "OCOR-DEV-0054.json",
+      "raw_output_path": "OCOR-DEV-0054.log",
+      "requirement_id": "FR-174",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0054"
+    },
+    {
+      "case_id": "OCOR-DEV-0054-INPUT-VISIBILITY-CURRENCY-AND-NON-INTERFERENCE",
+      "command": "on the real backends: inputs of another tenant, organization, domain or purpose, outside the caller compartments or above its marking are refused with exactly the same problem as unknown versions, before any policy call or content read; superseded, revoked, quarantined, proposed, expired or uncommitted inputs are refused; a target scope owner not shared by every input is refused",
+      "evidence_path": "OCOR-DEV-0054.json",
+      "raw_output_path": "OCOR-DEV-0054.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0054"
+    },
+    {
+      "case_id": "OCOR-DEV-0054-IDEMPOTENT-REPLAY-AND-FAULT-COMPLETION",
+      "command": "duplicate delivery and failure injection on the real backends: a replay (other deadline or correlation id, even after an input was superseded) returns the recorded outcome without writing; the same operation with another job or operation kind conflicts; outcomes persist across runs in the hash-chained job journal over fresh adapters, and a tampered or torn journal fails closed; a content-store failure after the dissent write, an audit outage or a job-ledger outage return no receipt and the retry completes the same derived slots without duplicates; a derived slot squatted by another item is never adopted (DERIVED_SLOT_OCCUPIED); a dropped or re-digested journal entry fails closed",
+      "evidence_path": "OCOR-DEV-0054.json",
+      "raw_output_path": "OCOR-DEV-0054.log",
+      "requirement_id": "FR-174",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0054"
     }
   ],
   "schema_version": "1.0"
