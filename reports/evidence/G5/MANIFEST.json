@@ -1,33 +1,33 @@
 {
   "artifacts": [
     {
-      "path": "OCOR-DEV-0050.requalified.json",
-      "sha256": "3441ba1d36568d296fa64d66c1174c07e832056b2f27f6221dc05ee2acc2a8c6",
+      "path": "OCOR-DEV-0050.requalified-rem0020.json",
+      "sha256": "fffd42cc67718dfd41646dba511196eb1967a5c7cda319b8748e1c54153019e9",
       "task_id": "OCOR-DEV-0050"
     },
     {
-      "path": "OCOR-DEV-0050.requalified.log",
-      "sha256": "88f723345441c04c179b767876afc74df38cb0fc19bb21f1f4c8ebe63f6820b0",
+      "path": "OCOR-DEV-0050.requalified-rem0020.log",
+      "sha256": "df93b7d3226b457909195b18d6b262376363f6ea804b79bda10540663fa87286",
       "task_id": "OCOR-DEV-0050-RAW"
     },
     {
-      "path": "OCOR-DEV-0051.json",
-      "sha256": "2c0932a03e2b9e256efa3948d76a42a0c4d2bd82bc817301761cd696dee07e44",
+      "path": "OCOR-DEV-0051.requalified.json",
+      "sha256": "d57b92cd6b8b8903ad0907f7d7088822ab6afc24c9183407f4a2390fa285573b",
       "task_id": "OCOR-DEV-0051"
     },
     {
-      "path": "OCOR-DEV-0051.log",
-      "sha256": "362e334d9e6db432bdae0809efbc4bf8092428317dac953d20f9eef144624e80",
+      "path": "OCOR-DEV-0051.requalified.log",
+      "sha256": "df93b7d3226b457909195b18d6b262376363f6ea804b79bda10540663fa87286",
       "task_id": "OCOR-DEV-0051-RAW"
     },
     {
-      "path": "OCOR-DEV-0052.json",
-      "sha256": "8a86ab09be0d43999187e84acceb98ff29b43380748b4d493290888c7d520209",
+      "path": "OCOR-DEV-0052.requalified.json",
+      "sha256": "276374b4642cf270d845d1a6398befbb02707509eebb635bc88ed3df636463d3",
       "task_id": "OCOR-DEV-0052"
     },
     {
-      "path": "OCOR-DEV-0052.log",
-      "sha256": "acb97fe423eac481e1b51f8fe441015da6d09082f4c82d0f57c795671e18efe2",
+      "path": "OCOR-DEV-0052.requalified.log",
+      "sha256": "df93b7d3226b457909195b18d6b262376363f6ea804b79bda10540663fa87286",
       "task_id": "OCOR-DEV-0052-RAW"
     },
     {
@@ -44,231 +44,6 @@
   "created_at": "2026-10-08T18:33:05Z",
   "gate": "G5",
   "requirement_results": [
-    {
-      "case_id": "OCOR-DEV-0050-CLOSED-CONTRACT-EVERY-CONDITIONAL-BRANCH",
-      "command": "closed GovernedMemoryItem: exact normative field set, every allOf branch positive+negative against the normative JSON Schema and the runtime, every required field, malformed values, aliases, canonical round trip",
-      "evidence_path": "OCOR-DEV-0050.requalified.json",
-      "raw_output_path": "OCOR-DEV-0050.requalified.log",
-      "requirement_id": "FR-140",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0050"
-    },
-    {
-      "case_id": "OCOR-DEV-0050-CAPABILITY-MATRIX-ALL-KINDS-AND-SCOPES",
-      "command": "all 56 kind/scope pairs declared explicitly; every one of the 8 kinds and 7 scopes has a supported pair",
-      "evidence_path": "OCOR-DEV-0050.requalified.json",
-      "raw_output_path": "OCOR-DEV-0050.requalified.log",
-      "requirement_id": "FR-140",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0050"
-    },
-    {
-      "case_id": "OCOR-DEV-0050-EVERY-SUPPORTED-PAIR-ADMITTED-WITH-PROVENANCE-AND-AUDIT",
-      "command": "every supported pair admitted: schema-valid persisted item, evidence/provenance refs, policy decision and correlation in the audit event, receipt valid against the OpenAPI MemoryReceipt",
-      "evidence_path": "OCOR-DEV-0050.requalified.json",
-      "raw_output_path": "OCOR-DEV-0050.requalified.log",
-      "requirement_id": "FR-140",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0050"
-    },
-    {
-      "case_id": "OCOR-DEV-0050-UNSUPPORTED-PAIR-REJECTED-BEFORE-PERSISTENCE",
-      "command": "every unsupported pair fails with UNSUPPORTED_CAPABILITY and zero ledger appends",
-      "evidence_path": "OCOR-DEV-0050.requalified.json",
-      "raw_output_path": "OCOR-DEV-0050.requalified.log",
-      "requirement_id": "FR-140",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0050"
-    },
-    {
-      "case_id": "OCOR-DEV-0050-MISSING-METADATA-INVALID-KIND-SCOPE-REJECTED-BEFORE-PERSISTENCE",
-      "command": "missing provenance/evidence/marking/taint, invalid kind/scope, envelope, lifecycle, kind semantics, digest, boundary-clock and reference-resolution failures rejected with zero appends",
-      "evidence_path": "OCOR-DEV-0050.requalified.json",
-      "raw_output_path": "OCOR-DEV-0050.requalified.log",
-      "requirement_id": "FR-140",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0050"
-    },
-    {
-      "case_id": "OCOR-DEV-0050-GCS-BINDING-AND-COMPARTMENT-ISOLATION",
-      "command": "binding required; tenant/compartment/purpose/owner/policy/GCS digest must equal the authenticated eleven-field GCS",
-      "evidence_path": "OCOR-DEV-0050.requalified.json",
-      "raw_output_path": "OCOR-DEV-0050.requalified.log",
-      "requirement_id": "FR-006",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0050"
-    },
-    {
-      "case_id": "OCOR-DEV-0050-CONSERVATIVE-MARKING-AND-CROSS-SCOPE-LINEAGE-DENIAL",
-      "command": "marking dominates the join of context and inputs; inputs above context and cross-tenant/compartment lineage denied",
-      "evidence_path": "OCOR-DEV-0050.requalified.json",
-      "raw_output_path": "OCOR-DEV-0050.requalified.log",
-      "requirement_id": "NFR-006",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0050"
-    },
-    {
-      "case_id": "OCOR-DEV-0050-PROHIBITED-CONTENT-AND-TAINT-NON-LAUNDERING",
-      "command": "hidden reasoning, secrets, credentials, tokens and raw conversation refused; required taint per source kind; taint inherited along lineage",
-      "evidence_path": "OCOR-DEV-0050.requalified.json",
-      "raw_output_path": "OCOR-DEV-0050.requalified.log",
-      "requirement_id": "NFR-048",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0050"
-    },
-    {
-      "case_id": "OCOR-DEV-0050-MEMORY-NEVER-GRANTS-INSTRUCTION-AUTHORITY",
-      "command": "instruction eligibility only for PROCEDURAL memory with a separate, exact, current approval by another principal; model-generated content never eligible",
-      "evidence_path": "OCOR-DEV-0050.requalified.json",
-      "raw_output_path": "OCOR-DEV-0050.requalified.log",
-      "requirement_id": "FR-113",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0050"
-    },
-    {
-      "case_id": "OCOR-DEV-0050-POLICY-AND-AUTHORITY-FAIL-CLOSED",
-      "command": "federation Authority required; policy deny/stale/outage and resolver outage fail closed with a policy-safe Problem",
-      "evidence_path": "OCOR-DEV-0050.requalified.json",
-      "raw_output_path": "OCOR-DEV-0050.requalified.log",
-      "requirement_id": "NFR-016",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0050"
-    },
-    {
-      "case_id": "OCOR-DEV-0050-IMMUTABLE-VERSIONS-IDEMPOTENCY-AND-EXACT-REPLAY",
-      "command": "idempotent replay, digest conflict, overwrite refused before persistence, contiguous supersession lineage, thread race with one winner, ledger-level gap/slot/key guards",
-      "evidence_path": "OCOR-DEV-0050.requalified.json",
-      "raw_output_path": "OCOR-DEV-0050.requalified.log",
-      "requirement_id": "FR-140",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0050"
-    },
-    {
-      "case_id": "OCOR-DEV-0050-CROSS-RUN-DURABLE-JOURNAL-AND-INTEGRITY",
-      "command": "versions persist across separate interpreter processes with exact replay; rejected candidates leave the journal byte-identical; process race one winner; tamper, torn write, removal and reorder detected fail closed",
-      "evidence_path": "OCOR-DEV-0050.requalified.json",
-      "raw_output_path": "OCOR-DEV-0050.requalified.log",
-      "requirement_id": "FR-140",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0050"
-    },
-    {
-      "case_id": "OCOR-DEV-0051-COMMIT-ALL-FOUR-STORES-WITH-BOUND-POINTERS",
-      "command": "admitted version committed to real PostgreSQL metadata, OpenBao-transit-encrypted content-addressed content, PostgreSQL full-text and Qdrant vector projections; version and pointers COMMITTED in one metadata transaction; every index entry carries the exact closed pointer (item/version, digests, representation version/digest, partition, marking, policy, scope, deletion epoch); receipt links the admission audit; backend IDs never cross the port; durable across fresh adapters",
-      "evidence_path": "OCOR-DEV-0051.json",
-      "raw_output_path": "OCOR-DEV-0051.log",
-      "requirement_id": "FR-115",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0051"
-    },
-    {
-      "case_id": "OCOR-DEV-0051-VERSIONED-HEAD-POINTER-AND-IMMUTABLE-REPRESENTATIONS",
-      "command": "head pointer advances only from n-1 to n (v3 before v2 refused, non-queryable); exact history readable; idempotent and concurrent re-commit converge to one row set; a different representation for a committed version is a stage conflict with zero writes",
-      "evidence_path": "OCOR-DEV-0051.json",
-      "raw_output_path": "OCOR-DEV-0051.log",
-      "requirement_id": "FR-115",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0051"
-    },
-    {
-      "case_id": "OCOR-DEV-0051-REJECTED-BEFORE-ANY-STORE-WRITE",
-      "command": "non-admitted, tampered, digest-mismatched, embedding-missing/unbound/dimension/digest-mismatched and non-rebuildable inputs refused with zero writes on every real backend; refusals carry the admission correlation id",
-      "evidence_path": "OCOR-DEV-0051.json",
-      "raw_output_path": "OCOR-DEV-0051.log",
-      "requirement_id": "FR-115",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0051"
-    },
-    {
-      "case_id": "OCOR-DEV-0051-COMPARTMENT-PARTITIONS-PHYSICAL-AND-LOGICAL",
-      "command": "every attribute of the ADD \u00a72.6 isolation tuple changes the partition; separate content addresses, PostgreSQL tables and Qdrant collections per partition; identical text/vectors never cross partitions; out-of-partition reads indistinguishable from absent; ciphertext moved across partitions does not open",
-      "evidence_path": "OCOR-DEV-0051.json",
-      "raw_output_path": "OCOR-DEV-0051.log",
-      "requirement_id": "FR-119",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0051"
-    },
-    {
-      "case_id": "OCOR-DEV-0051-PARTIAL-STORE-VISIBILITY-NON-QUERYABLE-AND-RECONCILED",
-      "command": "Qdrant paused mid-commit: PENDING version with physically present content/lexical entry is not queryable, countable or materialisable; grace window protects in-flight commits; reconcile retracts projections and content, retry commits; crash before the metadata switch rolled forward by reconcile; acknowledged-but-lost and wrong-pointer index writes refused by read-back; repair 1 (VF-001): a substituted lexical document, a substituted vector and a vector one binary32 ulp off, each under the correct pointer, fail PROJECTION_UNVERIFIED before the visibility switch on real PostgreSQL/Qdrant, are not found by either body, are retracted (never rolled forward) by reconcile, and the honest re-commit binds; the binary32 read-back holds for 24 committed l2-unit vectors",
-      "evidence_path": "OCOR-DEV-0051.json",
-      "raw_output_path": "OCOR-DEV-0051.log",
-      "requirement_id": "FR-115",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0051"
-    },
-    {
-      "case_id": "OCOR-DEV-0051-UNBOUND-REPRESENTATION-NON-QUERYABLE-AND-RECONCILED",
-      "command": "forged Qdrant points (fabricated ref, other-partition pointer, marking downgrade, never-staged version) outranking every bound entry and a tampered PostgreSQL lexical row never occupy result slots; reconcile removes exactly them; unbound backlog beyond the scan bound fails closed",
-      "evidence_path": "OCOR-DEV-0051.json",
-      "raw_output_path": "OCOR-DEV-0051.log",
-      "requirement_id": "FR-119",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0051"
-    },
-    {
-      "case_id": "OCOR-DEV-0051-ENCRYPTED-CONTENT-AND-METADATA-INTEGRITY-FAIL-CLOSED",
-      "command": "swapped ciphertext refused by OpenBao (CONTENT_UNSEALABLE); re-sealed foreign plaintext refused by digest (CONTENT_DIGEST_MISMATCH); metadata rewritten in place detected; committed projection drift blocks materialisation and is not hidden by re-commit; repair 1: document/tsvector/vector body drift after commit blocks materialisation (PROJECTION_DRIFT) and restoring the body restores it (VF-001); a pass-through cipher at 1, 3, 12 and 48 bytes (unit) and at 1, 12 and 35 bytes on real PostgreSQL, and real OpenBao transit used with a fixed context, are refused CONTENT_NOT_ENCRYPTED with no content row (VF-002); chance plaintext inside one seal is resealed, persistent plaintext refused after SEAL_ATTEMPTS; 1, 2, 3 and 12 byte payloads commit encrypted by real OpenBao transit; a payload inside the fixed transit framing ('vault') fails closed (documented limit)",
-      "evidence_path": "OCOR-DEV-0051.json",
-      "raw_output_path": "OCOR-DEV-0051.log",
-      "requirement_id": "FR-115",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0051"
-    },
-    {
-      "case_id": "OCOR-DEV-0052-STRUCTURED-FULL-TEXT-VECTOR-HYBRID-RETRIEVAL",
-      "command": "on real PostgreSQL (metadata, encrypted content, full-text), Qdrant (vector) and OpenBao transit: STRUCTURED reads the metadata authority with pinned filters (source kind, content schema, confidence, taint), FULL_TEXT and VECTOR rank by their own representation, HYBRID records lexical, vector, recency, confidence, source-quality, diversity and policy factors separately with final_score recomputable from the versioned profile; a parallel embedding representation is searched only under its own pin",
-      "evidence_path": "OCOR-DEV-0052.json",
-      "raw_output_path": "OCOR-DEV-0052.log",
-      "requirement_id": "FR-118",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0052"
-    },
-    {
-      "case_id": "OCOR-DEV-0052-PINS-QUERY-REPRESENTATION-RANKING-FILTERS-EXACT-VERSIONS",
-      "command": "the audit receipt pins query contract, mode, kinds, scopes, text, query-vector digest, representation versions, filters, valid_at, top_k and ranking profile digest, plus every hit's exact version ref, item and content digest; every pinned dimension changes query_digest; identical state replays byte-identically, also across fresh adapters; a new version is a new exact pin and the earlier version stays readable; hits of another representation version fail closed",
-      "evidence_path": "OCOR-DEV-0052.json",
-      "raw_output_path": "OCOR-DEV-0052.log",
-      "requirement_id": "FR-118",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0052"
-    },
-    {
-      "case_id": "OCOR-DEV-0052-POLICY-BEFORE-LOOKUP-AND-BEFORE-MATERIALISATION",
-      "command": "malformed requests, missing or foreign bindings and GCS mismatches are refused before policy and any index read; pre-query denial, stale bundle, unauthorized kind/scope and policy outage are audited and read no candidate; cross-project, cross-domain and federated retrieval open only with explicit Authority, cross-tenant stays denied; materialisation policy outage and unbound item digests fail closed",
-      "evidence_path": "OCOR-DEV-0052.json",
-      "raw_output_path": "OCOR-DEV-0052.log",
-      "requirement_id": "FR-119",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0052"
-    },
-    {
-      "case_id": "OCOR-DEV-0052-UNAUTHORIZED-ITEMS-NON-INTERFERENCE",
-      "command": "two real-backend worlds, one with 21 unauthorized items of distinct classes (compartment, mixed compartments, tenant, organization, marking, purpose, domain, project, run, agent, federated, quarantined, proposed, expired, not yet valid, validity elapsed, pending, revoked, materialisation-denied, other kind, reclassified): byte-identical responses, explanations and receipts in all four modes; indexes searched only inside authorized partitions; a query matching only unauthorized items is indistinguishable from no match; ineligible hits never displace eligible candidates",
-      "evidence_path": "OCOR-DEV-0052.json",
-      "raw_output_path": "OCOR-DEV-0052.log",
-      "requirement_id": "FR-119",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0052"
-    },
-    {
-      "case_id": "OCOR-DEV-0052-REVOCATION-EXPIRY-RECLASSIFICATION-AND-STOP-RACES",
-      "command": "revoked, expired (boundary clock) and reclassified items disappear from result, rank, count, normalisation and explanation; a SECRET caller sees only the reclassified head; a kill switch or delegation revocation between planning and materialisation fails closed with no hit and no success receipt",
-      "evidence_path": "OCOR-DEV-0052.json",
-      "raw_output_path": "OCOR-DEV-0052.log",
-      "requirement_id": "FR-119",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0052"
-    },
-    {
-      "case_id": "OCOR-DEV-0052-PARTIAL-AND-DRIFTED-PROJECTIONS-NEVER-MATERIALISED",
-      "command": "a version left PENDING by a Qdrant outage is never returned; a committed full-text projection tampered in PostgreSQL blocks materialisation with REPRESENTATION_NOT_READY and no success receipt",
-      "evidence_path": "OCOR-DEV-0052.json",
-      "raw_output_path": "OCOR-DEV-0052.log",
-      "requirement_id": "FR-118",
-      "status": "PASS",
-      "task_id": "OCOR-DEV-0052"
-    },
     {
       "case_id": "OCOR-DEV-0053-PARALLEL-VERSIONED-REPRESENTATION-DETERMINISTIC-REBUILD",
       "command": "on real PostgreSQL (metadata, encrypted content, full-text, representation records/descriptors), Qdrant (native and parallel vector layouts) and OpenBao transit: a model upgrade (pinned v1 fixture hash -> pinned v2 feature hashing) builds a parallel representation version of every current ACTIVE vector-bearing version, searched only under its own pin (VECTOR and HYBRID) while the native v1 representation answers byte-identically; every byte of metadata, content, lexical tables, native vectors and head pointers is unchanged; the manifest, descriptors and stored binary32 vectors are identical across repeated rebuilds, fresh adapters and a fresh world with reversed admission order",
@@ -358,6 +133,231 @@
       "requirement_id": "FR-131",
       "status": "PASS",
       "task_id": "OCOR-DEV-0053"
+    },
+    {
+      "case_id": "OCOR-DEV-0050-CLOSED-CONTRACT-EVERY-CONDITIONAL-BRANCH",
+      "command": "closed GovernedMemoryItem: exact normative field set, every allOf branch positive+negative against the normative JSON Schema and the runtime, every required field, malformed values, aliases, canonical round trip",
+      "evidence_path": "OCOR-DEV-0050.requalified-rem0020.json",
+      "raw_output_path": "OCOR-DEV-0050.requalified-rem0020.log",
+      "requirement_id": "FR-140",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0050"
+    },
+    {
+      "case_id": "OCOR-DEV-0050-CAPABILITY-MATRIX-ALL-KINDS-AND-SCOPES",
+      "command": "all 56 kind/scope pairs declared explicitly; every one of the 8 kinds and 7 scopes has a supported pair",
+      "evidence_path": "OCOR-DEV-0050.requalified-rem0020.json",
+      "raw_output_path": "OCOR-DEV-0050.requalified-rem0020.log",
+      "requirement_id": "FR-140",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0050"
+    },
+    {
+      "case_id": "OCOR-DEV-0050-EVERY-SUPPORTED-PAIR-ADMITTED-WITH-PROVENANCE-AND-AUDIT",
+      "command": "every supported pair admitted: schema-valid persisted item, evidence/provenance refs, policy decision and correlation in the audit event, receipt valid against the OpenAPI MemoryReceipt",
+      "evidence_path": "OCOR-DEV-0050.requalified-rem0020.json",
+      "raw_output_path": "OCOR-DEV-0050.requalified-rem0020.log",
+      "requirement_id": "FR-140",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0050"
+    },
+    {
+      "case_id": "OCOR-DEV-0050-UNSUPPORTED-PAIR-REJECTED-BEFORE-PERSISTENCE",
+      "command": "every unsupported pair fails with UNSUPPORTED_CAPABILITY and zero ledger appends",
+      "evidence_path": "OCOR-DEV-0050.requalified-rem0020.json",
+      "raw_output_path": "OCOR-DEV-0050.requalified-rem0020.log",
+      "requirement_id": "FR-140",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0050"
+    },
+    {
+      "case_id": "OCOR-DEV-0050-MISSING-METADATA-INVALID-KIND-SCOPE-REJECTED-BEFORE-PERSISTENCE",
+      "command": "missing provenance/evidence/marking/taint, invalid kind/scope, envelope, lifecycle, kind semantics, digest, boundary-clock and reference-resolution failures rejected with zero appends",
+      "evidence_path": "OCOR-DEV-0050.requalified-rem0020.json",
+      "raw_output_path": "OCOR-DEV-0050.requalified-rem0020.log",
+      "requirement_id": "FR-140",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0050"
+    },
+    {
+      "case_id": "OCOR-DEV-0050-GCS-BINDING-AND-COMPARTMENT-ISOLATION",
+      "command": "binding required; tenant/compartment/purpose/owner/policy/GCS digest must equal the authenticated eleven-field GCS",
+      "evidence_path": "OCOR-DEV-0050.requalified-rem0020.json",
+      "raw_output_path": "OCOR-DEV-0050.requalified-rem0020.log",
+      "requirement_id": "FR-006",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0050"
+    },
+    {
+      "case_id": "OCOR-DEV-0050-CONSERVATIVE-MARKING-AND-CROSS-SCOPE-LINEAGE-DENIAL",
+      "command": "marking dominates the join of context and inputs; inputs above context and cross-tenant/compartment lineage denied",
+      "evidence_path": "OCOR-DEV-0050.requalified-rem0020.json",
+      "raw_output_path": "OCOR-DEV-0050.requalified-rem0020.log",
+      "requirement_id": "NFR-006",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0050"
+    },
+    {
+      "case_id": "OCOR-DEV-0050-PROHIBITED-CONTENT-AND-TAINT-NON-LAUNDERING",
+      "command": "hidden reasoning, secrets, credentials, tokens and raw conversation refused; required taint per source kind; taint inherited along lineage",
+      "evidence_path": "OCOR-DEV-0050.requalified-rem0020.json",
+      "raw_output_path": "OCOR-DEV-0050.requalified-rem0020.log",
+      "requirement_id": "NFR-048",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0050"
+    },
+    {
+      "case_id": "OCOR-DEV-0050-MEMORY-NEVER-GRANTS-INSTRUCTION-AUTHORITY",
+      "command": "instruction eligibility only for PROCEDURAL memory with a separate, exact, current approval by another principal; model-generated content never eligible",
+      "evidence_path": "OCOR-DEV-0050.requalified-rem0020.json",
+      "raw_output_path": "OCOR-DEV-0050.requalified-rem0020.log",
+      "requirement_id": "FR-113",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0050"
+    },
+    {
+      "case_id": "OCOR-DEV-0050-POLICY-AND-AUTHORITY-FAIL-CLOSED",
+      "command": "federation Authority required; policy deny/stale/outage and resolver outage fail closed with a policy-safe Problem",
+      "evidence_path": "OCOR-DEV-0050.requalified-rem0020.json",
+      "raw_output_path": "OCOR-DEV-0050.requalified-rem0020.log",
+      "requirement_id": "NFR-016",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0050"
+    },
+    {
+      "case_id": "OCOR-DEV-0050-IMMUTABLE-VERSIONS-IDEMPOTENCY-AND-EXACT-REPLAY",
+      "command": "idempotent replay, digest conflict, overwrite refused before persistence, contiguous supersession lineage, thread race with one winner, ledger-level gap/slot/key guards",
+      "evidence_path": "OCOR-DEV-0050.requalified-rem0020.json",
+      "raw_output_path": "OCOR-DEV-0050.requalified-rem0020.log",
+      "requirement_id": "FR-140",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0050"
+    },
+    {
+      "case_id": "OCOR-DEV-0050-CROSS-RUN-DURABLE-JOURNAL-AND-INTEGRITY",
+      "command": "versions persist across separate interpreter processes with exact replay; rejected candidates leave the journal byte-identical; process race one winner; tamper, torn write, removal and reorder detected fail closed",
+      "evidence_path": "OCOR-DEV-0050.requalified-rem0020.json",
+      "raw_output_path": "OCOR-DEV-0050.requalified-rem0020.log",
+      "requirement_id": "FR-140",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0050"
+    },
+    {
+      "case_id": "OCOR-DEV-0051-COMMIT-ALL-FOUR-STORES-WITH-BOUND-POINTERS",
+      "command": "admitted version committed to real PostgreSQL metadata, OpenBao-transit-encrypted content-addressed content, PostgreSQL full-text and Qdrant vector projections; version and pointers COMMITTED in one metadata transaction; every index entry carries the exact closed pointer (item/version, digests, representation version/digest, partition, marking, policy, scope, deletion epoch); receipt links the admission audit; backend IDs never cross the port; durable across fresh adapters",
+      "evidence_path": "OCOR-DEV-0051.requalified.json",
+      "raw_output_path": "OCOR-DEV-0051.requalified.log",
+      "requirement_id": "FR-115",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "case_id": "OCOR-DEV-0051-VERSIONED-HEAD-POINTER-AND-IMMUTABLE-REPRESENTATIONS",
+      "command": "head pointer advances only from n-1 to n (v3 before v2 refused, non-queryable); exact history readable; idempotent and concurrent re-commit converge to one row set; a different representation for a committed version is a stage conflict with zero writes",
+      "evidence_path": "OCOR-DEV-0051.requalified.json",
+      "raw_output_path": "OCOR-DEV-0051.requalified.log",
+      "requirement_id": "FR-115",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "case_id": "OCOR-DEV-0051-REJECTED-BEFORE-ANY-STORE-WRITE",
+      "command": "non-admitted, tampered, digest-mismatched, embedding-missing/unbound/dimension/digest-mismatched and non-rebuildable inputs refused with zero writes on every real backend; refusals carry the admission correlation id",
+      "evidence_path": "OCOR-DEV-0051.requalified.json",
+      "raw_output_path": "OCOR-DEV-0051.requalified.log",
+      "requirement_id": "FR-115",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "case_id": "OCOR-DEV-0051-COMPARTMENT-PARTITIONS-PHYSICAL-AND-LOGICAL",
+      "command": "every attribute of the ADD \u00a72.6 isolation tuple changes the partition; separate content addresses, PostgreSQL tables and Qdrant collections per partition; identical text/vectors never cross partitions; out-of-partition reads indistinguishable from absent; ciphertext moved across partitions does not open",
+      "evidence_path": "OCOR-DEV-0051.requalified.json",
+      "raw_output_path": "OCOR-DEV-0051.requalified.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "case_id": "OCOR-DEV-0051-PARTIAL-STORE-VISIBILITY-NON-QUERYABLE-AND-RECONCILED",
+      "command": "Qdrant paused mid-commit: PENDING version with physically present content/lexical entry is not queryable, countable or materialisable; grace window protects in-flight commits; reconcile retracts projections and content, retry commits; crash before the metadata switch rolled forward by reconcile; acknowledged-but-lost and wrong-pointer index writes refused by read-back; repair 1 (VF-001): a substituted lexical document, a substituted vector and a vector one binary32 ulp off, each under the correct pointer, fail PROJECTION_UNVERIFIED before the visibility switch on real PostgreSQL/Qdrant, are not found by either body, are retracted (never rolled forward) by reconcile, and the honest re-commit binds; the binary32 read-back holds for 24 committed l2-unit vectors",
+      "evidence_path": "OCOR-DEV-0051.requalified.json",
+      "raw_output_path": "OCOR-DEV-0051.requalified.log",
+      "requirement_id": "FR-115",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "case_id": "OCOR-DEV-0051-UNBOUND-REPRESENTATION-NON-QUERYABLE-AND-RECONCILED",
+      "command": "forged Qdrant points (fabricated ref, other-partition pointer, marking downgrade, never-staged version) outranking every bound entry and a tampered PostgreSQL lexical row never occupy result slots; reconcile removes exactly them; unbound backlog beyond the scan bound fails closed",
+      "evidence_path": "OCOR-DEV-0051.requalified.json",
+      "raw_output_path": "OCOR-DEV-0051.requalified.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "case_id": "OCOR-DEV-0051-ENCRYPTED-CONTENT-AND-METADATA-INTEGRITY-FAIL-CLOSED",
+      "command": "swapped ciphertext refused by OpenBao (CONTENT_UNSEALABLE); re-sealed foreign plaintext refused by digest (CONTENT_DIGEST_MISMATCH); metadata rewritten in place detected; committed projection drift blocks materialisation and is not hidden by re-commit; repair 1: document/tsvector/vector body drift after commit blocks materialisation (PROJECTION_DRIFT) and restoring the body restores it (VF-001); a pass-through cipher at 1, 3, 12 and 48 bytes (unit) and at 1, 12 and 35 bytes on real PostgreSQL, and real OpenBao transit used with a fixed context, are refused CONTENT_NOT_ENCRYPTED with no content row (VF-002); chance plaintext inside one seal is resealed, persistent plaintext refused after SEAL_ATTEMPTS; 1, 2, 3 and 12 byte payloads commit encrypted by real OpenBao transit; a payload inside the fixed transit framing ('vault') fails closed (documented limit)",
+      "evidence_path": "OCOR-DEV-0051.requalified.json",
+      "raw_output_path": "OCOR-DEV-0051.requalified.log",
+      "requirement_id": "FR-115",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0051"
+    },
+    {
+      "case_id": "OCOR-DEV-0052-STRUCTURED-FULL-TEXT-VECTOR-HYBRID-RETRIEVAL",
+      "command": "on real PostgreSQL (metadata, encrypted content, full-text), Qdrant (vector) and OpenBao transit: STRUCTURED reads the metadata authority with pinned filters (source kind, content schema, confidence, taint), FULL_TEXT and VECTOR rank by their own representation, HYBRID records lexical, vector, recency, confidence, source-quality, diversity and policy factors separately with final_score recomputable from the versioned profile; a parallel embedding representation is searched only under its own pin",
+      "evidence_path": "OCOR-DEV-0052.requalified.json",
+      "raw_output_path": "OCOR-DEV-0052.requalified.log",
+      "requirement_id": "FR-118",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0052"
+    },
+    {
+      "case_id": "OCOR-DEV-0052-PINS-QUERY-REPRESENTATION-RANKING-FILTERS-EXACT-VERSIONS",
+      "command": "the audit receipt pins query contract, mode, kinds, scopes, text, query-vector digest, representation versions, filters, valid_at, top_k and ranking profile digest, plus every hit's exact version ref, item and content digest; every pinned dimension changes query_digest; identical state replays byte-identically, also across fresh adapters; a new version is a new exact pin and the earlier version stays readable; hits of another representation version fail closed",
+      "evidence_path": "OCOR-DEV-0052.requalified.json",
+      "raw_output_path": "OCOR-DEV-0052.requalified.log",
+      "requirement_id": "FR-118",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0052"
+    },
+    {
+      "case_id": "OCOR-DEV-0052-POLICY-BEFORE-LOOKUP-AND-BEFORE-MATERIALISATION",
+      "command": "malformed requests, missing or foreign bindings and GCS mismatches are refused before policy and any index read; pre-query denial, stale bundle, unauthorized kind/scope and policy outage are audited and read no candidate; cross-project, cross-domain and federated retrieval open only with explicit Authority, cross-tenant stays denied; materialisation policy outage and unbound item digests fail closed",
+      "evidence_path": "OCOR-DEV-0052.requalified.json",
+      "raw_output_path": "OCOR-DEV-0052.requalified.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0052"
+    },
+    {
+      "case_id": "OCOR-DEV-0052-UNAUTHORIZED-ITEMS-NON-INTERFERENCE",
+      "command": "two real-backend worlds, one with 21 unauthorized items of distinct classes (compartment, mixed compartments, tenant, organization, marking, purpose, domain, project, run, agent, federated, quarantined, proposed, expired, not yet valid, validity elapsed, pending, revoked, materialisation-denied, other kind, reclassified): byte-identical responses, explanations and receipts in all four modes; indexes searched only inside authorized partitions; a query matching only unauthorized items is indistinguishable from no match; ineligible hits never displace eligible candidates",
+      "evidence_path": "OCOR-DEV-0052.requalified.json",
+      "raw_output_path": "OCOR-DEV-0052.requalified.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0052"
+    },
+    {
+      "case_id": "OCOR-DEV-0052-REVOCATION-EXPIRY-RECLASSIFICATION-AND-STOP-RACES",
+      "command": "revoked, expired (boundary clock) and reclassified items disappear from result, rank, count, normalisation and explanation; a SECRET caller sees only the reclassified head; a kill switch or delegation revocation between planning and materialisation fails closed with no hit and no success receipt",
+      "evidence_path": "OCOR-DEV-0052.requalified.json",
+      "raw_output_path": "OCOR-DEV-0052.requalified.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0052"
+    },
+    {
+      "case_id": "OCOR-DEV-0052-PARTIAL-AND-DRIFTED-PROJECTIONS-NEVER-MATERIALISED",
+      "command": "a version left PENDING by a Qdrant outage is never returned; a committed full-text projection tampered in PostgreSQL blocks materialisation with REPRESENTATION_NOT_READY and no success receipt",
+      "evidence_path": "OCOR-DEV-0052.requalified.json",
+      "raw_output_path": "OCOR-DEV-0052.requalified.log",
+      "requirement_id": "FR-118",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0052"
     }
   ],
   "schema_version": "1.0"
