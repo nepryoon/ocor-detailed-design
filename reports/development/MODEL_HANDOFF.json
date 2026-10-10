@@ -6,9 +6,9 @@
     "REM-0017-CI-0049-REMAINDER-CAP resolved by PO with option 2: REM-0019 executes before REM-0017 CI reruns.",
     "REM18 underlying teardown defect remains open."
   ],
-  "base_sha": "e6e2add7f8462ade82006771624bfe57e8e94f04",
-  "baseline_commit": "e6e2add7f8462ade82006771624bfe57e8e94f04",
-  "branch": "governed/state-sync-ocor-dev-0055-sealed",
+  "base_sha": "0385349414c336ea974850a9b809fde006455b86",
+  "baseline_commit": "0385349414c336ea974850a9b809fde006455b86",
+  "branch": "governed/state-sync-rem-0019-implementation-in-progress",
   "changed_paths": [
     "reports/development/EXECUTION_STATE.json",
     "reports/development/MODEL_HANDOFF.json",
@@ -16,8 +16,8 @@
   ],
   "ci": {
     "rem_0017_status": "NOT_QUALIFIED_AWAITING_REM_0019",
-    "state_sync_status": "CI_REQUIRED_BEFORE_EXACT_HEAD_MERGE",
-    "task_status": "PASS_EXACT_HEAD_13_REQUIRED_PR202_MERGED"
+    "rem_0019_status": "IMPLEMENTATION_IN_PROGRESS_NO_PR",
+    "state_sync_status": "CI_REQUIRED_BEFORE_EXACT_HEAD_MERGE"
   },
   "ci_observations": {
     "192": {
@@ -194,26 +194,14 @@
     }
   ],
   "context_manifest_sha256": "2ad43a733bb86b64de70ea15b9a34544d510c9ae57afe5958e349de4b21c5b77",
-  "current_task": "OCOR-DEV-0055 sealed and merged; state sync; prossimo OCOR-DEV-REM-0019",
-  "evidence_paths": [
-    "reports/evidence/G5/OCOR-DEV-0055.json",
-    "reports/evidence/G5/OCOR-DEV-0055.log",
-    "reports/evidence/G5/MANIFEST.json"
-  ],
-  "exact_next_action": "OCOR-DEV-REM-0019 (decisione PO REM-0017-CI-0049-REMAINDER-CAP, opzione 2): isolamento dei test di OCOR-DEV-0049, solo test_ocor_dev_0049.py e fixture, produzione invariata, stessi 390 casi e asserzioni; prova di indipendenza (ordine di collezione, inverso, >=3 permutazioni con seed, esecuzioni isolate dei test dipendenti); riqualifica 0049 con supersession; branch governed/ da origin/main in worktree nuovo. Poi OCOR-DEV-REM-0017 (run CI con 0049 partizionato, ogni parte entro 45 minuti), poi OCOR-DEV-0056 e 0057 (pronti per dipendenze), 0058, 0059. Integrazione OCOR-DEV-0049 (GO b14e4bf, PR #176) subordinata alla chiusura verificata di REM-0017. RVW-03, INFO-A, INFO-C, REM-0018 aperti e non bloccano G5. F2 tracciato verso FGM-16; finestra residua VF-001 verso FGM-17; VF-004 rischio residuo aperto non assegnato, da riesaminare alla chiusura di G5.",
+  "current_task": "OCOR-DEV-REM-0019 implementation in progress (campagna di indipendenza in corso); handoff prima del limite di tempo dell iterazione",
+  "evidence_paths": [],
+  "exact_next_action": "OCOR-DEV-REM-0019:implementation (ripresa): nel worktree .ocor/worktrees/rem-0019 (branch governed/ocor-dev-rem-0019-0049-test-isolation, commit di codice 4c21be3) completare i run del modulo mancanti o falliti per infrastruttura con python3 ~/.ocor-codex/rem-0019/modules.py <label...> (order-seed-190001/190002/190003, order-reverse; un run gia in corso alla fine dell iterazione va atteso: controllare modules.progress e modules.done, non avviare un secondo stack); con i 5 run verdi: python3 ~/.ocor-codex/rem-0019/gates.py code solo se il commit e cambiato, build_evidence.py <worktree> ~/.ocor-codex/rem-0019 4c21be312bebd80f2d30f37c7a2febd5afb1aa5b, make_readme.py, commit dell evidenza, check_evidence.py <worktree> HEAD, gates.py final, push e build_request.py (REMEDIATION, verifier Cursor/Grok). Poi OCOR-DEV-REM-0017 (CI con 0049 partizionato sull HEAD verificato di REM-0019, ogni parte entro 45 minuti), poi 0056-0059. Integrazione OCOR-DEV-0049 (GO b14e4bf, PR #176) subordinata alla chiusura verificata di REM-0017. RVW-03, INFO-A, INFO-C, REM-0018 aperti e non bloccano G5. F2 verso FGM-16; finestra residua VF-001 di 0055 verso FGM-17; VF-004 di 0055 aperto non assegnato.",
   "head_sha": "git:HEAD",
   "head_sha_resolver": "git rev-parse HEAD on versioned handoff branch",
   "independent_verification": {
-    "repair_cycle": 1,
-    "request_id": "OCOR-DEV-0055-48705277f453-1",
-    "roles": {
-      "implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva del loop (quota Codex esaurita), cicli 0 e 1",
-      "independence": "external loop only; separate process, context and provider",
-      "integration_agent": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva (quota Codex esaurita)",
-      "verifier": "Grok 4.7 (Cursor CLI; verifier: cursor)"
-    },
-    "status": "GO_FOR_EVIDENCE_SEAL",
-    "verdict_sha256": "e2f0285547177bc0fba52429f69955edb7f95e65cd68f8f9915909a15dd10474",
+    "request_id": null,
+    "status": "NOT_REQUESTED_YET",
     "verifier": "cursor"
   },
   "local_full_suite": "Branch REM: CI-recipe parts on 12836ed \u2014 main 1363 PASS (exact union); candidate part 1 389 PASS 1780 s, part 3 1101 PASS; Helm part NOT_EXECUTED locally",
@@ -242,63 +230,33 @@
   "schema_version": "1.0",
   "security_observability_notes": "No secret handled; only GitHub API observations stored outside the repository with SHA-256.",
   "source_reference": {
-    "accepted_head": "48705277f453d8574eb6fe66c1b035e2f8a506f1",
-    "code_commit": "2d414d7bc3e1c770897e69d4a106dc789ed92c3e",
-    "method": "PR unica task/ (#202) sull HEAD di sigillo 73a28c4, figlio diretto dell HEAD verificato 4870527: cambiano solo independent_verification, sealed_at e status SEALED nel record e il relativo hash nel manifest G5. Codice, input e raw log byte-identici all HEAD verificato.",
-    "pull_requests": {
-      "202": {
-        "head_sha": "73a28c44b3f8570847469d00275135d2c19e4be4",
-        "merge_commit": "e6e2add7f8462ade82006771624bfe57e8e94f04",
-        "observed_at": "2026-10-10T11:43:07.809550+00:00",
-        "raw_observation_sha256": "2835d2327f6c5525ac9aa947f19b9c8f14db90fc3271584471106ab3f6913692",
-        "required_passed": 13,
-        "required_total": 13,
-        "run_ids": [
-          38048464878,
-          38048464881,
-          38048464895,
-          38048464931,
-          38048464932,
-          38048464965,
-          38048464998
-        ],
-        "status": "MERGED_EXACT_HEAD_13_REQUIRED"
+    "base": "df444af855e884d7783612b302e008b90105fe13",
+    "base_rationale": "test_ocor_dev_0049.py esiste solo sul candidato sigillato di OCOR-DEV-0049 (df444af, GO b14e4bf, PR #176) e 0049 si integra dopo la chiusura verificata di REM-0017: il branch parte dal candidato e REM-0017 ne fissera l HEAD verificato al posto di df444af.",
+    "branch": "governed/ocor-dev-rem-0019-0049-test-isolation",
+    "code_commit": "4c21be312bebd80f2d30f37c7a2febd5afb1aa5b",
+    "code_scope": "git diff --name-only df444af..4c21be3 = solo ocor-runtime/tests/tasks/test_ocor_dev_0049.py; produzione di 0049 invariata",
+    "design": "fixture tested (backup + restore isolato nel vault condiviso), reopen_pending, reopened, fault_observed, untested_ops e fresh_tested_ops (carrier Compose propri), agent.py scritto dalla fixture stack; backup e restore nei propri vault; 390 casi, asserzioni identiche (confronto AST su 72 funzioni)",
+    "isolated_runs": "119/119 PASS, un processo per caso dipendente, zero residui",
+    "local_gates_on_code_commit": "inputs 8/8, ruff, mypy strict 69 file, language, RCCAD, scope, piano 37 PASS/2 NOT_EXECUTED opzionali, drift 0, runtime-evidence 0049, harness 14 PASS",
+    "module_runs": {
+      "order-collection": {
+        "counts": {
+          "errors": 0,
+          "failures": 0,
+          "skipped": 0,
+          "tests": 390
+        },
+        "duration_seconds": 2356.6,
+        "ok": true
       }
     },
-    "seal_invariants_on_main": "PASS",
-    "sealed_manifest_sha256": "824461e2001a0ad43dfb8e9c4710393b177bdd9a10138c3c60507ca8aa7e3f4c",
-    "sealed_raw_sha256": "45c6f9fdeec9b8082413fbe228ca77bc202c4f0933052915466f0d2185a7ea2d",
-    "sealed_record_sha256": "2154d050c77ae10afdcf7434b15be042c1eb4d8f10f9e633e14829e8c58a9424",
-    "verdict": {
-      "request_id": "OCOR-DEV-0055-48705277f453-1",
-      "sha256": "e2f0285547177bc0fba52429f69955edb7f95e65cd68f8f9915909a15dd10474",
-      "verdict": "GO_FOR_EVIDENCE_SEAL"
+    "non_qualifying_attempts": {
+      "order-reverse attempt 1": "389/390 PASS; FAIL del caso Helm per SIGSEGV di containerd nel nodo kind alle 14:45:00Z (tick */15), capture-kafka exit 255: difetto locale REM-0017-KIND-CONTAINERD-CRASH, non dipendenza d ordine; ordine inverso da rieseguire"
     },
-    "verdict_history": [
-      {
-        "findings": [
-          "VF-001 (high)",
-          "VF-002 (high)",
-          "VF-003 (medium)",
-          "VF-004 (low)"
-        ],
-        "head_sha": "38b7734bd97f6932f5c5f10d3d71047436b54daf",
-        "repair_cycle": 0,
-        "request_id": "OCOR-DEV-0055-38b7734bd97f-0",
-        "sha256": "ee4f5e68ed6ce4efa8effe77ff66cf6106c731c1ce48d8307b9602eca483bf1a",
-        "verdict": "NO_GO",
-        "verifier": "Grok 4.7 (Cursor CLI)"
-      },
-      {
-        "findings": [],
-        "head_sha": "48705277f453d8574eb6fe66c1b035e2f8a506f1",
-        "repair_cycle": 1,
-        "request_id": "OCOR-DEV-0055-48705277f453-1",
-        "sha256": "e2f0285547177bc0fba52429f69955edb7f95e65cd68f8f9915909a15dd10474",
-        "verdict": "GO_FOR_EVIDENCE_SEAL",
-        "verifier": "Grok 4.7 (Cursor CLI)"
-      }
-    ]
+    "red": "su df444af 8/8 gruppi isolati o riordinati FAIL (readiness, agent.py, telemetria di fault, mutative non riaperto, receipt gia presente, reopen gia consumato)",
+    "session_dir": "/home/luca/.ocor-codex/rem-0019 (fuori dal repository: prepare.py, run_nodes.py, campaign.py, modules.py, gates.py, build_evidence.py, check_evidence.py, make_readme.py, build_request.py)",
+    "verifier": "Grok 4.7 via Cursor CLI (verifier: cursor)",
+    "worktree": ".ocor/worktrees/rem-0019"
   },
   "task_id": "OCOR-DEV-REM-0019",
   "teardown": {
@@ -327,6 +285,6 @@
     "REM-0017-KIND-CONTAINERD-CRASH",
     "RVW-03"
   ],
-  "updated_at": "2026-10-10T11:43:28Z",
-  "worktree": ".ocor/worktrees/state-sync-ocor-dev-0055-sealed"
+  "updated_at": "2026-10-10T15:14:31Z",
+  "worktree": ".ocor/worktrees/state-sync-rem-0019-progress"
 }
