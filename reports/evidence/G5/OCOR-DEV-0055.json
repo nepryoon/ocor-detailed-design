@@ -349,6 +349,140 @@
     "uv": "0.12.5",
     "worktree": ".ocor/worktrees/ocor-dev-0055"
   },
+  "independent_verification": {
+    "commands": [
+      {
+        "command": "sha256sum -c inputs/normative/SHA256SUMS",
+        "exit_code": 0,
+        "summary": "tutti i digest normativi OK sul worktree detached 48705277f453"
+      },
+      {
+        "command": "git diff --name-only origin/main HEAD",
+        "exit_code": 0,
+        "summary": "cinque path: lifecycle.py, test_ocor_dev_0055.py, MANIFEST.json, OCOR-DEV-0055.json, OCOR-DEV-0055.log; retrieval.py identico a origin/main; blob sigillato OCOR-DEV-0052.json invariato; voci preesistenti del manifest preservate"
+      },
+      {
+        "command": "uv sync --directory ocor-runtime --frozen --extra test --extra lint",
+        "exit_code": 0,
+        "summary": "ambiente isolato nel worktree detached"
+      },
+      {
+        "command": "python3 scripts/validate_rccad.py --base-ref origin/main",
+        "exit_code": 0,
+        "summary": "PASS_LOCAL_PRECHECK, findings vuoti"
+      },
+      {
+        "command": "python3 scripts/validate_language_policy.py",
+        "exit_code": 0,
+        "summary": "PASS"
+      },
+      {
+        "command": "python3 scripts/validate_ocor_change_scope.py --base origin/main --branch task/OCOR-DEV-0055-retention-expiry-revocation-forgetting-legal-hold",
+        "exit_code": 0,
+        "summary": "PASS: 5 path, superfici immutabili intatte"
+      },
+      {
+        "command": "python3 scripts/validate_ocor_development_plan.py --base-ref HEAD --authorized-extension",
+        "exit_code": 0,
+        "summary": "verdict PASS; il comando ha riscritto due file di planning nel worktree e sono stati ripristinati a HEAD prima della sonda di mutazione"
+      },
+      {
+        "command": "python3 scripts/validate_evidence_input_drift.py",
+        "exit_code": 0,
+        "summary": "PASS, drifted_inputs 0"
+      },
+      {
+        "command": "python3 scripts/validate_runtime_evidence.py --task OCOR-DEV-0055 --non-skipped --manifest reports/evidence/G5/MANIFEST.json",
+        "exit_code": 0,
+        "summary": "PASS"
+      },
+      {
+        "command": "python3 ~/.ocor-codex/ocor-dev-0055-r1/check_evidence.py <wt> 48705277f453d8574eb6fe66c1b035e2f8a506f1",
+        "exit_code": 0,
+        "summary": "PASS: 76 casi task, suite registrata 1784/0/0, 52 mutanti uccisi, branch corretto, input invariati fra commit 2d414d7 e HEAD"
+      },
+      {
+        "command": "uv run --project ocor-runtime --frozen --extra test --extra lint ruff check .",
+        "exit_code": 0,
+        "summary": "All checks passed"
+      },
+      {
+        "command": "uv run --project ocor-runtime --frozen --extra test --extra lint mypy --strict",
+        "exit_code": 0,
+        "summary": "Success: no issues found in 75 source files"
+      },
+      {
+        "command": "python3 scripts/reset_test_environment.py --execute (prima del primo bootstrap, env assente)",
+        "exit_code": 1,
+        "summary": "compose down rifiutato per variabili OCOR_LOCAL_* assenti; nessun container ocor-bootstrap esisteva. CA e bootstrap.env generati solo nel worktree, checkout principale non modificata"
+      },
+      {
+        "command": "python3 scripts/bootstrap_development_environment.py --execute --timeout 600",
+        "exit_code": 0,
+        "summary": "stack ocor-bootstrap avviato, 11 servizi, immagine Fuseki locale uguale al lock, OOMKilled false; init, fixture e SVID control-plane PASS"
+      },
+      {
+        "command": "OCOR_LIVE_POSTGRES_DSN=<dsn> uv run --directory ocor-runtime --frozen --extra test --extra lint pytest -q -rs tests/tasks/test_ocor_dev_0055.py tests/tasks/test_ocor_dev_rem_0021.py",
+        "exit_code": 0,
+        "summary": "118 passed, 0 failed, 0 skipped in 80.87s su PostgreSQL 16.14 postgres@sha256:33f923b05f64ca54ac4401c01126a6b92afe839a0aa0a52bc5aeb5cc958e5f20; nessun container, volume o rete lasciato"
+      },
+      {
+        "command": "pytest /tmp/.../probe_test.py (LEGAL_HOLD durante read_version, stop durante embed, finestra nell'append, retention oltre il limite, fattori di score)",
+        "exit_code": 1,
+        "summary": "7 passed, 1 failed. Fallisce solo l'asserzione della sonda sui fattori: FULL_TEXT restituisce un hit e lexical 1.0 e' la normalizzazione sul massimo del pool (retrieval.py), non un sentinella. LEGAL_HOLD in ogni modo, stop durante embed_query, retention di 25 item con limit 4 e la finestra dichiarata dentro append sono verdi"
+      },
+      {
+        "command": "pytest -q -rs tests/tasks/test_ocor_dev_0048.py",
+        "exit_code": 0,
+        "summary": "196 passed, 0 failed, 0 skipped in 136.19s sullo stack reale dopo initialize e SVID control-plane"
+      },
+      {
+        "command": "prima suite completa, watchdog su paused/unhealthy",
+        "exit_code": 99,
+        "summary": "interrotta a circa 28% perche' un test ha messo in pause ocor-bootstrap-openbao-1 (fault injection di OCOR-DEV-0024), OOMKilled false; non e' la run qualificante"
+      },
+      {
+        "command": "python3 scripts/reset_test_environment.py --execute && python3 scripts/bootstrap_development_environment.py --execute --timeout 600",
+        "exit_code": 0,
+        "summary": "reset e bootstrap ripetuti prima della suite completa; 11 servizi running, health BAD vuoto, SVID control-plane fetched, node v20.20.2"
+      },
+      {
+        "command": "PATH=<node-v20.20.2> OCOR_LIVE_POSTGRES_DSN=<dsn> uv run --directory ocor-runtime --frozen --extra test --extra lint pytest -q -rs tests",
+        "exit_code": 0,
+        "summary": "1784 passed, 0 failed, 0 skipped in 733.19s; nessuna esclusione; nessun OOMKilled"
+      },
+      {
+        "command": "mutation probe lifecycle.py, 52 mutanti, pytest -x sulla suite 0055, poi ripristino del sorgente",
+        "exit_code": 0,
+        "summary": "52/52 uccisi, zero sopravvissuti; stop-recheck-removed, stop-recheck-before-content-io, reopen-without-stop e stop-change-ignored uccisi; hash del sorgente ripristinato"
+      }
+    ],
+    "findings": [],
+    "implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva (quota Codex esaurita), cicli 0, 1 e integrazione",
+    "integration_condition": "Merge subordinato ai check obbligatori verdi sul commit di sigillo esatto; il verdetto qualifica il candidato indicato, con soli metadati di sigillo e manifest successivi.",
+    "not_executed": [],
+    "original_implementer": "Claude Code (Anthropic), claude-opus-5-5, implementatore di riserva",
+    "prior_verdicts": [
+      {
+        "findings": 4,
+        "request_id": "OCOR-DEV-0055-38b7734bd97f-0",
+        "verdict": "NO_GO"
+      }
+    ],
+    "repair_cycle": 1,
+    "review_type": "TASK_EVIDENCE",
+    "verdict_created_at": "2026-10-10T11:25:16Z",
+    "verdict_file_sha256": "e2f0285547177bc0fba52429f69955edb7f95e65cd68f8f9915909a15dd10474",
+    "verdict_head_sha": "48705277f453d8574eb6fe66c1b035e2f8a506f1",
+    "verdict_request_id": "OCOR-DEV-0055-48705277f453-1",
+    "verdict_status": "GO_FOR_EVIDENCE_SEAL",
+    "verifier": "Grok 4.7 (Cursor CLI)",
+    "verifier_configuration": {
+      "independence_limits": "Processo e contesto separati. Implementatore dei cicli 0 e 1: Claude Code (Anthropic), claude-opus-5-5. Verifier di entrambi i cicli: Grok 4.7 via Cursor CLI. Fornitore e modello diversi dall'implementatore.",
+      "model": "Grok 4.7",
+      "process": "Cursor CLI, contesto pulito, esecuzione non interattiva"
+    }
+  },
   "inputs": {
     "inputs_tree": "60a73de8e47b38e94aeb0e2b8dedc689fab6eb35",
     "ocor-runtime/src/ocor_runtime/memory/lifecycle.py": "7edc06445a093859ffb8c0d3d0d7824fc3935fc191e96f58e9053d61a2afc11b",
@@ -587,7 +721,8 @@
   },
   "rollback_procedure_verified": "Mechanical review: the task adds two new files only (memory/lifecycle.py, tests/tasks/test_ocor_dev_0055.py) plus evidence; rollback is a revert commit of the task commits. No persisted data migration: test schemas, Qdrant collections, OpenBao mounts and journals are disposable and removed in teardown; no existing module imports lifecycle.py.",
   "schema_version": "1.0",
-  "status": "CANDIDATE_AWAITING_INDEPENDENT_VERIFICATION",
+  "sealed_at": "2026-10-10T11:26:44.393410+00:00",
+  "status": "SEALED",
   "supersedes_candidate": "38b7734bd97f6932f5c5f10d3d71047436b54daf (unsealed cycle-0 candidate, same path, replaced on the task branch)",
   "task_id": "OCOR-DEV-0055",
   "tdd": {
