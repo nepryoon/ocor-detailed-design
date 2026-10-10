@@ -49,6 +49,16 @@
       "path": "OCOR-DEV-0054.log",
       "sha256": "3b8625382753f711a19e783af94ca7c16d1cbd9190fcdfc95efca7cf467047f1",
       "task_id": "OCOR-DEV-0054-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0055.json",
+      "sha256": "a6433735656329f53ac7402b70239260b39b436a15567d89f586e9e1b26d0532",
+      "task_id": "OCOR-DEV-0055"
+    },
+    {
+      "path": "OCOR-DEV-0055.log",
+      "sha256": "61a6d4ce7a37ec8760cc30fe6cb77d63079f3e9623940f6e17ab97cb36a9b44b",
+      "task_id": "OCOR-DEV-0055-RAW"
     }
   ],
   "created_at": "2026-10-08T18:33:05Z",
@@ -431,6 +441,60 @@
       "requirement_id": "FR-174",
       "status": "PASS",
       "task_id": "OCOR-DEV-0054"
+    },
+    {
+      "case_id": "OCOR-DEV-0055-REVOCATION-AND-EXPIRY-DETERMINISTICALLY-EXCLUDE",
+      "command": "FGM-10 on real PostgreSQL 16 (metadata, encrypted content, full-text index, representation descriptors), Qdrant 1.15.1 (native and parallel vector indexes) and OpenBao 2.6.2 transit: a revocation is version n+1 (supersedes_ref = head, same content, lifecycle_status REVOKED) committed through the real 0053 coordinator; version n stays byte-identical; the item leaves STRUCTURED, FULL_TEXT, VECTOR, HYBRID and the parallel v2 representation (descriptor invalidated) while every other hit is unchanged; expiry sweeps select by expires_at then item id, are bounded by a limit (rest deferred), are idempotent and identical on a twin world; REVOKED/EXPIRED never re-open (FSM of ADD v1.3 Part II \u00a72.10 parsed from the normative text and compared exactly); re-opening a QUARANTINED item needs a readable, unchanged stop epoch while an exclusion never waits on the stop state",
+      "evidence_path": "OCOR-DEV-0055.json",
+      "raw_output_path": "OCOR-DEV-0055.log",
+      "requirement_id": "FR-118",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0055"
+    },
+    {
+      "case_id": "OCOR-DEV-0055-EXCLUDED-ITEMS-NEVER-INFLUENCE-RESULTS-OR-CACHES",
+      "command": "FGM-10/FGM-16 on the real backends: a world whose strongest matches are held, revoked, superseded or deleted returns exactly the same refs, final scores, score factors and explanation count in every retrieval mode as a twin world that never contained them, and the raw backend query (search_eligible, predicate in the WHERE clause) carries no excluded entry; retrieval keeps no cache and the parallel representation is invalidated; a new version cannot be admitted on an excluded head (LifecycleGuardPolicy); unknown and invisible items (other compartment, purpose or a dominating marking) are refused identically",
+      "evidence_path": "OCOR-DEV-0055.json",
+      "raw_output_path": "OCOR-DEV-0055.log",
+      "requirement_id": "FR-038",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0055"
+    },
+    {
+      "case_id": "OCOR-DEV-0055-LEGAL-HOLD-BLOCKS-DELETION-AND-RESTORES-PRIOR-DISPOSITION",
+      "command": "FGM-11 on the real backends: LEGAL_HOLD records legal_hold_ref and prior_lifecycle_status and needs an active hold of the item's tenant (unknown, foreign or released holds refused); while held, requestMemoryDeletion, a forgetting transition and the retention sweep are refused or report the item as held, and content, native entries and ledger stay unchanged; leaving the hold needs the registry to report it released (outage fails closed) and restores exactly the prior disposition (ACTIVE becomes searchable again, REVOKED stays excluded), or enters deletion",
+      "evidence_path": "OCOR-DEV-0055.json",
+      "raw_output_path": "OCOR-DEV-0055.log",
+      "requirement_id": "FR-135",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0055"
+    },
+    {
+      "case_id": "OCOR-DEV-0055-DELETION-SAGA-PURGES-AND-WRITES-NON-CONTENT-TOMBSTONE",
+      "command": "FGM-12 on the real backends: the saga reserves a deletion epoch, commits a content-free DELETION_PENDING version (retrieval closed at once), purges native lexical/vector entries of every version, parallel descriptors and private content objects in every partition of the item (also after reclassification), retains an object still referenced by an undeleted item, re-reads the residue and only then commits DELETED with a durable, hash-chained, content-free tombstone; old exact versions fail closed; a failing replica participant leaves DELETION_INCOMPLETE (FAILED receipt, residue counts, absent from retrieval) until a governed retry under the same epoch completes it; unsupported deletion scopes and non-trigger reasons are refused",
+      "evidence_path": "OCOR-DEV-0055.json",
+      "raw_output_path": "OCOR-DEV-0055.log",
+      "requirement_id": "FR-135",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0055"
+    },
+    {
+      "case_id": "OCOR-DEV-0055-RETENTION-SELECTION-DETERMINISTIC-HELD-PROTECTED",
+      "command": "FGM-19 on the real backends: the retention sweep forgets items whose configured horizon elapsed since their first admission, ordered by due instant then item id and bounded by a limit, assigns deletion epochs in that order, reports held items as protected and PROPOSED or unconfigured-horizon items as unresolved without deleting them; forgetting triggers and the OpenAPI lifecycle/deletion request shapes are the declared vocabulary",
+      "evidence_path": "OCOR-DEV-0055.json",
+      "raw_output_path": "OCOR-DEV-0055.log",
+      "requirement_id": "FR-135",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0055"
+    },
+    {
+      "case_id": "OCOR-DEV-0055-FAIL-CLOSED-AUDITED-IDEMPOTENT-AND-DURABLE",
+      "command": "failure injection on the real backends: a store failure after the ledger append and a crash inside the saga after DELETION_PENDING leave the item excluded or unchanged and the replay of the same operation completes it, while another operation is refused (HEAD_NOT_COMMITTED, DELETION_IN_PROGRESS); a lifecycle version whose embedding the pinned model does not reproduce is refused before any write (EMBEDDING_NOT_REPRODUCIBLE); lifecycle state, tombstones and operation ids persist across fresh adapters over the journal ledger; closed envelopes, bounded reason codes, deadline, GCS binding, stale versions, policy denial/outage/stale bundle are refused before any write; every refusal is an audited denial and an unaudited denial or transition fails closed; metrics are bounded; the module has no backend client and no authority path",
+      "evidence_path": "OCOR-DEV-0055.json",
+      "raw_output_path": "OCOR-DEV-0055.log",
+      "requirement_id": "FR-118",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0055"
     }
   ],
   "schema_version": "1.0"
