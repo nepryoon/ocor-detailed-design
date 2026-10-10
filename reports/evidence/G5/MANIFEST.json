@@ -29,6 +29,16 @@
       "path": "OCOR-DEV-0052.log",
       "sha256": "acb97fe423eac481e1b51f8fe441015da6d09082f4c82d0f57c795671e18efe2",
       "task_id": "OCOR-DEV-0052-RAW"
+    },
+    {
+      "path": "OCOR-DEV-0053.json",
+      "sha256": "b2fff2ce1ee2f5432ed24687ab3a1d016b707bd5427ce658bba62ec816a2ceec",
+      "task_id": "OCOR-DEV-0053"
+    },
+    {
+      "path": "OCOR-DEV-0053.log",
+      "sha256": "e0b2072bd37ba3803e38f9c7aff21fcb1cc0325e47f24043bb2e2f5c14cc6c46",
+      "task_id": "OCOR-DEV-0053-RAW"
     }
   ],
   "created_at": "2026-10-08T18:33:05Z",
@@ -258,6 +268,96 @@
       "requirement_id": "FR-118",
       "status": "PASS",
       "task_id": "OCOR-DEV-0052"
+    },
+    {
+      "case_id": "OCOR-DEV-0053-PARALLEL-VERSIONED-REPRESENTATION-DETERMINISTIC-REBUILD",
+      "command": "on real PostgreSQL (metadata, encrypted content, full-text, representation records/descriptors), Qdrant (native and parallel vector layouts) and OpenBao transit: a model upgrade (pinned v1 fixture hash -> pinned v2 feature hashing) builds a parallel representation version of every current ACTIVE vector-bearing version, searched only under its own pin (VECTOR and HYBRID) while the native v1 representation answers byte-identically; every byte of metadata, content, lexical tables, native vectors and head pointers is unchanged; the manifest, descriptors and stored binary32 vectors are identical across repeated rebuilds, fresh adapters and a fresh world with reversed admission order",
+      "evidence_path": "OCOR-DEV-0053.json",
+      "raw_output_path": "OCOR-DEV-0053.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0053"
+    },
+    {
+      "case_id": "OCOR-DEV-0053-INTERRUPTED-OR-UNAUDITED-REBUILD-FAILS-CLOSED",
+      "command": "a Qdrant outage mid-rebuild, a failing audit sink, an acknowledged-but-unwritten index or descriptor write, an unavailable, non-deterministic or drifting model leave the representation BUILDING: retrieval of that version fails closed (REPRESENTATION_REBUILDING) while the native representation is unaffected; resuming converges to the clean manifest; concurrent rebuilds serialise through a compare-and-set record and converge",
+      "evidence_path": "OCOR-DEV-0053.json",
+      "raw_output_path": "OCOR-DEV-0053.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0053"
+    },
+    {
+      "case_id": "OCOR-DEV-0053-UNPINNED-MODEL-OR-DIMENSIONS-FAIL-RETRIEVAL",
+      "command": "a vector profile whose model digest, model ref, dimensions or normalization is not exactly a registered pin fails retrieval through the real search service and rebuild with UNSUPPORTED_CAPABILITY/EMBEDDING_MODEL_UNPINNED and writes nothing; query vectors and model outputs of other dimensions fail with EMBEDDING_DIMENSION_MISMATCH; a boundary without the v1 pin refuses even the native representation; pins are closed records",
+      "evidence_path": "OCOR-DEV-0053.json",
+      "raw_output_path": "OCOR-DEV-0053.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0053"
+    },
+    {
+      "case_id": "OCOR-DEV-0053-MIXED-REPRESENTATION-VERSIONS-FAIL-RETRIEVAL",
+      "command": "a current version embedded only in the old representation (REPRESENTATION_INCOMPLETE), a representation built with another pin for the same profile and an entry of another representation version inside the layout (REPRESENTATION_VERSION_MIXED) fail retrieval instead of mixing versions; a replaced Qdrant vector or an altered descriptor row fails closed (PROJECTION_DRIFT); foreign, shadow and stray entries never occupy a candidate slot; an incremental rebuild restores service",
+      "evidence_path": "OCOR-DEV-0053.json",
+      "raw_output_path": "OCOR-DEV-0053.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0053"
+    },
+    {
+      "case_id": "OCOR-DEV-0053-INVALIDATION-BEFORE-MATERIALISATION",
+      "command": "revoked, expired (boundary clock), reclassified and deletion-pending versions never reach a candidate slot, a result, a count or an explanation before any invalidation run; invalidate removes their descriptors and parallel entries with an audit receipt; the reclassified version is embedded only in its own SECRET partition after a rebuild under a SECRET GCS",
+      "evidence_path": "OCOR-DEV-0053.json",
+      "raw_output_path": "OCOR-DEV-0053.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0053"
+    },
+    {
+      "case_id": "OCOR-DEV-0053-AUTHORIZED-GCS-AND-CROSS-COMPARTMENT-NON-INTERFERENCE",
+      "command": "representation generation requires an authenticated binding and a GCS whose tenant, organization, domain, purpose, policy bundle and ontology release match the partition, whose compartments include it and whose marking dominates it, plus a permitted live policy decision on the context bundle; refusals write nothing; each partition has its own parallel collection and a caller authorized for one compartment searches only that layout",
+      "evidence_path": "OCOR-DEV-0053.json",
+      "raw_output_path": "OCOR-DEV-0053.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0053"
+    },
+    {
+      "case_id": "OCOR-DEV-0053-AUDITED-DENIALS-AND-COMMITTED-SUCCESS-RECEIPTS",
+      "command": "repair 1 (VF-001, VF-002): on real PostgreSQL/Qdrant/OpenBao every refusal of rebuild, invalidate and vector candidate lookup (REPRESENTATION_ABSENT, REPRESENTATION_INCOMPLETE, PROJECTION_DRIFT, REPRESENTATION_VERSION_MIXED; in the unit cases also AUTHENTICATION_REQUIRED, OPERATION_ID_INVALID, EMBEDDING_DIMENSION_MISMATCH, REPRESENTATION_REBUILDING) appends exactly one <action>.denied event with its reason/detail code and canonical audit_ref and no vector, and an unaudited denial fails closed; a compare-and-set lost to a concurrent occupant after BUILDING (rebuild) or during invalidation leaves the occupant, raises REPRESENTATION_RECORD_CONFLICT and records no success receipt, while the following rebuild records exactly one success receipt and an ACTIVE record; repair 2 (VF-003): inside a search of the EmbeddingSearchService a lookup denial carries the binding's correlation id, the request's operation id as operation and causation id and the governed-context digest; a direct port call outside any search, or a lookup on another coordinator during a search, carries none (nothing invented); without a binding the search fails AUTHENTICATION_REQUIRED before any representation lookup",
+      "evidence_path": "OCOR-DEV-0053.json",
+      "raw_output_path": "OCOR-DEV-0053.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0053"
+    },
+    {
+      "case_id": "OCOR-DEV-0053-UNAUDITED-ACTIVATION-NEVER-SERVES",
+      "command": "repair 2 (VF-001): on real PostgreSQL/Qdrant/OpenBao, when the success receipt cannot be written and the compensating withdraw compare-and-set fails too, the record left ACTIVE names an audit_ref the audit store does not hold, so the search service, the vector lookup, invalidation and a fresh coordinator over the same stores refuse it (REPRESENTATION_NOT_READY/REPRESENTATION_UNAUDITED, each refusal audited); an unavailable receipt lookup fails CONTROL_PLANE_UNAVAILABLE/AUDIT_UNAVAILABLE; no success receipt exists until a later rebuild writes exactly one and serves; a withdraw lost to a newer operation leaves that operation's record; a transient withdraw failure is retried within its bound and leaves BUILDING",
+      "evidence_path": "OCOR-DEV-0053.json",
+      "raw_output_path": "OCOR-DEV-0053.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0053"
+    },
+    {
+      "case_id": "OCOR-DEV-0053-VALIDITY-WINDOW-CANDIDATE-ELIGIBILITY",
+      "command": "repair 1 (VF-003): on real backends versions whose valid_until has elapsed or whose valid_from lies in the future never occupy a vector candidate slot nor reach the search response, while an explicit historic valid_at returns the version valid then, also through the search service (repair 2, VF-002: EmbeddingSearchService hands the request's valid_at to the lookup; the elapsed version valid at that instant is returned, the version not yet valid then is absent); the representation keeps their descriptors and stays complete when a future version enters its window (no rebuild); with 140 elapsed versions and one valid version in one partition, a 128-candidate lookup and the real search service return exactly the valid version without error",
+      "evidence_path": "OCOR-DEV-0053.json",
+      "raw_output_path": "OCOR-DEV-0053.log",
+      "requirement_id": "FR-119",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0053"
+    },
+    {
+      "case_id": "OCOR-DEV-0053-MARKING-AND-PURPOSE-PROPAGATION-TO-EMBEDDINGS",
+      "command": "every embedding descriptor carries the source item's marking and purpose and its partition digest (compartments, marking, purpose, policy bundle, ontology, scope bindings); a reclassified version is never served from the old marking's representation and is embedded only in its own partition; the marking cannot be dropped without changing the descriptor digest and store ref",
+      "evidence_path": "OCOR-DEV-0053.json",
+      "raw_output_path": "OCOR-DEV-0053.log",
+      "requirement_id": "FR-131",
+      "status": "PASS",
+      "task_id": "OCOR-DEV-0053"
     }
   ],
   "schema_version": "1.0"
