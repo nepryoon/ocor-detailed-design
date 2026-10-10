@@ -1164,6 +1164,22 @@ def test_a_stop_epoch_changed_during_the_content_read_refuses_reopening_before_a
     assert "urn:ocor:memory:q:v2" in world.every_mode()["FULL_TEXT"]
 
 
+def test_a_stop_epoch_changed_during_the_content_read_refuses_a_hold_release_to_active(backends: Backends) -> None:
+    world = backends.world()
+    populate(world)
+    world.holds.place()
+    world.move("x", "LEGAL_HOLD", hold=HOLD, reason="LITIGATION_HOLD")
+    world.holds.lift()
+    ledger = ledger_snapshot(world)
+    fired = _during_read(world, "x", lambda: setattr(world.lc_stop, "epoch", world.lc_stop.epoch + 1))
+    assert_error(lambda: world.move("x", "ACTIVE", reason="HOLD_RELEASED"), "STOP_EPOCH_MISMATCH", "STOP_EPOCH_CHANGED")
+    assert fired == ["x:v2"] and world.status("x") == "LEGAL_HOLD" and ledger_snapshot(world) == ledger
+    assert denials(world) == [("STOP_EPOCH_MISMATCH", "STOP_EPOCH_CHANGED")]
+    assert all(not ref.startswith("urn:ocor:memory:x:") for refs in world.every_mode().values() for ref in refs)
+    assert world.move("x", "ACTIVE", reason="HOLD_RELEASED").lifecycle_status == "ACTIVE"
+    assert "urn:ocor:memory:x:v3" in world.every_mode()["FULL_TEXT"]
+
+
 def test_an_exclusion_never_waits_on_a_stop_epoch_changed_during_the_content_read(backends: Backends) -> None:
     world = backends.world()
     populate(world)
