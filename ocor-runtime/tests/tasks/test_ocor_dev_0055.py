@@ -851,6 +851,7 @@ def test_expiry_is_deterministic_bounded_and_never_reopens(backends: Backends) -
     assert first.processed == ("urn:ocor:memory:early:v2",)
     assert first.deferred == ("urn:ocor:memory:mid:v1", "urn:ocor:memory:late:v1")
     assert world.status("gone") == "REVOKED" and world.ledger.latest_version("gone") == 2
+    assert first.unresolved == () and first.held == ()  # a non-ACTIVE head is never an expiry candidate
     second = world.lifecycle.enforce_expiry(binding=t52.binding(), operation_id="expiry-2")
     assert second.processed == ("urn:ocor:memory:mid:v2", "urn:ocor:memory:late:v2") and not second.deferred
     replay = world.lifecycle.enforce_expiry(binding=t52.binding(), operation_id="expiry-2")
