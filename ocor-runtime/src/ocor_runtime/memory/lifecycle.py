@@ -1137,6 +1137,14 @@ class MemoryLifecycleCoordinator:
             )
         return epoch
 
+    def _require_stop_epoch(self, context: GovernedContext, expected: int | None) -> None:
+        if expected is not None and self._stop_epoch(context) != expected:
+            raise MemoryLifecycleError(
+                "STOP_EPOCH_MISMATCH",
+                "STOP_EPOCH_CHANGED",
+                "the stop epoch changed before the item could be re-opened",
+            )
+
     def _check_fsm(
         self,
         head: GovernedMemoryItem,
@@ -1227,14 +1235,13 @@ class MemoryLifecycleCoordinator:
         decision = self._decide(plan.action, plan.head.item, plan.target, context)
         stop_epoch = self._stop_epoch(context) if plan.target is S.ACTIVE else None
         record = self._version(plan, decision, deletion_epoch=None)
-        if stop_epoch is not None and self._stop_epoch(context) != stop_epoch:
-            raise MemoryLifecycleError(
-                "STOP_EPOCH_MISMATCH",
-                "STOP_EPOCH_CHANGED",
-                "the stop epoch changed before the item could be re-opened",
-            )
+        self._require_stop_epoch(context, stop_epoch)
         # Content and embedding are re-derived and verified before any write.
         content = self._content_of(record)
+        # Re-opening is re-checked after the content I/O, right before the append.
+        # The stop epoch comes from an external control plane, so this check and
+        # the append are not atomic: the residual window is tracked towards FGM-17.
+        self._require_stop_epoch(context, stop_epoch)
         self._append(record)
         self._commit_content_version(record, plan.request.binding, content)
         return self._receipt(record, plan.request, record)
