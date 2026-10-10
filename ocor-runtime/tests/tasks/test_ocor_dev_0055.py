@@ -77,7 +77,7 @@ from ocor_runtime.memory.model import (
     MemoryAdmissionService,
     MemoryPolicyDecision,
 )
-from ocor_runtime.memory.retrieval import MemorySearchResponse, RetrievalMode
+from ocor_runtime.memory.retrieval import MemoryRetrievalError, MemorySearchResponse, RetrievalMode
 from ocor_runtime.memory.stores import MemoryPartition, VectorProfile, content_object_ref
 
 REPO = Path(__file__).resolve().parents[3]
@@ -1125,6 +1125,97 @@ def test_reopening_requires_a_readable_unchanged_stop_epoch_but_exclusion_never_
     world.lc_stop.bump_after = None
     assert world.move("q", "ACTIVE", reason="REVIEW_PASSED").lifecycle_status == "ACTIVE"
     assert "urn:ocor:memory:q:v2" in world.every_mode()["FULL_TEXT"]
+
+
+def _during_read(world: World, item_id: str, action: Any) -> list[str]:
+    """Run ``action()`` once, inside the first real content read of ``item_id``."""
+
+    original = world.coordinator.read_version
+    fired: list[str] = []
+
+    def read(partition: MemoryPartition, memory_item_id: str, memory_version: int) -> Any:
+        materialized = original(partition, memory_item_id, memory_version)
+        if memory_item_id == item_id and not fired:
+            fired.append(f"{memory_item_id}:v{memory_version}")
+            action()
+        return materialized
+
+    world.coordinator.read_version = read  # type: ignore[method-assign]
+    return fired
+
+
+def test_a_stop_epoch_changed_during_the_content_read_refuses_reopening_before_any_write(backends: Backends) -> None:
+    """VF-001: the stop epoch is re-read after content verification, right before the append."""
+
+    world = backends.world()
+    world.admit("q", TEXT, lifecycle="QUARANTINED")
+    ledger = ledger_snapshot(world)
+    reads = world.lc_stop.reads
+    fired = _during_read(world, "q", lambda: setattr(world.lc_stop, "epoch", world.lc_stop.epoch + 1))
+    assert_error(lambda: world.move("q", "ACTIVE", reason="REVIEW_PASSED"), "STOP_EPOCH_MISMATCH", "STOP_EPOCH_CHANGED")
+    assert fired == ["q:v1"]  # the epoch moved inside the only content read, after both pre-I/O reads
+    assert world.lc_stop.reads - reads == 3
+    assert world.status("q") == "QUARANTINED" and world.ledger.latest_version("q") == 1
+    assert ledger_snapshot(world) == ledger and world.metadata.get("q", 2) is None
+    assert denials(world) == [("STOP_EPOCH_MISMATCH", "STOP_EPOCH_CHANGED")]
+    assert all("urn:ocor:memory:q:" not in ref for refs in world.every_mode().values() for ref in refs)
+    # The same re-opening under the new, now stable epoch succeeds.
+    assert world.move("q", "ACTIVE", reason="REVIEW_PASSED").lifecycle_status == "ACTIVE"
+    assert "urn:ocor:memory:q:v2" in world.every_mode()["FULL_TEXT"]
+
+
+def test_an_exclusion_never_waits_on_a_stop_epoch_changed_during_the_content_read(backends: Backends) -> None:
+    world = backends.world()
+    populate(world)
+    fired = _during_read(world, "x", lambda: setattr(world.lc_stop, "epoch", world.lc_stop.epoch + 1))
+    assert world.move("x", "REVOKED", reason="SOURCE_RETRACTED").lifecycle_status == "REVOKED"
+    assert fired == ["x:v1"] and denials(world) == []
+    assert all(not ref.startswith("urn:ocor:memory:x:") for refs in world.every_mode().values() for ref in refs)
+
+
+@pytest.mark.parametrize("mode", list(RetrievalMode))
+@pytest.mark.parametrize("target", ["REVOKED", "EXPIRED", "SUPERSEDED"])
+def test_a_lifecycle_exclusion_committed_during_the_search_read_leaves_no_hit(
+    backends: Backends, mode: RetrievalMode, target: str
+) -> None:
+    """VF-002 on 0055: this coordinator excludes the item while retrieval reads its content."""
+
+    world = backends.world()
+    populate(world)
+    fired = _during_read(world, "x", lambda: world.move("x", target, reason="SOURCE_RETRACTED" if target == "REVOKED" else "OPERATOR_DECISION"))
+    with pytest.raises(MemoryRetrievalError) as caught:
+        world.search(mode)
+    assert (caught.value.reason_code, caught.value.detail_code) == ("REPRESENTATION_NOT_READY", "CANDIDATE_CHANGED")
+    assert fired == ["x:v1"] and world.status("x") == target
+    assert [(str(e["reason_code"]), str(e["detail_code"])) for e in world.audit.events if e["action"] == "searchMemory.denied"] == [
+        ("REPRESENTATION_NOT_READY", "CANDIDATE_CHANGED")
+    ]
+    assert [e for e in world.audit.events if e["action"] == "searchMemory"] == []
+    # Afterwards the excluded item is absent and every other hit is served.
+    refs = t52.refs(world.search(mode))
+    assert sorted(refs) == ["urn:ocor:memory:keep:v1", "urn:ocor:memory:y:v1"], refs
+
+
+def test_a_deletion_saga_started_during_the_search_read_leaves_no_hit(backends: Backends) -> None:
+    world = backends.world()
+    populate(world)
+    fired = _during_read(world, "x", lambda: world.delete("x"))
+    with pytest.raises(MemoryRetrievalError) as caught:
+        world.search(RetrievalMode.FULL_TEXT)
+    assert (caught.value.reason_code, caught.value.detail_code) == ("REPRESENTATION_NOT_READY", "CANDIDATE_CHANGED")
+    assert fired == ["x:v1"] and world.status("x") == "DELETED"
+    assert sorted(t52.refs(world.search(RetrievalMode.FULL_TEXT))) == ["urn:ocor:memory:keep:v1", "urn:ocor:memory:y:v1"]
+
+
+@pytest.mark.parametrize("mode", list(RetrievalMode))
+def test_a_search_without_lifecycle_changes_during_the_read_is_unchanged(backends: Backends, mode: RetrievalMode) -> None:
+    world = backends.world()
+    populate(world)
+    before = t52.refs(world.search(mode))
+    fired = _during_read(world, "x", lambda: None)
+    assert t52.refs(world.search(mode)) == before and fired == ["x:v1"]
+    assert sorted(before) == ["urn:ocor:memory:keep:v1", "urn:ocor:memory:x:v1", "urn:ocor:memory:y:v1"]
+    assert [e for e in world.audit.events if e["action"] == "searchMemory.denied"] == []
 
 
 def test_lifecycle_state_is_durable_across_fresh_adapters(backends: Backends, tmp_path: Path) -> None:
